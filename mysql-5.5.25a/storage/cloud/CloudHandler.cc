@@ -1,7 +1,3 @@
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation        // gcc: Class implementation
-#endif
-
 #include "sql_priv.h"
 #include "sql_class.h"           // MYSQL_HANDLERTON_INTERFACE_VERSION
 #include "CloudHandler.h"
@@ -20,19 +16,6 @@
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
-
-#include <protocol/TBinaryProtocol.h>
-#include <transport/TSocket.h>
-#include <transport/TTransportUtils.h>
-
-#include "gen-cpp/Engine.h"
-
-using namespace apache::thrift;
-using namespace apache::thrift::protocol;
-using namespace apache::thrift::transport;
-using namespace boost;
-
-using namespace com::nearinfinity::hbase_engine;
 
 CloudHandler::ha_cloud(handlerton *hton, TABLE_SHARE *table_arg)
   :handler(hton, table_arg)
@@ -66,24 +49,6 @@ int CloudHandler::close(void)
 {
   DBUG_ENTER("CloudHandler::close");
   DBUG_RETURN(free_share(share));
-}
-
-int CloudHandler::write_row(uchar *buf)
-{
-  DBUG_ENTER("CloudHandler::write_row");
-  DBUG_RETURN(0);
-}
-
-int CloudHandler::update_row(const uchar *old_data, uchar *new_data)
-{
-  DBUG_ENTER("CloudHandler::update_row");
-  DBUG_RETURN(HA_ERR_WRONG_COMMAND);
-}
-
-int CloudHandler::delete_row(const uchar *buf)
-{
-  DBUG_ENTER("CloudHandler::delete_row");
-  DBUG_RETURN(HA_ERR_WRONG_COMMAND);
 }
 
 int CloudHandler::rnd_init(bool scan)

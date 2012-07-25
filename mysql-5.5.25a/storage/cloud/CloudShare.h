@@ -1,6 +1,3 @@
-#ifdef CLOUD_SHARE_H
-#define CLOUD_SHARE_H
-
 #ifdef USE_PRAGMA_INTERFACE
 #pragma interface			/* gcc class implementation */
 #endif
@@ -13,5 +10,3 @@ typedef struct st_cloud_share {
   mysql_mutex_t mutex;
   THR_LOCK lock;
 } CloudShare;
-
-#endif
