@@ -5,4 +5,4 @@ controller/target/
 controller/src/main/java/com/nearinfinity/hbase_engine/Engine.java
 
 mysql-5.5.25a/storage/cloud/gen-cpp/
-*/.idea/*
+.idea/
