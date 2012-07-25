@@ -16,8 +16,8 @@
 include_directories("/usr/local/boost/include/boost-1_33_1/")
 include_directories("/usr/local/include/thrift")
 
-SET(STUB_PLUGIN_DYNAMIC "ha_stub")
-SET(STUB_SOURCES ha_stub.cc gen-cpp/hbase_engine_types.cpp gen-cpp/Engine.cpp)
-MYSQL_ADD_PLUGIN(stub ${STUB_SOURCES} STORAGE_ENGINE MODULE_ONLY)
+SET(cloud_PLUGIN_DYNAMIC "ha_cloud")
+SET(cloud_SOURCES ha_cloud.cc gen-cpp/hbase_engine_types.cpp gen-cpp/Engine.cpp)
+MYSQL_ADD_PLUGIN(cloud ${cloud_SOURCES} STORAGE_ENGINE MODULE_ONLY)
 
-SET_TARGET_PROPERTIES(stub PROPERTIES LINK_FLAGS -lthrift)
+SET_TARGET_PROPERTIES(cloud PROPERTIES LINK_FLAGS -lthrift)

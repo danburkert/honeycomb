@@ -13,22 +13,22 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA */
 
-/** @file ha_stub.h
+/** @file ha_cloud.h
 
     @brief
-  The ha_stub engine is a stubbed storage engine for stub purposes only;
+  The ha_cloud engine is a cloudbed storage engine for cloud purposes only;
   it does nothing at this point. Its purpose is to provide a source
   code illustration of how to begin writing new storage engines; see also
-  /storage/stub/ha_stub.cc.
+  /storage/cloud/ha_cloud.cc.
 
     @note
-  Please read ha_stub.cc before reading this file.
-  Reminder: The stub storage engine implements all methods that are *required*
+  Please read ha_cloud.cc before reading this file.
+  Reminder: The cloud storage engine implements all methods that are *required*
   to be implemented. For a full list of all methods that you can implement, see
   handler.h.
 
    @see
-  /sql/handler.h and /storage/stub/ha_stub.cc
+  /sql/handler.h and /storage/cloud/ha_cloud.cc
 */
 
 #ifdef USE_PRAGMA_INTERFACE
@@ -43,34 +43,34 @@
 //#include "../gen-cpp/Calculator.h"
 
 /** @brief
-  STUB_SHARE is a structure that will be shared among all open handlers.
-  This stub implements the minimum of what you will probably need.
+  cloud_SHARE is a structure that will be shared among all open handlers.
+  This cloud implements the minimum of what you will probably need.
 */
-typedef struct st_stub_share {
+typedef struct st_cloud_share {
   char *table_name;
   uint table_name_length,use_count;
   mysql_mutex_t mutex;
   THR_LOCK lock;
-} STUB_SHARE;
+} cloud_SHARE;
 
 /** @brief
   Class definition for the storage engine
 */
-class ha_stub: public handler
+class ha_cloud: public handler
 {
   THR_LOCK_DATA lock;      ///< MySQL lock
-  STUB_SHARE *share;    ///< Shared lock info
+  cloud_SHARE *share;    ///< Shared lock info
 
 public:
-  ha_stub(handlerton *hton, TABLE_SHARE *table_arg);
-  ~ha_stub()
+  ha_cloud(handlerton *hton, TABLE_SHARE *table_arg);
+  ~ha_cloud()
   {
   }
 
   /** @brief
     The name that will be used for display purposes.
    */
-  const char *table_type() const { return "STUB"; }
+  const char *table_type() const { return "cloud"; }
 
   /** @brief
     The name of the index type that will be used for display.
@@ -166,66 +166,66 @@ public:
   { return (double) rows /  20.0+1; }
 
   /*
-    Everything below are methods that we implement in ha_stub.cc.
+    Everything below are methods that we implement in ha_cloud.cc.
 
     Most of these methods are not obligatory, skip them and
     MySQL will treat them as not implemented
   */
   /** @brief
-    We implement this in ha_stub.cc; it's a required method.
+    We implement this in ha_cloud.cc; it's a required method.
   */
   int open(const char *name, int mode, uint test_if_locked);    // required
 
   /** @brief
-    We implement this in ha_stub.cc; it's a required method.
+    We implement this in ha_cloud.cc; it's a required method.
   */
   int close(void);                                              // required
 
   /** @brief
-    We implement this in ha_stub.cc. It's not an obligatory method;
+    We implement this in ha_cloud.cc. It's not an obligatory method;
     skip it and and MySQL will treat it as not implemented.
   */
   int write_row(uchar *buf);
 
   /** @brief
-    We implement this in ha_stub.cc. It's not an obligatory method;
+    We implement this in ha_cloud.cc. It's not an obligatory method;
     skip it and and MySQL will treat it as not implemented.
   */
   int update_row(const uchar *old_data, uchar *new_data);
 
   /** @brief
-    We implement this in ha_stub.cc. It's not an obligatory method;
+    We implement this in ha_cloud.cc. It's not an obligatory method;
     skip it and and MySQL will treat it as not implemented.
   */
   int delete_row(const uchar *buf);
 
   /** @brief
-    We implement this in ha_stub.cc. It's not an obligatory method;
+    We implement this in ha_cloud.cc. It's not an obligatory method;
     skip it and and MySQL will treat it as not implemented.
   */
   int index_read_map(uchar *buf, const uchar *key,
                      key_part_map keypart_map, enum ha_rkey_function find_flag);
 
   /** @brief
-    We implement this in ha_stub.cc. It's not an obligatory method;
+    We implement this in ha_cloud.cc. It's not an obligatory method;
     skip it and and MySQL will treat it as not implemented.
   */
   int index_next(uchar *buf);
 
   /** @brief
-    We implement this in ha_stub.cc. It's not an obligatory method;
+    We implement this in ha_cloud.cc. It's not an obligatory method;
     skip it and and MySQL will treat it as not implemented.
   */
   int index_prev(uchar *buf);
 
   /** @brief
-    We implement this in ha_stub.cc. It's not an obligatory method;
+    We implement this in ha_cloud.cc. It's not an obligatory method;
     skip it and and MySQL will treat it as not implemented.
   */
   int index_first(uchar *buf);
 
   /** @brief
-    We implement this in ha_stub.cc. It's not an obligatory method;
+    We implement this in ha_cloud.cc. It's not an obligatory method;
     skip it and and MySQL will treat it as not implemented.
   */
   int index_last(uchar *buf);

@@ -14,70 +14,70 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA */
 
 /**
-  @file ha_stub.cc
+  @file ha_cloud.cc
 
   @brief
-  The ha_stub engine is a stubbed storage engine for stub purposes only;
+  The ha_cloud engine is a cloudbed storage engine for cloud purposes only;
   it does nothing at this point. Its purpose is to provide a source
   code illustration of how to begin writing new storage engines; see also
-  /storage/stub/ha_stub.h.
+  /storage/cloud/ha_cloud.h.
 
   @details
-  ha_stub will let you create/open/delete tables, but
-  nothing further (for stub, indexes are not supported nor can data
-  be stored in the table). Use this stub as a template for
+  ha_cloud will let you create/open/delete tables, but
+  nothing further (for cloud, indexes are not supported nor can data
+  be stored in the table). Use this cloud as a template for
   implementing the same functionality in your own storage engine. You
-  can enable the stub storage engine in your build by doing the
+  can enable the cloud storage engine in your build by doing the
   following during your build process:<br> ./configure
-  --with-stub-storage-engine
+  --with-cloud-storage-engine
 
   Once this is done, MySQL will let you create tables with:<br>
-  CREATE TABLE <table name> (...) ENGINE=STUB;
+  CREATE TABLE <table name> (...) ENGINE=cloud;
 
-  The stub storage engine is set up to use table locks. It
-  implements an stub "SHARE" that is inserted into a hash by table
+  The cloud storage engine is set up to use table locks. It
+  implements an cloud "SHARE" that is inserted into a hash by table
   name. You can use this to store information of state that any
-  stub handler object will be able to see when it is using that
+  cloud handler object will be able to see when it is using that
   table.
 
-  Please read the object definition in ha_stub.h before reading the rest
+  Please read the object definition in ha_cloud.h before reading the rest
   of this file.
 
   @note
-  When you create an STUB table, the MySQL Server creates a table .frm
+  When you create an cloud table, the MySQL Server creates a table .frm
   (format) file in the database directory, using the table name as the file
   name as is customary with MySQL. No other files are created. To get an idea
-  of what occurs, here is an stub select that would do a scan of an entire
+  of what occurs, here is an cloud select that would do a scan of an entire
   table:
 
   @code
-  ha_stub::store_lock
-  ha_stub::external_lock
-  ha_stub::info
-  ha_stub::rnd_init
-  ha_stub::extra
+  ha_cloud::store_lock
+  ha_cloud::external_lock
+  ha_cloud::info
+  ha_cloud::rnd_init
+  ha_cloud::extra
   ENUM HA_EXTRA_CACHE        Cache record in HA_rrnd()
-  ha_stub::rnd_next
-  ha_stub::rnd_next
-  ha_stub::rnd_next
-  ha_stub::rnd_next
-  ha_stub::rnd_next
-  ha_stub::rnd_next
-  ha_stub::rnd_next
-  ha_stub::rnd_next
-  ha_stub::rnd_next
-  ha_stub::extra
+  ha_cloud::rnd_next
+  ha_cloud::rnd_next
+  ha_cloud::rnd_next
+  ha_cloud::rnd_next
+  ha_cloud::rnd_next
+  ha_cloud::rnd_next
+  ha_cloud::rnd_next
+  ha_cloud::rnd_next
+  ha_cloud::rnd_next
+  ha_cloud::extra
   ENUM HA_EXTRA_NO_CACHE     End caching of records (def)
-  ha_stub::external_lock
-  ha_stub::extra
+  ha_cloud::external_lock
+  ha_cloud::extra
   ENUM HA_EXTRA_RESET        Reset database to after open
   @endcode
 
-  Here you see that the stub storage engine has 9 rows called before
+  Here you see that the cloud storage engine has 9 rows called before
   rnd_next signals that it has reached the end of its data. Also note that
   the table in question was already opened; had it not been open, a call to
-  ha_stub::open() would also have been necessary. Calls to
-  ha_stub::extra() are hints as to what will be occuring to the request.
+  ha_cloud::open() would also have been necessary. Calls to
+  ha_cloud::extra() are hints as to what will be occuring to the request.
 
   A Longer Example can be found called the "Skeleton Engine" which can be 
   found on TangentOrg. It has both an engine and a full build environment
@@ -93,7 +93,7 @@
 
 #include "sql_priv.h"
 #include "sql_class.h"           // MYSQL_HANDLERTON_INTERFACE_VERSION
-#include "ha_stub.h"
+#include "ha_cloud.h"
 #include "probes_mysql.h"
 #include "sql_plugin.h"
 
@@ -123,35 +123,35 @@ using namespace boost;
 
 using namespace com::nearinfinity::hbase_engine;
 
-static handler *stub_create_handler(handlerton *hton,
+static handler *cloud_create_handler(handlerton *hton,
                                        TABLE_SHARE *table, 
                                        MEM_ROOT *mem_root);
 
-handlerton *stub_hton;
+handlerton *cloud_hton;
 
 /* Interface to mysqld, to check system tables supported by SE */
-static const char* stub_system_database();
-static bool stub_is_supported_system_table(const char *db,
+static const char* cloud_system_database();
+static bool cloud_is_supported_system_table(const char *db,
                                       const char *table_name,
                                       bool is_sql_layer_system_table);
 
-/* Variables for stub share methods */
+/* Variables for cloud share methods */
 
 /* 
-   Hash used to track the number of open tables; variable for stub share
+   Hash used to track the number of open tables; variable for cloud share
    methods
 */
-static HASH stub_open_tables;
+static HASH cloud_open_tables;
 
-/* The mutex used to init the hash; variable for stub share methods */
-mysql_mutex_t stub_mutex;
+/* The mutex used to init the hash; variable for cloud share methods */
+mysql_mutex_t cloud_mutex;
 
 /**
   @brief
   Function we use in the creation of our hash to get key.
 */
 
-static uchar* stub_get_key(STUB_SHARE *share, size_t *length,
+static uchar* cloud_get_key(cloud_SHARE *share, size_t *length,
                              my_bool not_used __attribute__((unused)))
 {
   *length=share->table_name_length;
@@ -159,60 +159,60 @@ static uchar* stub_get_key(STUB_SHARE *share, size_t *length,
 }
 
 #ifdef HAVE_PSI_INTERFACE
-static PSI_mutex_key ex_key_mutex_stub, ex_key_mutex_STUB_SHARE_mutex;
+static PSI_mutex_key ex_key_mutex_cloud, ex_key_mutex_cloud_SHARE_mutex;
 
-static PSI_mutex_info all_stub_mutexes[]=
+static PSI_mutex_info all_cloud_mutexes[]=
 {
-  { &ex_key_mutex_stub, "stub", PSI_FLAG_GLOBAL},
-  { &ex_key_mutex_STUB_SHARE_mutex, "STUB_SHARE::mutex", 0}
+  { &ex_key_mutex_cloud, "cloud", PSI_FLAG_GLOBAL},
+  { &ex_key_mutex_cloud_SHARE_mutex, "cloud_SHARE::mutex", 0}
 };
 
-static void init_stub_psi_keys()
+static void init_cloud_psi_keys()
 {
-  const char* category= "stub";
+  const char* category= "cloud";
   int count;
 
   if (PSI_server == NULL)
     return;
 
-  count= array_elements(all_stub_mutexes);
-  PSI_server->register_mutex(category, all_stub_mutexes, count);
+  count= array_elements(all_cloud_mutexes);
+  PSI_server->register_mutex(category, all_cloud_mutexes, count);
 }
 #endif
 
 
-static int stub_init_func(void *p)
+static int cloud_init_func(void *p)
 {
-  DBUG_ENTER("stub_init_func");
+  DBUG_ENTER("cloud_init_func");
 
 #ifdef HAVE_PSI_INTERFACE
-  init_stub_psi_keys();
+  init_cloud_psi_keys();
 #endif
 
-  stub_hton= (handlerton *)p;
-  mysql_mutex_init(ex_key_mutex_stub, &stub_mutex, MY_MUTEX_INIT_FAST);
-  (void) my_hash_init(&stub_open_tables,system_charset_info,32,0,0,
-                      (my_hash_get_key) stub_get_key,0,0);
+  cloud_hton= (handlerton *)p;
+  mysql_mutex_init(ex_key_mutex_cloud, &cloud_mutex, MY_MUTEX_INIT_FAST);
+  (void) my_hash_init(&cloud_open_tables,system_charset_info,32,0,0,
+                      (my_hash_get_key) cloud_get_key,0,0);
 
-  stub_hton->state=   SHOW_OPTION_YES;
-  stub_hton->create=  stub_create_handler;
-  stub_hton->flags=   HTON_CAN_RECREATE;
-  stub_hton->system_database=   stub_system_database;
-  stub_hton->is_supported_system_table= stub_is_supported_system_table;
+  cloud_hton->state=   SHOW_OPTION_YES;
+  cloud_hton->create=  cloud_create_handler;
+  cloud_hton->flags=   HTON_CAN_RECREATE;
+  cloud_hton->system_database=   cloud_system_database;
+  cloud_hton->is_supported_system_table= cloud_is_supported_system_table;
 
   DBUG_RETURN(0);
 }
 
 
-static int stub_done_func(void *p)
+static int cloud_done_func(void *p)
 {
   int error= 0;
-  DBUG_ENTER("stub_done_func");
+  DBUG_ENTER("cloud_done_func");
 
-  if (stub_open_tables.records)
+  if (cloud_open_tables.records)
     error= 1;
-  my_hash_free(&stub_open_tables);
-  mysql_mutex_destroy(&stub_mutex);
+  my_hash_free(&cloud_open_tables);
+  mysql_mutex_destroy(&cloud_mutex);
 
   DBUG_RETURN(error);
 }
@@ -221,31 +221,31 @@ static int stub_done_func(void *p)
 /**
   @brief
   Example of simple lock controls. The "share" it creates is a
-  structure we will pass to each stub handler. Do you have to have
+  structure we will pass to each cloud handler. Do you have to have
   one of these? Well, you have pieces that are used for locking, and
   they are needed to function.
 */
 
-static STUB_SHARE *get_share(const char *table_name, TABLE *table)
+static cloud_SHARE *get_share(const char *table_name, TABLE *table)
 {
-  STUB_SHARE *share;
+  cloud_SHARE *share;
   uint length;
   char *tmp_name;
 
-  mysql_mutex_lock(&stub_mutex);
+  mysql_mutex_lock(&cloud_mutex);
   length=(uint) strlen(table_name);
 
-  if (!(share=(STUB_SHARE*) my_hash_search(&stub_open_tables,
+  if (!(share=(cloud_SHARE*) my_hash_search(&cloud_open_tables,
                                               (uchar*) table_name,
                                               length)))
   {
-    if (!(share=(STUB_SHARE *)
+    if (!(share=(cloud_SHARE *)
           my_multi_malloc(MYF(MY_WME | MY_ZEROFILL),
                           &share, sizeof(*share),
                           &tmp_name, length+1,
                           NullS)))
     {
-      mysql_mutex_unlock(&stub_mutex);
+      mysql_mutex_unlock(&cloud_mutex);
       return NULL;
     }
 
@@ -253,14 +253,14 @@ static STUB_SHARE *get_share(const char *table_name, TABLE *table)
     share->table_name_length=length;
     share->table_name=tmp_name;
     strmov(share->table_name,table_name);
-    if (my_hash_insert(&stub_open_tables, (uchar*) share))
+    if (my_hash_insert(&cloud_open_tables, (uchar*) share))
       goto error;
     thr_lock_init(&share->lock);
-    mysql_mutex_init(ex_key_mutex_STUB_SHARE_mutex,
+    mysql_mutex_init(ex_key_mutex_cloud_SHARE_mutex,
                      &share->mutex, MY_MUTEX_INIT_FAST);
   }
   share->use_count++;
-  mysql_mutex_unlock(&stub_mutex);
+  mysql_mutex_unlock(&cloud_mutex);
 
   return share;
 
@@ -278,29 +278,29 @@ error:
   the last reference to the share, then we free memory associated with it.
 */
 
-static int free_share(STUB_SHARE *share)
+static int free_share(cloud_SHARE *share)
 {
-  mysql_mutex_lock(&stub_mutex);
+  mysql_mutex_lock(&cloud_mutex);
   if (!--share->use_count)
   {
-    my_hash_delete(&stub_open_tables, (uchar*) share);
+    my_hash_delete(&cloud_open_tables, (uchar*) share);
     thr_lock_delete(&share->lock);
     mysql_mutex_destroy(&share->mutex);
     my_free(share);
   }
-  mysql_mutex_unlock(&stub_mutex);
+  mysql_mutex_unlock(&cloud_mutex);
 
   return 0;
 }
 
-static handler* stub_create_handler(handlerton *hton,
+static handler* cloud_create_handler(handlerton *hton,
                                        TABLE_SHARE *table, 
                                        MEM_ROOT *mem_root)
 {
-  return new (mem_root) ha_stub(hton, table);
+  return new (mem_root) ha_cloud(hton, table);
 }
 
-ha_stub::ha_stub(handlerton *hton, TABLE_SHARE *table_arg)
+ha_cloud::ha_cloud(handlerton *hton, TABLE_SHARE *table_arg)
   :handler(hton, table_arg)
 {}
 
@@ -323,13 +323,13 @@ ha_stub::ha_stub(handlerton *hton, TABLE_SHARE *table_arg)
   delete_table method in handler.cc
 */
 
-static const char *ha_stub_exts[] = {
+static const char *ha_cloud_exts[] = {
   NullS
 };
 
-const char **ha_stub::bas_ext() const
+const char **ha_cloud::bas_ext() const
 {
-  return ha_stub_exts;
+  return ha_cloud_exts;
 }
 
 /*
@@ -337,10 +337,10 @@ const char **ha_stub::bas_ext() const
   system database specific to SE. This interface
   is optional, so every SE need not implement it.
 */
-const char* ha_stub_system_database= NULL;
-const char* stub_system_database()
+const char* ha_cloud_system_database= NULL;
+const char* cloud_system_database()
 {
-  return ha_stub_system_database;
+  return ha_cloud_system_database;
 }
 
 /*
@@ -352,7 +352,7 @@ const char* stub_system_database()
 
   This array is optional, so every SE need not implement it.
 */
-static st_system_tablename ha_stub_system_tables[]= {
+static st_system_tablename ha_cloud_system_tables[]= {
   {(const char*)NULL, (const char*)NULL}
 };
 
@@ -368,7 +368,7 @@ static st_system_tablename ha_stub_system_tables[]= {
     @retval TRUE   Given db.table_name is supported system table.
     @retval FALSE  Given db.table_name is not a supported system table.
 */
-static bool stub_is_supported_system_table(const char *db,
+static bool cloud_is_supported_system_table(const char *db,
                                               const char *table_name,
                                               bool is_sql_layer_system_table)
 {
@@ -379,7 +379,7 @@ static bool stub_is_supported_system_table(const char *db,
     return false;
 
   // Check if this is SE layer system tables
-  systab= ha_stub_system_tables;
+  systab= ha_cloud_system_tables;
   while (systab && systab->db)
   {
     if (systab->db == db &&
@@ -408,9 +408,9 @@ static bool stub_is_supported_system_table(const char *db,
   handler::ha_open() in handler.cc
 */
 
-int ha_stub::open(const char *name, int mode, uint test_if_locked)
+int ha_cloud::open(const char *name, int mode, uint test_if_locked)
 {
-  DBUG_ENTER("ha_stub::open");
+  DBUG_ENTER("ha_cloud::open");
 
   if (!(share = get_share(name, table)))
     DBUG_RETURN(1);
@@ -451,9 +451,9 @@ int ha_stub::open(const char *name, int mode, uint test_if_locked)
   sql_base.cc, sql_select.cc and table.cc
 */
 
-int ha_stub::close(void)
+int ha_cloud::close(void)
 {
-  DBUG_ENTER("ha_stub::close");
+  DBUG_ENTER("ha_cloud::close");
   DBUG_RETURN(free_share(share));
 }
 
@@ -473,8 +473,8 @@ int ha_stub::close(void)
   }
   @endcode
 
-  See ha_tina.cc for an stub of extracting all of the data as strings.
-  ha_berekly.cc has an stub of how to store it intact by "packing" it
+  See ha_tina.cc for an cloud of extracting all of the data as strings.
+  ha_berekly.cc has an cloud of how to store it intact by "packing" it
   for ha_berkeley's own native storage type.
 
   See the note for update_row() on auto_increments and timestamps. This
@@ -488,9 +488,9 @@ int ha_stub::close(void)
   sql_insert.cc, sql_select.cc, sql_table.cc, sql_udf.cc and sql_update.cc
 */
 
-int ha_stub::write_row(uchar *buf)
+int ha_cloud::write_row(uchar *buf)
 {
-  DBUG_ENTER("ha_stub::write_row");
+  DBUG_ENTER("ha_cloud::write_row");
   /*
     Example of a successful write_row. We don't store the data
     anywhere; they are thrown away. A real implementation will
@@ -510,7 +510,7 @@ int ha_stub::write_row(uchar *buf)
 
   @details
   Currently new_data will not have an updated auto_increament record, or
-  and updated timestamp field. You can do these for stub by doing:
+  and updated timestamp field. You can do these for cloud by doing:
   @code
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
     table->timestamp_field->set_time();
@@ -523,10 +523,10 @@ int ha_stub::write_row(uchar *buf)
   @see
   sql_select.cc, sql_acl.cc, sql_update.cc and sql_insert.cc
 */
-int ha_stub::update_row(const uchar *old_data, uchar *new_data)
+int ha_cloud::update_row(const uchar *old_data, uchar *new_data)
 {
 
-  DBUG_ENTER("ha_stub::update_row");
+  DBUG_ENTER("ha_cloud::update_row");
   DBUG_RETURN(HA_ERR_WRONG_COMMAND);
 }
 
@@ -551,9 +551,9 @@ int ha_stub::update_row(const uchar *old_data, uchar *new_data)
   sql_acl.cc, sql_udf.cc, sql_delete.cc, sql_insert.cc and sql_select.cc
 */
 
-int ha_stub::delete_row(const uchar *buf)
+int ha_cloud::delete_row(const uchar *buf)
 {
-  DBUG_ENTER("ha_stub::delete_row");
+  DBUG_ENTER("ha_cloud::delete_row");
   DBUG_RETURN(HA_ERR_WRONG_COMMAND);
 }
 
@@ -565,13 +565,13 @@ int ha_stub::delete_row(const uchar *buf)
   index.
 */
 
-int ha_stub::index_read_map(uchar *buf, const uchar *key,
+int ha_cloud::index_read_map(uchar *buf, const uchar *key,
                                key_part_map keypart_map __attribute__((unused)),
                                enum ha_rkey_function find_flag
                                __attribute__((unused)))
 {
   int rc;
-  DBUG_ENTER("ha_stub::index_read");
+  DBUG_ENTER("ha_cloud::index_read");
   MYSQL_INDEX_READ_ROW_START(table_share->db.str, table_share->table_name.str);
   rc= HA_ERR_WRONG_COMMAND;
   MYSQL_INDEX_READ_ROW_DONE(rc);
@@ -584,10 +584,10 @@ int ha_stub::index_read_map(uchar *buf, const uchar *key,
   Used to read forward through the index.
 */
 
-int ha_stub::index_next(uchar *buf)
+int ha_cloud::index_next(uchar *buf)
 {
   int rc;
-  DBUG_ENTER("ha_stub::index_next");
+  DBUG_ENTER("ha_cloud::index_next");
   MYSQL_INDEX_READ_ROW_START(table_share->db.str, table_share->table_name.str);
   rc= HA_ERR_WRONG_COMMAND;
   MYSQL_INDEX_READ_ROW_DONE(rc);
@@ -600,10 +600,10 @@ int ha_stub::index_next(uchar *buf)
   Used to read backwards through the index.
 */
 
-int ha_stub::index_prev(uchar *buf)
+int ha_cloud::index_prev(uchar *buf)
 {
   int rc;
-  DBUG_ENTER("ha_stub::index_prev");
+  DBUG_ENTER("ha_cloud::index_prev");
   MYSQL_INDEX_READ_ROW_START(table_share->db.str, table_share->table_name.str);
   rc= HA_ERR_WRONG_COMMAND;
   MYSQL_INDEX_READ_ROW_DONE(rc);
@@ -621,10 +621,10 @@ int ha_stub::index_prev(uchar *buf)
   @see
   opt_range.cc, opt_sum.cc, sql_handler.cc and sql_select.cc
 */
-int ha_stub::index_first(uchar *buf)
+int ha_cloud::index_first(uchar *buf)
 {
   int rc;
-  DBUG_ENTER("ha_stub::index_first");
+  DBUG_ENTER("ha_cloud::index_first");
   MYSQL_INDEX_READ_ROW_START(table_share->db.str, table_share->table_name.str);
   rc= HA_ERR_WRONG_COMMAND;
   MYSQL_INDEX_READ_ROW_DONE(rc);
@@ -642,10 +642,10 @@ int ha_stub::index_first(uchar *buf)
   @see
   opt_range.cc, opt_sum.cc, sql_handler.cc and sql_select.cc
 */
-int ha_stub::index_last(uchar *buf)
+int ha_cloud::index_last(uchar *buf)
 {
   int rc;
-  DBUG_ENTER("ha_stub::index_last");
+  DBUG_ENTER("ha_cloud::index_last");
   MYSQL_INDEX_READ_ROW_START(table_share->db.str, table_share->table_name.str);
   rc= HA_ERR_WRONG_COMMAND;
   MYSQL_INDEX_READ_ROW_DONE(rc);
@@ -656,7 +656,7 @@ int ha_stub::index_last(uchar *buf)
 /**
   @brief
   rnd_init() is called when the system wants the storage engine to do a table
-  scan. See the stub in the introduction at the top of this file to see when
+  scan. See the cloud in the introduction at the top of this file to see when
   rnd_init() is called.
 
   @details
@@ -666,15 +666,15 @@ int ha_stub::index_last(uchar *buf)
   @see
   filesort.cc, records.cc, sql_handler.cc, sql_select.cc, sql_table.cc and sql_update.cc
 */
-int ha_stub::rnd_init(bool scan)
+int ha_cloud::rnd_init(bool scan)
 {
-  DBUG_ENTER("ha_stub::rnd_init");
+  DBUG_ENTER("ha_cloud::rnd_init");
   DBUG_RETURN(HA_ERR_WRONG_COMMAND);
 }
 
-int ha_stub::rnd_end()
+int ha_cloud::rnd_end()
 {
-  DBUG_ENTER("ha_stub::rnd_end");
+  DBUG_ENTER("ha_cloud::rnd_end");
   DBUG_RETURN(0);
 }
 
@@ -693,10 +693,10 @@ int ha_stub::rnd_end()
   @see
   filesort.cc, records.cc, sql_handler.cc, sql_select.cc, sql_table.cc and sql_update.cc
 */
-int ha_stub::rnd_next(uchar *buf)
+int ha_cloud::rnd_next(uchar *buf)
 {
   int rc;
-  DBUG_ENTER("ha_stub::rnd_next");
+  DBUG_ENTER("ha_cloud::rnd_next");
   MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str,
                        TRUE);
   rc= HA_ERR_END_OF_FILE;
@@ -726,9 +726,9 @@ int ha_stub::rnd_next(uchar *buf)
   @see
   filesort.cc, sql_select.cc, sql_delete.cc and sql_update.cc
 */
-void ha_stub::position(const uchar *record)
+void ha_cloud::position(const uchar *record)
 {
-  DBUG_ENTER("ha_stub::position");
+  DBUG_ENTER("ha_cloud::position");
   DBUG_VOID_RETURN;
 }
 
@@ -746,10 +746,10 @@ void ha_stub::position(const uchar *record)
   @see
   filesort.cc, records.cc, sql_insert.cc, sql_select.cc and sql_update.cc
 */
-int ha_stub::rnd_pos(uchar *buf, uchar *pos)
+int ha_cloud::rnd_pos(uchar *buf, uchar *pos)
 {
   int rc;
-  DBUG_ENTER("ha_stub::rnd_pos");
+  DBUG_ENTER("ha_cloud::rnd_pos");
   MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str,
                        TRUE);
   rc= HA_ERR_WRONG_COMMAND;
@@ -796,9 +796,9 @@ int ha_stub::rnd_pos(uchar *buf, uchar *pos)
   sql_select.cc, sql_show.cc, sql_show.cc, sql_show.cc, sql_show.cc, sql_table.cc,
   sql_union.cc and sql_update.cc
 */
-int ha_stub::info(uint flag)
+int ha_cloud::info(uint flag)
 {
-  DBUG_ENTER("ha_stub::info");
+  DBUG_ENTER("ha_cloud::info");
   DBUG_RETURN(0);
 }
 
@@ -812,9 +812,9 @@ int ha_stub::info(uint flag)
     @see
   ha_innodb.cc
 */
-int ha_stub::extra(enum ha_extra_function operation)
+int ha_cloud::extra(enum ha_extra_function operation)
 {
-  DBUG_ENTER("ha_stub::extra");
+  DBUG_ENTER("ha_cloud::extra");
   DBUG_RETURN(0);
 }
 
@@ -838,9 +838,9 @@ int ha_stub::extra(enum ha_extra_function operation)
   JOIN::reinit() in sql_select.cc and
   st_select_lex_unit::exec() in sql_union.cc.
 */
-int ha_stub::delete_all_rows()
+int ha_cloud::delete_all_rows()
 {
-  DBUG_ENTER("ha_stub::delete_all_rows");
+  DBUG_ENTER("ha_cloud::delete_all_rows");
   DBUG_RETURN(HA_ERR_WRONG_COMMAND);
 }
 
@@ -861,9 +861,9 @@ int ha_stub::delete_all_rows()
   Truncate_statement in sql_truncate.cc
   Remarks in handler::truncate.
 */
-int ha_stub::truncate()
+int ha_cloud::truncate()
 {
-  DBUG_ENTER("ha_stub::truncate");
+  DBUG_ENTER("ha_cloud::truncate");
   DBUG_RETURN(HA_ERR_WRONG_COMMAND);
 }
 
@@ -885,9 +885,9 @@ int ha_stub::truncate()
   the section "locking functions for mysql" in lock.cc;
   copy_data_between_tables() in sql_table.cc.
 */
-int ha_stub::external_lock(THD *thd, int lock_type)
+int ha_cloud::external_lock(THD *thd, int lock_type)
 {
-  DBUG_ENTER("ha_stub::external_lock");
+  DBUG_ENTER("ha_cloud::external_lock");
   DBUG_RETURN(0);
 }
 
@@ -905,7 +905,7 @@ int ha_stub::external_lock(THD *thd, int lock_type)
   lock (if we don't want to use MySQL table locks at all), or add locks
   for many tables (like we do when we are using a MERGE handler).
 
-  Berkeley DB, for stub, changes all WRITE locks to TL_WRITE_ALLOW_WRITE
+  Berkeley DB, for cloud, changes all WRITE locks to TL_WRITE_ALLOW_WRITE
   (which signals that we are doing WRITES, but are still allowing other
   readers and writers).
 
@@ -929,7 +929,7 @@ int ha_stub::external_lock(THD *thd, int lock_type)
   @see
   get_lock_data() in lock.cc
 */
-THR_LOCK_DATA **ha_stub::store_lock(THD *thd,
+THR_LOCK_DATA **ha_cloud::store_lock(THD *thd,
                                        THR_LOCK_DATA **to,
                                        enum thr_lock_type lock_type)
 {
@@ -959,9 +959,9 @@ THR_LOCK_DATA **ha_stub::store_lock(THD *thd,
   @see
   delete_table and ha_create_table() in handler.cc
 */
-int ha_stub::delete_table(const char *name)
+int ha_cloud::delete_table(const char *name)
 {
-  DBUG_ENTER("ha_stub::delete_table");
+  DBUG_ENTER("ha_cloud::delete_table");
   /* This is not implemented but we want someone to be able that it works. */
   DBUG_RETURN(0);
 }
@@ -981,9 +981,9 @@ int ha_stub::delete_table(const char *name)
   @see
   mysql_rename_table() in sql_table.cc
 */
-int ha_stub::rename_table(const char * from, const char * to)
+int ha_cloud::rename_table(const char * from, const char * to)
 {
-  DBUG_ENTER("ha_stub::rename_table ");
+  DBUG_ENTER("ha_cloud::rename_table ");
   DBUG_RETURN(HA_ERR_WRONG_COMMAND);
 }
 
@@ -1001,10 +1001,10 @@ int ha_stub::rename_table(const char * from, const char * to)
   @see
   check_quick_keys() in opt_range.cc
 */
-ha_rows ha_stub::records_in_range(uint inx, key_range *min_key,
+ha_rows ha_cloud::records_in_range(uint inx, key_range *min_key,
                                      key_range *max_key)
 {
-  DBUG_ENTER("ha_stub::records_in_range");
+  DBUG_ENTER("ha_cloud::records_in_range");
   DBUG_RETURN(10);                         // low number to force index usage
 }
 
@@ -1028,10 +1028,10 @@ ha_rows ha_stub::records_in_range(uint inx, key_range *min_key,
   ha_create_table() in handle.cc
 */
 
-int ha_stub::create(const char *name, TABLE *table_arg,
+int ha_cloud::create(const char *name, TABLE *table_arg,
                        HA_CREATE_INFO *create_info)
 {
-  DBUG_ENTER("ha_stub::create");
+  DBUG_ENTER("ha_cloud::create");
   /*
     This is not implemented but we want someone to be able to see that it
     works.
@@ -1040,7 +1040,7 @@ int ha_stub::create(const char *name, TABLE *table_arg,
 }
 
 
-struct st_mysql_storage_engine stub_storage_engine=
+struct st_mysql_storage_engine cloud_storage_engine=
 { MYSQL_HANDLERTON_INTERFACE_VERSION };
 
 static ulong srv_enum_var= 0;
@@ -1079,14 +1079,14 @@ static MYSQL_SYSVAR_ULONG(
   1000,
   0);
 
-static struct st_mysql_sys_var* stub_system_variables[]= {
+static struct st_mysql_sys_var* cloud_system_variables[]= {
   MYSQL_SYSVAR(enum_var),
   MYSQL_SYSVAR(ulong_var),
   NULL
 };
 
-// this is an stub of SHOW_FUNC and of my_snprintf() service
-static int show_func_stub(MYSQL_THD thd, struct st_mysql_show_var *var,
+// this is an cloud of SHOW_FUNC and of my_snprintf() service
+static int show_func_cloud(MYSQL_THD thd, struct st_mysql_show_var *var,
                              char *buf)
 {
   var->type= SHOW_CHAR;
@@ -1099,23 +1099,23 @@ static int show_func_stub(MYSQL_THD thd, struct st_mysql_show_var *var,
 
 static struct st_mysql_show_var func_status[]=
 {
-  {"stub_func_stub",  (char *)show_func_stub, SHOW_FUNC},
+  {"cloud_func_cloud",  (char *)show_func_cloud, SHOW_FUNC},
   {0,0,SHOW_UNDEF}
 };
 
-mysql_declare_plugin(stub)
+mysql_declare_plugin(cloud)
 {
   MYSQL_STORAGE_ENGINE_PLUGIN,
-  &stub_storage_engine,
-  "STUB",
+  &cloud_storage_engine,
+  "cloud",
   "Brian Aker, MySQL AB",
   "Example storage engine",
   PLUGIN_LICENSE_GPL,
-  stub_init_func,                            /* Plugin Init */
-  stub_done_func,                            /* Plugin Deinit */
+  cloud_init_func,                            /* Plugin Init */
+  cloud_done_func,                            /* Plugin Deinit */
   0x0001 /* 0.1 */,
   func_status,                                  /* status variables */
-  stub_system_variables,                     /* system variables */
+  cloud_system_variables,                     /* system variables */
   NULL,                                         /* config options */
   0,                                            /* flags */
 }
