@@ -29,6 +29,7 @@ work for a Homebrew MySQL installation:
 
     cp build/storage/cloud/ha_cloud.so /usr/local/Cellar/mysql/5.5.25a/lib/plugin/
 or,
+
     ln -s build/storage/cloud/ha_cloud.so /usr/local/Cellar/mysql/5.5.25a/lib/plugin/
 
 
