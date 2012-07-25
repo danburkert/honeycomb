@@ -37,6 +37,7 @@ Compile Controller (Thrift Server)
 ----------------------------------
 
 Generate thrift files (run from repo root directory):
+    
     thrift -r --gen java -out controller/src/main/java/
     hbase_engine.thrift 
     cd controller
