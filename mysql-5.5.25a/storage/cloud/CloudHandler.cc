@@ -7,6 +7,7 @@
 #include "CloudHandler.h"
 #include "probes_mysql.h"
 #include "sql_plugin.h"
+#include "ha_cloud.h"
 
 /*  Undefining min and max macros defined by MySQL, because they cause problems
  *  with the STL min and max functions (thrift includes the STL)
@@ -21,9 +22,9 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-#include <protocol/TBinaryProtocol.h>
-#include <transport/TSocket.h>
-#include <transport/TTransportUtils.h>
+#include <thrift/protocol/TBinaryProtocol.h>
+#include <thrift/transport/TSocket.h>
+#include <thrift/transport/TTransportUtils.h>
 
 #include "gen-cpp/Engine.h"
 
@@ -32,11 +33,82 @@ using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
 using namespace boost;
 
-using namespace com::nearinfinity::hbase_engine;
+// using namespace com::nearinfinity::hbase_engine;
 
-CloudHandler::ha_cloud(handlerton *hton, TABLE_SHARE *table_arg)
+static HASH cloud_open_tables;
+
+CloudHandler::CloudHandler(handlerton *hton, TABLE_SHARE *table_arg)
   :handler(hton, table_arg)
 {}
+
+/*
+  If frm_error() is called in table.cc this is called to find out what file
+  extensions exist for this handler.
+
+  // TODO: Do any extensions exist for this handler? Doesn't seem like it. - ABC
+*/
+static const char *cloud_exts[] = {
+  NullS
+};
+
+const char **bas_ext() const
+{
+	return cloud_exts;
+}
+
+static CloudShare *get_share(const char *table_name, TABLE *table)
+{
+	CloudShare *share;
+	char meta_file_name[FN_REFLEN];
+	MY_STAT file_stat;                /* Stat information for the data file */
+	char *tmp_name;
+	uint length;
+
+	mysql_mutex_lock(&cloud_mutex);
+	length=(uint) strlen(table_name);
+
+	/*
+	If share is not present in the hash, create a new share and
+	initialize its members.
+	*/
+	if (!(share=(CloudShare*) my_hash_search(&cloud_open_tables,
+										   (uchar*) table_name,
+										   length)))
+	{
+	if (!my_multi_malloc(MYF(MY_WME | MY_ZEROFILL),
+						 &share, sizeof(*share),
+						 &tmp_name, length+1,
+						 NullS))
+	{
+	  mysql_mutex_unlock(&cloud_mutex);
+	  return NULL;
+	}
+
+	share->use_count= 0;
+	share->table_name_length= length;
+	share->table_name= tmp_name;
+	share->crashed= FALSE;
+	share->rows_recorded= 0;
+	share->data_file_version= 0;
+	strmov(share->table_name, table_name);
+	fn_format(share->data_file_name, table_name, "", NullS,
+			  MY_REPLACE_EXT|MY_UNPACK_FILENAME);
+
+	if (my_hash_insert(&cloud_open_tables, (uchar*) share))
+	  goto error;
+	thr_lock_init(&share->lock);
+
+	share->use_count++;
+	mysql_mutex_unlock(&cloud_mutex);
+
+	return share;
+
+	error:
+	mysql_mutex_unlock(&tina_mutex);
+	my_free(share);
+
+	return NULL;
+}
 
 int CloudHandler::open(const char *name, int mode, uint test_if_locked)
 {
@@ -117,7 +189,7 @@ void CloudHandler::position(const uchar *record)
 int CloudHandler::rnd_pos(uchar *buf, uchar *pos)
 {
   int rc;
-  DBUG_ENTER("CloudHandler::rnd_pos");
+  DBUG_ENTER("CloudHandler::rnd_pos");my_off_t saved_data_file_length;
   MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str,
                        TRUE);
   rc= HA_ERR_WRONG_COMMAND;
@@ -138,4 +210,23 @@ THR_LOCK_DATA **CloudHandler::store_lock(THD *thd, THR_LOCK_DATA **to, enum thr_
     lock.type=lock_type;
   *to++= &lock;
   return to;
+}
+
+/*
+  Free lock controls.
+*/
+static int free_share(CloudShare *share)
+{
+  DBUG_ENTER("CloudHandler::free_share");
+  mysql_mutex_lock(&cloud_mutex);
+  int result_code= 0;
+  if (!--share->use_count){
+    my_hash_delete(&cloud_open_tables, (uchar*) share);
+    thr_lock_delete(&share->lock);
+    mysql_mutex_destroy(&share->mutex);
+    my_free(share);
+  }
+  mysql_mutex_unlock(&cloud_mutex);
+
+  DBUG_RETURN(result_code);
 }

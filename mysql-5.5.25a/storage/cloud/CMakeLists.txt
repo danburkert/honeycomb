@@ -13,11 +13,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
-include_directories("/usr/local/boost/include/boost-1_33_1/")
+include_directories("/usr/local/include/boost-1_50_0/")
 include_directories("/usr/local/include/thrift")
 
 SET(cloud_PLUGIN_DYNAMIC "ha_cloud")
-SET(cloud_SOURCES ha_cloud.cc gen-cpp/hbase_engine_types.cpp gen-cpp/Engine.cpp)
+SET(cloud_SOURCES ha_cloud.cc gen-cpp/hbase_engine_types.cpp gen-cpp/Engine.cpp gen-cpp/hbase_engine_constants.cpp)
 MYSQL_ADD_PLUGIN(cloud ${cloud_SOURCES} STORAGE_ENGINE MODULE_ONLY)
 
 SET_TARGET_PROPERTIES(cloud PROPERTIES LINK_FLAGS -lthrift)

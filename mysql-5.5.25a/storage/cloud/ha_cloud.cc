@@ -96,6 +96,7 @@
 #include "ha_cloud.h"
 #include "probes_mysql.h"
 #include "sql_plugin.h"
+#include "CloudHandler.h"
 
 static handler *cloud_create_handler(handlerton *hton,
                                        TABLE_SHARE *table, 
@@ -396,8 +397,8 @@ mysql_declare_plugin(cloud)
   MYSQL_STORAGE_ENGINE_PLUGIN,
   &cloud_storage_engine,
   "cloud",
-  "Brian Aker, MySQL AB",
-  "Example storage engine",
+  "Near Infinity Corporation",
+  "Hbase storage engine",
   PLUGIN_LICENSE_GPL,
   cloud_init_func,                            /* Plugin Init */
   cloud_done_func,                            /* Plugin Deinit */

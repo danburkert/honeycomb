@@ -1,3 +1,6 @@
+#ifndef CLOUD_HANDLER_H
+#define CLOUD_HANDLER_H
+
 #ifdef USE_PRAGMA_INTERFACE
 #pragma interface			/* gcc class implementation */
 #endif
@@ -6,14 +9,13 @@
 #include "thr_lock.h"                    /* THR_LOCK, THR_LOCK_DATA */
 #include "handler.h"                     /* handler */
 #include "my_base.h"                     /* ha_rows */
-
-#include "CloudShare.h"
+#include "ha_cloud.h"
 
 class CloudHandler : public handler
 {
 private:
-  THR_LOCK_DATA lock;      ///< MySQL lock
-  CloudShare *share;    ///< Shared lock info
+	THR_LOCK_DATA lock;      	///< MySQL lockCloudShare;
+	CloudShare *share;    		///< Shared lock info
 
 public:
   CloudHandler(handlerton *hton, TABLE_SHARE *table_arg);
@@ -58,7 +60,7 @@ public:
 
   uint max_supported_key_length() const 
   {
-    return 0; 
+    return 0;
   }
 
   virtual double scan_time() 
@@ -71,6 +73,7 @@ public:
     return (double) rows /  20.0+1; 
   }
 
+  const char **bas_ext() const;
   int open(const char *name, int mode, uint test_if_locked);    // required
   int close(void);                                              // required
   int rnd_init(bool scan);                                      //required
@@ -81,4 +84,7 @@ public:
   int external_lock(THD *thd, int lock_type);                   ///< required
   int create(const char *name, TABLE *form, HA_CREATE_INFO *create_info); ///< required
   THR_LOCK_DATA **store_lock(THD *thd, THR_LOCK_DATA **to, enum thr_lock_type lock_type);     ///< required
+  static int free_share(CloudShare *share);
 };
+
+#endif
