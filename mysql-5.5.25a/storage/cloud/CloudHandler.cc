@@ -26,6 +26,7 @@
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TTransportUtils.h>
+#include <string>
 
 #include "gen-cpp/Engine.h"
 
@@ -149,14 +150,18 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
 {
     DBUG_ENTER("CloudHandler::create");
 
-//   boost::shared_ptr<TSocket> socket(new TSocket("localhost", 8086));
-//   boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-//   boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(socket));
-//
-//   socket->open();
-//   EngineClient client(protocol);
-//   client.createTable("dragonball");
-//   socket->close();
+    std::string example_table_name = "dragonball";
+    std::vector<std::string> example_cf_list;
+    example_cf_list.insert(example_cf_list.begin(), "Goku");
+
+    boost::shared_ptr<TSocket> socket(new TSocket("localhost", 8086));
+    boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+    boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(socket));
+
+    socket->open();
+    EngineClient client(protocol);
+    client.createTable(example_table_name, example_cf_list);
+    socket->close();
 
     DBUG_RETURN(0);
 }
