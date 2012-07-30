@@ -22,25 +22,19 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-#include <thrift/Thrift.h>
-#include <thrift/protocol/TBinaryProtocol.h>
-#include <thrift/transport/TSocket.h>
-#include <thrift/transport/TTransportUtils.h>
+// #include <thrift/Thrift.h>
+// #include <thrift/protocol/TBinaryProtocol.h>
+// #include <thrift/transport/TSocket.h>
+// #include <thrift/transport/TTransportUtils.h>
 
-#include "gen-cpp/Engine.h"
+// #include "gen-cpp/Engine.h"
 
-using namespace apache::thrift;
-using namespace apache::thrift::protocol;
-using namespace apache::thrift::transport;
-using namespace boost;
+// using namespace apache::thrift;
+// using namespace apache::thrift::protocol;
+// using namespace apache::thrift::transport;
+// using namespace boost;
 
 // using namespace com::nearinfinity::hbase_engine;
-
-static HASH cloud_open_tables;
-
-CloudHandler::CloudHandler(handlerton *hton, TABLE_SHARE *table_arg)
-  :handler(hton, table_arg)
-{}
 
 /*
   If frm_error() is called in table.cc this is called to find out what file
@@ -52,63 +46,9 @@ static const char *cloud_exts[] = {
   NullS
 };
 
-const char **bas_ext() const
+const char **CloudHandler::bas_ext() const
 {
 	return cloud_exts;
-}
-
-static CloudShare *get_share(const char *table_name, TABLE *table)
-{
-	CloudShare *share;
-	char meta_file_name[FN_REFLEN];
-	MY_STAT file_stat;                /* Stat information for the data file */
-	char *tmp_name;
-	uint length;
-
-	mysql_mutex_lock(&cloud_mutex);
-	length=(uint) strlen(table_name);
-
-	/*
-	If share is not present in the hash, create a new share and
-	initialize its members.
-	*/
-	if (!(share=(CloudShare*) my_hash_search(&cloud_open_tables,
-										   (uchar*) table_name,
-										   length)))
-	{
-	if (!my_multi_malloc(MYF(MY_WME | MY_ZEROFILL),
-						 &share, sizeof(*share),
-						 &tmp_name, length+1,
-						 NullS))
-	{
-	  mysql_mutex_unlock(&cloud_mutex);
-	  return NULL;
-	}
-
-	share->use_count= 0;
-	share->table_name_length= length;
-	share->table_name= tmp_name;
-	share->crashed= FALSE;
-	share->rows_recorded= 0;
-	share->data_file_version= 0;
-	strmov(share->table_name, table_name);
-	fn_format(share->data_file_name, table_name, "", NullS,
-			  MY_REPLACE_EXT|MY_UNPACK_FILENAME);
-
-	if (my_hash_insert(&cloud_open_tables, (uchar*) share))
-	  goto error;
-	thr_lock_init(&share->lock);
-
-	share->use_count++;
-	mysql_mutex_unlock(&cloud_mutex);
-
-	return share;
-
-	error:
-	mysql_mutex_unlock(&tina_mutex);
-	my_free(share);
-
-	return NULL;
 }
 
 int CloudHandler::open(const char *name, int mode, uint test_if_locked)
@@ -118,20 +58,20 @@ int CloudHandler::open(const char *name, int mode, uint test_if_locked)
   if (!(share = get_share(name, table)))
     DBUG_RETURN(1);
   thr_lock_data_init(&share->lock,&lock,NULL);
-  shared_ptr<TTransport> socket(new TSocket("localhost", 9090));
-  shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-  shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
-  EngineClient client(protocol);
+//   shared_ptr<TTransport> socket(new TSocket("localhost", 9090));
+//   shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+//   shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+//   EngineClient client(protocol);
 
-  try {
-  transport->open();
+//   try {
+//   transport->open();
+// 
+//   client.open();
 
-  client.open();
-
-  transport->close();
-  } catch (TException &tx) {
-  printf("ERROR: %s\n", tx.what());
-  } 
+//   transport->close();
+//   } catch (TException &tx) {
+//   printf("ERROR: %s\n", tx.what());
+//   } 
   DBUG_RETURN(0);
 }
 
@@ -203,14 +143,14 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
 {
   DBUG_ENTER("CloudHandler::create");
 
-  boost::shared_ptr<TSocket> socket(new TSocket("localhost", 8086));
-  boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-  boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(socket));
-
-  socket->open();
-  EngineClient client(protocol);
-  client.createTable("dragonball");
-  socket->close();
+//   boost::shared_ptr<TSocket> socket(new TSocket("localhost", 8086));
+//   boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+//   boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(socket));
+// 
+//   socket->open();
+//   EngineClient client(protocol);
+//   client.createTable("dragonball");
+//   socket->close();
 
   DBUG_RETURN(0);
 }
@@ -226,7 +166,7 @@ THR_LOCK_DATA **CloudHandler::store_lock(THD *thd, THR_LOCK_DATA **to, enum thr_
 /*
   Free lock controls.
 */
-static int free_share(CloudShare *share)
+int CloudHandler::free_share(CloudShare *share)
 {
   DBUG_ENTER("CloudHandler::free_share");
   mysql_mutex_lock(&cloud_mutex);
@@ -240,4 +180,10 @@ static int free_share(CloudShare *share)
   mysql_mutex_unlock(&cloud_mutex);
 
   DBUG_RETURN(result_code);
+}
+
+int CloudHandler::info(uint)
+{
+  DBUG_ENTER("CloudHandler::info");
+  DBUG_RETURN(0);
 }

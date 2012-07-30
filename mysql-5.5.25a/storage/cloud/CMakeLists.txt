@@ -17,11 +17,7 @@ include_directories("/usr/local/include/boost-1_50_0/")
 include_directories("/usr/local/include/thrift")
 
 SET(cloud_PLUGIN_DYNAMIC "ha_cloud")
-<<<<<<< HEAD
-SET(cloud_SOURCES ha_cloud.cc CloudHandler.cc)
-=======
-SET(cloud_SOURCES ha_cloud.cc gen-cpp/hbase_engine_types.cpp gen-cpp/Engine.cpp gen-cpp/hbase_engine_constants.cpp)
->>>>>>> 3f5c1c7b971c527f6642314a6897e51d2f7c18b9
+SET(cloud_SOURCES CloudHandler.cc ha_cloud.cc gen-cpp/hbase_engine_types.cpp gen-cpp/Engine.cpp gen-cpp/hbase_engine_constants.cpp)
 MYSQL_ADD_PLUGIN(cloud ${cloud_SOURCES} STORAGE_ENGINE MODULE_ONLY)
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions")

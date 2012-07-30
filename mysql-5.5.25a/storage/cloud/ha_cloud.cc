@@ -96,7 +96,6 @@
 #include "ha_cloud.h"
 #include "probes_mysql.h"
 #include "sql_plugin.h"
-#include "CloudHandler.h"
 
 static handler *cloud_create_handler(handlerton *hton,
                                        TABLE_SHARE *table, 
@@ -116,10 +115,8 @@ static bool cloud_is_supported_system_table(const char *db,
    Hash used to track the number of open tables; variable for cloud share
    methods
 */
-static HASH cloud_open_tables;
 
 /* The mutex used to init the hash; variable for cloud share methods */
-mysql_mutex_t cloud_mutex;
 
 /**
   @brief
