@@ -4,3 +4,6 @@ controller/target/
 .idea/
 .cmake
 CMakeFiles/
+cscope.files
+cscope.out
+tags
