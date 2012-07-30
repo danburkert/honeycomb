@@ -140,9 +140,9 @@ private:
       int external_lock(THD *thd, int lock_type);                   ///< required
       int create(const char *name, TABLE *form, HA_CREATE_INFO *create_info); ///< required
       THR_LOCK_DATA **store_lock(THD *thd, THR_LOCK_DATA **to, enum thr_lock_type lock_type);     ///< required
-      int CloudHandler::update_row(const uchar *old_data, uchar *new_data);
-      int CloudHandler::write_row(uchar *buf);
-      int CloudHandler::delete_row(const uchar *buf);
+      int update_row(const uchar *old_data, uchar *new_data);
+      int write_row(uchar *buf);
+      int delete_row(const uchar *buf);
       static int free_share(CloudShare *share);
     };
 
