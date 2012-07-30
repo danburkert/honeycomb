@@ -1,0 +1,1 @@
+/usr/bin/gcc    -Wall -O2 -g -DDBUG_OFF -bundle -Wl,-headerpad_max_install_names   -o qa_auth_server.so CMakeFiles/qa_auth_server.dir/qa_auth_server.c.o ../../libservices/libmysqlservices.a -Wl,-bundle_loader,/Users/showell/Development/mysql-cloud-engine/mysql-5.5.25a/sql/mysqld 

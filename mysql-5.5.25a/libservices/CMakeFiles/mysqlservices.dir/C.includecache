@@ -1,0 +1,26 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/Users/showell/Development/mysql-cloud-engine/mysql-5.5.25a/libservices/my_snprintf_service.c
+service_versions.h
+-
+
+/Users/showell/Development/mysql-cloud-engine/mysql-5.5.25a/libservices/my_thread_scheduler_service.c
+service_versions.h
+-
+
+/Users/showell/Development/mysql-cloud-engine/mysql-5.5.25a/libservices/thd_alloc_service.c
+service_versions.h
+-
+
+/Users/showell/Development/mysql-cloud-engine/mysql-5.5.25a/libservices/thd_wait_service.c
+service_versions.h
+-
+
+include/service_versions.h
+

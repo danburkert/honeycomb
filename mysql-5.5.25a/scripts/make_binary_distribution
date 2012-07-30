@@ -1,0 +1,1 @@
+cd /Users/showell/Development/mysql-cloud-engine/mysql-5.5.25a && '/usr/local/Cellar/cmake/2.8.8/bin/cpack' -G TGZ --config CPackConfig.cmake

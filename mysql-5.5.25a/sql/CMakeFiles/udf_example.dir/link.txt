@@ -1,0 +1,1 @@
+/usr/bin/gcc    -Wall -O2 -g -DDBUG_OFF -bundle -Wl,-headerpad_max_install_names   -o udf_example.so CMakeFiles/udf_example.dir/udf_example.c.o -Wl,-bundle_loader,/Users/showell/Development/mysql-cloud-engine/mysql-5.5.25a/sql/mysqld 

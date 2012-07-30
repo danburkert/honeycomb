@@ -1,0 +1,1 @@
+/usr/bin/gcc   -Wall -O2 -g -DDBUG_OFF -Wl,-search_paths_first -Wl,-headerpad_max_install_names   CMakeFiles/comp_err.dir/comp_err.c.o  -o comp_err  ../mysys/libmysys.a ../dbug/libdbug.a ../mysys/libmysys.a ../dbug/libdbug.a ../strings/libstrings.a -lz 

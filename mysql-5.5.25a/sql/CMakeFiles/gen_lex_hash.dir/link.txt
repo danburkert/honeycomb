@@ -1,0 +1,1 @@
+/usr/bin/c++   -O2 -g -DDBUG_OFF -Wl,-search_paths_first -Wl,-headerpad_max_install_names   CMakeFiles/gen_lex_hash.dir/gen_lex_hash.cc.o  -o gen_lex_hash  
