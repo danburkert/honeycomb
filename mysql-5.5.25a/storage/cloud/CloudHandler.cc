@@ -22,17 +22,17 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-// #include <thrift/Thrift.h>
-// #include <thrift/protocol/TBinaryProtocol.h>
-// #include <thrift/transport/TSocket.h>
-// #include <thrift/transport/TTransportUtils.h>
+#include <thrift/Thrift.h>
+#include <thrift/protocol/TBinaryProtocol.h>
+#include <thrift/transport/TSocket.h>
+#include <thrift/transport/TTransportUtils.h>
 
-// #include "gen-cpp/Engine.h"
+#include "gen-cpp/Engine.h"
 
-// using namespace apache::thrift;
-// using namespace apache::thrift::protocol;
-// using namespace apache::thrift::transport;
-// using namespace boost;
+using namespace apache::thrift;
+using namespace apache::thrift::protocol;
+using namespace apache::thrift::transport;
+using namespace boost;
 
 // using namespace com::nearinfinity::hbase_engine;
 
@@ -58,20 +58,17 @@ int CloudHandler::open(const char *name, int mode, uint test_if_locked)
   if (!(share = get_share(name, table)))
     DBUG_RETURN(1);
   thr_lock_data_init(&share->lock,&lock,NULL);
-//   shared_ptr<TTransport> socket(new TSocket("localhost", 9090));
-//   shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-//   shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
-//   EngineClient client(protocol);
+  shared_ptr<TTransport> socket(new TSocket("localhost", 9090));
+  shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+  shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
 
-//   try {
-//   transport->open();
-// 
-//   client.open();
+  try {
+  transport->open();
 
-//   transport->close();
-//   } catch (TException &tx) {
-//   printf("ERROR: %s\n", tx.what());
-//   } 
+  transport->close();
+  } catch (TException &tx) {
+  printf("ERROR: %s\n", tx.what());
+  } 
   DBUG_RETURN(0);
 }
 
