@@ -1,1 +1,0 @@
-/usr/bin/gcc   -Wall -O2 -g -DDBUG_OFF -Wl,-search_paths_first -Wl,-headerpad_max_install_names   CMakeFiles/thr_lock.dir/thr_lock.c.o  -o thr_lock  libmysys.a ../dbug/libdbug.a libmysys.a ../dbug/libdbug.a ../strings/libstrings.a -lz 

@@ -207,6 +207,78 @@ CloudHandler.cc.s:
 	cd /Users/showell/Development/mysql-cloud-engine/mysql-5.5.25a && $(MAKE) -f storage/cloud/CMakeFiles/cloud.dir/build.make storage/cloud/CMakeFiles/cloud.dir/CloudHandler.cc.s
 .PHONY : CloudHandler.cc.s
 
+gen-cpp/Engine.o: gen-cpp/Engine.cpp.o
+.PHONY : gen-cpp/Engine.o
+
+# target to build an object file
+gen-cpp/Engine.cpp.o:
+	cd /Users/showell/Development/mysql-cloud-engine/mysql-5.5.25a && $(MAKE) -f storage/cloud/CMakeFiles/cloud.dir/build.make storage/cloud/CMakeFiles/cloud.dir/gen-cpp/Engine.cpp.o
+.PHONY : gen-cpp/Engine.cpp.o
+
+gen-cpp/Engine.i: gen-cpp/Engine.cpp.i
+.PHONY : gen-cpp/Engine.i
+
+# target to preprocess a source file
+gen-cpp/Engine.cpp.i:
+	cd /Users/showell/Development/mysql-cloud-engine/mysql-5.5.25a && $(MAKE) -f storage/cloud/CMakeFiles/cloud.dir/build.make storage/cloud/CMakeFiles/cloud.dir/gen-cpp/Engine.cpp.i
+.PHONY : gen-cpp/Engine.cpp.i
+
+gen-cpp/Engine.s: gen-cpp/Engine.cpp.s
+.PHONY : gen-cpp/Engine.s
+
+# target to generate assembly for a file
+gen-cpp/Engine.cpp.s:
+	cd /Users/showell/Development/mysql-cloud-engine/mysql-5.5.25a && $(MAKE) -f storage/cloud/CMakeFiles/cloud.dir/build.make storage/cloud/CMakeFiles/cloud.dir/gen-cpp/Engine.cpp.s
+.PHONY : gen-cpp/Engine.cpp.s
+
+gen-cpp/hbase_engine_constants.o: gen-cpp/hbase_engine_constants.cpp.o
+.PHONY : gen-cpp/hbase_engine_constants.o
+
+# target to build an object file
+gen-cpp/hbase_engine_constants.cpp.o:
+	cd /Users/showell/Development/mysql-cloud-engine/mysql-5.5.25a && $(MAKE) -f storage/cloud/CMakeFiles/cloud.dir/build.make storage/cloud/CMakeFiles/cloud.dir/gen-cpp/hbase_engine_constants.cpp.o
+.PHONY : gen-cpp/hbase_engine_constants.cpp.o
+
+gen-cpp/hbase_engine_constants.i: gen-cpp/hbase_engine_constants.cpp.i
+.PHONY : gen-cpp/hbase_engine_constants.i
+
+# target to preprocess a source file
+gen-cpp/hbase_engine_constants.cpp.i:
+	cd /Users/showell/Development/mysql-cloud-engine/mysql-5.5.25a && $(MAKE) -f storage/cloud/CMakeFiles/cloud.dir/build.make storage/cloud/CMakeFiles/cloud.dir/gen-cpp/hbase_engine_constants.cpp.i
+.PHONY : gen-cpp/hbase_engine_constants.cpp.i
+
+gen-cpp/hbase_engine_constants.s: gen-cpp/hbase_engine_constants.cpp.s
+.PHONY : gen-cpp/hbase_engine_constants.s
+
+# target to generate assembly for a file
+gen-cpp/hbase_engine_constants.cpp.s:
+	cd /Users/showell/Development/mysql-cloud-engine/mysql-5.5.25a && $(MAKE) -f storage/cloud/CMakeFiles/cloud.dir/build.make storage/cloud/CMakeFiles/cloud.dir/gen-cpp/hbase_engine_constants.cpp.s
+.PHONY : gen-cpp/hbase_engine_constants.cpp.s
+
+gen-cpp/hbase_engine_types.o: gen-cpp/hbase_engine_types.cpp.o
+.PHONY : gen-cpp/hbase_engine_types.o
+
+# target to build an object file
+gen-cpp/hbase_engine_types.cpp.o:
+	cd /Users/showell/Development/mysql-cloud-engine/mysql-5.5.25a && $(MAKE) -f storage/cloud/CMakeFiles/cloud.dir/build.make storage/cloud/CMakeFiles/cloud.dir/gen-cpp/hbase_engine_types.cpp.o
+.PHONY : gen-cpp/hbase_engine_types.cpp.o
+
+gen-cpp/hbase_engine_types.i: gen-cpp/hbase_engine_types.cpp.i
+.PHONY : gen-cpp/hbase_engine_types.i
+
+# target to preprocess a source file
+gen-cpp/hbase_engine_types.cpp.i:
+	cd /Users/showell/Development/mysql-cloud-engine/mysql-5.5.25a && $(MAKE) -f storage/cloud/CMakeFiles/cloud.dir/build.make storage/cloud/CMakeFiles/cloud.dir/gen-cpp/hbase_engine_types.cpp.i
+.PHONY : gen-cpp/hbase_engine_types.cpp.i
+
+gen-cpp/hbase_engine_types.s: gen-cpp/hbase_engine_types.cpp.s
+.PHONY : gen-cpp/hbase_engine_types.s
+
+# target to generate assembly for a file
+gen-cpp/hbase_engine_types.cpp.s:
+	cd /Users/showell/Development/mysql-cloud-engine/mysql-5.5.25a && $(MAKE) -f storage/cloud/CMakeFiles/cloud.dir/build.make storage/cloud/CMakeFiles/cloud.dir/gen-cpp/hbase_engine_types.cpp.s
+.PHONY : gen-cpp/hbase_engine_types.cpp.s
+
 ha_cloud.o: ha_cloud.cc.o
 .PHONY : ha_cloud.o
 
@@ -250,6 +322,15 @@ help:
 	@echo "... CloudHandler.o"
 	@echo "... CloudHandler.i"
 	@echo "... CloudHandler.s"
+	@echo "... gen-cpp/Engine.o"
+	@echo "... gen-cpp/Engine.i"
+	@echo "... gen-cpp/Engine.s"
+	@echo "... gen-cpp/hbase_engine_constants.o"
+	@echo "... gen-cpp/hbase_engine_constants.i"
+	@echo "... gen-cpp/hbase_engine_constants.s"
+	@echo "... gen-cpp/hbase_engine_types.o"
+	@echo "... gen-cpp/hbase_engine_types.i"
+	@echo "... gen-cpp/hbase_engine_types.s"
 	@echo "... ha_cloud.o"
 	@echo "... ha_cloud.i"
 	@echo "... ha_cloud.s"
