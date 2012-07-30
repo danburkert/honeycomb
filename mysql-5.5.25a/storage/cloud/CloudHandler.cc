@@ -22,6 +22,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
+#include <thrift/Thrift.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TTransportUtils.h>
@@ -117,20 +118,20 @@ int CloudHandler::open(const char *name, int mode, uint test_if_locked)
   if (!(share = get_share(name, table)))
     DBUG_RETURN(1);
   thr_lock_data_init(&share->lock,&lock,NULL);
-  //shared_ptr<TTransport> socket(new TSocket("localhost", 9090));
-  //shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-  //shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
-  //EngineClient client(protocol);
+  shared_ptr<TTransport> socket(new TSocket("localhost", 9090));
+  shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+  shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+  EngineClient client(protocol);
 
-  //try {
-  //transport->open();
+  try {
+  transport->open();
 
-  //client.open();
+  client.open();
 
-  //transport->close();
-  //} catch (TException &tx) {
-  //printf("ERROR: %s\n", tx.what());
-  //} 
+  transport->close();
+  } catch (TException &tx) {
+  printf("ERROR: %s\n", tx.what());
+  } 
   DBUG_RETURN(0);
 }
 
@@ -201,6 +202,16 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
                        HA_CREATE_INFO *create_info)
 {
   DBUG_ENTER("CloudHandler::create");
+
+  boost::shared_ptr<TSocket> socket(new TSocket("localhost", 8086));
+  boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+  boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(socket));
+
+  socket->open();
+  EngineClient client(protocol);
+  client.createTable("dragonball");
+  socket->close();
+
   DBUG_RETURN(0);
 }
 
