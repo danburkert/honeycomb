@@ -20,5 +20,5 @@ SET(cloud_PLUGIN_DYNAMIC "ha_cloud")
 SET(cloud_SOURCES CloudHandler.cc ha_cloud.cc gen-cpp/hbase_engine_types.cpp gen-cpp/Engine.cpp gen-cpp/hbase_engine_constants.cpp)
 MYSQL_ADD_PLUGIN(cloud ${cloud_SOURCES} STORAGE_ENGINE MODULE_ONLY)
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions -frtti")
 SET_TARGET_PROPERTIES(cloud PROPERTIES LINK_FLAGS -lthrift)
