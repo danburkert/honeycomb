@@ -25,8 +25,7 @@ include_directories(${Thrift_INCLUDE_DIR})
 #SET(cloud_PLUGIN_DYNAMIC "ha_cloud")
 SET(CLOUD_SOURCES CloudHandler.cc ha_cloud.cc gen-cpp/hbase_engine_types.cpp gen-cpp/Engine.cpp gen-cpp/hbase_engine_constants.cpp)
 
-#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions -frtti")
-#SET_TARGET_PROPERTIES(cloud PROPERTIES LINK_FLAGS -lthrift)
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions -frtti")
 
 MYSQL_ADD_PLUGIN(
   cloud
