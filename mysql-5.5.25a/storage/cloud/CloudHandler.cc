@@ -62,20 +62,22 @@ int CloudHandler::open(const char *name, int mode, uint test_if_locked)
         DBUG_RETURN(1);
     }
 
-    thr_lock_data_init(&share->lock,&lock,NULL);
-    shared_ptr<TTransport> socket(new TSocket("localhost", 9090));
+    thr_lock_data_init(&share->lock, &lock, (void*) this);
+    shared_ptr<TTransport> socket(new TSocket("localhost", 8080));
     shared_ptr<TTransport> transport(new TBufferedTransport(socket));
     shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+    EngineClient client(protocol);
 
     try
     {
         transport->open();
+        client.open();
 
         transport->close();
     }
     catch (TException &tx)
     {
-        printf("ERROR: %s\n", tx.what());
+        DBUG_PRINT("error",("transport error: '%s'", tx.what()));
     }
 
     DBUG_RETURN(0);
@@ -180,16 +182,16 @@ THR_LOCK_DATA **CloudHandler::store_lock(THD *thd, THR_LOCK_DATA **to, enum thr_
 int CloudHandler::free_share(CloudShare *share)
 {
     DBUG_ENTER("CloudHandler::free_share");
-    mysql_mutex_lock(&cloud_mutex);
+    mysql_mutex_lock(cloud_mutex);
     int result_code= 0;
     if (!--share->use_count)
     {
-        my_hash_delete(&cloud_open_tables, (uchar*) share);
+        my_hash_delete(cloud_open_tables, (uchar*) share);
         thr_lock_delete(&share->lock);
         mysql_mutex_destroy(&share->mutex);
         my_free(share);
     }
-    mysql_mutex_unlock(&cloud_mutex);
+    mysql_mutex_unlock(cloud_mutex);
 
     DBUG_RETURN(result_code);
 }

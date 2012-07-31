@@ -792,13 +792,14 @@ int ha_tina::find_current_row(uchar *buf)
         Thus, for enums we silence the warning, as it doesn't really mean
         an invalid value.
       */
-      if ((*field)->store(buffer.ptr(), buffer.length(), buffer.charset(),
+      if ((*field)->store(buffer.ptr(), buffer.length(), buffer.charset(), // 2.3) Store the current field value and jump to 2)
                           is_enum ? CHECK_FIELD_IGNORE : CHECK_FIELD_WARN))
       {
         if (!is_enum)
           goto err;
       }
-      if ((*field)->flags & BLOB_FLAG)
+
+      if ((*field)->flags & BLOB_FLAG) // mysql_com.h
       {
         Field_blob *blob= *(Field_blob**) field;
         uchar *src, *tgt;
