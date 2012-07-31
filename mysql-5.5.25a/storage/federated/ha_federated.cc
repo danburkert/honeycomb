@@ -1883,7 +1883,7 @@ int ha_federated::write_row(uchar *buf)
         (*field)->val_str(&insert_field_value_string);
         if (needs_quote)
           values_string.append(value_quote_char);
-        insert_field_value_string.print(&values_string);
+        insert_field_value_string.print(&values_string); // print -> append to & convert special characters.
         if (needs_quote)
           values_string.append(value_quote_char);
 
