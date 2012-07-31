@@ -13,12 +13,25 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
-include_directories("/usr/local/include/boost-1_50_0/")
-include_directories("/usr/local/include/thrift")
+#include_directories("/usr/local/include/thrift")
 
-SET(cloud_PLUGIN_DYNAMIC "ha_cloud")
-SET(cloud_SOURCES CloudHandler.cc ha_cloud.cc gen-cpp/hbase_engine_types.cpp gen-cpp/Engine.cpp gen-cpp/hbase_engine_constants.cpp)
-MYSQL_ADD_PLUGIN(cloud ${cloud_SOURCES} STORAGE_ENGINE MODULE_ONLY)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
+
+find_package(Boost REQUIRED)
+find_package(Thrift REQUIRED)
+
+include_directories(${Thrift_INCLUDE_DIR})
+
+#SET(cloud_PLUGIN_DYNAMIC "ha_cloud")
+SET(CLOUD_SOURCES CloudHandler.cc ha_cloud.cc gen-cpp/hbase_engine_types.cpp gen-cpp/Engine.cpp gen-cpp/hbase_engine_constants.cpp)
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions -frtti")
-SET_TARGET_PROPERTIES(cloud PROPERTIES LINK_FLAGS -lthrift)
+
+MYSQL_ADD_PLUGIN(
+  cloud
+  ${CLOUD_SOURCES}
+  STORAGE_ENGINE
+  MODULE_ONLY
+  LINK_LIBRARIES thrift
+)
+
