@@ -62,22 +62,22 @@ int CloudHandler::open(const char *name, int mode, uint test_if_locked)
     }
 
     thr_lock_data_init(&share->lock, &lock, (void*) this);
-//    thr_lock_data_init(&share->lock,&lock,NULL);
-//    shared_ptr<TTransport> socket(new TSocket("localhost", 9090));
-//ushared_ptr<TTransport> socket(new TSocket("localhost", 9090));
-//    shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-//    shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
-//
-//    try
-//    {
-//        transport->open();
-//
-//        transport->close();
-//    }
-//    catch (TException &tx)
-//    {
-//        printf("ERROR: %s\n", tx.what());
-//    }
+    shared_ptr<TTransport> socket(new TSocket("localhost", 8080));
+    shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+    shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+    EngineClient client(protocol);
+
+    try
+    {
+        transport->open();
+        client.open();
+
+        transport->close();
+    }
+    catch (TException &tx)
+    {
+        DBUG_PRINT("error",("transport error: '%s'", tx.what()));
+    }
 
     DBUG_RETURN(0);
 }
