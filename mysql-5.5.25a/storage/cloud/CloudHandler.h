@@ -11,11 +11,14 @@
 #include "my_base.h"                     /* ha_rows */
 #include "CloudShare.h"
 
+
 class CloudHandler : public handler
 {
 private:
 	THR_LOCK_DATA lock;      	///< MySQL lockCloudShare;
 	CloudShare *share;    		///< Shared lock info
+    mysql_mutex_t* cloud_mutex;
+    HASH* cloud_open_tables;
     CloudShare *get_share(const char *table_name, TABLE *table)
     {
         CloudShare *share;
@@ -24,14 +27,14 @@ private:
         char *tmp_name;
         uint length;
 
-        mysql_mutex_lock(&cloud_mutex);
+        mysql_mutex_lock(cloud_mutex);
         length=(uint) strlen(table_name);
 
         /*
         If share is not present in the hash, create a new share and
         initialize its members.
         */
-        if (!(share=(CloudShare*) my_hash_search(&cloud_open_tables,
+        if (!(share=(CloudShare*) my_hash_search(cloud_open_tables,
                                                (uchar*) table_name,
                                                length)))
         {
@@ -40,7 +43,7 @@ private:
                                &tmp_name, length+1,
                                NullS))
           {
-            mysql_mutex_unlock(&cloud_mutex);
+            mysql_mutex_unlock(cloud_mutex);
             return NULL;
           }
         }
@@ -52,28 +55,28 @@ private:
         share->rows_recorded= 0;
         share->data_file_version= 0;
         strmov(share->table_name, table_name);
-        fn_format(share->data_file_name, table_name, "", NullS,
-                  MY_REPLACE_EXT|MY_UNPACK_FILENAME);
+        fn_format(share->data_file_name, table_name, "", "hbase", MY_REPLACE_EXT|MY_UNPACK_FILENAME);
 
-        if (my_hash_insert(&cloud_open_tables, (uchar*) share))
+        if (my_hash_insert(cloud_open_tables, (uchar*) share))
           goto error;
         thr_lock_init(&share->lock);
 
         share->use_count++;
-        mysql_mutex_unlock(&cloud_mutex);
+        mysql_mutex_unlock(cloud_mutex);
 
         return share;
 
         error:
-        mysql_mutex_unlock(&cloud_mutex);
+        mysql_mutex_unlock(cloud_mutex);
         my_free(share);
 
         return NULL;
     }
 
     public:
-      CloudHandler(handlerton *hton, TABLE_SHARE *table_arg) : handler(hton, table_arg)
-      {}
+      CloudHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex_t* mutex, HASH* open_tables) : handler(hton, table_arg), cloud_mutex(mutex), cloud_open_tables(open_tables)
+      {
+      }
 
       ~CloudHandler()
       {
@@ -143,7 +146,7 @@ private:
       int update_row(const uchar *old_data, uchar *new_data);
       int write_row(uchar *buf);
       int delete_row(const uchar *buf);
-      static int free_share(CloudShare *share);
+      int free_share(CloudShare *share);
     };
 
 #endif

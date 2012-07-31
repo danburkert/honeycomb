@@ -13,6 +13,4 @@ typedef struct st_cloud_share {
   uint data_file_version;   /* Version of the data file used */
 } CloudShare;
 
-static HASH cloud_open_tables;
-static mysql_mutex_t cloud_mutex;
 #endif
