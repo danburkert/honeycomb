@@ -123,7 +123,6 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
                          HA_CREATE_INFO *create_info)
 {
     DBUG_ENTER("CloudHandler::create");
-
     DBUG_RETURN(0);
 }
 
