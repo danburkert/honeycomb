@@ -24,15 +24,21 @@ public class HBaseClient {
             .put(RowType.TABLES.getValue())
             .put("TABLES".getBytes()).array();
 
-    private static final byte[] NIC = "nic".getBytes();
+    public static final byte[] NIC = "nic".getBytes();
 
     private final ConcurrentHashMap<String, TableInfo> tableCache = new ConcurrentHashMap<String, TableInfo>();
 
-    public HBaseClient(String tableName) throws IOException {
+    public HBaseClient(String tableName, String zkQuorum) {
         Configuration configuration = HBaseConfiguration.create();
-        configuration.set("hbase.zookeeper.quorum", "localhost");
+        configuration.set("hbase.zookeeper.quorum", zkQuorum);
 
-        this.table = new HTable(configuration, tableName);
+        try {
+            this.table = new HTable(configuration, tableName);
+        }
+        catch(IOException e) {
+            //TODO: handle this better
+            e.printStackTrace();
+        }
     }
 
     private void createTable(String tableName, List<Put> puts) throws IOException {
@@ -84,7 +90,7 @@ public class HBaseClient {
         table.put(putList);
     }
 
-    public void addData(String tableName, Map<String, byte[]> values) throws IOException {
+    public void writeRow(String tableName, Map<String, byte[]> values) throws IOException {
         //Get table id
         long tableId = getTableInfo(tableName).getId();
 
@@ -173,6 +179,31 @@ public class HBaseClient {
         return rows;
     }
 
+    public ResultScanner getTableScanner(String tableName) throws IOException {
+        //Get table id
+        TableInfo info = getTableInfo(tableName);
+        long tableId = info.getId();
+
+        //Build row key
+        byte[] startRow = ByteBuffer.allocate(25)
+                .put(RowType.DATA.getValue())
+                .putLong(tableId)
+                .putLong(0L) /* UUID pt 1 */
+                .putLong(0L) /* UUID pt 2 */
+                .array();
+
+        byte[] endRow = ByteBuffer.allocate(25)
+                .put(RowType.DATA.getValue())
+                .putLong(tableId+1)
+                .putLong(0L) /* UUID pt 1 */
+                .putLong(0L) /* UUID pt 2 */
+                .array();
+
+        Scan scan = new Scan(startRow, endRow);
+
+        return table.getScanner(scan);
+    }
+
     private TableInfo getTableInfo(String tableName) throws IOException {
         if (tableCache.containsKey(tableName)) {
             return tableCache.get(tableName);
@@ -200,5 +231,20 @@ public class HBaseClient {
         }
 
         return info;
+    }
+
+    public Map<String, byte[]> parseRow(Result result, String tableName) throws IOException {
+        TableInfo info = getTableInfo(tableName);
+
+        Map<String, byte[]> columns = new HashMap<String, byte[]>();
+        Map<byte[], byte[]> returnedColumns = result.getNoVersionMap().get(NIC);
+
+        for (byte[] qualifier : returnedColumns.keySet()) {
+            long columnId = ByteBuffer.wrap(qualifier).getLong();
+            String columnName = info.getColumnNameById(columnId);
+            columns.put(columnName, returnedColumns.get(qualifier));
+        }
+
+        return columns;
     }
 }

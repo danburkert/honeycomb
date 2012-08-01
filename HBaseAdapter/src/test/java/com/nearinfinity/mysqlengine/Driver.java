@@ -1,6 +1,7 @@
 package com.nearinfinity.mysqlengine;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -19,7 +20,7 @@ public class Driver {
     }
 
     public void go(String[] args) throws IOException {
-        HBaseClient client = new HBaseClient("sql");
+        HBaseClient client = new HBaseClient("sql", "localhost");
 
         if (args[0].equals("create")) {
             //create table_name column*
@@ -40,7 +41,7 @@ public class Driver {
                 values.put(tokens[0], tokens[1].getBytes());
             }
 
-            client.addData(tableName, values);
+            client.writeRow(tableName, values);
         }
         else if (args[0].equals("scan")) {
             //scan table_name
