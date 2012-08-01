@@ -1,5 +1,7 @@
 package com.nearinfinity.mysqlengine.jni;
 
+import com.nearinfinity.mysqlengine.HBaseClient;
+
 import java.util.List;
 import java.util.Map;
 
@@ -11,23 +13,24 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 public class HBaseAdapter {
-    public static boolean createTable(String tableName, List<String> columnNames) throws HBaseAdapterException {
+
+    public boolean createTable(String tableName, List<String> columnNames) throws HBaseAdapterException {
         return false;
     }
 
-    public static long startScan(String tableName) throws HBaseAdapterException {
+    public long startScan(String tableName) throws HBaseAdapterException {
         return 0L;
     }
 
-    public static Map<String, byte[]> nextRow(long scanId) throws HBaseAdapterException {
+    public Map<String, byte[]> nextRow(long scanId) throws HBaseAdapterException {
         return null;
     }
 
-    public static void endScan(long scanId) throws HBaseAdapterException {
+    public void endScan(long scanId) throws HBaseAdapterException {
 
     }
 
-    public static boolean writeRow(Map<String, byte[]> values) throws HBaseAdapterException {
+    public boolean writeRow(Map<String, byte[]> values) throws HBaseAdapterException {
         return false;
     }
 }
