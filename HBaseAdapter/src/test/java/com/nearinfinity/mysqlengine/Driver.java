@@ -35,10 +35,10 @@ public class Driver {
         else if (args[0].equals("put")) {
             //put table_name column=value*
             String tableName = args[1];
-            Map<String, ByteBuffer> values = new LinkedHashMap<String, ByteBuffer>();
+            Map<String, byte[]> values = new LinkedHashMap<String, byte[]>();
             for (int i = 2; i < args.length ; i++) {
                 String [] tokens = args[i].split("=");
-                values.put(tokens[0], ByteBuffer.wrap(tokens[1].getBytes()));
+                values.put(tokens[0], tokens[1].getBytes());
             }
 
             client.writeRow(tableName, values);
