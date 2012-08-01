@@ -1,6 +1,7 @@
 package com.nearinfinity.mysqlengine;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -34,13 +35,13 @@ public class Driver {
         else if (args[0].equals("put")) {
             //put table_name column=value*
             String tableName = args[1];
-            Map<String, byte[]> values = new LinkedHashMap<String, byte[]>();
+            Map<String, ByteBuffer> values = new LinkedHashMap<String, ByteBuffer>();
             for (int i = 2; i < args.length ; i++) {
                 String [] tokens = args[i].split("=");
-                values.put(tokens[0], tokens[1].getBytes());
+                values.put(tokens[0], ByteBuffer.wrap(tokens[1].getBytes()));
             }
 
-            client.addData(tableName, values);
+            client.writeRow(tableName, values);
         }
         else if (args[0].equals("scan")) {
             //scan table_name
