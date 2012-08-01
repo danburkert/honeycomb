@@ -9,6 +9,23 @@ bool HBaseAdapter::create_table(std::string table_name, std::vector<std::string>
     return this->env->CallStaticBooleanMethod(adapter_class, create_table_method, java_table_name, java_list);
 }
 
+long long HBaseAdapter::start_scan(std::string table_name)
+{
+    jclass adapter_class = this->env->FindClass("HBaseAdapter");
+    jmethodID start_scan_method = this->env->GetStaticMethodID(adapter_class, "startScan", "(Ljava/lang/String;)J");
+    jstring java_table_name = this->string_to_java_string(table_name);
+    return this->env->CallStaticLongMethod(adapter_class, start_scan_method, java_table_name);
+    
+}
+
+void HBaseAdapter::end_scan(long long scan_id)
+{
+  jclass adapter_class = this->env->FindClass("HBaseAdapter");
+  jmethodID end_scan_method = this->env->GetStaticMethodID(adapter_class, "end_scan", "(J)V");
+  jlong java_scan_id = scan_id;
+  this->env->CallStaticVoidMethod(adapter_class, end_scan_method, java_scan_id);
+}
+
 bool HBaseAdapter::write_row(std::map<std::string, unsigned char*> values)
 {
     return true;
