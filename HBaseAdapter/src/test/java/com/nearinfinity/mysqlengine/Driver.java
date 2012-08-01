@@ -20,7 +20,7 @@ public class Driver {
     }
 
     public void go(String[] args) throws IOException {
-        HBaseClient client = new HBaseClient("sql");
+        HBaseClient client = new HBaseClient("sql", "localhost");
 
         if (args[0].equals("create")) {
             //create table_name column*

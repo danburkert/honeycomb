@@ -28,9 +28,9 @@ public class HBaseClient {
 
     private final ConcurrentHashMap<String, TableInfo> tableCache = new ConcurrentHashMap<String, TableInfo>();
 
-    public HBaseClient(String tableName) {
+    public HBaseClient(String tableName, String zkQuorum) {
         Configuration configuration = HBaseConfiguration.create();
-        configuration.set("hbase.zookeeper.quorum", "localhost");
+        configuration.set("hbase.zookeeper.quorum", zkQuorum);
 
         try {
             this.table = new HTable(configuration, tableName);
