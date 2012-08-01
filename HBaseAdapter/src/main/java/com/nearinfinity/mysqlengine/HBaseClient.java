@@ -24,7 +24,7 @@ public class HBaseClient {
             .put(RowType.TABLES.getValue())
             .put("TABLES".getBytes()).array();
 
-    public static final byte[] NIC = "nic".getBytes();
+    private static final byte[] NIC = "nic".getBytes();
 
     private final ConcurrentHashMap<String, TableInfo> tableCache = new ConcurrentHashMap<String, TableInfo>();
 
@@ -184,7 +184,7 @@ public class HBaseClient {
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
 
-        //Build row key
+        //Build row keys
         byte[] startRow = ByteBuffer.allocate(25)
                 .put(RowType.DATA.getValue())
                 .putLong(tableId)
