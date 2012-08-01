@@ -10,7 +10,7 @@ import java.util.Map;
  * Time: 9:46 AM
  * To change this template use File | Settings | File Templates.
  */
-public class HBaseAdapter {
+public class HBaseAdapter<E> {
     public static boolean createTable(String tableName, List<String> columnNames) throws HBaseAdapterException {
         return false;
     }
@@ -30,4 +30,8 @@ public class HBaseAdapter {
     public static boolean writeRow(Map<String, byte[]> values) throws HBaseAdapterException {
         return false;
     }
+
+    public void bob(E e)
+      {
+      }
 }

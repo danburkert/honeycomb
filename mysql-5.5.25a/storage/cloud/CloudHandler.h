@@ -19,59 +19,7 @@ private:
 	CloudShare *share;    		///< Shared lock info
     mysql_mutex_t* cloud_mutex;
     HASH* cloud_open_tables;
-    CloudShare *get_share(const char *table_name, TABLE *table)
-    {
-        CloudShare *share;
-        char meta_file_name[FN_REFLEN];
-        MY_STAT file_stat;                /* Stat information for the data file */
-        char *tmp_name;
-        uint length;
-
-        mysql_mutex_lock(cloud_mutex);
-        length=(uint) strlen(table_name);
-
-        /*
-        If share is not present in the hash, create a new share and
-        initialize its members.
-        */
-        if (!(share=(CloudShare*) my_hash_search(cloud_open_tables,
-                                               (uchar*) table_name,
-                                               length)))
-        {
-          if (!my_multi_malloc(MYF(MY_WME | MY_ZEROFILL),
-                               &share, sizeof(*share),
-                               &tmp_name, length+1,
-                               NullS))
-          {
-            mysql_mutex_unlock(cloud_mutex);
-            return NULL;
-          }
-        }
-
-        share->use_count= 0;
-        share->table_name_length= length;
-        share->table_name= tmp_name;
-        share->crashed= FALSE;
-        share->rows_recorded= 0;
-        share->data_file_version= 0;
-        strmov(share->table_name, table_name);
-        fn_format(share->data_file_name, table_name, "", "hbase", MY_REPLACE_EXT|MY_UNPACK_FILENAME);
-
-        if (my_hash_insert(cloud_open_tables, (uchar*) share))
-          goto error;
-        thr_lock_init(&share->lock);
-
-        share->use_count++;
-        mysql_mutex_unlock(cloud_mutex);
-
-        return share;
-
-        error:
-        mysql_mutex_unlock(cloud_mutex);
-        my_free(share);
-
-        return NULL;
-    }
+    CloudShare *get_share(const char *table_name, TABLE *table);
 
     public:
       CloudHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex_t* mutex, HASH* open_tables) : handler(hton, table_arg), cloud_mutex(mutex), cloud_open_tables(open_tables)
