@@ -24,6 +24,8 @@ public:
     }
 
     bool create_table(std::string table_name, std::vector<std::string> columns);
+    long long start_scan(std::string table_name);
+    void end_scan(long long scan_id);
     bool write_row(std::map<std::string, unsigned char*> values);
 };
 
