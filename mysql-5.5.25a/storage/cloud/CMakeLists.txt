@@ -13,12 +13,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
-include_directories("/usr/local/include/boost-1_50_0/")
-include_directories("/usr/local/include/thrift")
+include_directories("/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers")
 
 SET(cloud_PLUGIN_DYNAMIC "ha_cloud")
-SET(cloud_SOURCES CloudHandler.cc ha_cloud.cc gen-cpp/hbase_engine_types.cpp gen-cpp/Engine.cpp gen-cpp/hbase_engine_constants.cpp)
+SET(cloud_SOURCES CloudHandler.cc ha_cloud.cc)
 MYSQL_ADD_PLUGIN(cloud ${cloud_SOURCES} STORAGE_ENGINE MODULE_ONLY)
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions -frtti")
-SET_TARGET_PROPERTIES(cloud PROPERTIES LINK_FLAGS -lthrift)
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -framework JavaVM")

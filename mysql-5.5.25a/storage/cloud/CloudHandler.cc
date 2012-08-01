@@ -8,34 +8,7 @@
 #include "probes_mysql.h"
 #include "sql_plugin.h"
 #include "ha_cloud.h"
-
-/*  Undefining min and max macros defined by MySQL, because they cause problems
- *  with the STL min and max functions (thrift includes the STL)
-*/
-#ifdef min
-#undef min
-#endif
-#ifdef max
-#undef max
-#endif
-
-#include <sys/socket.h>
-#include <arpa/inet.h>
-
-#include <thrift/Thrift.h>
-#include <thrift/protocol/TBinaryProtocol.h>
-#include <thrift/transport/TSocket.h>
-#include <thrift/transport/TTransportUtils.h>
-
-#include "gen-cpp/Engine.h"
-
-using namespace apache::thrift;
-using namespace apache::thrift::protocol;
-using namespace apache::thrift::transport;
-using namespace boost;
-
-using namespace com::nearinfinity::hbase_engine;
-
+#include <jni.h>
 /*
   If frm_error() is called in table.cc this is called to find out what file
   extensions exist for this handler.
@@ -62,23 +35,23 @@ int CloudHandler::open(const char *name, int mode, uint test_if_locked)
     }
 
     thr_lock_data_init(&share->lock, &lock, (void*) this);
-    shared_ptr<TTransport> socket(new TSocket("localhost", 8080));
-    shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-    shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
-    EngineClient client(protocol);
+    DBUG_PRINT("Java", ("Starting up the jvm"));
+    JavaVM* jvm;
+    JNIEnv* env;
+    JavaVMInitArgs vm_args;
+    JavaVMOption option[1];
 
-    try
-    {
-        transport->open();
-        client.open();
+    option[0].optionString = "-Djava.class.path=/Users/{home}/Development/jni-test";
 
-        transport->close();
-    }
-    catch (TException &tx)
-    {
-        DBUG_PRINT("error",("transport error: '%s'", tx.what()));
-    }
+    JNI_GetDefaultJavaVMInitArgs(&vm_args);
+    vm_args.version = JNI_VERSION_1_6;
+    vm_args.options = option;
 
+    JNI_CreateJavaVM(&jvm, (void**)&env, &vm_args);
+    jclass cls = env->FindClass("HelloWorld");
+    jmethodID mid = env->GetStaticMethodID(cls, "test", "(I)V");
+    env->CallStaticVoidMethod(cls, mid, 100);
+    jvm->DestroyJavaVM();
     DBUG_RETURN(0);
 }
 
@@ -150,15 +123,6 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
                          HA_CREATE_INFO *create_info)
 {
     DBUG_ENTER("CloudHandler::create");
-
-//   boost::shared_ptr<TSocket> socket(new TSocket("localhost", 8086));
-//   boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-//   boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(socket));
-//
-//   socket->open();
-//   EngineClient client(protocol);
-//   client.createTable("dragonball");
-//   socket->close();
 
     DBUG_RETURN(0);
 }
