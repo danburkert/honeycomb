@@ -5,9 +5,13 @@ import com.nearinfinity.mysqlengine.HBaseClient;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -19,10 +23,33 @@ import java.util.concurrent.atomic.AtomicLong;
  * To change this template use File | Settings | File Templates.
  */
 public class HBaseAdapter {
-    private static final String HBASE_TABLE_NAME = "sql";
-    private static AtomicLong connectionCounter = new AtomicLong(0L);
-    private static Map<Long, Connection> clientPool = new ConcurrentHashMap<Long, Connection>();
-    private static HBaseClient client = new HBaseClient(HBASE_TABLE_NAME);
+    private static AtomicLong connectionCounter;
+    private static Map<Long, Connection> clientPool;
+    private static HBaseClient client;
+    private static boolean configured;
+
+    static {
+        try {
+            Scanner confFile = new Scanner(new File("adapter.conf"));
+            Map<String, String> params = new HashMap<String, String>();
+            while (confFile.hasNextLine()) {
+                Scanner line = new Scanner(confFile.nextLine());
+                params.put(line.next(), line.next());
+            }
+            client = new HBaseClient(params.get("hbase_table_name"), params.get("zk_quorum"));
+            connectionCounter = new AtomicLong(0L);
+            clientPool = new ConcurrentHashMap<Long, Connection>();
+
+            configured = true;
+        }
+        catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static boolean isConfigured() {
+        return configured;
+    }
 
     public static boolean createTable(String tableName, List<String> columnNames) throws HBaseAdapterException {
         try {
