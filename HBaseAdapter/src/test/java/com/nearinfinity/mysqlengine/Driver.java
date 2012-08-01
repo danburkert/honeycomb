@@ -1,11 +1,11 @@
 package com.nearinfinity.mysqlengine;
 
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -58,6 +58,23 @@ public class Driver {
                 sb.append("}\n");
             }
             System.out.println(sb);
+        }
+        else if (args[0].equals("search")) {
+            //search table_name column=value
+            String tableName = args[1];
+            String [] tokens = args[2].split("=");
+
+            ResultScanner scanner = client.search(tableName, tokens[0], tokens[1].getBytes());
+            for (Result result :scanner) {
+                ByteBuffer rowKey = ByteBuffer.wrap(result.getRow());
+                byte rowType = rowKey.get();
+                long tableId = rowKey.getLong();
+                long columnId = rowKey.getLong();
+                byte[] value = new byte[tokens[1].getBytes().length];
+                rowKey.get(value);
+                UUID uuid = new UUID(rowKey.getLong(), rowKey.getLong());
+                System.out.println("Table: " + tableId + "\nColumn: " + columnId + "\nValue: " + new String(value) + "\nUUID: " + uuid.toString());
+            }
         }
     }
 }
