@@ -24,7 +24,7 @@ link_directories("/usr/lib/jvm/default-java/jre/lib/amd64")
 link_directories("/usr/lib/jvm/default-java/jre/lib/amd64/server")
 
 SET(cloud_PLUGIN_DYNAMIC "ha_cloud")
-SET(cloud_SOURCES CloudHandler.cc CloudHandler.h ha_cloud.cc ha_cloud.h)
+SET(cloud_SOURCES CloudHandler.cc ha_cloud.cc CloudHandler.h ha_cloud.h HBaseAdapter.cpp)
 
 IF(UNIX)
     MYSQL_ADD_PLUGIN(cloud ${cloud_SOURCES} STORAGE_ENGINE MODULE_ONLY LINK_LIBRARIES java jvm)
