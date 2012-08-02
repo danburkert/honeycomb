@@ -19,9 +19,62 @@ bool HBaseAdapter::create_table(std::string table_name, std::vector<std::string>
   return result;
 }
 
+long long HBaseAdapter::start_scan(std::string table_name)
+{
+  this->attach_current_thread();
+  jclass adapter_class = this->env->FindClass("HBaseAdapter");
+  jmethodID start_scan_method = this->env->GetStaticMethodID(adapter_class, "startScan", "(Ljava/lang/String;)J");
+  jstring java_table_name = this->string_to_java_string(table_name);
+  this->jvm->DetachCurrentThread();
+  return this->env->CallStaticLongMethod(adapter_class, start_scan_method, java_table_name);
+}
+
+void HBaseAdapter::end_scan(long long scan_id)
+{
+  this->attach_current_thread();
+  jclass adapter_class = this->env->FindClass("HBaseAdapter");
+  jmethodID end_scan_method = this->env->GetStaticMethodID(adapter_class, "end_scan", "(J)V");
+  jlong java_scan_id = scan_id;
+  this->env->CallStaticVoidMethod(adapter_class, end_scan_method, java_scan_id);
+  this->jvm->DetachCurrentThread();
+}
+
 bool HBaseAdapter::write_row(std::map<std::string, unsigned char*> values)
 {
+  this->attach_current_thread();
+  this->jvm->DetachCurrentThread();
   return true;
+}
+
+std::map<std::string, char*>* HBaseAdapter::next_row(long long scan_id)
+{
+  this->attach_current_thread();
+  jclass adapter_class = this->env->FindClass("HBaseAdapter");
+  jclass row_class = this->env->FindClass("Row");
+  jmethodID next_row_method = this->env->GetStaticMethodID(adapter_class, "next_row", "(J)Lcom/nearinfinity/mysqlengine/jni/Row;");
+  jlong java_scan_id = scan_id;
+  jobject row = this->env->CallStaticObjectMethod(adapter_class, next_row_method, java_scan_id);
+
+  jmethodID get_keys_method = this->env->GetMethodID(row_class, "getKeys", "()[Ljava/lang/String;");
+  jmethodID get_vals_method = this->env->GetMethodID(row_class, "getValues", "()[[B");
+
+  jarray keys = (jarray) this->env->CallObjectMethod(row, get_keys_method);
+  jarray vals = (jarray) this->env->CallObjectMethod(row, get_vals_method);
+
+  std::map<std::string, char*>* row_map = new std::map<std::string, char*>();
+  std::string key;
+  char* val;
+
+  jboolean is_copy = JNI_FALSE;
+
+  jsize size = this->env->GetArrayLength(keys);
+  for(jsize i = 0; i < size; i++) {
+    key = java_to_string((jstring) this->env->GetObjectArrayElement((jobjectArray) keys, (jsize) i));
+    val = (char*) this->env->GetByteArrayElements((jbyteArray) this->env->GetObjectArrayElement((jobjectArray) vals, i), &is_copy);
+    (*row_map)[key] = val;
+  }
+  this->jvm->DetachCurrentThread();
+  return row_map;
 }
 
 void HBaseAdapter::attach_current_thread()
@@ -35,10 +88,10 @@ void HBaseAdapter::attach_current_thread()
 
 std::string HBaseAdapter::java_to_string(jstring str)
 {
-    const char* chars = this->env->GetStringUTFChars(str, NULL);
-    std::string results = chars;
-    this->env->ReleaseStringUTFChars(str, chars);
-    return results;
+  const char* chars = this->env->GetStringUTFChars(str, NULL);
+  std::string results = chars;
+  this->env->ReleaseStringUTFChars(str, chars);
+  return results;
 }
 
 jstring HBaseAdapter::string_to_java_string(std::string string)
