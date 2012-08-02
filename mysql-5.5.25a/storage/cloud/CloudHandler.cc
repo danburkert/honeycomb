@@ -32,9 +32,14 @@ int CloudHandler::open(const char *name, int mode, uint test_if_locked)
     {
         DBUG_RETURN(1);
     }
-
+    
     thr_lock_data_init(&share->lock, &lock, (void*) this);
-    DBUG_PRINT("Java", ("Starting up the jvm"));
+    std::string table_name("mysql-test");
+    std::string column("column");
+    std::vector<std::string> columns;
+    columns.push_back(column);
+    this->hbase_adapter->create_table(table_name, columns);
+
     DBUG_RETURN(0);
 }
 

@@ -1,5 +1,14 @@
 #ifndef HBASE_ADAPTER_H
 #define HBASE_ADAPTER_H
+#include "my_global.h"
+// MySQL stupidly defines macros for min/max
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
+
 #include <string>
 #include <vector>
 #include <map>
@@ -9,13 +18,15 @@ class HBaseAdapter
 {
 private:
     JNIEnv* env;
+    JavaVM* jvm;
 
     std::string java_to_string(jstring str);
     jstring string_to_java_string(std::string string);
     jobject vector_to_java_list(std::vector<std::string> columns);
+    void attach_current_thread();
 
 public:
-    HBaseAdapter (JNIEnv* jni_env) : env(jni_env)
+    HBaseAdapter (JavaVM* vm) : jvm(vm)
     { 
     }
 
