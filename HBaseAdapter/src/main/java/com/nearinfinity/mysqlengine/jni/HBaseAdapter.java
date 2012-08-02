@@ -85,7 +85,7 @@ public class HBaseAdapter {
                 return row;
             }
             Map<String, byte[]> values = client.parseRow(result, conn.getTableName());
-            row.setValues(values);
+            row.setRowMap(values);
         }
         catch  (IOException e) {
             throw new HBaseAdapterException("IOException", e.toString());
