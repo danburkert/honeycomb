@@ -34,7 +34,7 @@ int CloudHandler::open(const char *name, int mode, uint test_if_locked)
     }
 
     thr_lock_data_init(&share->lock, &lock, (void*) this);
-    DBUG_PRINT("Java", ("Starting up the jvm"));
+
     DBUG_RETURN(0);
 }
 
@@ -58,19 +58,24 @@ int CloudHandler::update_row(const uchar *old_data, uchar *new_data)
 
 int CloudHandler::delete_row(const uchar *buf)
 {
-  DBUG_ENTER("CloudHandler::delete_row");
-  DBUG_RETURN(HA_ERR_WRONG_COMMAND);
+    DBUG_ENTER("CloudHandler::delete_row");
+    DBUG_RETURN(HA_ERR_WRONG_COMMAND);
 }
 
 int CloudHandler::rnd_init(bool scan)
 {
-  DBUG_ENTER("CloudHandler::rnd_init");
-  DBUG_RETURN(HA_ERR_WRONG_COMMAND);
+    DBUG_ENTER("CloudHandler::rnd_init");
+    std::string table_name("mysql-test");
+    std::string column("column");
+    std::vector<std::string> columns;
+    columns.push_back(column);
+    this->hbase_adapter->create_table(table_name, columns);
+    DBUG_RETURN(HA_ERR_WRONG_COMMAND);
 }
 
 int CloudHandler::external_lock(THD *thd, int lock_type)
 {
-  DBUG_ENTER("CloudHandler::external_lock");
+    DBUG_ENTER("CloudHandler::external_lock");
     DBUG_RETURN(0);
 }
 

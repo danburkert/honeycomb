@@ -2,7 +2,7 @@ find_package(JNI REQUIRED)
 include_directories(${JNI_INCLUDE_DIRS})
 
 SET(cloud_PLUGIN_DYNAMIC "ha_cloud")
-SET(cloud_SOURCES CloudHandler.cc ha_cloud.cc HBaseAdapter.cpp)
+SET(cloud_SOURCES CloudHandler.cc ha_cloud.cc HBaseAdapter.cc)
 MYSQL_ADD_PLUGIN(cloud ${cloud_SOURCES} STORAGE_ENGINE MODULE_ONLY
   LINK_LIBRARIES ${JNI_LIBRARIES} ${JAVA_JVM_LIBRARY})
 

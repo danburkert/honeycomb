@@ -40,5 +40,6 @@
 
 #include "CloudHandler.h"
 #include "CloudShare.h"
+#include "HBaseAdapter.h"
 
 #endif

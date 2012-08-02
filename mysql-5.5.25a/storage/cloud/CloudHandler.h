@@ -10,7 +10,7 @@
 #include "handler.h"                     /* handler */
 #include "my_base.h"                     /* ha_rows */
 #include "CloudShare.h"
-
+#include "HBaseAdapter.h"
 
 class CloudHandler : public handler
 {
@@ -19,15 +19,20 @@ private:
 	CloudShare *share;    		///< Shared lock info
     mysql_mutex_t* cloud_mutex;
     HASH* cloud_open_tables;
+    HBaseAdapter* hbase_adapter;
     CloudShare *get_share(const char *table_name, TABLE *table);
 
     public:
-      CloudHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex_t* mutex, HASH* open_tables) : handler(hton, table_arg), cloud_mutex(mutex), cloud_open_tables(open_tables)
+      CloudHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex_t* mutex, HASH* open_tables, HBaseAdapter* adapter) : handler(hton, table_arg) 
       {
+        cloud_mutex = mutex; 
+        cloud_open_tables = open_tables;
+        hbase_adapter = adapter;
       }
 
-      ~CloudHandler()
+      virtual ~CloudHandler()
       {
+        delete this->hbase_adapter;
       }
 
       const char *table_type() const 
