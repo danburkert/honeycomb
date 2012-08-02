@@ -20,4 +20,7 @@ public class HBaseAdapterException extends Exception {
     public String getStackTraceStr() {
         return this.stackTraceStr;
     }
+    public String toString() {
+        return this.message + "\n" + this.stackTraceStr;
+    }
 }
