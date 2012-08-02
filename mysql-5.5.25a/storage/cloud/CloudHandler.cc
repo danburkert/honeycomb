@@ -66,7 +66,7 @@ int CloudHandler::delete_row(const uchar *buf)
 int CloudHandler::rnd_init(bool scan)
 {
     DBUG_ENTER("CloudHandler::rnd_init");
-    std::string table_name(this->share->table_name);
+    //std::string table_name(this->share->table_name);
     //this->curr_scan_id = this->hbase_adapter->start_scan(table_name);
     DBUG_RETURN(0);
 }
@@ -117,11 +117,11 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
                          HA_CREATE_INFO *create_info)
 {
     DBUG_ENTER("CloudHandler::create");
-    std::string table_name(table_arg->alias);
+    //std::string table_name(table_arg->alias);
     //std::string column("column");
-    std::vector<std::string> columns;
+    //std::vector<std::string> columns;
     //columns.push_back(column);
-    this->hbase_adapter->create_table(table_name, columns);
+    //this->hbase_adapter->create_table(table_name, columns);
     DBUG_RETURN(0);
 }
 

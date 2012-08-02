@@ -1,6 +1,7 @@
 #ifndef HBASE_ADAPTER_H
 #define HBASE_ADAPTER_H
 #include "my_global.h"
+#include "sql_string.h"
 // MySQL stupidly defines macros for min/max
 #ifdef min
 #undef min
@@ -9,9 +10,6 @@
 #undef max
 #endif
 
-#include <string>
-#include <vector>
-#include <map>
 #include <jni.h>
 
 class HBaseAdapter
@@ -20,9 +18,6 @@ private:
     JNIEnv* env;
     JavaVM* jvm;
 
-    std::string java_to_string(jstring str);
-    jstring string_to_java_string(std::string string);
-    jobject vector_to_java_list(std::vector<std::string> columns);
     void attach_current_thread();
 
 public:
@@ -34,11 +29,11 @@ public:
     {
     }
 
-    bool create_table(std::string table_name, std::vector<std::string> columns);
-    long long start_scan(std::string table_name);
-    void end_scan(long long scan_id);
-    bool write_row(std::map<std::string, unsigned char*> values);
-    std::map<std::string, char*>* next_row(long long);
+    jboolean create_table(jstring table_name, jobject* columns);
+    jlong start_scan(jstring table_name);
+    void end_scan(jlong scan_id);
+    jboolean write_row(jstring table_name, jobject* row);
+    jobject* next_row(jlong scan_id);
 
 };
 

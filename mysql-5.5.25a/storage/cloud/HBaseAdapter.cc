@@ -1,8 +1,8 @@
 #include "HBaseAdapter.h"
 
-bool HBaseAdapter::create_table(std::string table_name, std::vector<std::string> columns)
+jboolean HBaseAdapter::create_table(jstring table_name, jobject* columns)
 {
-  this->attach_current_thread();
+  /*this->attach_current_thread();
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
   if (adapter_class == NULL)
   {
@@ -16,39 +16,42 @@ bool HBaseAdapter::create_table(std::string table_name, std::vector<std::string>
   jboolean result = this->env->CallStaticBooleanMethod(adapter_class, create_table_method, java_table_name, java_list);
   DBUG_PRINT("INFO", ("Result of the java call %d", result));
   this->jvm->DetachCurrentThread();
-  return result;
+  return result;*/
+  return 0;
 }
 
-long long HBaseAdapter::start_scan(std::string table_name)
+jlong HBaseAdapter::start_scan(jstring table_name)
 {
-  this->attach_current_thread();
+  /*this->attach_current_thread();
   jclass adapter_class = this->env->FindClass("HBaseAdapter");
   jmethodID start_scan_method = this->env->GetStaticMethodID(adapter_class, "startScan", "(Ljava/lang/String;)J");
   jstring java_table_name = this->string_to_java_string(table_name);
   this->jvm->DetachCurrentThread();
-  return this->env->CallStaticLongMethod(adapter_class, start_scan_method, java_table_name);
+  return this->env->CallStaticLongMethod(adapter_class, start_scan_method, java_table_name);*/
+  return 0;
 }
 
-void HBaseAdapter::end_scan(long long scan_id)
+void HBaseAdapter::end_scan(jlong scan_id)
 {
-  this->attach_current_thread();
+  /*this->attach_current_thread();
   jclass adapter_class = this->env->FindClass("HBaseAdapter");
   jmethodID end_scan_method = this->env->GetStaticMethodID(adapter_class, "end_scan", "(J)V");
   jlong java_scan_id = scan_id;
   this->env->CallStaticVoidMethod(adapter_class, end_scan_method, java_scan_id);
-  this->jvm->DetachCurrentThread();
+  this->jvm->DetachCurrentThread();*/
 }
 
-bool HBaseAdapter::write_row(std::map<std::string, unsigned char*> values)
+jboolean HBaseAdapter::write_row(jstring table_name, jobject *row)
 {
-  this->attach_current_thread();
+  /*this->attach_current_thread();
   this->jvm->DetachCurrentThread();
-  return true;
+  return true;*/
+  return 0;
 }
 
-std::map<std::string, char*>* HBaseAdapter::next_row(long long scan_id)
+jobject* HBaseAdapter::next_row(jlong scan_id)
 {
-  this->attach_current_thread();
+  /*this->attach_current_thread();
   jclass adapter_class = this->env->FindClass("HBaseAdapter");
   jclass row_class = this->env->FindClass("Row");
   jmethodID next_row_method = this->env->GetStaticMethodID(adapter_class, "next_row", "(J)Lcom/nearinfinity/mysqlengine/jni/Row;");
@@ -74,7 +77,8 @@ std::map<std::string, char*>* HBaseAdapter::next_row(long long scan_id)
     (*row_map)[key] = val;
   }
   this->jvm->DetachCurrentThread();
-  return row_map;
+  return row_map;*/
+  return NULL;
 }
 
 void HBaseAdapter::attach_current_thread()
@@ -86,32 +90,3 @@ void HBaseAdapter::attach_current_thread()
   this->jvm->AttachCurrentThread((void**)&this->env, &attachArgs);
 }
 
-std::string HBaseAdapter::java_to_string(jstring str)
-{
-  const char* chars = this->env->GetStringUTFChars(str, NULL);
-  std::string results = chars;
-  this->env->ReleaseStringUTFChars(str, chars);
-  return results;
-}
-
-jstring HBaseAdapter::string_to_java_string(std::string string)
-{
-  return this->env->NewStringUTF(string.c_str());
-}
-
-jobject HBaseAdapter::vector_to_java_list(std::vector<std::string> columns)
-{
-  jclass linked_list = this->env->FindClass("java/util/LinkedList");
-  jmethodID constructor = this->env->GetMethodID(linked_list, "<init>", "()V");
-  jobject list_object = this->env->NewObject(linked_list, constructor);
-  jmethodID add_method = this->env->GetMethodID(linked_list, "add", "(Ljava/lang/Object;)Z");
-  std::vector<std::string>::iterator iterator;
-  for(iterator = columns.begin(); iterator != columns.end(); iterator++)
-  {
-    std::string column = *iterator;
-    jstring java_column = this->string_to_java_string(column); 
-    this->env->CallBooleanMethod(list_object, add_method, java_column);
-  }
-
-  return list_object;
-}
