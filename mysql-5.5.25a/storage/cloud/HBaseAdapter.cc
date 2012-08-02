@@ -14,6 +14,7 @@ bool HBaseAdapter::create_table(std::string table_name, std::vector<std::string>
   jstring java_table_name = this->string_to_java_string(table_name);
   jobject java_list = this->vector_to_java_list(columns);
   jboolean result = this->env->CallStaticBooleanMethod(adapter_class, create_table_method, java_table_name, java_list);
+  DBUG_PRINT("INFO", ("Result of the java call %d", result));
   this->jvm->DetachCurrentThread();
   return result;
 }
