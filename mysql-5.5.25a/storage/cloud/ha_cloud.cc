@@ -121,8 +121,7 @@ static int cloud_init_func(void *p)
     DBUG_PRINT("Java", ("Starting up the jvm"));
     JavaVMInitArgs vm_args;
     JavaVMOption option[1];
-
-    option[0].optionString = "-Djava.class.path=/Users/showell/cloud/HBaseAdapter/target/mysqlengine-0.1-jar-with-dependencies.jar";
+    option[0].optionString = "-Djava.class.path=/usr/local/Cellar/mysql/5.5.25a/lib/plugin/mysqlengine-0.1-jar-with-dependencies.jar";
 
     JNI_GetDefaultJavaVMInitArgs(&vm_args);
     vm_args.version = JNI_VERSION_1_6;
