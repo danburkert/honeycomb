@@ -8,6 +8,7 @@
 #include "probes_mysql.h"
 #include "sql_plugin.h"
 #include "ha_cloud.h"
+
 /*
   If frm_error() is called in table.cc this is called to find out what file
   extensions exist for this handler.
@@ -65,12 +66,9 @@ int CloudHandler::delete_row(const uchar *buf)
 int CloudHandler::rnd_init(bool scan)
 {
     DBUG_ENTER("CloudHandler::rnd_init");
-    std::string table_name("mysql-test");
-    std::string column("column");
-    std::vector<std::string> columns;
-    columns.push_back(column);
-    this->hbase_adapter->create_table(table_name, columns);
-    DBUG_RETURN(HA_ERR_WRONG_COMMAND);
+    std::string table_name(this->share->table_name);
+    //this->curr_scan_id = this->hbase_adapter->start_scan(table_name);
+    DBUG_RETURN(0);
 }
 
 int CloudHandler::external_lock(THD *thd, int lock_type)
@@ -107,10 +105,23 @@ int CloudHandler::rnd_pos(uchar *buf, uchar *pos)
     DBUG_RETURN(rc);
 }
 
+int CloudHandler::rnd_end()
+{
+  DBUG_ENTER("CloudHandler::rnd_end");
+  //this->hbase_adapter->end_scan(curr_scan_id);
+  curr_scan_id = -1;
+  DBUG_RETURN(0);
+}
+
 int CloudHandler::create(const char *name, TABLE *table_arg,
                          HA_CREATE_INFO *create_info)
 {
     DBUG_ENTER("CloudHandler::create");
+    std::string table_name(table_arg->alias);
+    //std::string column("column");
+    std::vector<std::string> columns;
+    //columns.push_back(column);
+    this->hbase_adapter->create_table(table_name, columns);
     DBUG_RETURN(0);
 }
 

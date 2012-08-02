@@ -7,22 +7,21 @@
   <groupId>com.nearinfinity</groupId>
   <artifactId>mysqlengine</artifactId>
   <version>0.1</version>
+
   <build>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
-          <source>1.5</source>
-          <target>1.5</target>
+          <source>1.6</source>
+          <target>1.6</target>
         </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <configuration>
-          <source>1.5</source>
-          <target>1.5</target>
           <archive>
             <manifest>
               <addClasspath>true</addClasspath>
@@ -34,8 +33,6 @@
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <configuration>
-          <source>1.5</source>
-          <target>1.5</target>
           <archive>
             <manifest>
               <mainClass>com.nearinfinity.mysqlengine.Driver</mainClass>
