@@ -24,7 +24,7 @@ public class HBaseClient {
             .put(RowType.TABLES.getValue())
             .put("TABLES".getBytes()).array();
 
-    public static final byte[] NIC = "nic".getBytes();
+    private static final byte[] NIC = "nic".getBytes();
 
     private final ConcurrentHashMap<String, TableInfo> tableCache = new ConcurrentHashMap<String, TableInfo>();
 
@@ -179,12 +179,42 @@ public class HBaseClient {
         return rows;
     }
 
+    public ResultScanner search(String tableName, String columnName, byte[] value) throws IOException {
+        //Get table and column id
+        TableInfo info = getTableInfo(tableName);
+        long tableId = info.getId();
+        long columnId = info.getColumnIdByName(columnName);
+
+        //Build row keys
+        byte[] startRow = ByteBuffer.allocate(33 + value.length)
+                .put(RowType.INDEX.getValue())
+                .putLong(tableId)
+                .putLong(columnId)
+                .put(value)
+                .putLong(0L)
+                .putLong(0L)
+                .array();
+
+        byte[] endRow = ByteBuffer.allocate(33 + value.length)
+                .put(RowType.INDEX.getValue())
+                .putLong(tableId)
+                .putLong(columnId+1)
+                .put(value)
+                .putLong(0L)
+                .putLong(0L)
+                .array();
+
+        Scan scan = new Scan(startRow, endRow);
+
+        return table.getScanner(scan);
+    }
+
     public ResultScanner getTableScanner(String tableName) throws IOException {
         //Get table id
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
 
-        //Build row key
+        //Build row keys
         byte[] startRow = ByteBuffer.allocate(25)
                 .put(RowType.DATA.getValue())
                 .putLong(tableId)
@@ -236,9 +266,11 @@ public class HBaseClient {
     public Map<String, byte[]> parseRow(Result result, String tableName) throws IOException {
         TableInfo info = getTableInfo(tableName);
 
+        //Get columns returned from Result
         Map<String, byte[]> columns = new HashMap<String, byte[]>();
         Map<byte[], byte[]> returnedColumns = result.getNoVersionMap().get(NIC);
 
+        //Loop through columns, add to returned map
         for (byte[] qualifier : returnedColumns.keySet()) {
             long columnId = ByteBuffer.wrap(qualifier).getLong();
             String columnName = info.getColumnNameById(columnId);
