@@ -51,11 +51,7 @@ public class Driver {
 
             StringBuilder sb = new StringBuilder();
             for (Map<String, byte[]> row : rows) {
-                sb.append("{ ");
-                for (String key : row.keySet()) {
-                    sb.append("\'" + key + "\' => \'" + new String(row.get(key)) + "\', ");
-                }
-                sb.append("}\n");
+                sb.append(printRow(row));
             }
             System.out.println(sb);
         }
@@ -74,7 +70,21 @@ public class Driver {
                 rowKey.get(value);
                 UUID uuid = new UUID(rowKey.getLong(), rowKey.getLong());
                 System.out.println("Table: " + tableId + "\nColumn: " + columnId + "\nValue: " + new String(value) + "\nUUID: " + uuid.toString());
+
+                Result rowResult = client.getDataRow(uuid, tableId);
+                Map<String, byte[]> parsedRow = client.parseRow(rowResult, tableName);
+                System.out.println(printRow(parsedRow));
             }
         }
+    }
+
+    private static String printRow(Map<String, byte[]> row) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{ ");
+        for (String key : row.keySet()) {
+            sb.append("\'" + key + "\' => \'" + new String(row.get(key)) + "\', ");
+        }
+        sb.append("}\n");
+        return sb.toString();
     }
 }

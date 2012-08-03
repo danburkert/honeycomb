@@ -101,8 +101,8 @@ public class HBaseClient {
         byte [] rowKey = ByteBuffer.allocate(25)
                 .put(RowType.DATA.getValue())
                 .putLong(tableId)
-                .putLong(rowId.getLeastSignificantBits())
                 .putLong(rowId.getMostSignificantBits())
+                .putLong(rowId.getLeastSignificantBits())
                 .array();
 
         //Create put list
@@ -124,8 +124,8 @@ public class HBaseClient {
                     .putLong(tableId)
                     .putLong(columnId)
                     .put(value)
-                    .putLong(rowId.getLeastSignificantBits())
                     .putLong(rowId.getMostSignificantBits())
+                    .putLong(rowId.getLeastSignificantBits())
                     .array();
 
             //Add the corresponding index
@@ -177,6 +177,18 @@ public class HBaseClient {
         }
 
         return rows;
+    }
+
+    public Result getDataRow(UUID uuid, long tableId) throws IOException {
+        byte[] rowKey = ByteBuffer.allocate(25)
+                .put(RowType.DATA.getValue())
+                .putLong(tableId)
+                .putLong(uuid.getMostSignificantBits())
+                .putLong(uuid.getLeastSignificantBits())
+                .array();
+
+        Get get = new Get(rowKey);
+        return table.get(get);
     }
 
     public ResultScanner search(String tableName, String columnName, byte[] value) throws IOException {
