@@ -89,15 +89,17 @@ int CloudHandler::rnd_next(uchar *buf)
 {
     int rc;
     DBUG_ENTER("CloudHandler::rnd_next");
-    MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, TRUE);
-    rc= HA_ERR_END_OF_FILE;
-    MYSQL_READ_ROW_DONE(rc);
-    /*
+
+    //MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, TRUE);
+    //rc= HA_ERR_END_OF_FILE;
+    //MYSQL_READ_ROW_DONE(rc);
+
     JVMThreadAttach attached_thread(this->env, this->jvm);
     jclass adapter_class = this->env->FindClass("HBaseAdapter");
+
     jclass row_class = this->env->FindClass("Row");
     jmethodID next_row_method = this->env->GetStaticMethodID(adapter_class, "next_row", "(J)Lcom/nearinfinity/mysqlengine/jni/Row;");
-    jlong java_scan_id = scan_id;
+    jlong java_scan_id = curr_scan_id;
     jobject row = this->env->CallStaticObjectMethod(adapter_class, next_row_method, java_scan_id);
 
     jmethodID get_keys_method = this->env->GetMethodID(row_class, "getKeys", "()[Ljava/lang/String;");
@@ -106,8 +108,7 @@ int CloudHandler::rnd_next(uchar *buf)
     jarray keys = (jarray) this->env->CallObjectMethod(row, get_keys_method);
     jarray vals = (jarray) this->env->CallObjectMethod(row, get_vals_method);
 
-    std::map<std::string, char*>* row_map = new std::map<std::string, char*>();
-    std::string key;
+    const char* key;
     char* val;
 
     jboolean is_copy = JNI_FALSE;
@@ -116,10 +117,9 @@ int CloudHandler::rnd_next(uchar *buf)
     for(jsize i = 0; i < size; i++) {
       key = java_to_string((jstring) this->env->GetObjectArrayElement((jobjectArray) keys, (jsize) i));
       val = (char*) this->env->GetByteArrayElements((jbyteArray) this->env->GetObjectArrayElement((jobjectArray) vals, i), &is_copy);
-      (*row_map)[key] = val;
+
+      //TODO: Go through now and pack each key and value into the Field object
     }
-    return row_map;
-  */
     DBUG_RETURN(rc);
 }
 
