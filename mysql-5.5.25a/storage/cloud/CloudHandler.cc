@@ -168,15 +168,16 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
     }
 
     const char* table_name = table_arg->alias;
-    const char* column     = "column";
 
-    jclass list_class = this->env->FindClass("java/util/ArrayList");
+    jclass list_class = this->env->FindClass("java/util/LinkedList");
     jmethodID list_constructor = this->env->GetMethodID(list_class, "<init>", "()V");
     jobject columns = this->env->NewObject(list_class, list_constructor);
-
     jmethodID add_column = this->env->GetMethodID(list_class, "add", "(Ljava/lang/Object;)Z");
 
-    this->env->CallBooleanMethod(columns, add_column, string_to_java_string(column));
+    for (Field **field = table->field ; *field ; field++)
+    {
+      this->env->CallBooleanMethod(columns, add_column, string_to_java_string((*field)->field_name));
+    }
 
     jmethodID create_table_method = this->env->GetStaticMethodID(adapter_class, "createTable", "(Ljava/lang/String;Ljava/util/List;)Z");
     jboolean result = this->env->CallStaticBooleanMethod(adapter_class, create_table_method, table_name, columns);
