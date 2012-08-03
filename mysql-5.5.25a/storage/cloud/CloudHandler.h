@@ -10,41 +10,39 @@
 #include "handler.h"                     /* handler */
 #include "my_base.h"                     /* ha_rows */
 #include "CloudShare.h"
-#include "HBaseAdapter.h"
+#include <jni.h>
 
 class CloudHandler : public handler
 {
 private:
-	THR_LOCK_DATA lock;      	///< MySQL lockCloudShare;
-	CloudShare *share;    		///< Shared lock info
+    THR_LOCK_DATA lock;      	///< MySQL lockCloudShare;
+    CloudShare *share;    		///< Shared lock info
     mysql_mutex_t* cloud_mutex;
     HASH* cloud_open_tables;
-    HBaseAdapter* hbase_adapter;
     CloudShare *get_share(const char *table_name, TABLE *table);
 
     long long curr_scan_id;
 
-    public:
-      CloudHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex_t* mutex, HASH* open_tables, HBaseAdapter* adapter) : handler(hton, table_arg) 
-      {
-        cloud_mutex = mutex; 
-        cloud_open_tables = open_tables;
-        hbase_adapter = adapter;
-      }
+    // HBase JNI Adapter:
+    JNIEnv* env;
+    JavaVM* jvm;
 
-      virtual ~CloudHandler()
+    public:
+      CloudHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm)
+        : handler(hton, table_arg), jvm(jvm)
       {
-        delete this->hbase_adapter;
+        cloud_mutex = mutex;
+        cloud_open_tables = open_tables;
       }
 
       const char *table_type() const 
-      { 
+      {
         return "cloud";
       }
 
       const char *index_type(uint inx) 
       {
-        return "HASH"; 
+        return "HASH";
       }
 
       ulonglong table_flags() const
