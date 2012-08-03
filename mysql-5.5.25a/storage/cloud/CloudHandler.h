@@ -27,6 +27,9 @@ private:
     JNIEnv* env;
     JavaVM* jvm;
 
+    const char* java_to_string(jstring str);
+    jstring string_to_java_string(const char*);
+
     public:
       CloudHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm)
         : handler(hton, table_arg), jvm(jvm)
@@ -101,6 +104,6 @@ private:
       int delete_row(const uchar *buf);
       int free_share(CloudShare *share);
       int rnd_end();
-    };
+};
 
 #endif

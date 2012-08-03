@@ -8,6 +8,7 @@
 #include "probes_mysql.h"
 #include "sql_plugin.h"
 #include "ha_cloud.h"
+#include "JVMThreadAttach.h"
 
 /*
   If frm_error() is called in table.cc this is called to find out what file
@@ -66,8 +67,15 @@ int CloudHandler::delete_row(const uchar *buf)
 int CloudHandler::rnd_init(bool scan)
 {
     DBUG_ENTER("CloudHandler::rnd_init");
-    //std::string table_name(this->share->table_name);
-    //this->curr_scan_id = this->hbase_adapter->start_scan(table_name);
+
+    char* table_name = this->share->table_name;
+
+    JVMThreadAttach attached_thread(this->env, this->jvm);
+
+    jclass adapter_class = this->env->FindClass("HBaseAdapter");
+    jmethodID start_scan_method = this->env->GetStaticMethodID(adapter_class, "startScan", "(Ljava/lang/String;)J");
+    jstring java_table_name = this->string_to_java_string(table_name);
+    this->curr_scan_id = this->env->CallStaticLongMethod(adapter_class, start_scan_method, java_table_name);
     DBUG_RETURN(0);
 }
 
@@ -84,6 +92,34 @@ int CloudHandler::rnd_next(uchar *buf)
     MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, TRUE);
     rc= HA_ERR_END_OF_FILE;
     MYSQL_READ_ROW_DONE(rc);
+    /*
+    JVMThreadAttach attached_thread(this->env, this->jvm);
+    jclass adapter_class = this->env->FindClass("HBaseAdapter");
+    jclass row_class = this->env->FindClass("Row");
+    jmethodID next_row_method = this->env->GetStaticMethodID(adapter_class, "next_row", "(J)Lcom/nearinfinity/mysqlengine/jni/Row;");
+    jlong java_scan_id = scan_id;
+    jobject row = this->env->CallStaticObjectMethod(adapter_class, next_row_method, java_scan_id);
+
+    jmethodID get_keys_method = this->env->GetMethodID(row_class, "getKeys", "()[Ljava/lang/String;");
+    jmethodID get_vals_method = this->env->GetMethodID(row_class, "getValues", "()[[B");
+
+    jarray keys = (jarray) this->env->CallObjectMethod(row, get_keys_method);
+    jarray vals = (jarray) this->env->CallObjectMethod(row, get_vals_method);
+
+    std::map<std::string, char*>* row_map = new std::map<std::string, char*>();
+    std::string key;
+    char* val;
+
+    jboolean is_copy = JNI_FALSE;
+
+    jsize size = this->env->GetArrayLength(keys);
+    for(jsize i = 0; i < size; i++) {
+      key = java_to_string((jstring) this->env->GetObjectArrayElement((jobjectArray) keys, (jsize) i));
+      val = (char*) this->env->GetByteArrayElements((jbyteArray) this->env->GetObjectArrayElement((jobjectArray) vals, i), &is_copy);
+      (*row_map)[key] = val;
+    }
+    return row_map;
+  */
     DBUG_RETURN(rc);
 }
 
@@ -108,7 +144,13 @@ int CloudHandler::rnd_pos(uchar *buf, uchar *pos)
 int CloudHandler::rnd_end()
 {
   DBUG_ENTER("CloudHandler::rnd_end");
-  //this->hbase_adapter->end_scan(curr_scan_id);
+
+  JVMThreadAttach attached_thread(this->env, this->jvm);
+  jclass adapter_class = this->env->FindClass("HBaseAdapter");
+  jmethodID end_scan_method = this->env->GetStaticMethodID(adapter_class, "end_scan", "(J)V");
+  jlong java_scan_id = curr_scan_id;
+  this->env->CallStaticVoidMethod(adapter_class, end_scan_method, java_scan_id);
+
   curr_scan_id = -1;
   DBUG_RETURN(0);
 }
@@ -117,11 +159,29 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
                          HA_CREATE_INFO *create_info)
 {
     DBUG_ENTER("CloudHandler::create");
-    //std::string table_name(table_arg->alias);
-    //std::string column("column");
-    //std::vector<std::string> columns;
-    //columns.push_back(column);
-    //this->hbase_adapter->create_table(table_name, columns);
+    JVMThreadAttach attached_thread(this->env, this->jvm);
+    jclass adapter_class = this->env->FindClass("HBaseAdapter");
+    if (adapter_class == NULL)
+    {
+      DBUG_PRINT("Error", ("Could not find adapter class HBaseAdapter"));
+      DBUG_RETURN(1);
+    }
+
+    const char* table_name = table_arg->alias;
+    const char* column     = "column";
+
+    jclass list_class = this->env->FindClass("java/util/ArrayList");
+    jmethodID list_constructor = this->env->GetMethodID(list_class, "<init>", "()V");
+    jobject columns = this->env->NewObject(list_class, list_constructor);
+
+    jmethodID add_column = this->env->GetMethodID(list_class, "add", "(Ljava/lang/Object;)Z");
+
+    this->env->CallBooleanMethod(columns, add_column, string_to_java_string(column));
+
+    jmethodID create_table_method = this->env->GetStaticMethodID(adapter_class, "createTable", "(Ljava/lang/String;Ljava/util/List;)Z");
+    jboolean result = this->env->CallStaticBooleanMethod(adapter_class, create_table_method, table_name, columns);
+    DBUG_PRINT("INFO", ("Result of createTable: %d", result));
+
     DBUG_RETURN(0);
 }
 
@@ -211,4 +271,16 @@ error:
     my_free(share);
 
     return NULL;
+}
+
+const char* CloudHandler::java_to_string(jstring j_str)
+{
+    const char* str = this->env->GetStringUTFChars(j_str, NULL);
+    this->env->ReleaseStringUTFChars(j_str, str);
+    return str;
+}
+
+jstring CloudHandler::string_to_java_string(const char* string)
+{
+  return this->env->NewStringUTF(string);
 }
