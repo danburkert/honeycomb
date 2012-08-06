@@ -159,14 +159,10 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
                          HA_CREATE_INFO *create_info)
 {
     DBUG_ENTER("CloudHandler::create");
-    JNIEnv **jni_env;
-    if(this->jvm == NULL)
-    {
-      //this->recreate_vm();
-    }
+    JNIEnv *jni_env;
 
-    JVMThreadAttach attached_thread(jni_env, this->jvm);
-    jclass adapter_class = (*jni_env)->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
+    JVMThreadAttach attached_thread(&jni_env, this->jvm);
+    jclass adapter_class = jni_env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
     if (adapter_class == NULL)
     {
       DBUG_PRINT("Error", ("Could not find adapter class HBaseAdapter"));
@@ -175,18 +171,18 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
 
     const char* table_name = create_info->alias;
 
-    jclass list_class = (*jni_env)->FindClass("java/util/LinkedList");
-    jmethodID list_constructor = (*jni_env)->GetMethodID(list_class, "<init>", "()V");
-    jobject columns = (*jni_env)->NewObject(list_class, list_constructor);
-    jmethodID add_column = (*jni_env)->GetMethodID(list_class, "add", "(Ljava/lang/Object;)Z");
+    jclass list_class = jni_env->FindClass("java/util/LinkedList");
+    jmethodID list_constructor = jni_env->GetMethodID(list_class, "<init>", "()V");
+    jobject columns = jni_env->NewObject(list_class, list_constructor);
+    jmethodID add_column = jni_env->GetMethodID(list_class, "add", "(Ljava/lang/Object;)Z");
 
     for (Field **field = table_arg->field ; *field ; field++)
     {
-      (*jni_env)->CallBooleanMethod(columns, add_column, string_to_java_string(*jni_env, (*field)->field_name));
+      jni_env->CallBooleanMethod(columns, add_column, string_to_java_string(jni_env, (*field)->field_name));
     }
 
-    jmethodID create_table_method = (*jni_env)->GetStaticMethodID(adapter_class, "createTable", "(Ljava/lang/String;Ljava/util/List;)Z");
-    jboolean result = (*jni_env)->CallStaticBooleanMethod(adapter_class, create_table_method, string_to_java_string(*jni_env, table_name), columns);
+    jmethodID create_table_method = jni_env->GetStaticMethodID(adapter_class, "createTable", "(Ljava/lang/String;Ljava/util/List;)Z");
+    jboolean result = jni_env->CallStaticBooleanMethod(adapter_class, create_table_method, string_to_java_string(jni_env, table_name), columns);
     DBUG_PRINT("INFO", ("Result of createTable: %d", result));
 
     DBUG_RETURN(0);

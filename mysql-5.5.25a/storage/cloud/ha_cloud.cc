@@ -1,56 +1,3 @@
-/* Copyright (c) 2004, 2011, Oracle and/or its affiliates. All rights reserved.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; version 2 of the License.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA */
-
-/**
-@file ha_cloud.cc
-
-@brief
-The ha_cloud engine is a cloudbed storage engine for cloud purposes only;
-it does nothing at this point. Its purpose is to provide a source
-code illustration of how to begin writing new storage engines; see also
-/storage/cloud/ha_cloud.h.
-
-@details
-ha_cloud will let you create/open/delete tables, but
-nothing further (for cloud, indexes are not supported nor can data
-be stored in the table). Use this cloud as a template for
-implementing the same functionality in your own storage engine. You
-can enable the cloud storage engine in your build by doing the
-following during your build process:<br> ./configure
---with-cloud-storage-engine
-
-Once this is done, MySQL will let you create tables with:<br>
-CREATE TABLE <table name> (...) ENGINE=cloud;
-
-The cloud storage engine is set up to use table locks. It
-implements an cloud "SHARE" that is inserted into a hash by table
-name. You can use this to store information of state that any
-cloud handler object will be able to see when it is using that
-table.
-
-  Please read the object definition in ha_cloud.h before reading the rest
-  of this file.
-
-  @note
-  When you create an cloud table, the MySQL Server creates a table .frm
-  (format) file in the database directory, using the table name as the file
-  name as is customary with MySQL. No other files are created. To get an idea
-  of what occurs, here is an cloud select that would do a scan of an entire
-  table:
-*/
-
 #ifdef USE_PRAGMA_IMPLEMENTATION
 #pragma implementation        // gcc: Class implementation
 #endif
@@ -60,6 +7,7 @@ table.
 #include "ha_cloud.h"
 #include "probes_mysql.h"
 #include "sql_plugin.h"
+#include <signal.h>
 
 static handler *cloud_create_handler(handlerton *hton,
                                      TABLE_SHARE *table,
@@ -100,6 +48,22 @@ static void init_cloud_psi_keys()
 }
 #endif
 
+static void configure_jvm_options(JavaVMInitArgs* vm_args)
+{
+#ifdef __APPLE__
+      const int option_count = 3;
+      JavaVMOption option[option_count];
+      option[1].optionString = "-Djava.security.krb5.realm=OX.AC.UK";
+      option[2].optionString = "-Djava.security.krb5.kdc=kdc0.ox.ac.uk:kdc1.ox.ac.uk";
+#else
+      const int option_count = 1;
+      JavaVMOption option[option_count];
+#endif
+      option[0].optionString = "-Djava.class.path=/usr/local/mysql/lib/plugin/mysqlengine-0.1-jar-with-dependencies.jar";
+      vm_args->nOptions = option_count;
+      vm_args->options = option;
+      vm_args->version = JNI_VERSION_1_6;
+}
 
 static int cloud_init_func(void *p)
 {
@@ -109,44 +73,39 @@ static int cloud_init_func(void *p)
     init_cloud_psi_keys();
 #endif
 
-    cloud_hton= (handlerton *)p;
+    cloud_hton = (handlerton *)p;
     mysql_mutex_init(ex_key_mutex_cloud, &cloud_mutex, MY_MUTEX_INIT_FAST);
     (void) my_hash_init(&cloud_open_tables,system_charset_info,32,0,0,
                         (my_hash_get_key) cloud_get_key,0,0);
 
-    cloud_hton->state=   SHOW_OPTION_YES;
-    cloud_hton->create=  cloud_create_handler;
-    cloud_hton->flags=   HTON_CAN_RECREATE;
+    cloud_hton->state = SHOW_OPTION_YES;
+    cloud_hton->create = cloud_create_handler;
+    cloud_hton->flags = HTON_CAN_RECREATE;
 
-    DBUG_PRINT("Java", ("Starting up the jvm"));
-    JavaVM* created_vms[10];
+    JavaVM* created_vms[1];
     jsize vm_count;
-    JNI_GetCreatedJavaVMs(created_vms, 10, &vm_count);
-    if(vm_count > 0)
+    jint result = JNI_GetCreatedJavaVMs(created_vms, 1, &vm_count);
+    DBUG_PRINT("INFO", ("GetCreatedJavaVMs returned %d, vm count %d", result, vm_count));
+    if (result == 0 && vm_count > 0)
     {
-      DBUG_PRINT("INFO", ("%d created VMs, using the first", vm_count));
-      jvm = created_vms[0];
+        jvm = created_vms[0];
     }
     else
     {
+      DBUG_PRINT("INFO", ("Creating a new JVM."));
       JavaVMInitArgs vm_args;
-      JavaVMOption option[3];
-      option[0].optionString = "-Djava.class.path=/usr/local/Cellar/mysql/5.5.25a/lib/plugin/mysqlengine-0.1-jar-with-dependencies.jar";
-      option[1].optionString = "-Djava.security.krb5.realm=OX.AC.UK";
-      option[2].optionString = "-Djava.security.krb5.kdc=kdc0.ox.ac.uk:kdc1.ox.ac.uk";
-      //option[0].optionString = "-Djava.class.path=JUNK_ASDF";
+      configure_jvm_options(&vm_args);
+      jint result = JNI_CreateJavaVM(&jvm, (void**)&env, &vm_args);
+      if (result != 0)
+      {
+        DBUG_PRINT("ERROR", ("Failed to create JVM"));
+      }
 
-      JNI_GetDefaultJavaVMInitArgs(&vm_args);
-      vm_args.version = JNI_VERSION_1_6;
-      vm_args.options = option;
-
-      JNI_CreateJavaVM(&jvm, (void**)&env, &vm_args);
-      DBUG_PRINT("Java", ("Jvm successfully started"));
+      DBUG_PRINT("INFO", ("CreateJavaVM returned %d", result));
     }
 
     DBUG_RETURN(0);
 }
-
 
 static int cloud_done_func(void *p)
 {
@@ -160,7 +119,6 @@ static int cloud_done_func(void *p)
 
     my_hash_free(&cloud_open_tables);
     mysql_mutex_destroy(&cloud_mutex);
-
     DBUG_RETURN(error);
 }
 
