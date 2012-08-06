@@ -68,14 +68,16 @@ int CloudHandler::rnd_init(bool scan)
 {
     DBUG_ENTER("CloudHandler::rnd_init");
 
-    char* table_name = this->share->table_name;
+    const char* table_name = this->table->alias;
 
     JVMThreadAttach attached_thread(&this->env, this->jvm);
 
-    jclass adapter_class = this->env->FindClass("HBaseAdapter");
+    jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
     jmethodID start_scan_method = this->env->GetStaticMethodID(adapter_class, "startScan", "(Ljava/lang/String;)J");
-    jstring java_table_name = this->string_to_java_string(NULL, table_name);
+    jstring java_table_name = this->string_to_java_string(this->env, table_name);
+    
     this->curr_scan_id = this->env->CallStaticLongMethod(adapter_class, start_scan_method, java_table_name);
+    
     DBUG_RETURN(0);
 }
 

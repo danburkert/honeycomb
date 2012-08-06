@@ -72,6 +72,7 @@ public class HBaseAdapter {
     }
 
     public static long startScan(String tableName) throws HBaseAdapterException {
+        logger.info("HBaseAdapter: Starting scan on table " + tableName);
         long scanId = connectionCounter.incrementAndGet();
         try {
             ResultScanner scanner = client.getTableScanner(tableName);
