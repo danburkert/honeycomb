@@ -4,6 +4,7 @@ import com.nearinfinity.mysqlengine.Connection;
 import com.nearinfinity.mysqlengine.HBaseClient;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -27,15 +28,19 @@ public class HBaseAdapter {
     private static Map<Long, Connection> clientPool;
     private static HBaseClient client;
     private static boolean configured;
+    private static final Logger logger = Logger.getLogger(HBaseAdapter.class);
 
     static {
         try {
-            Scanner confFile = new Scanner(new File("adapter.conf"));
+            logger.info("HBaseAdapter::static_initializer in cwd " + new File(".").getAbsolutePath());
+            Scanner confFile = new Scanner(new File("/etc/mysql/adapter.conf"));
             Map<String, String> params = new HashMap<String, String>();
             while (confFile.hasNextLine()) {
                 Scanner line = new Scanner(confFile.nextLine());
                 params.put(line.next(), line.next());
             }
+            logger.info("params[\"hbase_table_name\"] = " + params.get("hbase_table_name"));
+            logger.info("params[\"zk_quorum\"] = " + params.get("zk_quorum"));
             client = new HBaseClient(params.get("hbase_table_name"), params.get("zk_quorum"));
             connectionCounter = new AtomicLong(0L);
             clientPool = new ConcurrentHashMap<Long, Connection>();
@@ -43,6 +48,7 @@ public class HBaseAdapter {
             configured = true;
         }
         catch (FileNotFoundException e) {
+            logger.warn("HBaseAdapter::GotFileNotFoundException", e);
             e.printStackTrace();
         }
     }
@@ -52,10 +58,23 @@ public class HBaseAdapter {
     }
 
     public static boolean createTable(String tableName, List<String> columnNames) throws HBaseAdapterException {
+        logger.info("$adapter->$create$Table$$");
+        logger.info("Another printf");
         try {
+            logger.info("TableName is null: " + (tableName == null));
+            logger.info("Another printf");
+            logger.info("ColumnNames is null: " + (columnNames == null));
+            logger.info("Another printf");
+            logger.info("Client is null: " + (client == null));
+            logger.info("Another printf");
+            logger.info("Table name is " + tableName);
+            logger.info("Another printf");
             client.createTableFull(tableName, columnNames);
+            logger.info("Another printf");
         }
-        catch (IOException e) {
+        catch (Exception e) {
+            logger.info("(def (we threw (an exception)))");
+            logger.info(e.toString());
             throw new HBaseAdapterException("IOException", e.toString());
         }
         return true;

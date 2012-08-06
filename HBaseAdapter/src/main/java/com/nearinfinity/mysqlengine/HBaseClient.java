@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import org.apache.log4j.Logger;
 
 /**
  * Created with IntelliJ IDEA.
@@ -28,6 +29,8 @@ public class HBaseClient {
 
     private final ConcurrentHashMap<String, TableInfo> tableCache = new ConcurrentHashMap<String, TableInfo>();
 
+    private static final Logger logger = Logger.getLogger(HBaseClient.class);
+
     public HBaseClient(String tableName, String zkQuorum) {
         Configuration configuration = HBaseConfiguration.create();
         configuration.set("hbase.zookeeper.quorum", zkQuorum);
@@ -42,6 +45,8 @@ public class HBaseClient {
     }
 
     private void createTable(String tableName, List<Put> puts) throws IOException {
+        logger.info("Congrats, you have made it to HBaseClient.createTable");
+
         //Get and increment the table counter (assumes it exists)
         long tableId = table.incrementColumnValue(ROOT, NIC, new byte[0], 1);
 
@@ -77,6 +82,7 @@ public class HBaseClient {
     }
 
     public void createTableFull(String tableName, List<String> columns) throws IOException {
+        logger.info("HBaseClient createTableFull");
         //Batch put list
         List<Put> putList = new LinkedList<Put>();
 
@@ -85,6 +91,8 @@ public class HBaseClient {
 
         //Create columns and add to put list
         addColumns(tableName, columns, putList);
+
+        logger.info("Number of puts " + putList.size());
 
         //Perform all puts
         table.put(putList);
@@ -140,6 +148,8 @@ public class HBaseClient {
     }
 
     public List<Map<String, byte[]>> fullTableScan(String tableName) throws IOException {
+        logger.info("HBaseClient.fullTableScan");
+
         //Get table id
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
@@ -192,6 +202,8 @@ public class HBaseClient {
     }
 
     public ResultScanner search(String tableName, String columnName, byte[] value) throws IOException {
+        logger.info("HBaseClient.search");
+
         //Get table and column id
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
