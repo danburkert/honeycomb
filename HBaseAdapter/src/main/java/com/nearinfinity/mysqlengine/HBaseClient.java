@@ -32,6 +32,9 @@ public class HBaseClient {
     private static final Logger logger = Logger.getLogger(HBaseClient.class);
 
     public HBaseClient(String tableName, String zkQuorum) {
+        logger.info("HBaseClient: Constructing with HBase table name: " + tableName);
+        logger.info("HBaseClient: Constructing with ZK Quorum: " + zkQuorum);
+
         Configuration configuration = HBaseConfiguration.create();
         configuration.set("hbase.zookeeper.quorum", zkQuorum);
 
@@ -39,13 +42,12 @@ public class HBaseClient {
             this.table = new HTable(configuration, tableName);
         }
         catch(IOException e) {
-            //TODO: handle this better
-            e.printStackTrace();
+            logger.error("IOException thrown", e);
         }
     }
 
     private void createTable(String tableName, List<Put> puts) throws IOException {
-        logger.info("Congrats, you have made it to HBaseClient.createTable");
+        logger.info("HBaseClient: createTable called");
 
         //Get and increment the table counter (assumes it exists)
         long tableId = table.incrementColumnValue(ROOT, NIC, new byte[0], 1);
@@ -82,7 +84,7 @@ public class HBaseClient {
     }
 
     public void createTableFull(String tableName, List<String> columns) throws IOException {
-        logger.info("HBaseClient createTableFull");
+        logger.info("HBaseClient: createTableFull");
         //Batch put list
         List<Put> putList = new LinkedList<Put>();
 
@@ -92,7 +94,7 @@ public class HBaseClient {
         //Create columns and add to put list
         addColumns(tableName, columns, putList);
 
-        logger.info("Number of puts " + putList.size());
+        logger.info("HBaseClient: Putting " + putList.size() + " new HBase cells");
 
         //Perform all puts
         table.put(putList);
