@@ -70,11 +70,11 @@ int CloudHandler::rnd_init(bool scan)
 
     char* table_name = this->share->table_name;
 
-    JVMThreadAttach attached_thread(this->env, this->jvm);
+    JVMThreadAttach attached_thread(&this->env, this->jvm);
 
     jclass adapter_class = this->env->FindClass("HBaseAdapter");
     jmethodID start_scan_method = this->env->GetStaticMethodID(adapter_class, "startScan", "(Ljava/lang/String;)J");
-    jstring java_table_name = this->string_to_java_string(table_name);
+    jstring java_table_name = this->string_to_java_string(NULL, table_name);
     this->curr_scan_id = this->env->CallStaticLongMethod(adapter_class, start_scan_method, java_table_name);
     DBUG_RETURN(0);
 }
@@ -94,7 +94,7 @@ int CloudHandler::rnd_next(uchar *buf)
     //rc= HA_ERR_END_OF_FILE;
     //MYSQL_READ_ROW_DONE(rc);
 
-    JVMThreadAttach attached_thread(this->env, this->jvm);
+    JVMThreadAttach attached_thread(&this->env, this->jvm);
     jclass adapter_class = this->env->FindClass("HBaseAdapter");
 
     jclass row_class = this->env->FindClass("Row");
@@ -145,7 +145,7 @@ int CloudHandler::rnd_end()
 {
   DBUG_ENTER("CloudHandler::rnd_end");
 
-  JVMThreadAttach attached_thread(this->env, this->jvm);
+  JVMThreadAttach attached_thread(&this->env, this->jvm);
   jclass adapter_class = this->env->FindClass("HBaseAdapter");
   jmethodID end_scan_method = this->env->GetStaticMethodID(adapter_class, "end_scan", "(J)V");
   jlong java_scan_id = curr_scan_id;
@@ -159,28 +159,34 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
                          HA_CREATE_INFO *create_info)
 {
     DBUG_ENTER("CloudHandler::create");
-    JVMThreadAttach attached_thread(this->env, this->jvm);
-    jclass adapter_class = this->env->FindClass("HBaseAdapter");
+    JNIEnv **jni_env;
+    if(this->jvm == NULL)
+    {
+      //this->recreate_vm();
+    }
+
+    JVMThreadAttach attached_thread(jni_env, this->jvm);
+    jclass adapter_class = (*jni_env)->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
     if (adapter_class == NULL)
     {
       DBUG_PRINT("Error", ("Could not find adapter class HBaseAdapter"));
       DBUG_RETURN(1);
     }
 
-    const char* table_name = table_arg->alias;
+    const char* table_name = create_info->alias;
 
-    jclass list_class = this->env->FindClass("java/util/LinkedList");
-    jmethodID list_constructor = this->env->GetMethodID(list_class, "<init>", "()V");
-    jobject columns = this->env->NewObject(list_class, list_constructor);
-    jmethodID add_column = this->env->GetMethodID(list_class, "add", "(Ljava/lang/Object;)Z");
+    jclass list_class = (*jni_env)->FindClass("java/util/LinkedList");
+    jmethodID list_constructor = (*jni_env)->GetMethodID(list_class, "<init>", "()V");
+    jobject columns = (*jni_env)->NewObject(list_class, list_constructor);
+    jmethodID add_column = (*jni_env)->GetMethodID(list_class, "add", "(Ljava/lang/Object;)Z");
 
-    for (Field **field = table->field ; *field ; field++)
+    for (Field **field = table_arg->field ; *field ; field++)
     {
-      this->env->CallBooleanMethod(columns, add_column, string_to_java_string((*field)->field_name));
+      (*jni_env)->CallBooleanMethod(columns, add_column, string_to_java_string(*jni_env, (*field)->field_name));
     }
 
-    jmethodID create_table_method = this->env->GetStaticMethodID(adapter_class, "createTable", "(Ljava/lang/String;Ljava/util/List;)Z");
-    jboolean result = this->env->CallStaticBooleanMethod(adapter_class, create_table_method, table_name, columns);
+    jmethodID create_table_method = (*jni_env)->GetStaticMethodID(adapter_class, "createTable", "(Ljava/lang/String;Ljava/util/List;)Z");
+    jboolean result = (*jni_env)->CallStaticBooleanMethod(adapter_class, create_table_method, string_to_java_string(*jni_env, table_name), columns);
     DBUG_PRINT("INFO", ("Result of createTable: %d", result));
 
     DBUG_RETURN(0);
@@ -281,7 +287,7 @@ const char* CloudHandler::java_to_string(jstring j_str)
     return str;
 }
 
-jstring CloudHandler::string_to_java_string(const char* string)
+jstring CloudHandler::string_to_java_string(JNIEnv *jni_env, const char* string)
 {
-  return this->env->NewStringUTF(string);
+  return jni_env->NewStringUTF(string);
 }

@@ -119,17 +119,30 @@ static int cloud_init_func(void *p)
     cloud_hton->flags=   HTON_CAN_RECREATE;
 
     DBUG_PRINT("Java", ("Starting up the jvm"));
-    JavaVMInitArgs vm_args;
-    JavaVMOption option[1];
-    //option[0].optionString = "-Djava.class.path=/usr/local/Cellar/mysql/5.5.25a/lib/plugin/mysqlengine-0.1-jar-with-dependencies.jar";
-    option[0].optionString = "-Djava.class.path=JUNK_ASDF";
+    JavaVM* created_vms[10];
+    jsize vm_count;
+    JNI_GetCreatedJavaVMs(created_vms, 10, &vm_count);
+    if(vm_count > 0)
+    {
+      DBUG_PRINT("INFO", ("%d created VMs, using the first", vm_count));
+      jvm = created_vms[0];
+    }
+    else
+    {
+      JavaVMInitArgs vm_args;
+      JavaVMOption option[3];
+      option[0].optionString = "-Djava.class.path=/usr/local/Cellar/mysql/5.5.25a/lib/plugin/mysqlengine-0.1-jar-with-dependencies.jar";
+      option[1].optionString = "-Djava.security.krb5.realm=OX.AC.UK";
+      option[2].optionString = "-Djava.security.krb5.kdc=kdc0.ox.ac.uk:kdc1.ox.ac.uk";
+      //option[0].optionString = "-Djava.class.path=JUNK_ASDF";
 
-    JNI_GetDefaultJavaVMInitArgs(&vm_args);
-    vm_args.version = JNI_VERSION_1_6;
-    vm_args.options = option;
+      JNI_GetDefaultJavaVMInitArgs(&vm_args);
+      vm_args.version = JNI_VERSION_1_6;
+      vm_args.options = option;
 
-    JNI_CreateJavaVM(&jvm, (void**)&env, &vm_args);
-    DBUG_PRINT("Java", ("Jvm successfully started"));
+      JNI_CreateJavaVM(&jvm, (void**)&env, &vm_args);
+      DBUG_PRINT("Java", ("Jvm successfully started"));
+    }
 
     DBUG_RETURN(0);
 }

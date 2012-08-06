@@ -1,5 +1,5 @@
 build/
-controller/target/
+target/
 
 .idea/
 .cmake
@@ -9,3 +9,4 @@ cscope.out
 tags
 *.class
 *.jar
+restart-mysql.sh
