@@ -32,19 +32,22 @@ public class HBaseAdapter {
 
     static {
         try {
-            logger.info("HBaseAdapter::static_initializer in cwd " + new File(".").getAbsolutePath());
+            logger.info("HBaseAdapter: Static initializer");
+
+            //Read config options from adapter.conf
             Scanner confFile = new Scanner(new File("/etc/mysql/adapter.conf"));
             Map<String, String> params = new HashMap<String, String>();
             while (confFile.hasNextLine()) {
                 Scanner line = new Scanner(confFile.nextLine());
                 params.put(line.next(), line.next());
             }
-            logger.info("params[\"hbase_table_name\"] = " + params.get("hbase_table_name"));
-            logger.info("params[\"zk_quorum\"] = " + params.get("zk_quorum"));
+
+            //Initiliaze class variables
             client = new HBaseClient(params.get("hbase_table_name"), params.get("zk_quorum"));
             connectionCounter = new AtomicLong(0L);
             clientPool = new ConcurrentHashMap<Long, Connection>();
 
+            //We are now configured
             configured = true;
         }
         catch (FileNotFoundException e) {
@@ -58,23 +61,11 @@ public class HBaseAdapter {
     }
 
     public static boolean createTable(String tableName, List<String> columnNames) throws HBaseAdapterException {
-        logger.info("$adapter->$create$Table$$");
-        logger.info("Another printf");
+        logger.info("HBaseAdapter: Creating table " + tableName);
         try {
-            logger.info("TableName is null: " + (tableName == null));
-            logger.info("Another printf");
-            logger.info("ColumnNames is null: " + (columnNames == null));
-            logger.info("Another printf");
-            logger.info("Client is null: " + (client == null));
-            logger.info("Another printf");
-            logger.info("Table name is " + tableName);
-            logger.info("Another printf");
             client.createTableFull(tableName, columnNames);
-            logger.info("Another printf");
         }
-        catch (Exception e) {
-            logger.info("(def (we threw (an exception)))");
-            logger.info(e.toString());
+        catch (IOException e) {
             throw new HBaseAdapterException("IOException", e.toString());
         }
         return true;
