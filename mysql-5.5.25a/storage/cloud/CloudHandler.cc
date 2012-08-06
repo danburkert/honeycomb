@@ -97,13 +97,13 @@ int CloudHandler::rnd_next(uchar *buf)
     //MYSQL_READ_ROW_DONE(rc);
 
     JVMThreadAttach attached_thread(&this->env, this->jvm);
-    jclass adapter_class = this->env->FindClass("HBaseAdapter");
-
-    jclass row_class = this->env->FindClass("Row");
-    jmethodID next_row_method = this->env->GetStaticMethodID(adapter_class, "next_row", "(J)Lcom/nearinfinity/mysqlengine/jni/Row;");
+    
+    jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
+    jmethodID next_row_method = this->env->GetStaticMethodID(adapter_class, "nextRow", "(J)Lcom/nearinfinity/mysqlengine/jni/Row;");
     jlong java_scan_id = curr_scan_id;
     jobject row = this->env->CallStaticObjectMethod(adapter_class, next_row_method, java_scan_id);
 
+    jclass row_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/Row");
     jmethodID get_keys_method = this->env->GetMethodID(row_class, "getKeys", "()[Ljava/lang/String;");
     jmethodID get_vals_method = this->env->GetMethodID(row_class, "getValues", "()[[B");
 
@@ -148,9 +148,11 @@ int CloudHandler::rnd_end()
   DBUG_ENTER("CloudHandler::rnd_end");
 
   JVMThreadAttach attached_thread(&this->env, this->jvm);
-  jclass adapter_class = this->env->FindClass("HBaseAdapter");
+  
+  jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
   jmethodID end_scan_method = this->env->GetStaticMethodID(adapter_class, "end_scan", "(J)V");
   jlong java_scan_id = curr_scan_id;
+  
   this->env->CallStaticVoidMethod(adapter_class, end_scan_method, java_scan_id);
 
   curr_scan_id = -1;
