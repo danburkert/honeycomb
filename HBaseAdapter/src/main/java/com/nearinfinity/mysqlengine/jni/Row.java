@@ -1,5 +1,7 @@
 package com.nearinfinity.mysqlengine.jni;
 
+import org.apache.log4j.Logger;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,6 +13,8 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 public class Row {
+    private static final Logger logger = Logger.getLogger(Row.class);
+
     private Map<String, byte[]> rowMap;
 
     public Map<String, byte[]> getRowMap() {
