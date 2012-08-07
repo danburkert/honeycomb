@@ -165,7 +165,16 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
     jclass adapter_class = jni_env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
     if (adapter_class == NULL)
     {
-      DBUG_PRINT("Error", ("Could not find adapter class HBaseAdapter"));
+      if(jni_env->ExceptionCheck() == JNI_TRUE)
+      {
+        jthrowable throwable = jni_env->ExceptionOccurred();
+        jclass objClazz = jni_env->GetObjectClass(throwable);
+        jmethodID methodId = jni_env->GetMethodID(objClazz, "toString", "()Ljava/lang/String;");
+        jstring result = (jstring)jni_env->CallObjectMethod(throwable, methodId);
+        const char* string = jni_env->GetStringUTFChars(result, NULL);
+        jni_env->ExceptionDescribe();
+      }
+      DBUG_PRINT("ERROR", ("Could not find adapter class HBaseAdapter"));
       DBUG_RETURN(1);
     }
 

@@ -7,7 +7,7 @@
 #include "ha_cloud.h"
 #include "probes_mysql.h"
 #include "sql_plugin.h"
-#include <signal.h>
+#include <stdlib.h>
 
 static handler *cloud_create_handler(handlerton *hton,
                                      TABLE_SHARE *table,
@@ -48,21 +48,18 @@ static void init_cloud_psi_keys()
 }
 #endif
 
-static void configure_jvm_options(JavaVMInitArgs* vm_args)
+static void print_java_exception(JNIEnv* env)
 {
-#ifdef __APPLE__
-      const int option_count = 3;
-      JavaVMOption option[option_count];
-      option[1].optionString = "-Djava.security.krb5.realm=OX.AC.UK";
-      option[2].optionString = "-Djava.security.krb5.kdc=kdc0.ox.ac.uk:kdc1.ox.ac.uk";
-#else
-      const int option_count = 1;
-      JavaVMOption option[option_count];
-#endif
-      option[0].optionString = "-Djava.class.path=/usr/local/mysql/lib/plugin/mysqlengine-0.1-jar-with-dependencies.jar";
-      vm_args->nOptions = option_count;
-      vm_args->options = option;
-      vm_args->version = JNI_VERSION_1_6;
+  if(env->ExceptionCheck() == JNI_TRUE)
+  {
+    jthrowable throwable = env->ExceptionOccurred();
+    jclass objClazz = env->GetObjectClass(throwable);
+    jmethodID methodId = env->GetMethodID(objClazz, "toString", "()Ljava/lang/String;");
+    jstring result = (jstring)env->CallObjectMethod(throwable, methodId);
+    const char* string = env->GetStringUTFChars(result, NULL);
+    DBUG_PRINT("INFO", ("Exceptions from the jvm %s", string));
+    env->ReleaseStringUTFChars(result, string);
+  }
 }
 
 static int cloud_init_func(void *p)
@@ -82,26 +79,46 @@ static int cloud_init_func(void *p)
     cloud_hton->create = cloud_create_handler;
     cloud_hton->flags = HTON_CAN_RECREATE;
 
-    JavaVM* created_vms[1];
+    JavaVM* created_vms;
     jsize vm_count;
-    jint result = JNI_GetCreatedJavaVMs(created_vms, 1, &vm_count);
+    jint result = JNI_GetCreatedJavaVMs(&created_vms, 1, &vm_count);
     DBUG_PRINT("INFO", ("GetCreatedJavaVMs returned %d, vm count %d", result, vm_count));
     if (result == 0 && vm_count > 0)
     {
-        jvm = created_vms[0];
+      jvm = created_vms;
+      JavaVMAttachArgs attachArgs;
+      attachArgs.version = JNI_VERSION_1_6;
+      attachArgs.name = NULL;
+      attachArgs.group = NULL;
+      jint ok = jvm->AttachCurrentThread((void**)&env, &attachArgs);
+      jclass adapter_class = env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
+      print_java_exception(env);
     }
     else
     {
-      DBUG_PRINT("INFO", ("Creating a new JVM."));
       JavaVMInitArgs vm_args;
-      configure_jvm_options(&vm_args);
+#ifdef __APPLE__
+      const int option_count = 3;
+      JavaVMOption option[option_count];
+      option[1].optionString = "-Djava.security.krb5.realm=OX.AC.UK";
+      option[2].optionString = "-Djava.security.krb5.kdc=kdc0.ox.ac.uk:kdc1.ox.ac.uk";
+#else
+      const int option_count = 1;
+      JavaVMOption option[option_count];
+#endif
+      option[0].optionString = "-Djava.class.path=/usr/local/mysql/lib/plugin/mysql.jar";
+      vm_args.nOptions = option_count;
+      vm_args.options = option;
+      vm_args.version = JNI_VERSION_1_6;
       jint result = JNI_CreateJavaVM(&jvm, (void**)&env, &vm_args);
       if (result != 0)
       {
         DBUG_PRINT("ERROR", ("Failed to create JVM"));
       }
 
-      DBUG_PRINT("INFO", ("CreateJavaVM returned %d", result));
+      jclass adapter_class = env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
+      DBUG_PRINT("INFO", ("Adapter class %p", adapter_class));
+      print_java_exception(env);
     }
 
     DBUG_RETURN(0);
