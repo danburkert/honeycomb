@@ -113,6 +113,10 @@ int CloudHandler::rnd_next(uchar *buf)
 
     jarray keys = (jarray) this->env->CallObjectMethod(row, get_keys_method);
     jarray vals = (jarray) this->env->CallObjectMethod(row, get_vals_method);
+    if (keys == NULL || vals == NULL) {
+      dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
+      DBUG_RETURN(HA_ERR_END_OF_FILE);
+    }
 
     const char* key;
     char* val;
@@ -122,17 +126,14 @@ int CloudHandler::rnd_next(uchar *buf)
     jsize size = this->env->GetArrayLength(keys);
 
     //If there are no values returned, then we've reached the last row
-    if (size == 0) {
-      DBUG_RETURN(HA_ERR_END_OF_FILE);
-    }
 
     int j = 0;
     for (uint i = 0 ; i < table->s->fields ; i++)
     {
       Field *field = table->field[i];
       my_ptrdiff_t offset;
-      //offset = (my_ptrdiff_t) (buf - table->record[0]);
-      //field->move_field_offset(offset);
+      offset = (my_ptrdiff_t) (buf - table->record[0]);
+      field->move_field_offset(offset);
 
       key = java_to_string((jstring) this->env->GetObjectArrayElement((jobjectArray) keys, (jsize) j));
       val = (char*) this->env->GetByteArrayElements((jbyteArray) this->env->GetObjectArrayElement((jobjectArray) vals, j), &is_copy);
@@ -144,7 +145,7 @@ int CloudHandler::rnd_next(uchar *buf)
         field->store(field_val, FALSE);
       }
 
-      //field->move_field_offset(-offset);
+      field->move_field_offset(-offset);
     }
 
     /*for(jsize i = 0; i < size; i++) {
