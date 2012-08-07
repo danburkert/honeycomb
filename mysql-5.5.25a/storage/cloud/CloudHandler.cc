@@ -9,6 +9,7 @@
 #include "sql_plugin.h"
 #include "ha_cloud.h"
 #include "JVMThreadAttach.h"
+#include "Macros.h"
 
 /*
   If frm_error() is called in table.cc this is called to find out what file
@@ -213,7 +214,7 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
         const char* string = jni_env->GetStringUTFChars(result, NULL);
         jni_env->ExceptionDescribe();
       }
-      DBUG_PRINT("ERROR", ("Could not find adapter class HBaseAdapter"));
+      ERROR(("Could not find adapter class HBaseAdapter"));
       DBUG_RETURN(1);
     }
 
@@ -231,7 +232,7 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
 
     jmethodID create_table_method = jni_env->GetStaticMethodID(adapter_class, "createTable", "(Ljava/lang/String;Ljava/util/List;)Z");
     jboolean result = jni_env->CallStaticBooleanMethod(adapter_class, create_table_method, string_to_java_string(jni_env, table_name), columns);
-    DBUG_PRINT("INFO", ("Result of createTable: %d", result));
+    INFO(("Result of createTable: %d", result));
 
     DBUG_RETURN(0);
 }
