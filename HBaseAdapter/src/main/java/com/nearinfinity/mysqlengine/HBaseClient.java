@@ -98,6 +98,8 @@ public class HBaseClient {
 
         //Perform all puts
         table.put(putList);
+
+        table.flushCommits();
     }
 
     public void writeRow(String tableName, Map<String, byte[]> values) throws IOException {
