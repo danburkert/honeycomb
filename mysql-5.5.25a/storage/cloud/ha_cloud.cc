@@ -106,7 +106,7 @@ static int cloud_init_func(void *p)
       const int option_count = 1;
       JavaVMOption option[option_count];
 #endif
-      option[0].optionString = "-Djava.class.path=/usr/local/mysql/lib/plugin/mysql.jar";
+      option[0].optionString = "-Djava.class.path=/usr/local/Cellar/mysql/5.5.25a/lib/plugin/mysqlengine-0.1-jar-with-dependencies.jar";
       vm_args.nOptions = option_count;
       vm_args.options = option;
       vm_args.version = JNI_VERSION_1_6;

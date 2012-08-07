@@ -267,6 +267,8 @@ int CloudHandler::free_share(CloudShare *share)
 int CloudHandler::info(uint)
 {
     DBUG_ENTER("CloudHandler::info");
+    if (stats.records < 2) 
+      stats.records= 2;
     DBUG_RETURN(0);
 }
 
@@ -322,6 +324,12 @@ error:
     my_free(share);
 
     return NULL;
+}
+
+int CloudHandler::extra(enum ha_extra_function operation)
+{
+  DBUG_ENTER("CloudHandler::extra");
+  DBUG_RETURN(0);
 }
 
 const char* CloudHandler::java_to_string(jstring j_str)
