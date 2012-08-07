@@ -256,6 +256,7 @@ public class HBaseClient {
                 .array();
 
         Scan scan = new Scan(startRow, endRow);
+        scan.setCaching(10);
 
         return table.getScanner(scan);
     }
