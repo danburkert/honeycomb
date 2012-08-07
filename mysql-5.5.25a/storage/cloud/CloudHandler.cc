@@ -90,11 +90,14 @@ int CloudHandler::external_lock(THD *thd, int lock_type)
 int CloudHandler::rnd_next(uchar *buf)
 {
     int rc;
+    my_bitmap_map *orig_bitmap;
+    
     DBUG_ENTER("CloudHandler::rnd_next");
 
-    //MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, TRUE);
+    orig_bitmap= dbug_tmp_use_all_columns(table, table->write_set);
+    
+    MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, TRUE);
     //rc= HA_ERR_END_OF_FILE;
-    //MYSQL_READ_ROW_DONE(rc);
 
     JVMThreadAttach attached_thread(&this->env, this->jvm);
     
@@ -116,12 +119,44 @@ int CloudHandler::rnd_next(uchar *buf)
     jboolean is_copy = JNI_FALSE;
 
     jsize size = this->env->GetArrayLength(keys);
-    for(jsize i = 0; i < size; i++) {
+
+    //If there are no values returned, then we've reached the last row
+    if (size == 0) {
+      DBUG_RETURN(HA_ERR_END_OF_FILE);
+    }
+
+    int j = 0;
+    for (uint i = 0 ; i < table->s->fields ; i++)
+    {
+      Field *field = table->field[i];
+      my_ptrdiff_t offset;
+      //offset = (my_ptrdiff_t) (buf - table->record[0]);
+      //field->move_field_offset(offset);
+
+      key = java_to_string((jstring) this->env->GetObjectArrayElement((jobjectArray) keys, (jsize) j));
+      val = (char*) this->env->GetByteArrayElements((jbyteArray) this->env->GetObjectArrayElement((jobjectArray) vals, j), &is_copy);
+
+      //field->set_notnull();
+      if (field->type() == MYSQL_TYPE_LONG)
+      {
+        long long field_val = atol(val);
+        field->store(field_val, FALSE);
+      }
+
+      //field->move_field_offset(-offset);
+    }
+
+    /*for(jsize i = 0; i < size; i++) {
       key = java_to_string((jstring) this->env->GetObjectArrayElement((jobjectArray) keys, (jsize) i));
       val = (char*) this->env->GetByteArrayElements((jbyteArray) this->env->GetObjectArrayElement((jobjectArray) vals, i), &is_copy);
 
-      //TODO: Go through now and pack each key and value into the Field object
-    }
+      //Go through now and pack each key and value into the Field object
+    }*/
+
+    dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
+    
+    MYSQL_READ_ROW_DONE(rc);
+    
     DBUG_RETURN(rc);
 }
 
@@ -150,7 +185,7 @@ int CloudHandler::rnd_end()
   JVMThreadAttach attached_thread(&this->env, this->jvm);
   
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
-  jmethodID end_scan_method = this->env->GetStaticMethodID(adapter_class, "end_scan", "(J)V");
+  jmethodID end_scan_method = this->env->GetStaticMethodID(adapter_class, "endScan", "(J)V");
   jlong java_scan_id = curr_scan_id;
   
   this->env->CallStaticVoidMethod(adapter_class, end_scan_method, java_scan_id);
