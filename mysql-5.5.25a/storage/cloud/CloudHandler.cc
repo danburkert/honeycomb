@@ -10,8 +10,6 @@
 #include "ha_cloud.h"
 #include "JVMThreadAttach.h"
 #include <arpa/inet.h>
-
-longlong htonll(longlong);
 #include "Macros.h"
 
 /*
@@ -220,15 +218,17 @@ int CloudHandler::external_lock(THD *thd, int lock_type)
 
 int CloudHandler::rnd_next(uchar *buf)
 {
-    int rc;
+    int rc = 0;
     my_bitmap_map *orig_bitmap;
     
+    ha_statistic_increment(&SSV::ha_read_rnd_next_count);
     DBUG_ENTER("CloudHandler::rnd_next");
 
     orig_bitmap= dbug_tmp_use_all_columns(table, table->write_set);
     
     MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, TRUE);
-    //rc= HA_ERR_END_OF_FILE;
+
+    memset(buf, 0, table->s->null_bytes);
 
     JVMThreadAttach attached_thread(&this->env, this->jvm);
     
@@ -248,45 +248,51 @@ int CloudHandler::rnd_next(uchar *buf)
       DBUG_RETURN(HA_ERR_END_OF_FILE);
     }
 
-    const char* key;
-    char* val;
-
     jboolean is_copy = JNI_FALSE;
 
     jsize size = this->env->GetArrayLength(keys);
 
-    //If there are no values returned, then we've reached the last row
-
-    int j = 0;
-    for (uint i = 0 ; i < table->s->fields ; i++)
+    for (jsize i = 0 ; i < size ; i++)
     {
-      Field *field = table->field[i];
-      my_ptrdiff_t offset;
-      offset = (my_ptrdiff_t) (buf - table->record[0]);
-      field->move_field_offset(offset);
+      jstring key_string = (jstring) this->env->GetObjectArrayElement((jobjectArray) keys, i);
+      const char* key = java_to_string(key_string);
+      jbyteArray byte_array = (jbyteArray) this->env->GetObjectArrayElement((jobjectArray) vals, i);
+      jsize val_length = this->env->GetArrayLength(byte_array);
+      char* val = (char*) this->env->GetByteArrayElements(byte_array, &is_copy);
 
-      key = java_to_string((jstring) this->env->GetObjectArrayElement((jobjectArray) keys, (jsize) j));
-      val = (char*) this->env->GetByteArrayElements((jbyteArray) this->env->GetObjectArrayElement((jobjectArray) vals, j), &is_copy);
-
-      //field->set_notnull();
-      if (field->type() == MYSQL_TYPE_LONG)
+      for(int j = 0; j < table->s->fields; j++)
       {
-        long long field_val = atol(val);
-        field->store(field_val, FALSE);
+        Field *field = table->field[j];
+        if (strcmp(key, field->field_name) != 0)
+        {
+          continue;
+        }
+
+        my_ptrdiff_t offset;
+        offset = (my_ptrdiff_t) (buf - table->record[0]);
+        field->move_field_offset(offset);
+
+        if (field->type() == MYSQL_TYPE_LONG)
+        {
+          longlong long_value = htonll(*(longlong*)val, false);
+          field->store(long_value, false);
+        }
+
+        if(field->type() == MYSQL_TYPE_VARCHAR)
+        {
+          field->store(val, val_length, &my_charset_bin);
+        }
+
+        field->move_field_offset(-offset);
+        break;
       }
 
-      field->move_field_offset(-offset);
+      this->env->ReleaseStringUTFChars(key_string, key);
     }
-
-    /*for(jsize i = 0; i < size; i++) {
-      key = java_to_string((jstring) this->env->GetObjectArrayElement((jobjectArray) keys, (jsize) i));
-      val = (char*) this->env->GetByteArrayElements((jbyteArray) this->env->GetObjectArrayElement((jobjectArray) vals, i), &is_copy);
-
-      //Go through now and pack each key and value into the Field object
-    }*/
 
     dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
     
+    stats.records++;
     MYSQL_READ_ROW_DONE(rc);
     
     DBUG_RETURN(rc);
@@ -451,7 +457,6 @@ CloudShare *CloudHandler::get_share(const char *table_name, TABLE *table)
     share->table_alias= tmp_alias;
     share->crashed= FALSE;
     share->rows_recorded= 0;
-    strmov(share->table_name, table_name);
 
     if (my_hash_insert(cloud_open_tables, (uchar*) share))
         goto error;
@@ -478,7 +483,6 @@ int CloudHandler::extra(enum ha_extra_function operation)
 const char* CloudHandler::java_to_string(jstring j_str)
 {
     const char* str = this->env->GetStringUTFChars(j_str, NULL);
-    this->env->ReleaseStringUTFChars(j_str, str);
     return str;
 }
 
@@ -520,28 +524,3 @@ jbyteArray CloudHandler::convert_value_to_java_bytes(JNIEnv *jni_env, uchar* val
 	return byteArray;
 }
 
-longlong htonll(longlong src) {
-	#define TYP_INIT 0
-	#define TYP_SMLE 1
-	#define TYP_BIGE 2
-
-	  static int typ = TYP_INIT;
-	  unsigned char c;
-	  union {
-		longlong ull;
-		unsigned char c[8];
-	  } x;
-	  if (typ == TYP_INIT) {
-		x.ull = 0x01;
-		typ = (x.c[7] == 0x01ULL) ? TYP_BIGE : TYP_SMLE;
-	  }
-	  if (typ == TYP_BIGE)
-		return src;
-	  x.ull = src;
-	  c = x.c[0]; x.c[0] = x.c[7]; x.c[7] = c;
-	  c = x.c[1]; x.c[1] = x.c[6]; x.c[6] = c;
-	  c = x.c[2]; x.c[2] = x.c[5]; x.c[5] = c;
-	  c = x.c[3]; x.c[3] = x.c[4]; x.c[4] = c;
-
-	  return x.ull;
-}
