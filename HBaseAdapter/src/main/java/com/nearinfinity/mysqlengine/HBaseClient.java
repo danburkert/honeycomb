@@ -27,6 +27,8 @@ public class HBaseClient {
 
     private static final byte[] NIC = "nic".getBytes();
 
+    private static final byte[] IS_DELETED = "isDeleted".getBytes();
+
     private final ConcurrentHashMap<String, TableInfo> tableCache = new ConcurrentHashMap<String, TableInfo>();
 
     private static final Logger logger = Logger.getLogger(HBaseClient.class);
@@ -193,7 +195,10 @@ public class HBaseClient {
         return rows;
     }
 
-    public Result getDataRow(UUID uuid, long tableId) throws IOException {
+    public Result getDataRow(UUID uuid, String tableName) throws IOException {
+        TableInfo info = tableCache.get(tableName);
+        long tableId = info.getId();
+
         byte[] rowKey = ByteBuffer.allocate(25)
                 .put(RowType.DATA.getValue())
                 .putLong(tableId)
@@ -307,5 +312,23 @@ public class HBaseClient {
         }
 
         return columns;
+    }
+
+    public boolean deleteRow(byte[] rowKey) throws IOException {
+        Put deletePut = new Put(rowKey);
+
+        long deleted = 1L;
+        deletePut.add(NIC, IS_DELETED, Bytes.toBytes(deleted));
+
+        table.put(deletePut);
+
+        return true;
+    }
+
+    public UUID parseUUIDFromDataRow(Result result) {
+        ByteBuffer buffer = ByteBuffer.wrap(result.getRow());
+        buffer.get(); /* Row Type: 1 byte */
+        buffer.getLong(); /* Table Id: 8 bytes */
+        return new UUID(buffer.getLong(), buffer.getLong());
     }
 }
