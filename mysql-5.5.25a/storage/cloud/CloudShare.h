@@ -2,6 +2,8 @@
 #define CLOUD_SHARE_H
 
 typedef struct st_cloud_share {
+  char *table_name;
+  uint table_name_length;
   char *table_alias;
   char *path_to_table;
   char data_file_name[FN_REFLEN];
@@ -11,7 +13,6 @@ typedef struct st_cloud_share {
   THR_LOCK lock;
   bool crashed;             /* Meta file is crashed */
   ha_rows rows_recorded;    /* Number of rows in tables */
-  uint data_file_version;   /* Version of the data file used */
 } CloudShare;
 
 #endif
