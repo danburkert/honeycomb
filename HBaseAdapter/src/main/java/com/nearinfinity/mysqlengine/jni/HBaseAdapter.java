@@ -107,6 +107,7 @@ public class HBaseAdapter {
     public static void endScan(long scanId) throws HBaseAdapterException {
         logger.info("HBaseAdapter: Ending scan with id " + scanId);
         Connection conn = clientPool.remove(scanId);
+        conn.getScanner().close();
         if (conn == null) {
             throw new HBaseAdapterException("ScanId does not exist", "");
         }
