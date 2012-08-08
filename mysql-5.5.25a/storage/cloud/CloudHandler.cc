@@ -251,35 +251,10 @@ int CloudHandler::rnd_next(uchar *buf)
       DBUG_RETURN(HA_ERR_END_OF_FILE);
     }
 
-    jboolean is_copy = JNI_FALSE;
-
-    this->ref = (uchar*) this->env->GetByteArrayElements(uuid, &is_copy);
+    this->ref = (uchar*) this->env->GetByteArrayElements(uuid, JNI_FALSE);
     this->ref_length = 16;
 
-    jsize size = this->env->GetArrayLength(keys);
-
-    for (jsize i = 0 ; i < size ; i++)
-    {
-      jstring key_string = (jstring) this->env->GetObjectArrayElement((jobjectArray) keys, i);
-      const char* key = java_to_string(key_string);
-      jbyteArray byte_array = (jbyteArray) this->env->GetObjectArrayElement((jobjectArray) vals, i);
-      jsize val_length = this->env->GetArrayLength(byte_array);
-      char* val = (char*) this->env->GetByteArrayElements(byte_array, &is_copy);
-
-      for(int j = 0; j < table->s->fields; j++)
-      {
-        Field *field = table->field[j];
-        if (strcmp(key, field->field_name) != 0)
-        {
-          continue;
-        }
-
-        this->store_field_value(field, buf, key, val, val_length);
-        break;
-      }
-
-      this->env->ReleaseStringUTFChars(key_string, key);
-    }
+    store_field_values(buf, keys, vals);
 
     dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
     
@@ -287,6 +262,35 @@ int CloudHandler::rnd_next(uchar *buf)
     MYSQL_READ_ROW_DONE(rc);
     
     DBUG_RETURN(rc);
+}
+
+void CloudHandler::store_field_values(uchar *buf, jarray keys, jarray vals)
+{
+  jboolean is_copy = JNI_FALSE;
+  jsize size = this->env->GetArrayLength(keys);
+
+  for (jsize i = 0 ; i < size ; i++)
+  {
+    jstring key_string = (jstring) this->env->GetObjectArrayElement((jobjectArray) keys, i);
+    const char* key = java_to_string(key_string);
+    jbyteArray byte_array = (jbyteArray) this->env->GetObjectArrayElement((jobjectArray) vals, i);
+    jsize val_length = this->env->GetArrayLength(byte_array);
+    char* val = (char*) this->env->GetByteArrayElements(byte_array, &is_copy);
+
+    for(int j = 0; j < table->s->fields; j++)
+    {
+      Field *field = table->field[j];
+      if (strcmp(key, field->field_name) != 0)
+      {
+        continue;
+      }
+
+      this->store_field_value(field, buf, key, val, val_length);
+      break;
+    }
+
+    this->env->ReleaseStringUTFChars(key_string, key);
+  }
 }
 
 void CloudHandler::store_field_value(Field* field, uchar* buf, const char* key, char* val, jsize val_length)
@@ -323,10 +327,9 @@ void CloudHandler::position(const uchar *record)
 
 int CloudHandler::rnd_pos(uchar *buf, uchar *pos)
 {
-  int rc;
+  int rc = 0;
   DBUG_ENTER("CloudHandler::rnd_pos");
-  // Boilerplate
-  ha_statistic_increment(&SSV::ha_read_rnd_count);
+  ha_statistic_increment(&SSV::ha_read_rnd_count); // Boilerplate
   MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, FALSE);
 
   JVMThreadAttach attached_thread(&this->env, this->jvm);
@@ -345,48 +348,12 @@ int CloudHandler::rnd_pos(uchar *buf, uchar *pos)
 
   jboolean is_copy = JNI_FALSE;
 
-  jsize size = this->env->GetArrayLength(keys);
-
-  for (jsize i = 0 ; i < size ; i++)
-  {
-    jstring key_string = (jstring) this->env->GetObjectArrayElement((jobjectArray) keys, i);
-    const char* key = java_to_string(key_string);
-    jbyteArray byte_array = (jbyteArray) this->env->GetObjectArrayElement((jobjectArray) vals, i);
-    jsize val_length = this->env->GetArrayLength(byte_array);
-    char* val = (char*) this->env->GetByteArrayElements(byte_array, &is_copy);
-
-    for(int j = 0; j < table->s->fields; j++)
-    {
-      Field *field = table->field[j];
-      if (strcmp(key, field->field_name) != 0)
-      {
-        continue;
-      }
-
-      my_ptrdiff_t offset;
-      offset = (my_ptrdiff_t) (buf - table->record[0]);
-      field->move_field_offset(offset);
-
-      if (field->type() == MYSQL_TYPE_LONG)
-      {
-        longlong long_value = htonll(*(longlong*)val, false);
-        field->store(long_value, false);
-      }
-
-      if(field->type() == MYSQL_TYPE_VARCHAR)
-      {
-        field->store(val, val_length, &my_charset_bin);
-      }
-
-      field->move_field_offset(-offset);
-      break;
-    }
-
-    this->env->ReleaseStringUTFChars(key_string, key);
+  if (keys == NULL || vals == NULL) {
+    DBUG_RETURN(HA_ERR_WRONG_COMMAND);
   }
 
-  rc = 0;
-  
+  store_field_values(buf, keys, vals)
+
   MYSQL_READ_ROW_DONE(rc);
   DBUG_RETURN(rc);
 }

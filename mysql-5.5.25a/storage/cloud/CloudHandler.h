@@ -40,6 +40,7 @@ private:
     jobject create_java_map(JNIEnv *jni_env);
     jobject java_map_insert(JNIEnv *jni_env, jobject java_map, jstring key, jbyteArray value);
     jbyteArray convert_value_to_java_bytes(JNIEnv *jni_env, uchar* value, uint32 length);
+    void store_field_values(uchar *buf, jarray keys, jarray vals);
     void store_field_value(Field* field, uchar* buf, const char* key, char* val, jsize val_length);
 
     longlong htonll(longlong src, bool check_endian = true) {
