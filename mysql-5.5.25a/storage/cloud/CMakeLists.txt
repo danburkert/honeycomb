@@ -1,5 +1,6 @@
 find_package(JNI REQUIRED)
 include_directories(${JNI_INCLUDE_DIRS})
+link_directories("/usr/local/java/jre/lib/amd64/xawt/")
 
 SET(cloud_PLUGIN_DYNAMIC "ha_cloud")
 SET(cloud_SOURCES CloudHandler.cc ha_cloud.cc)
