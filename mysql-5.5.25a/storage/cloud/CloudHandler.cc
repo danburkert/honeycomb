@@ -308,9 +308,7 @@ CloudShare *CloudHandler::get_share(const char *table_name, TABLE *table)
     share->table_name= tmp_name;
     share->crashed= FALSE;
     share->rows_recorded= 0;
-    share->data_file_version= 0;
     strmov(share->table_name, table_name);
-    fn_format(share->data_file_name, table_name, "", "hbase", MY_REPLACE_EXT|MY_UNPACK_FILENAME);
 
     if (my_hash_insert(cloud_open_tables, (uchar*) share))
         goto error;
