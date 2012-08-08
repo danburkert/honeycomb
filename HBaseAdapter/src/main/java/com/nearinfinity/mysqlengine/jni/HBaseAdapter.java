@@ -9,10 +9,8 @@ import org.apache.log4j.Logger;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
+import java.nio.ByteBuffer;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -91,12 +89,15 @@ public class HBaseAdapter {
         }
         Row row = new Row();
         try {
-            Result result = conn.getScanner().next();
+            Result result = conn.getNextResult();
             if (result == null) {
                 return row;
             }
             Map<String, byte[]> values = client.parseRow(result, conn.getTableName());
+            UUID uuid = client.parseUUIDFromDataRow(result);
+
             row.setRowMap(values);
+            row.setUUID(uuid);
         }
         catch  (IOException e) {
             throw new HBaseAdapterException("IOException", e.toString());
@@ -107,13 +108,14 @@ public class HBaseAdapter {
     public static void endScan(long scanId) throws HBaseAdapterException {
         logger.info("HBaseAdapter: Ending scan with id " + scanId);
         Connection conn = clientPool.remove(scanId);
-        conn.getScanner().close();
+        conn.close();
         if (conn == null) {
             throw new HBaseAdapterException("ScanId does not exist", "");
         }
     }
 
     public static boolean writeRow(String tableName, Map<String, byte[]> values) throws HBaseAdapterException {
+        logger.info("HBaseAdapter: Writing row to table " + tableName);
         try {
             client.writeRow(tableName, values);
         }
@@ -121,5 +123,48 @@ public class HBaseAdapter {
             throw new HBaseAdapterException("IOException", e.toString());
         }
         return true;
+    }
+
+    public static boolean deleteRow(long scanId) throws HBaseAdapterException {
+        logger.info("HBaseAdapter: Deleting row with scan id " + scanId);
+        boolean deleted = false;
+        try {
+            Connection conn = clientPool.get(scanId);
+            Result result = conn.getLastResult();
+            byte[] rowKey = result.getRow();
+
+            deleted = client.deleteRow(rowKey);
+        }
+        catch (IOException e) {
+            throw new HBaseAdapterException("IOException", e.toString());
+        }
+        return deleted;
+    }
+
+    public static Row getRow(long scanId, String tableName /*TODO: Can we delete this? */, byte[] uuid)  throws HBaseAdapterException {
+        logger.info("HBaseAdapter: Getting row with scanId " + scanId);
+        Connection conn = clientPool.get(scanId);
+        if (conn == null) {
+            throw new HBaseAdapterException("Cannot find scanId key", "");
+        }
+        Row row = new Row();
+        try {
+            //String tableName = conn.getTableName();
+            ByteBuffer buffer = ByteBuffer.wrap(uuid);
+            UUID rowUuid = new UUID(buffer.getLong(), buffer.getLong());
+
+            Result result = client.getDataRow(rowUuid, tableName);
+            if (result == null) {
+                return row;
+            }
+
+            Map<String, byte[]> values = client.parseRow(result, conn.getTableName());
+            row.setUUID(rowUuid);
+            row.setRowMap(values);
+        }
+        catch (IOException e) {
+            throw new HBaseAdapterException("IOException", e.toString());
+        }
+        return row;
     }
 }

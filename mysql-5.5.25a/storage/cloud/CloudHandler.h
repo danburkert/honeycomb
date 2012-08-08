@@ -40,6 +40,39 @@ private:
     jobject create_java_map(JNIEnv *jni_env);
     jobject java_map_insert(JNIEnv *jni_env, jobject java_map, jstring key, jbyteArray value);
     jbyteArray convert_value_to_java_bytes(JNIEnv *jni_env, uchar* value, uint32 length);
+    void store_field_values(uchar *buf, jarray keys, jarray vals);
+    void store_field_value(Field* field, uchar* buf, const char* key, char* val, jsize val_length);
+
+    longlong htonll(longlong src, bool check_endian = true) {
+      const int TYP_INIT = 0;
+      const int TYP_SMLE = 1;
+      const int TYP_BIGE = 2;
+
+      static int typ = TYP_INIT;
+      unsigned char c;
+      union {
+        longlong ull;
+        unsigned char c[8];
+      } x;
+
+      if (check_endian)
+      {
+        if (typ == TYP_INIT) {
+          x.ull = 0x01;
+          typ = (x.c[7] == 0x01ULL) ? TYP_BIGE : TYP_SMLE;
+        }
+        if (typ == TYP_BIGE)
+          return src;
+      }
+
+      x.ull = src;
+      c = x.c[0]; x.c[0] = x.c[7]; x.c[7] = c;
+      c = x.c[1]; x.c[1] = x.c[6]; x.c[6] = c;
+      c = x.c[2]; x.c[2] = x.c[5]; x.c[5] = c;
+      c = x.c[3]; x.c[3] = x.c[4]; x.c[4] = c;
+
+      return x.ull;
+    }
 
     public:
       CloudHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm)
