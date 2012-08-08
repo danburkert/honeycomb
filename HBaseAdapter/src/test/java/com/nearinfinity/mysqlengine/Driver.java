@@ -61,7 +61,7 @@ public class Driver {
             String [] tokens = args[2].split("=");
 
             ResultScanner scanner = client.search(tableName, tokens[0], tokens[1].getBytes());
-            for (Result result :scanner) {
+            for (Result result : scanner) {
                 ByteBuffer rowKey = ByteBuffer.wrap(result.getRow());
                 byte rowType = rowKey.get();
                 long tableId = rowKey.getLong();
@@ -71,9 +71,34 @@ public class Driver {
                 UUID uuid = new UUID(rowKey.getLong(), rowKey.getLong());
                 System.out.println("Table: " + tableId + "\nColumn: " + columnId + "\nValue: " + new String(value) + "\nUUID: " + uuid.toString());
 
-                Result rowResult = client.getDataRow(uuid, tableId);
+                Result rowResult = client.getDataRow(uuid, tableName);
                 Map<String, byte[]> parsedRow = client.parseRow(rowResult, tableName);
                 System.out.println(printRow(parsedRow));
+            }
+        }
+        else if (args[0].equals("delete")) {
+            //delete table_name column=value
+            String tableName = args[1];
+            String[] tokens = args[2].split("=");
+
+            ResultScanner scanner = client.search(tableName, tokens[0], tokens[1].getBytes());
+            for (Result result : scanner) {
+                ByteBuffer rowKey = ByteBuffer.wrap(result.getRow());
+                byte rowType = rowKey.get();
+                long tableId = rowKey.getLong();
+                long columnId = rowKey.getLong();
+                byte[] value = new byte[tokens[1].getBytes().length];
+                rowKey.get(value);
+                UUID uuid = new UUID(rowKey.getLong(), rowKey.getLong());
+
+                byte[] dataRowKey = ByteBuffer.allocate(25)
+                        .put(RowType.DATA.getValue())
+                        .putLong(tableId)
+                        .putLong(uuid.getMostSignificantBits())
+                        .putLong(uuid.getLeastSignificantBits())
+                        .array();
+
+                client.deleteRow(dataRowKey);
             }
         }
     }
