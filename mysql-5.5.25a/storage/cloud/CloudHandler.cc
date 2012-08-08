@@ -268,22 +268,7 @@ int CloudHandler::rnd_next(uchar *buf)
           continue;
         }
 
-        my_ptrdiff_t offset;
-        offset = (my_ptrdiff_t) (buf - table->record[0]);
-        field->move_field_offset(offset);
-
-        if (field->type() == MYSQL_TYPE_LONG)
-        {
-          longlong long_value = htonll(*(longlong*)val, false);
-          field->store(long_value, false);
-        }
-
-        if(field->type() == MYSQL_TYPE_VARCHAR)
-        {
-          field->store(val, val_length, &my_charset_bin);
-        }
-
-        field->move_field_offset(-offset);
+        this->store_field_value(field, buf, key, val, val_length);
         break;
       }
 
@@ -296,6 +281,32 @@ int CloudHandler::rnd_next(uchar *buf)
     MYSQL_READ_ROW_DONE(rc);
     
     DBUG_RETURN(rc);
+}
+
+void CloudHandler::store_field_value(Field* field, uchar* buf, const char* key, char* val, jsize val_length)
+{
+  my_ptrdiff_t offset = (my_ptrdiff_t) (buf - this->table->record[0]);
+  enum_field_types field_type = field->type();
+  field->move_field_offset(offset);
+
+  if (field_type == MYSQL_TYPE_LONG || 
+      field_type == MYSQL_TYPE_SHORT ||
+      field_type == MYSQL_TYPE_LONGLONG ||
+      field_type == MYSQL_TYPE_INT24 ||
+      field_type == MYSQL_TYPE_TINY || 
+      field_type == MYSQL_TYPE_ENUM)
+  {
+    longlong long_value = __builtin_bswap64(*(longlong*)val);
+    field->store(long_value, false);
+  }
+  else if(field_type == MYSQL_TYPE_VARCHAR ||
+      field_type == MYSQL_TYPE_STRING ||
+      field_type == MYSQL_TYPE_VAR_STRING)
+  {
+    field->store(val, val_length, &my_charset_bin);
+  }
+
+  field->move_field_offset(-offset);
 }
 
 void CloudHandler::position(const uchar *record)
