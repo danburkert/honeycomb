@@ -9,6 +9,9 @@
 #include "sql_plugin.h"
 #include "ha_cloud.h"
 #include "JVMThreadAttach.h"
+#include <arpa/inet.h>
+
+longlong htonll(longlong);
 
 /*
   If frm_error() is called in table.cc this is called to find out what file
@@ -24,6 +27,34 @@ const char **CloudHandler::bas_ext() const
     };
 
     return cloud_exts;
+}
+
+record_buffer *CloudHandler::create_record_buffer(unsigned int length)
+{
+  DBUG_ENTER("CloudHandler::create_record_buffer");
+  record_buffer *r;
+  if (!(r = (record_buffer*) my_malloc(sizeof(record_buffer), MYF(MY_WME))))
+  {
+    DBUG_RETURN(NULL);
+  }
+
+  r->length= (int)length;
+
+  if (!(r->buffer= (uchar*) my_malloc(r->length, MYF(MY_WME))))
+  {
+    my_free(r);
+    DBUG_RETURN(NULL);
+  }
+
+  DBUG_RETURN(r);
+}
+
+void CloudHandler::destroy_record_buffer(record_buffer *r)
+{
+  DBUG_ENTER("CloudHandler::destroy_record_buffer");
+  my_free(r->buffer);
+  my_free(r);
+  DBUG_VOID_RETURN;
 }
 
 int CloudHandler::open(const char *name, int mode, uint test_if_locked)
@@ -43,13 +74,112 @@ int CloudHandler::open(const char *name, int mode, uint test_if_locked)
 int CloudHandler::close(void)
 {
     DBUG_ENTER("CloudHandler::close");
+
+    destroy_record_buffer(rec_buffer);
+
     DBUG_RETURN(free_share(share));
 }
 
 int CloudHandler::write_row(uchar *buf)
 {
-    DBUG_ENTER("CloudHandler::write_row");
-    DBUG_RETURN(0);
+	DBUG_ENTER("CloudHandler::write_row");
+
+    JNIEnv *jni_env;
+    JVMThreadAttach attached_thread(&jni_env, this->jvm);
+    my_bitmap_map *old_map = dbug_tmp_use_all_columns(table, table->read_set);
+
+	// Boilerplate stuff every engine has to do on writes
+
+	if (share->crashed)
+	  DBUG_RETURN(HA_ERR_CRASHED_ON_USAGE);
+
+	ha_statistic_increment(&SSV::ha_write_count);
+
+	if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
+		table->timestamp_field->set_time();
+
+	jclass adapter_class = jni_env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
+	jmethodID write_row_method = jni_env->GetStaticMethodID(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;)Z");
+	jstring java_table_name = this->string_to_java_string(jni_env, this->share->table_alias);
+
+	jstring jstring_table_name = this->string_to_java_string(jni_env, this->share->table_alias);
+	jobject java_map = this->create_java_map(jni_env);
+
+	char attribute_buffer[1024];
+	String attribute(attribute_buffer, sizeof(attribute_buffer), &my_charset_bin);
+
+	for (Field **field_ptr=table->field; *field_ptr; field_ptr++)
+	{
+		Field * field = *field_ptr;
+
+		memset(rec_buffer->buffer, 0, rec_buffer->length);
+
+		const bool was_null= field->is_null();
+
+		if (was_null)
+		{
+		  field->set_default();
+		  field->set_notnull();
+		}
+
+		int fieldType = field->type();
+		uint actualFieldSize = field->field_length;
+
+		if (fieldType == MYSQL_TYPE_LONG
+				|| fieldType == MYSQL_TYPE_SHORT
+				|| fieldType == MYSQL_TYPE_TINY)
+		{
+			longlong field_value = htonll(field->val_int());
+			actualFieldSize = sizeof(longlong);
+			memcpy(rec_buffer->buffer, &field_value, sizeof(longlong));
+		}
+		else if (fieldType == MYSQL_TYPE_DECIMAL)
+		{
+			my_decimal field_value;
+			field->val_decimal(&field_value);
+			actualFieldSize = field_value.len;
+			memcpy(rec_buffer->buffer, field_value.buf, field_value.len);
+		}
+		else if (fieldType == MYSQL_TYPE_DOUBLE
+				|| fieldType == MYSQL_TYPE_FLOAT)
+		{
+			double field_value = field->val_real();
+			actualFieldSize = sizeof(double);
+			memcpy(rec_buffer->buffer, &field_value, sizeof(double));
+		}
+//		else if (fieldType == MYSQL_TYPE_DATE)
+//		{
+//
+//		}
+		else if (fieldType == MYSQL_TYPE_VARCHAR)
+		{
+			char attribute_buffer[field->field_length];
+			String attribute(attribute_buffer, sizeof(attribute_buffer), &my_charset_bin);
+			field->val_str(&attribute);
+			actualFieldSize = attribute.length();
+			memcpy(rec_buffer->buffer, attribute.ptr(), attribute.length());
+		}
+		else
+		{
+			continue;
+		}
+
+		if (was_null)
+		{
+			field->set_null();
+		}
+
+		jstring field_name = this->string_to_java_string(jni_env, field->field_name);
+		jbyteArray java_bytes = this->convert_value_to_java_bytes(jni_env, rec_buffer->buffer, actualFieldSize);
+
+		java_map_insert(jni_env, java_map, field_name, java_bytes);
+	}
+
+	jni_env->CallStaticBooleanMethod(adapter_class, write_row_method, java_table_name, java_map);
+
+	dbug_tmp_restore_column_map(table->read_set, old_map);
+
+	DBUG_RETURN(0);
 }
 
 int CloudHandler::update_row(const uchar *old_data, uchar *new_data)
@@ -240,11 +370,22 @@ CloudShare *CloudHandler::get_share(const char *table_name, TABLE *table)
     CloudShare *share;
     char meta_file_name[FN_REFLEN];
     MY_STAT file_stat;                /* Stat information for the data file */
-    char *tmp_name;
-    uint length;
+    char *tmp_path_name;
+    char *tmp_alias;
+    uint path_length, alias_length;
+
+	rec_buffer= create_record_buffer(table->s->reclength);
+
+	if (!rec_buffer)
+	{
+		DBUG_PRINT("CloudHandler", ("Ran out of memory while allocating record buffer"));
+
+		return NULL;
+	}
 
     mysql_mutex_lock(cloud_mutex);
-    length=(uint) strlen(table_name);
+    path_length=(uint) strlen(table_name);
+    alias_length=(uint) strlen(table->alias);
 
     /*
     If share is not present in the hash, create a new share and
@@ -252,11 +393,12 @@ CloudShare *CloudHandler::get_share(const char *table_name, TABLE *table)
     */
     if (!(share=(CloudShare*) my_hash_search(cloud_open_tables,
                 (uchar*) table_name,
-                length)))
+                path_length)))
     {
         if (!my_multi_malloc(MYF(MY_WME | MY_ZEROFILL),
                              &share, sizeof(*share),
-                             &tmp_name, length+1,
+                             &tmp_path_name, path_length+1,
+                             &tmp_alias, alias_length+1,
                              NullS))
         {
             mysql_mutex_unlock(cloud_mutex);
@@ -265,12 +407,13 @@ CloudShare *CloudHandler::get_share(const char *table_name, TABLE *table)
     }
 
     share->use_count= 0;
-    share->table_name_length= length;
-    share->table_name= tmp_name;
+    share->table_path_length= path_length;
+    share->path_to_table= tmp_path_name;
+    share->table_alias= tmp_alias;
     share->crashed= FALSE;
     share->rows_recorded= 0;
     share->data_file_version= 0;
-    strmov(share->table_name, table_name);
+    strmov(share->path_to_table, table_name);
     fn_format(share->data_file_name, table_name, "", "hbase", MY_REPLACE_EXT|MY_UNPACK_FILENAME);
 
     if (my_hash_insert(cloud_open_tables, (uchar*) share))
@@ -299,4 +442,63 @@ const char* CloudHandler::java_to_string(jstring j_str)
 jstring CloudHandler::string_to_java_string(JNIEnv *jni_env, const char* string)
 {
   return jni_env->NewStringUTF(string);
+}
+
+jobject CloudHandler::create_java_map(JNIEnv* jni_env)
+{
+	jclass map_class = jni_env->FindClass("java/util/HashMap");
+	jmethodID constructor = jni_env->GetMethodID(map_class, "<init>", "()V");
+	jobject java_map = jni_env->NewObject(map_class, constructor);
+	return java_map;
+}
+
+jobject CloudHandler::java_map_insert(JNIEnv *jni_env, jobject java_map, jstring key, jbyteArray value)
+{
+	jclass map_class = jni_env->FindClass("java/util/HashMap");
+	jmethodID put_method = jni_env->GetMethodID(map_class, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+
+	return jni_env->CallObjectMethod(java_map, put_method, key, value);
+}
+
+jbyteArray CloudHandler::convert_value_to_java_bytes(JNIEnv *jni_env, uchar* value, uint32 length)
+{
+	jbyteArray byteArray = jni_env->NewByteArray(length);
+	jbyte *java_bytes = jni_env->GetByteArrayElements(byteArray, 0);
+
+	memcpy(java_bytes, value, length);
+
+//	for (uint32 i = 0; i < length; i++)
+//	{
+//		java_bytes[i] = value[i];
+//	}
+
+	jni_env->SetByteArrayRegion(byteArray, 0, length, java_bytes);
+
+	return byteArray;
+}
+
+longlong htonll(longlong src) {
+	#define TYP_INIT 0
+	#define TYP_SMLE 1
+	#define TYP_BIGE 2
+
+	  static int typ = TYP_INIT;
+	  unsigned char c;
+	  union {
+		longlong ull;
+		unsigned char c[8];
+	  } x;
+	  if (typ == TYP_INIT) {
+		x.ull = 0x01;
+		typ = (x.c[7] == 0x01ULL) ? TYP_BIGE : TYP_SMLE;
+	  }
+	  if (typ == TYP_BIGE)
+		return src;
+	  x.ull = src;
+	  c = x.c[0]; x.c[0] = x.c[7]; x.c[7] = c;
+	  c = x.c[1]; x.c[1] = x.c[6]; x.c[6] = c;
+	  c = x.c[2]; x.c[2] = x.c[5]; x.c[5] = c;
+	  c = x.c[3]; x.c[3] = x.c[4]; x.c[4] = c;
+
+	  return x.ull;
 }
