@@ -2,8 +2,10 @@ package com.nearinfinity.mysqlengine.jni;
 
 import org.apache.log4j.Logger;
 
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Created with IntelliJ IDEA.
@@ -17,12 +19,25 @@ public class Row {
 
     private Map<String, byte[]> rowMap;
 
+    private byte[] uuid;
+
     public Map<String, byte[]> getRowMap() {
         return rowMap;
     }
 
     public void setRowMap(Map<String, byte[]> rowMap) {
         this.rowMap = new HashMap<String, byte[]>(rowMap);
+    }
+
+    public void setUUID(UUID rowUuid) {
+        this.uuid = ByteBuffer.allocate(16)
+                .putLong(rowUuid.getMostSignificantBits())
+                .putLong(rowUuid.getLeastSignificantBits())
+                .array();
+    }
+
+    public byte[] getUUID() {
+        return this.uuid;
     }
 
     public String[] getKeys() {

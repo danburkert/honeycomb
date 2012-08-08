@@ -1,6 +1,9 @@
 package com.nearinfinity.mysqlengine;
 
+import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
+
+import java.io.IOException;
 
 /**
  * Created with IntelliJ IDEA.
@@ -12,17 +15,29 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 public class Connection {
     private String tableName;
     private ResultScanner scanner;
+    private Result lastResult;
 
     public Connection(String tableName, ResultScanner scanner) {
         this.tableName = tableName;
         this.scanner = scanner;
-    }
-
-    public ResultScanner getScanner() {
-        return scanner;
+        this.lastResult = null;
     }
 
     public String getTableName() {
-        return tableName;
+        return this.tableName;
+    }
+
+    public Result getLastResult() {
+        return this.lastResult;
+    }
+
+    public Result getNextResult() throws IOException {
+        Result result = this.scanner.next();
+        this.lastResult = result;
+        return result;
+    }
+
+    public void close() {
+        this.scanner.close();
     }
 }
