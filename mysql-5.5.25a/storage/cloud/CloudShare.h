@@ -3,7 +3,11 @@
 
 typedef struct st_cloud_share {
   char *table_name;
-  uint table_name_length, use_count;
+  uint table_name_length;
+  char *table_alias;
+  char *path_to_table;
+  char data_file_name[FN_REFLEN];
+  uint table_path_length, table_alias_length, use_count;
   my_bool is_log_table;
   mysql_mutex_t mutex;
   THR_LOCK lock;

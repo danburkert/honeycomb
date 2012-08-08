@@ -23,8 +23,8 @@ static HASH cloud_open_tables;
 
 static uchar* cloud_get_key(CloudShare *share, size_t *length, my_bool not_used __attribute__((unused)))
 {
-  *length=share->table_name_length;
-  return (uchar*) share->table_name;
+    *length=share->table_path_length;
+    return (uchar*) share->path_to_table;
 }
 
 #ifdef HAVE_PSI_INTERFACE

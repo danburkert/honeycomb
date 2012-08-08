@@ -12,6 +12,11 @@
 #include "CloudShare.h"
 #include <jni.h>
 
+typedef struct st_record_buffer {
+  uchar *buffer;
+  uint32 length;
+} record_buffer;
+
 class CloudHandler : public handler
 {
 private:
@@ -19,6 +24,9 @@ private:
     CloudShare *share;    		///< Shared lock info
     mysql_mutex_t* cloud_mutex;
     HASH* cloud_open_tables;
+    record_buffer *rec_buffer;
+    record_buffer *create_record_buffer(unsigned int length);
+    void destroy_record_buffer(record_buffer *r);
     CloudShare *get_share(const char *table_name, TABLE *table);
 
     long long curr_scan_id;
@@ -28,13 +36,16 @@ private:
     JavaVM* jvm;
 
     const char* java_to_string(jstring str);
-    jstring string_to_java_string(JNIEnv *env, const char*);
+    jstring string_to_java_string(JNIEnv *jni_env, const char*);
+    jobject create_java_map(JNIEnv *jni_env);
+    jobject java_map_insert(JNIEnv *jni_env, jobject java_map, jstring key, jbyteArray value);
+    jbyteArray convert_value_to_java_bytes(JNIEnv *jni_env, uchar* value, uint32 length);
 
     public:
       CloudHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm)
         : handler(hton, table_arg), jvm(jvm)
       {
-        cloud_mutex = mutex;
+    	cloud_mutex = mutex;
         cloud_open_tables = open_tables;
       }
 
