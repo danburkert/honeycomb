@@ -9,10 +9,13 @@
 #include "sql_plugin.h"
 #include "ha_cloud.h"
 #include "JVMThreadAttach.h"
-#include <arpa/inet.h>
+#include "mysql_time.h"
+#include "Macros.h"
 
 longlong htonll(longlong);
-#include "Macros.h"
+void reverse_bytes(uchar *begin, uchar *end);
+bool is_little_endian();
+void make_big_endian(uchar *begin, uchar *end);
 
 /*
   If frm_error() is called in table.cc this is called to find out what file
@@ -128,33 +131,36 @@ int CloudHandler::write_row(uchar *buf)
 
 		if (fieldType == MYSQL_TYPE_LONG
 				|| fieldType == MYSQL_TYPE_SHORT
-				|| fieldType == MYSQL_TYPE_TINY)
+				|| fieldType == MYSQL_TYPE_TINY
+				|| fieldType == MYSQL_TYPE_LONGLONG
+				|| fieldType == MYSQL_TYPE_INT24
+				|| fieldType == MYSQL_TYPE_ENUM)
 		{
-			longlong field_value = htonll(field->val_int());
+			longlong field_value = __builtin_bswap64(field->val_int());
 			actualFieldSize = sizeof(longlong);
 			memcpy(rec_buffer->buffer, &field_value, sizeof(longlong));
 		}
-		else if (fieldType == MYSQL_TYPE_DECIMAL)
-		{
-			my_decimal field_value;
-			field->val_decimal(&field_value);
-			actualFieldSize = field_value.len;
-			memcpy(rec_buffer->buffer, field_value.buf, field_value.len);
-		}
 		else if (fieldType == MYSQL_TYPE_DOUBLE
-				|| fieldType == MYSQL_TYPE_FLOAT)
+				|| fieldType == MYSQL_TYPE_FLOAT
+				|| fieldType == MYSQL_TYPE_DECIMAL
+				|| fieldType == MYSQL_TYPE_NEWDECIMAL)
 		{
 			double field_value = field->val_real();
 			actualFieldSize = sizeof(double);
+			make_big_endian(field->ptr, field->ptr + sizeof(double));
 			memcpy(rec_buffer->buffer, &field_value, sizeof(double));
 		}
-//		else if (fieldType == MYSQL_TYPE_DATE)
-//		{
-//
-//		}
-		else if (fieldType == MYSQL_TYPE_VARCHAR)
+		else if (fieldType == MYSQL_TYPE_VARCHAR
+				|| fieldType == MYSQL_TYPE_STRING
+				|| fieldType == MYSQL_TYPE_VAR_STRING
+				|| fieldType == MYSQL_TYPE_BLOB
+				|| fieldType == MYSQL_TYPE_TINY_BLOB
+				|| fieldType == MYSQL_TYPE_MEDIUM_BLOB
+				|| fieldType == MYSQL_TYPE_LONG_BLOB)
 		{
-			char attribute_buffer[field->field_length];
+			uint32 fieldLength = field->binary() ? field->data_length() : field->field_length;
+
+			char attribute_buffer[fieldLength];
 			String attribute(attribute_buffer, sizeof(attribute_buffer), &my_charset_bin);
 			field->val_str(&attribute);
 			actualFieldSize = attribute.length();
@@ -162,7 +168,7 @@ int CloudHandler::write_row(uchar *buf)
 		}
 		else
 		{
-			continue;
+			memcpy(rec_buffer->buffer, field->ptr, field->field_length);
 		}
 
 		if (was_null)
@@ -546,4 +552,32 @@ longlong htonll(longlong src) {
 	  c = x.c[3]; x.c[3] = x.c[4]; x.c[4] = c;
 
 	  return x.ull;
+}
+
+void reverse_bytes(uchar *begin, uchar *end)
+{
+	for (; begin <= end; begin++, end--)
+	{
+		uchar *tmp = end;
+		*end = *begin;
+		*begin = *tmp;
+	}
+}
+
+bool is_little_endian()
+{
+    union {
+        uint32_t i;
+        char c[4];
+    } bint = {0x01020304};
+
+    return bint.c[0] == 4;
+}
+
+void make_big_endian(uchar *begin, uchar *end)
+{
+	if (is_little_endian)
+	{
+		reverse_bytes(begin, end);
+	}
 }
