@@ -4,6 +4,7 @@ import com.nearinfinity.mysqlengine.Connection;
 import com.nearinfinity.mysqlengine.HBaseClient;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.filter.SingleColumnValueExcludeFilter;
 import org.apache.log4j.Logger;
 
 import java.io.*;
@@ -80,12 +81,15 @@ public class HBaseAdapter {
             clientPool.put(scanId, new Connection(tableName, scanner));
         }
         catch (IOException e) {
+            logger.info("HBaseAdapter: startScan: exception thrown: " + e.toString());
             throw new HBaseAdapterException("IOException", e.toString());
         }
         return scanId;
     }
 
     public static Row nextRow(long scanId) throws HBaseAdapterException {
+        logger.info("HBaseAdapter: nextRow:  scanId: " + scanId);
+
         Connection conn = clientPool.get(scanId);
         if (conn == null) {
             throw new HBaseAdapterException("Cannot find scanId key", "");
@@ -106,6 +110,32 @@ public class HBaseAdapter {
             throw new HBaseAdapterException("IOException", e.toString());
         }
         return row;
+    }
+
+    public static Row[] nextRows(long scanId, long numRows) throws HBaseAdapterException {
+        logger.info("HBaseAdapter: Getting " + numRows + " rows using scanId " + scanId);
+        Connection conn = clientPool.get(scanId);
+        if (conn == null) {
+            throw new HBaseAdapterException("Cannot find scanId key", "");
+        }
+        ArrayList<Row> rowList = new ArrayList<Row>();
+        try {
+            for (long i = 0 ; i < numRows ; i++) {
+                Result result = conn.getNextResult();
+                if (result == null) {
+                    return (Row[])rowList.toArray();
+                }
+                Map<String, byte[]> values = client.parseRow(result, conn.getTableName());
+                UUID uuid = client.parseUUIDFromDataRow(result);
+
+                rowList.add(new Row(values, uuid));
+            }
+        }
+        catch (IOException e) {
+            throw new HBaseAdapterException("IOException", e.toString());
+        }
+
+        return (Row[])rowList.toArray();
     }
 
     public static void endScan(long scanId) throws HBaseAdapterException {
@@ -145,7 +175,6 @@ public class HBaseAdapter {
     }
 
     public static Row getRow(long scanId, String tableName /*TODO: Can we delete this? */, byte[] uuid)  throws HBaseAdapterException {
-        logger.info("HBaseAdapter: Getting row with scanId " + scanId);
         Connection conn = clientPool.get(scanId);
         if (conn == null) {
             throw new HBaseAdapterException("Cannot find scanId key", "");
@@ -155,6 +184,7 @@ public class HBaseAdapter {
             //String tableName = conn.getTableName();
             ByteBuffer buffer = ByteBuffer.wrap(uuid);
             UUID rowUuid = new UUID(buffer.getLong(), buffer.getLong());
+            logger.info("HBaseAdapter: Getting row with UUID: " + rowUuid.toString() + ", and scanId: " + scanId);
 
             Result result = client.getDataRow(rowUuid, tableName);
             if (result == null) {
