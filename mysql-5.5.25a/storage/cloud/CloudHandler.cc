@@ -11,9 +11,11 @@
 #include "JVMThreadAttach.h"
 #include "mysql_time.h"
 #include "Macros.h"
+
 void reverse_bytes(uchar *begin, uchar *end);
 bool is_little_endian();
 void make_big_endian(uchar *begin, uchar *end);
+longlong make_big_endian(longlong value);
 
 /*
   If frm_error() is called in table.cc this is called to find out what file
@@ -103,8 +105,6 @@ int CloudHandler::write_row(uchar *buf)
   jclass adapter_class = jni_env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
   jmethodID write_row_method = jni_env->GetStaticMethodID(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;)Z");
   jstring java_table_name = this->string_to_java_string(jni_env, this->share->table_alias);
-
-  jstring jstring_table_name = this->string_to_java_string(jni_env, this->share->table_alias);
   jobject java_map = this->create_java_map(jni_env);
 
   char attribute_buffer[1024];
@@ -127,14 +127,14 @@ int CloudHandler::write_row(uchar *buf)
     int fieldType = field->type();
     uint actualFieldSize = field->field_length;
 
-		if (fieldType == MYSQL_TYPE_LONG
+    if (fieldType == MYSQL_TYPE_LONG
 				|| fieldType == MYSQL_TYPE_SHORT
 				|| fieldType == MYSQL_TYPE_TINY
 				|| fieldType == MYSQL_TYPE_LONGLONG
 				|| fieldType == MYSQL_TYPE_INT24
-				|| fieldType == MYSQL_TYPE_ENUM)
+				|| fieldType == MYSQL_TYPE_YEAR)
 		{
-			longlong field_value = __builtin_bswap64(field->val_int());
+			longlong field_value = make_big_endian(field->val_int());
 			actualFieldSize = sizeof(longlong);
 			memcpy(rec_buffer->buffer, &field_value, sizeof(longlong));
 		}
@@ -154,11 +154,32 @@ int CloudHandler::write_row(uchar *buf)
 				|| fieldType == MYSQL_TYPE_BLOB
 				|| fieldType == MYSQL_TYPE_TINY_BLOB
 				|| fieldType == MYSQL_TYPE_MEDIUM_BLOB
-				|| fieldType == MYSQL_TYPE_LONG_BLOB)
+				|| fieldType == MYSQL_TYPE_LONG_BLOB
+				|| fieldType == MYSQL_TYPE_ENUM)
 		{
-			uint32 fieldLength = field->binary() ? field->data_length() : field->field_length;
+			ulonglong fieldLength = field->binary() ? field->data_length() : field->field_length;
 
 			char attribute_buffer[fieldLength];
+			String attribute(attribute_buffer, sizeof(attribute_buffer), &my_charset_bin);
+			field->val_str(&attribute);
+			actualFieldSize = attribute.length();
+			memcpy(rec_buffer->buffer, field->ptr, field->field_length);
+		}
+		else if (fieldType == MYSQL_TYPE_TIME
+				|| fieldType == MYSQL_TYPE_DATE
+				|| fieldType == MYSQL_TYPE_NEWDATE
+				|| fieldType == MYSQL_TYPE_DATETIME)
+		{
+
+			// Use number_to_datetime to convert from a longlong into a MySQL datetime object on reads - ABC
+			MYSQL_TIME mysql_time;
+			field->get_time(&mysql_time);
+			longlong timeValue = make_big_endian(TIME_to_ulonglong_time(&mysql_time));
+			actualFieldSize = sizeof(longlong);
+			memcpy(rec_buffer->buffer, &timeValue, sizeof(longlong));
+		}
+		else
+		{
 			memcpy(rec_buffer->buffer, field->ptr, field->field_length);
 		}
 
@@ -583,8 +604,13 @@ bool is_little_endian()
 
 void make_big_endian(uchar *begin, uchar *end)
 {
-	if (is_little_endian)
+	if (is_little_endian())
 	{
 		reverse_bytes(begin, end);
 	}
+}
+
+longlong make_big_endian(longlong value)
+{
+	return is_little_endian() ? __builtin_bswap64(value) : value;
 }
