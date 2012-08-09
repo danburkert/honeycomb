@@ -509,7 +509,7 @@ int CloudHandler::free_share(CloudShare *share)
   {
     my_hash_delete(cloud_open_tables, (uchar*) share);
     thr_lock_delete(&share->lock);
-    mysql_mutex_destroy(&share->mutex);
+    //mysql_mutex_destroy(&share->mutex);
     my_free(share);
   }
   mysql_mutex_unlock(cloud_mutex);
