@@ -171,7 +171,6 @@ public class HBaseAdapter {
     }
 
     public static Row getRow(long scanId, String tableName /*TODO: Can we delete this? */, byte[] uuid)  throws HBaseAdapterException {
-        logger.info("HBaseAdapter: Getting row with scanId " + scanId);
         Connection conn = clientPool.get(scanId);
         if (conn == null) {
             throw new HBaseAdapterException("Cannot find scanId key", "");
@@ -181,6 +180,7 @@ public class HBaseAdapter {
             //String tableName = conn.getTableName();
             ByteBuffer buffer = ByteBuffer.wrap(uuid);
             UUID rowUuid = new UUID(buffer.getLong(), buffer.getLong());
+            logger.info("HBaseAdapter: Getting row with UUID: " + rowUuid.toString() + ", and scanId: " + scanId);
 
             Result result = client.getDataRow(rowUuid, tableName);
             if (result == null) {
