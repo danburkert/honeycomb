@@ -129,7 +129,7 @@ int CloudHandler::delete_row_helper()
 
   jboolean result = this->env->CallStaticBooleanMethod(adapter_class, delete_row_method, java_scan_id);
 
-  INFO(("Result of deleteRow: %d", result));
+  DBUG_RETURN(result);
 }
 
 int CloudHandler::rnd_init(bool scan)
@@ -519,7 +519,7 @@ int CloudHandler::write_row_helper() {
 
   jni_env->CallStaticBooleanMethod(adapter_class, write_row_method, java_table_name, java_row_map);
 
-  return 0;
+  DBUG_RETURN(0);
 }
 
 /* Read fields into a java map.
