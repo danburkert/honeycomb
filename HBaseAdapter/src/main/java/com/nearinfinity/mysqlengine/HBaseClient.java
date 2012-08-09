@@ -3,6 +3,9 @@ package com.nearinfinity.mysqlengine;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.filter.CompareFilter;
+import org.apache.hadoop.hbase.filter.SingleColumnValueExcludeFilter;
+import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
 
@@ -24,6 +27,8 @@ public class HBaseClient {
     private static final byte[] NIC = "nic".getBytes();
 
     private static final byte[] IS_DELETED = "isDeleted".getBytes();
+
+    private static final byte[] DELETED_VAL = Bytes.toBytes(1L);
 
     private static final UUID ZERO_UUID = new UUID(0L, 0L);
 
@@ -190,7 +195,7 @@ public class HBaseClient {
 
         //Build row keys
         byte[] startRow = RowKeyFactory.buildIndexKey(tableId, columnId, value, ZERO_UUID);
-        byte[] endRow = RowKeyFactory.buildIndexKey(tableId, columnId+1, value, ZERO_UUID);
+        byte[] endRow = RowKeyFactory.buildIndexKey(tableId, columnId + 1, value, ZERO_UUID);
 
         Scan scan = new Scan(startRow, endRow);
 
@@ -204,12 +209,16 @@ public class HBaseClient {
 
         //Build row keys
         byte[] startRow = RowKeyFactory.buildDataKey(tableId, ZERO_UUID);
-        byte[] endRow = RowKeyFactory.buildDataKey(tableId+1, ZERO_UUID);
+        byte[] endRow = RowKeyFactory.buildDataKey(tableId + 1, ZERO_UUID);
 
         Scan scan = new Scan(startRow, endRow);
 
         //Set the caching for the scan
         scan.setCaching(10);
+
+        //Exclude deleted values
+        SingleColumnValueFilter filter = new SingleColumnValueFilter(NIC, IS_DELETED, CompareFilter.CompareOp.NOT_EQUAL, DELETED_VAL);
+        scan.setFilter(filter);
 
         return table.getScanner(scan);
     }
@@ -260,8 +269,7 @@ public class HBaseClient {
     public boolean deleteRow(byte[] rowKey) throws IOException {
         Put deletePut = new Put(rowKey);
 
-        long deleted = 1L;
-        deletePut.add(NIC, IS_DELETED, Bytes.toBytes(deleted));
+        deletePut.add(NIC, IS_DELETED, DELETED_VAL);
 
         table.put(deletePut);
 

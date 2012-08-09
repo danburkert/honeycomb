@@ -139,7 +139,7 @@ private:
 
       ulonglong table_flags() const
       {
-        return HA_BINLOG_STMT_CAPABLE;
+        return HA_BINLOG_STMT_CAPABLE | HA_REC_NOT_IN_SEQ;
       }
 
       ulong index_flags(uint inx, uint part, bool all_parts) const
