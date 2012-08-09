@@ -82,137 +82,40 @@ int CloudHandler::write_row(uchar *buf)
 {
   DBUG_ENTER("CloudHandler::write_row");
 
-  JNIEnv *jni_env;
-  JVMThreadAttach attached_thread(&jni_env, this->jvm);
-  my_bitmap_map *old_map = dbug_tmp_use_all_columns(table, table->read_set);
-
-  // Boilerplate stuff every engine has to do on writes
-
   if (share->crashed)
     DBUG_RETURN(HA_ERR_CRASHED_ON_USAGE);
 
   ha_statistic_increment(&SSV::ha_write_count);
 
-  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
-    table->timestamp_field->set_time();
+  int ret = write_row_helper();
 
-  jclass adapter_class = jni_env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
-  jmethodID write_row_method = jni_env->GetStaticMethodID(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;)Z");
-  jstring java_table_name = this->string_to_java_string(jni_env, this->share->table_alias);
-  jobject java_map = this->create_java_map(jni_env);
-
-  char attribute_buffer[1024];
-  String attribute(attribute_buffer, sizeof(attribute_buffer), &my_charset_bin);
-
-  for (Field **field_ptr=table->field; *field_ptr; field_ptr++)
-  {
-    Field * field = *field_ptr;
-
-    memset(rec_buffer->buffer, 0, rec_buffer->length);
-
-    const bool was_null= field->is_null();
-
-    if (was_null)
-    {
-      field->set_default();
-      field->set_notnull();
-    }
-
-    int fieldType = field->type();
-    uint actualFieldSize = field->field_length;
-
-    if (fieldType == MYSQL_TYPE_LONG
-        || fieldType == MYSQL_TYPE_SHORT
-        || fieldType == MYSQL_TYPE_TINY
-        || fieldType == MYSQL_TYPE_LONGLONG
-        || fieldType == MYSQL_TYPE_INT24
-        || fieldType == MYSQL_TYPE_ENUM)
-    {
-      longlong field_value = field->val_int();
-      if(this->is_little_endian())
-      {
-        field_value = __builtin_bswap64(field_value);
-      }
-
-      actualFieldSize = sizeof(longlong);
-      memcpy(rec_buffer->buffer, &field_value, sizeof(longlong));
-    }
-    else if (fieldType == MYSQL_TYPE_DOUBLE
-             || fieldType == MYSQL_TYPE_FLOAT
-             || fieldType == MYSQL_TYPE_DECIMAL
-             || fieldType == MYSQL_TYPE_NEWDECIMAL)
-    {
-      double field_value = field->val_real();
-      actualFieldSize = sizeof(double);
-      if(this->is_little_endian())
-      {
-        longlong* long_value = (longlong*)&field_value;
-        *long_value = __builtin_bswap64(*long_value);
-      }
-      memcpy(rec_buffer->buffer, &field_value, sizeof(longlong));
-    }
-	else if (fieldType == MYSQL_TYPE_TIME
-			|| fieldType == MYSQL_TYPE_DATE
-			|| fieldType == MYSQL_TYPE_NEWDATE
-			|| fieldType == MYSQL_TYPE_DATETIME
-			|| fieldType == MYSQL_TYPE_TIMESTAMP)
-	{
-		// Use number_to_datetime to convert from a longlong into a MySQL datetime object on reads - ABC
-		MYSQL_TIME mysql_time;
-		field->get_time(&mysql_time);
-		longlong timeValue = TIME_to_ulonglong_time(&mysql_time);
-		if (this->is_little_endian())
-		{
-			timeValue = __builtin_bswap64(timeValue);
-		}
-		actualFieldSize = sizeof(longlong);
-		memcpy(rec_buffer->buffer, &timeValue, sizeof(longlong));
-	}
-    else if (fieldType == MYSQL_TYPE_VARCHAR
-             || fieldType == MYSQL_TYPE_STRING
-             || fieldType == MYSQL_TYPE_VAR_STRING
-             || fieldType == MYSQL_TYPE_BLOB
-             || fieldType == MYSQL_TYPE_TINY_BLOB
-             || fieldType == MYSQL_TYPE_MEDIUM_BLOB
-             || fieldType == MYSQL_TYPE_LONG_BLOB)
-    {
-      field->val_str(&attribute);
-      actualFieldSize = attribute.length();
-      memcpy(rec_buffer->buffer, attribute.ptr(), attribute.length());
-    }
-	else
-	{
-		memcpy(rec_buffer->buffer, field->ptr, field->field_length);
-	}
-
-    if (was_null)
-    {
-      field->set_null();
-    }
-
-    jstring field_name = this->string_to_java_string(jni_env, field->field_name);
-    jbyteArray java_bytes = this->convert_value_to_java_bytes(jni_env, rec_buffer->buffer, actualFieldSize);
-
-    java_map_insert(jni_env, java_map, field_name, java_bytes);
-  }
-
-  jni_env->CallStaticBooleanMethod(adapter_class, write_row_method, java_table_name, java_map);
-
-  dbug_tmp_restore_column_map(table->read_set, old_map);
-
-  DBUG_RETURN(0);
+  DBUG_RETURN(ret);
 }
 
+/*
+  This will be called in a table scan right before the previous ::rnd_next()
+  call.
+*/
 int CloudHandler::update_row(const uchar *old_data, uchar *new_data)
 {
   DBUG_ENTER("CloudHandler::update_row");
+
+  ha_statistic_increment(&SSV::ha_update_count);
+
+  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
+    table->timestamp_field->set_time();
+
+  JNIEnv *jni_env;
+  JVMThreadAttach attached_thread(&jni_env, this->jvm);
+
+
   DBUG_RETURN(HA_ERR_WRONG_COMMAND);
 }
 
 int CloudHandler::delete_row(const uchar *buf)
 {
   DBUG_ENTER("CloudHandler::delete_row");
-  
+
   JVMThreadAttach attached_thread(&this->env, this->jvm);
 
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
@@ -595,6 +498,135 @@ int CloudHandler::extra(enum ha_extra_function operation)
 {
   DBUG_ENTER("CloudHandler::extra");
   DBUG_RETURN(0);
+}
+
+/* Set up the JNI Environment, and then persist the row to HBase.
+ * This helper calls sql_to_java, which returns the row information
+ * as a jobject to be sent to the HBaseAdapter.
+ */
+int CloudHandler::write_row_helper() {
+  JNIEnv *jni_env;
+  JVMThreadAttach attached_thread(&jni_env, this->jvm);
+
+  jclass adapter_class = jni_env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
+  jmethodID write_row_method = jni_env->GetStaticMethodID(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;)Z");
+  jstring java_table_name = this->string_to_java_string(jni_env, this->share->table_alias);
+  jobject java_row_map = sql_to_java(jni_env);
+
+  jni_env->CallStaticBooleanMethod(adapter_class, write_row_method, java_table_name, java_row_map);
+
+  return 0;
+}
+
+/* Read fields into a java map.
+ */
+jobject CloudHandler::sql_to_java(JNIEnv* jni_env) {
+  jobject java_map = this->create_java_map(jni_env);
+  // Boilerplate stuff every engine has to do on writes
+
+  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
+    table->timestamp_field->set_time();
+
+  my_bitmap_map *old_map = dbug_tmp_use_all_columns(table, table->read_set);
+
+  char attribute_buffer[1024];
+  String attribute(attribute_buffer, sizeof(attribute_buffer), &my_charset_bin);
+
+  for (Field **field_ptr=table->field; *field_ptr; field_ptr++)
+  {
+    Field * field = *field_ptr;
+
+    memset(rec_buffer->buffer, 0, rec_buffer->length);
+
+    const bool was_null= field->is_null();
+
+    if (was_null)
+    {
+      field->set_default();
+      field->set_notnull();
+    }
+
+    int fieldType = field->type();
+    uint actualFieldSize = field->field_length;
+
+    if (fieldType == MYSQL_TYPE_LONG
+        || fieldType == MYSQL_TYPE_SHORT
+        || fieldType == MYSQL_TYPE_TINY
+        || fieldType == MYSQL_TYPE_LONGLONG
+        || fieldType == MYSQL_TYPE_INT24
+        || fieldType == MYSQL_TYPE_ENUM)
+    {
+      longlong field_value = field->val_int();
+      if(this->is_little_endian())
+      {
+        field_value = __builtin_bswap64(field_value);
+      }
+
+      actualFieldSize = sizeof(longlong);
+      memcpy(rec_buffer->buffer, &field_value, sizeof(longlong));
+    }
+    else if (fieldType == MYSQL_TYPE_DOUBLE
+             || fieldType == MYSQL_TYPE_FLOAT
+             || fieldType == MYSQL_TYPE_DECIMAL
+             || fieldType == MYSQL_TYPE_NEWDECIMAL)
+    {
+      double field_value = field->val_real();
+      actualFieldSize = sizeof(double);
+      if(this->is_little_endian())
+      {
+        longlong* long_value = (longlong*)&field_value;
+        *long_value = __builtin_bswap64(*long_value);
+      }
+      memcpy(rec_buffer->buffer, &field_value, sizeof(longlong));
+    }
+	else if (fieldType == MYSQL_TYPE_TIME
+			|| fieldType == MYSQL_TYPE_DATE
+			|| fieldType == MYSQL_TYPE_NEWDATE
+			|| fieldType == MYSQL_TYPE_DATETIME
+			|| fieldType == MYSQL_TYPE_TIMESTAMP)
+	{
+		// Use number_to_datetime to convert from a longlong into a MySQL datetime object on reads - ABC
+		MYSQL_TIME mysql_time;
+		field->get_time(&mysql_time);
+		longlong timeValue = TIME_to_ulonglong_time(&mysql_time);
+		if (this->is_little_endian())
+		{
+			timeValue = __builtin_bswap64(timeValue);
+		}
+		actualFieldSize = sizeof(longlong);
+		memcpy(rec_buffer->buffer, &timeValue, sizeof(longlong));
+	}
+    else if (fieldType == MYSQL_TYPE_VARCHAR
+             || fieldType == MYSQL_TYPE_STRING
+             || fieldType == MYSQL_TYPE_VAR_STRING
+             || fieldType == MYSQL_TYPE_BLOB
+             || fieldType == MYSQL_TYPE_TINY_BLOB
+             || fieldType == MYSQL_TYPE_MEDIUM_BLOB
+             || fieldType == MYSQL_TYPE_LONG_BLOB)
+    {
+      field->val_str(&attribute);
+      actualFieldSize = attribute.length();
+      memcpy(rec_buffer->buffer, attribute.ptr(), attribute.length());
+    }
+	else
+	{
+		memcpy(rec_buffer->buffer, field->ptr, field->field_length);
+	}
+
+    if (was_null)
+    {
+      field->set_null();
+    }
+
+    jstring field_name = this->string_to_java_string(jni_env, field->field_name);
+    jbyteArray java_bytes = this->convert_value_to_java_bytes(jni_env, rec_buffer->buffer, actualFieldSize);
+
+    java_map_insert(jni_env, java_map, field_name, java_bytes);
+  }
+
+  dbug_tmp_restore_column_map(table->read_set, old_map);
+
+  return java_map;
 }
 
 const char* CloudHandler::java_to_string(jstring j_str)
