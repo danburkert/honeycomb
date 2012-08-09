@@ -6,9 +6,7 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.log4j.Logger;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -65,6 +63,11 @@ public class HBaseAdapter {
         }
         catch (IOException e) {
             throw new HBaseAdapterException("IOException", e.toString());
+        }
+        catch (Exception e)
+        {
+            logger.error("createTable exception", e);
+            throw new HBaseAdapterException("Exception", e.toString());
         }
         return true;
     }
@@ -127,7 +130,7 @@ public class HBaseAdapter {
 
     public static boolean deleteRow(long scanId) throws HBaseAdapterException {
         logger.info("HBaseAdapter: Deleting row with scan id " + scanId);
-        boolean deleted = false;
+        boolean deleted;
         try {
             Connection conn = clientPool.get(scanId);
             Result result = conn.getLastResult();

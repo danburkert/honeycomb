@@ -21,6 +21,11 @@ public class Row {
 
     private byte[] uuid;
 
+    public Row() {
+        this.rowMap = new HashMap<String, byte[]>();
+        this.uuid = new byte[0];
+    }
+
     public Map<String, byte[]> getRowMap() {
         return rowMap;
     }
