@@ -188,8 +188,19 @@ int CloudHandler::update_row(const uchar *old_data, uchar *new_data)
 
 int CloudHandler::delete_row(const uchar *buf)
 {
-    DBUG_ENTER("CloudHandler::delete_row");
-    DBUG_RETURN(HA_ERR_WRONG_COMMAND);
+  DBUG_ENTER("CloudHandler::delete_row");
+  
+  JVMThreadAttach attached_thread(&this->env, this->jvm);
+
+  jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
+  jmethodID delete_row_method = this->env->GetStaticMethodID(adapter_class, "deleteRow", "(J)Z");
+  jlong java_scan_id = curr_scan_id;
+
+  jboolean result = this->env->CallStaticBooleanMethod(adapter_class, delete_row_method, java_scan_id);
+
+  INFO(("Result of deleteRow: %d", result));
+
+  DBUG_RETURN(0);
 }
 
 int CloudHandler::rnd_init(bool scan)

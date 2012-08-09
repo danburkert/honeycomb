@@ -21,13 +21,11 @@ import org.apache.log4j.Logger;
 public class HBaseClient {
     private HTable table;
 
-    private static final byte[] ROOT = ByteBuffer.allocate(7)
-            .put(RowType.TABLES.getValue())
-            .put("TABLES".getBytes()).array();
-
     private static final byte[] NIC = "nic".getBytes();
 
     private static final byte[] IS_DELETED = "isDeleted".getBytes();
+
+    private static final UUID ZERO_UUID = new UUID(0L, 0L);
 
     private final ConcurrentHashMap<String, TableInfo> tableCache = new ConcurrentHashMap<String, TableInfo>();
 
@@ -52,10 +50,10 @@ public class HBaseClient {
         logger.info("HBaseClient: createTable called");
 
         //Get and increment the table counter (assumes it exists)
-        long tableId = table.incrementColumnValue(ROOT, NIC, new byte[0], 1);
+        long tableId = table.incrementColumnValue(RowKeyFactory.ROOT, NIC, new byte[0], 1);
 
         //Add a row with the table name
-        puts.add(new Put(ROOT).add(NIC, tableName.getBytes(), Bytes.toBytes(tableId)));
+        puts.add(new Put(RowKeyFactory.ROOT).add(NIC, tableName.getBytes(), Bytes.toBytes(tableId)));
 
         //Cache the table
         tableCache.put(tableName, new TableInfo(tableName, tableId));
@@ -112,12 +110,7 @@ public class HBaseClient {
         UUID rowId = UUID.randomUUID();
 
         //Build data row key
-        byte [] rowKey = ByteBuffer.allocate(25)
-                .put(RowType.DATA.getValue())
-                .putLong(tableId)
-                .putLong(rowId.getMostSignificantBits())
-                .putLong(rowId.getLeastSignificantBits())
-                .array();
+        byte [] rowKey = RowKeyFactory.buildDataKey(tableId, rowId);
 
         //Create put list
         List<Put> putList = new LinkedList<Put>();
@@ -133,14 +126,7 @@ public class HBaseClient {
             rowPut.add(NIC, Bytes.toBytes(columnId), value);
 
             //Build index key
-            byte [] indexRow = ByteBuffer.allocate(33 + value.length)
-                    .put(RowType.INDEX.getValue())
-                    .putLong(tableId)
-                    .putLong(columnId)
-                    .put(value)
-                    .putLong(rowId.getMostSignificantBits())
-                    .putLong(rowId.getLeastSignificantBits())
-                    .array();
+            byte [] indexRow = RowKeyFactory.buildIndexKey(tableId, columnId, value, rowId);
 
             //Add the corresponding index
             putList.add(new Put(indexRow).add(NIC, new byte[0], new byte[0]));
@@ -160,20 +146,9 @@ public class HBaseClient {
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
 
-        //Build row key
-        byte[] startRow = ByteBuffer.allocate(25)
-                .put(RowType.DATA.getValue())
-                .putLong(tableId)
-                .putLong(0L) /* UUID pt 1 */
-                .putLong(0L) /* UUID pt 2 */
-                .array();
-
-        byte[] endRow = ByteBuffer.allocate(25)
-                .put(RowType.DATA.getValue())
-                .putLong(tableId+1)
-                .putLong(0L) /* UUID pt 1 */
-                .putLong(0L) /* UUID pt 2 */
-                .array();
+        //Build row keys
+        byte[] startRow = RowKeyFactory.buildDataKey(tableId, ZERO_UUID);
+        byte[] endRow = RowKeyFactory.buildDataKey(tableId + 1, ZERO_UUID);
 
         Scan scan = new Scan(startRow, endRow);
 
@@ -199,12 +174,7 @@ public class HBaseClient {
         TableInfo info = tableCache.get(tableName);
         long tableId = info.getId();
 
-        byte[] rowKey = ByteBuffer.allocate(25)
-                .put(RowType.DATA.getValue())
-                .putLong(tableId)
-                .putLong(uuid.getMostSignificantBits())
-                .putLong(uuid.getLeastSignificantBits())
-                .array();
+        byte[] rowKey = RowKeyFactory.buildDataKey(tableId, uuid);
 
         Get get = new Get(rowKey);
         return table.get(get);
@@ -219,23 +189,8 @@ public class HBaseClient {
         long columnId = info.getColumnIdByName(columnName);
 
         //Build row keys
-        byte[] startRow = ByteBuffer.allocate(33 + value.length)
-                .put(RowType.INDEX.getValue())
-                .putLong(tableId)
-                .putLong(columnId)
-                .put(value)
-                .putLong(0L)
-                .putLong(0L)
-                .array();
-
-        byte[] endRow = ByteBuffer.allocate(33 + value.length)
-                .put(RowType.INDEX.getValue())
-                .putLong(tableId)
-                .putLong(columnId+1)
-                .put(value)
-                .putLong(0L)
-                .putLong(0L)
-                .array();
+        byte[] startRow = RowKeyFactory.buildIndexKey(tableId, columnId, value, ZERO_UUID);
+        byte[] endRow = RowKeyFactory.buildIndexKey(tableId, columnId+1, value, ZERO_UUID);
 
         Scan scan = new Scan(startRow, endRow);
 
@@ -248,21 +203,12 @@ public class HBaseClient {
         long tableId = info.getId();
 
         //Build row keys
-        byte[] startRow = ByteBuffer.allocate(25)
-                .put(RowType.DATA.getValue())
-                .putLong(tableId)
-                .putLong(0L) /* UUID pt 1 */
-                .putLong(0L) /* UUID pt 2 */
-                .array();
-
-        byte[] endRow = ByteBuffer.allocate(25)
-                .put(RowType.DATA.getValue())
-                .putLong(tableId+1)
-                .putLong(0L) /* UUID pt 1 */
-                .putLong(0L) /* UUID pt 2 */
-                .array();
+        byte[] startRow = RowKeyFactory.buildDataKey(tableId, ZERO_UUID);
+        byte[] endRow = RowKeyFactory.buildDataKey(tableId+1, ZERO_UUID);
 
         Scan scan = new Scan(startRow, endRow);
+
+        //Set the caching for the scan
         scan.setCaching(10);
 
         return table.getScanner(scan);
@@ -274,16 +220,13 @@ public class HBaseClient {
         }
 
         //Get the table id from HBase
-        Get tableIdGet = new Get(ROOT);
+        Get tableIdGet = new Get(RowKeyFactory.ROOT);
         Result result = table.get(tableIdGet);
         long tableId = ByteBuffer.wrap(result.getValue(NIC, tableName.getBytes())).getLong();
 
         TableInfo info = new TableInfo(tableName, tableId);
 
-        byte[] rowKey = ByteBuffer.allocate(9)
-                .put(RowType.COLUMNS.getValue())
-                .putLong(tableId)
-                .array();
+        byte[] rowKey = RowKeyFactory.buildColumnsKey(tableId);
 
         Get columnsGet = new Get(rowKey);
         Result columnsResult = table.get(columnsGet);
