@@ -48,7 +48,7 @@ public class HBaseAdapter {
             configured = true;
         }
         catch (FileNotFoundException e) {
-            logger.warn("HBaseAdapter::GotFileNotFoundException", e);
+            logger.warn("HBaseAdapter: GotFileNotFoundException", e);
             e.printStackTrace();
         }
     }
@@ -141,10 +141,10 @@ public class HBaseAdapter {
     public static void endScan(long scanId) throws HBaseAdapterException {
         logger.info("HBaseAdapter: Ending scan with id " + scanId);
         Connection conn = clientPool.remove(scanId);
-        conn.close();
         if (conn == null) {
             throw new HBaseAdapterException("ScanId does not exist", "");
         }
+        conn.close();
     }
 
     public static boolean writeRow(String tableName, Map<String, byte[]> values) throws HBaseAdapterException {
