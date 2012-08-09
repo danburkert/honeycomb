@@ -37,15 +37,15 @@ private:
     JavaVM* jvm;
 
     const char* java_to_string(jstring str);
-    jstring string_to_java_string(JNIEnv *jni_env, const char*);
-    jobject create_java_map(JNIEnv *jni_env);
-    jobject java_map_insert(JNIEnv *jni_env, jobject java_map, jstring key, jbyteArray value);
-    jbyteArray convert_value_to_java_bytes(JNIEnv *jni_env, uchar* value, uint32 length);
+    jstring string_to_java_string(const char*);
+    jobject create_java_map();
+    jobject java_map_insert(jobject java_map, jstring key, jbyteArray value);
+    jbyteArray convert_value_to_java_bytes(uchar* value, uint32 length);
     void store_field_values(uchar *buf, jarray keys, jarray vals);
     void store_field_value(Field* field, uchar* buf, const char* key, char* val, jsize val_length);
     int delete_row_helper();
     int write_row_helper();
-    jobject sql_to_java(JNIEnv*);
+    jobject sql_to_java();
 
     void reverse_bytes(uchar *begin, uchar *end)
     {

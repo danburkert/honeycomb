@@ -142,7 +142,7 @@ int CloudHandler::rnd_init(bool scan)
 
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
   jmethodID start_scan_method = this->env->GetStaticMethodID(adapter_class, "startScan", "(Ljava/lang/String;)J");
-  jstring java_table_name = this->string_to_java_string(this->env, table_name);
+  jstring java_table_name = this->string_to_java_string(table_name);
 
   this->curr_scan_id = this->env->CallStaticLongMethod(adapter_class, start_scan_method, java_table_name);
 
@@ -366,33 +366,32 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
                          HA_CREATE_INFO *create_info)
 {
   DBUG_ENTER("CloudHandler::create");
-  JNIEnv *jni_env;
 
-  JVMThreadAttach attached_thread(&jni_env, this->jvm);
-  jclass adapter_class = jni_env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
+  JVMThreadAttach attached_thread(&this->env, this->jvm);
+  jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
   if (adapter_class == NULL)
   {
-    this->print_java_exception(jni_env);
+    this->print_java_exception(this->env);
     ERROR(("Could not find adapter class HBaseAdapter"));
     DBUG_RETURN(1);
   }
 
   const char* table_name = create_info->alias;
 
-  jclass list_class = jni_env->FindClass("java/util/LinkedList");
-  jmethodID list_constructor = jni_env->GetMethodID(list_class, "<init>", "()V");
-  jobject columns = jni_env->NewObject(list_class, list_constructor);
-  jmethodID add_column = jni_env->GetMethodID(list_class, "add", "(Ljava/lang/Object;)Z");
+  jclass list_class = this->env->FindClass("java/util/LinkedList");
+  jmethodID list_constructor = this->env->GetMethodID(list_class, "<init>", "()V");
+  jobject columns = this->env->NewObject(list_class, list_constructor);
+  jmethodID add_column = this->env->GetMethodID(list_class, "add", "(Ljava/lang/Object;)Z");
 
   for (Field **field = table_arg->field ; *field ; field++)
   {
-    jni_env->CallBooleanMethod(columns, add_column, string_to_java_string(jni_env, (*field)->field_name));
+    this->env->CallBooleanMethod(columns, add_column, string_to_java_string((*field)->field_name));
   }
 
-  jmethodID create_table_method = jni_env->GetStaticMethodID(adapter_class, "createTable", "(Ljava/lang/String;Ljava/util/List;)Z");
-  jboolean result = jni_env->CallStaticBooleanMethod(adapter_class, create_table_method, string_to_java_string(jni_env, table_name), columns);
+  jmethodID create_table_method = this->env->GetStaticMethodID(adapter_class, "createTable", "(Ljava/lang/String;Ljava/util/List;)Z");
+  jboolean result = this->env->CallStaticBooleanMethod(adapter_class, create_table_method, string_to_java_string(table_name), columns);
   INFO(("Result of createTable: %d", result));
-  this->print_java_exception(jni_env);
+  this->print_java_exception(this->env);
 
   DBUG_RETURN(0);
 }
@@ -509,23 +508,22 @@ int CloudHandler::extra(enum ha_extra_function operation)
  */
 int CloudHandler::write_row_helper() {
   DBUG_ENTER("CloudHandler::write_row_helper");
-  JNIEnv *jni_env;
-  JVMThreadAttach attached_thread(&jni_env, this->jvm);
+  JVMThreadAttach attached_thread(&this->env, this->jvm);
 
-  jclass adapter_class = jni_env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
-  jmethodID write_row_method = jni_env->GetStaticMethodID(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;)Z");
-  jstring java_table_name = this->string_to_java_string(jni_env, this->share->table_alias);
-  jobject java_row_map = sql_to_java(jni_env);
+  jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
+  jmethodID write_row_method = this->env->GetStaticMethodID(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;)Z");
+  jstring java_table_name = this->string_to_java_string(this->share->table_alias);
+  jobject java_row_map = sql_to_java();
 
-  jni_env->CallStaticBooleanMethod(adapter_class, write_row_method, java_table_name, java_row_map);
+  this->env->CallStaticBooleanMethod(adapter_class, write_row_method, java_table_name, java_row_map);
 
   DBUG_RETURN(0);
 }
 
 /* Read fields into a java map.
  */
-jobject CloudHandler::sql_to_java(JNIEnv* jni_env) {
-  jobject java_map = this->create_java_map(jni_env);
+jobject CloudHandler::sql_to_java() {
+  jobject java_map = this->create_java_map();
   // Boilerplate stuff every engine has to do on writes
 
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
@@ -622,10 +620,10 @@ jobject CloudHandler::sql_to_java(JNIEnv* jni_env) {
       field->set_null();
     }
 
-    jstring field_name = this->string_to_java_string(jni_env, field->field_name);
-    jbyteArray java_bytes = this->convert_value_to_java_bytes(jni_env, rec_buffer->buffer, actualFieldSize);
+    jstring field_name = this->string_to_java_string(field->field_name);
+    jbyteArray java_bytes = this->convert_value_to_java_bytes(rec_buffer->buffer, actualFieldSize);
 
-    java_map_insert(jni_env, java_map, field_name, java_bytes);
+    java_map_insert(java_map, field_name, java_bytes);
   }
 
   dbug_tmp_restore_column_map(table->read_set, old_map);
@@ -639,35 +637,35 @@ const char* CloudHandler::java_to_string(jstring j_str)
   return str;
 }
 
-jstring CloudHandler::string_to_java_string(JNIEnv *jni_env, const char* string)
+jstring CloudHandler::string_to_java_string(const char* string)
 {
-  return jni_env->NewStringUTF(string);
+  return this->env->NewStringUTF(string);
 }
 
-jobject CloudHandler::create_java_map(JNIEnv* jni_env)
+jobject CloudHandler::create_java_map()
 {
-  jclass map_class = jni_env->FindClass("java/util/HashMap");
-  jmethodID constructor = jni_env->GetMethodID(map_class, "<init>", "()V");
-  jobject java_map = jni_env->NewObject(map_class, constructor);
+  jclass map_class = this->env->FindClass("java/util/HashMap");
+  jmethodID constructor = this->env->GetMethodID(map_class, "<init>", "()V");
+  jobject java_map = this->env->NewObject(map_class, constructor);
   return java_map;
 }
 
-jobject CloudHandler::java_map_insert(JNIEnv *jni_env, jobject java_map, jstring key, jbyteArray value)
+jobject CloudHandler::java_map_insert(jobject java_map, jstring key, jbyteArray value)
 {
-  jclass map_class = jni_env->FindClass("java/util/HashMap");
-  jmethodID put_method = jni_env->GetMethodID(map_class, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+  jclass map_class = this->env->FindClass("java/util/HashMap");
+  jmethodID put_method = this->env->GetMethodID(map_class, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
 
-  return jni_env->CallObjectMethod(java_map, put_method, key, value);
+  return this->env->CallObjectMethod(java_map, put_method, key, value);
 }
 
-jbyteArray CloudHandler::convert_value_to_java_bytes(JNIEnv *jni_env, uchar* value, uint32 length)
+jbyteArray CloudHandler::convert_value_to_java_bytes(uchar* value, uint32 length)
 {
-  jbyteArray byteArray = jni_env->NewByteArray(length);
-  jbyte *java_bytes = jni_env->GetByteArrayElements(byteArray, 0);
+  jbyteArray byteArray = this->env->NewByteArray(length);
+  jbyte *java_bytes = this->env->GetByteArrayElements(byteArray, 0);
 
   memcpy(java_bytes, value, length);
 
-  jni_env->SetByteArrayRegion(byteArray, 0, length, java_bytes);
+  this->env->SetByteArrayRegion(byteArray, 0, length, java_bytes);
 
   return byteArray;
 }
