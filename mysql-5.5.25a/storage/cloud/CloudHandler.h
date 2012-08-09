@@ -11,6 +11,7 @@
 #include "my_base.h"                     /* ha_rows */
 #include "CloudShare.h"
 #include <jni.h>
+#include "Macros.h"
 
 typedef struct st_record_buffer {
   uchar *buffer;
@@ -43,6 +44,35 @@ private:
     void store_field_values(uchar *buf, jarray keys, jarray vals);
     void store_field_value(Field* field, uchar* buf, const char* key, char* val, jsize val_length);
 
+    void reverse_bytes(uchar *begin, uchar *end)
+    {
+      for (; begin <= end; begin++, end--)
+      {
+        uchar tmp = *end;
+        *end = *begin;
+        *begin = tmp;
+      }
+    }
+
+    bool is_little_endian()
+    {
+      union
+      {
+        uint32_t i;
+        char c[4];
+      } bint = {0x01020304};
+
+      return bint.c[0] == 4;
+    }
+
+    void make_big_endian(uchar *begin, uchar *end)
+    {
+      if (is_little_endian())
+      {
+        reverse_bytes(begin, end);
+      }
+    }
+
     longlong htonll(longlong src, bool check_endian = true) {
       const int TYP_INIT = 0;
       const int TYP_SMLE = 1;
@@ -72,6 +102,21 @@ private:
       c = x.c[3]; x.c[3] = x.c[4]; x.c[4] = c;
 
       return x.ull;
+    }
+
+    void print_java_exception(JNIEnv* jni_env)
+    {
+      if(jni_env->ExceptionCheck() == JNI_TRUE)
+      {
+        jthrowable throwable = jni_env->ExceptionOccurred();
+        jclass objClazz = jni_env->GetObjectClass(throwable);
+        jmethodID methodId = jni_env->GetMethodID(objClazz, "toString", "()Ljava/lang/String;");
+        jstring result = (jstring)jni_env->CallObjectMethod(throwable, methodId);
+        const char* string = jni_env->GetStringUTFChars(result, NULL);
+        INFO(("Exception from java: %s", string));
+        INFO(("Exception from \n atoehutnaoeuhaotenhu"));
+        jni_env->ReleaseStringUTFChars(result, string);
+      }
     }
 
     public:

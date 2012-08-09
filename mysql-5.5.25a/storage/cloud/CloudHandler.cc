@@ -10,10 +10,6 @@
 #include "ha_cloud.h"
 #include "JVMThreadAttach.h"
 #include "mysql_time.h"
-#include "Macros.h"
-void reverse_bytes(uchar *begin, uchar *end);
-bool is_little_endian();
-void make_big_endian(uchar *begin, uchar *end);
 
 /*
   If frm_error() is called in table.cc this is called to find out what file
@@ -23,12 +19,12 @@ void make_big_endian(uchar *begin, uchar *end);
 */
 const char **CloudHandler::bas_ext() const
 {
-    static const char *cloud_exts[] =
-    {
-        NullS
-    };
+  static const char *cloud_exts[] =
+  {
+    NullS
+  };
 
-    return cloud_exts;
+  return cloud_exts;
 }
 
 record_buffer *CloudHandler::create_record_buffer(unsigned int length)
@@ -61,34 +57,34 @@ void CloudHandler::destroy_record_buffer(record_buffer *r)
 
 int CloudHandler::open(const char *name, int mode, uint test_if_locked)
 {
-    DBUG_ENTER("CloudHandler::open");
+  DBUG_ENTER("CloudHandler::open");
 
-    if (!(share = get_share(name, table)))
-    {
-        DBUG_RETURN(1);
-    }
+  if (!(share = get_share(name, table)))
+  {
+    DBUG_RETURN(1);
+  }
 
-    thr_lock_data_init(&share->lock, &lock, (void*) this);
+  thr_lock_data_init(&share->lock, &lock, (void*) this);
 
-    DBUG_RETURN(0);
+  DBUG_RETURN(0);
 }
 
 int CloudHandler::close(void)
 {
-    DBUG_ENTER("CloudHandler::close");
+  DBUG_ENTER("CloudHandler::close");
 
-    destroy_record_buffer(rec_buffer);
+  destroy_record_buffer(rec_buffer);
 
-    DBUG_RETURN(free_share(share));
+  DBUG_RETURN(free_share(share));
 }
 
 int CloudHandler::write_row(uchar *buf)
 {
   DBUG_ENTER("CloudHandler::write_row");
 
-    JNIEnv *jni_env;
-    JVMThreadAttach attached_thread(&jni_env, this->jvm);
-    my_bitmap_map *old_map = dbug_tmp_use_all_columns(table, table->read_set);
+  JNIEnv *jni_env;
+  JVMThreadAttach attached_thread(&jni_env, this->jvm);
+  my_bitmap_map *old_map = dbug_tmp_use_all_columns(table, table->read_set);
 
   // Boilerplate stuff every engine has to do on writes
 
@@ -127,40 +123,42 @@ int CloudHandler::write_row(uchar *buf)
     int fieldType = field->type();
     uint actualFieldSize = field->field_length;
 
-		if (fieldType == MYSQL_TYPE_LONG
-				|| fieldType == MYSQL_TYPE_SHORT
-				|| fieldType == MYSQL_TYPE_TINY
-				|| fieldType == MYSQL_TYPE_LONGLONG
-				|| fieldType == MYSQL_TYPE_INT24
-				|| fieldType == MYSQL_TYPE_ENUM)
-		{
-			longlong field_value = __builtin_bswap64(field->val_int());
-			actualFieldSize = sizeof(longlong);
-			memcpy(rec_buffer->buffer, &field_value, sizeof(longlong));
-		}
-		else if (fieldType == MYSQL_TYPE_DOUBLE
-				|| fieldType == MYSQL_TYPE_FLOAT
-				|| fieldType == MYSQL_TYPE_DECIMAL
-				|| fieldType == MYSQL_TYPE_NEWDECIMAL)
-		{
-			double field_value = field->val_real();
-			actualFieldSize = sizeof(double);
-			make_big_endian(field->ptr, field->ptr + sizeof(double));
-			memcpy(rec_buffer->buffer, &field_value, sizeof(double));
-		}
-		else if (fieldType == MYSQL_TYPE_VARCHAR
-				|| fieldType == MYSQL_TYPE_STRING
-				|| fieldType == MYSQL_TYPE_VAR_STRING
-				|| fieldType == MYSQL_TYPE_BLOB
-				|| fieldType == MYSQL_TYPE_TINY_BLOB
-				|| fieldType == MYSQL_TYPE_MEDIUM_BLOB
-				|| fieldType == MYSQL_TYPE_LONG_BLOB)
-		{
-			uint32 fieldLength = field->binary() ? field->data_length() : field->field_length;
+    if (fieldType == MYSQL_TYPE_LONG
+        || fieldType == MYSQL_TYPE_SHORT
+        || fieldType == MYSQL_TYPE_TINY
+        || fieldType == MYSQL_TYPE_LONGLONG
+        || fieldType == MYSQL_TYPE_INT24
+        || fieldType == MYSQL_TYPE_ENUM)
+    {
+      longlong field_value = __builtin_bswap64(field->val_int());
+      actualFieldSize = sizeof(longlong);
+      memcpy(rec_buffer->buffer, &field_value, sizeof(longlong));
+    }
+    else if (fieldType == MYSQL_TYPE_DOUBLE
+             || fieldType == MYSQL_TYPE_FLOAT
+             || fieldType == MYSQL_TYPE_DECIMAL
+             || fieldType == MYSQL_TYPE_NEWDECIMAL)
+    {
+      double field_value = field->val_real();
+      actualFieldSize = sizeof(double);
+      longlong* long_value = (longlong*)&field_value;
+      longlong swapped_long = __builtin_bswap64(*long_value);
+      double swapped_double = *(double*)&swapped_long;
+      memcpy(rec_buffer->buffer, &swapped_double, sizeof(double));
+    }
+    else if (fieldType == MYSQL_TYPE_VARCHAR
+             || fieldType == MYSQL_TYPE_STRING
+             || fieldType == MYSQL_TYPE_VAR_STRING
+             || fieldType == MYSQL_TYPE_BLOB
+             || fieldType == MYSQL_TYPE_TINY_BLOB
+             || fieldType == MYSQL_TYPE_MEDIUM_BLOB
+             || fieldType == MYSQL_TYPE_LONG_BLOB)
+    {
+      uint32 fieldLength = field->binary() ? field->data_length() : field->field_length;
 
-			char attribute_buffer[fieldLength];
-			memcpy(rec_buffer->buffer, field->ptr, field->field_length);
-		}
+      char attribute_buffer[fieldLength];
+      memcpy(rec_buffer->buffer, field->ptr, field->field_length);
+    }
 
     if (was_null)
     {
@@ -182,85 +180,86 @@ int CloudHandler::write_row(uchar *buf)
 
 int CloudHandler::update_row(const uchar *old_data, uchar *new_data)
 {
-    DBUG_ENTER("CloudHandler::update_row");
-    DBUG_RETURN(HA_ERR_WRONG_COMMAND);
+  DBUG_ENTER("CloudHandler::update_row");
+  DBUG_RETURN(HA_ERR_WRONG_COMMAND);
 }
 
 int CloudHandler::delete_row(const uchar *buf)
 {
-    DBUG_ENTER("CloudHandler::delete_row");
-    DBUG_RETURN(HA_ERR_WRONG_COMMAND);
+  DBUG_ENTER("CloudHandler::delete_row");
+  DBUG_RETURN(HA_ERR_WRONG_COMMAND);
 }
 
 int CloudHandler::rnd_init(bool scan)
 {
-    DBUG_ENTER("CloudHandler::rnd_init");
+  DBUG_ENTER("CloudHandler::rnd_init");
 
-    const char* table_name = this->table->alias;
+  const char* table_name = this->table->alias;
 
-    JVMThreadAttach attached_thread(&this->env, this->jvm);
+  JVMThreadAttach attached_thread(&this->env, this->jvm);
 
-    jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
-    jmethodID start_scan_method = this->env->GetStaticMethodID(adapter_class, "startScan", "(Ljava/lang/String;)J");
-    jstring java_table_name = this->string_to_java_string(this->env, table_name);
-    
-    this->curr_scan_id = this->env->CallStaticLongMethod(adapter_class, start_scan_method, java_table_name);
-    
-    DBUG_RETURN(0);
+  jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
+  jmethodID start_scan_method = this->env->GetStaticMethodID(adapter_class, "startScan", "(Ljava/lang/String;)J");
+  jstring java_table_name = this->string_to_java_string(this->env, table_name);
+
+  this->curr_scan_id = this->env->CallStaticLongMethod(adapter_class, start_scan_method, java_table_name);
+
+  DBUG_RETURN(0);
 }
 
 int CloudHandler::external_lock(THD *thd, int lock_type)
 {
-    DBUG_ENTER("CloudHandler::external_lock");
-    DBUG_RETURN(0);
+  DBUG_ENTER("CloudHandler::external_lock");
+  DBUG_RETURN(0);
 }
 
 int CloudHandler::rnd_next(uchar *buf)
 {
-    int rc = 0;
-    my_bitmap_map *orig_bitmap;
-    
-    ha_statistic_increment(&SSV::ha_read_rnd_next_count);
-    DBUG_ENTER("CloudHandler::rnd_next");
+  int rc = 0;
+  my_bitmap_map *orig_bitmap;
 
-    orig_bitmap= dbug_tmp_use_all_columns(table, table->write_set);
-    
-    MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, TRUE);
+  ha_statistic_increment(&SSV::ha_read_rnd_next_count);
+  DBUG_ENTER("CloudHandler::rnd_next");
 
-    memset(buf, 0, table->s->null_bytes);
+  orig_bitmap= dbug_tmp_use_all_columns(table, table->write_set);
 
-    JVMThreadAttach attached_thread(&this->env, this->jvm);
-    
-    jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
-    jmethodID next_row_method = this->env->GetStaticMethodID(adapter_class, "nextRow", "(J)Lcom/nearinfinity/mysqlengine/jni/Row;");
-    jlong java_scan_id = curr_scan_id;
-    jobject row = this->env->CallStaticObjectMethod(adapter_class, next_row_method, java_scan_id);
+  MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, TRUE);
 
-    jclass row_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/Row");
-    jmethodID get_keys_method = this->env->GetMethodID(row_class, "getKeys", "()[Ljava/lang/String;");
-    jmethodID get_vals_method = this->env->GetMethodID(row_class, "getValues", "()[[B");
-    jmethodID get_uuid_method = this->env->GetMethodID(row_class, "getUUID", "()[B");
+  memset(buf, 0, table->s->null_bytes);
 
-    jarray keys = (jarray) this->env->CallObjectMethod(row, get_keys_method);
-    jarray vals = (jarray) this->env->CallObjectMethod(row, get_vals_method);
-    jbyteArray uuid = (jbyteArray) this->env->CallObjectMethod(row, get_uuid_method);
+  JVMThreadAttach attached_thread(&this->env, this->jvm);
 
-    if (keys == NULL || vals == NULL) {
-      dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
-      DBUG_RETURN(HA_ERR_END_OF_FILE);
-    }
+  jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
+  jmethodID next_row_method = this->env->GetStaticMethodID(adapter_class, "nextRow", "(J)Lcom/nearinfinity/mysqlengine/jni/Row;");
+  jlong java_scan_id = curr_scan_id;
+  jobject row = this->env->CallStaticObjectMethod(adapter_class, next_row_method, java_scan_id);
 
-    this->ref = (uchar*) this->env->GetByteArrayElements(uuid, JNI_FALSE);
-    this->ref_length = 16;
+  jclass row_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/Row");
+  jmethodID get_keys_method = this->env->GetMethodID(row_class, "getKeys", "()[Ljava/lang/String;");
+  jmethodID get_vals_method = this->env->GetMethodID(row_class, "getValues", "()[[B");
+  jmethodID get_uuid_method = this->env->GetMethodID(row_class, "getUUID", "()[B");
 
-    store_field_values(buf, keys, vals);
+  jarray keys = (jarray) this->env->CallObjectMethod(row, get_keys_method);
+  jarray vals = (jarray) this->env->CallObjectMethod(row, get_vals_method);
+  jbyteArray uuid = (jbyteArray) this->env->CallObjectMethod(row, get_uuid_method);
 
+  if (keys == NULL || vals == NULL)
+  {
     dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
-    
-    stats.records++;
-    MYSQL_READ_ROW_DONE(rc);
-    
-    DBUG_RETURN(rc);
+    DBUG_RETURN(HA_ERR_END_OF_FILE);
+  }
+
+  this->ref = (uchar*) this->env->GetByteArrayElements(uuid, JNI_FALSE);
+  this->ref_length = 16;
+
+  store_field_values(buf, keys, vals);
+
+  dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
+
+  stats.records++;
+  MYSQL_READ_ROW_DONE(rc);
+
+  DBUG_RETURN(rc);
 }
 
 void CloudHandler::store_field_values(uchar *buf, jarray keys, jarray vals)
@@ -298,19 +297,33 @@ void CloudHandler::store_field_value(Field* field, uchar* buf, const char* key, 
   enum_field_types field_type = field->type();
   field->move_field_offset(offset);
 
-  if (field_type == MYSQL_TYPE_LONG || 
+  if (field_type == MYSQL_TYPE_LONG ||
       field_type == MYSQL_TYPE_SHORT ||
       field_type == MYSQL_TYPE_LONGLONG ||
       field_type == MYSQL_TYPE_INT24 ||
-      field_type == MYSQL_TYPE_TINY || 
+      field_type == MYSQL_TYPE_TINY ||
       field_type == MYSQL_TYPE_ENUM)
   {
     longlong long_value = __builtin_bswap64(*(longlong*)val);
     field->store(long_value, false);
   }
-  else if(field_type == MYSQL_TYPE_VARCHAR ||
-      field_type == MYSQL_TYPE_STRING ||
-      field_type == MYSQL_TYPE_VAR_STRING)
+  else if (field_type == MYSQL_TYPE_FLOAT ||
+           field_type == MYSQL_TYPE_DECIMAL ||
+           field_type == MYSQL_TYPE_NEWDECIMAL ||
+           field_type == MYSQL_TYPE_DOUBLE)
+  {
+    longlong* long_ptr = (longlong*)val;
+    longlong swapped_long = __builtin_bswap64(*long_ptr);
+    double double_value = *(double*)&swapped_long;
+    field->store(double_value);
+  }
+  else if (fieldType == MYSQL_TYPE_VARCHAR
+      || fieldType == MYSQL_TYPE_STRING
+      || fieldType == MYSQL_TYPE_VAR_STRING
+      || fieldType == MYSQL_TYPE_BLOB
+      || fieldType == MYSQL_TYPE_TINY_BLOB
+      || fieldType == MYSQL_TYPE_MEDIUM_BLOB
+      || fieldType == MYSQL_TYPE_LONG_BLOB)
   {
     field->store(val, val_length, &my_charset_bin);
   }
@@ -320,8 +333,8 @@ void CloudHandler::store_field_value(Field* field, uchar* buf, const char* key, 
 
 void CloudHandler::position(const uchar *record)
 {
-    DBUG_ENTER("CloudHandler::position");
-    DBUG_VOID_RETURN;
+  DBUG_ENTER("CloudHandler::position");
+  DBUG_VOID_RETURN;
 }
 
 int CloudHandler::rnd_pos(uchar *buf, uchar *pos)
@@ -332,7 +345,7 @@ int CloudHandler::rnd_pos(uchar *buf, uchar *pos)
   MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, FALSE);
 
   JVMThreadAttach attached_thread(&this->env, this->jvm);
-  
+
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
   jmethodID get_row_method = this->env->GetStaticMethodID(adapter_class, "getRow", "(JLjava/lang/String;[B)Lcom/nearinfinity/mysqlengine/jni/Row;");
   jlong java_scan_id = curr_scan_id;
@@ -347,11 +360,12 @@ int CloudHandler::rnd_pos(uchar *buf, uchar *pos)
 
   jboolean is_copy = JNI_FALSE;
 
-  if (keys == NULL || vals == NULL) {
+  if (keys == NULL || vals == NULL)
+  {
     DBUG_RETURN(HA_ERR_WRONG_COMMAND);
   }
 
-  store_field_values(buf, keys, vals)
+  store_field_values(buf, keys, vals);
 
   MYSQL_READ_ROW_DONE(rc);
   DBUG_RETURN(rc);
@@ -362,11 +376,11 @@ int CloudHandler::rnd_end()
   DBUG_ENTER("CloudHandler::rnd_end");
 
   JVMThreadAttach attached_thread(&this->env, this->jvm);
-  
+
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
   jmethodID end_scan_method = this->env->GetStaticMethodID(adapter_class, "endScan", "(J)V");
   jlong java_scan_id = curr_scan_id;
-  
+
   this->env->CallStaticVoidMethod(adapter_class, end_scan_method, java_scan_id);
 
   curr_scan_id = -1;
@@ -376,51 +390,44 @@ int CloudHandler::rnd_end()
 int CloudHandler::create(const char *name, TABLE *table_arg,
                          HA_CREATE_INFO *create_info)
 {
-    DBUG_ENTER("CloudHandler::create");
-    JNIEnv *jni_env;
+  DBUG_ENTER("CloudHandler::create");
+  JNIEnv *jni_env;
 
-    JVMThreadAttach attached_thread(&jni_env, this->jvm);
-    jclass adapter_class = jni_env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
-    if (adapter_class == NULL)
-    {
-      if(jni_env->ExceptionCheck() == JNI_TRUE)
-      {
-        jthrowable throwable = jni_env->ExceptionOccurred();
-        jclass objClazz = jni_env->GetObjectClass(throwable);
-        jmethodID methodId = jni_env->GetMethodID(objClazz, "toString", "()Ljava/lang/String;");
-        jstring result = (jstring)jni_env->CallObjectMethod(throwable, methodId);
-        const char* string = jni_env->GetStringUTFChars(result, NULL);
-        jni_env->ExceptionDescribe();
-      }
-      ERROR(("Could not find adapter class HBaseAdapter"));
-      DBUG_RETURN(1);
-    }
+  JVMThreadAttach attached_thread(&jni_env, this->jvm);
+  jclass adapter_class = jni_env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
+  if (adapter_class == NULL)
+  {
+    this->print_java_exception(jni_env);
+    ERROR(("Could not find adapter class HBaseAdapter"));
+    DBUG_RETURN(1);
+  }
 
-    const char* table_name = create_info->alias;
+  const char* table_name = create_info->alias;
 
-    jclass list_class = jni_env->FindClass("java/util/LinkedList");
-    jmethodID list_constructor = jni_env->GetMethodID(list_class, "<init>", "()V");
-    jobject columns = jni_env->NewObject(list_class, list_constructor);
-    jmethodID add_column = jni_env->GetMethodID(list_class, "add", "(Ljava/lang/Object;)Z");
+  jclass list_class = jni_env->FindClass("java/util/LinkedList");
+  jmethodID list_constructor = jni_env->GetMethodID(list_class, "<init>", "()V");
+  jobject columns = jni_env->NewObject(list_class, list_constructor);
+  jmethodID add_column = jni_env->GetMethodID(list_class, "add", "(Ljava/lang/Object;)Z");
 
-    for (Field **field = table_arg->field ; *field ; field++)
-    {
-      jni_env->CallBooleanMethod(columns, add_column, string_to_java_string(jni_env, (*field)->field_name));
-    }
+  for (Field **field = table_arg->field ; *field ; field++)
+  {
+    jni_env->CallBooleanMethod(columns, add_column, string_to_java_string(jni_env, (*field)->field_name));
+  }
 
-    jmethodID create_table_method = jni_env->GetStaticMethodID(adapter_class, "createTable", "(Ljava/lang/String;Ljava/util/List;)Z");
-    jboolean result = jni_env->CallStaticBooleanMethod(adapter_class, create_table_method, string_to_java_string(jni_env, table_name), columns);
-    INFO(("Result of createTable: %d", result));
+  jmethodID create_table_method = jni_env->GetStaticMethodID(adapter_class, "createTable", "(Ljava/lang/String;Ljava/util/List;)Z");
+  jboolean result = jni_env->CallStaticBooleanMethod(adapter_class, create_table_method, string_to_java_string(jni_env, table_name), columns);
+  INFO(("Result of createTable: %d", result));
+  this->print_java_exception(jni_env);
 
-    DBUG_RETURN(0);
+  DBUG_RETURN(0);
 }
 
 THR_LOCK_DATA **CloudHandler::store_lock(THD *thd, THR_LOCK_DATA **to, enum thr_lock_type lock_type)
 {
-    if (lock_type != TL_IGNORE && lock.type == TL_UNLOCK)
-        lock.type=lock_type;
-    *to++= &lock;
-    return to;
+  if (lock_type != TL_IGNORE && lock.type == TL_UNLOCK)
+    lock.type=lock_type;
+  *to++= &lock;
+  return to;
 }
 
 /*
@@ -428,37 +435,37 @@ THR_LOCK_DATA **CloudHandler::store_lock(THD *thd, THR_LOCK_DATA **to, enum thr_
 */
 int CloudHandler::free_share(CloudShare *share)
 {
-    DBUG_ENTER("CloudHandler::free_share");
-    mysql_mutex_lock(cloud_mutex);
-    int result_code= 0;
-    if (!--share->use_count)
-    {
-        my_hash_delete(cloud_open_tables, (uchar*) share);
-        thr_lock_delete(&share->lock);
-        mysql_mutex_destroy(&share->mutex);
-        my_free(share);
-    }
-    mysql_mutex_unlock(cloud_mutex);
+  DBUG_ENTER("CloudHandler::free_share");
+  mysql_mutex_lock(cloud_mutex);
+  int result_code= 0;
+  if (!--share->use_count)
+  {
+    my_hash_delete(cloud_open_tables, (uchar*) share);
+    thr_lock_delete(&share->lock);
+    mysql_mutex_destroy(&share->mutex);
+    my_free(share);
+  }
+  mysql_mutex_unlock(cloud_mutex);
 
-    DBUG_RETURN(result_code);
+  DBUG_RETURN(result_code);
 }
 
 int CloudHandler::info(uint)
 {
-    DBUG_ENTER("CloudHandler::info");
-    if (stats.records < 2) 
-      stats.records= 2;
-    DBUG_RETURN(0);
+  DBUG_ENTER("CloudHandler::info");
+  if (stats.records < 2)
+    stats.records= 2;
+  DBUG_RETURN(0);
 }
 
 CloudShare *CloudHandler::get_share(const char *table_name, TABLE *table)
 {
-    CloudShare *share;
-    char meta_file_name[FN_REFLEN];
-    MY_STAT file_stat;                /* Stat information for the data file */
-    char *tmp_path_name;
-    char *tmp_alias;
-    uint path_length, alias_length;
+  CloudShare *share;
+  char meta_file_name[FN_REFLEN];
+  MY_STAT file_stat;                /* Stat information for the data file */
+  char *tmp_path_name;
+  char *tmp_alias;
+  uint path_length, alias_length;
 
   rec_buffer= create_record_buffer(table->s->reclength);
 
@@ -469,50 +476,50 @@ CloudShare *CloudHandler::get_share(const char *table_name, TABLE *table)
     return NULL;
   }
 
-    mysql_mutex_lock(cloud_mutex);
-    path_length=(uint) strlen(table_name);
-    alias_length=(uint) strlen(table->alias);
+  mysql_mutex_lock(cloud_mutex);
+  path_length=(uint) strlen(table_name);
+  alias_length=(uint) strlen(table->alias);
 
-    /*
-    If share is not present in the hash, create a new share and
-    initialize its members.
-    */
-    if (!(share=(CloudShare*) my_hash_search(cloud_open_tables,
-                (uchar*) table_name,
-                path_length)))
+  /*
+  If share is not present in the hash, create a new share and
+  initialize its members.
+  */
+  if (!(share=(CloudShare*) my_hash_search(cloud_open_tables,
+              (uchar*) table_name,
+              path_length)))
+  {
+    if (!my_multi_malloc(MYF(MY_WME | MY_ZEROFILL),
+                         &share, sizeof(*share),
+                         &tmp_path_name, path_length+1,
+                         &tmp_alias, alias_length+1,
+                         NullS))
     {
-        if (!my_multi_malloc(MYF(MY_WME | MY_ZEROFILL),
-                             &share, sizeof(*share),
-                             &tmp_path_name, path_length+1,
-                             &tmp_alias, alias_length+1,
-                             NullS))
-        {
-            mysql_mutex_unlock(cloud_mutex);
-            return NULL;
-        }
+      mysql_mutex_unlock(cloud_mutex);
+      return NULL;
     }
+  }
 
-    share->use_count= 0;
-    share->table_path_length= path_length;
-    share->path_to_table= tmp_path_name;
-    share->table_alias= tmp_alias;
-    share->crashed= FALSE;
-    share->rows_recorded= 0;
+  share->use_count= 0;
+  share->table_path_length= path_length;
+  share->path_to_table= tmp_path_name;
+  share->table_alias= tmp_alias;
+  share->crashed= FALSE;
+  share->rows_recorded= 0;
 
-    if (my_hash_insert(cloud_open_tables, (uchar*) share))
-        goto error;
-    thr_lock_init(&share->lock);
+  if (my_hash_insert(cloud_open_tables, (uchar*) share))
+    goto error;
+  thr_lock_init(&share->lock);
 
-    share->use_count++;
-    mysql_mutex_unlock(cloud_mutex);
+  share->use_count++;
+  mysql_mutex_unlock(cloud_mutex);
 
-    return share;
+  return share;
 
 error:
-    mysql_mutex_unlock(cloud_mutex);
-    my_free(share);
+  mysql_mutex_unlock(cloud_mutex);
+  my_free(share);
 
-    return NULL;
+  return NULL;
 }
 
 int CloudHandler::extra(enum ha_extra_function operation)
@@ -523,8 +530,8 @@ int CloudHandler::extra(enum ha_extra_function operation)
 
 const char* CloudHandler::java_to_string(jstring j_str)
 {
-    const char* str = this->env->GetStringUTFChars(j_str, NULL);
-    return str;
+  const char* str = this->env->GetStringUTFChars(j_str, NULL);
+  return str;
 }
 
 jstring CloudHandler::string_to_java_string(JNIEnv *jni_env, const char* string)
@@ -558,33 +565,4 @@ jbyteArray CloudHandler::convert_value_to_java_bytes(JNIEnv *jni_env, uchar* val
   jni_env->SetByteArrayRegion(byteArray, 0, length, java_bytes);
 
   return byteArray;
-}
-
-
-void reverse_bytes(uchar *begin, uchar *end)
-{
-	for (; begin <= end; begin++, end--)
-	{
-		uchar *tmp = end;
-		*end = *begin;
-		*begin = *tmp;
-	}
-}
-
-bool is_little_endian()
-{
-    union {
-        uint32_t i;
-        char c[4];
-    } bint = {0x01020304};
-
-    return bint.c[0] == 4;
-}
-
-void make_big_endian(uchar *begin, uchar *end)
-{
-	if (is_little_endian)
-	{
-		reverse_bytes(begin, end);
-	}
 }
