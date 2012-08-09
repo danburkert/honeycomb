@@ -279,7 +279,8 @@ int CloudHandler::rnd_next(uchar *buf)
   jarray vals = (jarray) this->env->CallObjectMethod(row, get_vals_method);
   jbyteArray uuid = (jbyteArray) this->env->CallObjectMethod(row, get_uuid_method);
 
-  if (keys == NULL || vals == NULL)
+  if (this->env->GetArrayLength(keys) == 0 ||
+      this->env->GetArrayLength(vals) == 0)
   {
     dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
     DBUG_RETURN(HA_ERR_END_OF_FILE);
@@ -427,7 +428,8 @@ int CloudHandler::rnd_pos(uchar *buf, uchar *pos)
 
   jboolean is_copy = JNI_FALSE;
 
-  if (keys == NULL || vals == NULL)
+  if (this->env->GetArrayLength(keys) == 0 ||
+      this->env->GetArrayLength(vals) == 0)
   {
     DBUG_RETURN(HA_ERR_WRONG_COMMAND);
   }
