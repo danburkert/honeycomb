@@ -11,7 +11,6 @@
 #include "JVMThreadAttach.h"
 #include "mysql_time.h"
 
-
 /*
   If frm_error() is called in table.cc this is called to find out what file
   extensions exist for this handler.
@@ -150,31 +149,25 @@ int CloudHandler::write_row(uchar *buf)
         longlong* long_value = (longlong*)&field_value;
         *long_value = __builtin_bswap64(*long_value);
       }
-			longlong field_value = make_big_endian(field->val_int());
-				|| fieldType == MYSQL_TYPE_LONG_BLOB
-				|| fieldType == MYSQL_TYPE_ENUM)
-			ulonglong fieldLength = field->binary() ? field->data_length() : field->field_length;
-
-			char attribute_buffer[fieldLength];
-			String attribute(attribute_buffer, sizeof(attribute_buffer), &my_charset_bin);
-			field->val_str(&attribute);
-			actualFieldSize = attribute.length();
-			memcpy(rec_buffer->buffer, field->ptr, field->field_length);
-		}
-		else if (fieldType == MYSQL_TYPE_TIME
-				|| fieldType == MYSQL_TYPE_DATE
-				|| fieldType == MYSQL_TYPE_NEWDATE
-				|| fieldType == MYSQL_TYPE_DATETIME)
+      memcpy(rec_buffer->buffer, &field_value, sizeof(longlong));
+    }
+	else if (fieldType == MYSQL_TYPE_TIME
+			|| fieldType == MYSQL_TYPE_DATE
+			|| fieldType == MYSQL_TYPE_NEWDATE
+			|| fieldType == MYSQL_TYPE_DATETIME
+			|| fieldType == MYSQL_TYPE_TIMESTAMP)
+	{
+		// Use number_to_datetime to convert from a longlong into a MySQL datetime object on reads - ABC
+		MYSQL_TIME mysql_time;
+		field->get_time(&mysql_time);
+		longlong timeValue = TIME_to_ulonglong_time(&mysql_time);
+		if (this->is_little_endian())
 		{
-			// Use number_to_datetime to convert from a longlong into a MySQL datetime object on reads - ABC
-			MYSQL_TIME mysql_time;
-			field->get_time(&mysql_time);
-			longlong timeValue = make_big_endian(TIME_to_ulonglong_time(&mysql_time));
-			actualFieldSize = sizeof(longlong);
-			memcpy(rec_buffer->buffer, &timeValue, sizeof(longlong));
+			timeValue = __builtin_bswap64(timeValue);
 		}
-      memcpy(rec_buffer->buffer, &field_value, sizeof(double));
-    }
+		actualFieldSize = sizeof(longlong);
+		memcpy(rec_buffer->buffer, &timeValue, sizeof(longlong));
+	}
     else if (fieldType == MYSQL_TYPE_VARCHAR
              || fieldType == MYSQL_TYPE_STRING
              || fieldType == MYSQL_TYPE_VAR_STRING
@@ -183,25 +176,14 @@ int CloudHandler::write_row(uchar *buf)
              || fieldType == MYSQL_TYPE_MEDIUM_BLOB
              || fieldType == MYSQL_TYPE_LONG_BLOB)
     {
-      uint32 fieldLength = field->binary() ? field->data_length() : field->field_length;
-      memcpy(rec_buffer->buffer, &field_value, sizeof(double));
-    }
-    else if (fieldType == MYSQL_TYPE_VARCHAR
-             || fieldType == MYSQL_TYPE_STRING
-             || fieldType == MYSQL_TYPE_VAR_STRING
-             || fieldType == MYSQL_TYPE_BLOB
-             || fieldType == MYSQL_TYPE_TINY_BLOB
-             || fieldType == MYSQL_TYPE_MEDIUM_BLOB
-             || fieldType == MYSQL_TYPE_LONG_BLOB)
-    {
-      uint32 fieldLength = field->binary() ? field->data_length() : field->field_length;
-      char attribute_buffer[fieldLength];
-      memcpy(rec_buffer->buffer, field->ptr, field->field_length);
+      field->val_str(&attribute);
+      actualFieldSize = attribute.length();
+      memcpy(rec_buffer->buffer, attribute.ptr(), attribute.length());
     }
 	else
-		{
-			memcpy(rec_buffer->buffer, field->ptr, field->field_length);
-		}
+	{
+		memcpy(rec_buffer->buffer, field->ptr, field->field_length);
+	}
 
     if (was_null)
     {
@@ -394,6 +376,23 @@ void CloudHandler::store_field_value(Field* field, uchar* buf, const char* key, 
       || field_type == MYSQL_TYPE_LONG_BLOB)
   {
     field->store(val, val_length, &my_charset_bin);
+  }
+  else if (field_type == MYSQL_TYPE_TIME
+		  || field_type == MYSQL_TYPE_DATE
+		  || field_type == MYSQL_TYPE_DATETIME
+		  || field_type == MYSQL_TYPE_TIMESTAMP
+		  || field_type == MYSQL_TYPE_NEWDATE)
+  {
+	  longlong long_value = *(longlong *)val;
+	  MYSQL_TIME mysql_time;
+	  long_value = number_to_datetime(long_value, &mysql_time, TIME_NO_ZERO_DATE, 0);
+
+	  if (this->is_little_endian())
+	  {
+		  long_value = __builtin_bswap64(long_value);
+	  }
+
+	  field->store(long_value, false);
   }
 
   field->move_field_offset(-offset);
