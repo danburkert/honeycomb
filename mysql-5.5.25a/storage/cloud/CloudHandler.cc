@@ -292,7 +292,8 @@ int CloudHandler::rnd_next(uchar *buf)
   jarray vals = (jarray) this->env->CallObjectMethod(row, get_vals_method);
   jbyteArray uuid = (jbyteArray) this->env->CallObjectMethod(row, get_uuid_method);
 
-  if (keys == NULL || vals == NULL)
+  if (this->env->GetArrayLength(keys) == 0 ||
+      this->env->GetArrayLength(vals) == 0)
   {
     dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
     DBUG_RETURN(HA_ERR_END_OF_FILE);
@@ -441,7 +442,8 @@ int CloudHandler::rnd_pos(uchar *buf, uchar *pos)
 
   jboolean is_copy = JNI_FALSE;
 
-  if (keys == NULL || vals == NULL)
+  if (this->env->GetArrayLength(keys) == 0 ||
+      this->env->GetArrayLength(vals) == 0)
   {
     DBUG_RETURN(HA_ERR_WRONG_COMMAND);
   }
@@ -524,7 +526,7 @@ int CloudHandler::free_share(CloudShare *share)
   {
     my_hash_delete(cloud_open_tables, (uchar*) share);
     thr_lock_delete(&share->lock);
-    mysql_mutex_destroy(&share->mutex);
+    //mysql_mutex_destroy(&share->mutex);
     my_free(share);
   }
   mysql_mutex_unlock(cloud_mutex);

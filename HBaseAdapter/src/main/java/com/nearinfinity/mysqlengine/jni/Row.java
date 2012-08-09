@@ -26,6 +26,11 @@ public class Row {
         this.uuid = new byte[0];
     }
 
+    public Row(Map<String, byte[]> rowMap, UUID uuidObj) {
+        this.rowMap = rowMap;
+        this.setUUID(uuidObj);
+    }
+
     public Map<String, byte[]> getRowMap() {
         return rowMap;
     }
