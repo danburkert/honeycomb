@@ -11,6 +11,7 @@
 #include "JVMThreadAttach.h"
 #include "mysql_time.h"
 
+#include <sys/time.h>
 /*
   If frm_error() is called in table.cc this is called to find out what file
   extensions exist for this handler.
@@ -126,7 +127,8 @@ int CloudHandler::write_row(uchar *buf)
         || fieldType == MYSQL_TYPE_TINY
         || fieldType == MYSQL_TYPE_LONGLONG
         || fieldType == MYSQL_TYPE_INT24
-        || fieldType == MYSQL_TYPE_ENUM)
+        || fieldType == MYSQL_TYPE_ENUM
+        || fieldType == MYSQL_TYPE_YEAR)
     {
       longlong field_value = field->val_int();
       if(this->is_little_endian())
@@ -157,16 +159,32 @@ int CloudHandler::write_row(uchar *buf)
 			|| fieldType == MYSQL_TYPE_DATETIME
 			|| fieldType == MYSQL_TYPE_TIMESTAMP)
 	{
-		// Use number_to_datetime to convert from a longlong into a MySQL datetime object on reads - ABC
 		MYSQL_TIME mysql_time;
 		field->get_time(&mysql_time);
-		longlong timeValue = TIME_to_ulonglong_time(&mysql_time);
-		if (this->is_little_endian())
+
+		switch (fieldType)
 		{
-			timeValue = __builtin_bswap64(timeValue);
+			case MYSQL_TYPE_DATE:
+			case MYSQL_TYPE_NEWDATE:
+				mysql_time.time_type = MYSQL_TIMESTAMP_DATE;
+				break;
+			case MYSQL_TYPE_DATETIME:
+			case MYSQL_TYPE_TIMESTAMP:
+				mysql_time.time_type = MYSQL_TIMESTAMP_DATETIME;
+				break;
+			case MYSQL_TYPE_TIME:
+				mysql_time.time_type = MYSQL_TIMESTAMP_TIME;
+				break;
+			default:
+				mysql_time.time_type = MYSQL_TIMESTAMP_NONE;
+				break;
 		}
-		actualFieldSize = sizeof(longlong);
-		memcpy(rec_buffer->buffer, &timeValue, sizeof(longlong));
+
+		char timeString[MAX_DATE_STRING_REP_LENGTH];
+		my_TIME_to_str(&mysql_time, timeString);
+
+		actualFieldSize = strlen(timeString);
+		memcpy(rec_buffer->buffer, timeString, actualFieldSize);
 	}
     else if (fieldType == MYSQL_TYPE_VARCHAR
              || fieldType == MYSQL_TYPE_STRING
@@ -232,7 +250,11 @@ int CloudHandler::rnd_init(bool scan)
 
   const char* table_name = this->table->alias;
 
-  JVMThreadAttach attached_thread(&this->env, this->jvm);
+  JavaVMAttachArgs attachArgs;
+  attachArgs.version = JNI_VERSION_1_6;
+  attachArgs.name = NULL;
+  attachArgs.group = NULL;
+  this->jvm->AttachCurrentThread((void**)&this->env, &attachArgs);
 
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
   jmethodID start_scan_method = this->env->GetStaticMethodID(adapter_class, "startScan", "(Ljava/lang/String;)J");
@@ -249,10 +271,16 @@ int CloudHandler::external_lock(THD *thd, int lock_type)
   DBUG_RETURN(0);
 }
 
+double timing(clock_t begin, clock_t end)
+{
+  return (double)((end - begin)*1000) / CLOCKS_PER_SEC;
+}
+
 int CloudHandler::rnd_next(uchar *buf)
 {
   int rc = 0;
   my_bitmap_map *orig_bitmap;
+  clock_t begin,end;
 
   ha_statistic_increment(&SSV::ha_read_rnd_next_count);
   DBUG_ENTER("CloudHandler::rnd_next");
@@ -263,12 +291,14 @@ int CloudHandler::rnd_next(uchar *buf)
 
   memset(buf, 0, table->s->null_bytes);
 
-  JVMThreadAttach attached_thread(&this->env, this->jvm);
-
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
   jmethodID next_row_method = this->env->GetStaticMethodID(adapter_class, "nextRow", "(J)Lcom/nearinfinity/mysqlengine/jni/Row;");
   jlong java_scan_id = curr_scan_id;
+  begin = clock();
   jobject row = this->env->CallStaticObjectMethod(adapter_class, next_row_method, java_scan_id);
+  end = clock();
+  double elapsed = timing(begin,end);
+  this->share->hbase_time += elapsed;
 
   jclass row_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/Row");
   jmethodID get_keys_method = this->env->GetMethodID(row_class, "getKeys", "()[Ljava/lang/String;");
@@ -290,9 +320,8 @@ int CloudHandler::rnd_next(uchar *buf)
   this->ref_length = 16;
 
   store_field_values(buf, keys, vals);
-
   dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
-
+  
   stats.records++;
   MYSQL_READ_ROW_DONE(rc);
 
@@ -310,7 +339,8 @@ void CloudHandler::store_field_values(uchar *buf, jarray keys, jarray vals)
     const char* key = java_to_string(key_string);
     jbyteArray byte_array = (jbyteArray) this->env->GetObjectArrayElement((jobjectArray) vals, i);
     jsize val_length = this->env->GetArrayLength(byte_array);
-    char* val = (char*) this->env->GetByteArrayElements(byte_array, &is_copy);
+    jbyte* bytes =this->env->GetByteArrayElements(byte_array, &is_copy);
+    char* val = (char*) bytes;
 
     for(int j = 0; j < table->s->fields; j++)
     {
@@ -324,6 +354,7 @@ void CloudHandler::store_field_values(uchar *buf, jarray keys, jarray vals)
       break;
     }
 
+    this->env->ReleaseByteArrayElements(byte_array, bytes, 0);
     this->env->ReleaseStringUTFChars(key_string, key);
   }
 }
@@ -339,7 +370,7 @@ void CloudHandler::store_field_value(Field* field, uchar* buf, const char* key, 
       field_type == MYSQL_TYPE_LONGLONG ||
       field_type == MYSQL_TYPE_INT24 ||
       field_type == MYSQL_TYPE_TINY ||
-      field_type == MYSQL_TYPE_ENUM)
+      field_type == MYSQL_TYPE_YEAR)
   {
     longlong long_value = *(longlong*)val;
     if(this->is_little_endian())
@@ -374,7 +405,8 @@ void CloudHandler::store_field_value(Field* field, uchar* buf, const char* key, 
       || field_type == MYSQL_TYPE_BLOB
       || field_type == MYSQL_TYPE_TINY_BLOB
       || field_type == MYSQL_TYPE_MEDIUM_BLOB
-      || field_type == MYSQL_TYPE_LONG_BLOB)
+      || field_type == MYSQL_TYPE_LONG_BLOB
+      || field_type == MYSQL_TYPE_ENUM)
   {
     field->store(val, val_length, &my_charset_bin);
   }
@@ -384,16 +416,22 @@ void CloudHandler::store_field_value(Field* field, uchar* buf, const char* key, 
 		  || field_type == MYSQL_TYPE_TIMESTAMP
 		  || field_type == MYSQL_TYPE_NEWDATE)
   {
-	  longlong long_value = *(longlong *)val;
 	  MYSQL_TIME mysql_time;
-	  long_value = number_to_datetime(long_value, &mysql_time, TIME_NO_ZERO_DATE, 0);
 
-	  if (this->is_little_endian())
+	  int was_cut;
+	  int warning;
+
+	  switch (field_type)
 	  {
-		  long_value = __builtin_bswap64(long_value);
+	  case MYSQL_TYPE_TIME:
+		  str_to_time(val, field->field_length, &mysql_time, &warning);
+		  break;
+	  default:
+		  str_to_datetime(val, field->field_length, &mysql_time, TIME_FUZZY_DATE, &was_cut);
+		  break;
 	  }
 
-	  field->store(long_value, false);
+	  field->store_time(&mysql_time, mysql_time.time_type);
   }
 
   field->move_field_offset(-offset);
@@ -444,13 +482,14 @@ int CloudHandler::rnd_end()
 {
   DBUG_ENTER("CloudHandler::rnd_end");
 
-  JVMThreadAttach attached_thread(&this->env, this->jvm);
-
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
   jmethodID end_scan_method = this->env->GetStaticMethodID(adapter_class, "endScan", "(J)V");
   jlong java_scan_id = curr_scan_id;
 
   this->env->CallStaticVoidMethod(adapter_class, end_scan_method, java_scan_id);
+  INFO(("Total HBase time %f ms", this->share->hbase_time));
+  this->share->hbase_time = 0;
+  this->jvm->DetachCurrentThread();
 
   curr_scan_id = -1;
   DBUG_RETURN(0);
@@ -574,6 +613,7 @@ CloudShare *CloudHandler::get_share(const char *table_name, TABLE *table)
   share->table_alias= tmp_alias;
   share->crashed= FALSE;
   share->rows_recorded= 0;
+  share->hbase_time = 0;
 
   if (my_hash_insert(cloud_open_tables, (uchar*) share))
     goto error;
