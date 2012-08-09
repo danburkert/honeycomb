@@ -5,6 +5,7 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueExcludeFilter;
+import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
 
@@ -216,7 +217,7 @@ public class HBaseClient {
         scan.setCaching(10);
 
         //Exclude deleted values
-        SingleColumnValueExcludeFilter filter = new SingleColumnValueExcludeFilter(NIC, IS_DELETED, CompareFilter.CompareOp.EQUAL, DELETED_VAL);
+        SingleColumnValueFilter filter = new SingleColumnValueFilter(NIC, IS_DELETED, CompareFilter.CompareOp.NOT_EQUAL, DELETED_VAL);
         scan.setFilter(filter);
 
         return table.getScanner(scan);
