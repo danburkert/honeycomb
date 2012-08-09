@@ -53,7 +53,7 @@ public class Compactor {
             Scan scan = new Scan();
 
             long deleted = 1L;
-            Filter filter = new SingleColumnValueFilter(NIC, IS_DELETED, CompareFilter.CompareOp.EQUAL, new BinaryComparator(Bytes.toBytes(deleted)));
+            Filter filter = new SingleColumnValueFilter(NIC, IS_DELETED, CompareFilter.CompareOp.EQUAL, Bytes.toBytes(deleted));
             scan.setFilter(filter);
 
             ResultScanner scanner = table.getScanner(scan);
