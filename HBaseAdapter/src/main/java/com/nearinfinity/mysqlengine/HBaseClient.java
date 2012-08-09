@@ -263,7 +263,8 @@ public class HBaseClient {
                 .array();
 
         Scan scan = new Scan(startRow, endRow);
-        scan.setCaching(10);
+        logger.info("NOW SETTING CACHING");
+        scan.setCaching(1000);
 
         return table.getScanner(scan);
     }
