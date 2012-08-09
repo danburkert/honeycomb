@@ -43,6 +43,7 @@ private:
     jbyteArray convert_value_to_java_bytes(JNIEnv *jni_env, uchar* value, uint32 length);
     void store_field_values(uchar *buf, jarray keys, jarray vals);
     void store_field_value(Field* field, uchar* buf, const char* key, char* val, jsize val_length);
+    int delete_row_helper();
     int write_row_helper();
     jobject sql_to_java(JNIEnv*);
 

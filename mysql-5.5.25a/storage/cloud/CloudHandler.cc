@@ -102,19 +102,24 @@ int CloudHandler::update_row(const uchar *old_data, uchar *new_data)
 
   ha_statistic_increment(&SSV::ha_update_count);
 
-  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
-    table->timestamp_field->set_time();
+  // TODO: The next two lines should really be some kind of transaction.
+  delete_row_helper();
+  int ret = write_row_helper();
 
-  JNIEnv *jni_env;
-  JVMThreadAttach attached_thread(&jni_env, this->jvm);
-
-
-  DBUG_RETURN(HA_ERR_WRONG_COMMAND);
+  DBUG_RETURN(ret);
 }
 
 int CloudHandler::delete_row(const uchar *buf)
 {
   DBUG_ENTER("CloudHandler::delete_row");
+  ha_statistic_increment(&SSV::ha_delete_count);
+  delete_row_helper();
+  DBUG_RETURN(0);
+}
+
+int CloudHandler::delete_row_helper()
+{
+  DBUG_ENTER("CloudHandler::delete_row_helper");
 
   JVMThreadAttach attached_thread(&this->env, this->jvm);
 
@@ -125,8 +130,6 @@ int CloudHandler::delete_row(const uchar *buf)
   jboolean result = this->env->CallStaticBooleanMethod(adapter_class, delete_row_method, java_scan_id);
 
   INFO(("Result of deleteRow: %d", result));
-
-  DBUG_RETURN(0);
 }
 
 int CloudHandler::rnd_init(bool scan)
@@ -505,6 +508,7 @@ int CloudHandler::extra(enum ha_extra_function operation)
  * as a jobject to be sent to the HBaseAdapter.
  */
 int CloudHandler::write_row_helper() {
+  DBUG_ENTER("CloudHandler::write_row_helper");
   JNIEnv *jni_env;
   JVMThreadAttach attached_thread(&jni_env, this->jvm);
 
