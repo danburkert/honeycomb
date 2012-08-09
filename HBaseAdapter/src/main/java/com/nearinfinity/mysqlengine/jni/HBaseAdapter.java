@@ -4,6 +4,7 @@ import com.nearinfinity.mysqlengine.Connection;
 import com.nearinfinity.mysqlengine.HBaseClient;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.filter.SingleColumnValueExcludeFilter;
 import org.apache.log4j.Logger;
 
 import java.io.*;
