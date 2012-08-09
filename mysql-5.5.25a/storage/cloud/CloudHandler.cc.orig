@@ -10,7 +10,15 @@
 #include "ha_cloud.h"
 #include "JVMThreadAttach.h"
 #include "mysql_time.h"
+<<<<<<< HEAD
+#include "Macros.h"
 
+void reverse_bytes(uchar *begin, uchar *end);
+bool is_little_endian();
+void make_big_endian(uchar *begin, uchar *end);
+longlong make_big_endian(longlong value);
+=======
+>>>>>>> d58ac05dcf5e8f61e1493e5c5bfa7dcd79a6f7d3
 
 /*
   If frm_error() is called in table.cc this is called to find out what file
@@ -123,6 +131,62 @@ int CloudHandler::write_row(uchar *buf)
     uint actualFieldSize = field->field_length;
 
     if (fieldType == MYSQL_TYPE_LONG
+<<<<<<< HEAD
+				|| fieldType == MYSQL_TYPE_SHORT
+				|| fieldType == MYSQL_TYPE_TINY
+				|| fieldType == MYSQL_TYPE_LONGLONG
+				|| fieldType == MYSQL_TYPE_INT24
+				|| fieldType == MYSQL_TYPE_YEAR)
+		{
+			longlong field_value = make_big_endian(field->val_int());
+			actualFieldSize = sizeof(longlong);
+			memcpy(rec_buffer->buffer, &field_value, sizeof(longlong));
+		}
+		else if (fieldType == MYSQL_TYPE_DOUBLE
+				|| fieldType == MYSQL_TYPE_FLOAT
+				|| fieldType == MYSQL_TYPE_DECIMAL
+				|| fieldType == MYSQL_TYPE_NEWDECIMAL)
+		{
+			double field_value = field->val_real();
+			actualFieldSize = sizeof(double);
+			make_big_endian(field->ptr, field->ptr + sizeof(double));
+			memcpy(rec_buffer->buffer, &field_value, sizeof(double));
+		}
+		else if (fieldType == MYSQL_TYPE_VARCHAR
+				|| fieldType == MYSQL_TYPE_STRING
+				|| fieldType == MYSQL_TYPE_VAR_STRING
+				|| fieldType == MYSQL_TYPE_BLOB
+				|| fieldType == MYSQL_TYPE_TINY_BLOB
+				|| fieldType == MYSQL_TYPE_MEDIUM_BLOB
+				|| fieldType == MYSQL_TYPE_LONG_BLOB
+				|| fieldType == MYSQL_TYPE_ENUM)
+		{
+			ulonglong fieldLength = field->binary() ? field->data_length() : field->field_length;
+
+			char attribute_buffer[fieldLength];
+			String attribute(attribute_buffer, sizeof(attribute_buffer), &my_charset_bin);
+			field->val_str(&attribute);
+			actualFieldSize = attribute.length();
+			memcpy(rec_buffer->buffer, field->ptr, field->field_length);
+		}
+		else if (fieldType == MYSQL_TYPE_TIME
+				|| fieldType == MYSQL_TYPE_DATE
+				|| fieldType == MYSQL_TYPE_NEWDATE
+				|| fieldType == MYSQL_TYPE_DATETIME)
+		{
+
+			// Use number_to_datetime to convert from a longlong into a MySQL datetime object on reads - ABC
+			MYSQL_TIME mysql_time;
+			field->get_time(&mysql_time);
+			longlong timeValue = make_big_endian(TIME_to_ulonglong_time(&mysql_time));
+			actualFieldSize = sizeof(longlong);
+			memcpy(rec_buffer->buffer, &timeValue, sizeof(longlong));
+		}
+		else
+		{
+			memcpy(rec_buffer->buffer, field->ptr, field->field_length);
+		}
+=======
         || fieldType == MYSQL_TYPE_SHORT
         || fieldType == MYSQL_TYPE_TINY
         || fieldType == MYSQL_TYPE_LONGLONG
@@ -150,29 +214,7 @@ int CloudHandler::write_row(uchar *buf)
         longlong* long_value = (longlong*)&field_value;
         *long_value = __builtin_bswap64(*long_value);
       }
-			longlong field_value = make_big_endian(field->val_int());
-				|| fieldType == MYSQL_TYPE_LONG_BLOB
-				|| fieldType == MYSQL_TYPE_ENUM)
-			ulonglong fieldLength = field->binary() ? field->data_length() : field->field_length;
 
-			char attribute_buffer[fieldLength];
-			String attribute(attribute_buffer, sizeof(attribute_buffer), &my_charset_bin);
-			field->val_str(&attribute);
-			actualFieldSize = attribute.length();
-			memcpy(rec_buffer->buffer, field->ptr, field->field_length);
-		}
-		else if (fieldType == MYSQL_TYPE_TIME
-				|| fieldType == MYSQL_TYPE_DATE
-				|| fieldType == MYSQL_TYPE_NEWDATE
-				|| fieldType == MYSQL_TYPE_DATETIME)
-		{
-			// Use number_to_datetime to convert from a longlong into a MySQL datetime object on reads - ABC
-			MYSQL_TIME mysql_time;
-			field->get_time(&mysql_time);
-			longlong timeValue = make_big_endian(TIME_to_ulonglong_time(&mysql_time));
-			actualFieldSize = sizeof(longlong);
-			memcpy(rec_buffer->buffer, &timeValue, sizeof(longlong));
-		}
       memcpy(rec_buffer->buffer, &field_value, sizeof(double));
     }
     else if (fieldType == MYSQL_TYPE_VARCHAR
@@ -184,24 +226,11 @@ int CloudHandler::write_row(uchar *buf)
              || fieldType == MYSQL_TYPE_LONG_BLOB)
     {
       uint32 fieldLength = field->binary() ? field->data_length() : field->field_length;
-      memcpy(rec_buffer->buffer, &field_value, sizeof(double));
-    }
-    else if (fieldType == MYSQL_TYPE_VARCHAR
-             || fieldType == MYSQL_TYPE_STRING
-             || fieldType == MYSQL_TYPE_VAR_STRING
-             || fieldType == MYSQL_TYPE_BLOB
-             || fieldType == MYSQL_TYPE_TINY_BLOB
-             || fieldType == MYSQL_TYPE_MEDIUM_BLOB
-             || fieldType == MYSQL_TYPE_LONG_BLOB)
-    {
-      uint32 fieldLength = field->binary() ? field->data_length() : field->field_length;
+
       char attribute_buffer[fieldLength];
       memcpy(rec_buffer->buffer, field->ptr, field->field_length);
     }
-	else
-		{
-			memcpy(rec_buffer->buffer, field->ptr, field->field_length);
-		}
+>>>>>>> d58ac05dcf5e8f61e1493e5c5bfa7dcd79a6f7d3
 
     if (was_null)
     {
@@ -634,3 +663,40 @@ jbyteArray CloudHandler::convert_value_to_java_bytes(JNIEnv *jni_env, uchar* val
 
   return byteArray;
 }
+<<<<<<< HEAD
+
+
+void reverse_bytes(uchar *begin, uchar *end)
+{
+	for (; begin <= end; begin++, end--)
+	{
+		uchar *tmp = end;
+		*end = *begin;
+		*begin = *tmp;
+	}
+}
+
+bool is_little_endian()
+{
+    union {
+        uint32_t i;
+        char c[4];
+    } bint = {0x01020304};
+
+    return bint.c[0] == 4;
+}
+
+void make_big_endian(uchar *begin, uchar *end)
+{
+	if (is_little_endian())
+	{
+		reverse_bytes(begin, end);
+	}
+}
+
+longlong make_big_endian(longlong value)
+{
+	return is_little_endian() ? __builtin_bswap64(value) : value;
+}
+=======
+>>>>>>> d58ac05dcf5e8f61e1493e5c5bfa7dcd79a6f7d3

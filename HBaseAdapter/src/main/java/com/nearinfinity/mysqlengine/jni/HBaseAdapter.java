@@ -130,7 +130,7 @@ public class HBaseAdapter {
 
     public static boolean deleteRow(long scanId) throws HBaseAdapterException {
         logger.info("HBaseAdapter: Deleting row with scan id " + scanId);
-        boolean deleted = false;
+        boolean deleted;
         try {
             Connection conn = clientPool.get(scanId);
             Result result = conn.getLastResult();
