@@ -126,7 +126,8 @@ int CloudHandler::write_row(uchar *buf)
         || fieldType == MYSQL_TYPE_TINY
         || fieldType == MYSQL_TYPE_LONGLONG
         || fieldType == MYSQL_TYPE_INT24
-        || fieldType == MYSQL_TYPE_ENUM)
+        || fieldType == MYSQL_TYPE_ENUM
+        || fieldType == MYSQL_TYPE_YEAR)
     {
       longlong field_value = field->val_int();
       if(this->is_little_endian())
@@ -157,16 +158,32 @@ int CloudHandler::write_row(uchar *buf)
 			|| fieldType == MYSQL_TYPE_DATETIME
 			|| fieldType == MYSQL_TYPE_TIMESTAMP)
 	{
-		// Use number_to_datetime to convert from a longlong into a MySQL datetime object on reads - ABC
 		MYSQL_TIME mysql_time;
 		field->get_time(&mysql_time);
-		longlong timeValue = TIME_to_ulonglong_time(&mysql_time);
-		if (this->is_little_endian())
+
+		switch (fieldType)
 		{
-			timeValue = __builtin_bswap64(timeValue);
+			case MYSQL_TYPE_DATE:
+			case MYSQL_TYPE_NEWDATE:
+				mysql_time.time_type = MYSQL_TIMESTAMP_DATE;
+				break;
+			case MYSQL_TYPE_DATETIME:
+			case MYSQL_TYPE_TIMESTAMP:
+				mysql_time.time_type = MYSQL_TIMESTAMP_DATETIME;
+				break;
+			case MYSQL_TYPE_TIME:
+				mysql_time.time_type = MYSQL_TIMESTAMP_TIME;
+				break;
+			default:
+				mysql_time.time_type = MYSQL_TIMESTAMP_NONE;
+				break;
 		}
-		actualFieldSize = sizeof(longlong);
-		memcpy(rec_buffer->buffer, &timeValue, sizeof(longlong));
+
+		char timeString[MAX_DATE_STRING_REP_LENGTH];
+		my_TIME_to_str(&mysql_time, timeString);
+
+		actualFieldSize = strlen(timeString);
+		memcpy(rec_buffer->buffer, timeString, actualFieldSize);
 	}
     else if (fieldType == MYSQL_TYPE_VARCHAR
              || fieldType == MYSQL_TYPE_STRING
@@ -338,7 +355,7 @@ void CloudHandler::store_field_value(Field* field, uchar* buf, const char* key, 
       field_type == MYSQL_TYPE_LONGLONG ||
       field_type == MYSQL_TYPE_INT24 ||
       field_type == MYSQL_TYPE_TINY ||
-      field_type == MYSQL_TYPE_ENUM)
+      field_type == MYSQL_TYPE_YEAR)
   {
     longlong long_value = *(longlong*)val;
     if(this->is_little_endian())
@@ -373,7 +390,8 @@ void CloudHandler::store_field_value(Field* field, uchar* buf, const char* key, 
       || field_type == MYSQL_TYPE_BLOB
       || field_type == MYSQL_TYPE_TINY_BLOB
       || field_type == MYSQL_TYPE_MEDIUM_BLOB
-      || field_type == MYSQL_TYPE_LONG_BLOB)
+      || field_type == MYSQL_TYPE_LONG_BLOB
+      || field_type == MYSQL_TYPE_ENUM)
   {
     field->store(val, val_length, &my_charset_bin);
   }
@@ -383,16 +401,22 @@ void CloudHandler::store_field_value(Field* field, uchar* buf, const char* key, 
 		  || field_type == MYSQL_TYPE_TIMESTAMP
 		  || field_type == MYSQL_TYPE_NEWDATE)
   {
-	  longlong long_value = *(longlong *)val;
 	  MYSQL_TIME mysql_time;
-	  long_value = number_to_datetime(long_value, &mysql_time, TIME_NO_ZERO_DATE, 0);
 
-	  if (this->is_little_endian())
+	  int was_cut;
+	  int warning;
+
+	  switch (field_type)
 	  {
-		  long_value = __builtin_bswap64(long_value);
+	  case MYSQL_TYPE_TIME:
+		  str_to_time(val, field->field_length, &mysql_time, &warning);
+		  break;
+	  default:
+		  str_to_datetime(val, field->field_length, &mysql_time, TIME_FUZZY_DATE, &was_cut);
+		  break;
 	  }
 
-	  field->store(long_value, false);
+	  field->store_time(&mysql_time, mysql_time.time_type);
   }
 
   field->move_field_offset(-offset);
