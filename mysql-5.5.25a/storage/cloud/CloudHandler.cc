@@ -130,7 +130,12 @@ int CloudHandler::write_row(uchar *buf)
         || fieldType == MYSQL_TYPE_INT24
         || fieldType == MYSQL_TYPE_ENUM)
     {
-      longlong field_value = __builtin_bswap64(field->val_int());
+      longlong field_value = field->val_int();
+      if(this->is_little_endian())
+      {
+        field_value = __builtin_bswap64(field_value);
+      }
+
       actualFieldSize = sizeof(longlong);
       memcpy(rec_buffer->buffer, &field_value, sizeof(longlong));
     }
@@ -141,10 +146,13 @@ int CloudHandler::write_row(uchar *buf)
     {
       double field_value = field->val_real();
       actualFieldSize = sizeof(double);
-      longlong* long_value = (longlong*)&field_value;
-      longlong swapped_long = __builtin_bswap64(*long_value);
-      double swapped_double = *(double*)&swapped_long;
-      memcpy(rec_buffer->buffer, &swapped_double, sizeof(double));
+      if(this->is_little_endian())
+      {
+        longlong* long_value = (longlong*)&field_value;
+        *long_value = __builtin_bswap64(*long_value);
+      }
+
+      memcpy(rec_buffer->buffer, &field_value, sizeof(double));
     }
     else if (fieldType == MYSQL_TYPE_VARCHAR
              || fieldType == MYSQL_TYPE_STRING
@@ -304,7 +312,12 @@ void CloudHandler::store_field_value(Field* field, uchar* buf, const char* key, 
       field_type == MYSQL_TYPE_TINY ||
       field_type == MYSQL_TYPE_ENUM)
   {
-    longlong long_value = __builtin_bswap64(*(longlong*)val);
+    longlong long_value = *(longlong*)val;
+    if(this->is_little_endian())
+    {
+      long_value = __builtin_bswap64(long_value);
+    }
+
     field->store(long_value, false);
   }
   else if (field_type == MYSQL_TYPE_FLOAT ||
@@ -312,18 +325,27 @@ void CloudHandler::store_field_value(Field* field, uchar* buf, const char* key, 
            field_type == MYSQL_TYPE_NEWDECIMAL ||
            field_type == MYSQL_TYPE_DOUBLE)
   {
-    longlong* long_ptr = (longlong*)val;
-    longlong swapped_long = __builtin_bswap64(*long_ptr);
-    double double_value = *(double*)&swapped_long;
+    double double_value;
+    if (this->is_little_endian())
+    {
+      longlong* long_ptr = (longlong*)val;
+      longlong swapped_long = __builtin_bswap64(*long_ptr);
+      double_value = *(double*)&swapped_long;
+    }
+    else
+    {
+      double_value = *(double*)val;
+    }
+
     field->store(double_value);
   }
-  else if (fieldType == MYSQL_TYPE_VARCHAR
-      || fieldType == MYSQL_TYPE_STRING
-      || fieldType == MYSQL_TYPE_VAR_STRING
-      || fieldType == MYSQL_TYPE_BLOB
-      || fieldType == MYSQL_TYPE_TINY_BLOB
-      || fieldType == MYSQL_TYPE_MEDIUM_BLOB
-      || fieldType == MYSQL_TYPE_LONG_BLOB)
+  else if (field_type == MYSQL_TYPE_VARCHAR
+      || field_type == MYSQL_TYPE_STRING
+      || field_type == MYSQL_TYPE_VAR_STRING
+      || field_type == MYSQL_TYPE_BLOB
+      || field_type == MYSQL_TYPE_TINY_BLOB
+      || field_type == MYSQL_TYPE_MEDIUM_BLOB
+      || field_type == MYSQL_TYPE_LONG_BLOB)
   {
     field->store(val, val_length, &my_charset_bin);
   }
