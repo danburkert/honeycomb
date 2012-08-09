@@ -13,6 +13,7 @@ typedef struct st_cloud_share {
   THR_LOCK lock;
   bool crashed;             /* Meta file is crashed */
   ha_rows rows_recorded;    /* Number of rows in tables */
+  double hbase_time;
 } CloudShare;
 
 #endif
