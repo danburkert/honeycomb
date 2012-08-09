@@ -80,12 +80,15 @@ public class HBaseAdapter {
             clientPool.put(scanId, new Connection(tableName, scanner));
         }
         catch (IOException e) {
+            logger.info("HBaseAdapter: startScan: exception thrown: " + e.toString());
             throw new HBaseAdapterException("IOException", e.toString());
         }
         return scanId;
     }
 
     public static Row nextRow(long scanId) throws HBaseAdapterException {
+        logger.info("HBaseAdapter: nextRow:  scanId: " + scanId);
+
         Connection conn = clientPool.get(scanId);
         if (conn == null) {
             throw new HBaseAdapterException("Cannot find scanId key", "");
