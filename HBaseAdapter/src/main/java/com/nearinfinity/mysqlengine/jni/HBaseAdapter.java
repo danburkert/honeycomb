@@ -29,7 +29,7 @@ public class HBaseAdapter {
 
     static {
         try {
-            logger.info("HBaseAdapter: Static initializer");
+            logger.info("Static initializer");
 
             //Read config options from adapter.conf
             Scanner confFile = new Scanner(new File("/etc/mysql/adapter.conf"));
@@ -48,8 +48,7 @@ public class HBaseAdapter {
             configured = true;
         }
         catch (FileNotFoundException e) {
-            logger.warn("HBaseAdapter: GotFileNotFoundException", e);
-            e.printStackTrace();
+            logger.warn("FileNotFoundException", e);
         }
     }
 
@@ -58,68 +57,71 @@ public class HBaseAdapter {
     }
 
     public static boolean createTable(String tableName, List<String> columnNames) throws HBaseAdapterException {
-        logger.info("HBaseAdapter: Creating table " + tableName);
+        logger.info("Creating table " + tableName);
+
         try {
             client.createTableFull(tableName, columnNames);
         }
-        catch (IOException e) {
-            throw new HBaseAdapterException("IOException", e.toString());
+        catch (Exception e) {
+            logger.error("Exception in createTable", e);
+            throw new HBaseAdapterException("createTable", e);
         }
-        catch (Exception e)
-        {
-            logger.error("createTable exception", e);
-            throw new HBaseAdapterException("Exception", e.toString());
-        }
+
         return true;
     }
 
     public static long startScan(String tableName) throws HBaseAdapterException {
-        logger.info("HBaseAdapter: Starting scan on table " + tableName);
+        logger.info("Starting scan on table " + tableName);
+
         long scanId = connectionCounter.incrementAndGet();
         try {
             ResultScanner scanner = client.getTableScanner(tableName);
             clientPool.put(scanId, new Connection(tableName, scanner));
         }
         catch (IOException e) {
-            logger.info("HBaseAdapter: startScan: exception thrown: " + e.toString());
-            throw new HBaseAdapterException("IOException", e.toString());
+            logger.error("Exception in startScan ", e);
+            throw new HBaseAdapterException("startScan", e);
         }
+
         return scanId;
     }
 
     public static Row nextRow(long scanId) throws HBaseAdapterException {
-        logger.info("HBaseAdapter: nextRow:  scanId: " + scanId);
+        logger.info("nextRow:  scanId: " + scanId);
 
-        Connection conn = clientPool.get(scanId);
-        if (conn == null) {
-            throw new HBaseAdapterException("Cannot find scanId key", "");
-        }
+        Connection conn = getConnectionForId(scanId);
+
         Row row = new Row();
         try {
+
+            //Return empty Row if there is no next result
             Result result = conn.getNextResult();
             if (result == null) {
                 return row;
             }
+
+            //Set values and UUID
             Map<String, byte[]> values = client.parseRow(result, conn.getTableName());
             UUID uuid = client.parseUUIDFromDataRow(result);
-
             row.setRowMap(values);
             row.setUUID(uuid);
         }
-        catch  (IOException e) {
-            throw new HBaseAdapterException("IOException", e.toString());
+        catch  (Exception e) {
+            logger.error("Exception thrown in nextRow", e);
+            throw new HBaseAdapterException("nextRow", e);
         }
+
         return row;
     }
 
     public static Row[] nextRows(long scanId, long numRows) throws HBaseAdapterException {
-        logger.info("HBaseAdapter: Getting " + numRows + " rows using scanId " + scanId);
-        Connection conn = clientPool.get(scanId);
-        if (conn == null) {
-            throw new HBaseAdapterException("Cannot find scanId key", "");
-        }
+        logger.info("Getting " + numRows + " rows using scanId " + scanId);
+
+        Connection conn = getConnectionForId(scanId);
+
         ArrayList<Row> rowList = new ArrayList<Row>();
         try {
+
             for (long i = 0 ; i < numRows ; i++) {
                 Result result = conn.getNextResult();
                 if (result == null) {
@@ -131,35 +133,37 @@ public class HBaseAdapter {
                 rowList.add(new Row(values, uuid));
             }
         }
-        catch (IOException e) {
-            throw new HBaseAdapterException("IOException", e.toString());
+        catch (Exception e) {
+            logger.error("Exception thrown in nextRows", e);
+            throw new HBaseAdapterException("nextRows", e);
         }
 
         return (Row[])rowList.toArray();
     }
 
     public static void endScan(long scanId) throws HBaseAdapterException {
-        logger.info("HBaseAdapter: Ending scan with id " + scanId);
-        Connection conn = clientPool.remove(scanId);
-        if (conn == null) {
-            throw new HBaseAdapterException("ScanId does not exist", "");
-        }
+        logger.info("Ending scan with id " + scanId);
+        Connection conn = getConnectionForId(scanId);
         conn.close();
     }
 
     public static boolean writeRow(String tableName, Map<String, byte[]> values) throws HBaseAdapterException {
-        logger.info("HBaseAdapter: Writing row to table " + tableName);
+        logger.info("Writing row to table " + tableName);
+
         try {
             client.writeRow(tableName, values);
         }
-        catch (IOException e) {
-            throw new HBaseAdapterException("IOException", e.toString());
+        catch (Exception e) {
+            logger.error("Exception thrown in writeRow()", e);
+            throw new HBaseAdapterException("writeRow", e);
         }
+
         return true;
     }
 
     public static boolean deleteRow(long scanId) throws HBaseAdapterException {
-        logger.info("HBaseAdapter: Deleting row with scan id " + scanId);
+        logger.info("Deleting row with scanId " + scanId);
+
         boolean deleted;
         try {
             Connection conn = clientPool.get(scanId);
@@ -169,22 +173,24 @@ public class HBaseAdapter {
             deleted = client.deleteRow(rowKey);
         }
         catch (IOException e) {
-            throw new HBaseAdapterException("IOException", e.toString());
+            logger.error("Exception thrown in deleteRow()", e);
+            throw new HBaseAdapterException("deleteRow", e);
         }
+
         return deleted;
     }
 
     public static Row getRow(long scanId, String tableName /*TODO: Can we delete this? */, byte[] uuid)  throws HBaseAdapterException {
-        Connection conn = clientPool.get(scanId);
-        if (conn == null) {
-            throw new HBaseAdapterException("Cannot find scanId key", "");
-        }
+        logger.info("Getting row with scanId " + scanId);
+
+        Connection conn = getConnectionForId(scanId);
+
         Row row = new Row();
         try {
             //String tableName = conn.getTableName();
             ByteBuffer buffer = ByteBuffer.wrap(uuid);
             UUID rowUuid = new UUID(buffer.getLong(), buffer.getLong());
-            logger.info("HBaseAdapter: Getting row with UUID: " + rowUuid.toString() + ", and scanId: " + scanId);
+            logger.info("Getting row with UUID: " + rowUuid.toString() + ", and scanId: " + scanId);
 
             Result result = client.getDataRow(rowUuid, tableName);
             if (result == null) {
@@ -195,9 +201,19 @@ public class HBaseAdapter {
             row.setUUID(rowUuid);
             row.setRowMap(values);
         }
-        catch (IOException e) {
-            throw new HBaseAdapterException("IOException", e.toString());
+        catch (Exception e) {
+            logger.error("Exception thrown in getRow()", e);
+            throw new HBaseAdapterException("getRow", e);
         }
+
         return row;
+    }
+
+    private static Connection getConnectionForId(long scanId) throws HBaseAdapterException {
+        Connection conn = clientPool.get(scanId);
+        if (conn == null) {
+            throw new HBaseAdapterException("No connection for scanId " + scanId, null);
+        }
+        return conn;
     }
 }
