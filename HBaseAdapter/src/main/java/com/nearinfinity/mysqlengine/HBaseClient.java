@@ -1,11 +1,9 @@
 package com.nearinfinity.mysqlengine;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.CompareFilter;
-import org.apache.hadoop.hbase.filter.Filter;
-import org.apache.hadoop.hbase.filter.SingleColumnValueExcludeFilter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
@@ -24,6 +22,10 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class HBaseClient {
     private HTable table;
+
+    private HBaseAdmin admin;
+
+    private static final byte[] SQL = "sql".getBytes();
 
     private static final byte[] NIC = "nic".getBytes();
 
@@ -45,11 +47,56 @@ public class HBaseClient {
         configuration.set("hbase.zookeeper.quorum", zkQuorum);
 
         try {
+            this.admin = new HBaseAdmin(configuration);
+            this.initializeSqlTable();
+
             this.table = new HTable(configuration, tableName);
-        }
-        catch(IOException e) {
+        } catch (MasterNotRunningException e) {
+            logger.error("MasterNotRunningException thrown", e);
+        } catch (ZooKeeperConnectionException e) {
+            logger.error("ZooKeeperConnectionException thrown", e);
+        } catch (IOException e) {
             logger.error("IOException thrown", e);
+        } catch (InterruptedException e) {
+            logger.error("InterruptedException thrown", e);
         }
+    }
+
+    private void initializeSqlTable() throws IOException, InterruptedException
+    {
+        HTableDescriptor sqlTableDescriptor;
+        HColumnDescriptor nicColumn = new HColumnDescriptor(NIC);
+
+        if (!this.admin.tableExists(SQL))
+        {
+            logger.info("Creating sql table");
+            sqlTableDescriptor = new HTableDescriptor(SQL);
+            sqlTableDescriptor.addFamily(nicColumn);
+
+            this.admin.createTable(sqlTableDescriptor);
+        }
+
+        sqlTableDescriptor = this.admin.getTableDescriptor(SQL);
+        if (!sqlTableDescriptor.hasFamily(NIC))
+        {
+            logger.info("Adding nic column family to sql table");
+
+            if (!this.admin.isTableDisabled(SQL))
+            {
+                logger.info("Disabling sql table");
+                this.admin.disableTable(SQL);
+            }
+
+            this.admin.addColumn(SQL, nicColumn);
+        }
+
+        if (this.admin.isTableDisabled(SQL))
+        {
+            logger.info("Enabling sql table");
+            this.admin.enableTable(SQL);
+        }
+
+        this.admin.flush(SQL);
     }
 
     private void createTable(String tableName, List<Put> puts) throws IOException {
