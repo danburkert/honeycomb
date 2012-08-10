@@ -83,137 +83,45 @@ int CloudHandler::write_row(uchar *buf)
 {
   DBUG_ENTER("CloudHandler::write_row");
 
-  JNIEnv *jni_env;
-  JVMThreadAttach attached_thread(&jni_env, this->jvm);
-  my_bitmap_map *old_map = dbug_tmp_use_all_columns(table, table->read_set);
-
-  // Boilerplate stuff every engine has to do on writes
-
   if (share->crashed)
     DBUG_RETURN(HA_ERR_CRASHED_ON_USAGE);
 
   ha_statistic_increment(&SSV::ha_write_count);
 
-  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
-    table->timestamp_field->set_time();
+  int ret = write_row_helper();
 
-  jclass adapter_class = jni_env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
-  jmethodID write_row_method = jni_env->GetStaticMethodID(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;)Z");
-  jstring java_table_name = this->string_to_java_string(jni_env, this->share->table_alias);
-  jobject java_map = this->create_java_map(jni_env);
-
-  char attribute_buffer[1024];
-  String attribute(attribute_buffer, sizeof(attribute_buffer), &my_charset_bin);
-
-  for (Field **field_ptr=table->field; *field_ptr; field_ptr++)
-  {
-    Field * field = *field_ptr;
-
-    memset(rec_buffer->buffer, 0, rec_buffer->length);
-
-    const bool was_null= field->is_null();
-
-    if (was_null)
-    {
-      field->set_default();
-      field->set_notnull();
-    }
-
-    int fieldType = field->type();
-    uint actualFieldSize = field->field_length;
-
-    if (fieldType == MYSQL_TYPE_LONG
-        || fieldType == MYSQL_TYPE_SHORT
-        || fieldType == MYSQL_TYPE_TINY
-        || fieldType == MYSQL_TYPE_LONGLONG
-        || fieldType == MYSQL_TYPE_INT24
-        || fieldType == MYSQL_TYPE_ENUM)
-    {
-      longlong field_value = field->val_int();
-      if(this->is_little_endian())
-      {
-        field_value = __builtin_bswap64(field_value);
-      }
-
-      actualFieldSize = sizeof(longlong);
-      memcpy(rec_buffer->buffer, &field_value, sizeof(longlong));
-    }
-    else if (fieldType == MYSQL_TYPE_DOUBLE
-             || fieldType == MYSQL_TYPE_FLOAT
-             || fieldType == MYSQL_TYPE_DECIMAL
-             || fieldType == MYSQL_TYPE_NEWDECIMAL)
-    {
-      double field_value = field->val_real();
-      actualFieldSize = sizeof(double);
-      if(this->is_little_endian())
-      {
-        longlong* long_value = (longlong*)&field_value;
-        *long_value = __builtin_bswap64(*long_value);
-      }
-      memcpy(rec_buffer->buffer, &field_value, sizeof(longlong));
-    }
-	else if (fieldType == MYSQL_TYPE_TIME
-			|| fieldType == MYSQL_TYPE_DATE
-			|| fieldType == MYSQL_TYPE_NEWDATE
-			|| fieldType == MYSQL_TYPE_DATETIME
-			|| fieldType == MYSQL_TYPE_TIMESTAMP)
-	{
-		// Use number_to_datetime to convert from a longlong into a MySQL datetime object on reads - ABC
-		MYSQL_TIME mysql_time;
-		field->get_time(&mysql_time);
-		longlong timeValue = TIME_to_ulonglong_time(&mysql_time);
-		if (this->is_little_endian())
-		{
-			timeValue = __builtin_bswap64(timeValue);
-		}
-		actualFieldSize = sizeof(longlong);
-		memcpy(rec_buffer->buffer, &timeValue, sizeof(longlong));
-	}
-    else if (fieldType == MYSQL_TYPE_VARCHAR
-             || fieldType == MYSQL_TYPE_STRING
-             || fieldType == MYSQL_TYPE_VAR_STRING
-             || fieldType == MYSQL_TYPE_BLOB
-             || fieldType == MYSQL_TYPE_TINY_BLOB
-             || fieldType == MYSQL_TYPE_MEDIUM_BLOB
-             || fieldType == MYSQL_TYPE_LONG_BLOB)
-    {
-      field->val_str(&attribute);
-      actualFieldSize = attribute.length();
-      memcpy(rec_buffer->buffer, attribute.ptr(), attribute.length());
-    }
-	else
-	{
-		memcpy(rec_buffer->buffer, field->ptr, field->field_length);
-	}
-
-    if (was_null)
-    {
-      field->set_null();
-    }
-
-    jstring field_name = this->string_to_java_string(jni_env, field->field_name);
-    jbyteArray java_bytes = this->convert_value_to_java_bytes(jni_env, rec_buffer->buffer, actualFieldSize);
-
-    java_map_insert(jni_env, java_map, field_name, java_bytes);
-  }
-
-  jni_env->CallStaticBooleanMethod(adapter_class, write_row_method, java_table_name, java_map);
-
-  dbug_tmp_restore_column_map(table->read_set, old_map);
-
-  DBUG_RETURN(0);
+  DBUG_RETURN(ret);
 }
 
+/*
+  This will be called in a table scan right before the previous ::rnd_next()
+  call.
+*/
 int CloudHandler::update_row(const uchar *old_data, uchar *new_data)
 {
   DBUG_ENTER("CloudHandler::update_row");
-  DBUG_RETURN(HA_ERR_WRONG_COMMAND);
+
+  ha_statistic_increment(&SSV::ha_update_count);
+
+  // TODO: The next two lines should really be some kind of transaction.
+  delete_row_helper();
+  int ret = write_row_helper();
+
+  DBUG_RETURN(ret);
 }
 
 int CloudHandler::delete_row(const uchar *buf)
 {
   DBUG_ENTER("CloudHandler::delete_row");
-  
+  ha_statistic_increment(&SSV::ha_delete_count);
+  delete_row_helper();
+  DBUG_RETURN(0);
+}
+
+int CloudHandler::delete_row_helper()
+{
+  DBUG_ENTER("CloudHandler::delete_row_helper");
+
   JVMThreadAttach attached_thread(&this->env, this->jvm);
 
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
@@ -222,9 +130,7 @@ int CloudHandler::delete_row(const uchar *buf)
 
   jboolean result = this->env->CallStaticBooleanMethod(adapter_class, delete_row_method, java_scan_id);
 
-  INFO(("Result of deleteRow: %d", result));
-
-  DBUG_RETURN(0);
+  DBUG_RETURN(result);
 }
 
 int CloudHandler::rnd_init(bool scan)
@@ -241,7 +147,7 @@ int CloudHandler::rnd_init(bool scan)
 
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
   jmethodID start_scan_method = this->env->GetStaticMethodID(adapter_class, "startScan", "(Ljava/lang/String;)J");
-  jstring java_table_name = this->string_to_java_string(this->env, table_name);
+  jstring java_table_name = this->string_to_java_string(table_name);
 
   this->curr_scan_id = this->env->CallStaticLongMethod(adapter_class, start_scan_method, java_table_name);
 
@@ -354,7 +260,7 @@ void CloudHandler::store_field_value(Field* field, uchar* buf, const char* key, 
       field_type == MYSQL_TYPE_LONGLONG ||
       field_type == MYSQL_TYPE_INT24 ||
       field_type == MYSQL_TYPE_TINY ||
-      field_type == MYSQL_TYPE_ENUM)
+      field_type == MYSQL_TYPE_YEAR)
   {
     longlong long_value = *(longlong*)val;
     if(this->is_little_endian())
@@ -389,7 +295,8 @@ void CloudHandler::store_field_value(Field* field, uchar* buf, const char* key, 
       || field_type == MYSQL_TYPE_BLOB
       || field_type == MYSQL_TYPE_TINY_BLOB
       || field_type == MYSQL_TYPE_MEDIUM_BLOB
-      || field_type == MYSQL_TYPE_LONG_BLOB)
+      || field_type == MYSQL_TYPE_LONG_BLOB
+      || field_type == MYSQL_TYPE_ENUM)
   {
     field->store(val, val_length, &my_charset_bin);
   }
@@ -399,16 +306,22 @@ void CloudHandler::store_field_value(Field* field, uchar* buf, const char* key, 
 		  || field_type == MYSQL_TYPE_TIMESTAMP
 		  || field_type == MYSQL_TYPE_NEWDATE)
   {
-	  longlong long_value = *(longlong *)val;
 	  MYSQL_TIME mysql_time;
-	  long_value = number_to_datetime(long_value, &mysql_time, TIME_NO_ZERO_DATE, 0);
 
-	  if (this->is_little_endian())
+	  int was_cut;
+	  int warning;
+
+	  switch (field_type)
 	  {
-		  long_value = __builtin_bswap64(long_value);
+	  case MYSQL_TYPE_TIME:
+		  str_to_time(val, field->field_length, &mysql_time, &warning);
+		  break;
+	  default:
+		  str_to_datetime(val, field->field_length, &mysql_time, TIME_FUZZY_DATE, &was_cut);
+		  break;
 	  }
 
-	  field->store(long_value, false);
+	  field->store_time(&mysql_time, mysql_time.time_type);
   }
 
   field->move_field_offset(-offset);
@@ -478,33 +391,32 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
                          HA_CREATE_INFO *create_info)
 {
   DBUG_ENTER("CloudHandler::create");
-  JNIEnv *jni_env;
 
-  JVMThreadAttach attached_thread(&jni_env, this->jvm);
-  jclass adapter_class = jni_env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
+  JVMThreadAttach attached_thread(&this->env, this->jvm);
+  jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
   if (adapter_class == NULL)
   {
-    this->print_java_exception(jni_env);
+    this->print_java_exception(this->env);
     ERROR(("Could not find adapter class HBaseAdapter"));
     DBUG_RETURN(1);
   }
 
   const char* table_name = create_info->alias;
 
-  jclass list_class = jni_env->FindClass("java/util/LinkedList");
-  jmethodID list_constructor = jni_env->GetMethodID(list_class, "<init>", "()V");
-  jobject columns = jni_env->NewObject(list_class, list_constructor);
-  jmethodID add_column = jni_env->GetMethodID(list_class, "add", "(Ljava/lang/Object;)Z");
+  jclass list_class = this->env->FindClass("java/util/LinkedList");
+  jmethodID list_constructor = this->env->GetMethodID(list_class, "<init>", "()V");
+  jobject columns = this->env->NewObject(list_class, list_constructor);
+  jmethodID add_column = this->env->GetMethodID(list_class, "add", "(Ljava/lang/Object;)Z");
 
   for (Field **field = table_arg->field ; *field ; field++)
   {
-    jni_env->CallBooleanMethod(columns, add_column, string_to_java_string(jni_env, (*field)->field_name));
+    this->env->CallBooleanMethod(columns, add_column, string_to_java_string((*field)->field_name));
   }
 
-  jmethodID create_table_method = jni_env->GetStaticMethodID(adapter_class, "createTable", "(Ljava/lang/String;Ljava/util/List;)Z");
-  jboolean result = jni_env->CallStaticBooleanMethod(adapter_class, create_table_method, string_to_java_string(jni_env, table_name), columns);
+  jmethodID create_table_method = this->env->GetStaticMethodID(adapter_class, "createTable", "(Ljava/lang/String;Ljava/util/List;)Z");
+  jboolean result = this->env->CallStaticBooleanMethod(adapter_class, create_table_method, string_to_java_string(table_name), columns);
   INFO(("Result of createTable: %d", result));
-  this->print_java_exception(jni_env);
+  this->print_java_exception(this->env);
 
   DBUG_RETURN(0);
 }
@@ -617,41 +529,187 @@ int CloudHandler::extra(enum ha_extra_function operation)
   DBUG_RETURN(0);
 }
 
+/* Set up the JNI Environment, and then persist the row to HBase.
+ * This helper calls sql_to_java, which returns the row information
+ * as a jobject to be sent to the HBaseAdapter.
+ */
+int CloudHandler::write_row_helper() {
+  DBUG_ENTER("CloudHandler::write_row_helper");
+  JVMThreadAttach attached_thread(&this->env, this->jvm);
+
+  jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
+  jmethodID write_row_method = this->env->GetStaticMethodID(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;)Z");
+  jstring java_table_name = this->string_to_java_string(this->share->table_alias);
+  jobject java_row_map = sql_to_java();
+
+  this->env->CallStaticBooleanMethod(adapter_class, write_row_method, java_table_name, java_row_map);
+
+  DBUG_RETURN(0);
+}
+
+/* Read fields into a java map.
+ */
+jobject CloudHandler::sql_to_java() {
+  jobject java_map = this->create_java_map();
+  // Boilerplate stuff every engine has to do on writes
+
+  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
+    table->timestamp_field->set_time();
+
+  my_bitmap_map *old_map = dbug_tmp_use_all_columns(table, table->read_set);
+
+  char attribute_buffer[1024];
+  String attribute(attribute_buffer, sizeof(attribute_buffer), &my_charset_bin);
+
+  for (Field **field_ptr=table->field; *field_ptr; field_ptr++)
+  {
+    Field * field = *field_ptr;
+
+    memset(rec_buffer->buffer, 0, rec_buffer->length);
+
+    const bool was_null= field->is_null();
+
+    if (was_null)
+    {
+      field->set_default();
+      field->set_notnull();
+    }
+
+    int fieldType = field->type();
+    uint actualFieldSize = field->field_length;
+
+    if (fieldType == MYSQL_TYPE_LONG
+        || fieldType == MYSQL_TYPE_SHORT
+        || fieldType == MYSQL_TYPE_TINY
+        || fieldType == MYSQL_TYPE_LONGLONG
+        || fieldType == MYSQL_TYPE_INT24
+        || fieldType == MYSQL_TYPE_ENUM
+        || fieldType == MYSQL_TYPE_YEAR)
+    {
+      longlong field_value = field->val_int();
+      if(this->is_little_endian())
+      {
+        field_value = __builtin_bswap64(field_value);
+      }
+
+      actualFieldSize = sizeof(longlong);
+      memcpy(rec_buffer->buffer, &field_value, sizeof(longlong));
+    }
+    else if (fieldType == MYSQL_TYPE_DOUBLE
+             || fieldType == MYSQL_TYPE_FLOAT
+             || fieldType == MYSQL_TYPE_DECIMAL
+             || fieldType == MYSQL_TYPE_NEWDECIMAL)
+    {
+      double field_value = field->val_real();
+      actualFieldSize = sizeof(double);
+      if(this->is_little_endian())
+      {
+        longlong* long_value = (longlong*)&field_value;
+        *long_value = __builtin_bswap64(*long_value);
+      }
+      memcpy(rec_buffer->buffer, &field_value, sizeof(longlong));
+    }
+	else if (fieldType == MYSQL_TYPE_TIME
+			|| fieldType == MYSQL_TYPE_DATE
+			|| fieldType == MYSQL_TYPE_NEWDATE
+			|| fieldType == MYSQL_TYPE_DATETIME
+			|| fieldType == MYSQL_TYPE_TIMESTAMP)
+	{
+		MYSQL_TIME mysql_time;
+		field->get_time(&mysql_time);
+
+		switch (fieldType)
+		{
+			case MYSQL_TYPE_DATE:
+			case MYSQL_TYPE_NEWDATE:
+				mysql_time.time_type = MYSQL_TIMESTAMP_DATE;
+				break;
+			case MYSQL_TYPE_DATETIME:
+			case MYSQL_TYPE_TIMESTAMP:
+				mysql_time.time_type = MYSQL_TIMESTAMP_DATETIME;
+				break;
+			case MYSQL_TYPE_TIME:
+				mysql_time.time_type = MYSQL_TIMESTAMP_TIME;
+				break;
+			default:
+				mysql_time.time_type = MYSQL_TIMESTAMP_NONE;
+				break;
+		}
+
+		char timeString[MAX_DATE_STRING_REP_LENGTH];
+		my_TIME_to_str(&mysql_time, timeString);
+
+		actualFieldSize = strlen(timeString);
+		memcpy(rec_buffer->buffer, timeString, actualFieldSize);
+	}
+    else if (fieldType == MYSQL_TYPE_VARCHAR
+             || fieldType == MYSQL_TYPE_STRING
+             || fieldType == MYSQL_TYPE_VAR_STRING
+             || fieldType == MYSQL_TYPE_BLOB
+             || fieldType == MYSQL_TYPE_TINY_BLOB
+             || fieldType == MYSQL_TYPE_MEDIUM_BLOB
+             || fieldType == MYSQL_TYPE_LONG_BLOB)
+    {
+      field->val_str(&attribute);
+      actualFieldSize = attribute.length();
+      memcpy(rec_buffer->buffer, attribute.ptr(), attribute.length());
+    }
+	else
+	{
+		memcpy(rec_buffer->buffer, field->ptr, field->field_length);
+	}
+
+    if (was_null)
+    {
+      field->set_null();
+    }
+
+    jstring field_name = this->string_to_java_string(field->field_name);
+    jbyteArray java_bytes = this->convert_value_to_java_bytes(rec_buffer->buffer, actualFieldSize);
+
+    java_map_insert(java_map, field_name, java_bytes);
+  }
+
+  dbug_tmp_restore_column_map(table->read_set, old_map);
+
+  return java_map;
+}
+
 const char* CloudHandler::java_to_string(jstring j_str)
 {
   const char* str = this->env->GetStringUTFChars(j_str, NULL);
   return str;
 }
 
-jstring CloudHandler::string_to_java_string(JNIEnv *jni_env, const char* string)
+jstring CloudHandler::string_to_java_string(const char* string)
 {
-  return jni_env->NewStringUTF(string);
+  return this->env->NewStringUTF(string);
 }
 
-jobject CloudHandler::create_java_map(JNIEnv* jni_env)
+jobject CloudHandler::create_java_map()
 {
-  jclass map_class = jni_env->FindClass("java/util/HashMap");
-  jmethodID constructor = jni_env->GetMethodID(map_class, "<init>", "()V");
-  jobject java_map = jni_env->NewObject(map_class, constructor);
+  jclass map_class = this->env->FindClass("java/util/HashMap");
+  jmethodID constructor = this->env->GetMethodID(map_class, "<init>", "()V");
+  jobject java_map = this->env->NewObject(map_class, constructor);
   return java_map;
 }
 
-jobject CloudHandler::java_map_insert(JNIEnv *jni_env, jobject java_map, jstring key, jbyteArray value)
+jobject CloudHandler::java_map_insert(jobject java_map, jstring key, jbyteArray value)
 {
-  jclass map_class = jni_env->FindClass("java/util/HashMap");
-  jmethodID put_method = jni_env->GetMethodID(map_class, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+  jclass map_class = this->env->FindClass("java/util/HashMap");
+  jmethodID put_method = this->env->GetMethodID(map_class, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
 
-  return jni_env->CallObjectMethod(java_map, put_method, key, value);
+  return this->env->CallObjectMethod(java_map, put_method, key, value);
 }
 
-jbyteArray CloudHandler::convert_value_to_java_bytes(JNIEnv *jni_env, uchar* value, uint32 length)
+jbyteArray CloudHandler::convert_value_to_java_bytes(uchar* value, uint32 length)
 {
-  jbyteArray byteArray = jni_env->NewByteArray(length);
-  jbyte *java_bytes = jni_env->GetByteArrayElements(byteArray, 0);
+  jbyteArray byteArray = this->env->NewByteArray(length);
+  jbyte *java_bytes = this->env->GetByteArrayElements(byteArray, 0);
 
   memcpy(java_bytes, value, length);
 
-  jni_env->SetByteArrayRegion(byteArray, 0, length, java_bytes);
+  this->env->SetByteArrayRegion(byteArray, 0, length, java_bytes);
 
   return byteArray;
 }

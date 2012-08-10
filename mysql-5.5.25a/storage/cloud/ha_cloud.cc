@@ -84,7 +84,7 @@ static void test_jvm(bool attach_thread)
 static char* find_java_classpath()
 {
   char* class_path;
-  char* prefix = "-Djava.class.path=";
+  const char* prefix = "-Djava.class.path=";
   FILE* config = fopen("/etc/mysql/classpath.conf", "r");
   if(config != NULL)
   {
@@ -110,7 +110,7 @@ static char* find_java_classpath()
   else
   {
     char* home = getenv("MYSQL_HOME");
-    char* suffix = "/lib/plugin/mysqlengine-0.1-jar-with-dependencies.jar";
+    const char* suffix = "/lib/plugin/mysqlengine-0.1-jar-with-dependencies.jar";
     class_path = new char[strlen(prefix) + strlen(home) + strlen(suffix)];
     sprintf(class_path, "%s%s%s", prefix, home, suffix);
     FILE* jar = fopen(class_path, "r");
@@ -182,7 +182,7 @@ static int cloud_init_func(void *p)
 
   cloud_hton->state = SHOW_OPTION_YES;
   cloud_hton->create = cloud_create_handler;
-  cloud_hton->flags = HTON_CAN_RECREATE;
+  cloud_hton->flags = HTON_CAN_RECREATE | HTON_ALTER_NOT_SUPPORTED;
 
   create_or_find_jvm();
 
