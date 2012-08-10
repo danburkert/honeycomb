@@ -88,6 +88,8 @@ int CloudHandler::write_row(uchar *buf)
 
   ha_statistic_increment(&SSV::ha_write_count);
 
+  JVMThreadAttach attached_thread(&this->env, this->jvm);
+
   int ret = write_row_helper();
 
   DBUG_RETURN(ret);
@@ -105,15 +107,17 @@ int CloudHandler::update_row(const uchar *old_data, uchar *new_data)
 
   // TODO: The next two lines should really be some kind of transaction.
   delete_row_helper();
-  int ret = write_row_helper();
+  write_row_helper();
 
-  DBUG_RETURN(ret);
+  DBUG_RETURN(0);
 }
 
 int CloudHandler::delete_row(const uchar *buf)
 {
   DBUG_ENTER("CloudHandler::delete_row");
   ha_statistic_increment(&SSV::ha_delete_count);
+  //stats.records--;
+  //share->rows_recorded--;
   delete_row_helper();
   DBUG_RETURN(0);
 }
@@ -122,7 +126,6 @@ int CloudHandler::delete_row_helper()
 {
   DBUG_ENTER("CloudHandler::delete_row_helper");
 
-  JVMThreadAttach attached_thread(&this->env, this->jvm);
 
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
   jmethodID delete_row_method = this->env->GetStaticMethodID(adapter_class, "deleteRow", "(J)Z");
@@ -130,7 +133,7 @@ int CloudHandler::delete_row_helper()
 
   jboolean result = this->env->CallStaticBooleanMethod(adapter_class, delete_row_method, java_scan_id);
 
-  DBUG_RETURN(result);
+  DBUG_RETURN(0);
 }
 
 int CloudHandler::rnd_init(bool scan)
@@ -339,8 +342,6 @@ int CloudHandler::rnd_pos(uchar *buf, uchar *pos)
   ha_statistic_increment(&SSV::ha_read_rnd_count); // Boilerplate
   MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, FALSE);
 
-  JVMThreadAttach attached_thread(&this->env, this->jvm);
-
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
   jmethodID get_row_method = this->env->GetStaticMethodID(adapter_class, "getRow", "(JLjava/lang/String;[B)Lcom/nearinfinity/mysqlengine/jni/Row;");
   jlong java_scan_id = curr_scan_id;
@@ -531,7 +532,6 @@ int CloudHandler::extra(enum ha_extra_function operation)
  */
 int CloudHandler::write_row_helper() {
   DBUG_ENTER("CloudHandler::write_row_helper");
-  JVMThreadAttach attached_thread(&this->env, this->jvm);
 
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
   jmethodID write_row_method = this->env->GetStaticMethodID(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;)Z");
