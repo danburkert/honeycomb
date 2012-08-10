@@ -265,6 +265,7 @@ int CloudHandler::rnd_next(uchar *buf)
   my_bitmap_map *orig_bitmap;
   clock_t begin,end;
 
+  begin = clock();
   ha_statistic_increment(&SSV::ha_read_rnd_next_count);
   DBUG_ENTER("CloudHandler::rnd_next");
 
@@ -277,11 +278,7 @@ int CloudHandler::rnd_next(uchar *buf)
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
   jmethodID next_row_method = this->env->GetStaticMethodID(adapter_class, "nextRow", "(J)Lcom/nearinfinity/mysqlengine/jni/Row;");
   jlong java_scan_id = curr_scan_id;
-  begin = clock();
   jobject row = this->env->CallStaticObjectMethod(adapter_class, next_row_method, java_scan_id);
-  end = clock();
-  double elapsed = timing(begin,end);
-  this->share->hbase_time += elapsed;
 
   jclass row_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/Row");
   jmethodID get_keys_method = this->env->GetMethodID(row_class, "getKeys", "()[Ljava/lang/String;");
@@ -307,6 +304,10 @@ int CloudHandler::rnd_next(uchar *buf)
   
   stats.records++;
   MYSQL_READ_ROW_DONE(rc);
+  end = clock();
+  double elapsed = timing(begin,end);
+  this->share->hbase_time += elapsed;
+  this->share->hbase_calls++;
 
   DBUG_RETURN(rc);
 }
@@ -464,7 +465,9 @@ int CloudHandler::rnd_end()
 
   this->env->CallStaticVoidMethod(adapter_class, end_scan_method, java_scan_id);
   INFO(("Total HBase time %f ms", this->share->hbase_time));
+  INFO(("Total HBase calls %d", this->share->hbase_calls));
   this->share->hbase_time = 0;
+  this->share->hbase_calls = 0;
   this->jvm->DetachCurrentThread();
 
   curr_scan_id = -1;
@@ -590,6 +593,7 @@ CloudShare *CloudHandler::get_share(const char *table_name, TABLE *table)
   share->crashed= FALSE;
   share->rows_recorded= 0;
   share->hbase_time = 0;
+  share->hbase_calls = 0;
 
   if (my_hash_insert(cloud_open_tables, (uchar*) share))
     goto error;

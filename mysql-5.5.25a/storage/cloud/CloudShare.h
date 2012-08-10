@@ -14,6 +14,7 @@ typedef struct st_cloud_share {
   bool crashed;             /* Meta file is crashed */
   ha_rows rows_recorded;    /* Number of rows in tables */
   double hbase_time;
+  uint hbase_calls;
 } CloudShare;
 
 #endif
