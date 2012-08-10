@@ -182,7 +182,7 @@ static int cloud_init_func(void *p)
 
   cloud_hton->state = SHOW_OPTION_YES;
   cloud_hton->create = cloud_create_handler;
-  cloud_hton->flags = HTON_CAN_RECREATE;
+  cloud_hton->flags = HTON_CAN_RECREATE | HTON_ALTER_NOT_SUPPORTED;
 
   create_or_find_jvm();
 
