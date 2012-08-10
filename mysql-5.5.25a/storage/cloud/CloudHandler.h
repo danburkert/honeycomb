@@ -40,8 +40,11 @@ private:
     jstring string_to_java_string(const char*);
     jobject create_java_map();
     jobject java_map_insert(jobject java_map, jstring key, jbyteArray value);
+    jbyteArray java_map_get(jobject java_map, jstring key);
+    jboolean java_map_is_empty(jobject java_map);
     jbyteArray convert_value_to_java_bytes(uchar* value, uint32 length);
     void store_field_values(uchar *buf, jarray keys, jarray vals);
+    void java_to_sql(jobject row_map);
     void store_field_value(Field* field, uchar* buf, const char* key, char* val, jsize val_length);
     int delete_row_helper();
     int write_row_helper();

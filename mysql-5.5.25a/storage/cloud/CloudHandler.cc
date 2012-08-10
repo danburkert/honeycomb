@@ -193,16 +193,13 @@ int CloudHandler::rnd_next(uchar *buf)
   this->share->hbase_time += elapsed;
 
   jclass row_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/Row");
-  jmethodID get_keys_method = this->env->GetMethodID(row_class, "getKeys", "()[Ljava/lang/String;");
-  jmethodID get_vals_method = this->env->GetMethodID(row_class, "getValues", "()[[B");
+  jmethodID get_row_map_method = this->env->GetMethodID(row_class, "getRowMap", "()Ljava/util/Map;");
   jmethodID get_uuid_method = this->env->GetMethodID(row_class, "getUUID", "()[B");
 
-  jarray keys = (jarray) this->env->CallObjectMethod(row, get_keys_method);
-  jarray vals = (jarray) this->env->CallObjectMethod(row, get_vals_method);
+  jobject row_map = this->env->CallObjectMethod(row, get_row_map_method);
   jbyteArray uuid = (jbyteArray) this->env->CallObjectMethod(row, get_uuid_method);
 
-  if (this->env->GetArrayLength(keys) == 0 ||
-      this->env->GetArrayLength(vals) == 0)
+  if (java_map_is_empty(row_map))
   {
     dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
     DBUG_RETURN(HA_ERR_END_OF_FILE);
@@ -211,44 +208,55 @@ int CloudHandler::rnd_next(uchar *buf)
   this->ref = (uchar*) this->env->GetByteArrayElements(uuid, JNI_FALSE);
   this->ref_length = 16;
 
-  store_field_values(buf, keys, vals);
+  java_to_sql(row_map);
+
   dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
-  
+
   stats.records++;
   MYSQL_READ_ROW_DONE(rc);
 
   DBUG_RETURN(rc);
 }
 
-void CloudHandler::store_field_values(uchar *buf, jarray keys, jarray vals)
+void CloudHandler::java_to_sql(jobject row_map)
 {
   jboolean is_copy = JNI_FALSE;
-  jsize size = this->env->GetArrayLength(keys);
 
-  for (jsize i = 0 ; i < size ; i++)
+  for (int i = 0; i < table->s->fields; i++)
   {
-    jstring key_string = (jstring) this->env->GetObjectArrayElement((jobjectArray) keys, i);
-    const char* key = java_to_string(key_string);
-    jbyteArray byte_array = (jbyteArray) this->env->GetObjectArrayElement((jobjectArray) vals, i);
-    jsize val_length = this->env->GetArrayLength(byte_array);
-    jbyte* bytes =this->env->GetByteArrayElements(byte_array, &is_copy);
-    char* val = (char*) bytes;
+    Field *field = table->field[i];
+    jstring key = string_to_java_string(field->field_name);
 
-    for(int j = 0; j < table->s->fields; j++)
-    {
-      Field *field = table->field[j];
-      if (strcmp(key, field->field_name) != 0)
-      {
-        continue;
-      }
-
-      this->store_field_value(field, buf, key, val, val_length);
-      break;
-    }
-
-    this->env->ReleaseByteArrayElements(byte_array, bytes, 0);
-    this->env->ReleaseStringUTFChars(key_string, key);
+    jbyteArray val = java_map_get(row_map, key);
   }
+
+
+
+
+  //for (jsize i = 0 ; i < size ; i++)
+  //{
+    //jstring key_string = (jstring) this->env->GetObjectArrayElement((jobjectArray) keys, i);
+    //const char* key = java_to_string(key_string);
+    //jbyteArray byte_array = (jbyteArray) this->env->GetObjectArrayElement((jobjectArray) vals, i);
+    //jsize val_length = this->env->GetArrayLength(byte_array);
+    //jbyte* bytes =this->env->GetByteArrayElements(byte_array, &is_copy);
+    //char* val = (char*) bytes;
+//
+    //for(int j = 0; j < table->s->fields; j++)
+    //{
+      //Field *field = table->field[j];
+      //if (strcmp(key, field->field_name) != 0)
+      //{
+        //continue;
+      //}
+//
+      //this->store_field_value(field, buf, key, val, val_length);
+      //break;
+    //}
+//
+    //this->env->ReleaseByteArrayElements(byte_array, bytes, 0);
+    //this->env->ReleaseStringUTFChars(key_string, key);
+  //}
 }
 
 void CloudHandler::store_field_value(Field* field, uchar* buf, const char* key, char* val, jsize val_length)
@@ -362,7 +370,7 @@ int CloudHandler::rnd_pos(uchar *buf, uchar *pos)
     DBUG_RETURN(HA_ERR_WRONG_COMMAND);
   }
 
-  store_field_values(buf, keys, vals);
+  //store_field_values(buf, keys, vals);
 
   MYSQL_READ_ROW_DONE(rc);
   DBUG_RETURN(rc);
@@ -696,6 +704,22 @@ jobject CloudHandler::java_map_insert(jobject java_map, jstring key, jbyteArray 
   jmethodID put_method = this->env->GetMethodID(map_class, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
 
   return this->env->CallObjectMethod(java_map, put_method, key, value);
+}
+
+jbyteArray CloudHandler::java_map_get(jobject java_map, jstring key)
+{
+  jclass map_class = this->env->FindClass("java/util/HashMap");
+  jmethodID get_method = this->env->GetMethodID(map_class, "get", "(Ljava/lang/Object;)Ljava/lang/Object;");
+
+  return (jbyteArray) this->env->CallObjectMethod(java_map, get_method, key);
+}
+
+jboolean CloudHandler::java_map_is_empty(jobject java_map)
+{
+  jclass map_class = this->env->FindClass("java/util/HashMap");
+  jmethodID is_empty_method = this->env->GetMethodID(map_class, "isEmpty", "()Z;");
+  jboolean result = env->CallBooleanMethod(java_map, is_empty_method);
+  return (bool) result;
 }
 
 jbyteArray CloudHandler::convert_value_to_java_bytes(uchar* value, uint32 length)
