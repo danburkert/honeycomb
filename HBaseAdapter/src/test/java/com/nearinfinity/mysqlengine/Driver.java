@@ -91,15 +91,14 @@ public class Driver {
                 rowKey.get(value);
                 UUID uuid = new UUID(rowKey.getLong(), rowKey.getLong());
 
-                byte[] dataRowKey = ByteBuffer.allocate(25)
-                        .put(RowType.DATA.getValue())
-                        .putLong(tableId)
-                        .putLong(uuid.getMostSignificantBits())
-                        .putLong(uuid.getLeastSignificantBits())
-                        .array();
+                byte[] dataRowKey = RowKeyFactory.buildDataKey(tableId, uuid);
 
                 client.deleteRow(dataRowKey);
             }
+        }
+        else if (args[0].equals("compact")) {
+            //compact
+            client.compact();
         }
     }
 
