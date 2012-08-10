@@ -88,6 +88,8 @@ int CloudHandler::write_row(uchar *buf)
 
   ha_statistic_increment(&SSV::ha_write_count);
 
+  JVMThreadAttach attached_thread(&this->env, this->jvm);
+
   int ret = write_row_helper();
 
   DBUG_RETURN(ret);
@@ -124,7 +126,6 @@ int CloudHandler::delete_row_helper()
 {
   DBUG_ENTER("CloudHandler::delete_row_helper");
 
-  //JVMThreadAttach attached_thread(&this->env, this->jvm);
 
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
   jmethodID delete_row_method = this->env->GetStaticMethodID(adapter_class, "deleteRow", "(J)Z");
