@@ -10,3 +10,4 @@ tags
 *.class
 *.jar
 restart-mysql.sh
+*.swp
