@@ -424,7 +424,27 @@ public class HBaseClient {
 
     public void setCacheSize(int cacheSize)
     {
+        logger.info("Setting table scan row cache to " + cacheSize);
         this.cacheSize = cacheSize;
+    }
+
+    public void setAutoFlushTables(boolean shouldFlushChangesImmediately)
+    {
+        this.table.setAutoFlush(shouldFlushChangesImmediately);
+
+        logger.info(shouldFlushChangesImmediately
+                ? "Changes to tables will be written to HBase immediately"
+                : "Changes to tables will be written to HBase when the write buffer has become full");
+    }
+
+    public void setWriteBufferSize(long numBytes) {
+        try {
+            this.table.setWriteBufferSize(numBytes);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        logger.info("Size of HBase write buffer set to " + numBytes + " bytes (" + (numBytes / 1024 / 1024) + " megabytes)");
     }
 }
 
