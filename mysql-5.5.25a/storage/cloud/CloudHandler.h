@@ -30,21 +30,27 @@ private:
     void destroy_record_buffer(record_buffer *r);
     CloudShare *get_share(const char *table_name, TABLE *table);
 
+    const ha_rows rows_for_bulk_insert = 100;
+
     long long curr_scan_id;
 
     // HBase JNI Adapter:
     JNIEnv* env;
     JavaVM* jvm;
+    const static int write_buffer_size = 5000;
+    jobject saved_row_maps[write_buffer_size];
 
     const char* java_to_string(jstring str);
     jstring string_to_java_string(const char*);
     jobject create_java_map();
     jobject java_map_insert(jobject java_map, jstring key, jbyteArray value);
+    jbyteArray java_map_get(jobject java_map, jstring key);
+    jboolean java_map_is_empty(jobject java_map);
     jbyteArray convert_value_to_java_bytes(uchar* value, uint32 length);
-    void store_field_values(uchar *buf, jarray keys, jarray vals);
-    void store_field_value(Field* field, uchar* buf, const char* key, char* val, jsize val_length);
+    void java_to_sql(uchar *buf, jobject row_map);
     int delete_row_helper();
     int write_row_helper();
+    int bulk_write_row_helper();
     jobject sql_to_java();
 
     void reverse_bytes(uchar *begin, uchar *end)
@@ -214,7 +220,8 @@ private:
       int delete_row(const uchar *buf);
       int free_share(CloudShare *share);
       int rnd_end();
-
+      void start_bulk_insert(ha_rows rows);
+      int end_bulk_insert();
 };
 
 #endif

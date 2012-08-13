@@ -3,7 +3,7 @@ package com.nearinfinity.mysqlengine.jni;
 import org.apache.log4j.Logger;
 
 import java.nio.ByteBuffer;
-import java.util.HashMap;
+import java.util.TreeMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -22,7 +22,7 @@ public class Row {
     private byte[] uuid;
 
     public Row() {
-        this.rowMap = new HashMap<String, byte[]>();
+        this.rowMap = new TreeMap<String, byte[]>();
         this.uuid = new byte[0];
     }
 
@@ -36,7 +36,7 @@ public class Row {
     }
 
     public void setRowMap(Map<String, byte[]> rowMap) {
-        this.rowMap = new HashMap<String, byte[]>(rowMap);
+        this.rowMap = new TreeMap<String, byte[]>(rowMap);
     }
 
     public void setUUID(UUID rowUuid) {

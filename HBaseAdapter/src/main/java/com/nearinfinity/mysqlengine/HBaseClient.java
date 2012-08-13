@@ -62,13 +62,11 @@ public class HBaseClient {
         }
     }
 
-    private void initializeSqlTable() throws IOException, InterruptedException
-    {
+    private void initializeSqlTable() throws IOException, InterruptedException {
         HTableDescriptor sqlTableDescriptor;
         HColumnDescriptor nicColumn = new HColumnDescriptor(NIC);
 
-        if (!this.admin.tableExists(SQL))
-        {
+        if (!this.admin.tableExists(SQL)) {
             logger.info("Creating sql table");
             sqlTableDescriptor = new HTableDescriptor(SQL);
             sqlTableDescriptor.addFamily(nicColumn);
@@ -77,12 +75,10 @@ public class HBaseClient {
         }
 
         sqlTableDescriptor = this.admin.getTableDescriptor(SQL);
-        if (!sqlTableDescriptor.hasFamily(NIC))
-        {
+        if (!sqlTableDescriptor.hasFamily(NIC)) {
             logger.info("Adding nic column family to sql table");
 
-            if (!this.admin.isTableDisabled(SQL))
-            {
+            if (!this.admin.isTableDisabled(SQL)) {
                 logger.info("Disabling sql table");
                 this.admin.disableTable(SQL);
             }
@@ -90,8 +86,7 @@ public class HBaseClient {
             this.admin.addColumn(SQL, nicColumn);
         }
 
-        if (this.admin.isTableDisabled(SQL))
-        {
+        if (this.admin.isTableDisabled(SQL)) {
             logger.info("Enabling sql table");
             this.admin.enableTable(SQL);
         }
@@ -155,6 +150,47 @@ public class HBaseClient {
         table.flushCommits();
     }
 
+    public void writeRow(String tableName, Map<String, byte[]>[] valueArray) throws IOException {
+        logger.info("Rows to insert: " + valueArray.length);
+        //Get table id
+        long tableId = getTableInfo(tableName).getId();
+
+        //Create put list
+        List<Put> putList = new LinkedList<Put>();
+        for (int x = 0; x < valueArray.length; x++) {
+            Map<String, byte[]> values = valueArray[x];
+            //Get UUID for new entry
+            UUID rowId = UUID.randomUUID();
+
+            //Build data row key
+            byte[] rowKey = RowKeyFactory.buildDataKey(tableId, rowId);
+
+            Put rowPut = new Put(rowKey);
+
+            for (String columnName : values.keySet()) {
+                //Get column id and value
+                long columnId = getTableInfo(tableName).getColumnIdByName(columnName);
+                byte[] value = values.get(columnName);
+
+                //Add column to put
+                rowPut.add(NIC, Bytes.toBytes(columnId), value);
+
+                //Build index key
+                byte[] indexRow = RowKeyFactory.buildIndexKey(tableId, columnId, value, rowId);
+
+                //Add the corresponding index
+                putList.add(new Put(indexRow).add(NIC, new byte[0], new byte[0]));
+            }
+            //Add the row to put list
+            putList.add(rowPut);
+        }
+
+        logger.info("Put list length: " + putList.size());
+
+        //Final put
+        table.put(putList);
+    }
+
     public void writeRow(String tableName, Map<String, byte[]> values) throws IOException {
         //Get table id
         long tableId = getTableInfo(tableName).getId();
@@ -163,7 +199,7 @@ public class HBaseClient {
         UUID rowId = UUID.randomUUID();
 
         //Build data row key
-        byte [] rowKey = RowKeyFactory.buildDataKey(tableId, rowId);
+        byte[] rowKey = RowKeyFactory.buildDataKey(tableId, rowId);
 
         //Create put list
         List<Put> putList = new LinkedList<Put>();
@@ -179,7 +215,7 @@ public class HBaseClient {
             rowPut.add(NIC, Bytes.toBytes(columnId), value);
 
             //Build index key
-            byte [] indexRow = RowKeyFactory.buildIndexKey(tableId, columnId, value, rowId);
+            byte[] indexRow = RowKeyFactory.buildIndexKey(tableId, columnId, value, rowId);
 
             //Add the corresponding index
             putList.add(new Put(indexRow).add(NIC, new byte[0], new byte[0]));
@@ -224,7 +260,7 @@ public class HBaseClient {
     }
 
     public Result getDataRow(UUID uuid, String tableName) throws IOException {
-        TableInfo info = tableCache.get(tableName);
+        TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
 
         byte[] rowKey = RowKeyFactory.buildDataKey(tableId, uuid);
@@ -366,7 +402,9 @@ public class HBaseClient {
             byte[] rowKey = result.getRow();
 
             /* TODO: This is a temporary workaround until we can write a CustomFilter */
-            if (rowKey.length < 16) continue;
+            if (rowKey.length < 16) {
+                continue;
+            }
             ByteBuffer byteBuffer = ByteBuffer.wrap(rowKey, rowKey.length - 16, 16);
             UUID rowUUID = new UUID(byteBuffer.getLong(), byteBuffer.getLong());
             if (deletedUUIDs.contains(rowUUID)) {
