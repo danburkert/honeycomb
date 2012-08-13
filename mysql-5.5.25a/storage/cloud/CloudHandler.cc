@@ -722,22 +722,84 @@ jbyteArray CloudHandler::convert_value_to_java_bytes(uchar* value, uint32 length
 
   return byteArray;
 }
+int CloudHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add)
+{
+  DBUG_ENTER("CloudHandler::add_index");
+  
+  *add = new handler_add_index(table_arg, key_info, num_of_keys);
+
+  DBUG_RETURN(0);
+}
+
+int CloudHandler::final_add_index(handler_add_index *add, bool commit)
+{
+  DBUG_ENTER("CloudHandler::final_add_index");
+
+  DBUG_RETURN(0);
+}
+
+int CloudHandler::prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys)
+{
+  DBUG_ENTER("CloudHandler::prepare_drop_index");
+  DBUG_RETURN(HA_ERR_WRONG_COMMAND);
+}
+
+int CloudHandler::final_drop_index(TABLE *table_arg)
+{
+  DBUG_ENTER("CloudHandler::final_drop_index");
+  DBUG_RETURN(HA_ERR_WRONG_COMMAND);
+}
 
 int CloudHandler::index_init(uint idx, bool sorted)
 {
   DBUG_ENTER("CloudHandler::index_init");
-  DBUG_RETURN(HA_ERR_WRONG_COMMAND);
+  
+  this->active_index = idx;
+  
+  const char* table_name = this->table->alias;
+
+  JavaVMAttachArgs attachArgs;
+  attachArgs.version = JNI_VERSION_1_6;
+  attachArgs.name = NULL;
+  attachArgs.group = NULL;
+  this->jvm->AttachCurrentThread((void**)&this->env, &attachArgs);
+
+  jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
+  jmethodID start_scan_method = this->env->GetStaticMethodID(adapter_class, "startIndexScan", "(Ljava/lang/String;Ljava/lang/String;)J");
+  jstring java_table_name = this->string_to_java_string(table_name);
+
+  this->curr_scan_id = this->env->CallStaticLongMethod(adapter_class, start_scan_method, java_table_name);
+  
+  DBUG_RETURN(0);
 }
 
 int CloudHandler::index_end()
 {
   DBUG_ENTER("CloudHandler::index_end");
-  DBUG_RETURN(HA_ERR_WRONG_COMMAND);
+  
+  jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
+  jmethodID end_scan_method = this->env->GetStaticMethodID(adapter_class, "endScan", "(J)V");
+  jlong java_scan_id = curr_scan_id;
+
+  this->env->CallStaticVoidMethod(adapter_class, end_scan_method, java_scan_id);
+  //INFO(("Total HBase time %f ms", this->share->hbase_time));
+  //this->share->hbase_time = 0;
+  this->jvm->DetachCurrentThread();
+
+  this->curr_scan_id = -1;
+  this->active_index = -1;
+
+  DBUG_RETURN(0);
 }
 
 int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha_rkey_function find_flag)
 {
   DBUG_ENTER("CloudHandler::index_read");
+  
+  jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
+  jmethodID get_row_by_value_method = this->env->GetStaticMethodID(adapter_class, "getRowByValue", "(JLjava/lang/String;[B)Lcom/nearinfinity/mysqlengine/jni/Row;");
+   
+
   DBUG_RETURN(HA_ERR_WRONG_COMMAND);
 }
 
