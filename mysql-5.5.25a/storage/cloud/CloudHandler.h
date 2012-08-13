@@ -43,9 +43,7 @@ private:
     jbyteArray java_map_get(jobject java_map, jstring key);
     jboolean java_map_is_empty(jobject java_map);
     jbyteArray convert_value_to_java_bytes(uchar* value, uint32 length);
-    void store_field_values(uchar *buf, jarray keys, jarray vals);
-    void java_to_sql(jobject row_map);
-    void store_field_value(Field* field, uchar* buf, const char* key, char* val, jsize val_length);
+    void java_to_sql(uchar *buf, jobject row_map);
     int delete_row_helper();
     int write_row_helper();
     jobject sql_to_java();

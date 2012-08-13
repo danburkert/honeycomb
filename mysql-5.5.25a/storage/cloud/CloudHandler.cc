@@ -208,7 +208,7 @@ int CloudHandler::rnd_next(uchar *buf)
   this->ref = (uchar*) this->env->GetByteArrayElements(uuid, JNI_FALSE);
   this->ref_length = 16;
 
-  java_to_sql(row_map);
+  java_to_sql(buf, row_map);
 
   dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
 
@@ -218,123 +218,95 @@ int CloudHandler::rnd_next(uchar *buf)
   DBUG_RETURN(rc);
 }
 
-void CloudHandler::java_to_sql(jobject row_map)
+void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
 {
   jboolean is_copy = JNI_FALSE;
 
   for (int i = 0; i < table->s->fields; i++)
   {
     Field *field = table->field[i];
-    jstring key = string_to_java_string(field->field_name);
+    const char* key = field->field_name;
+    jstring java_key = string_to_java_string(key);
+    jbyteArray java_val = java_map_get(row_map, java_key);
+    char* val = (char*) this->env->GetByteArrayElements(java_val, &is_copy);
+    jsize val_length = this->env->GetArrayLength(java_val);
 
-    jbyteArray val = java_map_get(row_map, key);
-  }
+    my_ptrdiff_t offset = (my_ptrdiff_t) (buf - this->table->record[0]);
+    enum_field_types field_type = field->type();
+    field->move_field_offset(offset);
 
-
-
-
-  //for (jsize i = 0 ; i < size ; i++)
-  //{
-    //jstring key_string = (jstring) this->env->GetObjectArrayElement((jobjectArray) keys, i);
-    //const char* key = java_to_string(key_string);
-    //jbyteArray byte_array = (jbyteArray) this->env->GetObjectArrayElement((jobjectArray) vals, i);
-    //jsize val_length = this->env->GetArrayLength(byte_array);
-    //jbyte* bytes =this->env->GetByteArrayElements(byte_array, &is_copy);
-    //char* val = (char*) bytes;
-//
-    //for(int j = 0; j < table->s->fields; j++)
-    //{
-      //Field *field = table->field[j];
-      //if (strcmp(key, field->field_name) != 0)
-      //{
-        //continue;
-      //}
-//
-      //this->store_field_value(field, buf, key, val, val_length);
-      //break;
-    //}
-//
-    //this->env->ReleaseByteArrayElements(byte_array, bytes, 0);
-    //this->env->ReleaseStringUTFChars(key_string, key);
-  //}
-}
-
-void CloudHandler::store_field_value(Field* field, uchar* buf, const char* key, char* val, jsize val_length)
-{
-  my_ptrdiff_t offset = (my_ptrdiff_t) (buf - this->table->record[0]);
-  enum_field_types field_type = field->type();
-  field->move_field_offset(offset);
-
-  if (field_type == MYSQL_TYPE_LONG ||
-      field_type == MYSQL_TYPE_SHORT ||
-      field_type == MYSQL_TYPE_LONGLONG ||
-      field_type == MYSQL_TYPE_INT24 ||
-      field_type == MYSQL_TYPE_TINY ||
-      field_type == MYSQL_TYPE_YEAR)
-  {
-    longlong long_value = *(longlong*)val;
-    if(this->is_little_endian())
+    if (field_type == MYSQL_TYPE_LONG ||
+        field_type == MYSQL_TYPE_SHORT ||
+        field_type == MYSQL_TYPE_LONGLONG ||
+        field_type == MYSQL_TYPE_INT24 ||
+        field_type == MYSQL_TYPE_TINY ||
+        field_type == MYSQL_TYPE_YEAR)
     {
-      long_value = __builtin_bswap64(long_value);
+      longlong long_value = *(longlong*)val;
+      if(this->is_little_endian())
+      {
+        long_value = __builtin_bswap64(long_value);
+      }
+
+      field->store(long_value, false);
+    }
+    else if (field_type == MYSQL_TYPE_FLOAT ||
+             field_type == MYSQL_TYPE_DECIMAL ||
+             field_type == MYSQL_TYPE_NEWDECIMAL ||
+             field_type == MYSQL_TYPE_DOUBLE)
+    {
+      double double_value;
+      if (this->is_little_endian())
+      {
+        longlong* long_ptr = (longlong*)val;
+        longlong swapped_long = __builtin_bswap64(*long_ptr);
+        double_value = *(double*)&swapped_long;
+      }
+      else
+      {
+        double_value = *(double*)val;
+      }
+
+      field->store(double_value);
+    }
+    else if (field_type == MYSQL_TYPE_VARCHAR
+        || field_type == MYSQL_TYPE_STRING
+        || field_type == MYSQL_TYPE_VAR_STRING
+        || field_type == MYSQL_TYPE_BLOB
+        || field_type == MYSQL_TYPE_TINY_BLOB
+        || field_type == MYSQL_TYPE_MEDIUM_BLOB
+        || field_type == MYSQL_TYPE_LONG_BLOB
+        || field_type == MYSQL_TYPE_ENUM)
+    {
+      field->store(val, val_length, &my_charset_bin);
+    }
+    else if (field_type == MYSQL_TYPE_TIME
+        || field_type == MYSQL_TYPE_DATE
+        || field_type == MYSQL_TYPE_DATETIME
+        || field_type == MYSQL_TYPE_TIMESTAMP
+        || field_type == MYSQL_TYPE_NEWDATE)
+    {
+      MYSQL_TIME mysql_time;
+
+      int was_cut;
+      int warning;
+
+      switch (field_type)
+      {
+      case MYSQL_TYPE_TIME:
+        str_to_time(val, field->field_length, &mysql_time, &warning);
+        break;
+      default:
+        str_to_datetime(val, field->field_length, &mysql_time, TIME_FUZZY_DATE, &was_cut);
+        break;
+      }
+
+      field->store_time(&mysql_time, mysql_time.time_type);
     }
 
-    field->store(long_value, false);
+    field->move_field_offset(-offset);
   }
-  else if (field_type == MYSQL_TYPE_FLOAT ||
-           field_type == MYSQL_TYPE_DECIMAL ||
-           field_type == MYSQL_TYPE_NEWDECIMAL ||
-           field_type == MYSQL_TYPE_DOUBLE)
-  {
-    double double_value;
-    if (this->is_little_endian())
-    {
-      longlong* long_ptr = (longlong*)val;
-      longlong swapped_long = __builtin_bswap64(*long_ptr);
-      double_value = *(double*)&swapped_long;
-    }
-    else
-    {
-      double_value = *(double*)val;
-    }
-
-    field->store(double_value);
-  }
-  else if (field_type == MYSQL_TYPE_VARCHAR
-      || field_type == MYSQL_TYPE_STRING
-      || field_type == MYSQL_TYPE_VAR_STRING
-      || field_type == MYSQL_TYPE_BLOB
-      || field_type == MYSQL_TYPE_TINY_BLOB
-      || field_type == MYSQL_TYPE_MEDIUM_BLOB
-      || field_type == MYSQL_TYPE_LONG_BLOB
-      || field_type == MYSQL_TYPE_ENUM)
-  {
-    field->store(val, val_length, &my_charset_bin);
-  }
-  else if (field_type == MYSQL_TYPE_TIME
-		  || field_type == MYSQL_TYPE_DATE
-		  || field_type == MYSQL_TYPE_DATETIME
-		  || field_type == MYSQL_TYPE_TIMESTAMP
-		  || field_type == MYSQL_TYPE_NEWDATE)
-  {
-	  MYSQL_TIME mysql_time;
-
-	  int was_cut;
-	  int warning;
-
-	  switch (field_type)
-	  {
-	  case MYSQL_TYPE_TIME:
-		  str_to_time(val, field->field_length, &mysql_time, &warning);
-		  break;
-	  default:
-		  str_to_datetime(val, field->field_length, &mysql_time, TIME_FUZZY_DATE, &was_cut);
-		  break;
-	  }
-
-	  field->store_time(&mysql_time, mysql_time.time_type);
-  }
-
-  field->move_field_offset(-offset);
+  return;
 }
 
 void CloudHandler::position(const uchar *record)
@@ -717,7 +689,7 @@ jbyteArray CloudHandler::java_map_get(jobject java_map, jstring key)
 jboolean CloudHandler::java_map_is_empty(jobject java_map)
 {
   jclass map_class = this->env->FindClass("java/util/HashMap");
-  jmethodID is_empty_method = this->env->GetMethodID(map_class, "isEmpty", "()Z;");
+  jmethodID is_empty_method = this->env->GetMethodID(map_class, "isEmpty", "()Z");
   jboolean result = env->CallBooleanMethod(java_map, is_empty_method);
   return (bool) result;
 }
