@@ -31,15 +31,11 @@ private:
     void destroy_record_buffer(record_buffer *r);
     CloudShare *get_share(const char *table_name, TABLE *table);
 
-    static const ha_rows rows_for_bulk_insert = 100;
-
     long long curr_scan_id;
 
     // HBase JNI Adapter:
     JNIEnv* env;
     JavaVM* jvm;
-    const static int write_buffer_size = 5000;
-    jobject saved_row_maps[write_buffer_size];
 
     const char* java_to_string(jstring str);
     jstring string_to_java_string(const char*);
