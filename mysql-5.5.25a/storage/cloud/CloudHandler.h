@@ -134,6 +134,10 @@ private:
       int index_first(uchar *buf);
       int index_last(uchar *buf);
       //int index_next_same(uchar *buf, const uchar *key, uint keylen);
+      int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add);
+      int final_add_index(handler_add_index *add, bool commit);
+      int prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys);
+      int final_drop_index(TABLE *table_arg);
     
     public:
       CloudHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm)
@@ -170,17 +174,17 @@ private:
 
       uint max_supported_keys() const 
       {
-        return 0; 
+        return 1; 
       }
 
       uint max_supported_key_parts() const 
       {
-        return 0; 
+        return MAX_REF_PARTS; 
       }
 
       uint max_supported_key_length() const 
       {
-        return 0;
+        return 255;
       }
 
       virtual double scan_time() 
@@ -210,7 +214,6 @@ private:
       int delete_row(const uchar *buf);
       int free_share(CloudShare *share);
       int rnd_end();
-
 
 };
 

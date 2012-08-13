@@ -209,6 +209,24 @@ public class HBaseAdapter {
         return row;
     }
 
+    public static Row getRowByValue(long scanId, String columnName, byte[] value) throws HBaseAdapterException {
+        logger.info("Getting row by value with scanId " + scanId + " for column " + columnName);
+
+        Connection conn = getConnectionForId(scanId);
+
+        Row row = new Row();
+        try {
+            String tableName = conn.getTableName();
+
+        }
+        catch (Exception e) {
+            logger.error("Exception thrown in getRow()", e);
+            throw new HBaseAdapterException("getRow", e);
+        }
+
+        return row;
+    }
+
     private static Connection getConnectionForId(long scanId) throws HBaseAdapterException {
         Connection conn = clientPool.get(scanId);
         if (conn == null) {
