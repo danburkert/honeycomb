@@ -26,6 +26,7 @@ private:
     mysql_mutex_t* cloud_mutex;
     HASH* cloud_open_tables;
     record_buffer *rec_buffer;
+    bool performing_scan;
     record_buffer *create_record_buffer(unsigned int length);
     void destroy_record_buffer(record_buffer *r);
     CloudShare *get_share(const char *table_name, TABLE *table);

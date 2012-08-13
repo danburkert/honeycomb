@@ -56,6 +56,11 @@ void CloudHandler::destroy_record_buffer(record_buffer *r)
   DBUG_VOID_RETURN;
 }
 
+double timing(clock_t begin, clock_t end)
+{
+  return (double)((end - begin)*1000) / CLOCKS_PER_SEC;
+}
+
 int CloudHandler::open(const char *name, int mode, uint test_if_locked)
 {
   DBUG_ENTER("CloudHandler::open");
@@ -149,23 +154,16 @@ int CloudHandler::rnd_init(bool scan)
   this->jvm->AttachCurrentThread((void**)&this->env, &attachArgs);
 
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
-  jmethodID start_scan_method = this->env->GetStaticMethodID(adapter_class, "startScan", "(Ljava/lang/String;)J");
+  jmethodID start_scan_method = this->env->GetStaticMethodID(adapter_class, "startScan", "(Ljava/lang/String;Z)J");
   jstring java_table_name = this->string_to_java_string(table_name);
 
-  this->curr_scan_id = this->env->CallStaticLongMethod(adapter_class, start_scan_method, java_table_name);
+  jboolean java_scan_boolean = scan ? JNI_TRUE : JNI_FALSE;
+
+  this->curr_scan_id = this->env->CallStaticLongMethod(adapter_class, start_scan_method, java_table_name, java_scan_boolean);
+
+  this->performing_scan = scan;
 
   DBUG_RETURN(0);
-}
-
-int CloudHandler::external_lock(THD *thd, int lock_type)
-{
-  DBUG_ENTER("CloudHandler::external_lock");
-  DBUG_RETURN(0);
-}
-
-double timing(clock_t begin, clock_t end)
-{
-  return (double)((end - begin)*1000) / CLOCKS_PER_SEC;
 }
 
 int CloudHandler::rnd_next(uchar *buf)
@@ -184,10 +182,11 @@ int CloudHandler::rnd_next(uchar *buf)
   memset(buf, 0, table->s->null_bytes);
 
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
-  jmethodID next_row_method = this->env->GetStaticMethodID(adapter_class, "nextRow", "(J)Lcom/nearinfinity/mysqlengine/jni/Row;");
+  jmethodID next_row_method = this->env->GetStaticMethodID(adapter_class, "nextRow", "(JZ)Lcom/nearinfinity/mysqlengine/jni/Row;");
   jlong java_scan_id = curr_scan_id;
+  jboolean java_scan_boolean = this->performing_scan ? JNI_TRUE : JNI_FALSE;
   begin = clock();
-  jobject row = this->env->CallStaticObjectMethod(adapter_class, next_row_method, java_scan_id);
+  jobject row = this->env->CallStaticObjectMethod(adapter_class, next_row_method, java_scan_id, java_scan_boolean);
   end = clock();
   double elapsed = timing(begin,end);
   this->share->hbase_time += elapsed;
@@ -196,6 +195,12 @@ int CloudHandler::rnd_next(uchar *buf)
   jmethodID get_keys_method = this->env->GetMethodID(row_class, "getKeys", "()[Ljava/lang/String;");
   jmethodID get_vals_method = this->env->GetMethodID(row_class, "getValues", "()[[B");
   jmethodID get_uuid_method = this->env->GetMethodID(row_class, "getUUID", "()[B");
+
+  if (row == 0)
+  {
+	  dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
+	  DBUG_RETURN(HA_ERR_END_OF_FILE);
+  }
 
   jarray keys = (jarray) this->env->CallObjectMethod(row, get_keys_method);
   jarray vals = (jarray) this->env->CallObjectMethod(row, get_vals_method);
@@ -329,6 +334,12 @@ void CloudHandler::store_field_value(Field* field, uchar* buf, const char* key, 
   field->move_field_offset(-offset);
 }
 
+int CloudHandler::external_lock(THD *thd, int lock_type)
+{
+  DBUG_ENTER("CloudHandler::external_lock");
+  DBUG_RETURN(0);
+}
+
 void CloudHandler::position(const uchar *record)
 {
   DBUG_ENTER("CloudHandler::position");
@@ -382,6 +393,7 @@ int CloudHandler::rnd_end()
   this->jvm->DetachCurrentThread();
 
   curr_scan_id = -1;
+  this->performing_scan = false;
   DBUG_RETURN(0);
 }
 
@@ -458,8 +470,6 @@ int CloudHandler::info(uint)
 CloudShare *CloudHandler::get_share(const char *table_name, TABLE *table)
 {
   CloudShare *share;
-  char meta_file_name[FN_REFLEN];
-  MY_STAT file_stat;                /* Stat information for the data file */
   char *tmp_path_name;
   char *tmp_alias;
   uint path_length, alias_length;
