@@ -123,7 +123,6 @@ private:
         jstring result = (jstring)jni_env->CallObjectMethod(throwable, methodId);
         const char* string = jni_env->GetStringUTFChars(result, NULL);
         INFO(("Exception from java: %s", string));
-        INFO(("Exception from \n atoehutnaoeuhaotenhu"));
         jni_env->ReleaseStringUTFChars(result, string);
       }
     }

@@ -308,6 +308,7 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
     }
 
     field->move_field_offset(-offset);
+    this->env->ReleaseByteArrayElements(java_val, (jbyte*)val, 0);
   }
   return;
 }
@@ -714,8 +715,7 @@ jobject CloudHandler::sql_to_java() {
 
 const char* CloudHandler::java_to_string(jstring j_str)
 {
-  const char* str = this->env->GetStringUTFChars(j_str, NULL);
-  return str;
+  return this->env->GetStringUTFChars(j_str, NULL);
 }
 
 jstring CloudHandler::string_to_java_string(const char* string)
@@ -763,6 +763,7 @@ jbyteArray CloudHandler::convert_value_to_java_bytes(uchar* value, uint32 length
   memcpy(java_bytes, value, length);
 
   this->env->SetByteArrayRegion(byteArray, 0, length, java_bytes);
+  this->env->ReleaseByteArrayElements(byteArray, java_bytes, 0);
 
   return byteArray;
 }
