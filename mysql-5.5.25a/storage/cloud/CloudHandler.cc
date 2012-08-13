@@ -809,7 +809,7 @@ int CloudHandler::index_init(uint idx, bool sorted)
   this->jvm->AttachCurrentThread((void**)&this->env, &attachArgs);
 
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
-  jmethodID start_scan_method = this->env->GetStaticMethodID(adapter_class, "startScan", "(Ljava/lang/String;)J");
+  jmethodID start_scan_method = this->env->GetStaticMethodID(adapter_class, "startIndexScan", "(Ljava/lang/String;Ljava/lang/String;)J");
   jstring java_table_name = this->string_to_java_string(table_name);
 
   this->curr_scan_id = this->env->CallStaticLongMethod(adapter_class, start_scan_method, java_table_name);

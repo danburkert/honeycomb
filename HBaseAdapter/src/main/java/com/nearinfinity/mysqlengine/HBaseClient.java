@@ -307,6 +307,21 @@ public class HBaseClient {
         return table.getScanner(scan);
     }
 
+    public ResultScanner getIndexScanner(String tableName, String columnName) throws IOException {
+        //Get the table id
+        TableInfo info = getTableInfo(tableName);
+        long tableId = info.getId();
+        long columnId = info.getColumnIdByName(columnName);
+
+        //Build row keys
+        byte[] startRow = RowKeyFactory.buildIndexKey(tableId, columnId, new byte[0], ZERO_UUID);
+        byte[] endRow = RowKeyFactory.buildIndexKey(tableId, columnId + 1, new byte[0], ZERO_UUID);
+
+        Scan scan = new Scan(startRow, endRow);
+
+        return table.getScanner(scan);
+    }
+
     private TableInfo getTableInfo(String tableName) throws IOException {
         if (tableCache.containsKey(tableName)) {
             return tableCache.get(tableName);
