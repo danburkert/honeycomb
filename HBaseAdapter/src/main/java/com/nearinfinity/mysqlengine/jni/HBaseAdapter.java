@@ -26,6 +26,9 @@ public class HBaseAdapter {
     private static HBaseClient client;
     private static boolean configured;
     private static final Logger logger = Logger.getLogger(HBaseAdapter.class);
+//    private static long rowsToCache;
+
+    private static final int DEFAULT_NUM_CACHED_ROWS = 2500;
 
     static {
         try {
@@ -39,10 +42,20 @@ public class HBaseAdapter {
                 params.put(line.next(), line.next());
             }
 
-            //Initiliaze class variables
+            //Initialize class variables
             client = new HBaseClient(params.get("hbase_table_name"), params.get("zk_quorum"));
             connectionCounter = new AtomicLong(0L);
             clientPool = new ConcurrentHashMap<Long, Connection>();
+
+            try {
+                int cacheSize = Integer.parseInt(params.get("table_scan_cache_rows"));
+                client.setCacheSize(cacheSize);
+                logger.info("Setting table scan row cache to " + cacheSize);
+            }
+            catch (NumberFormatException e) {
+                logger.info("Number of rows to cache was not provided or invalid - using default of " + DEFAULT_NUM_CACHED_ROWS);
+                client.setCacheSize(DEFAULT_NUM_CACHED_ROWS);
+            }
 
             //We are now configured
             configured = true;
@@ -70,12 +83,12 @@ public class HBaseAdapter {
         return true;
     }
 
-    public static long startScan(String tableName) throws HBaseAdapterException {
+    public static long startScan(String tableName, boolean isFullTableScan) throws HBaseAdapterException {
         logger.info("Starting scan on table " + tableName);
 
         long scanId = connectionCounter.incrementAndGet();
         try {
-            ResultScanner scanner = client.getTableScanner(tableName);
+            ResultScanner scanner = client.getTableScanner(tableName, isFullTableScan);
             clientPool.put(scanId, new Connection(tableName, scanner));
         }
         catch (IOException e) {
@@ -92,12 +105,12 @@ public class HBaseAdapter {
         Connection conn = getConnectionForId(scanId);
 
         Row row = new Row();
-        try {
 
+        try {
             //Return empty Row if there is no next result
             Result result = conn.getNextResult();
             if (result == null) {
-                return row;
+                return null;
             }
 
             //Set values and UUID
@@ -112,33 +125,6 @@ public class HBaseAdapter {
         }
 
         return row;
-    }
-
-    public static Row[] nextRows(long scanId, long numRows) throws HBaseAdapterException {
-        logger.info("Getting " + numRows + " rows using scanId " + scanId);
-
-        Connection conn = getConnectionForId(scanId);
-
-        ArrayList<Row> rowList = new ArrayList<Row>();
-        try {
-
-            for (long i = 0 ; i < numRows ; i++) {
-                Result result = conn.getNextResult();
-                if (result == null) {
-                    return (Row[])rowList.toArray();
-                }
-                Map<String, byte[]> values = client.parseRow(result, conn.getTableName());
-                UUID uuid = client.parseUUIDFromDataRow(result);
-
-                rowList.add(new Row(values, uuid));
-            }
-        }
-        catch (Exception e) {
-            logger.error("Exception thrown in nextRows", e);
-            throw new HBaseAdapterException("nextRows", e);
-        }
-
-        return (Row[])rowList.toArray();
     }
 
     public static void endScan(long scanId) throws HBaseAdapterException {

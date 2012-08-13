@@ -1,5 +1,7 @@
 package com.nearinfinity.mysqlengine;
 
+import com.nearinfinity.mysqlengine.jni.*;
+import com.nearinfinity.mysqlengine.jni.Row;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
@@ -34,6 +36,8 @@ public class HBaseClient {
     private static final byte[] DELETED_VAL = Bytes.toBytes(1L);
 
     private static final UUID ZERO_UUID = new UUID(0L, 0L);
+
+    private int cacheSize = 10;
 
     private final ConcurrentHashMap<String, TableInfo> tableCache = new ConcurrentHashMap<String, TableInfo>();
 
@@ -250,7 +254,7 @@ public class HBaseClient {
         return table.getScanner(scan);
     }
 
-    public ResultScanner getTableScanner(String tableName) throws IOException {
+    public ResultScanner getTableScanner(String tableName, boolean isFullTableScan) throws IOException {
         //Get table id
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
@@ -262,7 +266,9 @@ public class HBaseClient {
         Scan scan = new Scan(startRow, endRow);
 
         //Set the caching for the scan
-        scan.setCaching(10);
+        int rowsToCacheForScan = isFullTableScan ? this.cacheSize : 10;
+        logger.info("Starting scan with cache size " + rowsToCacheForScan);
+        scan.setCaching(rowsToCacheForScan);
 
         //Exclude deleted values
         SingleColumnValueFilter filter = new SingleColumnValueFilter(NIC, IS_DELETED, CompareFilter.CompareOp.NOT_EQUAL, DELETED_VAL);
@@ -376,5 +382,10 @@ public class HBaseClient {
         }
 
         table.delete(deleteList);
+    }
+
+    public void setCacheSize(int cacheSize)
+    {
+        this.cacheSize = cacheSize;
     }
 }
