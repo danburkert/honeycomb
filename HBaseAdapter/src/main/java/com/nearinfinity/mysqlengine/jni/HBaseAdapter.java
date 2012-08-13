@@ -4,10 +4,11 @@ import com.nearinfinity.mysqlengine.Connection;
 import com.nearinfinity.mysqlengine.HBaseClient;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.filter.SingleColumnValueExcludeFilter;
 import org.apache.log4j.Logger;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,9 +27,9 @@ public class HBaseAdapter {
     private static HBaseClient client;
     private static boolean configured;
     private static final Logger logger = Logger.getLogger(HBaseAdapter.class);
-//    private static long rowsToCache;
 
     private static final int DEFAULT_NUM_CACHED_ROWS = 2500;
+    private static long elapsedTime;
 
     static {
         try {
@@ -59,8 +60,7 @@ public class HBaseAdapter {
 
             //We are now configured
             configured = true;
-        }
-        catch (FileNotFoundException e) {
+        } catch (FileNotFoundException e) {
             logger.warn("FileNotFoundException", e);
         }
     }
@@ -74,8 +74,7 @@ public class HBaseAdapter {
 
         try {
             client.createTableFull(tableName, columnNames);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.error("Exception in createTable", e);
             throw new HBaseAdapterException("createTable", e);
         }
@@ -90,8 +89,7 @@ public class HBaseAdapter {
         try {
             ResultScanner scanner = client.getTableScanner(tableName, isFullTableScan);
             clientPool.put(scanId, new Connection(tableName, scanner));
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             logger.error("Exception in startScan ", e);
             throw new HBaseAdapterException("startScan", e);
         }
@@ -103,14 +101,14 @@ public class HBaseAdapter {
         logger.info("nextRow:  scanId: " + scanId);
 
         Connection conn = getConnectionForId(scanId);
+        long start = System.currentTimeMillis();
 
         Row row = new Row();
 
         try {
-            //Return empty Row if there is no next result
             Result result = conn.getNextResult();
             if (result == null) {
-                return null;
+                return row;
             }
 
             //Set values and UUID
@@ -118,12 +116,12 @@ public class HBaseAdapter {
             UUID uuid = client.parseUUIDFromDataRow(result);
             row.setRowMap(values);
             row.setUUID(uuid);
-        }
-        catch  (Exception e) {
+        } catch (Exception e) {
             logger.error("Exception thrown in nextRow", e);
             throw new HBaseAdapterException("nextRow", e);
         }
 
+        elapsedTime += System.currentTimeMillis() - start;
         return row;
     }
 
@@ -138,14 +136,25 @@ public class HBaseAdapter {
 
         try {
             client.writeRow(tableName, values);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.error("Exception thrown in writeRow()", e);
             throw new HBaseAdapterException("writeRow", e);
         }
 
         return true;
     }
+
+    public static boolean writeRow(String tableName, Map<String, byte[]>[] values) throws HBaseAdapterException {
+        logger.info("HBaseAdapter: Writing row to table " + tableName);
+        try {
+            client.writeRow(tableName, values);
+        } catch (Exception e) {
+            logger.error("During bulk insert", e);
+            throw new HBaseAdapterException("IOException", e);
+        }
+        return true;
+    }
+
 
     public static boolean deleteRow(long scanId) throws HBaseAdapterException {
         logger.info("Deleting row with scanId " + scanId);
@@ -157,8 +166,7 @@ public class HBaseAdapter {
             byte[] rowKey = result.getRow();
 
             deleted = client.deleteRow(rowKey);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             logger.error("Exception thrown in deleteRow()", e);
             throw new HBaseAdapterException("deleteRow", e);
         }
@@ -166,7 +174,7 @@ public class HBaseAdapter {
         return deleted;
     }
 
-    public static Row getRow(long scanId, String tableName /*TODO: Can we delete this? */, byte[] uuid)  throws HBaseAdapterException {
+    public static Row getRow(long scanId, String tableName /*TODO: Can we delete this? */, byte[] uuid) throws HBaseAdapterException {
         logger.info("Getting row with scanId " + scanId);
 
         Connection conn = getConnectionForId(scanId);
@@ -186,8 +194,7 @@ public class HBaseAdapter {
             Map<String, byte[]> values = client.parseRow(result, conn.getTableName());
             row.setUUID(rowUuid);
             row.setRowMap(values);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.error("Exception thrown in getRow()", e);
             throw new HBaseAdapterException("getRow", e);
         }
