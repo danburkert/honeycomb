@@ -421,7 +421,6 @@ public class HBaseClient {
 
         table.delete(deleteList);
     }
-}
 
     public void setCacheSize(int cacheSize)
     {
