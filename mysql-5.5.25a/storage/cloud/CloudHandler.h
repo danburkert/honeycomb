@@ -44,9 +44,10 @@ private:
     jstring string_to_java_string(const char*);
     jobject create_java_map();
     jobject java_map_insert(jobject java_map, jstring key, jbyteArray value);
+    jbyteArray java_map_get(jobject java_map, jstring key);
+    jboolean java_map_is_empty(jobject java_map);
     jbyteArray convert_value_to_java_bytes(uchar* value, uint32 length);
-    void store_field_values(uchar *buf, jarray keys, jarray vals);
-    void store_field_value(Field* field, uchar* buf, const char* key, char* val, jsize val_length);
+    void java_to_sql(uchar *buf, jobject row_map);
     int delete_row_helper();
     int write_row_helper();
     int bulk_write_row_helper();
@@ -127,11 +128,24 @@ private:
       }
     }
 
+      /* Index methods */
+      int index_init(uint idx, bool sorted);
+      int index_end();
+      //int disable_indexes(uint mode);
+      //int enable_indexes(uint mode);
+      int index_read(uchar *buf, const uchar *key, uint key_len, enum ha_rkey_function find_flag);
+      //int index_read_last(uchar *buf, const uchar *key, uint key_len);
+      int index_next(uchar *buf);
+      int index_prev(uchar *buf);
+      int index_first(uchar *buf);
+      int index_last(uchar *buf);
+      //int index_next_same(uchar *buf, const uchar *key, uint keylen);
+    
     public:
       CloudHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm)
         : handler(hton, table_arg), jvm(jvm)
       {
-    	cloud_mutex = mutex;
+    	  cloud_mutex = mutex;
         cloud_open_tables = open_tables;
       }
 
