@@ -664,7 +664,7 @@ jstring CloudHandler::string_to_java_string(const char* string)
 
 jobject CloudHandler::create_java_map()
 {
-  jclass map_class = this->env->FindClass("java/util/HashMap");
+  jclass map_class = this->env->FindClass("java/util/TreeMap");
   jmethodID constructor = this->env->GetMethodID(map_class, "<init>", "()V");
   jobject java_map = this->env->NewObject(map_class, constructor);
   return java_map;
@@ -672,7 +672,7 @@ jobject CloudHandler::create_java_map()
 
 jobject CloudHandler::java_map_insert(jobject java_map, jstring key, jbyteArray value)
 {
-  jclass map_class = this->env->FindClass("java/util/HashMap");
+  jclass map_class = this->env->FindClass("java/util/TreeMap");
   jmethodID put_method = this->env->GetMethodID(map_class, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
 
   return this->env->CallObjectMethod(java_map, put_method, key, value);
@@ -680,7 +680,7 @@ jobject CloudHandler::java_map_insert(jobject java_map, jstring key, jbyteArray 
 
 jbyteArray CloudHandler::java_map_get(jobject java_map, jstring key)
 {
-  jclass map_class = this->env->FindClass("java/util/HashMap");
+  jclass map_class = this->env->FindClass("java/util/TreeMap");
   jmethodID get_method = this->env->GetMethodID(map_class, "get", "(Ljava/lang/Object;)Ljava/lang/Object;");
 
   return (jbyteArray) this->env->CallObjectMethod(java_map, get_method, key);
@@ -688,7 +688,7 @@ jbyteArray CloudHandler::java_map_get(jobject java_map, jstring key)
 
 jboolean CloudHandler::java_map_is_empty(jobject java_map)
 {
-  jclass map_class = this->env->FindClass("java/util/HashMap");
+  jclass map_class = this->env->FindClass("java/util/TreeMap");
   jmethodID is_empty_method = this->env->GetMethodID(map_class, "isEmpty", "()Z");
   jboolean result = env->CallBooleanMethod(java_map, is_empty_method);
   return (bool) result;
