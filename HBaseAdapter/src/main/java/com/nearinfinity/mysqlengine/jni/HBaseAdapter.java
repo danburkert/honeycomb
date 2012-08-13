@@ -77,9 +77,24 @@ public class HBaseAdapter {
         try {
             ResultScanner scanner = client.getTableScanner(tableName);
             clientPool.put(scanId, new Connection(tableName, scanner));
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error("Exception in startScan ", e);
             throw new HBaseAdapterException("startScan", e);
+        }
+
+        return scanId;
+    }
+
+    public static long startIndexScan(String tableName, String columnName) throws HBaseAdapterException {
+        logger.info("Starting index scan on table " + tableName);
+
+        long scanId = connectionCounter.incrementAndGet();
+        try {
+            ResultScanner scanner = client.getIndexScanner(tableName, columnName);
+            clientPool.put(scanId, new Connection(tableName, scanner));
+        } catch (Exception e) {
+            logger.error("Exception in startIndexScan ", e);
+            throw new HBaseAdapterException("startIndexScan", e);
         }
 
         return scanId;
