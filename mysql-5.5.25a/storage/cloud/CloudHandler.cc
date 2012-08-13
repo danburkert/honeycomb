@@ -188,19 +188,17 @@ int CloudHandler::rnd_next(uchar *buf)
   memset(buf, 0, table->s->null_bytes);
 
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
-  jmethodID next_row_method = this->env->GetStaticMethodID(adapter_class, "nextRow", "(JZ)Lcom/nearinfinity/mysqlengine/jni/Row;");
+  jmethodID next_row_method = this->env->GetStaticMethodID(adapter_class, "nextRow", "(J)Lcom/nearinfinity/mysqlengine/jni/Row;");
   jlong java_scan_id = curr_scan_id;
-  jboolean java_scan_boolean = this->performing_scan ? JNI_TRUE : JNI_FALSE;
-  begin = clock();
-  jobject row = this->env->CallStaticObjectMethod(adapter_class, next_row_method, java_scan_id, java_scan_boolean);
-  end = clock();
-  double elapsed = timing(begin,end);
-  this->share->hbase_time += elapsed;
+  jobject row = this->env->CallStaticObjectMethod(adapter_class, next_row_method, java_scan_id);
 
   jclass row_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/Row");
+  jmethodID get_keys_method = this->env->GetMethodID(row_class, "getKeys", "()[Ljava/lang/String;");
+  jmethodID get_vals_method = this->env->GetMethodID(row_class, "getValues", "()[[B");
   jmethodID get_row_map_method = this->env->GetMethodID(row_class, "getRowMap", "()Ljava/util/Map;");
   jmethodID get_uuid_method = this->env->GetMethodID(row_class, "getUUID", "()[B");
 
+  jobject row_map = this->env->CallObjectMethod(row, get_row_map_method);
   jarray keys = (jarray) this->env->CallObjectMethod(row, get_keys_method);
   jarray vals = (jarray) this->env->CallObjectMethod(row, get_vals_method);
   jbyteArray uuid = (jbyteArray) this->env->CallObjectMethod(row, get_uuid_method);
