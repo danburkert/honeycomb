@@ -15,6 +15,8 @@ typedef struct st_cloud_share {
   ha_rows rows_recorded;    /* Number of rows in tables */
   double hbase_time;
   uint hbase_calls;
+  ha_rows rows_to_insert;
+  ha_rows rows_inserted;
 } CloudShare;
 
 #endif

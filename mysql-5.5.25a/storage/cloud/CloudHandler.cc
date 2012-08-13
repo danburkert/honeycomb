@@ -88,9 +88,15 @@ int CloudHandler::write_row(uchar *buf)
 
   ha_statistic_increment(&SSV::ha_write_count);
 
-  JVMThreadAttach attached_thread(&this->env, this->jvm);
-
-  int ret = write_row_helper();
+  int ret;
+  if(this->share->rows_to_insert > this->rows_for_bulk_insert)
+  {
+    ret = bulk_write_row_helper();
+  }
+  else
+  {
+    ret = write_row_helper();
+  }
 
   DBUG_RETURN(ret);
 }
@@ -142,6 +148,7 @@ int CloudHandler::rnd_init(bool scan)
 
   const char* table_name = this->table->alias;
 
+  this->share->hbase_time = clock();
   JavaVMAttachArgs attachArgs;
   attachArgs.version = JNI_VERSION_1_6;
   attachArgs.name = NULL;
@@ -172,9 +179,7 @@ int CloudHandler::rnd_next(uchar *buf)
 {
   int rc = 0;
   my_bitmap_map *orig_bitmap;
-  clock_t begin,end;
 
-  begin = clock();
   ha_statistic_increment(&SSV::ha_read_rnd_next_count);
   DBUG_ENTER("CloudHandler::rnd_next");
 
@@ -213,9 +218,6 @@ int CloudHandler::rnd_next(uchar *buf)
   
   stats.records++;
   MYSQL_READ_ROW_DONE(rc);
-  end = clock();
-  double elapsed = timing(begin,end);
-  this->share->hbase_time += elapsed;
   this->share->hbase_calls++;
 
   DBUG_RETURN(rc);
@@ -378,13 +380,39 @@ int CloudHandler::rnd_end()
   jlong java_scan_id = curr_scan_id;
 
   this->env->CallStaticVoidMethod(adapter_class, end_scan_method, java_scan_id);
-  INFO(("Total HBase time %f ms", this->share->hbase_time));
+  clock_t end = clock();
+  double elapsed = timing(this->share->hbase_time,end);
+  INFO(("Total HBase time %f ms", elapsed));
   INFO(("Total HBase calls %d", this->share->hbase_calls));
   this->share->hbase_time = 0;
   this->share->hbase_calls = 0;
   this->jvm->DetachCurrentThread();
 
   curr_scan_id = -1;
+  DBUG_RETURN(0);
+}
+
+void CloudHandler::start_bulk_insert(ha_rows rows)
+{
+  JavaVMAttachArgs attachArgs;
+  attachArgs.version = JNI_VERSION_1_6;
+  attachArgs.name = NULL;
+  attachArgs.group = NULL;
+  this->jvm->AttachCurrentThread((void**)&this->env, &attachArgs);
+  DBUG_ENTER("CloudHandler::start_bulk_insert");
+  INFO(("Rows to insert %d", rows));
+  this->share->rows_to_insert = rows;
+  this->share->rows_inserted = 0;
+
+  DBUG_VOID_RETURN;
+}
+
+int CloudHandler::end_bulk_insert()
+{
+  DBUG_ENTER("CloudHandler::end_bulk_insert");
+  this->share->rows_to_insert = 0;
+  this->share->rows_inserted = 0;
+  this->jvm->DetachCurrentThread();
   DBUG_RETURN(0);
 }
 
@@ -527,6 +555,35 @@ error:
 int CloudHandler::extra(enum ha_extra_function operation)
 {
   DBUG_ENTER("CloudHandler::extra");
+  DBUG_RETURN(0);
+}
+
+int CloudHandler::bulk_write_row_helper()
+{
+  DBUG_ENTER("CloudHandler::bulk_write_row_helper");
+  jobject java_row_map = sql_to_java();
+  this->saved_row_maps[this->share->rows_inserted] = java_row_map;
+  this->share->rows_inserted++;
+
+  if(this->share->rows_to_insert - this->share->rows_inserted == 0 || this->share->rows_inserted == this->write_buffer_size)
+  {
+    jclass map_class = this->env->FindClass("java/util/Map");
+    jobjectArray array = this->env->NewObjectArray(this->share->rows_to_insert, map_class, NULL);
+    for(int x = 0; x < this->share->rows_inserted; x++)
+    {
+      jobject map_object = this->saved_row_maps[x];
+      this->env->SetObjectArrayElement(array, x, map_object);
+      this->print_java_exception(this->env);
+    }
+    jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
+    jmethodID write_row_method = this->env->GetStaticMethodID(adapter_class, "writeRow", "(Ljava/lang/String;[Ljava/util/Map;)Z");
+    jstring java_table_name = this->string_to_java_string(this->share->table_alias);
+
+    this->env->CallStaticBooleanMethod(adapter_class, write_row_method, java_table_name, array);
+    this->share->rows_to_insert -= this->share->rows_inserted;
+    this->share->rows_inserted = 0;
+  }
+
   DBUG_RETURN(0);
 }
 

@@ -4,8 +4,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.CompareFilter;
-import org.apache.hadoop.hbase.filter.Filter;
-import org.apache.hadoop.hbase.filter.SingleColumnValueExcludeFilter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
@@ -22,7 +20,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * Time: 2:09 PM
  * To change this template use File | Settings | File Templates.
  */
-public class HBaseClient {
+public class HBaseClient
+{
     private HTable table;
 
     private static final byte[] NIC = "nic".getBytes();
@@ -37,22 +36,26 @@ public class HBaseClient {
 
     private static final Logger logger = Logger.getLogger(HBaseClient.class);
 
-    public HBaseClient(String tableName, String zkQuorum) {
+    public HBaseClient(String tableName, String zkQuorum)
+    {
         logger.info("HBaseClient: Constructing with HBase table name: " + tableName);
         logger.info("HBaseClient: Constructing with ZK Quorum: " + zkQuorum);
 
         Configuration configuration = HBaseConfiguration.create();
         configuration.set("hbase.zookeeper.quorum", zkQuorum);
 
-        try {
+        try
+        {
             this.table = new HTable(configuration, tableName);
         }
-        catch(IOException e) {
+        catch (IOException e)
+        {
             logger.error("IOException thrown", e);
         }
     }
 
-    private void createTable(String tableName, List<Put> puts) throws IOException {
+    private void createTable(String tableName, List<Put> puts) throws IOException
+    {
         logger.info("HBaseClient: createTable called");
 
         //Get and increment the table counter (assumes it exists)
@@ -65,7 +68,8 @@ public class HBaseClient {
         tableCache.put(tableName, new TableInfo(tableName, tableId));
     }
 
-    private void addColumns(String tableName, List<String> columns, List<Put> puts) throws IOException {
+    private void addColumns(String tableName, List<String> columns, List<Put> puts) throws IOException
+    {
         //Get table id from cache
         long tableId = tableCache.get(tableName).getId();
 
@@ -77,7 +81,8 @@ public class HBaseClient {
         long lastColumnId = table.incrementColumnValue(columnBytes, NIC, new byte[0], numColumns);
         long startColumn = lastColumnId - numColumns;
 
-        for (String columnName : columns) {
+        for (String columnName : columns)
+        {
             long columnId = ++startColumn;
 
             //Add put
@@ -89,7 +94,8 @@ public class HBaseClient {
         }
     }
 
-    public void createTableFull(String tableName, List<String> columns) throws IOException {
+    public void createTableFull(String tableName, List<String> columns) throws IOException
+    {
         logger.info("HBaseClient: createTableFull");
         //Batch put list
         List<Put> putList = new LinkedList<Put>();
@@ -108,7 +114,52 @@ public class HBaseClient {
         table.flushCommits();
     }
 
-    public void writeRow(String tableName, Map<String, byte[]> values) throws IOException {
+    public void writeRow(String tableName, Map<String, byte[]>[] valueArray) throws IOException
+    {
+        logger.info("Rows to insert: " + valueArray.length);
+        //Get table id
+        long tableId = getTableInfo(tableName).getId();
+
+        //Create put list
+        List<Put> putList = new LinkedList<Put>();
+        for(int x = 0; x < valueArray.length; x++)
+        {
+            Map<String, byte[]> values = valueArray[x];
+            //Get UUID for new entry
+            UUID rowId = UUID.randomUUID();
+
+            //Build data row key
+            byte[] rowKey = RowKeyFactory.buildDataKey(tableId, rowId);
+
+            Put rowPut = new Put(rowKey);
+
+            for (String columnName : values.keySet())
+            {
+                //Get column id and value
+                long columnId = getTableInfo(tableName).getColumnIdByName(columnName);
+                byte[] value = values.get(columnName);
+
+                //Add column to put
+                rowPut.add(NIC, Bytes.toBytes(columnId), value);
+
+                //Build index key
+                byte[] indexRow = RowKeyFactory.buildIndexKey(tableId, columnId, value, rowId);
+
+                //Add the corresponding index
+                putList.add(new Put(indexRow).add(NIC, new byte[0], new byte[0]));
+            }
+            //Add the row to put list
+            putList.add(rowPut);
+        }
+
+        logger.info("Put list length: " + putList.size());
+
+        //Final put
+        table.put(putList);
+    }
+
+    public void writeRow(String tableName, Map<String, byte[]> values) throws IOException
+    {
         //Get table id
         long tableId = getTableInfo(tableName).getId();
 
@@ -116,14 +167,15 @@ public class HBaseClient {
         UUID rowId = UUID.randomUUID();
 
         //Build data row key
-        byte [] rowKey = RowKeyFactory.buildDataKey(tableId, rowId);
+        byte[] rowKey = RowKeyFactory.buildDataKey(tableId, rowId);
 
         //Create put list
         List<Put> putList = new LinkedList<Put>();
 
         Put rowPut = new Put(rowKey);
 
-        for (String columnName : values.keySet()) {
+        for (String columnName : values.keySet())
+        {
             //Get column id and value
             long columnId = getTableInfo(tableName).getColumnIdByName(columnName);
             byte[] value = values.get(columnName);
@@ -132,7 +184,7 @@ public class HBaseClient {
             rowPut.add(NIC, Bytes.toBytes(columnId), value);
 
             //Build index key
-            byte [] indexRow = RowKeyFactory.buildIndexKey(tableId, columnId, value, rowId);
+            byte[] indexRow = RowKeyFactory.buildIndexKey(tableId, columnId, value, rowId);
 
             //Add the corresponding index
             putList.add(new Put(indexRow).add(NIC, new byte[0], new byte[0]));
@@ -145,7 +197,8 @@ public class HBaseClient {
         table.put(putList);
     }
 
-    public List<Map<String, byte[]>> fullTableScan(String tableName) throws IOException {
+    public List<Map<String, byte[]>> fullTableScan(String tableName) throws IOException
+    {
         logger.info("HBaseClient.fullTableScan");
 
         //Get table id
@@ -162,10 +215,12 @@ public class HBaseClient {
         List<Map<String, byte[]>> rows = new LinkedList<Map<String, byte[]>>();
         ResultScanner results = table.getScanner(scan);
 
-        for (Result result : results) {
+        for (Result result : results)
+        {
             Map<String, byte[]> columns = new HashMap<String, byte[]>();
             Map<byte[], byte[]> returnedColumns = result.getNoVersionMap().get(NIC);
-            for (byte[] qualifier : returnedColumns.keySet()) {
+            for (byte[] qualifier : returnedColumns.keySet())
+            {
                 long columnId = ByteBuffer.wrap(qualifier).getLong();
                 String columnName = info.getColumnNameById(columnId);
                 columns.put(columnName, returnedColumns.get(qualifier));
@@ -176,8 +231,9 @@ public class HBaseClient {
         return rows;
     }
 
-    public Result getDataRow(UUID uuid, String tableName) throws IOException {
-        TableInfo info = tableCache.get(tableName);
+    public Result getDataRow(UUID uuid, String tableName) throws IOException
+    {
+        TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
 
         byte[] rowKey = RowKeyFactory.buildDataKey(tableId, uuid);
@@ -186,7 +242,8 @@ public class HBaseClient {
         return table.get(get);
     }
 
-    public ResultScanner search(String tableName, String columnName, byte[] value) throws IOException {
+    public ResultScanner search(String tableName, String columnName, byte[] value) throws IOException
+    {
         logger.info("HBaseClient.search");
 
         //Get table and column id
@@ -203,7 +260,8 @@ public class HBaseClient {
         return table.getScanner(scan);
     }
 
-    public ResultScanner getTableScanner(String tableName) throws IOException {
+    public ResultScanner getTableScanner(String tableName) throws IOException
+    {
         //Get table id
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
@@ -224,8 +282,10 @@ public class HBaseClient {
         return table.getScanner(scan);
     }
 
-    private TableInfo getTableInfo(String tableName) throws IOException {
-        if (tableCache.containsKey(tableName)) {
+    private TableInfo getTableInfo(String tableName) throws IOException
+    {
+        if (tableCache.containsKey(tableName))
+        {
             return tableCache.get(tableName);
         }
 
@@ -241,7 +301,8 @@ public class HBaseClient {
         Get columnsGet = new Get(rowKey);
         Result columnsResult = table.get(columnsGet);
         Map<byte[], byte[]> columns = columnsResult.getFamilyMap(NIC);
-        for (byte[] qualifier : columns.keySet()) {
+        for (byte[] qualifier : columns.keySet())
+        {
             String columnName = new String(qualifier);
             long columnId = ByteBuffer.wrap(columns.get(qualifier)).getLong();
             info.addColumn(columnName, columnId);
@@ -250,7 +311,8 @@ public class HBaseClient {
         return info;
     }
 
-    public Map<String, byte[]> parseRow(Result result, String tableName) throws IOException {
+    public Map<String, byte[]> parseRow(Result result, String tableName) throws IOException
+    {
         TableInfo info = getTableInfo(tableName);
 
         //Get columns returned from Result
@@ -258,7 +320,8 @@ public class HBaseClient {
         Map<byte[], byte[]> returnedColumns = result.getNoVersionMap().get(NIC);
 
         //Loop through columns, add to returned map
-        for (byte[] qualifier : returnedColumns.keySet()) {
+        for (byte[] qualifier : returnedColumns.keySet())
+        {
             long columnId = ByteBuffer.wrap(qualifier).getLong();
             String columnName = info.getColumnNameById(columnId);
             columns.put(columnName, returnedColumns.get(qualifier));
@@ -267,7 +330,8 @@ public class HBaseClient {
         return columns;
     }
 
-    public boolean deleteRow(byte[] rowKey) throws IOException {
+    public boolean deleteRow(byte[] rowKey) throws IOException
+    {
         Put deletePut = new Put(rowKey);
 
         deletePut.add(NIC, IS_DELETED, DELETED_VAL);
@@ -277,14 +341,16 @@ public class HBaseClient {
         return true;
     }
 
-    public UUID parseUUIDFromDataRow(Result result) {
+    public UUID parseUUIDFromDataRow(Result result)
+    {
         ByteBuffer buffer = ByteBuffer.wrap(result.getRow());
         buffer.get(); /* Row Type: 1 byte */
         buffer.getLong(); /* Table Id: 8 bytes */
         return new UUID(buffer.getLong(), buffer.getLong());
     }
 
-    public void compact() throws IOException {
+    public void compact() throws IOException
+    {
         Scan scan = new Scan();
 
         //Filter only rows with isDeleted=1
@@ -296,7 +362,8 @@ public class HBaseClient {
         List<Delete> deleteList = new LinkedList<Delete>();
 
         Set<UUID> deletedUUIDs = new HashSet<UUID>();
-        for (Result result : scanner) {
+        for (Result result : scanner)
+        {
             //Delete the data row key
             byte[] rowKey = result.getRow();
             Delete rowDelete = new Delete(rowKey);
@@ -315,14 +382,19 @@ public class HBaseClient {
 //        Filter uuidFilter = new UUIDFilter(deletedUUIDs);
 //        scan.setFilter(uuidFilter);
         ResultScanner indexScanner = table.getScanner(indexScan);
-        for (Result result : indexScanner) {
+        for (Result result : indexScanner)
+        {
             byte[] rowKey = result.getRow();
 
             /* TODO: This is a temporary workaround until we can write a CustomFilter */
-            if (rowKey.length < 16) continue;
+            if (rowKey.length < 16)
+            {
+                continue;
+            }
             ByteBuffer byteBuffer = ByteBuffer.wrap(rowKey, rowKey.length - 16, 16);
             UUID rowUUID = new UUID(byteBuffer.getLong(), byteBuffer.getLong());
-            if (deletedUUIDs.contains(rowUUID)) {
+            if (deletedUUIDs.contains(rowUUID))
+            {
                 Delete indexDelete = new Delete(rowKey);
                 deleteList.add(indexDelete);
             }
