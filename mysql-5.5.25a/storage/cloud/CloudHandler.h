@@ -30,6 +30,7 @@ private:
     record_buffer *create_record_buffer(unsigned int length);
     void destroy_record_buffer(record_buffer *r);
     CloudShare *get_share(const char *table_name, TABLE *table);
+    uint32 max_row_length();
 
     long long curr_scan_id;
 
@@ -46,7 +47,7 @@ private:
     jbyteArray convert_value_to_java_bytes(uchar* value, uint32 length);
     void java_to_sql(uchar *buf, jobject row_map);
     int delete_row_helper();
-    int write_row_helper();
+    int write_row_helper(uchar* buf);
     int bulk_write_row_helper();
     jobject sql_to_java();
 

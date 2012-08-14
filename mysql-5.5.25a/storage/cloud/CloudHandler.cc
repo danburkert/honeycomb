@@ -93,7 +93,7 @@ int CloudHandler::write_row(uchar *buf)
 
   ha_statistic_increment(&SSV::ha_write_count);
 
-  int ret = write_row_helper();
+  int ret = write_row_helper(buf);
 
   DBUG_RETURN(ret);
 }
@@ -110,7 +110,7 @@ int CloudHandler::update_row(const uchar *old_data, uchar *new_data)
 
   // TODO: The next two lines should really be some kind of transaction.
   delete_row_helper();
-  write_row_helper();
+  write_row_helper(new_data);
 
   DBUG_RETURN(0);
 }
@@ -528,19 +528,37 @@ int CloudHandler::extra(enum ha_extra_function operation)
   DBUG_RETURN(0);
 }
 
+uint32 CloudHandler::max_row_length()
+{
+  uint32 length = (uint32)(table->s->reclength + table->s->fields*2);
+  length += 4;
+
+  uint *ptr, *end;
+  for (ptr = table->s->blob_field, end=ptr + table->s->blob_fields ; ptr != end ; ptr++)
+  {
+    if (!table->field[*ptr]->is_null())
+      length += 2 + ((Field_blob*)table->field[*ptr])->get_length();
+  }
+
+  return length;
+}
+
 /* Set up the JNI Environment, and then persist the row to HBase.
  * This helper calls sql_to_java, which returns the row information
  * as a jobject to be sent to the HBaseAdapter.
  */
-int CloudHandler::write_row_helper() {
+int CloudHandler::write_row_helper(uchar* buf) {
   DBUG_ENTER("CloudHandler::write_row_helper");
 
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
-  jmethodID write_row_method = this->env->GetStaticMethodID(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;)Z");
+  jmethodID write_row_method = this->env->GetStaticMethodID(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;[B)Z");
   jstring java_table_name = this->string_to_java_string(this->share->table_alias);
   jobject java_row_map = sql_to_java();
+  uint32 row_length = this->max_row_length();
+  jbyteArray uniReg = this->env->NewByteArray(row_length);
+  this->env->SetByteArrayRegion(uniReg, 0, row_length, (jbyte*)buf);
 
-  this->env->CallStaticBooleanMethod(adapter_class, write_row_method, java_table_name, java_row_map);
+  this->env->CallStaticBooleanMethod(adapter_class, write_row_method, java_table_name, java_row_map, uniReg);
 
   DBUG_RETURN(0);
 }
