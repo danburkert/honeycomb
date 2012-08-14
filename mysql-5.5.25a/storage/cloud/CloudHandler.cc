@@ -531,7 +531,6 @@ int CloudHandler::extra(enum ha_extra_function operation)
 uint32 CloudHandler::max_row_length()
 {
   uint32 length = (uint32)(table->s->reclength + table->s->fields*2);
-  length += 4;
 
   uint *ptr, *end;
   for (ptr = table->s->blob_field, end=ptr + table->s->blob_fields ; ptr != end ; ptr++)
@@ -556,7 +555,20 @@ int CloudHandler::write_row_helper(uchar* buf) {
   jobject java_row_map = sql_to_java();
   uint32 row_length = this->max_row_length();
   jbyteArray uniReg = this->env->NewByteArray(row_length);
-  this->env->SetByteArrayRegion(uniReg, 0, row_length, (jbyte*)buf);
+  uchar* buffer = new uchar[row_length];
+  memcpy(buffer, buf, table->s->null_bytes);
+  uchar* ptr = buffer + table->s->null_bytes;
+  for (Field **field_ptr = table->field ; *field_ptr ; field_ptr++)
+  {
+    Field* field = *field_ptr;
+    if (!field->is_null())
+    {
+      ptr = field->pack(ptr, buf + field->offset(buf));
+    }
+  }
+
+  this->env->SetByteArrayRegion(uniReg, 0, row_length, (jbyte*)buffer);
+  delete buffer;
 
   this->env->CallStaticBooleanMethod(adapter_class, write_row_method, java_table_name, java_row_map, uniReg);
 
@@ -705,8 +717,7 @@ jobject CloudHandler::create_java_map()
 {
   jclass map_class = this->env->FindClass("java/util/TreeMap");
   jmethodID constructor = this->env->GetMethodID(map_class, "<init>", "()V");
-  jobject java_map = this->env->NewObject(map_class, constructor);
-  return java_map;
+  return this->env->NewObject(map_class, constructor);
 }
 
 jobject CloudHandler::java_map_insert(jobject java_map, jstring key, jbyteArray value)
