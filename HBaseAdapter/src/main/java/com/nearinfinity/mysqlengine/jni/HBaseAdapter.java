@@ -99,6 +99,7 @@ public class HBaseAdapter {
         logger.info("Starting scan on table " + tableName);
 
         long scanId = connectionCounter.incrementAndGet();
+        logger.info("Starting scan: scanId " + scanId);
         try {
             ResultScanner scanner = client.getTableScanner(tableName, isFullTableScan);
             clientPool.put(scanId, new Connection(tableName, scanner));
@@ -166,6 +167,10 @@ public class HBaseAdapter {
             throw new HBaseAdapterException("IOException", e);
         }
         return true;
+    }
+
+    public static void flushWrites() {
+        client.flushWrites();
     }
 
 
