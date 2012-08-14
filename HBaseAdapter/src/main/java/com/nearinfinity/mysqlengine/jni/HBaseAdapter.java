@@ -1,7 +1,9 @@
 package com.nearinfinity.mysqlengine.jni;
 
 import com.nearinfinity.mysqlengine.Connection;
+import com.nearinfinity.mysqlengine.DataConnection;
 import com.nearinfinity.mysqlengine.HBaseClient;
+import com.nearinfinity.mysqlengine.IndexConnection;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.log4j.Logger;
@@ -88,7 +90,7 @@ public class HBaseAdapter {
         long scanId = connectionCounter.incrementAndGet();
         try {
             ResultScanner scanner = client.getTableScanner(tableName, isFullTableScan);
-            clientPool.put(scanId, new Connection(tableName, scanner));
+            clientPool.put(scanId, new DataConnection(tableName, scanner));
         } catch (Exception e) {
             logger.error("Exception in startScan ", e);
             throw new HBaseAdapterException("startScan", e);
@@ -102,8 +104,8 @@ public class HBaseAdapter {
 
         long scanId = connectionCounter.incrementAndGet();
         try {
-            ResultScanner scanner = client.getIndexScanner(tableName, columnName);
-            clientPool.put(scanId, new Connection(tableName, scanner));
+//            ResultScanner scanner = client.getIndexScanner(tableName, columnName);
+            clientPool.put(scanId, new IndexConnection(tableName, columnName));
         } catch (Exception e) {
             logger.error("Exception in startIndexScan ", e);
             throw new HBaseAdapterException("startIndexScan", e);
@@ -113,7 +115,7 @@ public class HBaseAdapter {
     }
 
     public static Row nextRow(long scanId) throws HBaseAdapterException {
-        logger.info("nextRow:  scanId: " + scanId);
+        logger.info("Scanning to next row with scanId " + scanId);
 
         Connection conn = getConnectionForId(scanId);
         long start = System.currentTimeMillis();
@@ -131,6 +133,43 @@ public class HBaseAdapter {
             UUID uuid = client.parseUUIDFromDataRow(result);
             row.setRowMap(values);
             row.setUUID(uuid);
+        } catch (Exception e) {
+            logger.error("Exception thrown in nextRow", e);
+            throw new HBaseAdapterException("nextRow", e);
+        }
+
+        elapsedTime += System.currentTimeMillis() - start;
+        return row;
+    }
+
+    public static Row nextIndexRow(long scanId) throws HBaseAdapterException {
+        logger.info("nextIndexRow called with scanId " + scanId);
+
+        Connection conn = getConnectionForId(scanId);
+        long start = System.currentTimeMillis();
+
+        Row row = new Row();
+
+        try {
+            String tableName = conn.getTableName();
+
+            Result result = conn.getNextResult();
+            if (result == null) {
+                return row;
+            }
+
+            //Parse out UUID
+            UUID uuid = client.parseUUIDFromIndexRow(result);
+            logger.info("Getting row with UUID: " + uuid.toString() + ", and scanId: " + scanId);
+
+            Result dataResult = client.getDataRow(uuid, tableName);
+            if (dataResult == null) {
+                return row;
+            }
+
+            Map<String, byte[]> values = client.parseRow(dataResult, conn.getTableName());
+            row.setUUID(uuid);
+            row.setRowMap(values);
         } catch (Exception e) {
             logger.error("Exception thrown in nextRow", e);
             throw new HBaseAdapterException("nextRow", e);
@@ -160,7 +199,7 @@ public class HBaseAdapter {
     }
 
     public static boolean writeRow(String tableName, Map<String, byte[]>[] values) throws HBaseAdapterException {
-        logger.info("HBaseAdapter: Writing row to table " + tableName);
+        logger.info("Writing row to table " + tableName);
         try {
             client.writeRow(tableName, values);
         } catch (Exception e) {
@@ -217,15 +256,35 @@ public class HBaseAdapter {
         return row;
     }
 
-    public static Row getRowByValue(long scanId, String columnName, byte[] value) throws HBaseAdapterException {
-        logger.info("Getting row by value with scanId " + scanId + " for column " + columnName);
+    public static Row getRowByValue(long scanId, byte[] value) throws HBaseAdapterException {
+        logger.info("Getting row by value with scanId " + scanId);
 
-        Connection conn = getConnectionForId(scanId);
+        IndexConnection conn = (IndexConnection)getConnectionForId(scanId);
 
         Row row = new Row();
         try {
             String tableName = conn.getTableName();
+            String columnName = conn.getColumnName();
 
+            ResultScanner scanner = client.getIndexValueScanner(tableName, columnName, value);
+            Set<UUID> uuids = new HashSet<UUID>();
+
+            for (Result result : scanner) {
+                //Parse out UUID
+                UUID uuid = client.parseUUIDFromIndexRow(result);
+                uuids.add(uuid);
+
+                Result dataResult = client.getDataRow(uuid, tableName);
+                if (dataResult == null) {
+                    return row;
+                }
+//
+//            Map<String, byte[]> values = client.parseRow(dataResult, conn.getTableName());
+//            row.setUUID(uuid);
+//            row.setRowMap(values);
+            }
+
+//            Result [] dataResults =
         }
         catch (Exception e) {
             logger.error("Exception thrown in getRow()", e);
