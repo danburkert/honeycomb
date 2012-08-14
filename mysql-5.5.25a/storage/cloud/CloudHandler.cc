@@ -190,15 +190,16 @@ int CloudHandler::rnd_next(uchar *buf)
   jmethodID get_uuid_method = this->env->GetMethodID(row_class, "getUUID", "()[B");
 
   jobject row_map = this->env->CallObjectMethod(row, get_row_map_method);
-  jarray keys = (jarray) this->env->CallObjectMethod(row, get_keys_method);
-  jarray vals = (jarray) this->env->CallObjectMethod(row, get_vals_method);
-  jbyteArray uuid = (jbyteArray) this->env->CallObjectMethod(row, get_uuid_method);
 
-  if (java_map_is_empty(row_map))
+  if (row_map == NULL)
   {
     dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
     DBUG_RETURN(HA_ERR_END_OF_FILE);
   }
+
+  jarray keys = (jarray) this->env->CallObjectMethod(row, get_keys_method);
+  jarray vals = (jarray) this->env->CallObjectMethod(row, get_vals_method);
+  jbyteArray uuid = (jbyteArray) this->env->CallObjectMethod(row, get_uuid_method);
 
   this->ref = (uchar*) this->env->GetByteArrayElements(uuid, JNI_FALSE);
   this->ref_length = 16;
