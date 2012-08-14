@@ -103,9 +103,24 @@ public class HBaseAdapter {
         try {
             ResultScanner scanner = client.getTableScanner(tableName, isFullTableScan);
             clientPool.put(scanId, new Connection(tableName, scanner));
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error("Exception in startScan ", e);
             throw new HBaseAdapterException("startScan", e);
+        }
+
+        return scanId;
+    }
+
+    public static long startIndexScan(String tableName, String columnName) throws HBaseAdapterException {
+        logger.info("Starting index scan on table " + tableName);
+
+        long scanId = connectionCounter.incrementAndGet();
+        try {
+            ResultScanner scanner = client.getIndexScanner(tableName, columnName);
+            clientPool.put(scanId, new Connection(tableName, scanner));
+        } catch (Exception e) {
+            logger.error("Exception in startIndexScan ", e);
+            throw new HBaseAdapterException("startIndexScan", e);
         }
 
         return scanId;
@@ -213,6 +228,24 @@ public class HBaseAdapter {
             row.setUUID(rowUuid);
             row.setRowMap(values);
         } catch (Exception e) {
+            logger.error("Exception thrown in getRow()", e);
+            throw new HBaseAdapterException("getRow", e);
+        }
+
+        return row;
+    }
+
+    public static Row getRowByValue(long scanId, String columnName, byte[] value) throws HBaseAdapterException {
+        logger.info("Getting row by value with scanId " + scanId + " for column " + columnName);
+
+        Connection conn = getConnectionForId(scanId);
+
+        Row row = new Row();
+        try {
+            String tableName = conn.getTableName();
+
+        }
+        catch (Exception e) {
             logger.error("Exception thrown in getRow()", e);
             throw new HBaseAdapterException("getRow", e);
         }

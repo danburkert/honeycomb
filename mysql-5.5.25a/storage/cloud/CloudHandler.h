@@ -31,15 +31,11 @@ private:
     void destroy_record_buffer(record_buffer *r);
     CloudShare *get_share(const char *table_name, TABLE *table);
 
-    static const ha_rows rows_for_bulk_insert = 100;
-
     long long curr_scan_id;
 
     // HBase JNI Adapter:
     JNIEnv* env;
     JavaVM* jvm;
-    const static int write_buffer_size = 5000;
-    jobject saved_row_maps[write_buffer_size];
 
     const char* java_to_string(jstring str);
     jstring string_to_java_string(const char*);
@@ -124,7 +120,6 @@ private:
         jstring result = (jstring)jni_env->CallObjectMethod(throwable, methodId);
         const char* string = jni_env->GetStringUTFChars(result, NULL);
         INFO(("Exception from java: %s", string));
-        INFO(("Exception from \n atoehutnaoeuhaotenhu"));
         jni_env->ReleaseStringUTFChars(result, string);
       }
     }
@@ -141,6 +136,10 @@ private:
       int index_first(uchar *buf);
       int index_last(uchar *buf);
       //int index_next_same(uchar *buf, const uchar *key, uint keylen);
+      int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add);
+      int final_add_index(handler_add_index *add, bool commit);
+      int prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys);
+      int final_drop_index(TABLE *table_arg);
     
     public:
       CloudHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm)
@@ -177,17 +176,17 @@ private:
 
       uint max_supported_keys() const 
       {
-        return 0; 
+        return 1; 
       }
 
       uint max_supported_key_parts() const 
       {
-        return 0; 
+        return MAX_REF_PARTS; 
       }
 
       uint max_supported_key_length() const 
       {
-        return 0;
+        return 255;
       }
 
       virtual double scan_time() 
