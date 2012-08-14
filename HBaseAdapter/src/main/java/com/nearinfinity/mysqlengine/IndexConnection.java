@@ -14,7 +14,7 @@ import java.io.IOException;
  */
 public class IndexConnection implements Connection {
     private String tableName;
-    private Result[] results;
+    private ResultScanner scanner;
     private int currentIndex;
     private String columnName;
 
@@ -22,7 +22,7 @@ public class IndexConnection implements Connection {
         this.tableName = tableName;
         this.columnName = columnName;
         this.currentIndex = 0;
-        this.results = null;
+        this.scanner = null;
     }
 
     public String getTableName() {
@@ -30,26 +30,22 @@ public class IndexConnection implements Connection {
     }
 
     public Result getLastResult() {
-        if (currentIndex <= 0) {
-            return null;
-        }
-
-        return results[currentIndex-1];
+        return null;
     }
 
     public Result getNextResult() throws IOException {
-        if (currentIndex >= results.length) {
-            return null;
-        }
-
-        return results[currentIndex++];
+        return this.scanner.next();
     }
 
     public void close() {
-        results = null;
+        this.scanner.close();
     }
 
     public String getColumnName() {
         return this.columnName;
+    }
+
+    public void setScanner(ResultScanner scanner) {
+        this.scanner = scanner;
     }
 }
