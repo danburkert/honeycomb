@@ -118,7 +118,6 @@ public class HBaseAdapter {
 
         long scanId = connectionCounter.incrementAndGet();
         try {
-//            ResultScanner scanner = client.getIndexScanner(tableName, columnName);
             clientPool.put(scanId, new IndexConnection(tableName, columnName));
         } catch (Exception e) {
             logger.error("Exception in startIndexScan ", e);
@@ -156,70 +155,22 @@ public class HBaseAdapter {
         return row;
     }
 
-    public static Row nextIndexRow(long scanId) throws HBaseAdapterException {
-        logger.info("nextIndexRow called with scanId " + scanId);
-
-        Connection conn = getConnectionForId(scanId);
-        long start = System.currentTimeMillis();
-
-        Row row = new Row();
-
-        try {
-            String tableName = conn.getTableName();
-
-            Result result = conn.getNextResult();
-            if (result == null) {
-                return row;
-            }
-
-            //Parse out UUID
-            UUID uuid = client.parseUUIDFromIndexRow(result);
-            logger.info("Getting row with UUID: " + uuid.toString() + ", and scanId: " + scanId);
-
-            Result dataResult = client.getDataRow(uuid, tableName);
-            if (dataResult == null) {
-                return row;
-            }
-
-            Map<String, byte[]> values = client.parseRow(dataResult, conn.getTableName());
-            row.setUUID(uuid);
-            row.setRowMap(values);
-        } catch (Exception e) {
-            logger.error("Exception thrown in nextRow", e);
-            throw new HBaseAdapterException("nextRow", e);
-        }
-
-        elapsedTime += System.currentTimeMillis() - start;
-        return row;
-    }
-
     public static void endScan(long scanId) throws HBaseAdapterException {
         logger.info("Ending scan with id " + scanId);
         Connection conn = getConnectionForId(scanId);
         conn.close();
     }
 
-    public static boolean writeRow(String tableName, Map<String, byte[]> values) throws HBaseAdapterException {
+    public static boolean writeRow(String tableName, Map<String, byte[]> values, byte[] unireg) throws HBaseAdapterException {
         logger.info("Writing row to table " + tableName);
 
         try {
-            client.writeRow(tableName, values);
+            client.writeRow(tableName, values, unireg);
         } catch (Exception e) {
             logger.error("Exception thrown in writeRow()", e);
             throw new HBaseAdapterException("writeRow", e);
         }
 
-        return true;
-    }
-
-    public static boolean writeRow(String tableName, Map<String, byte[]>[] values) throws HBaseAdapterException {
-        logger.info("Writing row to table " + tableName);
-        try {
-            client.writeRow(tableName, values);
-        } catch (Exception e) {
-            logger.error("During bulk insert", e);
-            throw new HBaseAdapterException("IOException", e);
-        }
         return true;
     }
 
@@ -274,42 +225,59 @@ public class HBaseAdapter {
         return row;
     }
 
-    public static Row getRowByValue(long scanId, byte[] value) throws HBaseAdapterException {
-        logger.info("Getting row by value with scanId " + scanId);
+    public static byte[] indexRead(long scanId, byte[] value) throws HBaseAdapterException {
+        logger.info("Reading index with scanId " + scanId);
 
         IndexConnection conn = (IndexConnection)getConnectionForId(scanId);
 
-        Row row = new Row();
+        byte[] unireg = null;
         try {
             String tableName = conn.getTableName();
             String columnName = conn.getColumnName();
 
             ResultScanner scanner = client.getIndexValueScanner(tableName, columnName, value);
-            Set<UUID> uuids = new HashSet<UUID>();
+            conn.setScanner(scanner);
 
-            for (Result result : scanner) {
-                //Parse out UUID
-                UUID uuid = client.parseUUIDFromIndexRow(result);
-                uuids.add(uuid);
-
-                Result dataResult = client.getDataRow(uuid, tableName);
-                if (dataResult == null) {
-                    return row;
-                }
-//
-//            Map<String, byte[]> values = client.parseRow(dataResult, conn.getTableName());
-//            row.setUUID(uuid);
-//            row.setRowMap(values);
+            //Get the first result to return
+            Result result = conn.getNextResult();
+            if (result == null) {
+                return unireg;
             }
 
-//            Result [] dataResults =
+            //Get the data row
+            unireg = client.parseUniregFromIndex(result);
         }
         catch (Exception e) {
-            logger.error("Exception thrown in getRow()", e);
-            throw new HBaseAdapterException("getRow", e);
+            logger.error("Exception thrown in indexRead()", e);
+            throw new HBaseAdapterException("indexRead", e);
         }
 
-        return row;
+        return unireg;
+    }
+
+    public static byte[] nextIndexRow(long scanId) throws HBaseAdapterException {
+        logger.info("nextIndexRow called with scanId " + scanId);
+
+        Connection conn = getConnectionForId(scanId);
+        long start = System.currentTimeMillis();
+
+        byte[] unireg = null;
+        try {
+            //Get the first result to return
+            Result result = conn.getNextResult();
+            if (result == null) {
+                return unireg;
+            }
+
+            //Get the data row
+            unireg = client.parseUniregFromIndex(result);
+        } catch (Exception e) {
+            logger.error("Exception thrown in nextIndexRow()", e);
+            throw new HBaseAdapterException("nextIndexRow", e);
+        }
+
+        elapsedTime += System.currentTimeMillis() - start;
+        return unireg;
     }
 
     private static Connection getConnectionForId(long scanId) throws HBaseAdapterException {

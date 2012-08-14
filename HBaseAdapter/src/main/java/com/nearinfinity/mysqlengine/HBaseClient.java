@@ -35,9 +35,11 @@ public class HBaseClient {
 
     private static final byte[] DELETED_VAL = Bytes.toBytes(1L);
 
+    private static final byte[] UNIREG = "unireg".getBytes();
+
     private static final UUID ZERO_UUID = new UUID(0L, 0L);
 
-    private static final UUID FULL_UUID = UUID.fromString("ffffffff-ffff-ffff-ffff-ffffffffffff");
+//    private static final UUID FULL_UUID = UUID.fromString("ffffffff-ffff-ffff-ffff-ffffffffffff");
 
     private int cacheSize = 10;
 
@@ -156,48 +158,11 @@ public class HBaseClient {
         table.flushCommits();
     }
 
-    public void writeRow(String tableName, Map<String, byte[]>[] valueArray) throws IOException {
-        logger.info("Rows to insert: " + valueArray.length);
-        //Get table id
-        long tableId = getTableInfo(tableName).getId();
-
-        //Create put list
-        List<Put> putList = new LinkedList<Put>();
-        for (int x = 0; x < valueArray.length; x++) {
-            Map<String, byte[]> values = valueArray[x];
-            //Get UUID for new entry
-            UUID rowId = UUID.randomUUID();
-
-            //Build data row key
-            byte[] rowKey = RowKeyFactory.buildDataKey(tableId, rowId);
-
-            Put rowPut = new Put(rowKey);
-
-            for (String columnName : values.keySet()) {
-                //Get column id and value
-                long columnId = getTableInfo(tableName).getColumnIdByName(columnName);
-                byte[] value = values.get(columnName);
-
-                //Add column to put
-                rowPut.add(NIC, Bytes.toBytes(columnId), value);
-
-                //Build index key
-                byte[] indexRow = RowKeyFactory.buildIndexKey(tableId, columnId, value, rowId);
-
-                //Add the corresponding index
-                putList.add(new Put(indexRow).add(NIC, new byte[0], new byte[0]));
-            }
-            //Add the row to put list
-            putList.add(rowPut);
-        }
-
-        logger.info("Put list length: " + putList.size());
-
-        //Final put
-        table.put(putList);
+    public void writeRow(String tableName, Map<String, byte[]> values) throws IOException {
+        writeRow(tableName, values, null);
     }
 
-    public void writeRow(String tableName, Map<String, byte[]> values) throws IOException {
+    public void writeRow(String tableName, Map<String, byte[]> values, byte[] unireg) throws IOException {
         //Get table id
         long tableId = getTableInfo(tableName).getId();
 
@@ -212,6 +177,13 @@ public class HBaseClient {
 
         Put rowPut = new Put(rowKey);
 
+        byte[] indexQualifier = new byte[0];
+        byte[] indexValue = new byte[0];
+        if (unireg != null) {
+            indexQualifier = UNIREG;
+            indexValue = unireg;
+        }
+
         for (String columnName : values.keySet()) {
             //Get column id and value
             long columnId = getTableInfo(tableName).getColumnIdByName(columnName);
@@ -224,7 +196,7 @@ public class HBaseClient {
             byte[] indexRow = RowKeyFactory.buildIndexKey(tableId, columnId, value, rowId);
 
             //Add the corresponding index
-            putList.add(new Put(indexRow).add(NIC, new byte[0], new byte[0]));
+            putList.add(new Put(indexRow).add(NIC, indexQualifier, indexValue));
         }
 
         //Add the row to put list
@@ -338,7 +310,7 @@ public class HBaseClient {
 
         //Build row keys
         byte[] startRow = RowKeyFactory.buildIndexKey(tableId, columnId, value, ZERO_UUID);
-        byte[] endRow = RowKeyFactory.buildIndexKey(tableId, columnId, value, FULL_UUID);
+        byte[] endRow = RowKeyFactory.buildIndexKey(tableId, columnId+1, new byte[0], ZERO_UUID);
 
         Scan scan = new Scan(startRow, endRow);
 
@@ -501,5 +473,9 @@ public class HBaseClient {
         } catch (IOException e) {
             logger.error("Encountered an exception while flushing commits : ", e);
         }
+    }
+
+    public byte[] parseUniregFromIndex(Result firstResult) {
+        return firstResult.getValue(NIC, UNIREG);
     }
 }
