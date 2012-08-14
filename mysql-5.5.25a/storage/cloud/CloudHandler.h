@@ -156,17 +156,17 @@ private:
 
       const char *index_type(uint inx) 
       {
-        return "HASH";
+        return "BTREE";
       }
 
       ulonglong table_flags() const
       {
-        return HA_BINLOG_STMT_CAPABLE | HA_REC_NOT_IN_SEQ;
+        return HA_BINLOG_STMT_CAPABLE | HA_REC_NOT_IN_SEQ | HA_NO_TRANSACTIONS;
       }
 
       ulong index_flags(uint inx, uint part, bool all_parts) const
       {
-        return 0;
+        return HA_READ_NEXT | HA_READ_ORDER | HA_READ_RANGE;
       }
 
       uint max_supported_record_length() const 
@@ -181,7 +181,7 @@ private:
 
       uint max_supported_key_parts() const 
       {
-        return MAX_REF_PARTS; 
+        return 1; 
       }
 
       uint max_supported_key_length() const 

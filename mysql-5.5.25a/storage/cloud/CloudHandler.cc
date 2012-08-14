@@ -797,7 +797,8 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
   DBUG_ENTER("CloudHandler::index_read");
   
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
-  jmethodID get_row_by_value_method = this->env->GetStaticMethodID(adapter_class, "getRowByValue", "(JLjava/lang/String;[B)Lcom/nearinfinity/mysqlengine/jni/Row;");
+  jmethodID get_row_by_value_method = this->env->GetStaticMethodID(adapter_class, "getRowByValue", "(J[B)Lcom/nearinfinity/mysqlengine/jni/Row;");
+
    
 
   DBUG_RETURN(HA_ERR_WRONG_COMMAND);
@@ -805,8 +806,51 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
 
 int CloudHandler::index_next(uchar *buf)
 {
+  int rc = 0;
+  my_bitmap_map *orig_bitmap;
+
+  //ha_statistic_increment(&SSV::ha_read_rnd_next_count);
   DBUG_ENTER("CloudHandler::index_next");
-  DBUG_RETURN(HA_ERR_WRONG_COMMAND);
+
+  orig_bitmap= dbug_tmp_use_all_columns(table, table->write_set);
+
+  MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, TRUE);
+
+  memset(buf, 0, table->s->null_bytes);
+
+  jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
+  jmethodID next_row_method = this->env->GetStaticMethodID(adapter_class, "nextIndexRow", "(J)Lcom/nearinfinity/mysqlengine/jni/Row;");
+  jlong java_scan_id = curr_scan_id;
+  jobject row = this->env->CallStaticObjectMethod(adapter_class, next_row_method, java_scan_id);
+
+  jclass row_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/Row");
+  jmethodID get_keys_method = this->env->GetMethodID(row_class, "getKeys", "()[Ljava/lang/String;");
+  jmethodID get_vals_method = this->env->GetMethodID(row_class, "getValues", "()[[B");
+  jmethodID get_row_map_method = this->env->GetMethodID(row_class, "getRowMap", "()Ljava/util/Map;");
+  jmethodID get_uuid_method = this->env->GetMethodID(row_class, "getUUID", "()[B");
+
+  jobject row_map = this->env->CallObjectMethod(row, get_row_map_method);
+  jarray keys = (jarray) this->env->CallObjectMethod(row, get_keys_method);
+  jarray vals = (jarray) this->env->CallObjectMethod(row, get_vals_method);
+  jbyteArray uuid = (jbyteArray) this->env->CallObjectMethod(row, get_uuid_method);
+
+  if (java_map_is_empty(row_map))
+  {
+    dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
+    DBUG_RETURN(HA_ERR_END_OF_FILE);
+  }
+
+  //this->ref = (uchar*) this->env->GetByteArrayElements(uuid, JNI_FALSE);
+  //this->ref_length = 16;
+
+  java_to_sql(buf, row_map);
+
+  dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
+
+  //stats.records++;
+  MYSQL_READ_ROW_DONE(rc);
+
+  DBUG_RETURN(rc);
 }
 
 int CloudHandler::index_prev(uchar *buf)

@@ -37,6 +37,8 @@ public class HBaseClient {
 
     private static final UUID ZERO_UUID = new UUID(0L, 0L);
 
+    private static final UUID FULL_UUID = UUID.fromString("ffffffff-ffff-ffff-ffff-ffffffffffff");
+
     private int cacheSize = 10;
 
     private final ConcurrentHashMap<String, TableInfo> tableCache = new ConcurrentHashMap<String, TableInfo>();
@@ -328,6 +330,21 @@ public class HBaseClient {
         return table.getScanner(scan);
     }
 
+    public ResultScanner getIndexValueScanner(String tableName, String columnName, byte[] value) throws IOException {
+        //Get the table id
+        TableInfo info = getTableInfo(tableName);
+        long tableId = info.getId();
+        long columnId = info.getColumnIdByName(columnName);
+
+        //Build row keys
+        byte[] startRow = RowKeyFactory.buildIndexKey(tableId, columnId, value, ZERO_UUID);
+        byte[] endRow = RowKeyFactory.buildIndexKey(tableId, columnId, value, FULL_UUID);
+
+        Scan scan = new Scan(startRow, endRow);
+
+        return table.getScanner(scan);
+    }
+
     private TableInfo getTableInfo(String tableName) throws IOException {
         if (tableCache.containsKey(tableName)) {
             return tableCache.get(tableName);
@@ -382,9 +399,8 @@ public class HBaseClient {
     }
 
     public UUID parseUUIDFromDataRow(Result result) {
-        ByteBuffer buffer = ByteBuffer.wrap(result.getRow());
-        buffer.get(); /* Row Type: 1 byte */
-        buffer.getLong(); /* Table Id: 8 bytes */
+        byte[] rowKey = result.getRow();
+        ByteBuffer buffer = ByteBuffer.wrap(rowKey, rowKey.length - 16, 16);
         return new UUID(buffer.getLong(), buffer.getLong());
     }
 
@@ -440,6 +456,23 @@ public class HBaseClient {
     public void setCacheSize(int cacheSize)
     {
         this.cacheSize = cacheSize;
+    }
+
+    public UUID parseUUIDFromIndexRow(Result result) {
+        byte[] rowKey = result.getRow();
+        ByteBuffer byteBuffer = ByteBuffer.wrap(rowKey, rowKey.length - 16, 16);
+        return new UUID(byteBuffer.getLong(), byteBuffer.getLong());
+    }
+
+    public Result getIndexRow(String tableName, String columnName, byte[] value) throws IOException {
+        //Get the table id
+        TableInfo info = getTableInfo(tableName);
+        long tableId = info.getId();
+        long columnId = info.getColumnIdByName(columnName);
+
+        RowKeyFactory.buildIndexKey(tableId, columnId, value, ZERO_UUID);
+
+        return null;
     }
 }
 
