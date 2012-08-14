@@ -446,5 +446,12 @@ public class HBaseClient {
 
         logger.info("Size of HBase write buffer set to " + numBytes + " bytes (" + (numBytes / 1024 / 1024) + " megabytes)");
     }
-}
 
+    public void flushWrites() {
+        try {
+            table.flushCommits();
+        } catch (IOException e) {
+            logger.error("Encountered an exception while flushing commits : ", e);
+        }
+    }
+}

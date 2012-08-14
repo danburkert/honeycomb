@@ -401,6 +401,11 @@ int CloudHandler::end_bulk_insert()
   DBUG_ENTER("CloudHandler::end_bulk_insert");
   this->share->rows_to_insert = 0;
   this->share->rows_inserted = 0;
+
+  jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
+  jmethodID end_write_method = this->env->GetStaticMethodID(adapter_class, "flushWrites", "()V");
+  this->env->CallStaticVoidMethod(adapter_class, end_write_method);
+
   this->jvm->DetachCurrentThread();
   DBUG_RETURN(0);
 }
