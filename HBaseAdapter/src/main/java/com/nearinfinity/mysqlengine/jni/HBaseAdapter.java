@@ -31,6 +31,7 @@ public class HBaseAdapter {
     private static final Logger logger = Logger.getLogger(HBaseAdapter.class);
 
     private static final int DEFAULT_NUM_CACHED_ROWS = 2500;
+    private static final long DEFAULT_WRITE_BUFFER_SIZE = 5 * 1024 * 1024; // 5 megabytes
     private static long elapsedTime;
 
     static {
@@ -53,12 +54,24 @@ public class HBaseAdapter {
             try {
                 int cacheSize = Integer.parseInt(params.get("table_scan_cache_rows"));
                 client.setCacheSize(cacheSize);
-                logger.info("Setting table scan row cache to " + cacheSize);
+
             }
             catch (NumberFormatException e) {
                 logger.info("Number of rows to cache was not provided or invalid - using default of " + DEFAULT_NUM_CACHED_ROWS);
                 client.setCacheSize(DEFAULT_NUM_CACHED_ROWS);
             }
+
+            try {
+                long writeBufferSize = Long.parseLong(params.get("write_buffer_size"));
+                client.setWriteBufferSize(writeBufferSize);
+            }
+            catch (NumberFormatException e) {
+                logger.info("Write buffer size was not provided or invalid - using default of " + DEFAULT_WRITE_BUFFER_SIZE);
+                client.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
+            }
+
+            boolean flushChangesImmediately = Boolean.parseBoolean(params.get("flush_changes_immediately"));
+            client.setAutoFlushTables(flushChangesImmediately);
 
             //We are now configured
             configured = true;
@@ -88,6 +101,7 @@ public class HBaseAdapter {
         logger.info("Starting scan on table " + tableName);
 
         long scanId = connectionCounter.incrementAndGet();
+        logger.info("Starting scan: scanId " + scanId);
         try {
             ResultScanner scanner = client.getTableScanner(tableName, isFullTableScan);
             clientPool.put(scanId, new DataConnection(tableName, scanner));
@@ -207,6 +221,10 @@ public class HBaseAdapter {
             throw new HBaseAdapterException("IOException", e);
         }
         return true;
+    }
+
+    public static void flushWrites() {
+        client.flushWrites();
     }
 
 
