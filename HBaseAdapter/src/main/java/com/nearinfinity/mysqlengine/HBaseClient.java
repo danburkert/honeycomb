@@ -3,7 +3,9 @@ package com.nearinfinity.mysqlengine;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter;
+import org.apache.hadoop.hbase.filter.RowFilter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
@@ -12,6 +14,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Filter;
 
 /**
  * Created with IntelliJ IDEA.
@@ -38,6 +41,8 @@ public class HBaseClient {
     private static final byte[] VALUE_COLUMN = "value".getBytes();
 
     private static final UUID ZERO_UUID = new UUID(0L, 0L);
+
+    private static final UUID FULL_UUID = UUID.fromString("ffffffffffff-ffff-ffff-ffff-fffffffffffffffff");
 
     private int cacheSize = 10;
 
@@ -306,7 +311,7 @@ public class HBaseClient {
         return table.getScanner(scan);
     }
 
-    public ResultScanner getIndexValueScanner(String tableName, String columnName, byte[] value) throws IOException {
+    public ResultScanner getValueIndexScanner(String tableName, String columnName, byte[] value) throws IOException {
         //Get the table id
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
@@ -314,7 +319,7 @@ public class HBaseClient {
 
         //Build row keys
         byte[] startRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, ZERO_UUID);
-        byte[] endRow = RowKeyFactory.buildValueIndexKey(tableId, columnId + 1, new byte[0], ZERO_UUID);
+        byte[] endRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, FULL_UUID);
 
         Scan scan = new Scan(startRow, endRow);
 
@@ -481,5 +486,57 @@ public class HBaseClient {
 
     public byte[] parseUniregFromIndex(Result firstResult) {
         return firstResult.getValue(NIC, UNIREG);
+    }
+
+    public ResultScanner getSecondaryIndexScanner(String tableName, String columnName, byte[] value) throws IOException {
+        TableInfo info = getTableInfo(tableName);
+        long tableId = info.getId();
+        long columnId = info.getColumnIdByName(columnName);
+
+        byte[] startKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId, value);
+        byte[] endKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId+1, new byte[0]);
+
+        Scan scan = new Scan(startKey, endKey);
+
+        return table.getScanner(scan);
+    }
+
+    public ResultScanner getSecondaryIndexScannerExact(String tableName, String columnName, byte[] value) throws IOException {
+        TableInfo info = getTableInfo(tableName);
+        long tableId = info.getId();
+        long columnId = info.getColumnIdByName(columnName);
+
+        byte[] startKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId, value);
+        byte[] endKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId+1, new byte[0]);
+
+        Scan scan = new Scan(startKey, endKey);
+
+        RowFilter filter = new RowFilter(CompareFilter.CompareOp.EQUAL, new BinaryComparator(startKey));
+        scan.setFilter(filter);
+
+        return table.getScanner(scan);
+    }
+
+    public byte[] parseValueFromSecondaryIndexRow(Result result) {
+        byte[] row = result.getRow();
+        ByteBuffer buffer = ByteBuffer.wrap(row, 17, row.length - 17);
+        return buffer.array();
+    }
+
+    public ResultScanner getReverseIndexScanner(String tableName, String columnName, byte[] value) throws IOException {
+        TableInfo info = getTableInfo(tableName);
+        long tableId = info.getId();
+        long columnId = info.getColumnIdByName(columnName);
+
+        byte[] startKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId, value);
+        byte[] endKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId+1, value);
+
+        Scan scan = new Scan(startKey, endKey);
+
+        return table.getScanner(scan);
+    }
+
+    public byte[] parseValueFromReverseIndexRow(Result result) {
+        return RowKeyFactory.parseValueFromReverseIndexKey(result.getRow());
     }
 }

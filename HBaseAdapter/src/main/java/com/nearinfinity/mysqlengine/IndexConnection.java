@@ -1,5 +1,6 @@
 package com.nearinfinity.mysqlengine;
 
+import com.nearinfinity.mysqlengine.jni.IndexReadType;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 
@@ -17,12 +18,16 @@ public class IndexConnection implements Connection {
     private ResultScanner scanner;
     private int currentIndex;
     private String columnName;
+    private ResultScanner indexScanner;
+    private IndexReadType readType;
 
     public IndexConnection(String tableName, String columnName) {
         this.tableName = tableName;
         this.columnName = columnName;
         this.currentIndex = 0;
         this.scanner = null;
+        this.indexScanner = null;
+        this.readType = IndexReadType.HA_READ_KEY_EXACT;
     }
 
     public String getTableName() {
@@ -37,6 +42,10 @@ public class IndexConnection implements Connection {
         return this.scanner.next();
     }
 
+    public Result getNextIndexResult() throws IOException {
+        return this.indexScanner.next();
+    }
+
     public void close() {
         this.scanner.close();
     }
@@ -47,5 +56,17 @@ public class IndexConnection implements Connection {
 
     public void setScanner(ResultScanner scanner) {
         this.scanner = scanner;
+    }
+
+    public void setIndexScanner(ResultScanner indexScanner) {
+        this.indexScanner = indexScanner;
+    }
+
+    public void setReadType(IndexReadType readType) {
+        this.readType = readType;
+    }
+
+    public IndexReadType getReadType() {
+        return this.readType;
     }
 }
