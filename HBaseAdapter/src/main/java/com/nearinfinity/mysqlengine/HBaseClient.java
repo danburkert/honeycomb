@@ -1,7 +1,5 @@
 package com.nearinfinity.mysqlengine;
 
-import com.nearinfinity.mysqlengine.jni.*;
-import com.nearinfinity.mysqlengine.jni.Row;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
@@ -37,9 +35,9 @@ public class HBaseClient {
 
     private static final byte[] UNIREG = "unireg".getBytes();
 
-    private static final UUID ZERO_UUID = new UUID(0L, 0L);
+    private static final byte[] VALUE_COLUMN = "value".getBytes();
 
-//    private static final UUID FULL_UUID = UUID.fromString("ffffffff-ffff-ffff-ffff-ffffffffffff");
+    private static final UUID ZERO_UUID = new UUID(0L, 0L);
 
     private int cacheSize = 10;
 
@@ -192,23 +190,25 @@ public class HBaseClient {
             byte[] value = values.get(columnName);
 
             if(value == null) {
-                //Add column to put
-                //dataRow.add(NIC, Bytes.toBytes(columnId), new byte[0]);
-
-                // Build null index...
+                // Build null index
                 byte[] nullIndexRow = RowKeyFactory.buildNullIndexKey(tableId, columnId, rowId);
-                // and persist it.
                 putList.add(new Put(nullIndexRow).add(NIC, new byte[0], new byte[0]));
-
             } else {
                 all_null = false;
-                //Add column to put
+                // Add data column to put
                 dataRow.add(NIC, Bytes.toBytes(columnId), value);
 
-                // Build index key...
-                byte[] indexRow = RowKeyFactory.buildIndexKey(tableId, columnId, value, rowId);
-                // and persist it.
+                // Build value index key
+                byte[] indexRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, rowId);
                 putList.add(new Put(indexRow).add(NIC, indexQualifier, indexValue));
+
+                // Build secondary index key
+                byte[] secondaryIndexRow = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId, value);
+                putList.add(new Put(secondaryIndexRow).add(NIC, new byte[0], new byte[0]));
+
+                // Build reverse index key
+                byte[] reverseIndexRow = RowKeyFactory.buildReverseIndexKey(tableId, columnId, value);
+                putList.add(new Put(reverseIndexRow).add(NIC, VALUE_COLUMN, value));
             }
         }
 
@@ -274,8 +274,8 @@ public class HBaseClient {
         long columnId = info.getColumnIdByName(columnName);
 
         //Build row keys
-        byte[] startRow = RowKeyFactory.buildIndexKey(tableId, columnId, value, ZERO_UUID);
-        byte[] endRow = RowKeyFactory.buildIndexKey(tableId, columnId + 1, value, ZERO_UUID);
+        byte[] startRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, ZERO_UUID);
+        byte[] endRow = RowKeyFactory.buildValueIndexKey(tableId, columnId + 1, value, ZERO_UUID);
 
         Scan scan = new Scan(startRow, endRow);
 
@@ -312,8 +312,8 @@ public class HBaseClient {
         long columnId = info.getColumnIdByName(columnName);
 
         //Build row keys
-        byte[] startRow = RowKeyFactory.buildIndexKey(tableId, columnId, new byte[0], ZERO_UUID);
-        byte[] endRow = RowKeyFactory.buildIndexKey(tableId, columnId + 1, new byte[0], ZERO_UUID);
+        byte[] startRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, new byte[0], ZERO_UUID);
+        byte[] endRow = RowKeyFactory.buildValueIndexKey(tableId, columnId + 1, new byte[0], ZERO_UUID);
 
         Scan scan = new Scan(startRow, endRow);
 
@@ -327,8 +327,8 @@ public class HBaseClient {
         long columnId = info.getColumnIdByName(columnName);
 
         //Build row keys
-        byte[] startRow = RowKeyFactory.buildIndexKey(tableId, columnId, value, ZERO_UUID);
-        byte[] endRow = RowKeyFactory.buildIndexKey(tableId, columnId+1, new byte[0], ZERO_UUID);
+        byte[] startRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, ZERO_UUID);
+        byte[] endRow = RowKeyFactory.buildValueIndexKey(tableId, columnId + 1, new byte[0], ZERO_UUID);
 
         Scan scan = new Scan(startRow, endRow);
 
@@ -466,7 +466,7 @@ public class HBaseClient {
         long tableId = info.getId();
         long columnId = info.getColumnIdByName(columnName);
 
-        RowKeyFactory.buildIndexKey(tableId, columnId, value, ZERO_UUID);
+        RowKeyFactory.buildValueIndexKey(tableId, columnId, value, ZERO_UUID);
 
         return null;
     }
