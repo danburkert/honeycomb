@@ -12,6 +12,7 @@
 #include "CloudShare.h"
 #include <jni.h>
 #include "Macros.h"
+#include <string.h>
 
 typedef struct st_record_buffer {
   uchar *buffer;
@@ -49,6 +50,12 @@ private:
     int write_row_helper();
     int bulk_write_row_helper();
     jobject sql_to_java();
+    int delete_all_rows();
+    bool start_bulk_delete();
+    int end_bulk_delete();
+    int delete_table(const char *name);
+    void drop_table(const char *name);
+    int truncate();
 
     void reverse_bytes(uchar *begin, uchar *end)
     {
@@ -108,6 +115,18 @@ private:
       c = x.c[3]; x.c[3] = x.c[4]; x.c[4] = c;
 
       return x.ull;
+    }
+
+    void extract_table_name_from_path(const char *path, const char *&dest)
+    {
+    	const char *ptr = path + strlen(path);
+
+    	while(*(ptr-1) != '/')
+    	{
+    		ptr--;
+    	}
+
+    	dest = ptr;
     }
 
     void print_java_exception(JNIEnv* jni_env)
