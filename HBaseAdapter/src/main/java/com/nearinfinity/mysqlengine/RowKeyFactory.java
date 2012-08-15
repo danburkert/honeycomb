@@ -16,6 +16,8 @@ public class RowKeyFactory {
                                             .put("TABLES".getBytes())
                                             .array();
 
+    private static final byte BYTE_MASK = (byte) 0x000000ff;
+
     public static byte[] buildColumnsKey(long tableId) {
         return ByteBuffer.allocate(9)
                 .put(RowType.COLUMNS.getValue())
@@ -52,13 +54,18 @@ public class RowKeyFactory {
                 .array();
     }
 
-//    public static byte[] buildReverseIndexKey(long tableId, long columnId, byte[] value) {
-//        byte[] reverseValue = reverseValue(value);
-//    }
-//
-//    private static byte[] reverseValue(byte[] value) {
-//        ByteBuffer buffer = ByteBuffer.allocate(value.length);
-//
-//        return buffer.array();
-//    }
+    public static byte[] buildReverseIndexKey(long tableId, long columnId, byte[] value) {
+        byte[] reverseValue = reverseValue(value);
+        return buildSecondaryIndexKey(tableId, columnId, reverseValue);
+    }
+
+    private static byte[] reverseValue(byte[] value) {
+        ByteBuffer buffer = ByteBuffer.allocate(value.length);
+
+        for (int i = 0 ; i < value.length ; i++) {
+            buffer.put((byte) (BYTE_MASK ^ value[i]));
+        }
+
+        return buffer.array();
+    }
 }
