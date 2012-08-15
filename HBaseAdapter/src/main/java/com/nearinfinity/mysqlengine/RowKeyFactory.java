@@ -59,6 +59,12 @@ public class RowKeyFactory {
         return buildSecondaryIndexKey(tableId, columnId, reverseValue);
     }
 
+    public static byte[] parseValueFromReverseIndexKey(byte[] reverseIndexKey) {
+        ByteBuffer buffer = ByteBuffer.wrap(reverseIndexKey, 17, reverseIndexKey.length - 17);
+        byte[] actualValue = reverseValue(buffer.array());
+        return actualValue;
+    }
+
     private static byte[] reverseValue(byte[] value) {
         ByteBuffer buffer = ByteBuffer.allocate(value.length);
 
