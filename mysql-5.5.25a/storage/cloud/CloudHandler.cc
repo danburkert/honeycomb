@@ -93,7 +93,7 @@ int CloudHandler::write_row(uchar *buf)
 
   ha_statistic_increment(&SSV::ha_write_count);
 
-  int ret = write_row_helper();
+  int ret = write_row_helper(buf);
 
   DBUG_RETURN(ret);
 }
@@ -110,7 +110,7 @@ int CloudHandler::update_row(const uchar *old_data, uchar *new_data)
 
   // TODO: The next two lines should really be some kind of transaction.
   delete_row_helper();
-  write_row_helper();
+  write_row_helper(new_data);
 
   DBUG_RETURN(0);
 }
@@ -270,15 +270,16 @@ int CloudHandler::rnd_next(uchar *buf)
   jmethodID get_uuid_method = this->env->GetMethodID(row_class, "getUUID", "()[B");
 
   jobject row_map = this->env->CallObjectMethod(row, get_row_map_method);
-  jarray keys = (jarray) this->env->CallObjectMethod(row, get_keys_method);
-  jarray vals = (jarray) this->env->CallObjectMethod(row, get_vals_method);
-  jbyteArray uuid = (jbyteArray) this->env->CallObjectMethod(row, get_uuid_method);
 
-  if (java_map_is_empty(row_map))
+  if (row_map == NULL)
   {
     dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
     DBUG_RETURN(HA_ERR_END_OF_FILE);
   }
+
+  jarray keys = (jarray) this->env->CallObjectMethod(row, get_keys_method);
+  jarray vals = (jarray) this->env->CallObjectMethod(row, get_vals_method);
+  jbyteArray uuid = (jbyteArray) this->env->CallObjectMethod(row, get_uuid_method);
 
   this->ref = (uchar*) this->env->GetByteArrayElements(uuid, JNI_FALSE);
   this->ref_length = 16;
@@ -303,6 +304,10 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
     const char* key = field->field_name;
     jstring java_key = string_to_java_string(key);
     jbyteArray java_val = java_map_get(row_map, java_key);
+    if (java_val == NULL) {
+      field->set_null();
+      continue;
+    }
     char* val = (char*) this->env->GetByteArrayElements(java_val, &is_copy);
     jsize val_length = this->env->GetArrayLength(java_val);
 
@@ -604,19 +609,49 @@ int CloudHandler::extra(enum ha_extra_function operation)
   DBUG_RETURN(0);
 }
 
+uint32 CloudHandler::max_row_length()
+{
+  uint32 length = (uint32)(table->s->reclength + table->s->fields*2);
+
+  uint *ptr, *end;
+  for (ptr = table->s->blob_field, end=ptr + table->s->blob_fields ; ptr != end ; ptr++)
+  {
+    if (!table->field[*ptr]->is_null())
+      length += 2 + ((Field_blob*)table->field[*ptr])->get_length();
+  }
+
+  return length;
+}
+
 /* Set up the JNI Environment, and then persist the row to HBase.
  * This helper calls sql_to_java, which returns the row information
  * as a jobject to be sent to the HBaseAdapter.
  */
-int CloudHandler::write_row_helper() {
+int CloudHandler::write_row_helper(uchar* buf) {
   DBUG_ENTER("CloudHandler::write_row_helper");
 
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
-  jmethodID write_row_method = this->env->GetStaticMethodID(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;)Z");
+  jmethodID write_row_method = this->env->GetStaticMethodID(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;[B)Z");
   jstring java_table_name = this->string_to_java_string(this->table->alias);
   jobject java_row_map = sql_to_java();
+  uint32 row_length = this->max_row_length();
+  jbyteArray uniReg = this->env->NewByteArray(row_length);
+  uchar* buffer = new uchar[row_length];
+  memcpy(buffer, buf, table->s->null_bytes);
+  uchar* ptr = buffer + table->s->null_bytes;
+  for (Field **field_ptr = table->field ; *field_ptr ; field_ptr++)
+  {
+    Field* field = *field_ptr;
+    if (!field->is_null())
+    {
+      ptr = field->pack(ptr, buf + field->offset(buf));
+    }
+  }
 
-  this->env->CallStaticBooleanMethod(adapter_class, write_row_method, java_table_name, java_row_map);
+  this->env->SetByteArrayRegion(uniReg, 0, row_length, (jbyte*)buffer);
+  delete buffer;
+
+  this->env->CallStaticBooleanMethod(adapter_class, write_row_method, java_table_name, java_row_map, uniReg);
 
   DBUG_RETURN(0);
 }
@@ -638,15 +673,16 @@ jobject CloudHandler::sql_to_java() {
   for (Field **field_ptr=table->field; *field_ptr; field_ptr++)
   {
     Field * field = *field_ptr;
+    jstring field_name = this->string_to_java_string(field->field_name);
 
     memset(rec_buffer->buffer, 0, rec_buffer->length);
 
-    const bool was_null= field->is_null();
+    const bool is_null = field->is_null();
 
-    if (was_null)
+    if (is_null )
     {
-      field->set_default();
-      field->set_notnull();
+      java_map_insert(java_map, field_name, NULL);
+      continue;
     }
 
     int fieldType = field->type();
@@ -733,12 +769,6 @@ jobject CloudHandler::sql_to_java() {
 		memcpy(rec_buffer->buffer, field->ptr, field->field_length);
 	}
 
-    if (was_null)
-    {
-      field->set_null();
-    }
-
-    jstring field_name = this->string_to_java_string(field->field_name);
     jbyteArray java_bytes = this->convert_value_to_java_bytes(rec_buffer->buffer, actualFieldSize);
 
     java_map_insert(java_map, field_name, java_bytes);
@@ -763,8 +793,7 @@ jobject CloudHandler::create_java_map()
 {
   jclass map_class = this->env->FindClass("java/util/TreeMap");
   jmethodID constructor = this->env->GetMethodID(map_class, "<init>", "()V");
-  jobject java_map = this->env->NewObject(map_class, constructor);
-  return java_map;
+  return this->env->NewObject(map_class, constructor);
 }
 
 jobject CloudHandler::java_map_insert(jobject java_map, jstring key, jbyteArray value)
@@ -878,7 +907,8 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
   DBUG_ENTER("CloudHandler::index_read");
   
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
-  jmethodID get_row_by_value_method = this->env->GetStaticMethodID(adapter_class, "getRowByValue", "(JLjava/lang/String;[B)Lcom/nearinfinity/mysqlengine/jni/Row;");
+  jmethodID get_row_by_value_method = this->env->GetStaticMethodID(adapter_class, "getRowByValue", "(J[B)Lcom/nearinfinity/mysqlengine/jni/Row;");
+
    
 
   DBUG_RETURN(HA_ERR_WRONG_COMMAND);
@@ -886,8 +916,51 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
 
 int CloudHandler::index_next(uchar *buf)
 {
+  int rc = 0;
+  my_bitmap_map *orig_bitmap;
+
+  //ha_statistic_increment(&SSV::ha_read_rnd_next_count);
   DBUG_ENTER("CloudHandler::index_next");
-  DBUG_RETURN(HA_ERR_WRONG_COMMAND);
+
+  orig_bitmap= dbug_tmp_use_all_columns(table, table->write_set);
+
+  MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, TRUE);
+
+  memset(buf, 0, table->s->null_bytes);
+
+  jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
+  jmethodID next_row_method = this->env->GetStaticMethodID(adapter_class, "nextIndexRow", "(J)Lcom/nearinfinity/mysqlengine/jni/Row;");
+  jlong java_scan_id = curr_scan_id;
+  jobject row = this->env->CallStaticObjectMethod(adapter_class, next_row_method, java_scan_id);
+
+  jclass row_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/Row");
+  jmethodID get_keys_method = this->env->GetMethodID(row_class, "getKeys", "()[Ljava/lang/String;");
+  jmethodID get_vals_method = this->env->GetMethodID(row_class, "getValues", "()[[B");
+  jmethodID get_row_map_method = this->env->GetMethodID(row_class, "getRowMap", "()Ljava/util/Map;");
+  jmethodID get_uuid_method = this->env->GetMethodID(row_class, "getUUID", "()[B");
+
+  jobject row_map = this->env->CallObjectMethod(row, get_row_map_method);
+  jarray keys = (jarray) this->env->CallObjectMethod(row, get_keys_method);
+  jarray vals = (jarray) this->env->CallObjectMethod(row, get_vals_method);
+  jbyteArray uuid = (jbyteArray) this->env->CallObjectMethod(row, get_uuid_method);
+
+  if (java_map_is_empty(row_map))
+  {
+    dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
+    DBUG_RETURN(HA_ERR_END_OF_FILE);
+  }
+
+  //this->ref = (uchar*) this->env->GetByteArrayElements(uuid, JNI_FALSE);
+  //this->ref_length = 16;
+
+  java_to_sql(buf, row_map);
+
+  dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
+
+  //stats.records++;
+  MYSQL_READ_ROW_DONE(rc);
+
+  DBUG_RETURN(rc);
 }
 
 int CloudHandler::index_prev(uchar *buf)

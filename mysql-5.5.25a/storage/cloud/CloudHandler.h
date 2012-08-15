@@ -31,6 +31,7 @@ private:
     record_buffer *create_record_buffer(unsigned int length);
     void destroy_record_buffer(record_buffer *r);
     CloudShare *get_share(const char *table_name, TABLE *table);
+    uint32 max_row_length();
 
     long long curr_scan_id;
 
@@ -47,7 +48,7 @@ private:
     jbyteArray convert_value_to_java_bytes(uchar* value, uint32 length);
     void java_to_sql(uchar *buf, jobject row_map);
     int delete_row_helper();
-    int write_row_helper();
+    int write_row_helper(uchar* buf);
     int bulk_write_row_helper();
     jobject sql_to_java();
     int delete_all_rows();
@@ -175,17 +176,17 @@ private:
 
       const char *index_type(uint inx) 
       {
-        return "HASH";
+        return "BTREE";
       }
 
       ulonglong table_flags() const
       {
-        return HA_BINLOG_STMT_CAPABLE | HA_REC_NOT_IN_SEQ;
+        return HA_BINLOG_STMT_CAPABLE | HA_REC_NOT_IN_SEQ | HA_NO_TRANSACTIONS;
       }
 
       ulong index_flags(uint inx, uint part, bool all_parts) const
       {
-        return 0;
+        return HA_READ_NEXT | HA_READ_ORDER | HA_READ_RANGE;
       }
 
       uint max_supported_record_length() const 
@@ -200,7 +201,7 @@ private:
 
       uint max_supported_key_parts() const 
       {
-        return MAX_REF_PARTS; 
+        return 1; 
       }
 
       uint max_supported_key_length() const 
