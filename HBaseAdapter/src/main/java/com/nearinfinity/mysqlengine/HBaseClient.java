@@ -440,8 +440,20 @@ public class HBaseClient {
 
     public int deleteIndexRows (long tableId) throws IOException {
         logger.info("Deleting all index rows");
-        byte[] prefix = ByteBuffer.allocate(9).put(RowType.INDEX.getValue()).putLong(tableId).array();
-        return deleteRowsWithPrefix(prefix);
+
+        int affectedRows = 0;
+
+        byte[] valuePrefix = ByteBuffer.allocate(9).put(RowType.VALUE_INDEX.getValue()).putLong(tableId).array();
+        byte[] secondaryPrefix = ByteBuffer.allocate(9).put(RowType.SECONDARY_INDEX.getValue()).putLong(tableId).array();
+        byte[] reversePrefix = ByteBuffer.allocate(9).put(RowType.REVERSE_INDEX.getValue()).putLong(tableId).array();
+        byte[] nullPrefix = ByteBuffer.allocate(9).put(RowType.NULL_INDEX.getValue()).putLong(tableId).array();
+
+        affectedRows += deleteRowsWithPrefix(valuePrefix);
+        affectedRows += deleteRowsWithPrefix(secondaryPrefix);
+        affectedRows += deleteRowsWithPrefix(reversePrefix);
+        affectedRows += deleteRowsWithPrefix(nullPrefix);
+
+        return affectedRows;
     }
 
     public int deleteRowsWithPrefix(byte[] prefix) throws IOException
