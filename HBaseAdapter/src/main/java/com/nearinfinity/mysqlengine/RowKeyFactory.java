@@ -56,7 +56,12 @@ public class RowKeyFactory {
 
     public static byte[] buildReverseIndexKey(long tableId, long columnId, byte[] value) {
         byte[] reverseValue = reverseValue(value);
-        return buildSecondaryIndexKey(tableId, columnId, reverseValue);
+        return ByteBuffer.allocate(17 + value.length)
+                .put(RowType.REVERSE_INDEX.getValue())
+                .putLong(tableId)
+                .putLong(columnId)
+                .put(value)
+                .array();
     }
 
     public static byte[] parseValueFromReverseIndexKey(byte[] reverseIndexKey) {
