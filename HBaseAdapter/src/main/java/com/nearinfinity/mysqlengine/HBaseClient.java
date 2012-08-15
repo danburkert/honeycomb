@@ -35,9 +35,9 @@ public class HBaseClient {
 
     private static final byte[] UNIREG = "unireg".getBytes();
 
-    private static final UUID ZERO_UUID = new UUID(0L, 0L);
+    private static final byte[] VALUE_COLUMN = "value".getBytes();
 
-//    private static final UUID FULL_UUID = UUID.fromString("ffffffff-ffff-ffff-ffff-ffffffffffff");
+    private static final UUID ZERO_UUID = new UUID(0L, 0L);
 
     private int cacheSize = 10;
 
@@ -192,9 +192,15 @@ public class HBaseClient {
 
             //Build index key
             byte[] indexRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, rowId);
-
-            //Add the corresponding index
             putList.add(new Put(indexRow).add(NIC, indexQualifier, indexValue));
+
+            //Build secondary index key
+            byte[] secondaryIndexRow = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId, value);
+            putList.add(new Put(secondaryIndexRow).add(NIC, new byte[0], new byte[0]));
+
+            //Build reverse index key
+            byte[] reverseIndexRow = RowKeyFactory.buildReverseIndexKey(tableId, columnId, value);
+            putList.add(new Put(reverseIndexRow).add(NIC, VALUE_COLUMN, value));
         }
 
         //Add the row to put list
