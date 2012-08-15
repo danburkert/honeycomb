@@ -62,14 +62,7 @@ public class Driver {
 
             ResultScanner scanner = client.search(tableName, tokens[0], tokens[1].getBytes());
             for (Result result : scanner) {
-                ByteBuffer rowKey = ByteBuffer.wrap(result.getRow());
-                byte rowType = rowKey.get();
-                long tableId = rowKey.getLong();
-                long columnId = rowKey.getLong();
-                byte[] value = new byte[tokens[1].getBytes().length];
-                rowKey.get(value);
-                UUID uuid = new UUID(rowKey.getLong(), rowKey.getLong());
-                System.out.println("Table: " + tableId + "\nColumn: " + columnId + "\nValue: " + new String(value) + "\nUUID: " + uuid.toString());
+                UUID uuid = client.parseUUIDFromIndexRow(result);
 
                 Result rowResult = client.getDataRow(uuid, tableName);
                 Map<String, byte[]> parsedRow = client.parseRow(rowResult, tableName);

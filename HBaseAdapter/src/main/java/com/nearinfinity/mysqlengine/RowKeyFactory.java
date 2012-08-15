@@ -34,7 +34,7 @@ public class RowKeyFactory {
 
     public static byte[] buildIndexKey(long tableId, long columnId, byte[] value, UUID uuid) {
         return ByteBuffer.allocate(33 + value.length)
-                .put(RowType.INDEX.getValue())
+                .put(RowType.VALUE_INDEX.getValue())
                 .putLong(tableId)
                 .putLong(columnId)
                 .put(value)
