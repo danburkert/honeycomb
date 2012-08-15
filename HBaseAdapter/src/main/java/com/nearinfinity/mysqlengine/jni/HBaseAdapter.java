@@ -225,7 +225,7 @@ public class HBaseAdapter {
         return row;
     }
 
-    public static byte[] indexRead(long scanId, byte[] value) throws HBaseAdapterException {
+    public static byte[] indexRead(long scanId, byte[] value, IndexReadType readType) throws HBaseAdapterException {
         logger.info("Reading index with scanId " + scanId);
 
         IndexConnection conn = (IndexConnection)getConnectionForId(scanId);
