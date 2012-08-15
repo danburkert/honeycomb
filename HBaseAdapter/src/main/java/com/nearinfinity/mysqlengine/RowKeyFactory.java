@@ -60,7 +60,7 @@ public class RowKeyFactory {
                 .put(RowType.REVERSE_INDEX.getValue())
                 .putLong(tableId)
                 .putLong(columnId)
-                .put(value)
+                .put(reverseValue)
                 .array();
     }
 
