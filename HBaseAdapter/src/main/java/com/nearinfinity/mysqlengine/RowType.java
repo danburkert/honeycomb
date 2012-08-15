@@ -11,7 +11,8 @@ public enum RowType {
     TABLES(0),
     COLUMNS(1),
     DATA(2),
-    INDEX(3);
+    INDEX(3),
+    NULL_INDEX(6);
 
     private byte value;
 
