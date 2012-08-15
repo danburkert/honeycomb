@@ -138,7 +138,7 @@ public class HBaseAdapter {
         try {
             Result result = conn.getNextResult();
             if (result == null) {
-                return row;
+                return null;
             }
 
             //Set values and UUID

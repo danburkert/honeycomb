@@ -13,7 +13,8 @@ public enum RowType {
     DATA(2),
     VALUE_INDEX(3),
     SECONDARY_INDEX(4),
-    REVERSE_INDEX(5);
+    REVERSE_INDEX(5),
+    NULL_INDEX(6);
 
     private byte value;
 

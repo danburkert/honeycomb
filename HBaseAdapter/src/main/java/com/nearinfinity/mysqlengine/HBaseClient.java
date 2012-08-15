@@ -173,12 +173,12 @@ public class HBaseClient {
         UUID rowId = UUID.randomUUID();
 
         //Build data row key
-        byte[] rowKey = RowKeyFactory.buildDataKey(tableId, rowId);
+        byte[] dataKey = RowKeyFactory.buildDataKey(tableId, rowId);
 
         //Create put list
         List<Put> putList = new LinkedList<Put>();
 
-        Put rowPut = new Put(rowKey);
+        Put dataRow = new Put(dataKey);
 
         byte[] indexQualifier = new byte[0];
         byte[] indexValue = new byte[0];
@@ -187,29 +187,43 @@ public class HBaseClient {
             indexValue = unireg;
         }
 
+        boolean all_null = true;
+
         for (String columnName : values.keySet()) {
             //Get column id and value
             long columnId = getTableInfo(tableName).getColumnIdByName(columnName);
             byte[] value = values.get(columnName);
 
-            //Add column to put
-            rowPut.add(NIC, Bytes.toBytes(columnId), value);
+            if(value == null) {
+                // Build null index
+                byte[] nullIndexRow = RowKeyFactory.buildNullIndexKey(tableId, columnId, rowId);
+                putList.add(new Put(nullIndexRow).add(NIC, new byte[0], new byte[0]));
+            } else {
+                all_null = false;
+                // Add data column to put
+                dataRow.add(NIC, Bytes.toBytes(columnId), value);
 
-            //Build index key
-            byte[] indexRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, rowId);
-            putList.add(new Put(indexRow).add(NIC, indexQualifier, indexValue));
+                // Build value index key
+                byte[] indexRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, rowId);
+                putList.add(new Put(indexRow).add(NIC, indexQualifier, indexValue));
 
-            //Build secondary index key
-            byte[] secondaryIndexRow = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId, value);
-            putList.add(new Put(secondaryIndexRow).add(NIC, new byte[0], new byte[0]));
+                // Build secondary index key
+                byte[] secondaryIndexRow = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId, value);
+                putList.add(new Put(secondaryIndexRow).add(NIC, new byte[0], new byte[0]));
 
-            //Build reverse index key
-            byte[] reverseIndexRow = RowKeyFactory.buildReverseIndexKey(tableId, columnId, value);
-            putList.add(new Put(reverseIndexRow).add(NIC, VALUE_COLUMN, value));
+                // Build reverse index key
+                byte[] reverseIndexRow = RowKeyFactory.buildReverseIndexKey(tableId, columnId, value);
+                putList.add(new Put(reverseIndexRow).add(NIC, VALUE_COLUMN, value));
+            }
+        }
+
+        if(all_null) {
+            // Add special []->[] data row to signify a row of all null values
+            putList.add(dataRow.add(NIC, new byte[0], new byte[0]));
         }
 
         //Add the row to put list
-        putList.add(rowPut);
+        putList.add(dataRow);
 
         //Final put
         table.put(putList);
@@ -358,6 +372,11 @@ public class HBaseClient {
         //Get columns returned from Result
         Map<String, byte[]> columns = new HashMap<String, byte[]>();
         Map<byte[], byte[]> returnedColumns = result.getNoVersionMap().get(NIC);
+
+        if(returnedColumns.size() == 1 && returnedColumns.containsKey(new byte[0])) {
+            // The row of all nulls special case strikes again
+            return columns;
+        }
 
         //Loop through columns, add to returned map
         for (byte[] qualifier : returnedColumns.keySet()) {
