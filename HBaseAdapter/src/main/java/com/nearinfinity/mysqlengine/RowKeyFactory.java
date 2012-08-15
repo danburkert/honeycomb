@@ -42,4 +42,14 @@ public class RowKeyFactory {
                 .putLong(uuid.getLeastSignificantBits())
                 .array();
     }
+
+    public static byte[] buildNullIndexKey(long tableId, long columnId, UUID uuid) {
+        return ByteBuffer.allocate(33)
+                .put(RowType.NULL_INDEX.getValue())
+                .putLong(tableId)
+                .putLong(columnId)
+                .putLong(uuid.getMostSignificantBits())
+                .putLong(uuid.getLeastSignificantBits())
+                .array();
+    }
 }
