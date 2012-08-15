@@ -12,32 +12,14 @@ import java.io.IOException;
  * Time: 10:23 AM
  * To change this template use File | Settings | File Templates.
  */
-public class Connection {
-    private String tableName;
-    private ResultScanner scanner;
-    private Result lastResult;
+public interface Connection {
 
-    public Connection(String tableName, ResultScanner scanner) {
-        this.tableName = tableName;
-        this.scanner = scanner;
-        this.lastResult = null;
-    }
+    public String getTableName();
 
-    public String getTableName() {
-        return this.tableName;
-    }
+    public Result getLastResult();
 
-    public Result getLastResult() {
-        return this.lastResult;
-    }
+    public Result getNextResult() throws IOException;
 
-    public Result getNextResult() throws IOException {
-        Result result = this.scanner.next();
-        this.lastResult = result;
-        return result;
-    }
+    public void close();
 
-    public void close() {
-        this.scanner.close();
-    }
 }
