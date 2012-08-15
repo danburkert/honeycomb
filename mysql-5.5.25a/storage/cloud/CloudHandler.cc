@@ -224,6 +224,10 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
     const char* key = field->field_name;
     jstring java_key = string_to_java_string(key);
     jbyteArray java_val = java_map_get(row_map, java_key);
+    if (java_val == NULL) {
+      field->set_null();
+      continue;
+    }
     char* val = (char*) this->env->GetByteArrayElements(java_val, &is_copy);
     jsize val_length = this->env->GetArrayLength(java_val);
 
@@ -593,15 +597,16 @@ jobject CloudHandler::sql_to_java() {
   for (Field **field_ptr=table->field; *field_ptr; field_ptr++)
   {
     Field * field = *field_ptr;
+    jstring field_name = this->string_to_java_string(field->field_name);
 
     memset(rec_buffer->buffer, 0, rec_buffer->length);
 
-    const bool was_null= field->is_null();
+    const bool is_null = field->is_null();
 
-    if (was_null)
+    if (is_null )
     {
-      field->set_default();
-      field->set_notnull();
+      java_map_insert(java_map, field_name, NULL);
+      continue;
     }
 
     int fieldType = field->type();
@@ -688,12 +693,6 @@ jobject CloudHandler::sql_to_java() {
 		memcpy(rec_buffer->buffer, field->ptr, field->field_length);
 	}
 
-    if (was_null)
-    {
-      field->set_null();
-    }
-
-    jstring field_name = this->string_to_java_string(field->field_name);
     jbyteArray java_bytes = this->convert_value_to_java_bytes(rec_buffer->buffer, actualFieldSize);
 
     java_map_insert(java_map, field_name, java_bytes);
