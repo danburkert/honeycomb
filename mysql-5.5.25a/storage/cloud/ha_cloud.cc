@@ -182,7 +182,7 @@ static int cloud_init_func(void *p)
 
   cloud_hton->state = SHOW_OPTION_YES;
   cloud_hton->create = cloud_create_handler;
-  cloud_hton->flags = HTON_CAN_RECREATE | HTON_ALTER_NOT_SUPPORTED;
+  cloud_hton->flags = HTON_ALTER_NOT_SUPPORTED;
 
   create_or_find_jvm();
 
@@ -241,7 +241,7 @@ mysql_declare_plugin(cloud)
     &cloud_storage_engine,
     "cloud",
     "Near Infinity Corporation",
-    "Hbase storage engine",
+    "HBase storage engine",
     PLUGIN_LICENSE_GPL,
     cloud_init_func,                            /* Plugin Init */
     cloud_done_func,                            /* Plugin Deinit */
@@ -249,6 +249,6 @@ mysql_declare_plugin(cloud)
     NULL,                                  /* status variables */
     NULL,                     /* system variables */
     NULL,                                         /* config options */
-    0,                                            /* flags */
+    NULL,                                            /* flags */
 }
 mysql_declare_plugin_end;
