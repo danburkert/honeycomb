@@ -207,6 +207,34 @@ public class HBaseAdapter {
         return deleted;
     }
 
+    public static int deleteAllRows(String tableName) throws HBaseAdapterException {
+        logger.info("Deleting all rows from table " + tableName);
+
+        int deleted;
+        try {
+            deleted = client.deleteAllRows(tableName);
+        } catch (IOException e) {
+            logger.error("Exception thrown in deleteAllRows()",  e);
+            throw new HBaseAdapterException("deleteAllRows", e);
+        }
+
+        return deleted;
+    }
+
+    public static boolean dropTable(String tableName) throws HBaseAdapterException {
+        logger.info("Dropping table " + tableName);
+
+        boolean deleted;
+        try {
+            deleted = client.dropTable(tableName);
+        } catch (IOException e) {
+            logger.error("Exception thrown in dropTable()", e);
+            throw new HBaseAdapterException("dropTable", e);
+        }
+
+        return deleted;
+    }
+
     public static Row getRow(long scanId, String tableName /*TODO: Can we delete this? */, byte[] uuid) throws HBaseAdapterException {
         logger.info("Getting row with scanId " + scanId);
 
