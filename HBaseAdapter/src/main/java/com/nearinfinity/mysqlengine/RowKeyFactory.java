@@ -32,7 +32,7 @@ public class RowKeyFactory {
                 .array();
     }
 
-    public static byte[] buildIndexKey(long tableId, long columnId, byte[] value, UUID uuid) {
+    public static byte[] buildValueIndexKey(long tableId, long columnId, byte[] value, UUID uuid) {
         return ByteBuffer.allocate(33 + value.length)
                 .put(RowType.VALUE_INDEX.getValue())
                 .putLong(tableId)
@@ -42,4 +42,23 @@ public class RowKeyFactory {
                 .putLong(uuid.getLeastSignificantBits())
                 .array();
     }
+
+    public static byte[] buildSecondaryIndexKey(long tableId, long columnId, byte[] value) {
+        return ByteBuffer.allocate(17 + value.length)
+                .put(RowType.SECONDARY_INDEX.getValue())
+                .putLong(tableId)
+                .putLong(columnId)
+                .put(value)
+                .array();
+    }
+
+//    public static byte[] buildReverseIndexKey(long tableId, long columnId, byte[] value) {
+//        byte[] reverseValue = reverseValue(value);
+//    }
+//
+//    private static byte[] reverseValue(byte[] value) {
+//        ByteBuffer buffer = ByteBuffer.allocate(value.length);
+//
+//        return buffer.array();
+//    }
 }
