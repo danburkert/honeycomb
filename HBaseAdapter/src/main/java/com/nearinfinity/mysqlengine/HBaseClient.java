@@ -3,10 +3,7 @@ package com.nearinfinity.mysqlengine;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.filter.BinaryComparator;
-import org.apache.hadoop.hbase.filter.CompareFilter;
-import org.apache.hadoop.hbase.filter.RowFilter;
-import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
+import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
 
@@ -402,6 +399,92 @@ public class HBaseClient {
         byte[] rowKey = result.getRow();
         ByteBuffer buffer = ByteBuffer.wrap(rowKey, rowKey.length - 16, 16);
         return new UUID(buffer.getLong(), buffer.getLong());
+    }
+
+    public boolean dropTable(String tableName) throws IOException {
+        logger.info("Preparing to drop table " + tableName);
+        long tableId = getTableInfo(tableName).getId();
+
+        deleteIndexRows(tableId);
+        deleteDataRows(tableId);
+        deleteColumns(tableId);
+        deleteTableFromRoot(tableName);
+
+        logger.info("Table " + tableName + " is no more!");
+
+        return true;
+    }
+
+    public int deleteAllRows(String tableName) throws IOException {
+        long tableId = getTableInfo(tableName).getId();
+
+        logger.info("Deleting all rows from table " + tableName + " with tableId " + tableId);
+
+        deleteIndexRows(tableId);
+        int rowsAffected = deleteDataRows(tableId);
+
+        return rowsAffected;
+    }
+
+    public int deleteDataRows(long tableId) throws IOException {
+        logger.info("Deleting all data rows");
+        byte[] prefix = ByteBuffer.allocate(9).put(RowType.DATA.getValue()).putLong(tableId).array();
+        return deleteRowsWithPrefix(prefix);
+    }
+
+    public int deleteColumns(long tableId) throws IOException {
+        logger.info("Deleting all columns");
+        byte[] prefix = ByteBuffer.allocate(9).put(RowType.COLUMNS.getValue()).putLong(tableId).array();
+        return deleteRowsWithPrefix(prefix);
+    }
+
+    public int deleteIndexRows (long tableId) throws IOException {
+        logger.info("Deleting all index rows");
+
+        int affectedRows = 0;
+
+        byte[] valuePrefix = ByteBuffer.allocate(9).put(RowType.VALUE_INDEX.getValue()).putLong(tableId).array();
+        byte[] secondaryPrefix = ByteBuffer.allocate(9).put(RowType.SECONDARY_INDEX.getValue()).putLong(tableId).array();
+        byte[] reversePrefix = ByteBuffer.allocate(9).put(RowType.REVERSE_INDEX.getValue()).putLong(tableId).array();
+        byte[] nullPrefix = ByteBuffer.allocate(9).put(RowType.NULL_INDEX.getValue()).putLong(tableId).array();
+
+        affectedRows += deleteRowsWithPrefix(valuePrefix);
+        affectedRows += deleteRowsWithPrefix(secondaryPrefix);
+        affectedRows += deleteRowsWithPrefix(reversePrefix);
+        affectedRows += deleteRowsWithPrefix(nullPrefix);
+
+        return affectedRows;
+    }
+
+    public int deleteRowsWithPrefix(byte[] prefix) throws IOException
+    {
+        Scan scan = new Scan();
+        PrefixFilter filter = new PrefixFilter(prefix);
+        scan.setFilter(filter);
+
+        ResultScanner scanner = table.getScanner(scan);
+        List<Delete> deleteList = new LinkedList<Delete>();
+        int count = 0;
+
+        for (Result result : scanner) {
+            //Delete the data row key
+            byte[] rowKey = result.getRow();
+            Delete rowDelete = new Delete(rowKey);
+            deleteList.add(rowDelete);
+
+            ++count;
+        }
+
+        table.delete(deleteList);
+
+        return count;
+    }
+
+    public void deleteTableFromRoot(String tableName) throws IOException {
+        Delete delete = new Delete((RowKeyFactory.ROOT));
+        delete.deleteColumns(NIC, tableName.getBytes());
+
+        table.delete(delete);
     }
 
     public void compact() throws IOException {

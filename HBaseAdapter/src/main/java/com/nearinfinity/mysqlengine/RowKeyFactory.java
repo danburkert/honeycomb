@@ -89,4 +89,20 @@ public class RowKeyFactory {
                 .putLong(uuid.getLeastSignificantBits())
                 .array();
     }
+
+    public static byte[] position_of_long(long n) {
+        final long BITMASK = 0x8000000000000000L;
+        return ByteBuffer.allocate(8).putLong(n ^ BITMASK).array();
+    }
+
+    public static byte[] position_of_double(double n) {
+        long bits = Double.doubleToLongBits(n);
+        final long BITMASK;
+        if(n < 0) {
+            BITMASK = 0xFFFFFFFFFFFFFFFFL;
+        } else {
+            BITMASK = 0x8000000000000000L;
+        }
+        return ByteBuffer.allocate(8).putLong(bits ^ BITMASK).array();
+    }
 }
