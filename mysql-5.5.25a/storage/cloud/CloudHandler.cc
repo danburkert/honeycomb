@@ -559,9 +559,13 @@ jobject CloudHandler::get_field_metadata(Field *field, TABLE *table_arg)
 	  this->java_list_add(list, create_metadata_enum_object("IS_NULLABLE"));
 	}
 
-	if (strcmp(table_arg->s->key_info[table_arg->s->primary_key].key_part->field->field_name, field->field_name) == 0)
+	// 64 is obviously some key flag indicating no primary key, but I have no idea where it's defined. Will fix later. - ABC
+	if (table_arg->s->primary_key != 64)
 	{
-	  this->java_list_add(list, create_metadata_enum_object("PRIMARY_KEY"));
+	  if (strcmp(table_arg->s->key_info[table_arg->s->primary_key].key_part->field->field_name, field->field_name) == 0)
+	    {
+	      this->java_list_add(list, create_metadata_enum_object("PRIMARY_KEY"));
+	    }
 	}
 
 	return list;
