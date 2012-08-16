@@ -1,9 +1,6 @@
 package com.nearinfinity.mysqlengine.jni;
 
-import com.nearinfinity.mysqlengine.Connection;
-import com.nearinfinity.mysqlengine.DataConnection;
-import com.nearinfinity.mysqlengine.HBaseClient;
-import com.nearinfinity.mysqlengine.IndexConnection;
+import com.nearinfinity.mysqlengine.*;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.log4j.Logger;
@@ -54,7 +51,6 @@ public class HBaseAdapter {
             try {
                 int cacheSize = Integer.parseInt(params.get("table_scan_cache_rows"));
                 client.setCacheSize(cacheSize);
-
             }
             catch (NumberFormatException e) {
                 logger.info("Number of rows to cache was not provided or invalid - using default of " + DEFAULT_NUM_CACHED_ROWS);
@@ -84,11 +80,11 @@ public class HBaseAdapter {
         return configured;
     }
 
-    public static boolean createTable(String tableName, List<String> columnNames) throws HBaseAdapterException {
+    public static boolean createTable(String tableName, Map<String, List<ColumnMetadata>> columns) throws HBaseAdapterException {
         logger.info("Creating table " + tableName);
 
         try {
-            client.createTableFull(tableName, columnNames);
+            client.createTableFull(tableName, columns);
         } catch (Exception e) {
             logger.error("Exception in createTable", e);
             throw new HBaseAdapterException("createTable", e);

@@ -1,5 +1,7 @@
 package com.nearinfinity.mysqlengine;
 
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -14,15 +16,15 @@ public class TableInfo {
 
     private String name;
 
-    private ConcurrentHashMap<String, ColumnInfo> columnNamesToIds;
+    private ConcurrentHashMap<String, ColumnInfo> columnNamesToInfo;
 
-    private ConcurrentHashMap<Long, ColumnInfo> columnIdsToNames;
+    private ConcurrentHashMap<Long, ColumnInfo> columnIdsToInfo;
 
     public TableInfo(String name, long id) {
         this.name = name;
         this.id = id;
-        this.columnNamesToIds = new ConcurrentHashMap<String, ColumnInfo>();
-        this.columnIdsToNames = new ConcurrentHashMap<Long, ColumnInfo>();
+        this.columnNamesToInfo = new ConcurrentHashMap<String, ColumnInfo>();
+        this.columnIdsToInfo = new ConcurrentHashMap<Long, ColumnInfo>();
     }
 
     public long getId() {
@@ -34,16 +36,24 @@ public class TableInfo {
     }
 
     public long getColumnIdByName(String columnName) {
-        return columnNamesToIds.get(columnName).getId();
+        return columnNamesToInfo.get(columnName).getId();
     }
 
     public String getColumnNameById(long id) {
-        return columnIdsToNames.get(id).getName();
+        return columnIdsToInfo.get(id).getName();
     }
 
-    public void addColumn(String columnName, long id) {
-        ColumnInfo info = new ColumnInfo(id, columnName);
-        columnNamesToIds.put(columnName, info);
-        columnIdsToNames.put(id, info);
+    public void addColumn(String columnName, long id, List<ColumnMetadata> metadata) {
+        ColumnInfo info = new ColumnInfo(id, columnName, metadata);
+        columnNamesToInfo.put(columnName, info);
+        columnIdsToInfo.put(id, info);
+    }
+
+    public Set<String> getColumnNames() {
+        return this.columnNamesToInfo.keySet();
+    }
+
+    public Set<Long> getColumnIds() {
+        return this.columnIdsToInfo.keySet();
     }
 }

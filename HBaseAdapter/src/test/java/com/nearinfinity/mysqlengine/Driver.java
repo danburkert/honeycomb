@@ -25,9 +25,11 @@ public class Driver {
         if (args[0].equals("create")) {
             //create table_name column*
             String tableName = args[1];
-            List<String> columns = new LinkedList<String>();
+            Map<String, List<ColumnMetadata>> columns = new HashMap<String, List<ColumnMetadata>>();
             for (int i = 2 ; i < args.length ; i++) {
-                columns.add(args[i]);
+                List<ColumnMetadata> metadata = new ArrayList<ColumnMetadata>();
+                metadata.add(ColumnMetadata.NONE);
+                columns.put(args[i], metadata);
             }
 
             client.createTableFull(tableName, columns);
