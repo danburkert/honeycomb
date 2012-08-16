@@ -57,9 +57,21 @@ static void print_java_exception(JNIEnv* env)
     jclass objClazz = env->GetObjectClass(throwable);
     jmethodID methodId = env->GetMethodID(objClazz, "toString", "()Ljava/lang/String;");
     jstring result = (jstring)env->CallObjectMethod(throwable, methodId);
+
     const char* string = env->GetStringUTFChars(result, NULL);
     INFO(("Exceptions from the jvm %s", string));
     env->ReleaseStringUTFChars(result, string);
+
+    // Uncomment these lines if you encounter an exception during initialization on Java side...should reveal the cause - ABC
+
+//    jmethodID get_cause = env->GetMethodID(objClazz, "getException", "()Ljava/lang/Throwable;");
+//    jobject cause = env->CallObjectMethod(throwable, get_cause);
+//    jclass causeClass = env->GetObjectClass(cause);
+//    jmethodID cause_toString = env->GetMethodID(causeClass, "getMessage", "()Ljava/lang/String;");
+//    jstring cause_result = (jstring)env->CallObjectMethod(cause, cause_toString);
+//    const char* cause_string = env->GetStringUTFChars(cause_result, NULL);
+//    INFO(("Exception was caused by: %s", cause_string));
+//    env->ReleaseStringUTFChars(cause_result, cause_string)
   }
 }
 

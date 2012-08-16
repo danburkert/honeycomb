@@ -1,13 +1,8 @@
 package com.nearinfinity.mysqlengine.jni;
 
-import com.nearinfinity.mysqlengine.Connection;
-import com.nearinfinity.mysqlengine.DataConnection;
-import com.nearinfinity.mysqlengine.HBaseClient;
-import com.nearinfinity.mysqlengine.IndexConnection;
-import com.sun.xml.internal.rngom.ast.om.ParsedElementAnnotation;
+import com.nearinfinity.mysqlengine.*;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -56,7 +51,6 @@ public class HBaseAdapter {
             try {
                 int cacheSize = Integer.parseInt(params.get("table_scan_cache_rows"));
                 client.setCacheSize(cacheSize);
-
             } catch (NumberFormatException e) {
                 logger.info("Number of rows to cache was not provided or invalid - using default of " + DEFAULT_NUM_CACHED_ROWS);
                 client.setCacheSize(DEFAULT_NUM_CACHED_ROWS);
@@ -84,11 +78,11 @@ public class HBaseAdapter {
         return configured;
     }
 
-    public static boolean createTable(String tableName, List<String> columnNames) throws HBaseAdapterException {
+    public static boolean createTable(String tableName, Map<String, List<ColumnMetadata>> columns) throws HBaseAdapterException {
         logger.info("Creating table " + tableName);
 
         try {
-            client.createTableFull(tableName, columnNames);
+            client.createTableFull(tableName, columns);
         } catch (Exception e) {
             logger.error("Exception in createTable", e);
             throw new HBaseAdapterException("createTable", e);
@@ -390,6 +384,52 @@ public class HBaseAdapter {
                     unireg = client.parseUniregFromIndex(result);
                 }
                 break;
+                case INDEX_FIRST: {
+                    ResultScanner indexScanner = client.getSecondaryIndexScannerFull(tableName, columnName);
+                    conn.setIndexScanner(indexScanner);
+
+                    //Get the first row of the value
+                    Result indexResult = conn.getNextIndexResult();
+                    if (indexResult == null) {
+                        return unireg;
+                    }
+
+                    value = client.parseValueFromSecondaryIndexRow(indexResult);
+
+                    ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, value);
+                    conn.setScanner(scanner);
+
+                    //Get the first result to return
+                    Result result = conn.getNextResult();
+                    if (result == null) {
+                        return unireg;
+                    }
+                    unireg = client.parseUniregFromIndex(result);
+                }
+                break;
+                case INDEX_LAST: {
+                    ResultScanner indexScanner = client.getReverseIndexScannerFull(tableName, columnName);
+                    conn.setIndexScanner(indexScanner);
+
+                    //Get the first row of the value
+                    Result indexResult = conn.getNextIndexResult();
+                    if (indexResult == null) {
+                        return unireg;
+                    }
+
+                    value = client.parseValueFromReverseIndexRow(indexResult);
+
+                    ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, value);
+                    conn.setScanner(scanner);
+
+                    //Get the first result to return
+                    Result result = conn.getNextResult();
+                    if (result == null) {
+                        return unireg;
+                    }
+                    unireg = client.parseUniregFromIndex(result);
+                }
+                break;
             }
         } catch (Exception e) {
             logger.error("Exception thrown in indexRead()", e);
@@ -421,11 +461,13 @@ public class HBaseAdapter {
 
                 byte[] value = null;
                 switch (conn.getReadType()) {
+                    case INDEX_FIRST:
                     case HA_READ_AFTER_KEY:
                     case HA_READ_KEY_OR_NEXT: {
                         value = client.parseValueFromSecondaryIndexRow(indexResult);
                     }
                     break;
+                    case INDEX_LAST:
                     case HA_READ_BEFORE_KEY:
                     case HA_READ_KEY_OR_PREV: {
                         value = client.parseValueFromReverseIndexRow(indexResult);
