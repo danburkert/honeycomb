@@ -3,8 +3,7 @@ package com.nearinfinity.mysqlengine;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.filter.CompareFilter;
-import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
+import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
 
@@ -35,9 +34,11 @@ public class HBaseClient {
 
     private static final byte[] UNIREG = "unireg".getBytes();
 
+    private static final byte[] VALUE_COLUMN = "value".getBytes();
+
     private static final UUID ZERO_UUID = new UUID(0L, 0L);
 
-//    private static final UUID FULL_UUID = UUID.fromString("ffffffff-ffff-ffff-ffff-ffffffffffff");
+    private static final UUID FULL_UUID = UUID.fromString("ffffffff-ffff-ffff-ffff-ffffffffffff");
 
     private int cacheSize = 10;
 
@@ -168,12 +169,12 @@ public class HBaseClient {
         UUID rowId = UUID.randomUUID();
 
         //Build data row key
-        byte[] rowKey = RowKeyFactory.buildDataKey(tableId, rowId);
+        byte[] dataKey = RowKeyFactory.buildDataKey(tableId, rowId);
 
         //Create put list
         List<Put> putList = new LinkedList<Put>();
 
-        Put rowPut = new Put(rowKey);
+        Put dataRow = new Put(dataKey);
 
         byte[] indexQualifier = new byte[0];
         byte[] indexValue = new byte[0];
@@ -182,23 +183,43 @@ public class HBaseClient {
             indexValue = unireg;
         }
 
+        boolean allRowsNull = true;
+
         for (String columnName : values.keySet()) {
             //Get column id and value
             long columnId = getTableInfo(tableName).getColumnIdByName(columnName);
             byte[] value = values.get(columnName);
 
-            //Add column to put
-            rowPut.add(NIC, Bytes.toBytes(columnId), value);
+            if(value == null) {
+                // Build null index
+                byte[] nullIndexRow = RowKeyFactory.buildNullIndexKey(tableId, columnId, rowId);
+                putList.add(new Put(nullIndexRow).add(NIC, new byte[0], new byte[0]));
+            } else {
+                allRowsNull = false;
+                // Add data column to put
+                dataRow.add(NIC, Bytes.toBytes(columnId), value);
 
-            //Build index key
-            byte[] indexRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, rowId);
+                // Build value index key
+                byte[] indexRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, rowId);
+                putList.add(new Put(indexRow).add(NIC, indexQualifier, indexValue));
 
-            //Add the corresponding index
-            putList.add(new Put(indexRow).add(NIC, indexQualifier, indexValue));
+                // Build secondary index key
+                byte[] secondaryIndexRow = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId, value);
+                putList.add(new Put(secondaryIndexRow).add(NIC, new byte[0], new byte[0]));
+
+                // Build reverse index key
+                byte[] reverseIndexRow = RowKeyFactory.buildReverseIndexKey(tableId, columnId, value);
+                putList.add(new Put(reverseIndexRow).add(NIC, VALUE_COLUMN, value));
+            }
+        }
+
+        if(allRowsNull) {
+            // Add special []->[] data row to signify a row of all null values
+            putList.add(dataRow.add(NIC, new byte[0], new byte[0]));
         }
 
         //Add the row to put list
-        putList.add(rowPut);
+        putList.add(dataRow);
 
         //Final put
         table.put(putList);
@@ -300,7 +321,7 @@ public class HBaseClient {
         return table.getScanner(scan);
     }
 
-    public ResultScanner getIndexValueScanner(String tableName, String columnName, byte[] value) throws IOException {
+    public ResultScanner getValueIndexScanner(String tableName, String columnName, byte[] value) throws IOException {
         //Get the table id
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
@@ -308,9 +329,16 @@ public class HBaseClient {
 
         //Build row keys
         byte[] startRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, ZERO_UUID);
-        byte[] endRow = RowKeyFactory.buildValueIndexKey(tableId, columnId + 1, new byte[0], ZERO_UUID);
+        byte[] endRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, FULL_UUID);
 
-        Scan scan = new Scan(startRow, endRow);
+        Scan scan = new Scan();
+        scan.setStartRow(startRow);
+
+        List<Filter> filterList = new LinkedList<Filter>();
+        filterList.add(new InclusiveStopFilter(endRow));
+        filterList.add(new ExactValueFilter(value));
+
+        scan.setFilter(new FilterList(filterList));
 
         return table.getScanner(scan);
     }
@@ -348,6 +376,11 @@ public class HBaseClient {
         Map<String, byte[]> columns = new HashMap<String, byte[]>();
         Map<byte[], byte[]> returnedColumns = result.getNoVersionMap().get(NIC);
 
+        if(returnedColumns.size() == 1 && returnedColumns.containsKey(new byte[0])) {
+            // The row of all nulls special case strikes again
+            return columns;
+        }
+
         //Loop through columns, add to returned map
         for (byte[] qualifier : returnedColumns.keySet()) {
             long columnId = ByteBuffer.wrap(qualifier).getLong();
@@ -372,6 +405,92 @@ public class HBaseClient {
         byte[] rowKey = result.getRow();
         ByteBuffer buffer = ByteBuffer.wrap(rowKey, rowKey.length - 16, 16);
         return new UUID(buffer.getLong(), buffer.getLong());
+    }
+
+    public boolean dropTable(String tableName) throws IOException {
+        logger.info("Preparing to drop table " + tableName);
+        long tableId = getTableInfo(tableName).getId();
+
+        deleteIndexRows(tableId);
+        deleteDataRows(tableId);
+        deleteColumns(tableId);
+        deleteTableFromRoot(tableName);
+
+        logger.info("Table " + tableName + " is no more!");
+
+        return true;
+    }
+
+    public int deleteAllRows(String tableName) throws IOException {
+        long tableId = getTableInfo(tableName).getId();
+
+        logger.info("Deleting all rows from table " + tableName + " with tableId " + tableId);
+
+        deleteIndexRows(tableId);
+        int rowsAffected = deleteDataRows(tableId);
+
+        return rowsAffected;
+    }
+
+    public int deleteDataRows(long tableId) throws IOException {
+        logger.info("Deleting all data rows");
+        byte[] prefix = ByteBuffer.allocate(9).put(RowType.DATA.getValue()).putLong(tableId).array();
+        return deleteRowsWithPrefix(prefix);
+    }
+
+    public int deleteColumns(long tableId) throws IOException {
+        logger.info("Deleting all columns");
+        byte[] prefix = ByteBuffer.allocate(9).put(RowType.COLUMNS.getValue()).putLong(tableId).array();
+        return deleteRowsWithPrefix(prefix);
+    }
+
+    public int deleteIndexRows (long tableId) throws IOException {
+        logger.info("Deleting all index rows");
+
+        int affectedRows = 0;
+
+        byte[] valuePrefix = ByteBuffer.allocate(9).put(RowType.VALUE_INDEX.getValue()).putLong(tableId).array();
+        byte[] secondaryPrefix = ByteBuffer.allocate(9).put(RowType.SECONDARY_INDEX.getValue()).putLong(tableId).array();
+        byte[] reversePrefix = ByteBuffer.allocate(9).put(RowType.REVERSE_INDEX.getValue()).putLong(tableId).array();
+        byte[] nullPrefix = ByteBuffer.allocate(9).put(RowType.NULL_INDEX.getValue()).putLong(tableId).array();
+
+        affectedRows += deleteRowsWithPrefix(valuePrefix);
+        affectedRows += deleteRowsWithPrefix(secondaryPrefix);
+        affectedRows += deleteRowsWithPrefix(reversePrefix);
+        affectedRows += deleteRowsWithPrefix(nullPrefix);
+
+        return affectedRows;
+    }
+
+    public int deleteRowsWithPrefix(byte[] prefix) throws IOException
+    {
+        Scan scan = new Scan();
+        PrefixFilter filter = new PrefixFilter(prefix);
+        scan.setFilter(filter);
+
+        ResultScanner scanner = table.getScanner(scan);
+        List<Delete> deleteList = new LinkedList<Delete>();
+        int count = 0;
+
+        for (Result result : scanner) {
+            //Delete the data row key
+            byte[] rowKey = result.getRow();
+            Delete rowDelete = new Delete(rowKey);
+            deleteList.add(rowDelete);
+
+            ++count;
+        }
+
+        table.delete(deleteList);
+
+        return count;
+    }
+
+    public void deleteTableFromRoot(String tableName) throws IOException {
+        Delete delete = new Delete((RowKeyFactory.ROOT));
+        delete.deleteColumns(NIC, tableName.getBytes());
+
+        table.delete(delete);
     }
 
     public void compact() throws IOException {
@@ -475,5 +594,57 @@ public class HBaseClient {
 
     public byte[] parseUniregFromIndex(Result firstResult) {
         return firstResult.getValue(NIC, UNIREG);
+    }
+
+    public ResultScanner getSecondaryIndexScanner(String tableName, String columnName, byte[] value) throws IOException {
+        TableInfo info = getTableInfo(tableName);
+        long tableId = info.getId();
+        long columnId = info.getColumnIdByName(columnName);
+
+        byte[] startKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId, value);
+        byte[] endKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId+1, new byte[0]);
+
+        Scan scan = new Scan(startKey, endKey);
+
+        return table.getScanner(scan);
+    }
+
+    public ResultScanner getSecondaryIndexScannerExact(String tableName, String columnName, byte[] value) throws IOException {
+        TableInfo info = getTableInfo(tableName);
+        long tableId = info.getId();
+        long columnId = info.getColumnIdByName(columnName);
+
+        byte[] startKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId, value);
+        byte[] endKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId+1, new byte[0]);
+
+        Scan scan = new Scan(startKey, endKey);
+
+        RowFilter filter = new RowFilter(CompareFilter.CompareOp.EQUAL, new BinaryComparator(startKey));
+        scan.setFilter(filter);
+
+        return table.getScanner(scan);
+    }
+
+    public byte[] parseValueFromSecondaryIndexRow(Result result) {
+        byte[] row = result.getRow();
+        ByteBuffer buffer = ByteBuffer.wrap(row, 17, row.length - 17);
+        return buffer.array();
+    }
+
+    public ResultScanner getReverseIndexScanner(String tableName, String columnName, byte[] value) throws IOException {
+        TableInfo info = getTableInfo(tableName);
+        long tableId = info.getId();
+        long columnId = info.getColumnIdByName(columnName);
+
+        byte[] startKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId, value);
+        byte[] endKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId+1, value);
+
+        Scan scan = new Scan(startKey, endKey);
+
+        return table.getScanner(scan);
+    }
+
+    public byte[] parseValueFromReverseIndexRow(Result result) {
+        return RowKeyFactory.parseValueFromReverseIndexKey(result.getRow());
     }
 }
