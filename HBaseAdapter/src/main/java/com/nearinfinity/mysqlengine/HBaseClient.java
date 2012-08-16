@@ -628,8 +628,7 @@ public class HBaseClient {
 
     public byte[] parseValueFromSecondaryIndexRow(Result result) {
         byte[] row = result.getRow();
-        ByteBuffer buffer = ByteBuffer.wrap(row, 17, row.length - 17);
-        return buffer.array();
+        return this.wrapAndGet(row, 17, row.length - 17);
     }
 
     public ResultScanner getReverseIndexScanner(String tableName, String columnName, byte[] value) throws IOException {
@@ -647,5 +646,13 @@ public class HBaseClient {
 
     public byte[] parseValueFromReverseIndexRow(Result result) {
         return RowKeyFactory.parseValueFromReverseIndexKey(result.getRow());
+    }
+
+    private byte[] wrapAndGet(byte[] array, int offset, int length) {
+        ByteBuffer buffer = ByteBuffer.wrap(array);
+        buffer.position(offset);
+        byte[] ans = new byte[length];
+        buffer.get(ans);
+        return ans;
     }
 }
