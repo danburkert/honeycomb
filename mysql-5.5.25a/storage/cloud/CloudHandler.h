@@ -34,6 +34,7 @@ private:
     uint32 max_row_length();
     void unpack_index(uchar* buf, jbyteArray uniReg);
     jobject java_find_flag(enum ha_rkey_function find_flag);
+    int index_field_type;
 
     long long curr_scan_id;
 
@@ -60,13 +61,13 @@ private:
     void drop_table(const char *name);
     int truncate();
 
-    void reverse_bytes(uchar *begin, uchar *end)
+    void reverse_bytes(uchar *begin, uint length)
     {
-      for (; begin <= end; begin++, end--)
+      for(int x = 0, y = length - 1; x < y; x++, y--)
       {
-        uchar tmp = *end;
-        *end = *begin;
-        *begin = tmp;
+        uchar tmp = begin[x];
+        begin[x] = begin[y];
+        begin[y] = tmp;
       }
     }
 
@@ -81,12 +82,23 @@ private:
       return bint.c[0] == 4;
     }
 
-    void make_big_endian(uchar *begin, uchar *end)
+    void make_big_endian(uchar *begin, uint length)
     {
       if (is_little_endian())
       {
-        reverse_bytes(begin, end);
+        reverse_bytes(begin, length);
       }
+    }
+
+    bool is_integral_field(int field_type)
+    {
+      return (field_type == MYSQL_TYPE_LONG
+          || field_type == MYSQL_TYPE_SHORT
+          || field_type == MYSQL_TYPE_TINY
+          || field_type == MYSQL_TYPE_LONGLONG
+          || field_type == MYSQL_TYPE_INT24
+          || field_type == MYSQL_TYPE_ENUM
+          || field_type == MYSQL_TYPE_YEAR);
     }
 
     longlong htonll(longlong src, bool check_endian = true) {

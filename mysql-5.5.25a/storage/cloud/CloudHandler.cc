@@ -841,6 +841,15 @@ int CloudHandler::index_init(uint idx, bool sorted)
   
   const char* table_name = this->table->alias;
   const char* column_name = this->table->s->key_info[idx].name;
+  for (Field **field_ptr=table->field; *field_ptr; field_ptr++)
+  {
+    Field * field = *field_ptr;
+    if (strcmp(field->field_name, column_name) == 0)
+    {
+      this->index_field_type = field->type();
+      break;
+    }
+  }
 
   JavaVMAttachArgs attachArgs;
   attachArgs.version = JNI_VERSION_1_6;
@@ -882,15 +891,41 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
   jmethodID index_read_method = this->env->GetStaticMethodID(adapter_class, "indexRead", "(J[BLcom/nearinfinity/mysqlengine/jni/IndexReadType;)[B");
   jlong java_scan_id = this->curr_scan_id;
+  uchar* key_copy ;
+  if (this->is_integral_field(this->index_field_type))
+  {
+    key_copy = new uchar[sizeof(longlong)];
+    if (key_len == sizeof(int))
+    {
+      int* int_key = (int*)key;
+      longlong long_key = (longlong)*int_key;
+      memcpy(key_copy, &long_key, sizeof(longlong));
+      key_len = sizeof(longlong);
+    }
+    else
+    {
+      longlong* long_key = (longlong*)key;
+      memcpy(key_copy, long_key, sizeof(longlong));
+    }
+  }
+  else
+  {
+    key_copy = new uchar[key_len];
+    memcpy(key_copy, key, key_len);
+  }
+
+  this->make_big_endian(key_copy, key_len);
   jbyteArray java_key = this->env->NewByteArray(key_len);
-  uchar* key_copy = new uchar[key_len];
-  memcpy(key_copy, key, key_len);
-  this->make_big_endian(key_copy, key_copy + key_len);
   this->env->SetByteArrayRegion(java_key, 0, key_len, (jbyte*)key_copy);
   delete key_copy;
   jobject java_find_flag = this->java_find_flag(find_flag);
   jobject result = this->env->CallStaticObjectMethod(adapter_class, index_read_method, java_scan_id, java_key, java_find_flag);
   jbyteArray uniReg = (jbyteArray)result;
+  if(uniReg == NULL)
+  {
+    DBUG_RETURN(HA_ERR_END_OF_FILE);
+  }
+
   this->unpack_index(buf, uniReg);
 
   DBUG_RETURN(0);
@@ -913,7 +948,7 @@ int CloudHandler::index_next(uchar *buf)
   jobject result = this->env->CallStaticObjectMethod(adapter_class, index_next_method, java_scan_id);
   jbyteArray uniReg = (jbyteArray)result;
 
-  if (this->env->GetArrayLength(uniReg) == 0)
+  if (uniReg == NULL)
   {
     dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
     DBUG_RETURN(HA_ERR_END_OF_FILE);
