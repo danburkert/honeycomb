@@ -31,6 +31,8 @@ private:
     void destroy_record_buffer(record_buffer *r);
     CloudShare *get_share(const char *table_name, TABLE *table);
     uint32 max_row_length();
+    void unpack_index(uchar* buf, jbyteArray uniReg);
+    jobject java_find_flag(enum ha_rkey_function find_flag);
 
     long long curr_scan_id;
 
@@ -137,10 +139,6 @@ private:
       int index_first(uchar *buf);
       int index_last(uchar *buf);
       //int index_next_same(uchar *buf, const uchar *key, uint keylen);
-      int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add);
-      int final_add_index(handler_add_index *add, bool commit);
-      int prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys);
-      int final_drop_index(TABLE *table_arg);
     
     public:
       CloudHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm)
@@ -157,12 +155,12 @@ private:
 
       const char *index_type(uint inx) 
       {
-        return "BTREE";
+        return "HASH";
       }
 
       ulonglong table_flags() const
       {
-        return HA_BINLOG_STMT_CAPABLE | HA_REC_NOT_IN_SEQ | HA_NO_TRANSACTIONS;
+        return HA_FAST_KEY_READ | HA_BINLOG_STMT_CAPABLE | HA_REC_NOT_IN_SEQ | HA_NO_TRANSACTIONS;
       }
 
       ulong index_flags(uint inx, uint part, bool all_parts) const
