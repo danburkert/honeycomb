@@ -89,4 +89,12 @@ public class RowKeyFactory {
                 .putLong(uuid.getLeastSignificantBits())
                 .array();
     }
+
+    public static byte[] buildColumnInfoKey(long tableId, long columnId) {
+        return ByteBuffer.allocate(17)
+                .put(RowType.COLUMN_INFO.getValue())
+                .putLong(tableId)
+                .putLong(columnId)
+                .array();
+    }
 }

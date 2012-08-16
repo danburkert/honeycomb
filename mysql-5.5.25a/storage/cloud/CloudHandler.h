@@ -19,6 +19,8 @@ typedef struct st_record_buffer {
   uint32 length;
 } record_buffer;
 
+enum hbase_data_type { UNKNOWN_TYPE, JAVA_STRING, JAVA_LONG, JAVA_DOUBLE, JAVA_TIME };
+
 class CloudHandler : public handler
 {
 private:
@@ -42,10 +44,12 @@ private:
     const char* java_to_string(jstring str);
     jstring string_to_java_string(const char*);
     jobject create_java_map();
-    jobject java_map_insert(jobject java_map, jstring key, jbyteArray value);
+    jobject java_map_insert(jobject java_map, jobject key, jobject value);
     jbyteArray java_map_get(jobject java_map, jstring key);
     jboolean java_map_is_empty(jobject java_map);
     jbyteArray convert_value_to_java_bytes(uchar* value, uint32 length);
+    jobject get_field_metadata(Field *field, TABLE *table_arg);
+    hbase_data_type extract_field_type(Field *field);
     void java_to_sql(uchar *buf, jobject row_map);
     int delete_row_helper();
     int write_row_helper(uchar* buf);
@@ -57,6 +61,9 @@ private:
     int delete_table(const char *name);
     void drop_table(const char *name);
     int truncate();
+    jobject create_java_list();
+    void java_list_add(jobject list, jobject obj);
+    jobject create_metadata_enum_object(const char *name);
 
     void reverse_bytes(uchar *begin, uchar *end)
     {
@@ -118,7 +125,8 @@ private:
       return x.ull;
     }
 
-    void extract_table_name_from_path(const char *path, const char *&dest)
+    // For those annoying times when you need the table name but actually have its file path
+    const char *extract_table_name_from_path(const char *path)
     {
     	const char *ptr = path + strlen(path);
 
@@ -127,7 +135,7 @@ private:
     		ptr--;
     	}
 
-    	dest = ptr;
+    	return ptr;
     }
 
     void print_java_exception(JNIEnv* jni_env)

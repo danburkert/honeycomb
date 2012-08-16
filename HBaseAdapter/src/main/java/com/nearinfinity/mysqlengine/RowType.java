@@ -10,11 +10,12 @@ package com.nearinfinity.mysqlengine;
 public enum RowType {
     TABLES(0),
     COLUMNS(1),
-    DATA(2),
-    VALUE_INDEX(3),
-    SECONDARY_INDEX(4),
-    REVERSE_INDEX(5),
-    NULL_INDEX(6);
+    COLUMN_INFO(2),
+    DATA(3),
+    VALUE_INDEX(4),
+    SECONDARY_INDEX(5),
+    REVERSE_INDEX(6),
+    NULL_INDEX(7);
 
     private byte value;
 

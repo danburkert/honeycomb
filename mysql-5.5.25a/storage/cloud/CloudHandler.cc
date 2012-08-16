@@ -192,8 +192,7 @@ int CloudHandler::delete_table(const char *name)
 	attachArgs.group = NULL;
 	this->jvm->AttachCurrentThread((void**)&this->env, &attachArgs);
 
-	const char *alias;
-	extract_table_name_from_path(name, alias);
+	const char *alias = extract_table_name_from_path(name);
 
 	jstring tableName = string_to_java_string(alias);
 	jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
@@ -480,7 +479,14 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
 {
   DBUG_ENTER("CloudHandler::create");
 
-  JVMThreadAttach attached_thread(&this->env, this->jvm);
+//  JVMThreadAttach attached_thread(&this->env, this->jvm);
+
+	JavaVMAttachArgs attachArgs;
+	attachArgs.version = JNI_VERSION_1_6;
+	attachArgs.name = NULL;
+	attachArgs.group = NULL;
+	this->jvm->AttachCurrentThread((void**)&this->env, &attachArgs);
+
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
   if (adapter_class == NULL)
   {
@@ -491,22 +497,131 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
 
   const char* table_name = create_info->alias;
 
-  jclass list_class = this->env->FindClass("java/util/LinkedList");
-  jmethodID list_constructor = this->env->GetMethodID(list_class, "<init>", "()V");
-  jobject columns = this->env->NewObject(list_class, list_constructor);
-  jmethodID add_column = this->env->GetMethodID(list_class, "add", "(Ljava/lang/Object;)Z");
+  jobject columnMap = this->create_java_map();
 
   for (Field **field = table_arg->field ; *field ; field++)
   {
-    this->env->CallBooleanMethod(columns, add_column, string_to_java_string((*field)->field_name));
+	  jobject metadataList = this->get_field_metadata(*field, table_arg);
+	  this->java_map_insert(columnMap, string_to_java_string((*field)->field_name), metadataList);
   }
 
-  jmethodID create_table_method = this->env->GetStaticMethodID(adapter_class, "createTable", "(Ljava/lang/String;Ljava/util/List;)Z");
-  jboolean result = this->env->CallStaticBooleanMethod(adapter_class, create_table_method, string_to_java_string(table_name), columns);
+  jmethodID create_table_method = this->env->GetStaticMethodID(adapter_class, "createTable", "(Ljava/lang/String;Ljava/util/Map;)Z");
+  jboolean result = this->env->CallStaticBooleanMethod(adapter_class, create_table_method, string_to_java_string(table_name), columnMap);
   INFO(("Result of createTable: %d", result));
   this->print_java_exception(this->env);
 
+  this->jvm->DetachCurrentThread();
+
   DBUG_RETURN(0);
+}
+
+jobject CloudHandler::create_java_list()
+{
+	jclass list_class = this->env->FindClass("java/util/LinkedList");
+	jmethodID list_constructor = this->env->GetMethodID(list_class, "<init>", "()V");
+	return this->env->NewObject(list_class, list_constructor);
+}
+
+jobject CloudHandler::create_metadata_enum_object(const char *name)
+{
+  jclass metadata_class = this->env->FindClass("com/nearinfinity/mysqlengine/ColumnMetadata");
+  jfieldID enum_field = this->env->GetStaticFieldID(metadata_class, name, "Lcom/nearinfinity/mysqlengine/ColumnMetadata;");
+  jobject enum_object = this->env->GetStaticObjectField(metadata_class, enum_field);
+
+  return enum_object;
+}
+
+jobject CloudHandler::get_field_metadata(Field *field, TABLE *table_arg)
+{
+	jobject list = this->create_java_list();
+	hbase_data_type essentialType = this->extract_field_type(field);
+
+	switch (essentialType)
+	{
+	case JAVA_STRING:
+	  this->java_list_add(list, create_metadata_enum_object("STRING"));
+		break;
+	case JAVA_TIME:
+	  this->java_list_add(list, create_metadata_enum_object("TIME"));
+		break;
+	case JAVA_DOUBLE:
+	  this->java_list_add(list, create_metadata_enum_object("DOUBLE"));
+		break;
+	case JAVA_LONG:
+	  this->java_list_add(list, create_metadata_enum_object("LONG"));
+		break;
+	default:
+		break;
+	}
+
+	if (field->real_maybe_null())
+	{
+	  this->java_list_add(list, create_metadata_enum_object("IS_NULLABLE"));
+	}
+
+	if (strcmp(table_arg->s->key_info[table_arg->s->primary_key].key_part->field->field_name, field->field_name) == 0)
+	{
+	  this->java_list_add(list, create_metadata_enum_object("PRIMARY_KEY"));
+	}
+
+	return list;
+
+}
+
+void CloudHandler::java_list_add(jobject list, jobject obj)
+{
+	jclass list_class = this->env->FindClass("java/util/LinkedList");
+	jmethodID add_method = this->env->GetMethodID(list_class, "add", "(Ljava/lang/Object;)Z");
+
+	this->env->CallBooleanMethod(list, add_method, obj);
+}
+
+hbase_data_type CloudHandler::extract_field_type(Field *field)
+{
+	int fieldType = field->type();
+	hbase_data_type essentialType;
+
+	if (fieldType == MYSQL_TYPE_LONG
+	        || fieldType == MYSQL_TYPE_SHORT
+	        || fieldType == MYSQL_TYPE_TINY
+	        || fieldType == MYSQL_TYPE_LONGLONG
+	        || fieldType == MYSQL_TYPE_INT24
+	        || fieldType == MYSQL_TYPE_ENUM
+	        || fieldType == MYSQL_TYPE_YEAR)
+	{
+		essentialType = JAVA_LONG;
+	}
+	else if (fieldType == MYSQL_TYPE_DOUBLE
+             || fieldType == MYSQL_TYPE_FLOAT
+             || fieldType == MYSQL_TYPE_DECIMAL
+             || fieldType == MYSQL_TYPE_NEWDECIMAL)
+	{
+		essentialType = JAVA_DOUBLE;
+	}
+	else if (fieldType == MYSQL_TYPE_TIME
+			|| fieldType == MYSQL_TYPE_DATE
+			|| fieldType == MYSQL_TYPE_NEWDATE
+			|| fieldType == MYSQL_TYPE_DATETIME
+			|| fieldType == MYSQL_TYPE_TIMESTAMP)
+	{
+		essentialType = JAVA_TIME;
+	}
+	else if (fieldType == MYSQL_TYPE_VARCHAR
+            || fieldType == MYSQL_TYPE_STRING
+            || fieldType == MYSQL_TYPE_VAR_STRING
+            || fieldType == MYSQL_TYPE_BLOB
+            || fieldType == MYSQL_TYPE_TINY_BLOB
+            || fieldType == MYSQL_TYPE_MEDIUM_BLOB
+            || fieldType == MYSQL_TYPE_LONG_BLOB)
+	{
+		essentialType = JAVA_STRING;
+	}
+	else
+	{
+		essentialType = UNKNOWN_TYPE;
+	}
+
+	return essentialType;
 }
 
 THR_LOCK_DATA **CloudHandler::store_lock(THD *thd, THR_LOCK_DATA **to, enum thr_lock_type lock_type)
@@ -685,16 +800,10 @@ jobject CloudHandler::sql_to_java() {
       continue;
     }
 
-    int fieldType = field->type();
+    hbase_data_type fieldType = this->extract_field_type(field);
     uint actualFieldSize = field->field_length;
 
-    if (fieldType == MYSQL_TYPE_LONG
-        || fieldType == MYSQL_TYPE_SHORT
-        || fieldType == MYSQL_TYPE_TINY
-        || fieldType == MYSQL_TYPE_LONGLONG
-        || fieldType == MYSQL_TYPE_INT24
-        || fieldType == MYSQL_TYPE_ENUM
-        || fieldType == MYSQL_TYPE_YEAR)
+    if (fieldType == JAVA_LONG)
     {
       longlong field_value = field->val_int();
       if(this->is_little_endian())
@@ -705,10 +814,7 @@ jobject CloudHandler::sql_to_java() {
       actualFieldSize = sizeof(longlong);
       memcpy(rec_buffer->buffer, &field_value, sizeof(longlong));
     }
-    else if (fieldType == MYSQL_TYPE_DOUBLE
-             || fieldType == MYSQL_TYPE_FLOAT
-             || fieldType == MYSQL_TYPE_DECIMAL
-             || fieldType == MYSQL_TYPE_NEWDECIMAL)
+    else if (fieldType == JAVA_DOUBLE)
     {
       double field_value = field->val_real();
       actualFieldSize = sizeof(double);
@@ -719,16 +825,12 @@ jobject CloudHandler::sql_to_java() {
       }
       memcpy(rec_buffer->buffer, &field_value, sizeof(longlong));
     }
-	else if (fieldType == MYSQL_TYPE_TIME
-			|| fieldType == MYSQL_TYPE_DATE
-			|| fieldType == MYSQL_TYPE_NEWDATE
-			|| fieldType == MYSQL_TYPE_DATETIME
-			|| fieldType == MYSQL_TYPE_TIMESTAMP)
+	else if (fieldType == JAVA_TIME)
 	{
 		MYSQL_TIME mysql_time;
 		field->get_time(&mysql_time);
 
-		switch (fieldType)
+		switch (field->type())
 		{
 			case MYSQL_TYPE_DATE:
 			case MYSQL_TYPE_NEWDATE:
@@ -752,13 +854,7 @@ jobject CloudHandler::sql_to_java() {
 		actualFieldSize = strlen(timeString);
 		memcpy(rec_buffer->buffer, timeString, actualFieldSize);
 	}
-    else if (fieldType == MYSQL_TYPE_VARCHAR
-             || fieldType == MYSQL_TYPE_STRING
-             || fieldType == MYSQL_TYPE_VAR_STRING
-             || fieldType == MYSQL_TYPE_BLOB
-             || fieldType == MYSQL_TYPE_TINY_BLOB
-             || fieldType == MYSQL_TYPE_MEDIUM_BLOB
-             || fieldType == MYSQL_TYPE_LONG_BLOB)
+    else if (fieldType == JAVA_STRING)
     {
       field->val_str(&attribute);
       actualFieldSize = attribute.length();
@@ -796,7 +892,8 @@ jobject CloudHandler::create_java_map()
   return this->env->NewObject(map_class, constructor);
 }
 
-jobject CloudHandler::java_map_insert(jobject java_map, jstring key, jbyteArray value)
+jobject CloudHandler::java_map_insert(jobject java_map, jobject key, jobject value)
+//jobject CloudHandler::java_map_insert(jobject java_map, jstring key, jbyteArray value)
 {
   jclass map_class = this->env->FindClass("java/util/TreeMap");
   jmethodID put_method = this->env->GetMethodID(map_class, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
