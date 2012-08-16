@@ -1,14 +1,9 @@
 package com.nearinfinity.mysqlengine.jni;
 
-import com.nearinfinity.mysqlengine.Connection;
-import com.nearinfinity.mysqlengine.DataConnection;
-import com.nearinfinity.mysqlengine.HBaseClient;
-import com.nearinfinity.mysqlengine.IndexConnection;
-import com.sun.jersey.api.NotFoundException;
+import com.nearinfinity.mysqlengine.*;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.log4j.Logger;
-import org.omg.CosNaming.NamingContextPackage.NotFound;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -56,7 +51,6 @@ public class HBaseAdapter {
             try {
                 int cacheSize = Integer.parseInt(params.get("table_scan_cache_rows"));
                 client.setCacheSize(cacheSize);
-
             } catch (NumberFormatException e) {
                 logger.info("Static Initializer-> Number of rows to cache was not provided or invalid" +
                         " - using default of " + DEFAULT_NUM_CACHED_ROWS);
@@ -85,11 +79,11 @@ public class HBaseAdapter {
         return configured;
     }
 
-    public static boolean createTable(String tableName, List<String> columnNames) throws HBaseAdapterException {
-        logger.info("creatingTable-> tableName:" + tableName + ", columnName: " + columnNames.toString());
+    public static boolean createTable(String tableName, Map<String, List<ColumnMetadata>> columns) throws HBaseAdapterException {
+        logger.info("creatingTable-> tableName:" + tableName);
 
         try {
-            client.createTableFull(tableName, columnNames);
+            client.createTableFull(tableName, columns);
         } catch (Exception e) {
             logger.error("createTable-> Exception:", e);
             throw new HBaseAdapterException("createTable", e);
@@ -239,7 +233,7 @@ public class HBaseAdapter {
             Result result = client.getDataRow(rowUuid, tableName);
             if (result == null) {
                 logger.error("getRow-> Exception: Row not found");
-                throw new HBaseAdapterException("getRow", new NotFoundException());
+                throw new HBaseAdapterException("getRow", new Exception());
             }
 
             Map<String, byte[]> values = client.parseRow(result, conn.getTableName());
@@ -255,12 +249,8 @@ public class HBaseAdapter {
     }
 
     public static byte[] indexRead(long scanId, byte[] value, IndexReadType readType) throws HBaseAdapterException {
+        logger.info("Reading index with scanId " + scanId + " read type " + readType.name());
         logger.info("indexRead-> scanId: " + scanId + ", readType: " + readType.name());
-        StringBuilder sb = new StringBuilder();
-        for (byte b : value) {
-            sb.append(String.format("%02X ", b));
-        }
-        logger.info("\t\tIndex key: " + sb.toString());
         IndexConnection conn = (IndexConnection) getConnectionForId(scanId);
 
         byte[] unireg = null;
@@ -277,18 +267,19 @@ public class HBaseAdapter {
                     conn.setIndexScanner(indexScanner);
 
                     //Get the first row of the value
-                    Result result = conn.getNextIndexResult();
-                    if (result == null) {
+                    Result indexResult = conn.getNextIndexResult();
+                    if (indexResult == null) {
                         return unireg;
                     }
 
                     ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, value);
                     conn.setScanner(scanner);
                     //Get the first result to return
-                    Result valueIndexResult = conn.getNextResult();
-                    if (valueIndexResult == null) {
+                    Result result = conn.getNextResult();
+                    if (result == null) {
                         return unireg;
                     }
+
                     unireg = client.parseUniregFromIndex(result);
                 }
                 break;
@@ -297,25 +288,26 @@ public class HBaseAdapter {
                     conn.setIndexScanner(indexScanner);
 
                     //Get the first row of the value
-                    Result result = conn.getNextIndexResult();
-                    if (result == null) {
+                    Result indexResult = conn.getNextIndexResult();
+                    if (indexResult == null) {
                         return unireg;
                     }
 
-                    byte[] indexValue = client.parseValueFromSecondaryIndexRow(result);
-                    if (Arrays.equals(value, indexValue)) {
+                    byte[] nextValue = client.parseValueFromSecondaryIndexRow(indexResult);
+                    if (Arrays.equals(value, nextValue)) {
                         //Get the next index result
                         Result nextResult = conn.getNextIndexResult();
                         if (nextResult == null) {
                             return unireg;
                         }
+                        nextValue = client.parseValueFromSecondaryIndexRow(nextResult);
                     }
 
-                    ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, value);
+                    ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, nextValue);
                     conn.setScanner(scanner);
                     //Get the first result to return
-                    Result valueIndexResult = conn.getNextResult();
-                    if (valueIndexResult == null) {
+                    Result result = conn.getNextResult();
+                    if (result == null) {
                         return unireg;
                     }
                     unireg = client.parseUniregFromIndex(result);
@@ -326,16 +318,17 @@ public class HBaseAdapter {
                     conn.setIndexScanner(indexScanner);
 
                     //Get the first row of the value
-                    Result result = conn.getNextIndexResult();
-                    if (result == null) {
+                    Result indexResult = conn.getNextIndexResult();
+                    if (indexResult == null) {
                         return unireg;
                     }
 
                     ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, value);
                     conn.setScanner(scanner);
+
                     //Get the first result to return
-                    Result valueIndexResult = conn.getNextResult();
-                    if (valueIndexResult == null) {
+                    Result result = conn.getNextResult();
+                    if (result == null) {
                         return unireg;
                     }
                     unireg = client.parseUniregFromIndex(result);
@@ -346,12 +339,12 @@ public class HBaseAdapter {
                     conn.setIndexScanner(indexScanner);
 
                     //Get the first row of the value
-                    Result result = conn.getNextIndexResult();
-                    if (result == null) {
+                    Result indexResult = conn.getNextIndexResult();
+                    if (indexResult == null) {
                         return unireg;
                     }
 
-                    byte[] indexValue = client.parseValueFromReverseIndexRow(result);
+                    byte[] indexValue = client.parseValueFromReverseIndexRow(indexResult);
                     if (Arrays.equals(value, indexValue)) {
                         //Get the next index result
                         Result nextResult = conn.getNextIndexResult();
@@ -362,9 +355,10 @@ public class HBaseAdapter {
 
                     ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, value);
                     conn.setScanner(scanner);
+
                     //Get the first result to return
-                    Result valueIndexResult = conn.getNextResult();
-                    if (valueIndexResult == null) {
+                    Result result = conn.getNextResult();
+                    if (result == null) {
                         return unireg;
                     }
                     unireg = client.parseUniregFromIndex(result);
@@ -375,8 +369,8 @@ public class HBaseAdapter {
                     conn.setIndexScanner(indexScanner);
 
                     //Get the first row of the value
-                    Result result = conn.getNextIndexResult();
-                    if (result == null) {
+                    Result indexResult = conn.getNextIndexResult();
+                    if (indexResult == null) {
                         return unireg;
                     }
 
@@ -384,8 +378,54 @@ public class HBaseAdapter {
                     conn.setScanner(scanner);
 
                     //Get the first result to return
-                    Result valueIndexResult = conn.getNextResult();
-                    if (valueIndexResult == null) {
+                    Result result = conn.getNextResult();
+                    if (result == null) {
+                        return unireg;
+                    }
+                    unireg = client.parseUniregFromIndex(result);
+                }
+                break;
+                case INDEX_FIRST: {
+                    ResultScanner indexScanner = client.getSecondaryIndexScannerFull(tableName, columnName);
+                    conn.setIndexScanner(indexScanner);
+
+                    //Get the first row of the value
+                    Result indexResult = conn.getNextIndexResult();
+                    if (indexResult == null) {
+                        return unireg;
+                    }
+
+                    value = client.parseValueFromSecondaryIndexRow(indexResult);
+
+                    ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, value);
+                    conn.setScanner(scanner);
+
+                    //Get the first result to return
+                    Result result = conn.getNextResult();
+                    if (result == null) {
+                        return unireg;
+                    }
+                    unireg = client.parseUniregFromIndex(result);
+                }
+                break;
+                case INDEX_LAST: {
+                    ResultScanner indexScanner = client.getReverseIndexScannerFull(tableName, columnName);
+                    conn.setIndexScanner(indexScanner);
+
+                    //Get the first row of the value
+                    Result indexResult = conn.getNextIndexResult();
+                    if (indexResult == null) {
+                        return unireg;
+                    }
+
+                    value = client.parseValueFromReverseIndexRow(indexResult);
+
+                    ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, value);
+                    conn.setScanner(scanner);
+
+                    //Get the first result to return
+                    Result result = conn.getNextResult();
+                    if (result == null) {
                         return unireg;
                     }
                     unireg = client.parseUniregFromIndex(result);
@@ -413,6 +453,7 @@ public class HBaseAdapter {
 
             Result result = conn.getNextResult();
             while (result == null) {
+
                 //Get the first row of the value
                 Result indexResult = conn.getNextIndexResult();
                 if (indexResult == null) {
@@ -421,11 +462,13 @@ public class HBaseAdapter {
 
                 byte[] value = null;
                 switch (conn.getReadType()) {
+                    case INDEX_FIRST:
                     case HA_READ_AFTER_KEY:
                     case HA_READ_KEY_OR_NEXT: {
                         value = client.parseValueFromSecondaryIndexRow(indexResult);
                     }
                     break;
+                    case INDEX_LAST:
                     case HA_READ_BEFORE_KEY:
                     case HA_READ_KEY_OR_PREV: {
                         value = client.parseValueFromReverseIndexRow(indexResult);

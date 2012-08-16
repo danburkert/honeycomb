@@ -1,5 +1,8 @@
 package com.nearinfinity.mysqlengine;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created with IntelliJ IDEA.
  * User: jedstrom
@@ -10,9 +13,11 @@ package com.nearinfinity.mysqlengine;
 public class ColumnInfo {
     private long id;
     private String name;
-    public ColumnInfo(long id, String name) {
+    private ArrayList<ColumnMetadata> metadata;
+    public ColumnInfo(long id, String name, List<ColumnMetadata> metadata) {
         this.id = id;
         this.name = name;
+        this.metadata = new ArrayList<ColumnMetadata>(metadata);
     }
 
     public long getId() {
@@ -21,5 +26,9 @@ public class ColumnInfo {
 
     public String getName() {
         return this.name;
+    }
+
+    public ArrayList<ColumnMetadata> getMetadata() {
+        return this.metadata;
     }
 }
