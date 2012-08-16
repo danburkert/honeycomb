@@ -55,8 +55,7 @@ public class HBaseAdapter {
                 int cacheSize = Integer.parseInt(params.get("table_scan_cache_rows"));
                 client.setCacheSize(cacheSize);
 
-            }
-            catch (NumberFormatException e) {
+            } catch (NumberFormatException e) {
                 logger.info("Number of rows to cache was not provided or invalid - using default of " + DEFAULT_NUM_CACHED_ROWS);
                 client.setCacheSize(DEFAULT_NUM_CACHED_ROWS);
             }
@@ -64,8 +63,7 @@ public class HBaseAdapter {
             try {
                 long writeBufferSize = Long.parseLong(params.get("write_buffer_size"));
                 client.setWriteBufferSize(writeBufferSize);
-            }
-            catch (NumberFormatException e) {
+            } catch (NumberFormatException e) {
                 logger.info("Write buffer size was not provided or invalid - using default of " + DEFAULT_WRITE_BUFFER_SIZE);
                 client.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
             }
@@ -204,7 +202,7 @@ public class HBaseAdapter {
         try {
             deleted = client.deleteAllRows(tableName);
         } catch (IOException e) {
-            logger.error("Exception thrown in deleteAllRows()",  e);
+            logger.error("Exception thrown in deleteAllRows()", e);
             throw new HBaseAdapterException("deleteAllRows", e);
         }
 
@@ -254,14 +252,19 @@ public class HBaseAdapter {
     }
 
     public static byte[] indexRead(long scanId, byte[] value, IndexReadType readType) throws HBaseAdapterException {
-        logger.info("Reading index with scanId " + scanId);
-
-        IndexConnection conn = (IndexConnection)getConnectionForId(scanId);
+        logger.info("Reading index with scanId " + scanId + " read type " + readType.name());
+        StringBuilder sb = new StringBuilder();
+        for (byte b : value) {
+            sb.append(String.format("%02X ", b));
+        }
+        logger.info("Index key " + sb.toString());
+        IndexConnection conn = (IndexConnection) getConnectionForId(scanId);
 
         byte[] unireg = null;
         try {
             String tableName = conn.getTableName();
             String columnName = conn.getColumnName();
+            logger.info("Index read table " + tableName + " column name " + columnName);
 
             conn.setReadType(readType);
 
@@ -284,7 +287,8 @@ public class HBaseAdapter {
                         return unireg;
                     }
                     unireg = client.parseUniregFromIndex(result);
-                } break;
+                }
+                break;
                 case HA_READ_AFTER_KEY: {
                     ResultScanner indexScanner = client.getSecondaryIndexScanner(tableName, columnName, value);
                     conn.setIndexScanner(indexScanner);
@@ -312,7 +316,8 @@ public class HBaseAdapter {
                         return unireg;
                     }
                     unireg = client.parseUniregFromIndex(result);
-                } break;
+                }
+                break;
                 case HA_READ_KEY_OR_NEXT: {
                     ResultScanner indexScanner = client.getSecondaryIndexScanner(tableName, columnName, value);
                     conn.setIndexScanner(indexScanner);
@@ -331,7 +336,8 @@ public class HBaseAdapter {
                         return unireg;
                     }
                     unireg = client.parseUniregFromIndex(result);
-                } break;
+                }
+                break;
                 case HA_READ_BEFORE_KEY: {
                     ResultScanner indexScanner = client.getReverseIndexScanner(tableName, columnName, value);
                     conn.setIndexScanner(indexScanner);
@@ -359,7 +365,8 @@ public class HBaseAdapter {
                         return unireg;
                     }
                     unireg = client.parseUniregFromIndex(result);
-                } break;
+                }
+                break;
                 case HA_READ_KEY_OR_PREV: {
                     ResultScanner indexScanner = client.getReverseIndexScanner(tableName, columnName, value);
                     conn.setIndexScanner(indexScanner);
@@ -379,10 +386,10 @@ public class HBaseAdapter {
                         return unireg;
                     }
                     unireg = client.parseUniregFromIndex(result);
-                } break;
+                }
+                break;
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.error("Exception thrown in indexRead()", e);
             throw new HBaseAdapterException("indexRead", e);
         }
@@ -393,7 +400,7 @@ public class HBaseAdapter {
     public static byte[] nextIndexRow(long scanId) throws HBaseAdapterException {
         logger.info("nextIndexRow called with scanId " + scanId);
 
-        IndexConnection conn = (IndexConnection)getConnectionForId(scanId);
+        IndexConnection conn = (IndexConnection) getConnectionForId(scanId);
         long start = System.currentTimeMillis();
 
         byte[] unireg = null;
@@ -414,7 +421,8 @@ public class HBaseAdapter {
                     case HA_READ_AFTER_KEY:
                     case HA_READ_KEY_OR_NEXT: {
                         value = client.parseValueFromSecondaryIndexRow(indexResult);
-                    } break;
+                    }
+                    break;
                     case HA_READ_BEFORE_KEY:
                     case HA_READ_KEY_OR_PREV: {
                         value = client.parseValueFromReverseIndexRow(indexResult);
