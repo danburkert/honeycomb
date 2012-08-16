@@ -1017,8 +1017,34 @@ void CloudHandler::unpack_index(uchar* buf, jbyteArray uniReg)
 
 int CloudHandler::index_prev(uchar *buf)
 {
+  int rc = 0;
+  my_bitmap_map *orig_bitmap;
+
   DBUG_ENTER("CloudHandler::index_prev");
-  DBUG_RETURN(HA_ERR_WRONG_COMMAND);
+
+  orig_bitmap= dbug_tmp_use_all_columns(table, table->write_set);
+
+  MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, TRUE);
+
+  jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
+  jmethodID index_next_method = this->env->GetStaticMethodID(adapter_class, "nextIndexRow", "(J)[B");
+  jlong java_scan_id = this->curr_scan_id;
+  jobject result = this->env->CallStaticObjectMethod(adapter_class, index_next_method, java_scan_id);
+  jbyteArray uniReg = (jbyteArray)result;
+
+  if (uniReg == NULL)
+  {
+    dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
+    DBUG_RETURN(HA_ERR_END_OF_FILE);
+  }
+
+  this->unpack_index(buf, uniReg);
+
+  dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
+
+  MYSQL_READ_ROW_DONE(rc);
+
+  DBUG_RETURN(rc);
 }
 
 int CloudHandler::index_first(uchar *buf)

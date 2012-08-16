@@ -196,7 +196,7 @@ private:
 
       ulong index_flags(uint inx, uint part, bool all_parts) const
       {
-        return HA_READ_NEXT | HA_READ_ORDER | HA_READ_RANGE;
+        return HA_READ_NEXT | HA_READ_ORDER | HA_READ_RANGE | HA_READ_PREV;
       }
 
       uint max_supported_record_length() const 
