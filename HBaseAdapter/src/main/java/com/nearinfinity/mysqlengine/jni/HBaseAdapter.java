@@ -7,6 +7,7 @@ import com.nearinfinity.mysqlengine.IndexConnection;
 import com.sun.xml.internal.rngom.ast.om.ParsedElementAnnotation;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -297,16 +298,17 @@ public class HBaseAdapter {
                         return unireg;
                     }
 
-                    byte[] indexValue = client.parseValueFromSecondaryIndexRow(indexResult);
-                    if (Arrays.equals(value, indexValue)) {
+                    byte[] nextValue = client.parseValueFromSecondaryIndexRow(indexResult);
+                    if (Arrays.equals(value, nextValue)) {
                         //Get the next index result
                         Result nextResult = conn.getNextIndexResult();
                         if (nextResult == null) {
                             return unireg;
                         }
+                        nextValue = client.parseValueFromSecondaryIndexRow(nextResult);
                     }
 
-                    ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, value);
+                    ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, nextValue);
                     conn.setScanner(scanner);
                     //Get the first result to return
                     Result result = conn.getNextResult();
@@ -410,7 +412,6 @@ public class HBaseAdapter {
 
             Result result = conn.getNextResult();
             while (result == null) {
-                logger.info("Got a null result, attempting to go to next index");
 
                 //Get the first row of the value
                 Result indexResult = conn.getNextIndexResult();
@@ -423,7 +424,6 @@ public class HBaseAdapter {
                     case HA_READ_AFTER_KEY:
                     case HA_READ_KEY_OR_NEXT: {
                         value = client.parseValueFromSecondaryIndexRow(indexResult);
-                        logger.info("Parsed value of length " + value.length + " from indexResult");
                     }
                     break;
                     case HA_READ_BEFORE_KEY:
