@@ -16,6 +16,8 @@ public class RowKeyFactory {
                                             .put("TABLES".getBytes())
                                             .array();
 
+    private static final byte BYTE_MASK = (byte) 0x000000ff;
+
     public static byte[] buildColumnsKey(long tableId) {
         return ByteBuffer.allocate(9)
                 .put(RowType.COLUMNS.getValue())
@@ -52,13 +54,55 @@ public class RowKeyFactory {
                 .array();
     }
 
-//    public static byte[] buildReverseIndexKey(long tableId, long columnId, byte[] value) {
-//        byte[] reverseValue = reverseValue(value);
-//    }
-//
-//    private static byte[] reverseValue(byte[] value) {
-//        ByteBuffer buffer = ByteBuffer.allocate(value.length);
-//
-//        return buffer.array();
-//    }
+    public static byte[] buildReverseIndexKey(long tableId, long columnId, byte[] value) {
+        byte[] reverseValue = reverseValue(value);
+        return ByteBuffer.allocate(17 + value.length)
+                .put(RowType.REVERSE_INDEX.getValue())
+                .putLong(tableId)
+                .putLong(columnId)
+                .put(reverseValue)
+                .array();
+    }
+
+    public static byte[] parseValueFromReverseIndexKey(byte[] reverseIndexKey) {
+        ByteBuffer buffer = ByteBuffer.wrap(reverseIndexKey, 17, reverseIndexKey.length - 17);
+        byte[] actualValue = reverseValue(buffer.array());
+        return actualValue;
+    }
+
+    private static byte[] reverseValue(byte[] value) {
+        ByteBuffer buffer = ByteBuffer.allocate(value.length);
+
+        for (int i = 0 ; i < value.length ; i++) {
+            buffer.put((byte) (BYTE_MASK ^ value[i]));
+        }
+
+        return buffer.array();
+    }
+
+    public static byte[] buildNullIndexKey(long tableId, long columnId, UUID uuid) {
+        return ByteBuffer.allocate(33)
+                .put(RowType.NULL_INDEX.getValue())
+                .putLong(tableId)
+                .putLong(columnId)
+                .putLong(uuid.getMostSignificantBits())
+                .putLong(uuid.getLeastSignificantBits())
+                .array();
+    }
+
+    public static byte[] positionOfLong(long n) {
+        final long BITMASK = 0x8000000000000000L;
+        return ByteBuffer.allocate(8).putLong(n ^ BITMASK).array();
+    }
+
+    public static byte[] positionOfDouble(double n) {
+        long bits = Double.doubleToLongBits(n);
+        final long BITMASK;
+        if(n < 0) {
+            BITMASK = 0xFFFFFFFFFFFFFFFFL;
+        } else {
+            BITMASK = 0x8000000000000000L;
+        }
+        return ByteBuffer.allocate(8).putLong(bits ^ BITMASK).array();
+    }
 }
