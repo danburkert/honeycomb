@@ -19,6 +19,8 @@ typedef struct st_record_buffer {
   uint32 length;
 } record_buffer;
 
+enum hbase_data_type { UNKNOWN_TYPE, JAVA_STRING, JAVA_LONG, JAVA_DOUBLE, JAVA_TIME };
+
 class CloudHandler : public handler
 {
 private:
@@ -45,10 +47,12 @@ private:
     const char* java_to_string(jstring str);
     jstring string_to_java_string(const char*);
     jobject create_java_map();
-    jobject java_map_insert(jobject java_map, jstring key, jbyteArray value);
+    jobject java_map_insert(jobject java_map, jobject key, jobject value);
     jbyteArray java_map_get(jobject java_map, jstring key);
     jboolean java_map_is_empty(jobject java_map);
     jbyteArray convert_value_to_java_bytes(uchar* value, uint32 length);
+    jobject get_field_metadata(Field *field, TABLE *table_arg);
+    hbase_data_type extract_field_type(Field *field);
     void java_to_sql(uchar *buf, jobject row_map);
     int delete_row_helper();
     int write_row_helper(uchar* buf);
@@ -60,6 +64,9 @@ private:
     int delete_table(const char *name);
     void drop_table(const char *name);
     int truncate();
+    jobject create_java_list();
+    void java_list_add(jobject list, jobject obj);
+    jobject create_metadata_enum_object(const char *name);
 
     void reverse_bytes(uchar *begin, uint length)
     {
@@ -101,38 +108,8 @@ private:
           || field_type == MYSQL_TYPE_YEAR);
     }
 
-    longlong htonll(longlong src, bool check_endian = true) {
-      const int TYP_INIT = 0;
-      const int TYP_SMLE = 1;
-      const int TYP_BIGE = 2;
-
-      static int typ = TYP_INIT;
-      unsigned char c;
-      union {
-        longlong ull;
-        unsigned char c[8];
-      } x;
-
-      if (check_endian)
-      {
-        if (typ == TYP_INIT) {
-          x.ull = 0x01;
-          typ = (x.c[7] == 0x01ULL) ? TYP_BIGE : TYP_SMLE;
-        }
-        if (typ == TYP_BIGE)
-          return src;
-      }
-
-      x.ull = src;
-      c = x.c[0]; x.c[0] = x.c[7]; x.c[7] = c;
-      c = x.c[1]; x.c[1] = x.c[6]; x.c[6] = c;
-      c = x.c[2]; x.c[2] = x.c[5]; x.c[5] = c;
-      c = x.c[3]; x.c[3] = x.c[4]; x.c[4] = c;
-
-      return x.ull;
-    }
-
-    void extract_table_name_from_path(const char *path, const char *&dest)
+    // For those annoying times when you need the table name but actually have its file path
+    const char *extract_table_name_from_path(const char *path)
     {
     	const char *ptr = path + strlen(path);
 
@@ -141,7 +118,7 @@ private:
     		ptr--;
     	}
 
-    	dest = ptr;
+    	return ptr;
     }
 
     void print_java_exception(JNIEnv* jni_env)
@@ -200,7 +177,7 @@ private:
 
       ulong index_flags(uint inx, uint part, bool all_parts) const
       {
-        return HA_READ_NEXT | HA_READ_ORDER | HA_READ_RANGE;
+        return HA_READ_NEXT | HA_READ_ORDER | HA_READ_RANGE | HA_READ_PREV;
       }
 
       uint max_supported_record_length() const 
@@ -252,6 +229,7 @@ private:
       int rnd_end();
       void start_bulk_insert(ha_rows rows);
       int end_bulk_insert();
+      // ha_rows records_in_range(uint keynr, key_range* min_key, key_range* max_key);
 };
 
 #endif

@@ -47,7 +47,12 @@ public class IndexConnection implements Connection {
     }
 
     public void close() {
-        this.scanner.close();
+        if (this.scanner != null) {
+            this.scanner.close();
+        }
+        if (this.indexScanner != null) {
+            this.indexScanner.close();
+        }
     }
 
     public String getColumnName() {
@@ -55,10 +60,16 @@ public class IndexConnection implements Connection {
     }
 
     public void setScanner(ResultScanner scanner) {
+        if (this.scanner != null) {
+            this.scanner.close();
+        }
         this.scanner = scanner;
     }
 
     public void setIndexScanner(ResultScanner indexScanner) {
+        if (this.indexScanner != null) {
+            this.indexScanner.close();
+        }
         this.indexScanner = indexScanner;
     }
 
