@@ -114,7 +114,7 @@ public class HBaseClient {
         tableCache.put(tableName, new TableInfo(tableName, tableId));
     }
 
-    private void addColumns(String tableName, List<String> columns, List<Put> puts) throws IOException {
+    private void addColumns(String tableName, Map<String, List<ColumnMetadata>> columns, List<Put> puts) throws IOException {
         //Get table id from cache
         long tableId = tableCache.get(tableName).getId();
 
@@ -126,19 +126,29 @@ public class HBaseClient {
         long lastColumnId = table.incrementColumnValue(columnBytes, NIC, new byte[0], numColumns);
         long startColumn = lastColumnId - numColumns;
 
-        for (String columnName : columns) {
+        for (String columnName : columns.keySet()) {
             long columnId = ++startColumn;
 
-            //Add put
+            //Add column
             Put columnPut = new Put(columnBytes).add(NIC, columnName.getBytes(), Bytes.toBytes(columnId));
             puts.add(columnPut);
 
+            // Add column metadata
+            byte[] columnInfoBytes = RowKeyFactory.buildColumnInfoKey(tableId, columnId);
+            Put columnInfoPut = new Put(columnInfoBytes);
+
+            for (ColumnMetadata meta : columns.get(columnName)) {
+                columnInfoPut.add(NIC, meta.getValue(), columnName.getBytes());
+            }
+
+            puts.add(columnInfoPut);
+
             //Add to cache
-            tableCache.get(tableName).addColumn(columnName, columnId);
+            tableCache.get(tableName).addColumn(columnName, columnId, columns.get(columnName));
         }
     }
 
-    public void createTableFull(String tableName, List<String> columns) throws IOException {
+    public void createTableFull(String tableName, Map<String, List<ColumnMetadata>> columns) throws IOException {
         logger.info("HBaseClient: createTableFull");
         //Batch put list
         List<Put> putList = new LinkedList<Put>();
@@ -186,6 +196,10 @@ public class HBaseClient {
         boolean allRowsNull = true;
 
         for (String columnName : values.keySet()) {
+
+            // TODO: Add insertion of column info rows here
+            // TODO: How the fuck do we determine what type of data it is!?
+
             //Get column id and value
             long columnId = getTableInfo(tableName).getColumnIdByName(columnName);
             byte[] value = values.get(columnName);
@@ -364,10 +378,33 @@ public class HBaseClient {
         for (byte[] qualifier : columns.keySet()) {
             String columnName = new String(qualifier);
             long columnId = ByteBuffer.wrap(columns.get(qualifier)).getLong();
-            info.addColumn(columnName, columnId);
+            info.addColumn(columnName, columnId, getMetadataForColumn(tableId, columnId));
         }
 
         return info;
+    }
+
+    public List<ColumnMetadata> getMetadataForColumn(long tableId, long columnId) throws IOException {
+        ArrayList<ColumnMetadata> metadataList = new ArrayList<ColumnMetadata>();
+
+        Get metadataGet = new Get(RowKeyFactory.buildColumnInfoKey(tableId, columnId));
+        Result result = table.get(metadataGet);
+
+        Map<byte[], byte[]> metadata = result.getFamilyMap(NIC);
+        for (byte[] qualifier : metadata.keySet()) {
+            // Only the qualifier matters for column metadata - value is not important
+            String metadataString = new String(qualifier).toUpperCase();
+            ColumnMetadata metaDataItem;
+
+            try {
+                metaDataItem = ColumnMetadata.valueOf(metadataString);
+                metadataList.add(metaDataItem);
+            } catch (IllegalArgumentException e) {
+
+            }
+        }
+
+        return metadataList;
     }
 
     public Map<String, byte[]> parseRow(Result result, String tableName) throws IOException {
@@ -410,10 +447,12 @@ public class HBaseClient {
 
     public boolean dropTable(String tableName) throws IOException {
         logger.info("Preparing to drop table " + tableName);
-        long tableId = getTableInfo(tableName).getId();
+        TableInfo info = getTableInfo(tableName);
+        long tableId = info.getId();
 
         deleteIndexRows(tableId);
         deleteDataRows(tableId);
+        deleteColumnInfoRows(info);
         deleteColumns(tableId);
         deleteTableFromRoot(tableName);
 
@@ -440,6 +479,7 @@ public class HBaseClient {
     }
 
     public int deleteColumns(long tableId) throws IOException {
+        // TODO: Update this to delete column info rows when they are done
         logger.info("Deleting all columns");
         byte[] prefix = ByteBuffer.allocate(9).put(RowType.COLUMNS.getValue()).putLong(tableId).array();
         return deleteRowsWithPrefix(prefix);
@@ -459,6 +499,20 @@ public class HBaseClient {
         affectedRows += deleteRowsWithPrefix(secondaryPrefix);
         affectedRows += deleteRowsWithPrefix(reversePrefix);
         affectedRows += deleteRowsWithPrefix(nullPrefix);
+
+        return affectedRows;
+    }
+
+    public int deleteColumnInfoRows (TableInfo info) throws IOException {
+        logger.info("Deleting all column metadata rows");
+
+        long tableId = info.getId();
+        int affectedRows = 0;
+
+        for (Long columnId : info.getColumnIds()) {
+            byte[] metadataKey = RowKeyFactory.buildColumnInfoKey(tableId, columnId);
+            affectedRows += deleteRowsWithPrefix(metadataKey);
+        }
 
         return affectedRows;
     }
@@ -610,6 +664,19 @@ public class HBaseClient {
         return table.getScanner(scan);
     }
 
+    public ResultScanner getSecondaryIndexScannerFull(String tableName, String columnName) throws IOException {
+        TableInfo info = getTableInfo(tableName);
+        long tableId = info.getId();
+        long columnId = info.getColumnIdByName(columnName);
+
+        byte[] startKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId, new byte[0]);
+        byte[] endKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId+1, new byte[0]);
+
+        Scan scan = new Scan(startKey, endKey);
+
+        return table.getScanner(scan);
+    }
+
     public ResultScanner getSecondaryIndexScannerExact(String tableName, String columnName, byte[] value) throws IOException {
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
@@ -637,7 +704,20 @@ public class HBaseClient {
         long columnId = info.getColumnIdByName(columnName);
 
         byte[] startKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId, value);
-        byte[] endKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId+1, value);
+        byte[] endKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId+1, new byte[0]);
+
+        Scan scan = new Scan(startKey, endKey);
+
+        return table.getScanner(scan);
+    }
+
+    public ResultScanner getReverseIndexScannerFull(String tableName, String columnName) throws IOException {
+        TableInfo info = getTableInfo(tableName);
+        long tableId = info.getId();
+        long columnId = info.getColumnIdByName(columnName);
+
+        byte[] startKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId, new byte[0]);
+        byte[] endKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId+1, new byte[0]);
 
         Scan scan = new Scan(startKey, endKey);
 
