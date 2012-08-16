@@ -42,7 +42,7 @@ public class HBaseClient {
 
     private static final UUID ZERO_UUID = new UUID(0L, 0L);
 
-    private static final UUID FULL_UUID = UUID.fromString("ffffffffffff-ffff-ffff-ffff-fffffffffffffffff");
+    private static final UUID FULL_UUID = UUID.fromString("ffffffff-ffff-ffff-ffff-ffffffffffff");
 
     private int cacheSize = 10;
 
@@ -187,7 +187,7 @@ public class HBaseClient {
             indexValue = unireg;
         }
 
-        boolean all_null = true;
+        boolean allRowsNull = true;
 
         for (String columnName : values.keySet()) {
             //Get column id and value
@@ -199,7 +199,7 @@ public class HBaseClient {
                 byte[] nullIndexRow = RowKeyFactory.buildNullIndexKey(tableId, columnId, rowId);
                 putList.add(new Put(nullIndexRow).add(NIC, new byte[0], new byte[0]));
             } else {
-                all_null = false;
+                allRowsNull = false;
                 // Add data column to put
                 dataRow.add(NIC, Bytes.toBytes(columnId), value);
 
@@ -217,7 +217,7 @@ public class HBaseClient {
             }
         }
 
-        if(all_null) {
+        if(allRowsNull) {
             // Add special []->[] data row to signify a row of all null values
             putList.add(dataRow.add(NIC, new byte[0], new byte[0]));
         }
