@@ -40,8 +40,6 @@ public class HBaseClient {
 
     private static final UUID FULL_UUID = UUID.fromString("ffffffff-ffff-ffff-ffff-ffffffffffff");
 
-    private int cacheSize = 10;
-
     private final ConcurrentHashMap<String, TableInfo> tableCache = new ConcurrentHashMap<String, TableInfo>();
 
     private static final Logger logger = Logger.getLogger(HBaseClient.class);
@@ -250,7 +248,7 @@ public class HBaseClient {
         byte[] startRow = RowKeyFactory.buildDataKey(tableId, ZERO_UUID);
         byte[] endRow = RowKeyFactory.buildDataKey(tableId + 1, ZERO_UUID);
 
-        Scan scan = new Scan(startRow, endRow);
+        Scan scan = ScanFactory.buildScan(startRow, endRow);
 
         //Scan all rows in HBase
         List<Map<String, byte[]>> rows = new LinkedList<Map<String, byte[]>>();
@@ -292,7 +290,7 @@ public class HBaseClient {
         byte[] startRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, ZERO_UUID);
         byte[] endRow = RowKeyFactory.buildValueIndexKey(tableId, columnId + 1, value, ZERO_UUID);
 
-        Scan scan = new Scan(startRow, endRow);
+        Scan scan = ScanFactory.buildScan(startRow, endRow);
 
         return table.getScanner(scan);
     }
@@ -306,13 +304,7 @@ public class HBaseClient {
         byte[] startRow = RowKeyFactory.buildDataKey(tableId, ZERO_UUID);
         byte[] endRow = RowKeyFactory.buildDataKey(tableId + 1, ZERO_UUID);
 
-        Scan scan = new Scan(startRow, endRow);
-
-        //Set the caching for the scan
-        int rowsToCacheForScan = isFullTableScan ? this.cacheSize : 10;
-        logger.info("Starting scan with cache size " + rowsToCacheForScan);
-        scan.setCaching(rowsToCacheForScan);
-
+        Scan scan = ScanFactory.buildScan(startRow, endRow);
         //Exclude deleted values
         SingleColumnValueFilter filter = new SingleColumnValueFilter(NIC, IS_DELETED, CompareFilter.CompareOp.NOT_EQUAL, DELETED_VAL);
         scan.setFilter(filter);
@@ -330,7 +322,7 @@ public class HBaseClient {
         byte[] startRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, new byte[0], ZERO_UUID);
         byte[] endRow = RowKeyFactory.buildValueIndexKey(tableId, columnId + 1, new byte[0], ZERO_UUID);
 
-        Scan scan = new Scan(startRow, endRow);
+        Scan scan = ScanFactory.buildScan(startRow, endRow);
 
         return table.getScanner(scan);
     }
@@ -345,7 +337,7 @@ public class HBaseClient {
         byte[] startRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, ZERO_UUID);
         byte[] endRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, FULL_UUID);
 
-        Scan scan = new Scan();
+        Scan scan = ScanFactory.buildScan();
         scan.addColumn(NIC, UNIREG);
         scan.setStartRow(startRow);
 
@@ -519,7 +511,7 @@ public class HBaseClient {
 
     public int deleteRowsWithPrefix(byte[] prefix) throws IOException
     {
-        Scan scan = new Scan();
+        Scan scan = ScanFactory.buildScan();
         PrefixFilter filter = new PrefixFilter(prefix);
         scan.setFilter(filter);
 
@@ -600,7 +592,7 @@ public class HBaseClient {
     public void setCacheSize(int cacheSize)
     {
         logger.info("Setting table scan row cache to " + cacheSize);
-        this.cacheSize = cacheSize;
+        ScanFactory.setCacheAmount(cacheSize);
     }
 
     public UUID parseUUIDFromIndexRow(Result result) {
@@ -659,7 +651,7 @@ public class HBaseClient {
         byte[] startKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId, value);
         byte[] endKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId+1, new byte[0]);
 
-        Scan scan = new Scan(startKey, endKey);
+        Scan scan = ScanFactory.buildScan(startKey, endKey);
 
         return table.getScanner(scan);
     }
@@ -672,7 +664,7 @@ public class HBaseClient {
         byte[] startKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId, new byte[0]);
         byte[] endKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId+1, new byte[0]);
 
-        Scan scan = new Scan(startKey, endKey);
+        Scan scan = ScanFactory.buildScan(startKey, endKey);
 
         return table.getScanner(scan);
     }
@@ -685,7 +677,7 @@ public class HBaseClient {
         byte[] startKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId, value);
         byte[] endKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId+1, new byte[0]);
 
-        Scan scan = new Scan(startKey, endKey);
+        Scan scan = ScanFactory.buildScan(startKey, endKey);
 
         RowFilter filter = new RowFilter(CompareFilter.CompareOp.EQUAL, new BinaryComparator(startKey));
         scan.setFilter(filter);
@@ -706,7 +698,7 @@ public class HBaseClient {
         byte[] startKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId, value);
         byte[] endKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId+1, new byte[0]);
 
-        Scan scan = new Scan(startKey, endKey);
+        Scan scan = ScanFactory.buildScan(startKey, endKey);
 
         return table.getScanner(scan);
     }
@@ -719,7 +711,7 @@ public class HBaseClient {
         byte[] startKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId, new byte[0]);
         byte[] endKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId+1, new byte[0]);
 
-        Scan scan = new Scan(startKey, endKey);
+        Scan scan = ScanFactory.buildScan(startKey, endKey);
 
         return table.getScanner(scan);
     }
