@@ -952,7 +952,7 @@ int CloudHandler::index_init(uint idx, bool sorted)
   this->active_index = idx;
   
   const char* table_name = this->table->alias;
-  const char* column_name = this->table->s->key_info[idx].name;
+  const char* column_name = this->table->s->key_info[idx].key_part->field->field_name;
   for (Field **field_ptr=table->field; *field_ptr; field_ptr++)
   {
     Field * field = *field_ptr;
