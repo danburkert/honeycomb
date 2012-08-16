@@ -1,6 +1,8 @@
 package com.nearinfinity.mysqlengine;
 
 import org.apache.hadoop.hbase.filter.FilterBase;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.log4j.Logger;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -19,6 +21,8 @@ public class ExactValueFilter extends FilterBase {
 
     private byte[] value;
 
+    private static final Logger logger = Logger.getLogger(ExactValueFilter.class);
+
     public ExactValueFilter() {
         super();
     }
@@ -29,22 +33,31 @@ public class ExactValueFilter extends FilterBase {
 
     @Override
     public boolean filterRowKey(byte[] buffer, int offset, int length) {
-        byte[] rowKey = ByteBuffer.wrap(buffer, offset, length).array();
+        byte[] rowKey = wrapAndGet(buffer, offset, length);
         byte[] indexValue = parseValueFromIndexRow(rowKey);
+
         return !Arrays.equals(value, indexValue);
     }
 
     @Override
     public void write(DataOutput dataOutput) throws IOException {
-        dataOutput.write(value);
+        Bytes.writeByteArray(dataOutput, this.value);
     }
 
     @Override
     public void readFields(DataInput dataInput) throws IOException {
-        dataInput.readFully(value);
+        this.value = Bytes.readByteArray(dataInput);
     }
 
     private byte[] parseValueFromIndexRow(byte[] rowKey) {
-        return ByteBuffer.wrap(rowKey, 17, value.length).array();
+        return wrapAndGet(rowKey, 17, value.length);
+    }
+
+    private byte[] wrapAndGet(byte[] array, int offset, int length) {
+        ByteBuffer buffer = ByteBuffer.wrap(array);
+        buffer.position(offset);
+        byte[] ans = new byte[length];
+        buffer.get(ans);
+        return ans;
     }
 }

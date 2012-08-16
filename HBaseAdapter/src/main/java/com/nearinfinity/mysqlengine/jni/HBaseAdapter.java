@@ -253,11 +253,7 @@ public class HBaseAdapter {
 
     public static byte[] indexRead(long scanId, byte[] value, IndexReadType readType) throws HBaseAdapterException {
         logger.info("Reading index with scanId " + scanId + " read type " + readType.name());
-        StringBuilder sb = new StringBuilder();
-        for (byte b : value) {
-            sb.append(String.format("%02X ", b));
-        }
-        logger.info("Index key " + sb.toString());
+
         IndexConnection conn = (IndexConnection) getConnectionForId(scanId);
 
         byte[] unireg = null;
@@ -286,7 +282,8 @@ public class HBaseAdapter {
                     if (valueIndexResult == null) {
                         return unireg;
                     }
-                    unireg = client.parseUniregFromIndex(result);
+
+                    unireg = client.parseUniregFromIndex(valueIndexResult);
                 }
                 break;
                 case HA_READ_AFTER_KEY: {
