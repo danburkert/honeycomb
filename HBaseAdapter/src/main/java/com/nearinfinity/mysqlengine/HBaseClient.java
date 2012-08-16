@@ -332,6 +332,7 @@ public class HBaseClient {
         byte[] endRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, FULL_UUID);
 
         Scan scan = new Scan();
+        scan.addColumn(NIC, UNIREG);
         scan.setStartRow(startRow);
 
         List<Filter> filterList = new LinkedList<Filter>();
@@ -592,8 +593,8 @@ public class HBaseClient {
         }
     }
 
-    public byte[] parseUniregFromIndex(Result firstResult) {
-        return firstResult.getValue(NIC, UNIREG);
+    public byte[] parseUniregFromIndex(Result result) {
+        return result.getValue(NIC, UNIREG);
     }
 
     public ResultScanner getSecondaryIndexScanner(String tableName, String columnName, byte[] value) throws IOException {
