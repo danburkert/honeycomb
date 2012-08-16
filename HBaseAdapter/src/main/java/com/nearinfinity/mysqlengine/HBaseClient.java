@@ -610,6 +610,19 @@ public class HBaseClient {
         return table.getScanner(scan);
     }
 
+    public ResultScanner getSecondaryIndexScannerFull(String tableName, String columnName) throws IOException {
+        TableInfo info = getTableInfo(tableName);
+        long tableId = info.getId();
+        long columnId = info.getColumnIdByName(columnName);
+
+        byte[] startKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId, new byte[0]);
+        byte[] endKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId+1, new byte[0]);
+
+        Scan scan = new Scan(startKey, endKey);
+
+        return table.getScanner(scan);
+    }
+
     public ResultScanner getSecondaryIndexScannerExact(String tableName, String columnName, byte[] value) throws IOException {
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
@@ -637,7 +650,20 @@ public class HBaseClient {
         long columnId = info.getColumnIdByName(columnName);
 
         byte[] startKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId, value);
-        byte[] endKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId+1, value);
+        byte[] endKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId+1, new byte[0]);
+
+        Scan scan = new Scan(startKey, endKey);
+
+        return table.getScanner(scan);
+    }
+
+    public ResultScanner getReverseIndexScannerFull(String tableName, String columnName) throws IOException {
+        TableInfo info = getTableInfo(tableName);
+        long tableId = info.getId();
+        long columnId = info.getColumnIdByName(columnName);
+
+        byte[] startKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId, new byte[0]);
+        byte[] endKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId+1, new byte[0]);
 
         Scan scan = new Scan(startKey, endKey);
 
