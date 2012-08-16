@@ -38,11 +38,9 @@ public class DataConnection implements Connection {
     }
 
     public void close() {
+        if (this.scanner != null) {
+            this.scanner.close();
+        }
         this.scanner.close();
-    }
-
-    public void setScanner(ResultScanner scanner) {
-        this.scanner = scanner;
-        this.lastResult = null;
     }
 }
