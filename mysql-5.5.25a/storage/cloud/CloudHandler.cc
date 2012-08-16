@@ -201,9 +201,9 @@ int CloudHandler::delete_table(const char *name)
 
 	jboolean result = this->env->CallStaticBooleanMethod(adapter_class, drop_table_method, tableName);
 
-	this->jvm->DetachCurrentThread();
+  this->jvm->DetachCurrentThread();
 
-	DBUG_RETURN(0);
+  DBUG_RETURN(0);
 }
 
 int CloudHandler::delete_row_helper()
@@ -247,12 +247,10 @@ int CloudHandler::rnd_init(bool scan)
 int CloudHandler::rnd_next(uchar *buf)
 {
   int rc = 0;
-  my_bitmap_map *orig_bitmap;
 
   ha_statistic_increment(&SSV::ha_read_rnd_next_count);
   DBUG_ENTER("CloudHandler::rnd_next");
 
-  orig_bitmap= dbug_tmp_use_all_columns(table, table->write_set);
 
   MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, TRUE);
 
@@ -264,8 +262,6 @@ int CloudHandler::rnd_next(uchar *buf)
   jobject row = this->env->CallStaticObjectMethod(adapter_class, next_row_method, java_scan_id);
 
   jclass row_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/Row");
-  jmethodID get_keys_method = this->env->GetMethodID(row_class, "getKeys", "()[Ljava/lang/String;");
-  jmethodID get_vals_method = this->env->GetMethodID(row_class, "getValues", "()[[B");
   jmethodID get_row_map_method = this->env->GetMethodID(row_class, "getRowMap", "()Ljava/util/Map;");
   jmethodID get_uuid_method = this->env->GetMethodID(row_class, "getUUID", "()[B");
 
@@ -273,22 +269,16 @@ int CloudHandler::rnd_next(uchar *buf)
 
   if (row_map == NULL)
   {
-    dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
     DBUG_RETURN(HA_ERR_END_OF_FILE);
   }
 
-  jarray keys = (jarray) this->env->CallObjectMethod(row, get_keys_method);
-  jarray vals = (jarray) this->env->CallObjectMethod(row, get_vals_method);
   jbyteArray uuid = (jbyteArray) this->env->CallObjectMethod(row, get_uuid_method);
-
-  this->ref = (uchar*) this->env->GetByteArrayElements(uuid, JNI_FALSE);
+  uchar* pos = (uchar*) this->env->GetByteArrayElements(uuid, JNI_FALSE);
+  memcpy(this->ref, pos, 16);
   this->ref_length = 16;
 
   java_to_sql(buf, row_map);
 
-  dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
-
-  stats.records++;
   MYSQL_READ_ROW_DONE(rc);
 
   DBUG_RETURN(rc);
@@ -297,10 +287,13 @@ int CloudHandler::rnd_next(uchar *buf)
 void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
 {
   jboolean is_copy = JNI_FALSE;
+  my_bitmap_map *orig_bitmap;
+  orig_bitmap= dbug_tmp_use_all_columns(table, table->write_set);
 
   for (int i = 0; i < table->s->fields; i++)
   {
     Field *field = table->field[i];
+    field->set_notnull(); // for some reason the field was inited as null during rnd_pos
     const char* key = field->field_name;
     jstring java_key = string_to_java_string(key);
     jbyteArray java_val = java_map_get(row_map, java_key);
@@ -387,6 +380,9 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
     field->move_field_offset(-offset);
     this->env->ReleaseByteArrayElements(java_val, (jbyte*)val, 0);
   }
+
+  dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
+
   return;
 }
 
@@ -405,31 +401,28 @@ void CloudHandler::position(const uchar *record)
 int CloudHandler::rnd_pos(uchar *buf, uchar *pos)
 {
   int rc = 0;
-  DBUG_ENTER("CloudHandler::rnd_pos");
   ha_statistic_increment(&SSV::ha_read_rnd_count); // Boilerplate
+  DBUG_ENTER("CloudHandler::rnd_pos");
+
   MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, FALSE);
 
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
-  jmethodID get_row_method = this->env->GetStaticMethodID(adapter_class, "getRow", "(JLjava/lang/String;[B)Lcom/nearinfinity/mysqlengine/jni/Row;");
+  jmethodID get_row_method = this->env->GetStaticMethodID(adapter_class, "getRow", "(J[B)Lcom/nearinfinity/mysqlengine/jni/Row;");
   jlong java_scan_id = curr_scan_id;
-  jobject row = this->env->CallStaticObjectMethod(adapter_class, get_row_method, java_scan_id, pos);
+  jbyteArray uuid = convert_value_to_java_bytes(pos, 16);
+  jobject row = this->env->CallStaticObjectMethod(adapter_class, get_row_method, java_scan_id, uuid);
 
   jclass row_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/Row");
-  jmethodID get_keys_method = this->env->GetMethodID(row_class, "getKeys", "()[Ljava/lang/String;");
-  jmethodID get_vals_method = this->env->GetMethodID(row_class, "getValues", "()[[B");
+  jmethodID get_row_map_method = this->env->GetMethodID(row_class, "getRowMap", "()Ljava/util/Map;");
 
-  jarray keys = (jarray) this->env->CallObjectMethod(row, get_keys_method);
-  jarray vals = (jarray) this->env->CallObjectMethod(row, get_vals_method);
+  jobject row_map = this->env->CallObjectMethod(row, get_row_map_method);
 
-  jboolean is_copy = JNI_FALSE;
-
-  if (this->env->GetArrayLength(keys) == 0 ||
-      this->env->GetArrayLength(vals) == 0)
+  if (row_map == NULL)
   {
-    DBUG_RETURN(HA_ERR_WRONG_COMMAND);
+    DBUG_RETURN(HA_ERR_END_OF_FILE);
   }
 
-  //store_field_values(buf, keys, vals);
+  java_to_sql(buf, row_map);
 
   MYSQL_READ_ROW_DONE(rc);
   DBUG_RETURN(rc);
