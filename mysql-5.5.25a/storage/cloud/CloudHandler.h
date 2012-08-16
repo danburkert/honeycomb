@@ -34,6 +34,9 @@ private:
     void destroy_record_buffer(record_buffer *r);
     CloudShare *get_share(const char *table_name, TABLE *table);
     uint32 max_row_length();
+    void unpack_index(uchar* buf, jbyteArray uniReg);
+    jobject java_find_flag(enum ha_rkey_function find_flag);
+    int index_field_type;
 
     long long curr_scan_id;
 
@@ -65,13 +68,13 @@ private:
     void java_list_add(jobject list, jobject obj);
     jobject create_metadata_enum_object(const char *name);
 
-    void reverse_bytes(uchar *begin, uchar *end)
+    void reverse_bytes(uchar *begin, uint length)
     {
-      for (; begin <= end; begin++, end--)
+      for(int x = 0, y = length - 1; x < y; x++, y--)
       {
-        uchar tmp = *end;
-        *end = *begin;
-        *begin = tmp;
+        uchar tmp = begin[x];
+        begin[x] = begin[y];
+        begin[y] = tmp;
       }
     }
 
@@ -86,12 +89,23 @@ private:
       return bint.c[0] == 4;
     }
 
-    void make_big_endian(uchar *begin, uchar *end)
+    void make_big_endian(uchar *begin, uint length)
     {
       if (is_little_endian())
       {
-        reverse_bytes(begin, end);
+        reverse_bytes(begin, length);
       }
+    }
+
+    bool is_integral_field(int field_type)
+    {
+      return (field_type == MYSQL_TYPE_LONG
+          || field_type == MYSQL_TYPE_SHORT
+          || field_type == MYSQL_TYPE_TINY
+          || field_type == MYSQL_TYPE_LONGLONG
+          || field_type == MYSQL_TYPE_INT24
+          || field_type == MYSQL_TYPE_ENUM
+          || field_type == MYSQL_TYPE_YEAR);
     }
 
     longlong htonll(longlong src, bool check_endian = true) {
@@ -164,10 +178,6 @@ private:
       int index_first(uchar *buf);
       int index_last(uchar *buf);
       //int index_next_same(uchar *buf, const uchar *key, uint keylen);
-      int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add);
-      int final_add_index(handler_add_index *add, bool commit);
-      int prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys);
-      int final_drop_index(TABLE *table_arg);
     
     public:
       CloudHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm)
@@ -184,17 +194,17 @@ private:
 
       const char *index_type(uint inx) 
       {
-        return "BTREE";
+        return "HASH";
       }
 
       ulonglong table_flags() const
       {
-        return HA_BINLOG_STMT_CAPABLE | HA_REC_NOT_IN_SEQ | HA_NO_TRANSACTIONS;
+        return HA_FAST_KEY_READ | HA_BINLOG_STMT_CAPABLE | HA_REC_NOT_IN_SEQ | HA_NO_TRANSACTIONS;
       }
 
       ulong index_flags(uint inx, uint part, bool all_parts) const
       {
-        return HA_READ_NEXT | HA_READ_ORDER | HA_READ_RANGE;
+        return HA_READ_NEXT | HA_READ_ORDER | HA_READ_RANGE | HA_READ_PREV;
       }
 
       uint max_supported_record_length() const 
