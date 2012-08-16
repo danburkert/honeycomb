@@ -101,37 +101,6 @@ private:
           || field_type == MYSQL_TYPE_YEAR);
     }
 
-    longlong htonll(longlong src, bool check_endian = true) {
-      const int TYP_INIT = 0;
-      const int TYP_SMLE = 1;
-      const int TYP_BIGE = 2;
-
-      static int typ = TYP_INIT;
-      unsigned char c;
-      union {
-        longlong ull;
-        unsigned char c[8];
-      } x;
-
-      if (check_endian)
-      {
-        if (typ == TYP_INIT) {
-          x.ull = 0x01;
-          typ = (x.c[7] == 0x01ULL) ? TYP_BIGE : TYP_SMLE;
-        }
-        if (typ == TYP_BIGE)
-          return src;
-      }
-
-      x.ull = src;
-      c = x.c[0]; x.c[0] = x.c[7]; x.c[7] = c;
-      c = x.c[1]; x.c[1] = x.c[6]; x.c[6] = c;
-      c = x.c[2]; x.c[2] = x.c[5]; x.c[5] = c;
-      c = x.c[3]; x.c[3] = x.c[4]; x.c[4] = c;
-
-      return x.ull;
-    }
-
     void extract_table_name_from_path(const char *path, const char *&dest)
     {
     	const char *ptr = path + strlen(path);
@@ -248,6 +217,7 @@ private:
       int rnd_end();
       void start_bulk_insert(ha_rows rows);
       int end_bulk_insert();
+      // ha_rows records_in_range(uint keynr, key_range* min_key, key_range* max_key);
 };
 
 #endif
