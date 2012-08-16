@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Filter;
 
 /**
  * Created with IntelliJ IDEA.
@@ -332,7 +331,14 @@ public class HBaseClient {
         byte[] startRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, ZERO_UUID);
         byte[] endRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, FULL_UUID);
 
-        Scan scan = new Scan(startRow, endRow);
+        Scan scan = new Scan();
+        scan.setStartRow(startRow);
+
+        List<Filter> filterList = new LinkedList<Filter>();
+        filterList.add(new InclusiveStopFilter(endRow));
+        filterList.add(new ExactValueFilter(value));
+
+        scan.setFilter(new FilterList(filterList));
 
         return table.getScanner(scan);
     }

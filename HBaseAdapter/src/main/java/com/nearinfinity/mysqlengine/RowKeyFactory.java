@@ -90,12 +90,12 @@ public class RowKeyFactory {
                 .array();
     }
 
-    public static byte[] position_of_long(long n) {
+    public static byte[] positionOfLong(long n) {
         final long BITMASK = 0x8000000000000000L;
         return ByteBuffer.allocate(8).putLong(n ^ BITMASK).array();
     }
 
-    public static byte[] position_of_double(double n) {
+    public static byte[] positionOfDouble(double n) {
         long bits = Double.doubleToLongBits(n);
         final long BITMASK;
         if(n < 0) {
