@@ -891,7 +891,7 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
   jmethodID index_read_method = this->env->GetStaticMethodID(adapter_class, "indexRead", "(J[BLcom/nearinfinity/mysqlengine/jni/IndexReadType;)[B");
   jlong java_scan_id = this->curr_scan_id;
-  uchar* key_copy ;
+  uchar* key_copy;
   if (this->is_integral_field(this->index_field_type))
   {
     key_copy = new uchar[sizeof(longlong)];
@@ -1050,7 +1050,26 @@ int CloudHandler::index_prev(uchar *buf)
 int CloudHandler::index_first(uchar *buf)
 {
   DBUG_ENTER("CloudHandler::index_first");
-  DBUG_RETURN(HA_ERR_WRONG_COMMAND);
+  
+  jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
+  jmethodID index_read_method = this->env->GetStaticMethodID(adapter_class, "indexRead", "(J[BLcom/nearinfinity/mysqlengine/jni/IndexReadType;)[B");
+  jlong java_scan_id = this->curr_scan_id;
+  
+  jclass read_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/IndexReadType");
+  jfieldID field_id = this->env->GetStaticFieldID(read_class, "INDEX_FIRST", "Lcom/nearinfinity/mysqlengine/jni/IndexReadType;");
+  jobject java_find_flag = this->env->GetStaticObjectField(read_class, field_id);
+  
+  jobject result = this->env->CallStaticObjectMethod(adapter_class, index_read_method, java_scan_id, NULL, java_find_flag);
+  jbyteArray uniReg = (jbyteArray)result;
+  
+  if(uniReg == NULL)
+  {
+    DBUG_RETURN(HA_ERR_END_OF_FILE);
+  }
+
+  this->unpack_index(buf, uniReg);
+
+  DBUG_RETURN(0);
 }
 
 int CloudHandler::index_last(uchar *buf)
