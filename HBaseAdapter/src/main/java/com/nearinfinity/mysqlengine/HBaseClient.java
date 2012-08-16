@@ -296,7 +296,8 @@ public class HBaseClient {
 
         //Set the caching for the scan
         int rowsToCacheForScan = isFullTableScan ? this.cacheSize : 10;
-        logger.info("Starting scan with cache size " + rowsToCacheForScan);
+        logger.info("getTableScanner-> tableName: " + tableName+ ", isFullTableScan: " + isFullTableScan +
+        ", cachSize: " + rowsToCacheForScan);
         scan.setCaching(rowsToCacheForScan);
 
         //Exclude deleted values
