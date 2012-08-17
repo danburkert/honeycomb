@@ -71,7 +71,7 @@ static void print_java_exception(JNIEnv* env)
 //    jstring cause_result = (jstring)env->CallObjectMethod(cause, cause_toString);
 //    const char* cause_string = env->GetStringUTFChars(cause_result, NULL);
 //    INFO(("Exception was caused by: %s", cause_string));
-//    env->ReleaseStringUTFChars(cause_result, cause_string)
+//    env->ReleaseStringUTFChars(cause_result, cause_string);
   }
 }
 

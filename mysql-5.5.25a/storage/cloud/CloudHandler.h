@@ -19,7 +19,9 @@ typedef struct st_record_buffer {
   uint32 length;
 } record_buffer;
 
-enum hbase_data_type { UNKNOWN_TYPE, JAVA_STRING, JAVA_LONG, JAVA_DOUBLE, JAVA_TIME };
+enum hbase_data_type { UNKNOWN_TYPE, JAVA_STRING, JAVA_LONG, JAVA_DOUBLE, JAVA_TIME, JAVA_DATE, JAVA_DATETIME };
+
+static __thread int thread_ref_count=0;
 
 class CloudHandler : public handler
 {
@@ -67,6 +69,8 @@ private:
     jobject create_java_list();
     void java_list_add(jobject list, jobject obj);
     jobject create_metadata_enum_object(const char *name);
+    void attach_thread();
+    void detach_thread();
 
     void reverse_bytes(uchar *begin, uint length)
     {
