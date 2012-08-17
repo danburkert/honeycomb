@@ -67,6 +67,8 @@ private:
     jobject create_java_list();
     void java_list_add(jobject list, jobject obj);
     jobject create_metadata_enum_object(const char *name);
+    void attach_thread();
+    void detach_thread();
 
     void reverse_bytes(uchar *begin, uint length)
     {
@@ -168,7 +170,11 @@ private:
 
       ulonglong table_flags() const
       {
-        return HA_FAST_KEY_READ | HA_BINLOG_STMT_CAPABLE | HA_REC_NOT_IN_SEQ | HA_NO_TRANSACTIONS;
+        return HA_FAST_KEY_READ |
+          HA_BINLOG_STMT_CAPABLE |
+          HA_REC_NOT_IN_SEQ |
+          HA_NO_TRANSACTIONS |
+          HA_NULL_IN_KEY; // Nulls in indexed columns are allowed
       }
 
       ulong index_flags(uint inx, uint part, bool all_parts) const
@@ -225,7 +231,6 @@ private:
       int rnd_end();
       void start_bulk_insert(ha_rows rows);
       int end_bulk_insert();
-      // ha_rows records_in_range(uint keynr, key_range* min_key, key_range* max_key);
 };
 
 #endif

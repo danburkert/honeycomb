@@ -22,7 +22,7 @@ const char **CloudHandler::bas_ext() const
 {
   static const char *cloud_exts[] =
   {
-	  NullS
+    NullS
   };
 
   return cloud_exts;
@@ -127,82 +127,70 @@ int CloudHandler::delete_row(const uchar *buf)
 
 bool CloudHandler::start_bulk_delete()
 {
-	DBUG_ENTER("CloudHandler::start_bulk_delete");
+  DBUG_ENTER("CloudHandler::start_bulk_delete");
 
-	JavaVMAttachArgs attachArgs;
-	attachArgs.version = JNI_VERSION_1_6;
-	attachArgs.name = NULL;
-	attachArgs.group = NULL;
-	this->jvm->AttachCurrentThread((void**)&this->env, &attachArgs);
+  attach_thread();
 
-	DBUG_RETURN(true);
+  DBUG_RETURN(true);
 }
 
 int CloudHandler::end_bulk_delete()
 {
-	DBUG_ENTER("CloudHandler::end_bulk_delete");
+  DBUG_ENTER("CloudHandler::end_bulk_delete");
 
-	this->jvm->DetachCurrentThread();
+  detach_thread();
 
-	DBUG_RETURN(0);
+  DBUG_RETURN(0);
 }
 
 int CloudHandler::delete_all_rows()
 {
-	DBUG_ENTER("CloudHandler::delete_all_rows");
+  DBUG_ENTER("CloudHandler::delete_all_rows");
 
-	JavaVMAttachArgs attachArgs;
-	attachArgs.version = JNI_VERSION_1_6;
-	attachArgs.name = NULL;
-	attachArgs.group = NULL;
-	this->jvm->AttachCurrentThread((void**)&this->env, &attachArgs);
+  attach_thread();
 
-	jstring tableName = string_to_java_string(this->table->alias);
-	jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
-	jmethodID delete_rows_method = this->env->GetStaticMethodID(adapter_class, "deleteAllRows", "(Ljava/lang/String;)I");
+  jstring tableName = string_to_java_string(this->table->alias);
+  jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
+  jmethodID delete_rows_method = this->env->GetStaticMethodID(adapter_class, "deleteAllRows", "(Ljava/lang/String;)I");
 
-	jboolean result = this->env->CallStaticIntMethod(adapter_class, delete_rows_method, tableName);
+  jboolean result = this->env->CallStaticIntMethod(adapter_class, delete_rows_method, tableName);
 
-	this->jvm->DetachCurrentThread();
+  detach_thread();
 
-	DBUG_RETURN(0);
+  DBUG_RETURN(0);
 }
 
 int CloudHandler::truncate()
 {
-	DBUG_ENTER("CloudHandler::truncate");
+  DBUG_ENTER("CloudHandler::truncate");
 
-	DBUG_RETURN(delete_all_rows());
+  DBUG_RETURN(delete_all_rows());
 }
 
 void CloudHandler::drop_table(const char *name)
 {
-	close();
+  close();
 
-	delete_table(name);
+  delete_table(name);
 }
 
 int CloudHandler::delete_table(const char *name)
 {
-	DBUG_ENTER("CloudHandler::delete_table");
+  DBUG_ENTER("CloudHandler::delete_table");
 
-	JavaVMAttachArgs attachArgs;
-	attachArgs.version = JNI_VERSION_1_6;
-	attachArgs.name = NULL;
-	attachArgs.group = NULL;
-	this->jvm->AttachCurrentThread((void**)&this->env, &attachArgs);
+  attach_thread();
 
-	const char *alias = extract_table_name_from_path(name);
+  const char *alias = extract_table_name_from_path(name);
 
-	jstring tableName = string_to_java_string(alias);
-	jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
-	jmethodID drop_table_method = this->env->GetStaticMethodID(adapter_class, "dropTable", "(Ljava/lang/String;)Z");
+  jstring tableName = string_to_java_string(alias);
+  jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
+  jmethodID drop_table_method = this->env->GetStaticMethodID(adapter_class, "dropTable", "(Ljava/lang/String;)Z");
 
-	jboolean result = this->env->CallStaticBooleanMethod(adapter_class, drop_table_method, tableName);
+  jboolean result = this->env->CallStaticBooleanMethod(adapter_class, drop_table_method, tableName);
 
-	this->jvm->DetachCurrentThread();
+  detach_thread();
 
-	DBUG_RETURN(0);
+  DBUG_RETURN(0);
 }
 
 int CloudHandler::delete_row_helper()
@@ -224,11 +212,7 @@ int CloudHandler::rnd_init(bool scan)
 
   const char* table_name = this->table->alias;
 
-  JavaVMAttachArgs attachArgs;
-  attachArgs.version = JNI_VERSION_1_6;
-  attachArgs.name = NULL;
-  attachArgs.group = NULL;
-  this->jvm->AttachCurrentThread((void**)&this->env, &attachArgs);
+  attach_thread();
 
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
   jmethodID start_scan_method = this->env->GetStaticMethodID(adapter_class, "startScan", "(Ljava/lang/String;Z)J");
@@ -246,12 +230,10 @@ int CloudHandler::rnd_init(bool scan)
 int CloudHandler::rnd_next(uchar *buf)
 {
   int rc = 0;
-  my_bitmap_map *orig_bitmap;
 
   ha_statistic_increment(&SSV::ha_read_rnd_next_count);
   DBUG_ENTER("CloudHandler::rnd_next");
 
-  orig_bitmap= dbug_tmp_use_all_columns(table, table->write_set);
 
   MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, TRUE);
 
@@ -263,8 +245,6 @@ int CloudHandler::rnd_next(uchar *buf)
   jobject row = this->env->CallStaticObjectMethod(adapter_class, next_row_method, java_scan_id);
 
   jclass row_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/Row");
-  jmethodID get_keys_method = this->env->GetMethodID(row_class, "getKeys", "()[Ljava/lang/String;");
-  jmethodID get_vals_method = this->env->GetMethodID(row_class, "getValues", "()[[B");
   jmethodID get_row_map_method = this->env->GetMethodID(row_class, "getRowMap", "()Ljava/util/Map;");
   jmethodID get_uuid_method = this->env->GetMethodID(row_class, "getUUID", "()[B");
 
@@ -272,22 +252,16 @@ int CloudHandler::rnd_next(uchar *buf)
 
   if (row_map == NULL)
   {
-    dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
     DBUG_RETURN(HA_ERR_END_OF_FILE);
   }
 
-  jarray keys = (jarray) this->env->CallObjectMethod(row, get_keys_method);
-  jarray vals = (jarray) this->env->CallObjectMethod(row, get_vals_method);
   jbyteArray uuid = (jbyteArray) this->env->CallObjectMethod(row, get_uuid_method);
-
-  this->ref = (uchar*) this->env->GetByteArrayElements(uuid, JNI_FALSE);
+  uchar* pos = (uchar*) this->env->GetByteArrayElements(uuid, JNI_FALSE);
+  memcpy(this->ref, pos, 16);
   this->ref_length = 16;
 
   java_to_sql(buf, row_map);
 
-  dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
-
-  stats.records++;
   MYSQL_READ_ROW_DONE(rc);
 
   DBUG_RETURN(rc);
@@ -296,10 +270,13 @@ int CloudHandler::rnd_next(uchar *buf)
 void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
 {
   jboolean is_copy = JNI_FALSE;
+  my_bitmap_map *orig_bitmap;
+  orig_bitmap= dbug_tmp_use_all_columns(table, table->write_set);
 
   for (int i = 0; i < table->s->fields; i++)
   {
     Field *field = table->field[i];
+    field->set_notnull(); // for some reason the field was inited as null during rnd_pos
     const char* key = field->field_name;
     jstring java_key = string_to_java_string(key);
     jbyteArray java_val = java_map_get(row_map, java_key);
@@ -369,6 +346,9 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
     field->move_field_offset(-offset);
     this->env->ReleaseByteArrayElements(java_val, (jbyte*)val, 0);
   }
+
+  dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
+
   return;
 }
 
@@ -387,31 +367,28 @@ void CloudHandler::position(const uchar *record)
 int CloudHandler::rnd_pos(uchar *buf, uchar *pos)
 {
   int rc = 0;
-  DBUG_ENTER("CloudHandler::rnd_pos");
   ha_statistic_increment(&SSV::ha_read_rnd_count); // Boilerplate
+  DBUG_ENTER("CloudHandler::rnd_pos");
+
   MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, FALSE);
 
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
-  jmethodID get_row_method = this->env->GetStaticMethodID(adapter_class, "getRow", "(JLjava/lang/String;[B)Lcom/nearinfinity/mysqlengine/jni/Row;");
+  jmethodID get_row_method = this->env->GetStaticMethodID(adapter_class, "getRow", "(J[B)Lcom/nearinfinity/mysqlengine/jni/Row;");
   jlong java_scan_id = curr_scan_id;
-  jobject row = this->env->CallStaticObjectMethod(adapter_class, get_row_method, java_scan_id, pos);
+  jbyteArray uuid = convert_value_to_java_bytes(pos, 16);
+  jobject row = this->env->CallStaticObjectMethod(adapter_class, get_row_method, java_scan_id, uuid);
 
   jclass row_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/Row");
-  jmethodID get_keys_method = this->env->GetMethodID(row_class, "getKeys", "()[Ljava/lang/String;");
-  jmethodID get_vals_method = this->env->GetMethodID(row_class, "getValues", "()[[B");
+  jmethodID get_row_map_method = this->env->GetMethodID(row_class, "getRowMap", "()Ljava/util/Map;");
 
-  jarray keys = (jarray) this->env->CallObjectMethod(row, get_keys_method);
-  jarray vals = (jarray) this->env->CallObjectMethod(row, get_vals_method);
+  jobject row_map = this->env->CallObjectMethod(row, get_row_map_method);
 
-  jboolean is_copy = JNI_FALSE;
-
-  if (this->env->GetArrayLength(keys) == 0 ||
-      this->env->GetArrayLength(vals) == 0)
+  if (row_map == NULL)
   {
-    DBUG_RETURN(HA_ERR_WRONG_COMMAND);
+    DBUG_RETURN(HA_ERR_END_OF_FILE);
   }
 
-  //store_field_values(buf, keys, vals);
+  java_to_sql(buf, row_map);
 
   MYSQL_READ_ROW_DONE(rc);
   DBUG_RETURN(rc);
@@ -426,7 +403,8 @@ int CloudHandler::rnd_end()
   jlong java_scan_id = curr_scan_id;
 
   this->env->CallStaticVoidMethod(adapter_class, end_scan_method, java_scan_id);
-  this->jvm->DetachCurrentThread();
+
+  detach_thread();
 
   curr_scan_id = -1;
   this->performing_scan = false;
@@ -436,11 +414,8 @@ int CloudHandler::rnd_end()
 void CloudHandler::start_bulk_insert(ha_rows rows)
 {
   DBUG_ENTER("CloudHandler::start_bulk_insert");
-  JavaVMAttachArgs attachArgs;
-  attachArgs.version = JNI_VERSION_1_6;
-  attachArgs.name = NULL;
-  attachArgs.group = NULL;
-  this->jvm->AttachCurrentThread((void**)&this->env, &attachArgs);
+
+  attach_thread();
 
   DBUG_VOID_RETURN;
 }
@@ -453,7 +428,7 @@ int CloudHandler::end_bulk_insert()
   jmethodID end_write_method = this->env->GetStaticMethodID(adapter_class, "flushWrites", "()V");
   this->env->CallStaticVoidMethod(adapter_class, end_write_method);
 
-  this->jvm->DetachCurrentThread();
+  detach_thread();
   DBUG_RETURN(0);
 }
 
@@ -464,11 +439,7 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
 
 //  JVMThreadAttach attached_thread(&this->env, this->jvm);
 
-	JavaVMAttachArgs attachArgs;
-	attachArgs.version = JNI_VERSION_1_6;
-	attachArgs.name = NULL;
-	attachArgs.group = NULL;
-	this->jvm->AttachCurrentThread((void**)&this->env, &attachArgs);
+  attach_thread();
 
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
   if (adapter_class == NULL)
@@ -484,8 +455,8 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
 
   for (Field **field = table_arg->field ; *field ; field++)
   {
-	  jobject metadataList = this->get_field_metadata(*field, table_arg);
-	  this->java_map_insert(columnMap, string_to_java_string((*field)->field_name), metadataList);
+    jobject metadataList = this->get_field_metadata(*field, table_arg);
+    this->java_map_insert(columnMap, string_to_java_string((*field)->field_name), metadataList);
   }
 
   jmethodID create_table_method = this->env->GetStaticMethodID(adapter_class, "createTable", "(Ljava/lang/String;Ljava/util/Map;)Z");
@@ -493,16 +464,16 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
   INFO(("Result of createTable: %d", result));
   this->print_java_exception(this->env);
 
-  this->jvm->DetachCurrentThread();
+  detach_thread();
 
   DBUG_RETURN(0);
 }
 
 jobject CloudHandler::create_java_list()
 {
-	jclass list_class = this->env->FindClass("java/util/LinkedList");
-	jmethodID list_constructor = this->env->GetMethodID(list_class, "<init>", "()V");
-	return this->env->NewObject(list_class, list_constructor);
+  jclass list_class = this->env->FindClass("java/util/LinkedList");
+  jmethodID list_constructor = this->env->GetMethodID(list_class, "<init>", "()V");
+  return this->env->NewObject(list_class, list_constructor);
 }
 
 jobject CloudHandler::create_metadata_enum_object(const char *name)
@@ -516,8 +487,8 @@ jobject CloudHandler::create_metadata_enum_object(const char *name)
 
 jobject CloudHandler::get_field_metadata(Field *field, TABLE *table_arg)
 {
-	jobject list = this->create_java_list();
-	hbase_data_type essentialType = this->extract_field_type(field);
+  jobject list = this->create_java_list();
+  hbase_data_type essentialType = this->extract_field_type(field);
 
 	switch (essentialType)
 	{
@@ -543,48 +514,48 @@ jobject CloudHandler::get_field_metadata(Field *field, TABLE *table_arg)
       break;
 	}
 
-	if (field->real_maybe_null())
-	{
-	  this->java_list_add(list, create_metadata_enum_object("IS_NULLABLE"));
-	}
+  if (field->real_maybe_null())
+  {
+    this->java_list_add(list, create_metadata_enum_object("IS_NULLABLE"));
+  }
 
-	// 64 is obviously some key flag indicating no primary key, but I have no idea where it's defined. Will fix later. - ABC
-	if (table_arg->s->primary_key != 64)
-	{
-	  if (strcmp(table_arg->s->key_info[table_arg->s->primary_key].key_part->field->field_name, field->field_name) == 0)
-	    {
-	      this->java_list_add(list, create_metadata_enum_object("PRIMARY_KEY"));
-	    }
-	}
+  // 64 is obviously some key flag indicating no primary key, but I have no idea where it's defined. Will fix later. - ABC
+  if (table_arg->s->primary_key != 64)
+  {
+    if (strcmp(table_arg->s->key_info[table_arg->s->primary_key].key_part->field->field_name, field->field_name) == 0)
+      {
+        this->java_list_add(list, create_metadata_enum_object("PRIMARY_KEY"));
+      }
+  }
 
-	return list;
+  return list;
 
 }
 
 void CloudHandler::java_list_add(jobject list, jobject obj)
 {
-	jclass list_class = this->env->FindClass("java/util/LinkedList");
-	jmethodID add_method = this->env->GetMethodID(list_class, "add", "(Ljava/lang/Object;)Z");
+  jclass list_class = this->env->FindClass("java/util/LinkedList");
+  jmethodID add_method = this->env->GetMethodID(list_class, "add", "(Ljava/lang/Object;)Z");
 
-	this->env->CallBooleanMethod(list, add_method, obj);
+  this->env->CallBooleanMethod(list, add_method, obj);
 }
 
 hbase_data_type CloudHandler::extract_field_type(Field *field)
 {
-	int fieldType = field->type();
-	hbase_data_type essentialType;
+  int fieldType = field->type();
+  hbase_data_type essentialType;
 
-	if (fieldType == MYSQL_TYPE_LONG
-	        || fieldType == MYSQL_TYPE_SHORT
-	        || fieldType == MYSQL_TYPE_TINY
-	        || fieldType == MYSQL_TYPE_LONGLONG
-	        || fieldType == MYSQL_TYPE_INT24
-	        || fieldType == MYSQL_TYPE_ENUM
-	        || fieldType == MYSQL_TYPE_YEAR)
-	{
-		essentialType = JAVA_LONG;
-	}
-	else if (fieldType == MYSQL_TYPE_DOUBLE
+  if (fieldType == MYSQL_TYPE_LONG
+          || fieldType == MYSQL_TYPE_SHORT
+          || fieldType == MYSQL_TYPE_TINY
+          || fieldType == MYSQL_TYPE_LONGLONG
+          || fieldType == MYSQL_TYPE_INT24
+          || fieldType == MYSQL_TYPE_ENUM
+          || fieldType == MYSQL_TYPE_YEAR)
+  {
+    essentialType = JAVA_LONG;
+  }
+  else if (fieldType == MYSQL_TYPE_DOUBLE
              || fieldType == MYSQL_TYPE_FLOAT
              || fieldType == MYSQL_TYPE_DECIMAL
              || fieldType == MYSQL_TYPE_NEWDECIMAL)
@@ -598,7 +569,7 @@ hbase_data_type CloudHandler::extract_field_type(Field *field)
 	}
 	else if (fieldType == MYSQL_TYPE_TIME)
 	{
-		essentialType = JAVA_TIME;
+	  essentialType = JAVA_TIME;
 	}
 	else if (fieldType == MYSQL_TYPE_DATETIME
       || fieldType == MYSQL_TYPE_TIMESTAMP)
@@ -612,15 +583,15 @@ hbase_data_type CloudHandler::extract_field_type(Field *field)
             || fieldType == MYSQL_TYPE_TINY_BLOB
             || fieldType == MYSQL_TYPE_MEDIUM_BLOB
             || fieldType == MYSQL_TYPE_LONG_BLOB)
-	{
-		essentialType = JAVA_STRING;
-	}
-	else
-	{
-		essentialType = UNKNOWN_TYPE;
-	}
+  {
+    essentialType = JAVA_STRING;
+  }
+  else
+  {
+    essentialType = UNKNOWN_TYPE;
+  }
 
-	return essentialType;
+  return essentialType;
 }
 
 THR_LOCK_DATA **CloudHandler::store_lock(THD *thd, THR_LOCK_DATA **to, enum thr_lock_type lock_type)
@@ -824,12 +795,10 @@ jobject CloudHandler::sql_to_java() {
       }
       memcpy(rec_buffer->buffer, &field_value, sizeof(longlong));
     }
-	else if (fieldType == JAVA_TIME
-	    || fieldType == JAVA_DATE
-	    || fieldType == JAVA_DATETIME)
-	{
-		MYSQL_TIME mysql_time;
-		field->get_time(&mysql_time);
+  else if (fieldType == JAVA_TIME)
+  {
+    MYSQL_TIME mysql_time;
+    field->get_time(&mysql_time);
 
 		switch (fieldType)
 		{
@@ -847,22 +816,22 @@ jobject CloudHandler::sql_to_java() {
 				break;
 		}
 
-		char timeString[MAX_DATE_STRING_REP_LENGTH];
-		my_TIME_to_str(&mysql_time, timeString);
+    char timeString[MAX_DATE_STRING_REP_LENGTH];
+    my_TIME_to_str(&mysql_time, timeString);
 
-		actualFieldSize = strlen(timeString);
-		memcpy(rec_buffer->buffer, timeString, actualFieldSize);
-	}
+    actualFieldSize = strlen(timeString);
+    memcpy(rec_buffer->buffer, timeString, actualFieldSize);
+  }
     else if (fieldType == JAVA_STRING)
     {
       field->val_str(&attribute);
       actualFieldSize = attribute.length();
       memcpy(rec_buffer->buffer, attribute.ptr(), attribute.length());
     }
-	else
-	{
-		memcpy(rec_buffer->buffer, field->ptr, field->field_length);
-	}
+  else
+  {
+    memcpy(rec_buffer->buffer, field->ptr, field->field_length);
+  }
 
     jbyteArray java_bytes = this->convert_value_to_java_bytes(rec_buffer->buffer, actualFieldSize);
 
@@ -929,23 +898,12 @@ jbyteArray CloudHandler::convert_value_to_java_bytes(uchar* value, uint32 length
   return byteArray;
 }
 
-/*ha_rows CloudHandler::records_in_range(uint index, key_range* min_key, key_range* max_key)
-{
-  DBUG_ENTER("CloudHandler::records_in_range");
-
-  KEY* key = this->table->key_info + index;
-  const uchar* min_key_value = min_key->key;
-  const uchar* max_key_value = max_key->key;
-
-  DBUG_RETURN(0);
-}*/
-
 int CloudHandler::index_init(uint idx, bool sorted)
 {
   DBUG_ENTER("CloudHandler::index_init");
-  
+
   this->active_index = idx;
-  
+
   const char* table_name = this->table->alias;
   const char* column_name = this->table->s->key_info[idx].key_part->field->field_name;
   for (Field **field_ptr=table->field; *field_ptr; field_ptr++)
@@ -957,12 +915,7 @@ int CloudHandler::index_init(uint idx, bool sorted)
       break;
     }
   }
-
-  JavaVMAttachArgs attachArgs;
-  attachArgs.version = JNI_VERSION_1_6;
-  attachArgs.name = NULL;
-  attachArgs.group = NULL;
-  this->jvm->AttachCurrentThread((void**)&this->env, &attachArgs);
+  attach_thread();
 
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
   jmethodID start_scan_method = this->env->GetStaticMethodID(adapter_class, "startIndexScan", "(Ljava/lang/String;Ljava/lang/String;)J");
@@ -970,21 +923,21 @@ int CloudHandler::index_init(uint idx, bool sorted)
   jstring java_column_name = this->string_to_java_string(column_name);
 
   this->curr_scan_id = this->env->CallStaticLongMethod(adapter_class, start_scan_method, java_table_name, java_column_name);
-  
+
   DBUG_RETURN(0);
 }
 
 int CloudHandler::index_end()
 {
   DBUG_ENTER("CloudHandler::index_end");
-  
+
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
   jmethodID end_scan_method = this->env->GetStaticMethodID(adapter_class, "endScan", "(J)V");
   jlong java_scan_id = curr_scan_id;
 
   this->env->CallStaticVoidMethod(adapter_class, end_scan_method, java_scan_id);
-  this->jvm->DetachCurrentThread();
 
+  detach_thread();
   this->curr_scan_id = -1;
   this->active_index = -1;
 
@@ -994,7 +947,7 @@ int CloudHandler::index_end()
 int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha_rkey_function find_flag)
 {
   DBUG_ENTER("CloudHandler::index_read");
-  
+
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
   jmethodID index_read_method = this->env->GetStaticMethodID(adapter_class, "indexRead", "(J[BLcom/nearinfinity/mysqlengine/jni/IndexReadType;)[B");
   jlong java_scan_id = this->curr_scan_id;
@@ -1045,8 +998,6 @@ int CloudHandler::index_next(uchar *buf)
 
   DBUG_ENTER("CloudHandler::index_next");
 
-  orig_bitmap= dbug_tmp_use_all_columns(table, table->write_set);
-
   MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, TRUE);
 
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
@@ -1057,13 +1008,10 @@ int CloudHandler::index_next(uchar *buf)
 
   if (uniReg == NULL)
   {
-    dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
     DBUG_RETURN(HA_ERR_END_OF_FILE);
   }
 
   this->unpack_index(buf, uniReg);
-
-  dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
 
   MYSQL_READ_ROW_DONE(rc);
 
@@ -1157,18 +1105,18 @@ int CloudHandler::index_prev(uchar *buf)
 int CloudHandler::index_first(uchar *buf)
 {
   DBUG_ENTER("CloudHandler::index_first");
-  
+
   jclass adapter_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
   jmethodID index_read_method = this->env->GetStaticMethodID(adapter_class, "indexRead", "(J[BLcom/nearinfinity/mysqlengine/jni/IndexReadType;)[B");
   jlong java_scan_id = this->curr_scan_id;
-  
+
   jclass read_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/IndexReadType");
   jfieldID field_id = this->env->GetStaticFieldID(read_class, "INDEX_FIRST", "Lcom/nearinfinity/mysqlengine/jni/IndexReadType;");
   jobject java_find_flag = this->env->GetStaticObjectField(read_class, field_id);
-  
+
   jobject result = this->env->CallStaticObjectMethod(adapter_class, index_read_method, java_scan_id, NULL, java_find_flag);
   jbyteArray uniReg = (jbyteArray)result;
-  
+
   if(uniReg == NULL)
   {
     DBUG_RETURN(HA_ERR_END_OF_FILE);
@@ -1184,3 +1132,21 @@ int CloudHandler::index_last(uchar *buf)
   DBUG_ENTER("CloudHandler::index_last");
   DBUG_RETURN(HA_ERR_WRONG_COMMAND);
 }
+
+void CloudHandler::detach_thread()
+{
+  this->jvm->DetachCurrentThread();
+  this->env = NULL;
+}
+
+void CloudHandler::attach_thread()
+{
+  if(this->env == NULL)
+  {
+    JavaVMAttachArgs attachArgs;
+    attachArgs.version = JNI_VERSION_1_6;
+    attachArgs.name = NULL;
+    attachArgs.group = NULL;
+    this->jvm->AttachCurrentThread((void**)&this->env, &attachArgs);
+  }
+};
