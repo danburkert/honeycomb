@@ -171,7 +171,8 @@ public class HBaseClient {
 
     public void writeRow(String tableName, Map<String, byte[]> values, byte[] unireg) throws IOException {
         //Get table id
-        long tableId = getTableInfo(tableName).getId();
+        TableInfo info = getTableInfo(tableName);
+        long tableId = info.getId();
 
         //Get UUID for new entry
         UUID rowId = UUID.randomUUID();
@@ -195,12 +196,11 @@ public class HBaseClient {
 
         for (String columnName : values.keySet()) {
 
-            // TODO: Add insertion of column info rows here
-            // TODO: How the fuck do we determine what type of data it is!?
-
             //Get column id and value
-            long columnId = getTableInfo(tableName).getColumnIdByName(columnName);
+            long columnId = info.getColumnIdByName(columnName);
+            ColumnMetadata columnType = info.getColumnTypeByName(columnName);
             byte[] value = values.get(columnName);
+
 
             if(value == null) {
                 // Build null index
@@ -216,11 +216,11 @@ public class HBaseClient {
                 putList.add(new Put(indexRow).add(NIC, indexQualifier, indexValue));
 
                 // Build secondary index key
-                byte[] secondaryIndexRow = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId, value);
+                byte[] secondaryIndexRow = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId, value, columnType);
                 putList.add(new Put(secondaryIndexRow).add(NIC, new byte[0], new byte[0]));
 
                 // Build reverse index key
-                byte[] reverseIndexRow = RowKeyFactory.buildReverseIndexKey(tableId, columnId, value);
+                byte[] reverseIndexRow = RowKeyFactory.buildReverseIndexKey(tableId, columnId, value, columnType);
                 putList.add(new Put(reverseIndexRow).add(NIC, VALUE_COLUMN, value));
             }
         }
@@ -647,9 +647,10 @@ public class HBaseClient {
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
         long columnId = info.getColumnIdByName(columnName);
+        ColumnMetadata columnType = info.getColumnTypeByName(columnName);
 
-        byte[] startKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId, value);
-        byte[] endKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId+1, new byte[0]);
+        byte[] startKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId, value, columnType);
+        byte[] endKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId+1, new byte[0], columnType);
 
         Scan scan = ScanFactory.buildScan(startKey, endKey);
 
@@ -660,9 +661,10 @@ public class HBaseClient {
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
         long columnId = info.getColumnIdByName(columnName);
+        ColumnMetadata columnType = info.getColumnTypeByName(columnName);
 
-        byte[] startKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId, new byte[0]);
-        byte[] endKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId+1, new byte[0]);
+        byte[] startKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId, new byte[0], columnType);
+        byte[] endKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId+1, new byte[0], columnType);
 
         Scan scan = ScanFactory.buildScan(startKey, endKey);
 
@@ -673,9 +675,10 @@ public class HBaseClient {
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
         long columnId = info.getColumnIdByName(columnName);
+        ColumnMetadata columnType = info.getColumnTypeByName(columnName);
 
-        byte[] startKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId, value);
-        byte[] endKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId+1, new byte[0]);
+        byte[] startKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId, value, columnType);
+        byte[] endKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId+1, new byte[0], columnType);
 
         Scan scan = ScanFactory.buildScan(startKey, endKey);
 
@@ -685,18 +688,20 @@ public class HBaseClient {
         return table.getScanner(scan);
     }
 
-    public byte[] parseValueFromSecondaryIndexRow(Result result) {
-        byte[] row = result.getRow();
-        return this.wrapAndGet(row, 17, row.length - 17);
+    public byte[] parseValueFromSecondaryIndexRow(String tableName, String columnName, Result result)  throws IOException {
+        TableInfo info = getTableInfo(tableName);
+        ColumnMetadata columnType = info.getColumnTypeByName(columnName);
+        return RowKeyFactory.parseValueFromSecondaryIndexKey(result.getRow(), columnType);
     }
 
     public ResultScanner getReverseIndexScanner(String tableName, String columnName, byte[] value) throws IOException {
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
         long columnId = info.getColumnIdByName(columnName);
+        ColumnMetadata columnType = info.getColumnTypeByName(columnName);
 
-        byte[] startKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId, value);
-        byte[] endKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId+1, new byte[0]);
+        byte[] startKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId, value, columnType);
+        byte[] endKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId+1, new byte[0], columnType);
 
         Scan scan = ScanFactory.buildScan(startKey, endKey);
 
@@ -707,24 +712,19 @@ public class HBaseClient {
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
         long columnId = info.getColumnIdByName(columnName);
+        ColumnMetadata columnType = info.getColumnTypeByName(columnName);
 
-        byte[] startKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId, new byte[0]);
-        byte[] endKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId+1, new byte[0]);
+        byte[] startKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId, new byte[0], columnType);
+        byte[] endKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId+1, new byte[0], columnType);
 
         Scan scan = ScanFactory.buildScan(startKey, endKey);
 
         return table.getScanner(scan);
     }
 
-    public byte[] parseValueFromReverseIndexRow(Result result) {
-        return RowKeyFactory.parseValueFromReverseIndexKey(result.getRow());
-    }
-
-    private byte[] wrapAndGet(byte[] array, int offset, int length) {
-        ByteBuffer buffer = ByteBuffer.wrap(array);
-        buffer.position(offset);
-        byte[] ans = new byte[length];
-        buffer.get(ans);
-        return ans;
+    public byte[] parseValueFromReverseIndexRow(String tableName, String columnName, Result result) throws IOException {
+        TableInfo info = getTableInfo(tableName);
+        ColumnMetadata columnType = info.getColumnTypeByName(columnName);
+        return RowKeyFactory.parseValueFromReverseIndexKey(result.getRow(), columnType);
     }
 }
