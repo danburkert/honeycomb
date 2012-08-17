@@ -927,17 +927,6 @@ jbyteArray CloudHandler::convert_value_to_java_bytes(uchar* value, uint32 length
   return byteArray;
 }
 
-/*ha_rows CloudHandler::records_in_range(uint index, key_range* min_key, key_range* max_key)
-{
-  DBUG_ENTER("CloudHandler::records_in_range");
-
-  KEY* key = this->table->key_info + index;
-  const uchar* min_key_value = min_key->key;
-  const uchar* max_key_value = max_key->key;
-
-  DBUG_RETURN(0);
-}*/
-
 int CloudHandler::index_init(uint idx, bool sorted)
 {
   DBUG_ENTER("CloudHandler::index_init");
