@@ -56,4 +56,21 @@ public class TableInfo {
     public Set<Long> getColumnIds() {
         return this.columnIdsToInfo.keySet();
     }
+
+    public ColumnMetadata getColumnTypeByName(String columnName) {
+        ColumnInfo info = this.columnNamesToInfo.get(columnName);
+        for (ColumnMetadata metadata : info.getMetadata()) {
+            switch (metadata) {
+                case LONG:
+                case DOUBLE:
+                case STRING:
+                case TIME:
+                    return metadata;
+                default:
+                    // Keep going
+            }
+        }
+
+        return ColumnMetadata.NONE;
+    }
 }
