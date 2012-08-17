@@ -21,6 +21,8 @@ typedef struct st_record_buffer {
 
 enum hbase_data_type { UNKNOWN_TYPE, JAVA_STRING, JAVA_LONG, JAVA_DOUBLE, JAVA_TIME };
 
+static __thread int thread_ref_count=0;
+
 class CloudHandler : public handler
 {
 private:

@@ -1142,18 +1142,26 @@ int CloudHandler::index_last(uchar *buf)
 
 void CloudHandler::detach_thread()
 {
-  this->jvm->DetachCurrentThread();
-  this->env = NULL;
+  thread_ref_count--;
+
+  if(thread_ref_count <= 0)
+  {
+    this->jvm->DetachCurrentThread();
+    this->env = NULL;
+  }
 }
 
 void CloudHandler::attach_thread()
 {
+  thread_ref_count++;
+  JavaVMAttachArgs attachArgs;
+  attachArgs.version = JNI_VERSION_1_6;
+  attachArgs.name = NULL;
+  attachArgs.group = NULL;
+
+  this->jvm->GetEnv((void**)&this->env, attachArgs.version);
   if(this->env == NULL)
   {
-    JavaVMAttachArgs attachArgs;
-    attachArgs.version = JNI_VERSION_1_6;
-    attachArgs.name = NULL;
-    attachArgs.group = NULL;
     this->jvm->AttachCurrentThread((void**)&this->env, &attachArgs);
   }
 };
