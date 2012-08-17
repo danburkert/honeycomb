@@ -248,7 +248,6 @@ public class HBaseAdapter {
     }
 
     public static byte[] indexRead(long scanId, byte[] value, IndexReadType readType) throws HBaseAdapterException {
-        logger.info("Reading index with scanId " + scanId + " read type " + readType.name());
         logger.info("indexRead-> scanId: " + scanId + ", readType: " + readType.name());
         IndexConnection conn = (IndexConnection) getConnectionForId(scanId);
 
@@ -256,7 +255,7 @@ public class HBaseAdapter {
         try {
             String tableName = conn.getTableName();
             String columnName = conn.getColumnName();
-            logger.info("\t\ttableName: " + tableName + ", columnName " + columnName);
+            logger.info("Scanning table " + tableName + ", column " + columnName);
 
             conn.setReadType(readType);
 
@@ -292,14 +291,14 @@ public class HBaseAdapter {
                         return unireg;
                     }
 
-                    byte[] nextValue = client.parseValueFromSecondaryIndexRow(indexResult);
+                    byte[] nextValue = client.parseValueFromSecondaryIndexRow(tableName, columnName, indexResult);
                     if (Arrays.equals(value, nextValue)) {
                         //Get the next index result
                         Result nextResult = conn.getNextIndexResult();
                         if (nextResult == null) {
                             return unireg;
                         }
-                        nextValue = client.parseValueFromSecondaryIndexRow(nextResult);
+                        nextValue = client.parseValueFromSecondaryIndexRow(tableName, columnName, nextResult);
                     }
 
                     ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, nextValue);
@@ -343,7 +342,7 @@ public class HBaseAdapter {
                         return unireg;
                     }
 
-                    byte[] indexValue = client.parseValueFromReverseIndexRow(indexResult);
+                    byte[] indexValue = client.parseValueFromReverseIndexRow(tableName, columnName, indexResult);
                     if (Arrays.equals(value, indexValue)) {
                         //Get the next index result
                         Result nextResult = conn.getNextIndexResult();
@@ -394,9 +393,9 @@ public class HBaseAdapter {
                         return unireg;
                     }
 
-                    value = client.parseValueFromSecondaryIndexRow(indexResult);
+                    byte[] returnedValue = client.parseValueFromSecondaryIndexRow(tableName, columnName, indexResult);
 
-                    ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, value);
+                    ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, returnedValue);
                     conn.setScanner(scanner);
 
                     //Get the first result to return
@@ -404,6 +403,7 @@ public class HBaseAdapter {
                     if (result == null) {
                         return unireg;
                     }
+
                     unireg = client.parseUniregFromIndex(result);
                 }
                 break;
@@ -417,9 +417,9 @@ public class HBaseAdapter {
                         return unireg;
                     }
 
-                    value = client.parseValueFromReverseIndexRow(indexResult);
+                    byte[] returnedValue = client.parseValueFromReverseIndexRow(tableName, columnName, indexResult);
 
-                    ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, value);
+                    ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, returnedValue);
                     conn.setScanner(scanner);
 
                     //Get the first result to return
@@ -464,13 +464,13 @@ public class HBaseAdapter {
                     case INDEX_FIRST:
                     case HA_READ_AFTER_KEY:
                     case HA_READ_KEY_OR_NEXT: {
-                        value = client.parseValueFromSecondaryIndexRow(indexResult);
+                        value = client.parseValueFromSecondaryIndexRow(tableName, columnName, indexResult);
                     }
                     break;
                     case INDEX_LAST:
                     case HA_READ_BEFORE_KEY:
                     case HA_READ_KEY_OR_PREV: {
-                        value = client.parseValueFromReverseIndexRow(indexResult);
+                        value = client.parseValueFromReverseIndexRow(tableName, columnName, indexResult);
                     }
                 }
 
