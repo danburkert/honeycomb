@@ -67,6 +67,8 @@ private:
     jobject create_java_list();
     void java_list_add(jobject list, jobject obj);
     jobject create_metadata_enum_object(const char *name);
+    void attach_thread();
+    void detach_thread();
 
     void reverse_bytes(uchar *begin, uint length)
     {
