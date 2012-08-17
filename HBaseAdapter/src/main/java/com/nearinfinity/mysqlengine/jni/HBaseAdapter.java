@@ -249,7 +249,6 @@ public class HBaseAdapter {
     }
 
     public static byte[] indexRead(long scanId, byte[] value, IndexReadType readType) throws HBaseAdapterException {
-        logger.info("Reading index with scanId " + scanId + " read type " + readType.name());
         logger.info("indexRead-> scanId: " + scanId + ", readType: " + readType.name());
         IndexConnection conn = (IndexConnection) getConnectionForId(scanId);
 
