@@ -19,7 +19,7 @@ typedef struct st_record_buffer {
   uint32 length;
 } record_buffer;
 
-enum hbase_data_type { UNKNOWN_TYPE, JAVA_STRING, JAVA_LONG, JAVA_DOUBLE, JAVA_TIME };
+enum hbase_data_type { UNKNOWN_TYPE, JAVA_STRING, JAVA_LONG, JAVA_DOUBLE, JAVA_TIME, JAVA_DATE, JAVA_DATETIME };
 
 class CloudHandler : public handler
 {

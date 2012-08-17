@@ -311,15 +311,10 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
     jsize val_length = this->env->GetArrayLength(java_val);
 
     my_ptrdiff_t offset = (my_ptrdiff_t) (buf - this->table->record[0]);
-    enum_field_types field_type = field->type();
+    hbase_data_type field_type = extract_field_type(field);
     field->move_field_offset(offset);
 
-    if (field_type == MYSQL_TYPE_LONG ||
-        field_type == MYSQL_TYPE_SHORT ||
-        field_type == MYSQL_TYPE_LONGLONG ||
-        field_type == MYSQL_TYPE_INT24 ||
-        field_type == MYSQL_TYPE_TINY ||
-        field_type == MYSQL_TYPE_YEAR)
+    if (field_type == JAVA_LONG)
     {
       longlong long_value = *(longlong*)val;
       if(this->is_little_endian())
@@ -329,10 +324,7 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
 
       field->store(long_value, false);
     }
-    else if (field_type == MYSQL_TYPE_FLOAT ||
-             field_type == MYSQL_TYPE_DECIMAL ||
-             field_type == MYSQL_TYPE_NEWDECIMAL ||
-             field_type == MYSQL_TYPE_DOUBLE)
+    else if (field_type == JAVA_DOUBLE)
     {
       double double_value;
       if (this->is_little_endian())
@@ -348,22 +340,13 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
 
       field->store(double_value);
     }
-    else if (field_type == MYSQL_TYPE_VARCHAR
-        || field_type == MYSQL_TYPE_STRING
-        || field_type == MYSQL_TYPE_VAR_STRING
-        || field_type == MYSQL_TYPE_BLOB
-        || field_type == MYSQL_TYPE_TINY_BLOB
-        || field_type == MYSQL_TYPE_MEDIUM_BLOB
-        || field_type == MYSQL_TYPE_LONG_BLOB
-        || field_type == MYSQL_TYPE_ENUM)
+    else if (field_type == JAVA_STRING)
     {
       field->store(val, val_length, &my_charset_bin);
     }
-    else if (field_type == MYSQL_TYPE_TIME
-        || field_type == MYSQL_TYPE_DATE
-        || field_type == MYSQL_TYPE_DATETIME
-        || field_type == MYSQL_TYPE_TIMESTAMP
-        || field_type == MYSQL_TYPE_NEWDATE)
+    else if (field_type == JAVA_TIME
+        || field_type == JAVA_DATE
+        || field_type == JAVA_DATETIME)
     {
       MYSQL_TIME mysql_time;
 
@@ -372,7 +355,7 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
 
       switch (field_type)
       {
-      case MYSQL_TYPE_TIME:
+      case JAVA_TIME:
         str_to_time(val, field->field_length, &mysql_time, &warning);
         break;
       default:
@@ -538,20 +521,26 @@ jobject CloudHandler::get_field_metadata(Field *field, TABLE *table_arg)
 
 	switch (essentialType)
 	{
-	case JAVA_STRING:
-	  this->java_list_add(list, create_metadata_enum_object("STRING"));
-		break;
-	case JAVA_TIME:
-	  this->java_list_add(list, create_metadata_enum_object("TIME"));
-		break;
-	case JAVA_DOUBLE:
-	  this->java_list_add(list, create_metadata_enum_object("DOUBLE"));
-		break;
-	case JAVA_LONG:
-	  this->java_list_add(list, create_metadata_enum_object("LONG"));
-		break;
-	default:
-		break;
+    case JAVA_STRING:
+      this->java_list_add(list, create_metadata_enum_object("STRING"));
+      break;
+    case JAVA_DATE:
+      this->java_list_add(list, create_metadata_enum_object("DATE"));
+      break;
+    case JAVA_TIME:
+      this->java_list_add(list, create_metadata_enum_object("TIME"));
+      break;
+    case JAVA_DATETIME:
+      this->java_list_add(list, create_metadata_enum_object("DATETIME"));
+      break;
+    case JAVA_DOUBLE:
+      this->java_list_add(list, create_metadata_enum_object("DOUBLE"));
+      break;
+    case JAVA_LONG:
+      this->java_list_add(list, create_metadata_enum_object("LONG"));
+      break;
+    default:
+      break;
 	}
 
 	if (field->real_maybe_null())
@@ -602,13 +591,19 @@ hbase_data_type CloudHandler::extract_field_type(Field *field)
 	{
 		essentialType = JAVA_DOUBLE;
 	}
-	else if (fieldType == MYSQL_TYPE_TIME
-			|| fieldType == MYSQL_TYPE_DATE
-			|| fieldType == MYSQL_TYPE_NEWDATE
-			|| fieldType == MYSQL_TYPE_DATETIME
-			|| fieldType == MYSQL_TYPE_TIMESTAMP)
+	else if (fieldType == MYSQL_TYPE_DATE
+      || fieldType == MYSQL_TYPE_NEWDATE)
+	{
+	  essentialType = JAVA_DATE;
+	}
+	else if (fieldType == MYSQL_TYPE_TIME)
 	{
 		essentialType = JAVA_TIME;
+	}
+	else if (fieldType == MYSQL_TYPE_DATETIME
+      || fieldType == MYSQL_TYPE_TIMESTAMP)
+	{
+	  essentialType = JAVA_DATETIME;
 	}
 	else if (fieldType == MYSQL_TYPE_VARCHAR
             || fieldType == MYSQL_TYPE_STRING
@@ -829,22 +824,22 @@ jobject CloudHandler::sql_to_java() {
       }
       memcpy(rec_buffer->buffer, &field_value, sizeof(longlong));
     }
-	else if (fieldType == JAVA_TIME)
+	else if (fieldType == JAVA_TIME
+	    || fieldType == JAVA_DATE
+	    || fieldType == JAVA_DATETIME)
 	{
 		MYSQL_TIME mysql_time;
 		field->get_time(&mysql_time);
 
-		switch (field->type())
+		switch (fieldType)
 		{
-			case MYSQL_TYPE_DATE:
-			case MYSQL_TYPE_NEWDATE:
+		  case JAVA_DATE:
 				mysql_time.time_type = MYSQL_TIMESTAMP_DATE;
 				break;
-			case MYSQL_TYPE_DATETIME:
-			case MYSQL_TYPE_TIMESTAMP:
+		  case JAVA_DATETIME:
 				mysql_time.time_type = MYSQL_TIMESTAMP_DATETIME;
 				break;
-			case MYSQL_TYPE_TIME:
+		  case JAVA_TIME:
 				mysql_time.time_type = MYSQL_TIMESTAMP_TIME;
 				break;
 			default:
