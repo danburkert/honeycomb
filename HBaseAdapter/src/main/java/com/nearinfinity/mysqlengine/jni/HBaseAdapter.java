@@ -67,6 +67,7 @@ public class HBaseAdapter {
 
             boolean flushChangesImmediately = Boolean.parseBoolean(params.get("flush_changes_immediately"));
             client.setAutoFlushTables(flushChangesImmediately);
+            logger.info("Auto flush is set to: " + flushChangesImmediately);
 
             //We are now configured
             configured = true;
@@ -157,8 +158,6 @@ public class HBaseAdapter {
     }
 
     public static boolean writeRow(String tableName, Map<String, byte[]> values, byte[] unireg) throws HBaseAdapterException {
-        logger.info("writeRow-> tableName: " + tableName);
-
         try {
             client.writeRow(tableName, values, unireg);
         } catch (Exception e) {
