@@ -21,8 +21,6 @@ public class ExactValueFilter extends FilterBase {
 
     private byte[] value;
 
-    private static final Logger logger = Logger.getLogger(ExactValueFilter.class);
-
     public ExactValueFilter() {
         super();
     }
