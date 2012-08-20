@@ -178,11 +178,24 @@ public class HBaseAdapter {
 
         boolean deleted;
         try {
-            Connection conn = clientPool.get(scanId);
+            Connection conn = getConnectionForId(scanId);
             Result result = conn.getLastResult();
-            byte[] rowKey = result.getRow();
+            String tableName = conn.getTableName();
 
-            deleted = client.deleteRow(rowKey);
+            UUID uuid = null;
+            if (conn instanceof IndexConnection) {
+                if (((IndexConnection) conn).isNullScan()) {
+                    uuid = client.parseUUIDFromNullIndexRow(result);
+                }
+                else {
+                    uuid = client.parseUUIDFromIndexRow(result);
+                }
+            }
+            else if (conn instanceof DataConnection) {
+                uuid = client.parseUUIDFromDataRow(result);
+            }
+
+            deleted = client.deleteRow(tableName, uuid);
         } catch (IOException e) {
             logger.error("deleteRow-> Exception:", e);
             throw new HBaseAdapterException("deleteRow", e);
@@ -444,6 +457,8 @@ public class HBaseAdapter {
                 }
                 break;
                 case INDEX_NULL: {
+                    conn.setNullScan(true);
+
                     ResultScanner nullScanner = client.getNullIndexScanner(tableName, columnName);
                     conn.setIndexScanner(nullScanner);
 
@@ -452,7 +467,7 @@ public class HBaseAdapter {
                         return indexRow;
                     }
 
-                    indexRow.setUUID(client.parseUUIDFromNulIndexRow(indexResult));
+                    indexRow.setUUID(client.parseUUIDFromNullIndexRow(indexResult));
                     indexRow.setUnireg(client.parseUniregFromNullIndexRow(indexResult));
                 } break;
             }
@@ -498,7 +513,7 @@ public class HBaseAdapter {
                         value = client.parseValueFromReverseIndexRow(tableName, columnName, indexResult);
                     } break;
                     case INDEX_NULL: {
-                        indexRow.setUUID(client.parseUUIDFromNulIndexRow(indexResult));
+                        indexRow.setUUID(client.parseUUIDFromNullIndexRow(indexResult));
                         indexRow.setUnireg(client.parseUniregFromNullIndexRow(indexResult));
                         return indexRow;
                     }

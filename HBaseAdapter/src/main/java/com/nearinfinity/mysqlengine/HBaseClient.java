@@ -421,14 +421,50 @@ public class HBaseClient {
         return columns;
     }
 
-    public boolean deleteRow(byte[] rowKey) throws IOException {
-        Put deletePut = new Put(rowKey);
+    public boolean deleteRow(String tableName, UUID uuid) throws IOException {
+        if (uuid == null) {
+            return false;
+        }
 
-        deletePut.add(NIC, IS_DELETED, DELETED_VAL);
+        TableInfo info = getTableInfo(tableName);
+        long tableId = info.getId();
 
-        table.put(deletePut);
+        List<Delete> deleteList = new LinkedList<Delete>();
+
+        Filter uuidFilter = new UUIDFilter(uuid);
+
+        //Delete dataRows
+        byte[] dataRowKey = RowKeyFactory.buildDataKey(tableId, uuid);
+        deleteList.add(new Delete(dataRowKey));
+
+        //Scan the index rows
+        byte[] indexStartKey = RowKeyFactory.buildValueIndexKey(tableId, 0L, new byte[0], uuid);
+        byte[] indexEndKey = RowKeyFactory.buildValueIndexKey(tableId+1, 0L, new byte[0], uuid);
+        deleteList.addAll(scanAndDeleteAllUUIDs(indexStartKey, indexEndKey, uuid));
+
+        //Scan the null index rows
+        byte[] nullStartKey = RowKeyFactory.buildNullIndexKey(tableId, 0L, uuid);
+        byte[] nullEndKey = RowKeyFactory.buildNullIndexKey(tableId + 1, 0L, uuid);
+        deleteList.addAll(scanAndDeleteAllUUIDs(nullStartKey, nullEndKey, uuid));
+
+        table.delete(deleteList);
 
         return true;
+    }
+
+    private List<Delete> scanAndDeleteAllUUIDs(byte[] startKey, byte[] endKey, UUID uuid) throws IOException {
+        List<Delete> deleteList = new LinkedList<Delete>();
+
+        Scan scan = ScanFactory.buildScan(startKey, endKey);
+
+        Filter uuidFilter = new UUIDFilter(uuid);
+        scan.setFilter(uuidFilter);
+
+        for (Result result : table.getScanner(scan)) {
+            deleteList.add(new Delete(result.getRow()));
+        }
+
+        return deleteList;
     }
 
     public UUID parseUUIDFromDataRow(Result result) {
@@ -741,7 +777,7 @@ public class HBaseClient {
         return table.getScanner(scan);
     }
 
-    public UUID parseUUIDFromNulIndexRow(Result result) {
+    public UUID parseUUIDFromNullIndexRow(Result result) {
         byte[] rowKey = result.getRow();
         ByteBuffer byteBuffer = ByteBuffer.wrap(rowKey, rowKey.length - 16, 16);
         return new UUID(byteBuffer.getLong(), byteBuffer.getLong());

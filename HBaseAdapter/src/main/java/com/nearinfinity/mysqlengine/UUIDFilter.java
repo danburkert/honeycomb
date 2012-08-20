@@ -7,6 +7,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -20,27 +21,46 @@ import java.util.UUID;
  */
 public class UUIDFilter extends FilterBase {
 
-    private Set<UUID> uuids = new HashSet<UUID>();
-    byte[] suffix = null;
+    private byte[] value;
 
-    public UUIDFilter(Set<UUID> uuids) {
-        this.uuids = uuids;
+    public UUIDFilter() {
+        this.value = null;
+    }
+
+    public UUIDFilter(UUID uuid) {
+        this.value = ByteBuffer.allocate(16)
+                .putLong(uuid.getMostSignificantBits())
+                .putLong(uuid.getLeastSignificantBits())
+                .array();
     }
 
     @Override
     public boolean filterRowKey(byte[] buffer, int offset, int length) {
-        ByteBuffer byteBuffer = ByteBuffer.wrap(buffer, offset + length - 16, 16);
-        UUID rowUUID = new UUID(byteBuffer.getLong(), byteBuffer.getLong());
-        return !uuids.contains(rowUUID);
+        byte[] rowKey = wrapAndGet(buffer, offset, length);
+        byte[] uuid = parseUUIDFromKey(rowKey);
+
+        return !Arrays.equals(uuid, this.value);
     }
 
     @Override
     public void write(DataOutput dataOutput) throws IOException {
-        Bytes.writeByteArray(dataOutput, this.suffix);
+        Bytes.writeByteArray(dataOutput, this.value);
     }
 
     @Override
     public void readFields(DataInput dataInput) throws IOException {
-        this.suffix = Bytes.readByteArray(dataInput);
+        this.value = Bytes.readByteArray(dataInput);
+    }
+
+    private byte[] parseUUIDFromKey(byte[] rowKey) {
+        return wrapAndGet(rowKey, rowKey.length - 16, 16);
+    }
+
+    private byte[] wrapAndGet(byte[] array, int offset, int length) {
+        ByteBuffer buffer = ByteBuffer.wrap(array);
+        buffer.position(offset);
+        byte[] ans = new byte[length];
+        buffer.get(ans);
+        return ans;
     }
 }
