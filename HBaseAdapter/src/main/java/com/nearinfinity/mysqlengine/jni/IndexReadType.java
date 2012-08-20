@@ -14,5 +14,6 @@ public enum IndexReadType {
     HA_READ_KEY_OR_PREV,
     HA_READ_BEFORE_KEY,
     INDEX_FIRST,
-    INDEX_LAST
+    INDEX_LAST,
+    INDEX_NULL
 }

@@ -325,7 +325,9 @@ public class HBaseAdapter {
                         return indexRow;
                     }
 
-                    ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, value);
+                    byte[] returnedValue = client.parseValueFromSecondaryIndexRow(tableName, columnName, indexResult);
+
+                    ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, returnedValue);
                     conn.setScanner(scanner);
 
                     //Get the first result to return
@@ -354,9 +356,10 @@ public class HBaseAdapter {
                         if (nextResult == null) {
                             return indexRow;
                         }
+                        indexValue = client.parseValueFromReverseIndexRow(tableName, columnName, nextResult);
                     }
 
-                    ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, value);
+                    ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, indexValue);
                     conn.setScanner(scanner);
 
                     //Get the first result to return
@@ -378,7 +381,9 @@ public class HBaseAdapter {
                         return indexRow;
                     }
 
-                    ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, value);
+                    byte[] returnedValue = client.parseValueFromReverseIndexRow(tableName, columnName, indexResult);
+
+                    ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, returnedValue);
                     conn.setScanner(scanner);
 
                     //Get the first result to return
@@ -439,6 +444,18 @@ public class HBaseAdapter {
                     indexRow.setUUID(client.parseUUIDFromIndexRow(result));
                 }
                 break;
+                case INDEX_NULL: {
+                    ResultScanner nullScanner = client.getNullIndexScanner(tableName, columnName);
+                    conn.setIndexScanner(nullScanner);
+
+                    Result indexResult = conn.getNextIndexResult();
+                    if (indexResult == null) {
+                        return indexRow;
+                    }
+
+                    indexRow.setUUID(client.parseUUIDFromNulIndexRow(indexResult));
+                    indexRow.setUnireg(client.parseUniregFromNullIndexRow(indexResult));
+                } break;
             }
         } catch (Exception e) {
             logger.error("indexRead-> Exception:", e);
@@ -480,6 +497,11 @@ public class HBaseAdapter {
                     case HA_READ_BEFORE_KEY:
                     case HA_READ_KEY_OR_PREV: {
                         value = client.parseValueFromReverseIndexRow(tableName, columnName, indexResult);
+                    } break;
+                    case INDEX_NULL: {
+                        indexRow.setUUID(client.parseUUIDFromNulIndexRow(indexResult));
+                        indexRow.setUnireg(client.parseUniregFromNullIndexRow(indexResult));
+                        return indexRow;
                     }
                 }
 
