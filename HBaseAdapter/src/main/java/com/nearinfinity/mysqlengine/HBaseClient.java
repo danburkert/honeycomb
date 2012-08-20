@@ -205,7 +205,7 @@ public class HBaseClient {
             if(value == null) {
                 // Build null index
                 byte[] nullIndexRow = RowKeyFactory.buildNullIndexKey(tableId, columnId, rowId);
-                putList.add(new Put(nullIndexRow).add(NIC, new byte[0], new byte[0]));
+                putList.add(new Put(nullIndexRow).add(NIC, indexQualifier, indexValue));
             } else {
                 allRowsNull = false;
                 // Add data column to put
@@ -726,5 +726,28 @@ public class HBaseClient {
         TableInfo info = getTableInfo(tableName);
         ColumnMetadata columnType = info.getColumnTypeByName(columnName);
         return RowKeyFactory.parseValueFromReverseIndexKey(result.getRow(), columnType);
+    }
+
+    public ResultScanner getNullIndexScanner(String tableName, String columnName) throws IOException {
+        TableInfo info = getTableInfo(tableName);
+        long tableId = info.getId();
+        long columnId = info.getColumnIdByName(columnName);
+
+        byte[] startKey = RowKeyFactory.buildNullIndexKey(tableId, columnId, ZERO_UUID);
+        byte[] endKey = RowKeyFactory.buildNullIndexKey(tableId, columnId+1, ZERO_UUID);
+
+        Scan scan = ScanFactory.buildScan(startKey, endKey);
+
+        return table.getScanner(scan);
+    }
+
+    public UUID parseUUIDFromNulIndexRow(Result result) {
+        byte[] rowKey = result.getRow();
+        ByteBuffer byteBuffer = ByteBuffer.wrap(rowKey, rowKey.length - 16, 16);
+        return new UUID(byteBuffer.getLong(), byteBuffer.getLong());
+    }
+
+    public byte[] parseUniregFromNullIndexRow(Result result) {
+        return result.getValue(NIC, UNIREG);
     }
 }

@@ -38,7 +38,7 @@ private:
     uint32 max_row_length();
     void unpack_index(uchar* buf, jbyteArray uniReg);
     jobject java_find_flag(enum ha_rkey_function find_flag);
-    int index_field_type;
+    Field *index_field;
 
     long long curr_scan_id;
 
@@ -69,6 +69,8 @@ private:
     jobject create_java_list();
     void java_list_add(jobject list, jobject obj);
     jobject create_metadata_enum_object(const char *name);
+    bool is_key_null(const uchar *key);
+    jobject java_find_flag_by_name(char *name);
     void attach_thread();
     void detach_thread();
 
@@ -181,7 +183,7 @@ private:
 
       ulong index_flags(uint inx, uint part, bool all_parts) const
       {
-        return HA_READ_NEXT | HA_READ_ORDER | HA_READ_RANGE | HA_READ_PREV;
+        return HA_READ_NEXT | HA_READ_ORDER | HA_READ_RANGE | HA_READ_PREV | HA_ONLY_WHOLE_INDEX;
       }
 
       uint max_supported_record_length() const 
