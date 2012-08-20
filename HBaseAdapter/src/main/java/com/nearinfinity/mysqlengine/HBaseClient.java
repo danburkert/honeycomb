@@ -576,55 +576,6 @@ public class HBaseClient {
         table.delete(delete);
     }
 
-    public void compact() throws IOException {
-        Scan scan = new Scan();
-
-        //Filter only rows with isDeleted=1
-        SingleColumnValueFilter filter = new SingleColumnValueFilter(NIC, IS_DELETED, CompareFilter.CompareOp.EQUAL, DELETED_VAL);
-        filter.setFilterIfMissing(true);
-        scan.setFilter(filter);
-
-        ResultScanner scanner = table.getScanner(scan);
-        List<Delete> deleteList = new LinkedList<Delete>();
-
-        Set<UUID> deletedUUIDs = new HashSet<UUID>();
-        for (Result result : scanner) {
-            //Delete the data row key
-            byte[] rowKey = result.getRow();
-            Delete rowDelete = new Delete(rowKey);
-            deleteList.add(rowDelete);
-
-            deletedUUIDs.add(parseUUIDFromDataRow(result));
-        }
-
-        /**
-         * TODO:
-         * Still not sure how this should be done. Right now it scans ALL indexes to build Deletes for all row keys.
-         * Should we build indexes from the row we got previously? Should we only scan each table we know has deleted
-         * values? There is some optimization to be done here...
-         */
-        Scan indexScan = new Scan();
-//        Filter uuidFilter = new UUIDFilter(deletedUUIDs);
-//        scan.setFilter(uuidFilter);
-        ResultScanner indexScanner = table.getScanner(indexScan);
-        for (Result result : indexScanner) {
-            byte[] rowKey = result.getRow();
-
-            /* TODO: This is a temporary workaround until we can write a CustomFilter */
-            if (rowKey.length < 16) {
-                continue;
-            }
-            ByteBuffer byteBuffer = ByteBuffer.wrap(rowKey, rowKey.length - 16, 16);
-            UUID rowUUID = new UUID(byteBuffer.getLong(), byteBuffer.getLong());
-            if (deletedUUIDs.contains(rowUUID)) {
-                Delete indexDelete = new Delete(rowKey);
-                deleteList.add(indexDelete);
-            }
-        }
-
-        table.delete(deleteList);
-    }
-
     public void setCacheSize(int cacheSize)
     {
         logger.info("Setting table scan row cache to " + cacheSize);
