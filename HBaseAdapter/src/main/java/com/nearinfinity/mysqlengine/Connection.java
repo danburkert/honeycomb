@@ -1,7 +1,6 @@
 package com.nearinfinity.mysqlengine;
 
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
 
 import java.io.IOException;
 

@@ -88,7 +88,7 @@ public class Driver {
 
                 byte[] dataRowKey = RowKeyFactory.buildDataKey(tableId, uuid);
 
-                client.deleteRow(dataRowKey);
+                client.deleteRow(tableName, uuid);
             }
         }
         else if (args[0].equals("compact")) {
