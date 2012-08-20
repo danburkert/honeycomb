@@ -45,7 +45,7 @@ public class TableCache {
         return info;
     }
 
-    private List<ColumnMetadata> getMetadataForColumn(long tableId, long columnId) throws IOException {
+    public List<ColumnMetadata> getMetadataForColumn(long tableId, long columnId) throws IOException {
         ArrayList<ColumnMetadata> metadataList = new ArrayList<ColumnMetadata>();
 
         Get metadataGet = new Get(RowKeyFactory.buildColumnInfoKey(tableId, columnId));
@@ -66,5 +66,9 @@ public class TableCache {
         }
 
         return metadataList;
+    }
+
+    public void addTableInfo(String tableName, TableInfo info) {
+        this.tableCache.put(tableName, info);
     }
 }

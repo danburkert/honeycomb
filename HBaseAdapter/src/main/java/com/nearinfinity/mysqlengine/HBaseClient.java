@@ -100,8 +100,6 @@ public class HBaseClient {
     }
 
     private void createTable(String tableName, List<Put> puts) throws IOException {
-        logger.info("HBaseClient: createTable called");
-
         //Get and increment the table counter (assumes it exists)
         long tableId = table.incrementColumnValue(RowKeyFactory.ROOT, NIC, new byte[0], 1);
 
@@ -147,7 +145,6 @@ public class HBaseClient {
     }
 
     public void createTableFull(String tableName, Map<String, List<ColumnMetadata>> columns) throws IOException {
-        logger.info("HBaseClient: createTableFull");
         //Batch put list
         List<Put> putList = new LinkedList<Put>();
 
@@ -156,8 +153,6 @@ public class HBaseClient {
 
         //Create columns and add to put list
         addColumns(tableName, columns, putList);
-
-        logger.info("HBaseClient: Putting " + putList.size() + " new HBase cells");
 
         //Perform all puts
         table.put(putList);
@@ -238,8 +233,6 @@ public class HBaseClient {
     }
 
     public List<Map<String, byte[]>> fullTableScan(String tableName) throws IOException {
-        logger.info("HBaseClient.fullTableScan");
-
         //Get table id
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
@@ -295,7 +288,7 @@ public class HBaseClient {
         return table.getScanner(scan);
     }
 
-    public ResultScanner getTableScanner(String tableName, boolean isFullTableScan) throws IOException {
+    public ResultScanner getDataScanner(String tableName, boolean isFullTableScan) throws IOException {
         //Get table id
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
@@ -312,7 +305,7 @@ public class HBaseClient {
         return table.getScanner(scan);
     }
 
-    public ResultScanner getValueIndexScanner(String tableName, String columnName, byte[] value) throws IOException {
+    public ResultScanner getPrimaryIndexScanner(String tableName, String columnName, byte[] value) throws IOException {
         //Get the table id
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
@@ -497,7 +490,7 @@ public class HBaseClient {
 
         int affectedRows = 0;
 
-        byte[] valuePrefix = ByteBuffer.allocate(9).put(RowType.VALUE_INDEX.getValue()).putLong(tableId).array();
+        byte[] valuePrefix = ByteBuffer.allocate(9).put(RowType.PRIMARY_INDEX.getValue()).putLong(tableId).array();
         byte[] secondaryPrefix = ByteBuffer.allocate(9).put(RowType.SECONDARY_INDEX.getValue()).putLong(tableId).array();
         byte[] reversePrefix = ByteBuffer.allocate(9).put(RowType.REVERSE_INDEX.getValue()).putLong(tableId).array();
         byte[] nullPrefix = ByteBuffer.allocate(9).put(RowType.NULL_INDEX.getValue()).putLong(tableId).array();

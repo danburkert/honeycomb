@@ -1,7 +1,5 @@
 package com.nearinfinity.mysqlengine;
 
-import org.apache.log4j.Logger;
-
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
@@ -44,7 +42,7 @@ public class RowKeyFactory {
 
     public static byte[] buildValueIndexKey(long tableId, long columnId, byte[] value, UUID uuid) {
         return ByteBuffer.allocate(33 + value.length)
-                .put(RowType.VALUE_INDEX.getValue())
+                .put(RowType.PRIMARY_INDEX.getValue())
                 .putLong(tableId)
                 .putLong(columnId)
                 .put(value)

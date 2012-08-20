@@ -88,7 +88,7 @@ public class HBaseAdapter {
         long scanId = connectionCounter.incrementAndGet();
         logger.info("startScan-> tableName: " + tableName + ", scanId: " + scanId);
         try {
-            ResultScanner scanner = client.getTableScanner(tableName, isFullTableScan);
+            ResultScanner scanner = client.getDataScanner(tableName, isFullTableScan);
             clientPool.put(scanId, new DataConnection(tableName, scanner));
         } catch (Exception e) {
             logger.error("startScan-> Exception:", e);
@@ -218,7 +218,6 @@ public class HBaseAdapter {
             String tableName = conn.getTableName();
             ByteBuffer buffer = ByteBuffer.wrap(uuid);
             UUID rowUuid = new UUID(buffer.getLong(), buffer.getLong());
-            logger.info("\t\t UUID: " + rowUuid.toString());
 
             Result result = client.getDataRow(rowUuid, tableName);
             if (result == null) {
@@ -227,7 +226,6 @@ public class HBaseAdapter {
             }
 
             Map<String, byte[]> values = client.parseRow(result, conn.getTableName());
-            logger.info("\t\t values.size: " + values.size());
             row.setUUID(rowUuid);
             row.setRowMap(values);
         } catch (Exception e) {
@@ -250,7 +248,9 @@ public class HBaseAdapter {
 
             conn.setReadType(readType);
 
-            Result result = null;
+            Result result;
+            byte[] returnedValue = null;
+
             switch (readType) {
                 case HA_READ_KEY_EXACT: {
                     ResultScanner indexScanner = client.getSecondaryIndexScannerExact(tableName, columnName, value);
@@ -262,7 +262,7 @@ public class HBaseAdapter {
                         return indexRow;
                     }
 
-                    ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, value);
+                    ResultScanner scanner = client.getPrimaryIndexScanner(tableName, columnName, value);
                     conn.setScanner(scanner);
                     //Get the first result to return
                     result = conn.getNextResult();
@@ -281,22 +281,14 @@ public class HBaseAdapter {
                         return indexRow;
                     }
 
-                    byte[] nextValue = ResultParser.parseValue(indexResult);
-                    if (Arrays.equals(value, nextValue)) {
+                    returnedValue = ResultParser.parseValue(indexResult);
+                    if (Arrays.equals(value, returnedValue)) {
                         //Get the next index result
                         Result nextResult = conn.getNextIndexResult();
                         if (nextResult == null) {
                             return indexRow;
                         }
-                        nextValue = ResultParser.parseValue(nextResult);
-                    }
-
-                    ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, nextValue);
-                    conn.setScanner(scanner);
-                    //Get the first result to return
-                    result = conn.getNextResult();
-                    if (result == null) {
-                        return indexRow;
+                        returnedValue = ResultParser.parseValue(nextResult);
                     }
                 }
                 break;
@@ -310,16 +302,7 @@ public class HBaseAdapter {
                         return indexRow;
                     }
 
-                    byte[] returnedValue = ResultParser.parseValue(indexResult);
-
-                    ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, returnedValue);
-                    conn.setScanner(scanner);
-
-                    //Get the first result to return
-                    result = conn.getNextResult();
-                    if (result == null) {
-                        return indexRow;
-                    }
+                    returnedValue = ResultParser.parseValue(indexResult);
                 }
                 break;
                 case HA_READ_BEFORE_KEY: {
@@ -332,23 +315,14 @@ public class HBaseAdapter {
                         return indexRow;
                     }
 
-                    byte[] indexValue = ResultParser.parseValue(indexResult);
-                    if (Arrays.equals(value, indexValue)) {
+                    returnedValue = ResultParser.parseValue(indexResult);
+                    if (Arrays.equals(value, returnedValue)) {
                         //Get the next index result
                         Result nextResult = conn.getNextIndexResult();
                         if (nextResult == null) {
                             return indexRow;
                         }
-                        indexValue = ResultParser.parseValue(nextResult);
-                    }
-
-                    ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, indexValue);
-                    conn.setScanner(scanner);
-
-                    //Get the first result to return
-                    result = conn.getNextResult();
-                    if (result == null) {
-                        return indexRow;
+                        returnedValue = ResultParser.parseValue(nextResult);
                     }
                 }
                 break;
@@ -362,16 +336,7 @@ public class HBaseAdapter {
                         return indexRow;
                     }
 
-                    byte[] returnedValue = ResultParser.parseValue(indexResult);
-
-                    ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, returnedValue);
-                    conn.setScanner(scanner);
-
-                    //Get the first result to return
-                    result = conn.getNextResult();
-                    if (result == null) {
-                        return indexRow;
-                    }
+                    returnedValue = ResultParser.parseValue(indexResult);
                 }
                 break;
                 case INDEX_FIRST: {
@@ -384,16 +349,7 @@ public class HBaseAdapter {
                         return indexRow;
                     }
 
-                    byte[] returnedValue = ResultParser.parseValue(indexResult);
-
-                    ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, returnedValue);
-                    conn.setScanner(scanner);
-
-                    //Get the first result to return
-                    result = conn.getNextResult();
-                    if (result == null) {
-                        return indexRow;
-                    }
+                    returnedValue = ResultParser.parseValue(indexResult);
                 }
                 break;
                 case INDEX_LAST: {
@@ -406,16 +362,7 @@ public class HBaseAdapter {
                         return indexRow;
                     }
 
-                    byte[] returnedValue = ResultParser.parseValue(indexResult);
-
-                    ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, returnedValue);
-                    conn.setScanner(scanner);
-
-                    //Get the first result to return
-                    result = conn.getNextResult();
-                    if (result == null) {
-                        return indexRow;
-                    }
+                    returnedValue = ResultParser.parseValue(indexResult);
                 }
                 break;
                 case INDEX_NULL: {
@@ -428,7 +375,20 @@ public class HBaseAdapter {
                     if (result == null) {
                         return indexRow;
                     }
-                } break;
+
+                    indexRow.parseResult(result);
+
+                    return indexRow;
+                }
+            }
+
+            ResultScanner scanner = client.getPrimaryIndexScanner(tableName, columnName, returnedValue);
+            conn.setScanner(scanner);
+
+            //Get the first result to return
+            result = conn.getNextResult();
+            if (result == null) {
+                return indexRow;
             }
 
             indexRow.parseResult(result);
@@ -482,7 +442,7 @@ public class HBaseAdapter {
                     return indexRow;
                 }
 
-                ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, value);
+                ResultScanner scanner = client.getPrimaryIndexScanner(tableName, columnName, value);
                 conn.setScanner(scanner);
 
                 //Get the next result, let the loop determine if we need to loop again
