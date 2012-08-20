@@ -911,7 +911,7 @@ int CloudHandler::index_init(uint idx, bool sorted)
     Field * field = *field_ptr;
     if (strcmp(field->field_name, column_name) == 0)
     {
-      this->index_field_type = field->type();
+      this->index_field = field;
       break;
     }
   }
@@ -952,7 +952,41 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
   jmethodID index_read_method = this->env->GetStaticMethodID(adapter_class, "indexRead", "(J[BLcom/nearinfinity/mysqlengine/jni/IndexReadType;)Lcom/nearinfinity/mysqlengine/jni/IndexRow;");
   jlong java_scan_id = this->curr_scan_id;
   uchar* key_copy;
-  if (this->is_integral_field(this->index_field_type))
+  uint key_copy_len;
+  jobject java_find_flag;
+
+  if (find_flag == HA_READ_PREFIX_LAST_OR_PREV)
+  {
+    find_flag = HA_READ_KEY_OR_PREV;
+  }
+
+  if (this->index_field->maybe_null() && is_key_null(key))
+  {
+    switch (find_flag) {
+      case HA_READ_KEY_EXACT: 
+        java_find_flag = java_find_flag_by_name("INDEX_NULL");
+        break;
+      case HA_READ_AFTER_KEY:
+        java_find_flag = java_find_flag_by_name("INDEX_FIRST");
+        break;
+      default:
+        java_find_flag = this->java_find_flag(find_flag);
+    }
+  }
+  else
+  {
+    java_find_flag = this->java_find_flag(find_flag);
+  }
+
+  if (this->index_field->maybe_null())
+  {
+    //If the index is nullable, then the first byte tells us whether it is null
+    //We can ignore the value by incrementing the pointer and decrementing the length
+    key++;
+    key_len--;
+  }
+  
+  if (this->is_integral_field(this->index_field->type()))
   {
     key_copy = new uchar[sizeof(longlong)];
     if (key_len == sizeof(int))
@@ -978,7 +1012,6 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
   jbyteArray java_key = this->env->NewByteArray(key_len);
   this->env->SetByteArrayRegion(java_key, 0, key_len, (jbyte*)key_copy);
   delete key_copy;
-  jobject java_find_flag = this->java_find_flag(find_flag);
   jobject index_row = this->env->CallStaticObjectMethod(adapter_class, index_read_method, java_scan_id, java_key, java_find_flag);
   
   jclass index_row_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/IndexRow");
@@ -1196,6 +1229,18 @@ int CloudHandler::index_last(uchar *buf)
   DBUG_RETURN(0);
 }
 
+jobject CloudHandler::java_find_flag_by_name(char *name)
+{
+  jclass read_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/IndexReadType");
+  jfieldID field_id = this->env->GetStaticFieldID(read_class, name, "Lcom/nearinfinity/mysqlengine/jni/IndexReadType;");
+  return this->env->GetStaticObjectField(read_class, field_id);
+}
+
+bool CloudHandler::is_key_null(const uchar *key)
+{
+  return key[0] != 0;
+}
+
 void CloudHandler::detach_thread()
 {
   thread_ref_count--;
@@ -1220,4 +1265,4 @@ void CloudHandler::attach_thread()
   {
     this->jvm->AttachCurrentThread((void**)&this->env, &attachArgs);
   }
-};
+}
