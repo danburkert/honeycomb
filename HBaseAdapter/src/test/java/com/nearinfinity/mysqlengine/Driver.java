@@ -64,7 +64,7 @@ public class Driver {
 
             ResultScanner scanner = client.search(tableName, tokens[0], tokens[1].getBytes());
             for (Result result : scanner) {
-                UUID uuid = client.parseUUIDFromIndexRow(result);
+                UUID uuid = ResultParser.parseUUID(result);
 
                 Result rowResult = client.getDataRow(uuid, tableName);
                 Map<String, byte[]> parsedRow = client.parseRow(rowResult, tableName);

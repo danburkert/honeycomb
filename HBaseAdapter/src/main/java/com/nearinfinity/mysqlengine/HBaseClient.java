@@ -217,7 +217,7 @@ public class HBaseClient {
 
                 // Build secondary index key
                 byte[] secondaryIndexRow = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId, value, columnType);
-                putList.add(new Put(secondaryIndexRow).add(NIC, new byte[0], new byte[0]));
+                putList.add(new Put(secondaryIndexRow).add(NIC, VALUE_COLUMN, value));
 
                 // Build reverse index key
                 byte[] reverseIndexRow = RowKeyFactory.buildReverseIndexKey(tableId, columnId, value, columnType);
@@ -308,21 +308,6 @@ public class HBaseClient {
         //Exclude deleted values
         SingleColumnValueFilter filter = new SingleColumnValueFilter(NIC, IS_DELETED, CompareFilter.CompareOp.NOT_EQUAL, DELETED_VAL);
         scan.setFilter(filter);
-
-        return table.getScanner(scan);
-    }
-
-    public ResultScanner getIndexScanner(String tableName, String columnName) throws IOException {
-        //Get the table id
-        TableInfo info = getTableInfo(tableName);
-        long tableId = info.getId();
-        long columnId = info.getColumnIdByName(columnName);
-
-        //Build row keys
-        byte[] startRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, new byte[0], ZERO_UUID);
-        byte[] endRow = RowKeyFactory.buildValueIndexKey(tableId, columnId + 1, new byte[0], ZERO_UUID);
-
-        Scan scan = ScanFactory.buildScan(startRow, endRow);
 
         return table.getScanner(scan);
     }
@@ -467,12 +452,6 @@ public class HBaseClient {
         return deleteList;
     }
 
-    public UUID parseUUIDFromDataRow(Result result) {
-        byte[] rowKey = result.getRow();
-        ByteBuffer buffer = ByteBuffer.wrap(rowKey, rowKey.length - 16, 16);
-        return new UUID(buffer.getLong(), buffer.getLong());
-    }
-
     public boolean dropTable(String tableName) throws IOException {
         logger.info("Preparing to drop table " + tableName);
         TableInfo info = getTableInfo(tableName);
@@ -582,23 +561,6 @@ public class HBaseClient {
         ScanFactory.setCacheAmount(cacheSize);
     }
 
-    public UUID parseUUIDFromIndexRow(Result result) {
-        byte[] rowKey = result.getRow();
-        ByteBuffer byteBuffer = ByteBuffer.wrap(rowKey, rowKey.length - 16, 16);
-        return new UUID(byteBuffer.getLong(), byteBuffer.getLong());
-    }
-
-    public Result getIndexRow(String tableName, String columnName, byte[] value) throws IOException {
-        //Get the table id
-        TableInfo info = getTableInfo(tableName);
-        long tableId = info.getId();
-        long columnId = info.getColumnIdByName(columnName);
-
-        RowKeyFactory.buildValueIndexKey(tableId, columnId, value, ZERO_UUID);
-
-        return null;
-    }
-
     public void setAutoFlushTables(boolean shouldFlushChangesImmediately)
     {
         this.table.setAutoFlush(shouldFlushChangesImmediately);
@@ -624,10 +586,6 @@ public class HBaseClient {
         } catch (IOException e) {
             logger.error("Encountered an exception while flushing commits : ", e);
         }
-    }
-
-    public byte[] parseUniregFromIndex(Result result) {
-        return result.getValue(NIC, UNIREG);
     }
 
     public ResultScanner getSecondaryIndexScanner(String tableName, String columnName, byte[] value) throws IOException {
@@ -675,12 +633,6 @@ public class HBaseClient {
         return table.getScanner(scan);
     }
 
-    public byte[] parseValueFromSecondaryIndexRow(String tableName, String columnName, Result result)  throws IOException {
-        TableInfo info = getTableInfo(tableName);
-        ColumnMetadata columnType = info.getColumnTypeByName(columnName);
-        return RowKeyFactory.parseValueFromSecondaryIndexKey(result.getRow(), columnType);
-    }
-
     public ResultScanner getReverseIndexScanner(String tableName, String columnName, byte[] value) throws IOException {
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
@@ -709,12 +661,6 @@ public class HBaseClient {
         return table.getScanner(scan);
     }
 
-    public byte[] parseValueFromReverseIndexRow(String tableName, String columnName, Result result) throws IOException {
-        TableInfo info = getTableInfo(tableName);
-        ColumnMetadata columnType = info.getColumnTypeByName(columnName);
-        return RowKeyFactory.parseValueFromReverseIndexKey(result.getRow(), columnType);
-    }
-
     public ResultScanner getNullIndexScanner(String tableName, String columnName) throws IOException {
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
@@ -726,15 +672,5 @@ public class HBaseClient {
         Scan scan = ScanFactory.buildScan(startKey, endKey);
 
         return table.getScanner(scan);
-    }
-
-    public UUID parseUUIDFromNullIndexRow(Result result) {
-        byte[] rowKey = result.getRow();
-        ByteBuffer byteBuffer = ByteBuffer.wrap(rowKey, rowKey.length - 16, 16);
-        return new UUID(byteBuffer.getLong(), byteBuffer.getLong());
-    }
-
-    public byte[] parseUniregFromNullIndexRow(Result result) {
-        return result.getValue(NIC, UNIREG);
     }
 }
