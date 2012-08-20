@@ -91,10 +91,6 @@ public class Driver {
                 client.deleteRow(tableName, uuid);
             }
         }
-        else if (args[0].equals("compact")) {
-            //compact
-            client.compact();
-        }
     }
 
     private static String printRow(Map<String, byte[]> row) {
