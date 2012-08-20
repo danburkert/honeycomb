@@ -12,14 +12,13 @@
 #include "CloudShare.h"
 #include <jni.h>
 #include "Macros.h"
+#include "FieldMetadata.h"
 #include <string.h>
 
 typedef struct st_record_buffer {
   uchar *buffer;
   uint32 length;
 } record_buffer;
-
-enum hbase_data_type { UNKNOWN_TYPE, JAVA_STRING, JAVA_LONG, JAVA_DOUBLE, JAVA_TIME, JAVA_DATE, JAVA_DATETIME };
 
 static __thread int thread_ref_count=0;
 
@@ -53,8 +52,6 @@ private:
     jbyteArray java_map_get(jobject java_map, jstring key);
     jboolean java_map_is_empty(jobject java_map);
     jbyteArray convert_value_to_java_bytes(uchar* value, uint32 length);
-    jobject get_field_metadata(Field *field, TABLE *table_arg);
-    hbase_data_type extract_field_type(Field *field);
     void java_to_sql(uchar *buf, jobject row_map);
     int delete_row_helper();
     int write_row_helper(uchar* buf);
@@ -66,9 +63,6 @@ private:
     int delete_table(const char *name);
     void drop_table(const char *name);
     int truncate();
-    jobject create_java_list();
-    void java_list_add(jobject list, jobject obj);
-    jobject create_metadata_enum_object(const char *name);
     bool is_key_null(const uchar *key);
     jobject java_find_flag_by_name(char *name);
     void attach_thread();

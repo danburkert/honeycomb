@@ -9,6 +9,7 @@
 #include "sql_plugin.h"
 #include "ha_cloud.h"
 #include "JVMThreadAttach.h"
+#include "Util.h"
 #include "mysql_time.h"
 
 #include <sys/time.h>
@@ -452,10 +453,11 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
   const char* table_name = create_info->alias;
 
   jobject columnMap = this->create_java_map();
+  FieldMetadata metadata(this->env);
 
   for (Field **field = table_arg->field ; *field ; field++)
   {
-    jobject metadataList = this->get_field_metadata(*field, table_arg);
+    jobject metadataList = metadata.get_field_metadata(*field, table_arg);
     this->java_map_insert(columnMap, string_to_java_string((*field)->field_name), metadataList);
   }
 
@@ -467,131 +469,6 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
   detach_thread();
 
   DBUG_RETURN(0);
-}
-
-jobject CloudHandler::create_java_list()
-{
-  jclass list_class = this->env->FindClass("java/util/LinkedList");
-  jmethodID list_constructor = this->env->GetMethodID(list_class, "<init>", "()V");
-  return this->env->NewObject(list_class, list_constructor);
-}
-
-jobject CloudHandler::create_metadata_enum_object(const char *name)
-{
-  jclass metadata_class = this->env->FindClass("com/nearinfinity/mysqlengine/ColumnMetadata");
-  jfieldID enum_field = this->env->GetStaticFieldID(metadata_class, name, "Lcom/nearinfinity/mysqlengine/ColumnMetadata;");
-  jobject enum_object = this->env->GetStaticObjectField(metadata_class, enum_field);
-
-  return enum_object;
-}
-
-jobject CloudHandler::get_field_metadata(Field *field, TABLE *table_arg)
-{
-  jobject list = this->create_java_list();
-  hbase_data_type essentialType = this->extract_field_type(field);
-
-	switch (essentialType)
-	{
-    case JAVA_STRING:
-      this->java_list_add(list, create_metadata_enum_object("STRING"));
-      break;
-    case JAVA_DATE:
-      this->java_list_add(list, create_metadata_enum_object("DATE"));
-      break;
-    case JAVA_TIME:
-      this->java_list_add(list, create_metadata_enum_object("TIME"));
-      break;
-    case JAVA_DATETIME:
-      this->java_list_add(list, create_metadata_enum_object("DATETIME"));
-      break;
-    case JAVA_DOUBLE:
-      this->java_list_add(list, create_metadata_enum_object("DOUBLE"));
-      break;
-    case JAVA_LONG:
-      this->java_list_add(list, create_metadata_enum_object("LONG"));
-      break;
-    default:
-      break;
-	}
-
-  if (field->real_maybe_null())
-  {
-    this->java_list_add(list, create_metadata_enum_object("IS_NULLABLE"));
-  }
-
-  // 64 is obviously some key flag indicating no primary key, but I have no idea where it's defined. Will fix later. - ABC
-  if (table_arg->s->primary_key != 64)
-  {
-    if (strcmp(table_arg->s->key_info[table_arg->s->primary_key].key_part->field->field_name, field->field_name) == 0)
-      {
-        this->java_list_add(list, create_metadata_enum_object("PRIMARY_KEY"));
-      }
-  }
-
-  return list;
-
-}
-
-void CloudHandler::java_list_add(jobject list, jobject obj)
-{
-  jclass list_class = this->env->FindClass("java/util/LinkedList");
-  jmethodID add_method = this->env->GetMethodID(list_class, "add", "(Ljava/lang/Object;)Z");
-
-  this->env->CallBooleanMethod(list, add_method, obj);
-}
-
-hbase_data_type CloudHandler::extract_field_type(Field *field)
-{
-  int fieldType = field->type();
-  hbase_data_type essentialType;
-
-  if (fieldType == MYSQL_TYPE_LONG
-          || fieldType == MYSQL_TYPE_SHORT
-          || fieldType == MYSQL_TYPE_TINY
-          || fieldType == MYSQL_TYPE_LONGLONG
-          || fieldType == MYSQL_TYPE_INT24
-          || fieldType == MYSQL_TYPE_ENUM
-          || fieldType == MYSQL_TYPE_YEAR)
-  {
-    essentialType = JAVA_LONG;
-  }
-  else if (fieldType == MYSQL_TYPE_DOUBLE
-             || fieldType == MYSQL_TYPE_FLOAT
-             || fieldType == MYSQL_TYPE_DECIMAL
-             || fieldType == MYSQL_TYPE_NEWDECIMAL)
-	{
-		essentialType = JAVA_DOUBLE;
-	}
-	else if (fieldType == MYSQL_TYPE_DATE
-      || fieldType == MYSQL_TYPE_NEWDATE)
-	{
-	  essentialType = JAVA_DATE;
-	}
-	else if (fieldType == MYSQL_TYPE_TIME)
-	{
-	  essentialType = JAVA_TIME;
-	}
-	else if (fieldType == MYSQL_TYPE_DATETIME
-      || fieldType == MYSQL_TYPE_TIMESTAMP)
-	{
-	  essentialType = JAVA_DATETIME;
-	}
-	else if (fieldType == MYSQL_TYPE_VARCHAR
-            || fieldType == MYSQL_TYPE_STRING
-            || fieldType == MYSQL_TYPE_VAR_STRING
-            || fieldType == MYSQL_TYPE_BLOB
-            || fieldType == MYSQL_TYPE_TINY_BLOB
-            || fieldType == MYSQL_TYPE_MEDIUM_BLOB
-            || fieldType == MYSQL_TYPE_LONG_BLOB)
-  {
-    essentialType = JAVA_STRING;
-  }
-  else
-  {
-    essentialType = UNKNOWN_TYPE;
-  }
-
-  return essentialType;
 }
 
 THR_LOCK_DATA **CloudHandler::store_lock(THD *thd, THR_LOCK_DATA **to, enum thr_lock_type lock_type)
@@ -770,7 +647,7 @@ jobject CloudHandler::sql_to_java() {
       continue;
     }
 
-    hbase_data_type fieldType = this->extract_field_type(field);
+    hbase_data_type fieldType = extract_field_type(field);
     uint actualFieldSize = field->field_length;
 
     if (fieldType == JAVA_LONG)
