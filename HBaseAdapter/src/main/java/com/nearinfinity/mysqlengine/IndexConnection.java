@@ -20,6 +20,8 @@ public class IndexConnection implements Connection {
     private String columnName;
     private ResultScanner indexScanner;
     private IndexReadType readType;
+    private Result lastResult;
+    private boolean isNullScan;
 
     public IndexConnection(String tableName, String columnName) {
         this.tableName = tableName;
@@ -28,6 +30,7 @@ public class IndexConnection implements Connection {
         this.scanner = null;
         this.indexScanner = null;
         this.readType = IndexReadType.HA_READ_KEY_EXACT;
+        this.lastResult = null;
     }
 
     public String getTableName() {
@@ -35,11 +38,13 @@ public class IndexConnection implements Connection {
     }
 
     public Result getLastResult() {
-        return null;
+        return this.lastResult;
     }
 
     public Result getNextResult() throws IOException {
-        return this.scanner.next();
+        Result result = this.scanner.next();
+        this.lastResult = result;
+        return result;
     }
 
     public Result getNextIndexResult() throws IOException {
@@ -79,5 +84,13 @@ public class IndexConnection implements Connection {
 
     public IndexReadType getReadType() {
         return this.readType;
+    }
+
+    public boolean isNullScan() {
+        return this.isNullScan;
+    }
+
+    public void setNullScan(boolean isNullScan) {
+        this.isNullScan = isNullScan;
     }
 }
