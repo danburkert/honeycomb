@@ -25,12 +25,10 @@ public class HBaseAdapter {
     private static AtomicLong connectionCounter;
     private static Map<Long, Connection> clientPool;
     private static HBaseClient client;
-    private static boolean configured;
     private static final Logger logger = Logger.getLogger(HBaseAdapter.class);
 
     private static final int DEFAULT_NUM_CACHED_ROWS = 2500;
     private static final long DEFAULT_WRITE_BUFFER_SIZE = 5 * 1024 * 1024; // 5 megabytes
-    private static long elapsedTime;
 
     static {
         try {
@@ -68,16 +66,9 @@ public class HBaseAdapter {
 
             boolean flushChangesImmediately = Boolean.parseBoolean(params.get("flush_changes_immediately"));
             client.setAutoFlushTables(flushChangesImmediately);
-
-            //We are now configured
-            configured = true;
         } catch (FileNotFoundException e) {
             logger.warn("Static Initializer-> FileNotFoundException:", e);
         }
-    }
-
-    public static boolean isConfigured() {
-        return configured;
     }
 
     public static boolean createTable(String tableName, Map<String, List<ColumnMetadata>> columns) throws HBaseAdapterException {
@@ -125,7 +116,6 @@ public class HBaseAdapter {
         logger.info("nextRow-> scanId: " + scanId);
 
         Connection conn = getConnectionForId(scanId);
-        long start = System.currentTimeMillis();
 
         Row row = new Row();
 
@@ -147,7 +137,6 @@ public class HBaseAdapter {
             throw new HBaseAdapterException("nextRow", e);
         }
 
-        elapsedTime += System.currentTimeMillis() - start;
         return row;
     }
 
@@ -484,7 +473,6 @@ public class HBaseAdapter {
         logger.info("nextIndexRow-> scanId: " + scanId);
 
         IndexConnection conn = (IndexConnection) getConnectionForId(scanId);
-        long start = System.currentTimeMillis();
 
         IndexRow indexRow = new IndexRow();
         try {
@@ -538,7 +526,6 @@ public class HBaseAdapter {
             throw new HBaseAdapterException("nextIndexRow", e);
         }
 
-        elapsedTime += System.currentTimeMillis() - start;
         return indexRow;
     }
 
