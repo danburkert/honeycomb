@@ -127,7 +127,7 @@ public class HBaseAdapter {
 
             //Set values and UUID
             Map<String, byte[]> values = client.parseRow(result, conn.getTableName());
-            UUID uuid = client.parseUUIDFromDataRow(result);
+            UUID uuid = ResultParser.parseUUID(result);
             row.setRowMap(values);
             row.setUUID(uuid);
             logger.info("\t\t UUID: " + uuid.toString());
@@ -170,18 +170,7 @@ public class HBaseAdapter {
             Result result = conn.getLastResult();
             String tableName = conn.getTableName();
 
-            UUID uuid = null;
-            if (conn instanceof IndexConnection) {
-                if (((IndexConnection) conn).isNullScan()) {
-                    uuid = client.parseUUIDFromNullIndexRow(result);
-                }
-                else {
-                    uuid = client.parseUUIDFromIndexRow(result);
-                }
-            }
-            else if (conn instanceof DataConnection) {
-                uuid = client.parseUUIDFromDataRow(result);
-            }
+            UUID uuid = ResultParser.parseUUID(result);
 
             deleted = client.deleteRow(tableName, uuid);
         } catch (IOException e) {
@@ -261,6 +250,7 @@ public class HBaseAdapter {
 
             conn.setReadType(readType);
 
+            Result result = null;
             switch (readType) {
                 case HA_READ_KEY_EXACT: {
                     ResultScanner indexScanner = client.getSecondaryIndexScannerExact(tableName, columnName, value);
@@ -275,13 +265,10 @@ public class HBaseAdapter {
                     ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, value);
                     conn.setScanner(scanner);
                     //Get the first result to return
-                    Result result = conn.getNextResult();
+                    result = conn.getNextResult();
                     if (result == null) {
                         return indexRow;
                     }
-
-                    indexRow.setUnireg(client.parseUniregFromIndex(result));
-                    indexRow.setUUID(client.parseUUIDFromIndexRow(result));
                 }
                 break;
                 case HA_READ_AFTER_KEY: {
@@ -294,25 +281,23 @@ public class HBaseAdapter {
                         return indexRow;
                     }
 
-                    byte[] nextValue = client.parseValueFromSecondaryIndexRow(tableName, columnName, indexResult);
+                    byte[] nextValue = ResultParser.parseValue(indexResult);
                     if (Arrays.equals(value, nextValue)) {
                         //Get the next index result
                         Result nextResult = conn.getNextIndexResult();
                         if (nextResult == null) {
                             return indexRow;
                         }
-                        nextValue = client.parseValueFromSecondaryIndexRow(tableName, columnName, nextResult);
+                        nextValue = ResultParser.parseValue(nextResult);
                     }
 
                     ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, nextValue);
                     conn.setScanner(scanner);
                     //Get the first result to return
-                    Result result = conn.getNextResult();
+                    result = conn.getNextResult();
                     if (result == null) {
                         return indexRow;
                     }
-                    indexRow.setUnireg(client.parseUniregFromIndex(result));
-                    indexRow.setUUID(client.parseUUIDFromIndexRow(result));
                 }
                 break;
                 case HA_READ_KEY_OR_NEXT: {
@@ -325,18 +310,16 @@ public class HBaseAdapter {
                         return indexRow;
                     }
 
-                    byte[] returnedValue = client.parseValueFromSecondaryIndexRow(tableName, columnName, indexResult);
+                    byte[] returnedValue = ResultParser.parseValue(indexResult);
 
                     ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, returnedValue);
                     conn.setScanner(scanner);
 
                     //Get the first result to return
-                    Result result = conn.getNextResult();
+                    result = conn.getNextResult();
                     if (result == null) {
                         return indexRow;
                     }
-                    indexRow.setUnireg(client.parseUniregFromIndex(result));
-                    indexRow.setUUID(client.parseUUIDFromIndexRow(result));
                 }
                 break;
                 case HA_READ_BEFORE_KEY: {
@@ -349,26 +332,24 @@ public class HBaseAdapter {
                         return indexRow;
                     }
 
-                    byte[] indexValue = client.parseValueFromReverseIndexRow(tableName, columnName, indexResult);
+                    byte[] indexValue = ResultParser.parseValue(indexResult);
                     if (Arrays.equals(value, indexValue)) {
                         //Get the next index result
                         Result nextResult = conn.getNextIndexResult();
                         if (nextResult == null) {
                             return indexRow;
                         }
-                        indexValue = client.parseValueFromReverseIndexRow(tableName, columnName, nextResult);
+                        indexValue = ResultParser.parseValue(nextResult);
                     }
 
                     ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, indexValue);
                     conn.setScanner(scanner);
 
                     //Get the first result to return
-                    Result result = conn.getNextResult();
+                    result = conn.getNextResult();
                     if (result == null) {
                         return indexRow;
                     }
-                    indexRow.setUnireg(client.parseUniregFromIndex(result));
-                    indexRow.setUUID(client.parseUUIDFromIndexRow(result));
                 }
                 break;
                 case HA_READ_KEY_OR_PREV: {
@@ -381,18 +362,16 @@ public class HBaseAdapter {
                         return indexRow;
                     }
 
-                    byte[] returnedValue = client.parseValueFromReverseIndexRow(tableName, columnName, indexResult);
+                    byte[] returnedValue = ResultParser.parseValue(indexResult);
 
                     ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, returnedValue);
                     conn.setScanner(scanner);
 
                     //Get the first result to return
-                    Result result = conn.getNextResult();
+                    result = conn.getNextResult();
                     if (result == null) {
                         return indexRow;
                     }
-                    indexRow.setUnireg(client.parseUniregFromIndex(result));
-                    indexRow.setUUID(client.parseUUIDFromIndexRow(result));
                 }
                 break;
                 case INDEX_FIRST: {
@@ -405,19 +384,16 @@ public class HBaseAdapter {
                         return indexRow;
                     }
 
-                    byte[] returnedValue = client.parseValueFromSecondaryIndexRow(tableName, columnName, indexResult);
+                    byte[] returnedValue = ResultParser.parseValue(indexResult);
 
                     ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, returnedValue);
                     conn.setScanner(scanner);
 
                     //Get the first result to return
-                    Result result = conn.getNextResult();
+                    result = conn.getNextResult();
                     if (result == null) {
                         return indexRow;
                     }
-
-                    indexRow.setUnireg(client.parseUniregFromIndex(result));
-                    indexRow.setUUID(client.parseUUIDFromIndexRow(result));
                 }
                 break;
                 case INDEX_LAST: {
@@ -430,18 +406,16 @@ public class HBaseAdapter {
                         return indexRow;
                     }
 
-                    byte[] returnedValue = client.parseValueFromReverseIndexRow(tableName, columnName, indexResult);
+                    byte[] returnedValue = ResultParser.parseValue(indexResult);
 
                     ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, returnedValue);
                     conn.setScanner(scanner);
 
                     //Get the first result to return
-                    Result result = conn.getNextResult();
+                    result = conn.getNextResult();
                     if (result == null) {
                         return indexRow;
                     }
-                    indexRow.setUnireg(client.parseUniregFromIndex(result));
-                    indexRow.setUUID(client.parseUUIDFromIndexRow(result));
                 }
                 break;
                 case INDEX_NULL: {
@@ -450,15 +424,14 @@ public class HBaseAdapter {
                     ResultScanner nullScanner = client.getNullIndexScanner(tableName, columnName);
                     conn.setIndexScanner(nullScanner);
 
-                    Result indexResult = conn.getNextIndexResult();
-                    if (indexResult == null) {
+                    result = conn.getNextIndexResult();
+                    if (result == null) {
                         return indexRow;
                     }
-
-                    indexRow.setUUID(client.parseUUIDFromNullIndexRow(indexResult));
-                    indexRow.setUnireg(client.parseUniregFromNullIndexRow(indexResult));
                 } break;
             }
+
+            indexRow.parseResult(result);
         } catch (Exception e) {
             logger.error("indexRead-> Exception:", e);
             throw new HBaseAdapterException("indexRead", e);
@@ -491,17 +464,16 @@ public class HBaseAdapter {
                     case INDEX_FIRST:
                     case HA_READ_AFTER_KEY:
                     case HA_READ_KEY_OR_NEXT: {
-                        value = client.parseValueFromSecondaryIndexRow(tableName, columnName, indexResult);
+                        value = ResultParser.parseValue(indexResult);
                     }
                     break;
                     case INDEX_LAST:
                     case HA_READ_BEFORE_KEY:
                     case HA_READ_KEY_OR_PREV: {
-                        value = client.parseValueFromReverseIndexRow(tableName, columnName, indexResult);
+                        value = ResultParser.parseValue(indexResult);
                     } break;
                     case INDEX_NULL: {
-                        indexRow.setUUID(client.parseUUIDFromNullIndexRow(indexResult));
-                        indexRow.setUnireg(client.parseUniregFromNullIndexRow(indexResult));
+                        indexRow.parseResult(indexResult);
                         return indexRow;
                     }
                 }
@@ -517,8 +489,7 @@ public class HBaseAdapter {
                 result = conn.getNextResult();
             }
 
-            indexRow.setUnireg(client.parseUniregFromIndex(result));
-            indexRow.setUUID(client.parseUUIDFromIndexRow(result));
+            indexRow.parseResult(result);
         } catch (Exception e) {
             logger.error("nextIndexRow-> Exception:", e);
             throw new HBaseAdapterException("nextIndexRow", e);
