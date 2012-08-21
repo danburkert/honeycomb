@@ -1,5 +1,6 @@
 package com.nearinfinity.mysqlengine;
 
+import com.nearinfinity.mysqlengine.strategy.ScanStrategy;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
@@ -663,6 +664,14 @@ public class HBaseClient {
         byte[] endKey = RowKeyFactory.buildNullIndexKey(tableId, columnId+1, ZERO_UUID);
 
         Scan scan = ScanFactory.buildScan(startKey, endKey);
+
+        return table.getScanner(scan);
+    }
+
+    public ResultScanner getScanner(ScanStrategy strategy) throws IOException {
+        TableInfo info = getTableInfo(strategy.getTableName());
+
+        Scan scan = strategy.getScan(info);
 
         return table.getScanner(scan);
     }
