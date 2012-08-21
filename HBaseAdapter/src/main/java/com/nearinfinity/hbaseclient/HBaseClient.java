@@ -235,35 +235,6 @@ public class HBaseClient {
         table.put(putList);
     }
 
-    public List<Map<String, byte[]>> fullTableScan(String tableName) throws IOException {
-        //Get table id
-        TableInfo info = getTableInfo(tableName);
-        long tableId = info.getId();
-
-        //Build row keys
-        byte[] startRow = RowKeyFactory.buildDataKey(tableId, ZERO_UUID);
-        byte[] endRow = RowKeyFactory.buildDataKey(tableId + 1, ZERO_UUID);
-
-        Scan scan = ScanFactory.buildScan(startRow, endRow);
-
-        //Scan all rows in HBase
-        List<Map<String, byte[]>> rows = new LinkedList<Map<String, byte[]>>();
-        ResultScanner results = table.getScanner(scan);
-
-        for (Result result : results) {
-            Map<String, byte[]> columns = new HashMap<String, byte[]>();
-            Map<byte[], byte[]> returnedColumns = result.getNoVersionMap().get(NIC);
-            for (byte[] qualifier : returnedColumns.keySet()) {
-                long columnId = ByteBuffer.wrap(qualifier).getLong();
-                String columnName = info.getColumnNameById(columnId);
-                columns.put(columnName, returnedColumns.get(qualifier));
-            }
-            rows.add(columns);
-        }
-
-        return rows;
-    }
-
     public Result getDataRow(UUID uuid, String tableName) throws IOException {
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
@@ -272,46 +243,6 @@ public class HBaseClient {
 
         Get get = new Get(rowKey);
         return table.get(get);
-    }
-
-    public ResultScanner search(String tableName, String columnName, byte[] value) throws IOException {
-        logger.info("HBaseClient.search");
-
-        //Get table and column id
-        TableInfo info = getTableInfo(tableName);
-        long tableId = info.getId();
-        long columnId = info.getColumnIdByName(columnName);
-
-        //Build row keys
-        byte[] startRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, ZERO_UUID);
-        byte[] endRow = RowKeyFactory.buildValueIndexKey(tableId, columnId + 1, value, ZERO_UUID);
-
-        Scan scan = ScanFactory.buildScan(startRow, endRow);
-
-        return table.getScanner(scan);
-    }
-
-    public ResultScanner getPrimaryIndexScanner(String tableName, String columnName, byte[] value) throws IOException {
-        //Get the table id
-        TableInfo info = getTableInfo(tableName);
-        long tableId = info.getId();
-        long columnId = info.getColumnIdByName(columnName);
-
-        //Build row keys
-        byte[] startRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, ZERO_UUID);
-        byte[] endRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, FULL_UUID);
-
-        Scan scan = ScanFactory.buildScan();
-        scan.addColumn(NIC, UNIREG);
-        scan.setStartRow(startRow);
-
-        List<Filter> filterList = new LinkedList<Filter>();
-        filterList.add(new InclusiveStopFilter(endRow));
-        filterList.add(new ExactValueFilter(value));
-
-        scan.setFilter(new FilterList(filterList));
-
-        return table.getScanner(scan);
     }
 
     private TableInfo getTableInfo(String tableName) throws IOException {
@@ -553,7 +484,7 @@ public class HBaseClient {
         try {
             this.table.setWriteBufferSize(numBytes);
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Encountered an error setting write buffer size", e);
         }
 
         logger.info("Size of HBase write buffer set to " + numBytes + " bytes (" + (numBytes / 1024 / 1024) + " megabytes)");

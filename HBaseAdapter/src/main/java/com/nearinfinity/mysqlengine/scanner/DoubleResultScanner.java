@@ -62,7 +62,8 @@ public class DoubleResultScanner implements HBaseResultScanner {
                 return null;
             }
             byte[] value = ResultParser.parseValue(secondaryResult);
-            primaryScanner = client.getPrimaryIndexScanner(tableName, columnName, value);
+            ScanStrategy strategy = new PrimaryIndexScanStrategy(tableName, columnName, value);
+            primaryScanner = client.getScanner(strategy);
             result = primaryScanner.next();
         }
         return result;
