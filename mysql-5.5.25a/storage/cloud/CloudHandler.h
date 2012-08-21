@@ -114,12 +114,7 @@ class CloudHandler : public handler
 
     jclass adapter()
     {
-      if (this->hbase_adapter == NULL)
-      {
-        this->hbase_adapter = find_jni_class("HBaseAdapter", this->env);
-      }
-
-      return this->hbase_adapter;
+      return find_jni_class("HBaseAdapter", this->env);
     }
 
     // For those annoying times when you need the table name but actually have its file path
