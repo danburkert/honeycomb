@@ -1,7 +1,5 @@
 package com.nearinfinity.hbaseclient;
 
-import com.nearinfinity.mysqlengine.RowType;
-
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
