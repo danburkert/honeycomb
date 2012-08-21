@@ -1,9 +1,15 @@
 package com.nearinfinity.mysqlengine.jni;
 
+import com.nearinfinity.hbaseclient.ColumnMetadata;
+import com.nearinfinity.hbaseclient.Constants;
+import com.nearinfinity.hbaseclient.HBaseClient;
+import com.nearinfinity.hbaseclient.ResultParser;
 import com.nearinfinity.mysqlengine.*;
-import com.nearinfinity.mysqlengine.readstrategies.*;
+import com.nearinfinity.hbaseclient.strategy.*;
+import com.nearinfinity.mysqlengine.scanner.SingleResultScanner;
+import com.nearinfinity.mysqlengine.scanner.DoubleResultScanner;
+import com.nearinfinity.mysqlengine.scanner.HBaseResultScanner;
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
 
@@ -89,8 +95,9 @@ public class HBaseAdapter {
         long scanId = connectionCounter.incrementAndGet();
         logger.info("startScan-> tableName: " + tableName + ", scanId: " + scanId);
         try {
-            ResultScanner scanner = client.getTableScanner(tableName, isFullTableScan);
-            clientPool.put(scanId, new DataConnection(tableName, scanner));
+            ScanStrategy strategy = new FullTableScanStrategy(tableName, "", new byte[0]);
+            SingleResultScanner dataScanner = new SingleResultScanner(client.getScanner(strategy));
+            clientPool.put(scanId, new Connection(tableName, dataScanner));
         } catch (Exception e) {
             logger.error("startScan-> Exception:", e);
             throw new HBaseAdapterException("startScan", e);
@@ -99,27 +106,24 @@ public class HBaseAdapter {
         return scanId;
     }
 
-
     public static Row nextRow(long scanId) throws HBaseAdapterException {
         logger.info("nextRow-> scanId: " + scanId);
 
         Connection conn = getConnectionForId(scanId);
 
         Row row = new Row();
-
         try {
-            Result result = conn.getNextResult();
+            HBaseResultScanner scanner = conn.getScanner();
+            Result result = scanner.next(null);
+
             if (result == null) {
                 return null;
             }
 
             //Set values and UUID
             Map<String, byte[]> values = client.parseRow(result, conn.getTableName());
-            UUID uuid = client.parseUUIDFromDataRow(result);
-            row.setRowMap(values);
-            row.setUUID(uuid);
-            logger.info("\t\t UUID: " + uuid.toString());
-
+            UUID uuid = ResultParser.parseUUID(result);
+            row.parse(values, uuid);
         } catch (Exception e) {
             logger.error("nextRow-> Exception:", e);
             throw new HBaseAdapterException("nextRow", e);
@@ -155,19 +159,10 @@ public class HBaseAdapter {
         boolean deleted;
         try {
             Connection conn = getConnectionForId(scanId);
-            Result result = conn.getLastResult();
+            HBaseResultScanner scanner = conn.getScanner();
+            Result result = scanner.getLastResult();
             String tableName = conn.getTableName();
-
-            UUID uuid = null;
-            if (conn instanceof IndexConnection) {
-                if (((IndexConnection) conn).isNullScan()) {
-                    uuid = client.parseUUIDFromNullIndexRow(result);
-                } else {
-                    uuid = client.parseUUIDFromIndexRow(result);
-                }
-            } else if (conn instanceof DataConnection) {
-                uuid = client.parseUUIDFromDataRow(result);
-            }
+            UUID uuid = ResultParser.parseUUID(result);
 
             deleted = client.deleteRow(tableName, uuid);
         } catch (IOException e) {
@@ -215,7 +210,6 @@ public class HBaseAdapter {
             String tableName = conn.getTableName();
             ByteBuffer buffer = ByteBuffer.wrap(uuid);
             UUID rowUuid = new UUID(buffer.getLong(), buffer.getLong());
-            logger.info("\t\t UUID: " + rowUuid.toString());
 
             Result result = client.getDataRow(rowUuid, tableName);
             if (result == null) {
@@ -224,7 +218,6 @@ public class HBaseAdapter {
             }
 
             Map<String, byte[]> values = client.parseRow(result, conn.getTableName());
-            logger.info("\t\t values.size: " + values.size());
             row.setUUID(rowUuid);
             row.setRowMap(values);
         } catch (Exception e) {
@@ -240,7 +233,7 @@ public class HBaseAdapter {
 
         long scanId = connectionCounter.incrementAndGet();
         try {
-            clientPool.put(scanId, new IndexConnection(tableName, columnName));
+            clientPool.put(scanId, new Connection(tableName, columnName));
         } catch (Exception e) {
             logger.error("startIndexScan-> Exception:", e);
             throw new HBaseAdapterException("startIndexScan", e);
@@ -251,62 +244,69 @@ public class HBaseAdapter {
 
     public static IndexRow indexRead(long scanId, byte[] value, IndexReadType readType) throws HBaseAdapterException {
         logger.info("Reading index with scanId " + scanId + " read type " + readType.name());
-        IndexConnection conn = (IndexConnection) getConnectionForId(scanId);
+        Connection conn = getConnectionForId(scanId);
 
         IndexRow indexRow = new IndexRow();
         try {
             String tableName = conn.getTableName();
             String columnName = conn.getColumnName();
-            logger.info("Scanning table " + tableName + ", column " + columnName);
 
-            conn.setReadType(readType);
-            IndexReadStrategy readStrategy;
+            byte[] valueToSkip = null;
+            HBaseResultScanner scanner = null;
 
             switch (readType) {
                 case HA_READ_KEY_EXACT: {
-                    readStrategy = new ExactKeyReadStrategy(client);
-                }
-                break;
-                case HA_READ_KEY_OR_NEXT: {
-                    readStrategy = new KeyOrNextReadStrategy(client);
-                }
-                break;
+                    ScanStrategy strategy = new ExactScanStrategy(tableName, columnName, value);
+                    scanner = new DoubleResultScanner(client.getScanner(strategy), tableName, columnName, client);
+                } break;
                 case HA_READ_AFTER_KEY: {
-                    readStrategy = new AfterKeyReadStrategy(client);
-                }
-                break;
+                    ScanStrategy strategy = new OrderedScanStrategy(tableName, columnName, value);
+                    scanner = new DoubleResultScanner(client.getScanner(strategy), tableName, columnName, client);
+                    valueToSkip = value;
+                } break;
+                case HA_READ_KEY_OR_NEXT: {
+                    ScanStrategy strategy = new OrderedScanStrategy(tableName, columnName, value);
+                    scanner = new DoubleResultScanner(client.getScanner(strategy), tableName, columnName, client);
+                } break;
                 case HA_READ_BEFORE_KEY: {
-                    readStrategy = new BeforeKeyReadStrategy(client);
-                }
-                break;
+                    ScanStrategy strategy = new ReverseScanStrategy(tableName, columnName, value);
+                    scanner = new DoubleResultScanner(client.getScanner(strategy), tableName, columnName, client);
+                    valueToSkip = value;
+                } break;
                 case HA_READ_KEY_OR_PREV: {
-                    readStrategy = new KeyOrPrevReadStrategy(client);
-                }
-                break;
+                    ScanStrategy strategy = new ReverseScanStrategy(tableName, columnName, value);
+                    scanner = new DoubleResultScanner(client.getScanner(strategy), tableName, columnName, client);
+                } break;
                 case INDEX_FIRST: {
-                    readStrategy = new IndexFirstReadStrategy(client);
-                }
-                break;
+                    ScanStrategy strategy = new OrderedScanStrategy(tableName, columnName, new byte[0]);
+                    scanner = new DoubleResultScanner(client.getScanner(strategy), tableName, columnName, client);
+                } break;
                 case INDEX_LAST: {
-                    readStrategy = new IndexLastReadStrategy(client);
-                }
-                break;
+                    ScanStrategy strategy = new ReverseScanStrategy(tableName, columnName, new byte[0]);
+                    scanner = new DoubleResultScanner(client.getScanner(strategy), tableName, columnName, client);
+                } break;
                 case INDEX_NULL: {
-                    readStrategy = new NullReadStrategy(client);
-                }
-                break;
-                default: throw new HBaseAdapterException("Not a valid read type", null);
+                    ScanStrategy strategy = new NullScanStrategy(tableName, columnName, null);
+                    scanner = new SingleResultScanner(client.getScanner(strategy));
+                } break;
             }
 
-            logger.info("Using strategy: " + readStrategy.getClass().getName());
-            readStrategy.setupResultScannerForConnection(conn, value);
-            Result result = conn.getNextResult();
+            logger.info("Scanning with valueToSkip " + Bytes.toStringBinary(valueToSkip));
+
+            conn.setScanner(scanner);
+            Result result = scanner.next(valueToSkip);
+
+
             if (result == null) {
                 return indexRow;
             }
+            else {
+                logger.info("First result has unireg " + Bytes.toString(ResultParser.parseUnireg(result)));
+                logger.info("Contains nic:unireg " + result.containsColumn(Constants.NIC,  Constants.UNIREG));
+                logger.info("Row key " + ResultParser.parseUUID(result));
+            }
 
-            indexRow.setUnireg(client.parseUniregFromIndex(result));
-            indexRow.setUUID(client.parseUUIDFromIndexRow(result));
+            indexRow.parseResult(result);
         } catch (Exception e) {
             logger.error("indexRead-> Exception:", e);
             throw new HBaseAdapterException("indexRead", e);
@@ -316,56 +316,19 @@ public class HBaseAdapter {
     }
 
     public static IndexRow nextIndexRow(long scanId) throws HBaseAdapterException {
-        IndexConnection conn = (IndexConnection) getConnectionForId(scanId);
+        logger.info("nextIndexRow-> scanId: " + scanId);
+
+        Connection conn = getConnectionForId(scanId);
 
         IndexRow indexRow = new IndexRow();
         try {
-            String tableName = conn.getTableName();
-            String columnName = conn.getColumnName();
-
-            Result result = conn.getNextResult();
-            while (result == null) {
-
-                //Get the first row of the value
-                Result indexResult = conn.getNextIndexResult();
-                if (indexResult == null) {
-                    return indexRow;
-                }
-
-                byte[] value = null;
-                switch (conn.getReadType()) {
-                    case INDEX_FIRST:
-                    case HA_READ_AFTER_KEY:
-                    case HA_READ_KEY_OR_NEXT: {
-                        value = client.parseValueFromSecondaryIndexRow(tableName, columnName, indexResult);
-                    }
-                    break;
-                    case INDEX_LAST:
-                    case HA_READ_BEFORE_KEY:
-                    case HA_READ_KEY_OR_PREV: {
-                        value = client.parseValueFromReverseIndexRow(tableName, columnName, indexResult);
-                    }
-                    break;
-                    case INDEX_NULL: {
-                        indexRow.setUUID(client.parseUUIDFromNullIndexRow(indexResult));
-                        indexRow.setUnireg(client.parseUniregFromNullIndexRow(indexResult));
-                        return indexRow;
-                    }
-                }
-
-                if (value == null) {
-                    return indexRow;
-                }
-
-                ResultScanner scanner = client.getValueIndexScanner(tableName, columnName, value);
-                conn.setScanner(scanner);
-
-                //Get the next result, let the loop determine if we need to loop again
-                result = conn.getNextResult();
+            HBaseResultScanner scanner = conn.getScanner();
+            Result result = scanner.next(null);
+            if (result == null) {
+                return indexRow;
             }
 
-            indexRow.setUnireg(client.parseUniregFromIndex(result));
-            indexRow.setUUID(client.parseUUIDFromIndexRow(result));
+            indexRow.parseResult(result);
         } catch (Exception e) {
             logger.error("nextIndexRow-> Exception:", e);
             throw new HBaseAdapterException("nextIndexRow", e);
@@ -375,7 +338,6 @@ public class HBaseAdapter {
     }
 
     private static Connection getConnectionForId(long scanId) throws HBaseAdapterException {
-        //logger.info("getConnectionForId-> scanId: " + scanId); // Obnoxious
         Connection conn = clientPool.get(scanId);
         if (conn == null) {
             throw new HBaseAdapterException("getConnectionForId->No connection for scanId: " + scanId, null);

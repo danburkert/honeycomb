@@ -1,5 +1,9 @@
-package com.nearinfinity.mysqlengine;
+package com.nearinfinity.hbaseclient;
 
+import com.nearinfinity.hbaseclient.ColumnMetadata;
+import com.nearinfinity.hbaseclient.Constants;
+import com.nearinfinity.hbaseclient.RowKeyFactory;
+import com.nearinfinity.hbaseclient.TableInfo;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
@@ -45,7 +49,7 @@ public class TableCache {
         return info;
     }
 
-    private List<ColumnMetadata> getMetadataForColumn(long tableId, long columnId) throws IOException {
+    public List<ColumnMetadata> getMetadataForColumn(long tableId, long columnId) throws IOException {
         ArrayList<ColumnMetadata> metadataList = new ArrayList<ColumnMetadata>();
 
         Get metadataGet = new Get(RowKeyFactory.buildColumnInfoKey(tableId, columnId));
@@ -66,5 +70,9 @@ public class TableCache {
         }
 
         return metadataList;
+    }
+
+    public void addTableInfo(String tableName, TableInfo info) {
+        this.tableCache.put(tableName, info);
     }
 }

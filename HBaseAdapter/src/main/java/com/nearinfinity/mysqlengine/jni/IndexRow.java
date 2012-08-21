@@ -1,6 +1,7 @@
 package com.nearinfinity.mysqlengine.jni;
 
-import org.apache.hadoop.hbase.util.Bytes;
+import com.nearinfinity.hbaseclient.ResultParser;
+import org.apache.hadoop.hbase.client.Result;
 import org.apache.log4j.Logger;
 
 import java.nio.ByteBuffer;
@@ -46,5 +47,10 @@ public class IndexRow {
                 .putLong(rowUuid.getMostSignificantBits())
                 .putLong(rowUuid.getLeastSignificantBits())
                 .array();
+    }
+
+    public void parseResult(Result result) {
+        this.setUnireg(ResultParser.parseUnireg(result));
+        this.setUUID(ResultParser.parseUUID(result));
     }
 }
