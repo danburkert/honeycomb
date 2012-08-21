@@ -124,7 +124,8 @@ class CloudHandler : public handler
     // For those annoying times when you need the table name but actually have its file path
     const char *extract_table_name_from_path(const char *path)
     {
-      return strrchr(path, '/');
+      const char* ptr = strrchr(path, '/');
+      return ptr + 1;
     }
 
     /* Index methods */

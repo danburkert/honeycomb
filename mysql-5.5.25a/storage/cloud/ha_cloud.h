@@ -41,5 +41,7 @@
 #include "CloudHandler.h"
 #include "CloudShare.h"
 #include "Util.h"
+#include "Macros.h"
+#include "JNISetup.h"
 
 #endif
