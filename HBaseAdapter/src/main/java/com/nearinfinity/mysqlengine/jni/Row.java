@@ -67,4 +67,9 @@ public class Row {
         }
         return valueArray;
     }
+
+    public void parse(Map<String, byte[]> values, UUID uuid) {
+        this.setRowMap(values);
+        this.setUUID(uuid);
+    }
 }
