@@ -9,10 +9,10 @@
 #include "thr_lock.h"                    /* THR_LOCK, THR_LOCK_DATA */
 #include "handler.h"                     /* handler */
 #include "my_base.h"                     /* ha_rows */
-#include "CloudShare.h"
 #include <jni.h>
 #include <string.h>
 
+#include "CloudShare.h"
 #include "Macros.h"
 #include "FieldMetadata.h"
 #include "Util.h"
@@ -70,6 +70,7 @@ class CloudHandler : public handler
     jobject java_find_flag_by_name(char *name);
     void attach_thread();
     void detach_thread();
+    void store_uuid_ref(jobject index_row, jmethodID get_uuid_method);
 
     void reverse_bytes(uchar *begin, uint length)
     {
@@ -115,7 +116,7 @@ class CloudHandler : public handler
     {
       if (this->hbase_adapter == NULL)
       {
-        this->hbase_adapter = find_class("HBaseAdapter", this->env);
+        this->hbase_adapter = find_jni_class("HBaseAdapter", this->env);
       }
 
       return this->hbase_adapter;

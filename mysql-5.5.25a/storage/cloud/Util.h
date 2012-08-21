@@ -8,6 +8,6 @@
 enum hbase_data_type { UNKNOWN_TYPE, JAVA_STRING, JAVA_LONG, JAVA_DOUBLE, JAVA_TIME, JAVA_DATE, JAVA_DATETIME };
 
 hbase_data_type extract_field_type(Field *field);
-jclass find_class(const char* class_name, JNIEnv* env);
+jclass find_jni_class(const char* class_name, JNIEnv* env);
 void print_java_exception(JNIEnv* jni_env);
 #endif

@@ -14,7 +14,7 @@ void print_java_exception(JNIEnv* env)
   }
 }
 
-jclass find_class(const char* class_name, JNIEnv* env)
+jclass find_jni_class(const char* class_name, JNIEnv* env)
 {
   char buffer[1024];  
   const char* path = JNI_CLASSPATH;
@@ -32,7 +32,6 @@ hbase_data_type extract_field_type(Field *field)
           || fieldType == MYSQL_TYPE_TINY
           || fieldType == MYSQL_TYPE_LONGLONG
           || fieldType == MYSQL_TYPE_INT24
-          || fieldType == MYSQL_TYPE_ENUM
           || fieldType == MYSQL_TYPE_YEAR)
   {
     essentialType = JAVA_LONG;
@@ -64,7 +63,8 @@ hbase_data_type extract_field_type(Field *field)
             || fieldType == MYSQL_TYPE_BLOB
             || fieldType == MYSQL_TYPE_TINY_BLOB
             || fieldType == MYSQL_TYPE_MEDIUM_BLOB
-            || fieldType == MYSQL_TYPE_LONG_BLOB)
+            || fieldType == MYSQL_TYPE_LONG_BLOB
+            || fieldType == MYSQL_TYPE_ENUM)
   {
     essentialType = JAVA_STRING;
   }

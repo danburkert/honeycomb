@@ -1,5 +1,8 @@
 #include "JNISetup.h"
 
+static const char* prefix = "-Djava.class.path=";
+static const int prefix_length = strlen(prefix);
+
 static void test_jvm(bool attach_thread, JavaVM* jvm, JNIEnv* env)
 {
 #ifndef DBUG_OFF
@@ -12,40 +15,37 @@ static void test_jvm(bool attach_thread, JavaVM* jvm, JNIEnv* env)
     jint ok = jvm->AttachCurrentThread((void**)&env, &attachArgs);
   }
 
-  jclass adapter_class = env->FindClass("com/nearinfinity/mysqlengine/jni/HBaseAdapter");
+  jclass adapter_class = find_jni_class("HBaseAdapter", env);
   INFO(("Adapter class %p", adapter_class));
   print_java_exception(env);
 #endif
 }
 
-static char* read_classpath_conf_file(FILE* config, const char* prefix)
+static char* read_classpath_conf_file(FILE* config)
 {
   fseek(config, 0, SEEK_END);
   long size = ftell(config);
   rewind(config);
-  int prefix_length = strlen(prefix);
   int class_path_length = prefix_length + size; 
   char* class_path = new char[class_path_length];
   strncpy(class_path, prefix, prefix_length);
   fread(class_path + prefix_length, sizeof(char), size, config);
-  int i = 0;
-  for(char* ptr = class_path; i < class_path_length; ptr++, i++)
+  fclose(config);
+
+  char* newline = strpbrk(class_path, "\n\r");
+  if(newline != NULL)
   {
-    if(*ptr == '\n' || *ptr == '\r')
-    {
-      *ptr = '\0';
-    }
+    *newline = '\0';
   }
 
-  fclose(config);
   return class_path;
 }
 
-static char* create_default_classpath(const char* prefix)
+static char* create_default_classpath()
 {
   char* home = getenv("MYSQL_HOME");
   const char* suffix = "/lib/plugin/mysqlengine-0.1-jar-with-dependencies.jar";
-  char* class_path = new char[strlen(prefix) + strlen(home) + strlen(suffix)];
+  char* class_path = new char[prefix_length + strlen(home) + strlen(suffix)];
   sprintf(class_path, "%s%s%s", prefix, home, suffix);
   FILE* jar = fopen(class_path, "r");
   if(jar == NULL)
@@ -63,15 +63,14 @@ static char* create_default_classpath(const char* prefix)
 static char* find_java_classpath()
 {
   char* class_path;
-  const char* prefix = "-Djava.class.path=";
   FILE* config = fopen("/etc/mysql/classpath.conf", "r");
   if(config != NULL)
   {
-    class_path = read_classpath_conf_file(config, prefix);
+    class_path = read_classpath_conf_file(config);
   }
   else
   {
-    class_path = create_default_classpath(prefix);
+    class_path = create_default_classpath();
   }
 
   INFO(("Full class path: %s", class_path));
