@@ -137,6 +137,13 @@ class CloudHandler : public handler
     CloudHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm)
       : handler(hton, table_arg), jvm(jvm), cloud_mutex(mutex), cloud_open_tables(open_tables), hbase_adapter(NULL)
     {
+      this->ref_length = 16;
+      this->ref = new uchar[this->ref_length];
+    }
+
+    ~CloudHandler()
+    {
+      delete[] this->ref;
     }
 
     const char *table_type() const 
