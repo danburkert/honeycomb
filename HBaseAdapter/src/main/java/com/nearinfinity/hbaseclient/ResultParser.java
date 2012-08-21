@@ -21,7 +21,7 @@ public class ResultParser {
     }
 
     public static byte[] parseUnireg(Result result) {
-        return result.getValue(Constants.NIC, Constants.VALUE_COLUMN);
+        return result.getValue(Constants.NIC, Constants.UNIREG);
     }
 
     public static byte[] parseValue(Result result) {

@@ -1,6 +1,7 @@
 package com.nearinfinity.mysqlengine.jni;
 
 import com.nearinfinity.hbaseclient.ColumnMetadata;
+import com.nearinfinity.hbaseclient.Constants;
 import com.nearinfinity.hbaseclient.HBaseClient;
 import com.nearinfinity.hbaseclient.ResultParser;
 import com.nearinfinity.mysqlengine.*;
@@ -290,11 +291,19 @@ public class HBaseAdapter {
                 } break;
             }
 
-            conn.setScanner(scanner);
+            logger.info("Scanning with valueToSkip " + Bytes.toStringBinary(valueToSkip));
 
+            conn.setScanner(scanner);
             Result result = scanner.next(valueToSkip);
+
+
             if (result == null) {
                 return indexRow;
+            }
+            else {
+                logger.info("First result has unireg " + Bytes.toString(ResultParser.parseUnireg(result)));
+                logger.info("Contains nic:unireg " + result.containsColumn(Constants.NIC,  Constants.UNIREG));
+                logger.info("Row key " + ResultParser.parseUUID(result));
             }
 
             indexRow.parseResult(result);
