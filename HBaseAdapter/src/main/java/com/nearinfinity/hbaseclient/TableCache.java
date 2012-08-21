@@ -1,5 +1,9 @@
-package com.nearinfinity.mysqlengine;
+package com.nearinfinity.hbaseclient;
 
+import com.nearinfinity.hbaseclient.ColumnMetadata;
+import com.nearinfinity.hbaseclient.Constants;
+import com.nearinfinity.hbaseclient.RowKeyFactory;
+import com.nearinfinity.hbaseclient.TableInfo;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;

@@ -1,4 +1,4 @@
-package com.nearinfinity.mysqlengine;
+package com.nearinfinity.hbaseclient;
 
 import java.util.ArrayList;
 import java.util.List;
