@@ -1,0 +1,43 @@
+let $engine_type=cloud;
+
+let $numeric_type=INT;
+let $null_flag = NOT NULL;
+let $sign_flag =;
+
+let $min_val = -128;
+let $mid_val = 64;
+let $max_val = 127;
+let $null_val = 123;
+
+### Setup
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+--enable_warnings
+
+### Create table
+eval CREATE TABLE t1(c1 $numeric_type $sign_flag $null_flag)
+  ENGINE=$engine_type;
+
+### Insert Values
+
+# Values within range
+eval INSERT INTO t1 VALUES
+  ($min_val),
+  ($mid_val),
+  ($max_val);
+
+# Values outside range
+eval INSERT INTO t1 VALUES
+  ($min_val - 1),
+  ($max_val + 1);
+
+# Null values
+eval INSERT INTO t1 VALUES ($null_val);
+
+### Read table
+SELECT * FROM t1 order by c1;
+
+### Cleanup
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+--enable_warnings

@@ -1,0 +1,90 @@
+let $engine_type=cloud;
+
+### Setup
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+DROP TABLE IF EXISTS t2;
+--enable_warnings
+
+### Create tables
+# Int types
+eval CREATE TABLE t1(c1 DECIMAL(5,2) NOT NULL, # (-1000, 1000)
+                     c2 FLOAT        NOT NULL, # (-2^127, 2^127)
+                     c3 DOUBLE       NOT NULL) # (-2^1023, 2^1023)
+  ENGINE=$engine_type;
+
+# Unsigned Int types
+eval CREATE TABLE t2(c1 DECIMAL(5,2) UNSIGNED NOT NULL, # (0, 1000)
+                     c2 FLOAT        UNSIGNED NOT NULL, # (-2^127, 2^127)
+                     c3 DOUBLE       UNSIGNED NOT NULL) # (-2^1023, 2^1023)
+  ENGINE=$engine_type;
+
+### Insert Values
+
+# Values within range
+INSERT INTO t1 VALUES
+  (-999.99,  -pow(2,127) + 2, -pow(2,1023) + 2),
+  (   -1.1,             -1.1,             -1.1),
+  (    0.0,              0.0,              0.0),
+  (    1.1,              1.1,              1.1),
+  ( 999.99,   pow(2,127) - 2,  pow(2,1023) - 2);
+INSERT INTO t2 VALUES
+  (    0.0,              0.0,              0.0),
+  (    1.1,              1.1,              1.1),
+  ( 999.99,   pow(2,127) - 2,  pow(2,1023) - 2);
+
+# Values outside range
+INSERT INTO t1 VALUES
+  (-1000.0,  -pow(2,128), -pow(2,1023)),
+  ( 1000.0,   pow(2,128),  pow(2,1023));
+INSERT INTO t2 VALUES
+  (   -1.1,         -1.1,         -1.1),
+  ( 1000.0,   pow(2,128),  pow(2,1023)); # Can't actuall test double out of range...
+
+# Null values
+INSERT INTO t1 VALUES
+  (NULL, 0, 0),
+  (0, NULL, 0),
+  (0, 0, NULL);
+INSERT INTO t2 VALUES
+  (NULL, 0, 0),
+  (0, NULL, 0),
+  (0, 0, NULL);
+
+### Select Values
+SELECT * FROM t1 ORDER BY c1;
+SELECT * FROM t2 ORDER BY c1;
+
+SELECT * FROM t1 ORDER BY c1 LIMIT 3;
+SELECT * FROM t2 ORDER BY c1 LIMIT 3;
+
+### Update Values
+UPDATE t1
+  SET c1 = 1.0, c2 = 2.0, c3 = 3.0
+  WHERE c1 > 1 AND c1 < 2;
+UPDATE t2
+  SET c1 = 1.0, c2 = 2.0, c3 = 3.0
+  WHERE c1 > 1 AND c1 < 2;
+
+# Check updates
+SELECT * FROM t1 ORDER BY c1;
+SELECT * FROM t2 ORDER BY c1;
+
+### Delete values
+DELETE FROM t1
+  WHERE c1 > 0 AND c1 < 100
+  ORDER BY c1;
+DELETE FROM t2
+  WHERE c1 > 0 AND c1 < 100
+  ORDER BY c1;
+
+# Check deletes
+SELECT * FROM t1 ORDER BY c1;
+SELECT * FROM t2 ORDER BY c1;
+
+
+### Teardown
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+DROP TABLE IF EXISTS t2;
+--enable_warnings
