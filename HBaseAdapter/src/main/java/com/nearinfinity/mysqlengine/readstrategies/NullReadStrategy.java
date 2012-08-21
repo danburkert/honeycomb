@@ -14,9 +14,9 @@ import java.io.IOException;
  * To change this template use File | Settings | File Templates.
  */
 public class NullReadStrategy implements IndexReadStrategy {
-    private final HBaseClient client;
+    private final Index client;
 
-    public NullReadStrategy(HBaseClient client) {
+    public NullReadStrategy(Index client) {
         this.client = client;
     }
 

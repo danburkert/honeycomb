@@ -15,9 +15,9 @@ import java.io.IOException;
  * To change this template use File | Settings | File Templates.
  */
 public class IndexLastReadStrategy implements IndexReadStrategy {
-    private final HBaseClient client;
+    private final Index client;
 
-    public IndexLastReadStrategy(HBaseClient client) {
+    public IndexLastReadStrategy(Index client) {
         this.client = client;
     }
 

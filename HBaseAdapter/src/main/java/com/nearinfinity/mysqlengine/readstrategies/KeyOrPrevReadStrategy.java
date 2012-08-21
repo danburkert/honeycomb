@@ -1,6 +1,5 @@
 package com.nearinfinity.mysqlengine.readstrategies;
 
-import com.nearinfinity.mysqlengine.HBaseClient;
 import com.nearinfinity.mysqlengine.IndexConnection;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -15,9 +14,9 @@ import java.io.IOException;
  * To change this template use File | Settings | File Templates.
  */
 public class KeyOrPrevReadStrategy implements IndexReadStrategy {
-    private final HBaseClient client;
+    private final Index client;
 
-    public KeyOrPrevReadStrategy(HBaseClient client) {
+    public KeyOrPrevReadStrategy(Index client) {
         this.client = client;
     }
 
