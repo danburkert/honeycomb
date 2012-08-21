@@ -1,4 +1,4 @@
-package com.nearinfinity.mysqlengine;
+package com.nearinfinity.hbaseclient.filter;
 
 import org.apache.hadoop.hbase.filter.FilterBase;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -20,8 +20,6 @@ import java.util.Arrays;
 public class ExactValueFilter extends FilterBase {
 
     private byte[] value;
-
-    private static final Logger logger = Logger.getLogger(ExactValueFilter.class);
 
     public ExactValueFilter() {
         super();
