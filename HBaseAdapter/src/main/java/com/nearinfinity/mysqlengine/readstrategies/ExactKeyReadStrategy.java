@@ -9,9 +9,9 @@ import java.io.IOException;
 
 public class ExactKeyReadStrategy implements IndexReadStrategy {
 
-    private final HBaseClient client;
+    private final Index client;
 
-    public ExactKeyReadStrategy(HBaseClient client) {
+    public ExactKeyReadStrategy(Index client) {
         this.client = client;
     }
 

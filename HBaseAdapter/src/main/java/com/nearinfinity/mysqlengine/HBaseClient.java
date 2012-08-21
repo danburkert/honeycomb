@@ -1,5 +1,6 @@
 package com.nearinfinity.mysqlengine;
 
+import com.nearinfinity.mysqlengine.readstrategies.Index;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
@@ -19,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Time: 2:09 PM
  * To change this template use File | Settings | File Templates.
  */
-public class HBaseClient {
+public class HBaseClient implements Index {
     private HTable table;
 
     private HBaseAdmin admin;
@@ -688,7 +689,7 @@ public class HBaseClient {
         ColumnMetadata columnType = info.getColumnTypeByName(columnName);
 
         byte[] startKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId, value, columnType);
-        byte[] endKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId+1, new byte[0], columnType);
+        byte[] endKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId + 1, new byte[0], columnType);
 
         Scan scan = ScanFactory.buildScan(startKey, endKey);
 
@@ -702,7 +703,7 @@ public class HBaseClient {
         ColumnMetadata columnType = info.getColumnTypeByName(columnName);
 
         byte[] startKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId, new byte[0], columnType);
-        byte[] endKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId+1, new byte[0], columnType);
+        byte[] endKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId + 1, new byte[0], columnType);
 
         Scan scan = ScanFactory.buildScan(startKey, endKey);
 
@@ -721,7 +722,7 @@ public class HBaseClient {
         long columnId = info.getColumnIdByName(columnName);
 
         byte[] startKey = RowKeyFactory.buildNullIndexKey(tableId, columnId, ZERO_UUID);
-        byte[] endKey = RowKeyFactory.buildNullIndexKey(tableId, columnId+1, ZERO_UUID);
+        byte[] endKey = RowKeyFactory.buildNullIndexKey(tableId, columnId + 1, ZERO_UUID);
 
         Scan scan = ScanFactory.buildScan(startKey, endKey);
 
