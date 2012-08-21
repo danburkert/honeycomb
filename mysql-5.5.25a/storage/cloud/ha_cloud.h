@@ -40,5 +40,6 @@
 
 #include "CloudHandler.h"
 #include "CloudShare.h"
+#include "Util.h"
 
 #endif

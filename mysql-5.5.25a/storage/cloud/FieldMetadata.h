@@ -26,7 +26,7 @@ private:
 
   jobject create_metadata_enum_object(const char *name)
   {
-    jclass metadata_class = this->env->FindClass("com/nearinfinity/mysqlengine/ColumnMetadata");
+    jclass metadata_class = find_class("ColumnMetadata", this->env);
     jfieldID enum_field = this->env->GetStaticFieldID(metadata_class, name, "Lcom/nearinfinity/mysqlengine/ColumnMetadata;");
     jobject enum_object = this->env->GetStaticObjectField(metadata_class, enum_field);
 

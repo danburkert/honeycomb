@@ -23,8 +23,8 @@ static HASH cloud_open_tables;
 
 static uchar* cloud_get_key(CloudShare *share, size_t *length, my_bool not_used __attribute__((unused)))
 {
-    *length=share->table_path_length;
-    return (uchar*) share->path_to_table;
+  *length=share->table_path_length;
+  return (uchar*) share->path_to_table;
 }
 
 #ifdef HAVE_PSI_INTERFACE
@@ -49,32 +49,6 @@ static void init_cloud_psi_keys()
 }
 #endif
 
-static void print_java_exception(JNIEnv* env)
-{
-  if(env->ExceptionCheck() == JNI_TRUE)
-  {
-    jthrowable throwable = env->ExceptionOccurred();
-    jclass objClazz = env->GetObjectClass(throwable);
-    jmethodID methodId = env->GetMethodID(objClazz, "toString", "()Ljava/lang/String;");
-    jstring result = (jstring)env->CallObjectMethod(throwable, methodId);
-
-    const char* string = env->GetStringUTFChars(result, NULL);
-    INFO(("Exceptions from the jvm %s", string));
-    env->ReleaseStringUTFChars(result, string);
-
-    // Uncomment these lines if you encounter an exception during initialization on Java side...should reveal the cause - ABC
-
-//    jmethodID get_cause = env->GetMethodID(objClazz, "getException", "()Ljava/lang/Throwable;");
-//    jobject cause = env->CallObjectMethod(throwable, get_cause);
-//    jclass causeClass = env->GetObjectClass(cause);
-//    jmethodID cause_toString = env->GetMethodID(causeClass, "getMessage", "()Ljava/lang/String;");
-//    jstring cause_result = (jstring)env->CallObjectMethod(cause, cause_toString);
-//    const char* cause_string = env->GetStringUTFChars(cause_result, NULL);
-//    INFO(("Exception was caused by: %s", cause_string));
-//    env->ReleaseStringUTFChars(cause_result, cause_string);
-  }
-}
-
 static void test_jvm(bool attach_thread)
 {
 #ifndef DBUG_OFF
@@ -93,6 +67,48 @@ static void test_jvm(bool attach_thread)
 #endif
 }
 
+static char* read_classpath_conf_file(FILE* config, const char* prefix)
+{
+  fseek(config, 0, SEEK_END);
+  long size = ftell(config);
+  rewind(config);
+  int prefix_length = strlen(prefix);
+  int class_path_length = prefix_length + size; 
+  char* class_path = new char[class_path_length];
+  strncpy(class_path, prefix, prefix_length);
+  fread(class_path + prefix_length, sizeof(char), size, config);
+  int i = 0;
+  for(char* ptr = class_path; i < class_path_length; ptr++, i++)
+  {
+    if(*ptr == '\n' || *ptr == '\r')
+    {
+      *ptr = '\0';
+    }
+  }
+
+  fclose(config);
+  return class_path;
+}
+
+static char* create_default_classpath(const char* prefix)
+{
+  char* home = getenv("MYSQL_HOME");
+  const char* suffix = "/lib/plugin/mysqlengine-0.1-jar-with-dependencies.jar";
+  char* class_path = new char[strlen(prefix) + strlen(home) + strlen(suffix)];
+  sprintf(class_path, "%s%s%s", prefix, home, suffix);
+  FILE* jar = fopen(class_path, "r");
+  if(jar == NULL)
+  {
+    ERROR(("No jar classpath specified and the default jar path %s cannot be opened. Either place \"classpath.conf\" in /etc/mysql/ or create %s. Place the java classpath in classpath.conf.", class_path, class_path));
+  }
+  else
+  {
+    fclose(jar);
+  }
+
+  return class_path;
+}
+
 static char* find_java_classpath()
 {
   char* class_path;
@@ -100,40 +116,11 @@ static char* find_java_classpath()
   FILE* config = fopen("/etc/mysql/classpath.conf", "r");
   if(config != NULL)
   {
-    fseek(config, 0, SEEK_END);
-    long size = ftell(config);
-    rewind(config);
-    int prefix_length = strlen(prefix);
-    int class_path_length = prefix_length + size; 
-    class_path = new char[class_path_length];
-    strncpy(class_path, prefix, prefix_length);
-    fread(class_path + prefix_length, sizeof(char), size, config);
-    int i = 0;
-    for(char* ptr = class_path; i < class_path_length; ptr++, i++)
-    {
-      if(*ptr == '\n' || *ptr == '\r')
-      {
-        *ptr = '\0';
-      }
-    }
-
-    fclose(config);
+    class_path = read_classpath_conf_file(config, prefix);
   }
   else
   {
-    char* home = getenv("MYSQL_HOME");
-    const char* suffix = "/lib/plugin/mysqlengine-0.1-jar-with-dependencies.jar";
-    class_path = new char[strlen(prefix) + strlen(home) + strlen(suffix)];
-    sprintf(class_path, "%s%s%s", prefix, home, suffix);
-    FILE* jar = fopen(class_path, "r");
-    if(jar == NULL)
-    {
-      ERROR(("No jar classpath specified and the default jar path %s cannot be opened. Either place \"classpath.conf\" in /etc/mysql/ or create %s. Place the java classpath in classpath.conf.", class_path, class_path));
-    }
-    else
-    {
-      fclose(jar);
-    }
+    class_path = create_default_classpath(prefix);
   }
 
   INFO(("Full class path: %s", class_path));
@@ -164,7 +151,6 @@ static void create_or_find_jvm()
 #endif
     char* class_path = find_java_classpath();
     option[0].optionString = class_path;
-    // option[0].optionString = "-Djava.class.path=/usr/local/mysql/lib/plugin/mysql.jar";
     vm_args.nOptions = option_count;
     vm_args.options = option;
     vm_args.version = JNI_VERSION_1_6;
