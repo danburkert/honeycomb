@@ -1,6 +1,7 @@
 package com.nearinfinity.mysqlengine.jni;
 
 import com.nearinfinity.mysqlengine.*;
+import com.nearinfinity.mysqlengine.strategy.*;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -88,7 +89,8 @@ public class HBaseAdapter {
         long scanId = connectionCounter.incrementAndGet();
         logger.info("startScan-> tableName: " + tableName + ", scanId: " + scanId);
         try {
-            ResultScanner scanner = client.getDataScanner(tableName, isFullTableScan);
+            ScanStrategy strategy = new FullTableScanStrategy(tableName, "", new byte[0]);
+            ResultScanner scanner = client.getScanner(strategy);
             clientPool.put(scanId, new DataConnection(tableName, scanner));
         } catch (Exception e) {
             logger.error("startScan-> Exception:", e);
@@ -253,7 +255,8 @@ public class HBaseAdapter {
 
             switch (readType) {
                 case HA_READ_KEY_EXACT: {
-                    ResultScanner indexScanner = client.getSecondaryIndexScannerExact(tableName, columnName, value);
+                    ScanStrategy strategy = new ExactScanStrategy(tableName, columnName, value);
+                    ResultScanner indexScanner = client.getScanner(strategy);
                     conn.setIndexScanner(indexScanner);
 
                     //Get the first row of the value
@@ -262,17 +265,12 @@ public class HBaseAdapter {
                         return indexRow;
                     }
 
-                    ResultScanner scanner = client.getPrimaryIndexScanner(tableName, columnName, value);
-                    conn.setScanner(scanner);
-                    //Get the first result to return
-                    result = conn.getNextResult();
-                    if (result == null) {
-                        return indexRow;
-                    }
+                    returnedValue = ResultParser.parseValue(indexResult);
                 }
                 break;
                 case HA_READ_AFTER_KEY: {
-                    ResultScanner indexScanner = client.getSecondaryIndexScanner(tableName, columnName, value);
+                    ScanStrategy strategy = new OrderedScanStrategy(tableName, columnName, value);
+                    ResultScanner indexScanner = client.getScanner(strategy);
                     conn.setIndexScanner(indexScanner);
 
                     //Get the first row of the value
@@ -293,7 +291,8 @@ public class HBaseAdapter {
                 }
                 break;
                 case HA_READ_KEY_OR_NEXT: {
-                    ResultScanner indexScanner = client.getSecondaryIndexScanner(tableName, columnName, value);
+                    ScanStrategy strategy = new OrderedScanStrategy(tableName, columnName, value);
+                    ResultScanner indexScanner = client.getScanner(strategy);
                     conn.setIndexScanner(indexScanner);
 
                     //Get the first row of the value
@@ -306,7 +305,8 @@ public class HBaseAdapter {
                 }
                 break;
                 case HA_READ_BEFORE_KEY: {
-                    ResultScanner indexScanner = client.getReverseIndexScanner(tableName, columnName, value);
+                    ScanStrategy strategy = new ReverseScanStrategy(tableName, columnName, value);
+                    ResultScanner indexScanner = client.getScanner(strategy);
                     conn.setIndexScanner(indexScanner);
 
                     //Get the first row of the value
@@ -327,7 +327,8 @@ public class HBaseAdapter {
                 }
                 break;
                 case HA_READ_KEY_OR_PREV: {
-                    ResultScanner indexScanner = client.getReverseIndexScanner(tableName, columnName, value);
+                    ScanStrategy strategy = new ReverseScanStrategy(tableName, columnName, value);
+                    ResultScanner indexScanner = client.getScanner(strategy);
                     conn.setIndexScanner(indexScanner);
 
                     //Get the first row of the value
@@ -340,7 +341,8 @@ public class HBaseAdapter {
                 }
                 break;
                 case INDEX_FIRST: {
-                    ResultScanner indexScanner = client.getSecondaryIndexScannerFull(tableName, columnName);
+                    ScanStrategy strategy = new OrderedScanStrategy(tableName, columnName, new byte[0]);
+                    ResultScanner indexScanner = client.getScanner(strategy);
                     conn.setIndexScanner(indexScanner);
 
                     //Get the first row of the value
@@ -353,7 +355,8 @@ public class HBaseAdapter {
                 }
                 break;
                 case INDEX_LAST: {
-                    ResultScanner indexScanner = client.getReverseIndexScannerFull(tableName, columnName);
+                    ScanStrategy strategy = new ReverseScanStrategy(tableName, columnName, new byte[0]);
+                    ResultScanner indexScanner = client.getScanner(strategy);
                     conn.setIndexScanner(indexScanner);
 
                     //Get the first row of the value
@@ -368,7 +371,8 @@ public class HBaseAdapter {
                 case INDEX_NULL: {
                     conn.setNullScan(true);
 
-                    ResultScanner nullScanner = client.getNullIndexScanner(tableName, columnName);
+                    ScanStrategy strategy = new NullScanStrategy(tableName, columnName, null);
+                    ResultScanner nullScanner = client.getScanner(strategy);
                     conn.setIndexScanner(nullScanner);
 
                     result = conn.getNextIndexResult();
@@ -382,7 +386,8 @@ public class HBaseAdapter {
                 }
             }
 
-            ResultScanner scanner = client.getPrimaryIndexScanner(tableName, columnName, returnedValue);
+            ScanStrategy strategy = new PrimaryIndexScanStrategy(tableName, columnName, returnedValue);
+            ResultScanner scanner = client.getScanner(strategy);
             conn.setScanner(scanner);
 
             //Get the first result to return
