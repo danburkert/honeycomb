@@ -1,12 +1,10 @@
-package com.nearinfinity.mysqlengine.strategy;
+package com.nearinfinity.hbaseclient.strategy;
 
-import com.nearinfinity.mysqlengine.Constants;
-import com.nearinfinity.mysqlengine.RowKeyFactory;
-import com.nearinfinity.mysqlengine.ScanFactory;
-import com.nearinfinity.mysqlengine.TableInfo;
+import com.nearinfinity.hbaseclient.Constants;
+import com.nearinfinity.hbaseclient.RowKeyFactory;
+import com.nearinfinity.hbaseclient.ScanFactory;
+import com.nearinfinity.hbaseclient.TableInfo;
 import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.filter.CompareFilter;
-import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 
 /**
  * Created with IntelliJ IDEA.

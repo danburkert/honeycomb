@@ -1,4 +1,4 @@
-package com.nearinfinity.mysqlengine;
+package com.nearinfinity.hbaseclient.filter;
 
 import org.apache.hadoop.hbase.filter.FilterBase;
 import org.apache.hadoop.hbase.util.Bytes;

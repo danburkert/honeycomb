@@ -1,4 +1,4 @@
-package com.nearinfinity.mysqlengine;
+package com.nearinfinity.hbaseclient;
 
 import com.google.inject.AbstractModule;
 import org.apache.hadoop.hbase.client.HTable;

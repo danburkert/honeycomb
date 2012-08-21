@@ -1,6 +1,9 @@
-package com.nearinfinity.mysqlengine.strategy;
+package com.nearinfinity.hbaseclient.strategy;
 
-import com.nearinfinity.mysqlengine.*;
+import com.nearinfinity.hbaseclient.ColumnMetadata;
+import com.nearinfinity.hbaseclient.RowKeyFactory;
+import com.nearinfinity.hbaseclient.ScanFactory;
+import com.nearinfinity.hbaseclient.TableInfo;
 import org.apache.hadoop.hbase.client.Scan;
 
 /**

@@ -1,8 +1,7 @@
 package com.nearinfinity.mysqlengine.jni;
 
-import com.nearinfinity.mysqlengine.ResultParser;
+import com.nearinfinity.hbaseclient.ResultParser;
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
 
 import java.nio.ByteBuffer;

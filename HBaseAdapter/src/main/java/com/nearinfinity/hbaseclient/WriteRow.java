@@ -1,5 +1,6 @@
-package com.nearinfinity.mysqlengine;
+package com.nearinfinity.hbaseclient;
 
+import com.nearinfinity.hbaseclient.*;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
