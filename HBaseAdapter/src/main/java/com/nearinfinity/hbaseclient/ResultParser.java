@@ -3,6 +3,7 @@ package com.nearinfinity.hbaseclient;
 import org.apache.hadoop.hbase.client.Result;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
 import java.util.UUID;
 
 /**

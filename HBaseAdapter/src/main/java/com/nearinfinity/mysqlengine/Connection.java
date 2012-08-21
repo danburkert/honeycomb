@@ -1,5 +1,8 @@
 package com.nearinfinity.mysqlengine;
 
+import com.nearinfinity.hbaseclient.HBaseClient;
+import com.nearinfinity.mysqlengine.jni.IndexReadType;
+import com.nearinfinity.mysqlengine.scanner.HBaseResultScanner;
 import org.apache.hadoop.hbase.client.Result;
 
 import java.io.IOException;
@@ -11,14 +14,45 @@ import java.io.IOException;
  * Time: 10:23 AM
  * To change this template use File | Settings | File Templates.
  */
-public interface Connection {
+public class Connection {
+    private String tableName;
+    private String columnName;
+    private HBaseResultScanner scanner;
 
-    public String getTableName();
+    public Connection(String tableName, HBaseResultScanner scanner) {
+        this(tableName, null, scanner);
+    }
 
-    public Result getLastResult();
+    public Connection(String tableName, String columnName) {
+        this(tableName, columnName, null);
+    }
 
-    public Result getNextResult() throws IOException;
+    public Connection(String tableName, String columnName, HBaseResultScanner scanner) {
+        this.tableName = tableName;
+        this.columnName = columnName;
+        this.scanner = scanner;
+    }
 
-    public void close();
+    public void setScanner(HBaseResultScanner scanner) {
+        this.scanner = scanner;
+    }
+
+    public HBaseResultScanner getScanner() {
+        return this.scanner;
+    }
+
+    public void close() {
+        if (scanner == null) {
+            scanner.close();
+        }
+    }
+
+    public String getTableName() {
+        return this.tableName;
+    }
+
+    public String getColumnName() {
+        return this.columnName;
+    }
 
 }

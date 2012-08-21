@@ -3,7 +3,6 @@ package com.nearinfinity.hbaseclient;
 import com.nearinfinity.hbaseclient.filter.ExactValueFilter;
 import com.nearinfinity.hbaseclient.filter.UUIDFilter;
 import com.nearinfinity.hbaseclient.strategy.ScanStrategy;
-import com.nearinfinity.mysqlengine.*;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
