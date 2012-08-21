@@ -3,7 +3,7 @@ include_directories(${JNI_INCLUDE_DIRS})
 link_directories("/usr/local/java/jre/lib/amd64/xawt/")
 
 SET(cloud_PLUGIN_DYNAMIC "ha_cloud")
-SET(cloud_SOURCES CloudHandler.cc ha_cloud.cc Util.cc)
+SET(cloud_SOURCES CloudHandler.cc ha_cloud.cc Util.cc JNISetup.cc)
 MYSQL_ADD_PLUGIN(cloud ${cloud_SOURCES} STORAGE_ENGINE MODULE_ONLY
   LINK_LIBRARIES ${JNI_LIBRARIES} ${JAVA_JVM_LIBRARY})
 
