@@ -1,0 +1,141 @@
+DROP TABLE IF EXISTS t1;
+DROP TABLE IF EXISTS t2;
+CREATE TABLE t1(c1 DECIMAL(5,2) NOT NULL, # (-1000, 1000)
+c2 FLOAT        NOT NULL, # (-2^127, 2^127)
+c3 DOUBLE       NOT NULL) # (-2^1023, 2^1023)
+ENGINE=cloud;
+CREATE TABLE t2(c1 DECIMAL(5,2) UNSIGNED NOT NULL, # (0, 1000)
+c2 FLOAT        UNSIGNED NOT NULL, # (-2^127, 2^127)
+c3 DOUBLE       UNSIGNED NOT NULL) # (-2^1023, 2^1023)
+ENGINE=cloud;
+INSERT INTO t1 VALUES
+(-999.99,  -pow(2,127) + 2, -pow(2,1023) + 2),
+(   -1.1,             -1.1,             -1.1),
+(    0.0,              0.0,              0.0),
+(    1.1,              1.1,              1.1),
+( 999.99,   pow(2,127) - 2,  pow(2,1023) - 2);
+INSERT INTO t2 VALUES
+(    0.0,              0.0,              0.0),
+(    1.1,              1.1,              1.1),
+( 999.99,   pow(2,127) - 2,  pow(2,1023) - 2);
+INSERT INTO t1 VALUES
+(-1000.0,  -pow(2,128), -pow(2,1023)),
+( 1000.0,   pow(2,128),  pow(2,1023));
+Warnings:
+Warning	1264	Out of range value for column 'c1' at row 1
+Warning	1264	Out of range value for column 'c2' at row 1
+Warning	1264	Out of range value for column 'c1' at row 2
+Warning	1264	Out of range value for column 'c2' at row 2
+INSERT INTO t2 VALUES
+(   -1.1,         -1.1,         -1.1),
+( 1000.0,   pow(2,128),  pow(2,1023));
+Warnings:
+Warning	1264	Out of range value for column 'c1' at row 1
+Warning	1264	Out of range value for column 'c2' at row 1
+Warning	1264	Out of range value for column 'c3' at row 1
+Warning	1264	Out of range value for column 'c1' at row 2
+Warning	1264	Out of range value for column 'c2' at row 2
+INSERT INTO t1 VALUES
+(NULL, 0, 0),
+(0, NULL, 0),
+(0, 0, NULL);
+Warnings:
+Warning	1048	Column 'c1' cannot be null
+Warning	1048	Column 'c2' cannot be null
+Warning	1048	Column 'c3' cannot be null
+INSERT INTO t2 VALUES
+(NULL, 0, 0),
+(0, NULL, 0),
+(0, 0, NULL);
+Warnings:
+Warning	1048	Column 'c1' cannot be null
+Warning	1048	Column 'c2' cannot be null
+Warning	1048	Column 'c3' cannot be null
+SELECT * FROM t1 ORDER BY c1;
+c1	c2	c3
+-999.99	-1.70141e38	-8.98846567431158e307
+-999.99	-3.40282e38	-8.98846567431158e307
+-1.10	-1.1	-1.1
+0.00	0	0
+0.00	0	0
+0.00	0	0
+0.00	0	0
+1.10	1.1	1.1
+999.99	1.70141e38	8.98846567431158e307
+999.99	3.40282e38	8.98846567431158e307
+SELECT * FROM t2 ORDER BY c1;
+c1	c2	c3
+0.00	0	0
+0.00	0	0
+0.00	0	0
+0.00	0	0
+0.00	0	0
+1.10	1.1	1.1
+999.99	1.70141e38	8.98846567431158e307
+999.99	3.40282e38	8.98846567431158e307
+SELECT * FROM t1 ORDER BY c1 LIMIT 3;
+c1	c2	c3
+-999.99	-1.70141e38	-8.98846567431158e307
+-999.99	-3.40282e38	-8.98846567431158e307
+-1.10	-1.1	-1.1
+SELECT * FROM t2 ORDER BY c1 LIMIT 3;
+c1	c2	c3
+0.00	0	0
+0.00	0	0
+0.00	0	0
+UPDATE t1
+SET c1 = 1.0, c2 = 2.0, c3 = 3.0
+WHERE c1 > 1 AND c1 < 2;
+UPDATE t2
+SET c1 = 1.0, c2 = 2.0, c3 = 3.0
+WHERE c1 > 1 AND c1 < 2;
+SELECT * FROM t1 ORDER BY c1;
+c1	c2	c3
+-999.99	-1.70141e38	-8.98846567431158e307
+-999.99	-3.40282e38	-8.98846567431158e307
+-1.10	-1.1	-1.1
+0.00	0	0
+0.00	0	0
+0.00	0	0
+0.00	0	0
+1.00	2	3
+999.99	1.70141e38	8.98846567431158e307
+999.99	3.40282e38	8.98846567431158e307
+SELECT * FROM t2 ORDER BY c1;
+c1	c2	c3
+0.00	0	0
+0.00	0	0
+0.00	0	0
+0.00	0	0
+0.00	0	0
+1.00	2	3
+999.99	1.70141e38	8.98846567431158e307
+999.99	3.40282e38	8.98846567431158e307
+DELETE FROM t1
+WHERE c1 > 0 AND c1 < 100
+ORDER BY c1;
+DELETE FROM t2
+WHERE c1 > 0 AND c1 < 100
+ORDER BY c1;
+SELECT * FROM t1 ORDER BY c1;
+c1	c2	c3
+-999.99	-1.70141e38	-8.98846567431158e307
+-999.99	-3.40282e38	-8.98846567431158e307
+-1.10	-1.1	-1.1
+0.00	0	0
+0.00	0	0
+0.00	0	0
+0.00	0	0
+999.99	1.70141e38	8.98846567431158e307
+999.99	3.40282e38	8.98846567431158e307
+SELECT * FROM t2 ORDER BY c1;
+c1	c2	c3
+0.00	0	0
+0.00	0	0
+0.00	0	0
+0.00	0	0
+0.00	0	0
+999.99	1.70141e38	8.98846567431158e307
+999.99	3.40282e38	8.98846567431158e307
+DROP TABLE IF EXISTS t1;
+DROP TABLE IF EXISTS t2;
