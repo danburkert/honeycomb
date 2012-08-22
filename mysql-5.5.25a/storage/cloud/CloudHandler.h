@@ -146,12 +146,12 @@ class CloudHandler : public handler
       delete[] this->ref;
     }
 
-    const char *table_type() const 
+    const char *table_type() const
     {
       return "cloud";
     }
 
-    const char *index_type(uint inx) 
+    const char *index_type(uint inx)
     {
       return "HASH";
     }
@@ -170,34 +170,34 @@ class CloudHandler : public handler
       return HA_READ_NEXT | HA_READ_ORDER | HA_READ_RANGE | HA_READ_PREV | HA_ONLY_WHOLE_INDEX;
     }
 
-    uint max_supported_record_length() const 
+    uint max_supported_record_length() const
     {
-      return HA_MAX_REC_LENGTH; 
+      return HA_MAX_REC_LENGTH;
     }
 
-    uint max_supported_keys() const 
+    uint max_supported_keys() const
     {
-      return 1; 
+      return MAX_INDEXES;
     }
 
-    uint max_supported_key_parts() const 
+    uint max_supported_key_parts() const
     {
-      return 1; 
+      return 1;
     }
 
-    uint max_supported_key_length() const 
+    uint max_supported_key_length() const
     {
       return 255;
     }
 
-    virtual double scan_time() 
-    { 
-      return (double) (stats.records+stats.deleted) / 20.0+10; 
+    virtual double scan_time()
+    {
+      return (double) (stats.records+stats.deleted) / 20.0+10;
     }
 
     virtual double read_time(uint, uint, ha_rows rows)
-    { 
-      return (double) rows /  20.0+1; 
+    {
+      return (double) rows /  20.0+1;
     }
 
     const char **bas_ext() const;
