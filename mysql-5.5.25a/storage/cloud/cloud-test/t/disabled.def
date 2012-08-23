@@ -7,3 +7,6 @@ decimal :
 float :
 double :
 char :
+varchar :
+binary :
+varbinary :

@@ -19,7 +19,9 @@ decimal   \
 float     \
 double    \
 char      \
-varchar
+varchar   \
+binary    \
+varbinary
 
 # Change engine to cloud in results (appears in table creation statements)
 cd $MYSQL_HOME/mysql-test/suite/cloud-test/r/

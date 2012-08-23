@@ -1,0 +1,19 @@
+--source enginetype.inc
+
+let $string_type = BINARY(15);
+let $val1  = 'AAAAAAAAA';
+let $val2  = 'aaaaaaaaa';
+let $val3  = 'BBBBBBBBB';
+let $val4  = 'bbbbbbbbb';
+let $val5  = 'ccccccccc';
+let $val6  = 'CCCCCCCCC';
+let $val7  = 'aAaAaAaAa';
+let $val8  = '012345678912345';
+let $val9  = 'BBBZ     ';
+let $val10 = '!@#\$%^&*()';
+let $val11 = '\n\r\b\0';
+let $val12 = '	';
+let $val13 = '';
+let $comp_val  = 'BBBZ';
+
+--source string_options.inc
