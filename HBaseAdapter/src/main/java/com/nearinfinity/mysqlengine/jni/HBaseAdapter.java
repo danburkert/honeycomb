@@ -35,7 +35,7 @@ public class HBaseAdapter {
     private static final Logger logger = Logger.getLogger(HBaseAdapter.class);
 
     private static final int DEFAULT_NUM_CACHED_ROWS = 2500;
-    private static final long DEFAULT_WRITE_BUFFER_SIZE = 5 * 1024 * 1024; // 5 megabytes
+    private static final long DEFAULT_WRITE_BUFFER_SIZE = 5 * 1024 * 1024;
 
     static {
         try {
@@ -107,8 +107,6 @@ public class HBaseAdapter {
     }
 
     public static Row nextRow(long scanId) throws HBaseAdapterException {
-        logger.info("nextRow-> scanId: " + scanId);
-
         Connection conn = getConnectionForId(scanId);
 
         Row row = new Row();
@@ -258,37 +256,45 @@ public class HBaseAdapter {
                 case HA_READ_KEY_EXACT: {
                     ScanStrategy strategy = new ExactScanStrategy(tableName, columnName, value);
                     scanner = new DoubleResultScanner(client.getScanner(strategy), tableName, columnName, client);
-                } break;
+                }
+                break;
                 case HA_READ_AFTER_KEY: {
                     ScanStrategy strategy = new OrderedScanStrategy(tableName, columnName, value);
                     scanner = new DoubleResultScanner(client.getScanner(strategy), tableName, columnName, client);
                     valueToSkip = value;
-                } break;
+                }
+                break;
                 case HA_READ_KEY_OR_NEXT: {
                     ScanStrategy strategy = new OrderedScanStrategy(tableName, columnName, value);
                     scanner = new DoubleResultScanner(client.getScanner(strategy), tableName, columnName, client);
-                } break;
+                }
+                break;
                 case HA_READ_BEFORE_KEY: {
                     ScanStrategy strategy = new ReverseScanStrategy(tableName, columnName, value);
                     scanner = new DoubleResultScanner(client.getScanner(strategy), tableName, columnName, client);
                     valueToSkip = value;
-                } break;
+                }
+                break;
                 case HA_READ_KEY_OR_PREV: {
                     ScanStrategy strategy = new ReverseScanStrategy(tableName, columnName, value);
                     scanner = new DoubleResultScanner(client.getScanner(strategy), tableName, columnName, client);
-                } break;
+                }
+                break;
                 case INDEX_FIRST: {
                     ScanStrategy strategy = new OrderedScanStrategy(tableName, columnName, new byte[0]);
                     scanner = new DoubleResultScanner(client.getScanner(strategy), tableName, columnName, client);
-                } break;
+                }
+                break;
                 case INDEX_LAST: {
                     ScanStrategy strategy = new ReverseScanStrategy(tableName, columnName, new byte[0]);
                     scanner = new DoubleResultScanner(client.getScanner(strategy), tableName, columnName, client);
-                } break;
+                }
+                break;
                 case INDEX_NULL: {
                     ScanStrategy strategy = new NullScanStrategy(tableName, columnName, null);
                     scanner = new SingleResultScanner(client.getScanner(strategy));
-                } break;
+                }
+                break;
             }
 
             conn.setScanner(scanner);
