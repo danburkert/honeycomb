@@ -11,3 +11,4 @@ tags
 *.jar
 restart-mysql.sh
 *.swp
+*.reject
