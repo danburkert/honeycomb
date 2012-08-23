@@ -10,3 +10,4 @@ char :
 varchar :
 binary :
 varbinary :
+enum :

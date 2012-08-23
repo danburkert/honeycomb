@@ -1,0 +1,22 @@
+--source enginetype.inc
+
+let $string_type = ENUM('t','h', 'q','u','i','c','k',
+                        'b','r','o','w','n', 'f','x',
+                        'j','m','p','s', 'v', 'e',
+                        'l','a','z','y', 'd','g');
+let $val1  = 'g';
+let $val2  = 'o';
+let $val3  = 'o';
+let $val4  = 'd';
+let $val5  = 'm';
+let $val6  = 'o';
+let $val7  = 'r';
+let $val8  = 'n';
+let $val9  = 'i';
+let $val10 = 'n';
+let $val11 = 'g';
+let $val12 = 'v';
+let $val13 = 'i';
+let $comp_val  = 'w';
+
+--source string_options.inc
