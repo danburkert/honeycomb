@@ -297,18 +297,11 @@ public class HBaseAdapter {
                 break;
             }
 
-            logger.info("Scanning with valueToSkip " + Bytes.toStringBinary(valueToSkip));
-
             conn.setScanner(scanner);
             Result result = scanner.next(valueToSkip);
 
-
             if (result == null) {
                 return indexRow;
-            } else {
-                logger.info("First result has unireg " + Bytes.toString(ResultParser.parseUnireg(result)));
-                logger.info("Contains nic:unireg " + result.containsColumn(Constants.NIC, Constants.UNIREG));
-                logger.info("Row key " + ResultParser.parseUUID(result));
             }
 
             indexRow.parseResult(result);
