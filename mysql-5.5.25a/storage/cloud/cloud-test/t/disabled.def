@@ -4,3 +4,4 @@ mediumint :
 int :
 bigint :
 decimal :
+float :
