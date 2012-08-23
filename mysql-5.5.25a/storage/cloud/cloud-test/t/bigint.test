@@ -1,0 +1,24 @@
+--source enginetype.inc
+
+let $numeric_type=BIGINT;
+
+# NOTE:  These aren't the true ranges of a bigint, but
+#        if the true ranges are used then MySQL will
+#        trigger an int overflow exception.  The true
+#        ranges are commented out below.
+
+#let $signed_min   = -9223372036854775808;
+#let $signed_mid   =  4611686018427387903;
+#let $signed_max   =  9223372036854775807;
+#let $unsigned_min =                    0;
+#let $unsigned_mid =  9223372036854775807;
+#let $unsigned_max = 18446744073709551615;
+
+let $signed_min   = -9223372036854775808;
+let $signed_mid   =  4611686018427387903;
+let $signed_max   =  9223372036854775807;
+let $unsigned_min =                    0;
+let $unsigned_mid =  4611686018427387903;
+let $unsigned_max =  9223372036854775807;
+
+--source numeric_options.inc
