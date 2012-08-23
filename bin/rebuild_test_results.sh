@@ -9,7 +9,7 @@ rm enginetype.inc.cloud
 
 # Run tests and record results
 cd $MYSQL_HOME/mysql-test
-./mtr --suite=cloud-test --extern socket=/tmp/mysql.sock --record tinyint smallint mediumint int bigint decimal float
+./mtr --suite=cloud-test --extern socket=/tmp/mysql.sock --record tinyint smallint mediumint int bigint decimal float double
 
 # Change engine to cloud in results (appears in table creation statements)
 cd $MYSQL_HOME/mysql-test/suite/cloud-test/r/
