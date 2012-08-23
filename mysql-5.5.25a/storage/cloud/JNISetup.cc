@@ -111,7 +111,8 @@ void create_or_find_jvm(JavaVM** jvm)
       ERROR(("Failed to create JVM"));
     }
 
-    delete class_path;
+    delete[] class_path;
     test_jvm(false, *jvm, env);
+    (*jvm)->DetachCurrentThread();
   }
 }
