@@ -1,0 +1,12 @@
+--source enginetype.inc
+
+let $numeric_type=INT;
+
+let $signed_min   = -2147483648;
+let $signed_mid   =  1073741824;
+let $signed_max   =  2147483647;
+let $unsigned_min =           0;
+let $unsigned_mid =  2147483648;
+let $unsigned_max =  4294967295;
+
+--source numeric_options.inc

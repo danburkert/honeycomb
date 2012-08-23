@@ -601,7 +601,7 @@ int CloudHandler::write_row_helper(uchar* buf)
   }
 
   this->env->SetByteArrayRegion(uniReg, 0, row_length, (jbyte*)buffer);
-  delete buffer;
+  delete[] buffer;
 
   this->env->CallStaticBooleanMethod(adapter_class, write_row_method, java_table_name, java_row_map, uniReg);
 
@@ -879,7 +879,7 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
   this->make_big_endian(key_copy, key_len);
   jbyteArray java_key = this->env->NewByteArray(key_len);
   this->env->SetByteArrayRegion(java_key, 0, key_len, (jbyte*)key_copy);
-  delete key_copy;
+  delete[] key_copy;
   jobject index_row = this->env->CallStaticObjectMethod(adapter_class, index_read_method, java_scan_id, java_key, java_find_flag);
 
   jclass index_row_class = find_jni_class("IndexRow", this->env);
@@ -904,7 +904,6 @@ void CloudHandler::store_uuid_ref(jobject index_row, jmethodID get_uuid_method)
   uchar* pos = (uchar*) this->env->GetByteArrayElements(uuid, JNI_FALSE);
   memcpy(this->ref, pos, 16);
   this->env->ReleaseByteArrayElements(uuid, (jbyte*)pos, 0);
-  this->ref_length = 16;
 }
 
 int CloudHandler::index_next(uchar *buf)
