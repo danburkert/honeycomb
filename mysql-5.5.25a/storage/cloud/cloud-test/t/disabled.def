@@ -5,3 +5,5 @@ int :
 bigint :
 decimal :
 float :
+double :
+char :
