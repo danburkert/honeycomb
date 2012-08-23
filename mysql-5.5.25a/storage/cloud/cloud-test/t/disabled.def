@@ -3,3 +3,4 @@ smallint :
 mediumint :
 int :
 bigint :
+decimal :

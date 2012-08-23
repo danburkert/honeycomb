@@ -1,0 +1,15 @@
+--source enginetype.inc
+
+let $numeric_type=DECIMAL(5,2);
+
+# NOTE:  An unsigned decimal doesn't extend the range,
+# it just disallows negatives.
+
+let $signed_min   = -999.99;
+let $signed_mid   = -500.50;
+let $signed_max   =  999.99;
+let $unsigned_min =       0;
+let $unsigned_mid =  500.50;
+let $unsigned_max =  999.99;
+
+--source numeric_options.inc
