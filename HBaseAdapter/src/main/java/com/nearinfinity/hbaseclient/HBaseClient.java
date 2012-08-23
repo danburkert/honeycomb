@@ -1,12 +1,12 @@
 package com.nearinfinity.hbaseclient;
 
-import com.nearinfinity.hbaseclient.filter.ExactValueFilter;
 import com.nearinfinity.hbaseclient.filter.UUIDFilter;
 import com.nearinfinity.hbaseclient.strategy.ScanStrategy;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.filter.*;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
 
@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static java.lang.String.format;
 
 /**
  * Created with IntelliJ IDEA.
@@ -46,6 +48,14 @@ public class HBaseClient {
     private final ConcurrentHashMap<String, TableInfo> tableCache = new ConcurrentHashMap<String, TableInfo>();
 
     private static final Logger logger = Logger.getLogger(HBaseClient.class);
+
+    private long writeBufferSize = 0;
+
+    private long currentBufferSize = 0;
+
+    private long flushCount = 1;
+
+    private long totalFlushTime = 0;
 
     public HBaseClient(String tableName, String zkQuorum) {
         logger.info("HBaseClient: Constructing with HBase table name: " + tableName);
@@ -200,7 +210,7 @@ public class HBaseClient {
             byte[] value = values.get(columnName);
 
 
-            if(value == null) {
+            if (value == null) {
                 // Build null index
                 byte[] nullIndexRow = RowKeyFactory.buildNullIndexKey(tableId, columnId, rowId);
                 putList.add(new Put(nullIndexRow).add(NIC, indexQualifier, indexValue));
@@ -223,16 +233,29 @@ public class HBaseClient {
             }
         }
 
-        if(allRowsNull) {
+        if (allRowsNull) {
             // Add special []->[] data row to signify a row of all null values
             putList.add(dataRow.add(NIC, new byte[0], new byte[0]));
         }
 
         //Add the row to put list
         putList.add(dataRow);
+        for (Put p : putList) {
+            this.currentBufferSize += p.heapSize();
+        }
 
-        //Final put
-        table.put(putList);
+        if (this.currentBufferSize >= this.writeBufferSize) {
+            long start = System.currentTimeMillis();
+            table.put(putList);
+            long elapsed = System.currentTimeMillis() - start;
+            this.totalFlushTime += elapsed;
+            logger.info(format("Flush # %d, Timing %d ms, Average %d ms, Total %d ms", this.flushCount, elapsed, this.totalFlushTime / this.flushCount, this.totalFlushTime));
+            this.currentBufferSize = 0;
+            this.flushCount++;
+        } else {
+            //Final put
+            table.put(putList);
+        }
     }
 
     public Result getDataRow(UUID uuid, String tableName) throws IOException {
@@ -301,7 +324,7 @@ public class HBaseClient {
         Map<String, byte[]> columns = new HashMap<String, byte[]>();
         Map<byte[], byte[]> returnedColumns = result.getNoVersionMap().get(NIC);
 
-        if(returnedColumns.size() == 1 && returnedColumns.containsKey(new byte[0])) {
+        if (returnedColumns.size() == 1 && returnedColumns.containsKey(new byte[0])) {
             // The row of all nulls special case strikes again
             return columns;
         }
@@ -334,7 +357,7 @@ public class HBaseClient {
 
         //Scan the index rows
         byte[] indexStartKey = RowKeyFactory.buildValueIndexKey(tableId, 0L, new byte[0], uuid);
-        byte[] indexEndKey = RowKeyFactory.buildValueIndexKey(tableId+1, 0L, new byte[0], uuid);
+        byte[] indexEndKey = RowKeyFactory.buildValueIndexKey(tableId + 1, 0L, new byte[0], uuid);
         deleteList.addAll(scanAndDeleteAllUUIDs(indexStartKey, indexEndKey, uuid));
 
         //Scan the null index rows
@@ -402,7 +425,7 @@ public class HBaseClient {
         return deleteRowsWithPrefix(prefix);
     }
 
-    public int deleteIndexRows (long tableId) throws IOException {
+    public int deleteIndexRows(long tableId) throws IOException {
         logger.info("Deleting all index rows");
 
         int affectedRows = 0;
@@ -420,7 +443,7 @@ public class HBaseClient {
         return affectedRows;
     }
 
-    public int deleteColumnInfoRows (TableInfo info) throws IOException {
+    public int deleteColumnInfoRows(TableInfo info) throws IOException {
         logger.info("Deleting all column metadata rows");
 
         long tableId = info.getId();
@@ -434,8 +457,7 @@ public class HBaseClient {
         return affectedRows;
     }
 
-    public int deleteRowsWithPrefix(byte[] prefix) throws IOException
-    {
+    public int deleteRowsWithPrefix(byte[] prefix) throws IOException {
         Scan scan = ScanFactory.buildScan();
         PrefixFilter filter = new PrefixFilter(prefix);
         scan.setFilter(filter);
@@ -465,14 +487,12 @@ public class HBaseClient {
         table.delete(delete);
     }
 
-    public void setCacheSize(int cacheSize)
-    {
+    public void setCacheSize(int cacheSize) {
         logger.info("Setting table scan row cache to " + cacheSize);
         ScanFactory.setCacheAmount(cacheSize);
     }
 
-    public void setAutoFlushTables(boolean shouldFlushChangesImmediately)
-    {
+    public void setAutoFlushTables(boolean shouldFlushChangesImmediately) {
         this.table.setAutoFlush(shouldFlushChangesImmediately);
 
         logger.info(shouldFlushChangesImmediately
@@ -483,6 +503,7 @@ public class HBaseClient {
     public void setWriteBufferSize(long numBytes) {
         try {
             this.table.setWriteBufferSize(numBytes);
+            this.writeBufferSize = numBytes;
         } catch (IOException e) {
             logger.error("Encountered an error setting write buffer size", e);
         }
