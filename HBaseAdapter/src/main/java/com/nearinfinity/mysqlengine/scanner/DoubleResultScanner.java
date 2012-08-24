@@ -72,6 +72,7 @@ public class DoubleResultScanner implements HBaseResultScanner {
             primaryScanner = client.getScanner(strategy);
             result = primaryScanner.next();
         }
+        this.lastResult = result;
         return result;
     }
 
