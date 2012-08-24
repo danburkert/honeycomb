@@ -36,13 +36,13 @@ SELECT * FROM t1 ORDER BY c1 DESC;
 eval SELECT * FROM t1 WHERE c1 >  $comp_val ORDER BY c1 ASC;
 eval SELECT * FROM t1 WHERE c1 >= $comp_val ORDER BY c1 ASC;
 eval SELECT * FROM t1 WHERE c1 <  $comp_val ORDER BY c1 ASC;
-eval SELECT * FROM t1 WHERE c1 >= $comp_val ORDER BY c1 ASC;
+eval SELECT * FROM t1 WHERE c1 <= $comp_val ORDER BY c1 ASC;
 eval SELECT * FROM t1 WHERE c1 =  $comp_val ORDER BY c1 ASC;
 
 eval SELECT * FROM t1 WHERE c1 >  $comp_val ORDER BY c1 DESC;
 eval SELECT * FROM t1 WHERE c1 >= $comp_val ORDER BY c1 DESC;
 eval SELECT * FROM t1 WHERE c1 <  $comp_val ORDER BY c1 DESC;
-eval SELECT * FROM t1 WHERE c1 >= $comp_val ORDER BY c1 DESC;
+eval SELECT * FROM t1 WHERE c1 <= $comp_val ORDER BY c1 DESC;
 eval SELECT * FROM t1 WHERE c1 =  $comp_val ORDER BY c1 DESC;
 
 ### Update Values

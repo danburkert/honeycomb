@@ -83,12 +83,25 @@ v
 d
 g
 g
-SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 ASC;
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 ASC;
 c1
+i
+i
+r
+o
+o
+o
 w
 w
 w
 w
+n
+n
+m
+v
+d
+g
+g
 SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 ASC;
 c1
 w
@@ -118,12 +131,25 @@ o
 r
 i
 i
-SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 DESC;
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 DESC;
 c1
+g
+g
+d
+v
+m
+n
+n
 w
 w
 w
 w
+o
+o
+o
+r
+i
+i
 SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 DESC;
 c1
 w
@@ -372,12 +398,25 @@ v
 d
 g
 g
-SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 ASC;
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 ASC;
 c1
+i
+i
+r
+o
+o
+o
 w
 w
 w
 w
+n
+n
+m
+v
+d
+g
+g
 SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 ASC;
 c1
 w
@@ -407,12 +446,25 @@ o
 r
 i
 i
-SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 DESC;
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 DESC;
 c1
+g
+g
+d
+v
+m
+n
+n
 w
 w
 w
 w
+o
+o
+o
+r
+i
+i
 SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 DESC;
 c1
 w
@@ -547,12 +599,25 @@ v
 d
 g
 g
-SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 ASC;
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 ASC;
 c1
+i
+i
+r
+o
+o
+o
 w
 w
 w
 w
+n
+n
+m
+v
+d
+g
+g
 SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 ASC;
 c1
 w
@@ -582,12 +647,25 @@ o
 r
 i
 i
-SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 DESC;
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 DESC;
 c1
+g
+g
+d
+v
+m
+n
+n
 w
 w
 w
 w
+o
+o
+o
+r
+i
+i
 SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 DESC;
 c1
 w
@@ -836,12 +914,25 @@ v
 d
 g
 g
-SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 ASC;
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 ASC;
 c1
+i
+i
+r
+o
+o
+o
 w
 w
 w
 w
+n
+n
+m
+v
+d
+g
+g
 SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 ASC;
 c1
 w
@@ -871,12 +962,25 @@ o
 r
 i
 i
-SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 DESC;
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 DESC;
 c1
+g
+g
+d
+v
+m
+n
+n
 w
 w
 w
 w
+o
+o
+o
+r
+i
+i
 SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 DESC;
 c1
 w
@@ -1011,12 +1115,25 @@ v
 d
 g
 g
-SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 ASC;
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 ASC;
 c1
+i
+i
+r
+o
+o
+o
 w
 w
 w
 w
+n
+n
+m
+v
+d
+g
+g
 SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 ASC;
 c1
 w
@@ -1046,12 +1163,25 @@ o
 r
 i
 i
-SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 DESC;
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 DESC;
 c1
+g
+g
+d
+v
+m
+n
+n
 w
 w
 w
 w
+o
+o
+o
+r
+i
+i
 SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 DESC;
 c1
 w
@@ -1300,12 +1430,25 @@ v
 d
 g
 g
-SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 ASC;
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 ASC;
 c1
+i
+i
+r
+o
+o
+o
 w
 w
 w
 w
+n
+n
+m
+v
+d
+g
+g
 SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 ASC;
 c1
 w
@@ -1335,12 +1478,25 @@ o
 r
 i
 i
-SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 DESC;
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 DESC;
 c1
+g
+g
+d
+v
+m
+n
+n
 w
 w
 w
 w
+o
+o
+o
+r
+i
+i
 SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 DESC;
 c1
 w
@@ -1475,12 +1631,25 @@ v
 d
 g
 g
-SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 ASC;
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 ASC;
 c1
+i
+i
+r
+o
+o
+o
 w
 w
 w
 w
+n
+n
+m
+v
+d
+g
+g
 SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 ASC;
 c1
 w
@@ -1510,12 +1679,25 @@ o
 r
 i
 i
-SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 DESC;
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 DESC;
 c1
+g
+g
+d
+v
+m
+n
+n
 w
 w
 w
 w
+o
+o
+o
+r
+i
+i
 SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 DESC;
 c1
 w
@@ -1764,12 +1946,25 @@ v
 d
 g
 g
-SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 ASC;
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 ASC;
 c1
+i
+i
+r
+o
+o
+o
 w
 w
 w
 w
+n
+n
+m
+v
+d
+g
+g
 SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 ASC;
 c1
 w
@@ -1799,12 +1994,25 @@ o
 r
 i
 i
-SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 DESC;
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 DESC;
 c1
+g
+g
+d
+v
+m
+n
+n
 w
 w
 w
 w
+o
+o
+o
+r
+i
+i
 SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 DESC;
 c1
 w
