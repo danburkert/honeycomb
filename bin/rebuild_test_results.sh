@@ -22,7 +22,10 @@ char      \
 varchar   \
 binary    \
 varbinary \
-enum
+enum      \
+date      \
+datetime  \
+timestamp \
 
 # Change engine to cloud in results (appears in table creation statements)
 cd $MYSQL_HOME/mysql-test/suite/cloud-test/r/
