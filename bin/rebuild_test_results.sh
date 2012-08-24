@@ -26,6 +26,8 @@ enum      \
 date      \
 datetime  \
 timestamp \
+time      \
+year      \
 
 # Change engine to cloud in results (appears in table creation statements)
 cd $MYSQL_HOME/mysql-test/suite/cloud-test/r/
