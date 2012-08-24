@@ -90,4 +90,9 @@ public class DoubleResultScanner implements HBaseResultScanner {
     public Result getLastResult() {
         return this.lastResult;
     }
+
+    @Override
+    public void setLastResult(Result result) {
+        this.lastResult = result;
+    }
 }
