@@ -203,7 +203,7 @@ DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
 'b','r','o','w','n', 'f','x',
 'j','m','p','s', 'v', 'e',
-'l','a','z','y', 'd','g')  )
+'l','a','z','y', 'd','g') NULL )
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('g'),
@@ -317,7 +317,7 @@ DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
 'b','r','o','w','n', 'f','x',
 'j','m','p','s', 'v', 'e',
-'l','a','z','y', 'd','g')  )
+'l','a','z','y', 'd','g') NULL )
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('g'),
@@ -719,7 +719,7 @@ DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
 'b','r','o','w','n', 'f','x',
 'j','m','p','s', 'v', 'e',
-'l','a','z','y', 'd','g')  , INDEX(c1))
+'l','a','z','y', 'd','g') NULL , INDEX(c1))
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('g'),
@@ -833,7 +833,7 @@ DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
 'b','r','o','w','n', 'f','x',
 'j','m','p','s', 'v', 'e',
-'l','a','z','y', 'd','g')  , INDEX(c1))
+'l','a','z','y', 'd','g') NULL , INDEX(c1))
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('g'),
@@ -1235,7 +1235,7 @@ DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
 'b','r','o','w','n', 'f','x',
 'j','m','p','s', 'v', 'e',
-'l','a','z','y', 'd','g')  )
+'l','a','z','y', 'd','g') NULL )
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('g'),
@@ -1349,7 +1349,7 @@ DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
 'b','r','o','w','n', 'f','x',
 'j','m','p','s', 'v', 'e',
-'l','a','z','y', 'd','g')  )
+'l','a','z','y', 'd','g') NULL )
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('g'),
@@ -1751,7 +1751,7 @@ DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
 'b','r','o','w','n', 'f','x',
 'j','m','p','s', 'v', 'e',
-'l','a','z','y', 'd','g')  , INDEX(c1))
+'l','a','z','y', 'd','g') NULL , INDEX(c1))
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('g'),
@@ -1865,7 +1865,7 @@ DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
 'b','r','o','w','n', 'f','x',
 'j','m','p','s', 'v', 'e',
-'l','a','z','y', 'd','g')  , INDEX(c1))
+'l','a','z','y', 'd','g') NULL , INDEX(c1))
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('g'),
