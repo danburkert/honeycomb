@@ -93,7 +93,7 @@ public class HBaseAdapter {
 
     public static long startScan(String tableName, boolean isFullTableScan) throws HBaseAdapterException {
         long scanId = connectionCounter.incrementAndGet();
-        logger.info("startScan-> tableName: " + tableName + ", scanId: " + scanId);
+        logger.info("startScan-> tableName: " + tableName + ", scanId: " + scanId + ", isFullTableScan: " + isFullTableScan);
         try {
             ScanStrategy strategy = new FullTableScanStrategy(tableName, "", new byte[0]);
             SingleResultScanner dataScanner = new SingleResultScanner(client.getScanner(strategy));
@@ -210,10 +210,13 @@ public class HBaseAdapter {
             UUID rowUuid = new UUID(buffer.getLong(), buffer.getLong());
 
             Result result = client.getDataRow(rowUuid, tableName);
+
             if (result == null) {
                 logger.error("getRow-> Exception: Row not found");
                 throw new HBaseAdapterException("getRow", new Exception());
             }
+
+            conn.getScanner().setLastResult(result);
 
             Map<String, byte[]> values = client.parseRow(result, conn.getTableName());
             row.setUUID(rowUuid);
