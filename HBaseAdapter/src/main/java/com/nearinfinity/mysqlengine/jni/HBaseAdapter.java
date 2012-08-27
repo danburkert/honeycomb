@@ -93,7 +93,7 @@ public class HBaseAdapter {
 
     public static long startScan(String tableName, boolean isFullTableScan) throws HBaseAdapterException {
         long scanId = connectionCounter.incrementAndGet();
-        logger.info("startScan-> tableName: " + tableName + ", scanId: " + scanId);
+        logger.info("startScan-> tableName: " + tableName + ", scanId: " + scanId + ", isFullTableScan: " + isFullTableScan);
         try {
             ScanStrategy strategy = new FullTableScanStrategy(tableName, "", new byte[0]);
             SingleResultScanner dataScanner = new SingleResultScanner(client.getScanner(strategy));
@@ -200,7 +200,7 @@ public class HBaseAdapter {
     }
 
     public static Row getRow(long scanId, byte[] uuid) throws HBaseAdapterException {
-        logger.info("getRow-> scanId: " + scanId + "," + Bytes.toStringBinary(uuid));
+        logger.info("getRow-> scanId: " + scanId + "," + Bytes.toString(uuid));
         Connection conn = getConnectionForId(scanId);
 
         Row row = new Row();
@@ -210,10 +210,13 @@ public class HBaseAdapter {
             UUID rowUuid = new UUID(buffer.getLong(), buffer.getLong());
 
             Result result = client.getDataRow(rowUuid, tableName);
+
             if (result == null) {
                 logger.error("getRow-> Exception: Row not found");
                 throw new HBaseAdapterException("getRow", new Exception());
             }
+
+            conn.getScanner().setLastResult(result);
 
             Map<String, byte[]> values = client.parseRow(result, conn.getTableName());
             row.setUUID(rowUuid);
@@ -241,9 +244,8 @@ public class HBaseAdapter {
     }
 
     public static IndexRow indexRead(long scanId, byte[] value, IndexReadType readType) throws HBaseAdapterException {
-        logger.info("Reading index with scanId " + scanId + " read type " + readType.name());
+        logger.info("indexRead-> scanId: " + scanId + ", value: " + Bytes.toString(value) + ", readType " + readType.name());
         Connection conn = getConnectionForId(scanId);
-
         IndexRow indexRow = new IndexRow();
         try {
             String tableName = conn.getTableName();
@@ -297,18 +299,11 @@ public class HBaseAdapter {
                 break;
             }
 
-            logger.info("Scanning with valueToSkip " + Bytes.toStringBinary(valueToSkip));
-
             conn.setScanner(scanner);
             Result result = scanner.next(valueToSkip);
 
-
             if (result == null) {
                 return indexRow;
-            } else {
-                logger.info("First result has unireg " + Bytes.toString(ResultParser.parseUnireg(result)));
-                logger.info("Contains nic:unireg " + result.containsColumn(Constants.NIC, Constants.UNIREG));
-                logger.info("Row key " + ResultParser.parseUUID(result));
             }
 
             indexRow.parseResult(result);
