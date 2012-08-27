@@ -13,6 +13,7 @@ public enum ColumnMetadata {
     PRIMARY_KEY("PrimaryKey".getBytes()),
     STRING("String".getBytes()),
     LONG("Long".getBytes()),
+    ULONG("ULong".getBytes()),
     DOUBLE("Double".getBytes()),
     TIME("Time".getBytes()),
     DATE("Date".getBytes()),

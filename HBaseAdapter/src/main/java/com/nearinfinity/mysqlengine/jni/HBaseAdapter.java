@@ -200,7 +200,7 @@ public class HBaseAdapter {
     }
 
     public static Row getRow(long scanId, byte[] uuid) throws HBaseAdapterException {
-        logger.info("getRow-> scanId: " + scanId + "," + Bytes.toStringBinary(uuid));
+        logger.info("getRow-> scanId: " + scanId + "," + Bytes.toString(uuid));
         Connection conn = getConnectionForId(scanId);
 
         Row row = new Row();
@@ -244,9 +244,8 @@ public class HBaseAdapter {
     }
 
     public static IndexRow indexRead(long scanId, byte[] value, IndexReadType readType) throws HBaseAdapterException {
-        logger.info("Reading index with scanId " + scanId + " read type " + readType.name());
+        logger.info("indexRead-> scanId: " + scanId + ", value: " + Bytes.toString(value) + ", readType " + readType.name());
         Connection conn = getConnectionForId(scanId);
-
         IndexRow indexRow = new IndexRow();
         try {
             String tableName = conn.getTableName();
