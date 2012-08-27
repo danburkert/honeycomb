@@ -9,6 +9,7 @@
 #include "sql_plugin.h"
 #include "ha_cloud.h"
 #include "mysql_time.h"
+#include "Util.h"
 
 #include <sys/time.h>
 /*
@@ -284,7 +285,7 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
     hbase_data_type field_type = extract_field_type(field);
     field->move_field_offset(offset);
 
-    if (field_type == JAVA_LONG)
+    if (field_type == JAVA_LONG || field_type == JAVA_ULONG)
     {
       longlong long_value = *(longlong*)val;
       if(this->is_little_endian())
@@ -641,7 +642,7 @@ jobject CloudHandler::sql_to_java()
     hbase_data_type fieldType = extract_field_type(field);
     uint actualFieldSize = field->field_length;
 
-    if (fieldType == JAVA_LONG)
+    if (fieldType == JAVA_LONG || fieldType == JAVA_ULONG)
     {
       longlong field_value = field->val_int();
       if(this->is_little_endian())
@@ -859,8 +860,15 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
     key_copy = new uchar[sizeof(longlong)];
     if (key_len == sizeof(int))
     {
-      int* int_key = (int*)key;
-      longlong long_key = (longlong)*int_key;
+      longlong long_key;
+      if (is_unsigned_field(this->index_field))
+      {
+        uint* int_key = (uint*) key;
+        long_key = (longlong)*int_key;
+      } else {
+        int* int_key = (int*)key;
+        long_key = (longlong)*int_key;
+      }
       memcpy(key_copy, &long_key, sizeof(longlong));
       key_len = sizeof(longlong);
     }
