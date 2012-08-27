@@ -11,12 +11,7 @@
 #include "mysql_time.h"
 
 #include <sys/time.h>
-/*
-  If frm_error() is called in table.cc this is called to find out what file
-  extensions exist for this handler.
-
-  // TODO: Do any extensions exist for this handler? Doesn't seem like it. - ABC
-*/
+double real_time(timeval start);
 const char **CloudHandler::bas_ext() const
 {
   static const char *cloud_exts[] =
@@ -53,11 +48,6 @@ void CloudHandler::destroy_record_buffer(record_buffer *r)
   my_free(r->buffer);
   my_free(r);
   DBUG_VOID_RETURN;
-}
-
-double timing(clock_t begin, clock_t end)
-{
-  return (double)((end - begin)*1000) / CLOCKS_PER_SEC;
 }
 
 int CloudHandler::open(const char *name, int mode, uint test_if_locked)
@@ -409,6 +399,7 @@ void CloudHandler::start_bulk_insert(ha_rows rows)
   DBUG_ENTER("CloudHandler::start_bulk_insert");
 
   attach_thread();
+  log_print("INFO", "%d rows to be inserted.", rows);
 
   DBUG_VOID_RETURN;
 }
@@ -417,9 +408,17 @@ int CloudHandler::end_bulk_insert()
 {
   DBUG_ENTER("CloudHandler::end_bulk_insert");
 
+  timeval start, end;
+  gettimeofday(&start, NULL);
   jclass adapter_class = this->adapter();
   jmethodID end_write_method = this->env->GetStaticMethodID(adapter_class, "flushWrites", "()V");
   this->env->CallStaticVoidMethod(adapter_class, end_write_method);
+  gettimeofday(&end, NULL);
+  this->hbase_timing += real_time(end) - real_time(start);
+  log_print("INFO", "write_row_helper jni (no hbase): %f seconds", this->write_timing);
+  log_print("INFO", "write_row_helper jni (hbase): %f seconds", this->hbase_timing);
+  this->write_timing = 0;
+  this->hbase_timing = 0;
 
   detach_thread();
   DBUG_RETURN(0);
@@ -574,6 +573,11 @@ uint32 CloudHandler::max_row_length()
   return length;
 }
 
+double real_time(timeval start)
+{
+  return start.tv_sec + (start.tv_usec / 1000000.0);
+}
+
 /* Set up the JNI Environment, and then persist the row to HBase.
  * This helper calls sql_to_java, which returns the row information
  * as a jobject to be sent to the HBaseAdapter.
@@ -582,6 +586,8 @@ int CloudHandler::write_row_helper(uchar* buf)
 {
   DBUG_ENTER("CloudHandler::write_row_helper");
 
+  timeval start, end;
+  gettimeofday(&start, NULL);
   jclass adapter_class = this->adapter();
   jmethodID write_row_method = this->env->GetStaticMethodID(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;[B)Z");
   jstring java_table_name = this->string_to_java_string(this->table->alias);
@@ -602,8 +608,13 @@ int CloudHandler::write_row_helper(uchar* buf)
 
   this->env->SetByteArrayRegion(uniReg, 0, row_length, (jbyte*)buffer);
   delete[] buffer;
+  gettimeofday(&end, NULL);
+  this->write_timing += real_time(end) - real_time(start);
 
+  gettimeofday(&start, NULL);
   this->env->CallStaticBooleanMethod(adapter_class, write_row_method, java_table_name, java_row_map, uniReg);
+  gettimeofday(&end, NULL);
+  this->hbase_timing += real_time(end) - real_time(start);
 
   DBUG_RETURN(0);
 }
