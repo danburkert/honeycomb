@@ -1,1 +1,1 @@
-let $null_flag = ;
+let $null_flag = NULL;
