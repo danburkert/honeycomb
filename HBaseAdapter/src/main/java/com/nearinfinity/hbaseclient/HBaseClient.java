@@ -15,6 +15,8 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static java.lang.String.*;
+
 /**
  * Created with IntelliJ IDEA.
  * User: jedstrom
@@ -46,6 +48,8 @@ public class HBaseClient {
     private final ConcurrentHashMap<String, TableInfo> tableCache = new ConcurrentHashMap<String, TableInfo>();
 
     private static final Logger logger = Logger.getLogger(HBaseClient.class);
+
+    private long hbaseTiming = 0, writeTiming = 0;
 
     public HBaseClient(String tableName, String zkQuorum) {
         logger.info("HBaseClient: Constructing with HBase table name: " + tableName);
@@ -168,6 +172,7 @@ public class HBaseClient {
     }
 
     public void writeRow(String tableName, Map<String, byte[]> values, byte[] unireg) throws IOException {
+        long start = System.currentTimeMillis();
         //Get table id
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
@@ -230,8 +235,13 @@ public class HBaseClient {
 
         //Add the row to put list
         putList.add(dataRow);
+        long end = System.currentTimeMillis();
+        this.writeTiming += end - start;
         //Final put
+        start = System.currentTimeMillis();
         table.put(putList);
+        end = System.currentTimeMillis();
+        this.hbaseTiming += end - start;
 
     }
 
@@ -489,6 +499,10 @@ public class HBaseClient {
 
     public void flushWrites() {
         try {
+            logger.info(format("Preparing hbase writes %d ms", this.writeTiming));
+            logger.info(format("Writing hbase values %d ms", this.hbaseTiming));
+            this.hbaseTiming = 0;
+            this.writeTiming = 0;
             table.flushCommits();
         } catch (IOException e) {
             logger.error("Encountered an exception while flushing commits : ", e);
