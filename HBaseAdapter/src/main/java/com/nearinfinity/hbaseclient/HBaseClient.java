@@ -15,8 +15,6 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static java.lang.String.format;
-
 /**
  * Created with IntelliJ IDEA.
  * User: jedstrom
@@ -48,14 +46,6 @@ public class HBaseClient {
     private final ConcurrentHashMap<String, TableInfo> tableCache = new ConcurrentHashMap<String, TableInfo>();
 
     private static final Logger logger = Logger.getLogger(HBaseClient.class);
-
-    private long writeBufferSize = 0;
-
-    private long currentBufferSize = 0;
-
-    private long flushCount = 1;
-
-    private long totalFlushTime = 0;
 
     public HBaseClient(String tableName, String zkQuorum) {
         logger.info("HBaseClient: Constructing with HBase table name: " + tableName);
@@ -240,22 +230,9 @@ public class HBaseClient {
 
         //Add the row to put list
         putList.add(dataRow);
-        for (Put p : putList) {
-            this.currentBufferSize += p.heapSize();
-        }
+        //Final put
+        table.put(putList);
 
-        if (this.currentBufferSize >= this.writeBufferSize) {
-            long start = System.currentTimeMillis();
-            table.put(putList);
-            long elapsed = System.currentTimeMillis() - start;
-            this.totalFlushTime += elapsed;
-            logger.info(format("Flush # %d, Timing %d ms, Average %d ms, Total %d ms", this.flushCount, elapsed, this.totalFlushTime / this.flushCount, this.totalFlushTime));
-            this.currentBufferSize = 0;
-            this.flushCount++;
-        } else {
-            //Final put
-            table.put(putList);
-        }
     }
 
     public Result getDataRow(UUID uuid, String tableName) throws IOException {
@@ -503,7 +480,6 @@ public class HBaseClient {
     public void setWriteBufferSize(long numBytes) {
         try {
             this.table.setWriteBufferSize(numBytes);
-            this.writeBufferSize = numBytes;
         } catch (IOException e) {
             logger.error("Encountered an error setting write buffer size", e);
         }
