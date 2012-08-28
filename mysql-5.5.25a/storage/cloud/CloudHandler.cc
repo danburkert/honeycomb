@@ -884,7 +884,7 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
         case 4: // int
           int8store(key_copy, uint4korr(key));
           break;
-        case 5: // bigint
+        case 8: // bigint
           int8store(key_copy, uint8korr(key));
           break;
       }
@@ -903,13 +903,13 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
         case 4: // int
           int8store(key_copy, sint4korr(key));
           break;
-        case 5: // bigint
+        case 8: // bigint
           int8store(key_copy, sint8korr(key));
           break;
       }
     }
     key_len = sizeof(longlong);
-    this->make_big_endian(key_copy, key_len);
+    //this->make_big_endian(key_copy, key_len);
   }
   else
   {
