@@ -820,7 +820,6 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
   jmethodID index_read_method = this->env->GetStaticMethodID(adapter_class, "indexRead", "(J[BLcom/nearinfinity/mysqlengine/jni/IndexReadType;)Lcom/nearinfinity/mysqlengine/jni/IndexRow;");
   jlong java_scan_id = this->curr_scan_id;
   uchar* key_copy;
-  uint key_copy_len;
   jobject java_find_flag;
 
   if (find_flag == HA_READ_PREFIX_LAST_OR_PREV)
@@ -857,34 +856,57 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
 
   if (this->is_integral_field(this->index_field->type()))
   {
-    key_copy = new uchar[sizeof(longlong)];
-    if (key_len == sizeof(int))
+    key_copy = new uchar[sizeof(long long)]; // Store key as 8 bytes
+    if (is_unsigned_field(this->index_field))
     {
-      longlong long_key;
-      if (is_unsigned_field(this->index_field))
+      switch (key_len)
       {
-        uint* int_key = (uint*) key;
-        long_key = (longlong)*int_key;
-      } else {
-        int* int_key = (int*)key;
-        long_key = (longlong)*int_key;
+        case 1: // tinyint
+          int8store(key_copy, *((uint8_t *) key));
+          break;
+        case 2: // smallint
+          int8store(key_copy, uint2korr(key));
+          break;
+        case 3: // mediumint
+          int8store(key_copy, uint3korr(key));
+          break;
+        case 4: // int
+          int8store(key_copy, uint4korr(key));
+          break;
+        case 5: // bigint
+          int8store(key_copy, uint8korr(key));
+          break;
       }
-      memcpy(key_copy, &long_key, sizeof(longlong));
-      key_len = sizeof(longlong);
+    } else {
+      switch (key_len)
+      {
+        case 1: // tinyint
+          int8store(key_copy, *((int8_t *) key));
+          break;
+        case 2: // smallint
+          int8store(key_copy, sint2korr(key));
+          break;
+        case 3: // mediumint
+          int8store(key_copy, sint3korr(key));
+          break;
+        case 4: // int
+          int8store(key_copy, sint4korr(key));
+          break;
+        case 5: // bigint
+          int8store(key_copy, sint8korr(key));
+          break;
+      }
     }
-    else
-    {
-      longlong* long_key = (longlong*)key;
-      memcpy(key_copy, long_key, sizeof(longlong));
-    }
+    key_len = sizeof(longlong);
+    this->make_big_endian(key_copy, key_len);
   }
   else
   {
     key_copy = new uchar[key_len];
     memcpy(key_copy, key, key_len);
+    this->make_big_endian(key_copy, key_len);
   }
 
-  this->make_big_endian(key_copy, key_len);
   jbyteArray java_key = this->env->NewByteArray(key_len);
   this->env->SetByteArrayRegion(java_key, 0, key_len, (jbyte*)key_copy);
   delete[] key_copy;
