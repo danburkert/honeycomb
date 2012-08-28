@@ -65,6 +65,7 @@ static int cloud_init_func(void *p)
   cloud_hton->create = cloud_create_handler;
   cloud_hton->flags = HTON_ALTER_NOT_SUPPORTED;
 
+  setup_logging(NULL);
   create_or_find_jvm(&jvm);
 
   DBUG_RETURN(0);
@@ -80,6 +81,7 @@ static int cloud_done_func(void *p)
     error= 1;
   }
 
+  close_logging();
   my_hash_free(&cloud_open_tables);
   mysql_mutex_destroy(&cloud_mutex);
   DBUG_RETURN(error);
