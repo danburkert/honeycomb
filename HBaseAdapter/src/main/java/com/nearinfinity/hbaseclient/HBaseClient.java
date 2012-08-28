@@ -15,7 +15,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static java.lang.String.*;
+import static java.lang.String.format;
 
 /**
  * Created with IntelliJ IDEA.
@@ -49,7 +49,8 @@ public class HBaseClient {
 
     private static final Logger logger = Logger.getLogger(HBaseClient.class);
 
-    private long hbaseTiming = 0, writeTiming = 0;
+    private long hbaseTiming = 0, writeTiming = 0, valueSetLoopTiming = 0;
+    private long createPutListPrologTiming = 0;
 
     public HBaseClient(String tableName, String zkQuorum) {
         logger.info("HBaseClient: Constructing with HBase table name: " + tableName);
@@ -173,7 +174,21 @@ public class HBaseClient {
 
     public void writeRow(String tableName, Map<String, byte[]> values, byte[] unireg) throws IOException {
         long start = System.currentTimeMillis();
+        List<Put> putList = createPutList(tableName, values, unireg);
+        long end = System.currentTimeMillis();
+        this.writeTiming += end - start;
+
+        //Final put
+        start = System.currentTimeMillis();
+        table.put(putList);
+        end = System.currentTimeMillis();
+        this.hbaseTiming += end - start;
+
+    }
+
+    private List<Put> createPutList(String tableName, Map<String, byte[]> values, byte[] unireg) throws IOException {
         //Get table id
+        long start = System.currentTimeMillis();
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
 
@@ -182,6 +197,7 @@ public class HBaseClient {
 
         //Build data row key
         byte[] dataKey = RowKeyFactory.buildDataKey(tableId, rowId);
+
 
         //Create put list
         List<Put> putList = new LinkedList<Put>();
@@ -196,7 +212,9 @@ public class HBaseClient {
         }
 
         boolean allRowsNull = true;
+        this.createPutListPrologTiming += System.currentTimeMillis() - start;
 
+        start = System.currentTimeMillis();
         for (String columnName : values.keySet()) {
 
             //Get column id and value
@@ -228,6 +246,8 @@ public class HBaseClient {
             }
         }
 
+        this.valueSetLoopTiming += System.currentTimeMillis() - start;
+
         if (allRowsNull) {
             // Add special []->[] data row to signify a row of all null values
             putList.add(dataRow.add(NIC, new byte[0], new byte[0]));
@@ -235,14 +255,7 @@ public class HBaseClient {
 
         //Add the row to put list
         putList.add(dataRow);
-        long end = System.currentTimeMillis();
-        this.writeTiming += end - start;
-        //Final put
-        start = System.currentTimeMillis();
-        table.put(putList);
-        end = System.currentTimeMillis();
-        this.hbaseTiming += end - start;
-
+        return putList;
     }
 
     public Result getDataRow(UUID uuid, String tableName) throws IOException {
@@ -277,6 +290,8 @@ public class HBaseClient {
             long columnId = ByteBuffer.wrap(columns.get(qualifier)).getLong();
             info.addColumn(columnName, columnId, getMetadataForColumn(tableId, columnId));
         }
+
+        tableCache.put(tableName, info);
 
         return info;
     }
@@ -500,9 +515,13 @@ public class HBaseClient {
     public void flushWrites() {
         try {
             logger.info(format("Preparing hbase writes %d ms", this.writeTiming));
+            logger.info(format("\tLooping through value set keys %d ms", this.valueSetLoopTiming));
+            logger.info(format("\tProlog of create put list %d ms", this.createPutListPrologTiming));
             logger.info(format("Writing hbase values %d ms", this.hbaseTiming));
             this.hbaseTiming = 0;
             this.writeTiming = 0;
+            this.valueSetLoopTiming = 0;
+            this.createPutListPrologTiming = 0;
             table.flushCommits();
         } catch (IOException e) {
             logger.error("Encountered an exception while flushing commits : ", e);
