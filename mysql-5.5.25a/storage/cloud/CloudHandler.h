@@ -16,6 +16,7 @@
 #include "Macros.h"
 #include "FieldMetadata.h"
 #include "Util.h"
+#include "Logging.h"
 
 typedef struct st_record_buffer {
   uchar *buffer;
@@ -42,6 +43,8 @@ class CloudHandler : public handler
     Field *index_field;
 
     long long curr_scan_id;
+
+    double write_timing, hbase_timing;
 
     // HBase JNI Adapter:
     JNIEnv* env;
@@ -139,6 +142,8 @@ class CloudHandler : public handler
     {
       this->ref_length = 16;
       this->ref = new uchar[this->ref_length];
+      this->write_timing = 0;
+      this->hbase_timing = 0;
     }
 
     ~CloudHandler()

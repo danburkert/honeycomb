@@ -14,6 +14,8 @@ eval INSERT INTO t1 VALUES
   ($min_val),
   (0),
   (0),
+  (0),
+  (0),
   ($mid_val - 2),
   ($mid_val - 1),
   ($mid_val),
@@ -29,19 +31,20 @@ SELECT * FROM t1 ORDER BY c1 DESC;
 eval SELECT * FROM t1 WHERE c1 >  $mid_val ORDER BY c1 ASC;
 eval SELECT * FROM t1 WHERE c1 >= $mid_val ORDER BY c1 ASC;
 eval SELECT * FROM t1 WHERE c1 <  $mid_val ORDER BY c1 ASC;
-eval SELECT * FROM t1 WHERE c1 >= $mid_val ORDER BY c1 ASC;
+eval SELECT * FROM t1 WHERE c1 <= $mid_val ORDER BY c1 ASC;
 eval SELECT * FROM t1 WHERE c1 =  $mid_val ORDER BY c1 ASC;
 
 eval SELECT * FROM t1 WHERE c1 >  $mid_val ORDER BY c1 DESC;
 eval SELECT * FROM t1 WHERE c1 >= $mid_val ORDER BY c1 DESC;
 eval SELECT * FROM t1 WHERE c1 <  $mid_val ORDER BY c1 DESC;
-eval SELECT * FROM t1 WHERE c1 >= $mid_val ORDER BY c1 DESC;
+eval SELECT * FROM t1 WHERE c1 <= $mid_val ORDER BY c1 DESC;
 eval SELECT * FROM t1 WHERE c1 =  $mid_val ORDER BY c1 DESC;
 
 ### Update Values
 eval UPDATE t1
   SET c1 = $mid_val
-  WHERE c1 = 0;
+  WHERE c1 <= 0 + $epsilon AND c1 >= 0 - $epsilon
+  LIMIT 2;
 
 # Check updates
 SELECT * FROM t1 ORDER BY c1;
@@ -49,7 +52,7 @@ SELECT * FROM t1 ORDER BY c1;
 ### Delete values
 
 eval DELETE FROM t1
-  WHERE c1 = $mid_val
+  WHERE c1 <= 0 + $epsilon AND c1 >= 0 - $epsilon
   ORDER BY c1;
 
 # Check deletes

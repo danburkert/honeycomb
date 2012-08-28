@@ -9,4 +9,6 @@ let $unsigned_min =        0;
 let $unsigned_mid =  8388608;
 let $unsigned_max = 16777215;
 
+let $epsilon = 0;
+
 --source numeric_options.inc

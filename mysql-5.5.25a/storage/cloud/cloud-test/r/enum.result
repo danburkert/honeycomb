@@ -1,0 +1,2064 @@
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
+'b','r','o','w','n', 'f','x',
+'j','m','p','s', 'v', 'e',
+'l','a','z','y', 'd','g') NOT NULL )
+ENGINE=cloud;
+INSERT INTO t1 VALUES
+('g'),
+('o'),
+('o'),
+('d'),
+('m'),
+('o'),
+('r'),
+('n'),
+('i'),
+('n'),
+('g'),
+('v'),
+('i'),
+('w'),
+('w'),
+('w'),
+('w');
+SELECT * FROM t1 ORDER BY c1 ASC;
+c1
+i
+i
+r
+o
+o
+o
+w
+w
+w
+w
+n
+n
+m
+v
+d
+g
+g
+SELECT * FROM t1 ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+w
+w
+w
+w
+o
+o
+o
+r
+i
+i
+SELECT * FROM t1 WHERE c1 >  'w' ORDER BY c1 ASC;
+c1
+SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 ASC;
+c1
+w
+w
+w
+w
+SELECT * FROM t1 WHERE c1 <  'w' ORDER BY c1 ASC;
+c1
+i
+i
+r
+o
+o
+o
+n
+n
+m
+v
+d
+g
+g
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 ASC;
+c1
+i
+i
+r
+o
+o
+o
+w
+w
+w
+w
+n
+n
+m
+v
+d
+g
+g
+SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 ASC;
+c1
+w
+w
+w
+w
+SELECT * FROM t1 WHERE c1 >  'w' ORDER BY c1 DESC;
+c1
+SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 DESC;
+c1
+w
+w
+w
+w
+SELECT * FROM t1 WHERE c1 <  'w' ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+o
+o
+o
+r
+i
+i
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+w
+w
+w
+w
+o
+o
+o
+r
+i
+i
+SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 DESC;
+c1
+w
+w
+w
+w
+UPDATE t1
+SET c1 = 'r'
+WHERE c1 = 'w'
+LIMIT 2;
+SELECT * FROM t1 ORDER BY c1;
+c1
+i
+i
+r
+r
+r
+o
+o
+o
+w
+w
+n
+n
+m
+v
+d
+g
+g
+DELETE FROM t1
+WHERE c1 = 'w'
+ORDER BY c1;
+SELECT * FROM t1 ORDER BY c1;
+c1
+i
+i
+r
+r
+r
+o
+o
+o
+n
+n
+m
+v
+d
+g
+g
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
+'b','r','o','w','n', 'f','x',
+'j','m','p','s', 'v', 'e',
+'l','a','z','y', 'd','g') NULL )
+ENGINE=cloud;
+INSERT INTO t1 VALUES
+('g'),
+('o'),
+('o'),
+('d'),
+('m'),
+('o'),
+('r'),
+('n'),
+('i'),
+('n'),
+('g'),
+('v'),
+('i'),
+('w'),
+(NULL),
+(NULL),
+(NULL),
+(NULL);
+SELECT * FROM t1 WHERE c1 IS     NULL ORDER BY c1 ASC;
+c1
+NULL
+NULL
+NULL
+NULL
+SELECT * FROM t1 WHERE c1 IS NOT NULL ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+w
+o
+o
+o
+r
+i
+i
+SELECT * FROM t1 WHERE c1 IS     NULL ORDER BY c1 ASC;
+c1
+NULL
+NULL
+NULL
+NULL
+SELECT * FROM t1 WHERE c1 IS NOT NULL ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+w
+o
+o
+o
+r
+i
+i
+UPDATE t1
+SET c1 = 'w'
+WHERE c1 IS NULL
+LIMIT 2;
+SELECT * FROM t1 ORDER BY c1;
+c1
+NULL
+NULL
+i
+i
+r
+o
+o
+o
+w
+w
+w
+n
+n
+m
+v
+d
+g
+g
+DELETE FROM t1
+WHERE c1 IS NULL
+ORDER BY c1;
+SELECT * FROM t1 ORDER BY c1;
+c1
+i
+i
+r
+o
+o
+o
+w
+w
+w
+n
+n
+m
+v
+d
+g
+g
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
+'b','r','o','w','n', 'f','x',
+'j','m','p','s', 'v', 'e',
+'l','a','z','y', 'd','g') NULL )
+ENGINE=cloud;
+INSERT INTO t1 VALUES
+('g'),
+('o'),
+('o'),
+('d'),
+('m'),
+('o'),
+('r'),
+('n'),
+('i'),
+('n'),
+('g'),
+('v'),
+('i'),
+('w'),
+('w'),
+('w'),
+('w');
+SELECT * FROM t1 ORDER BY c1 ASC;
+c1
+i
+i
+r
+o
+o
+o
+w
+w
+w
+w
+n
+n
+m
+v
+d
+g
+g
+SELECT * FROM t1 ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+w
+w
+w
+w
+o
+o
+o
+r
+i
+i
+SELECT * FROM t1 WHERE c1 >  'w' ORDER BY c1 ASC;
+c1
+SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 ASC;
+c1
+w
+w
+w
+w
+SELECT * FROM t1 WHERE c1 <  'w' ORDER BY c1 ASC;
+c1
+i
+i
+r
+o
+o
+o
+n
+n
+m
+v
+d
+g
+g
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 ASC;
+c1
+i
+i
+r
+o
+o
+o
+w
+w
+w
+w
+n
+n
+m
+v
+d
+g
+g
+SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 ASC;
+c1
+w
+w
+w
+w
+SELECT * FROM t1 WHERE c1 >  'w' ORDER BY c1 DESC;
+c1
+SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 DESC;
+c1
+w
+w
+w
+w
+SELECT * FROM t1 WHERE c1 <  'w' ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+o
+o
+o
+r
+i
+i
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+w
+w
+w
+w
+o
+o
+o
+r
+i
+i
+SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 DESC;
+c1
+w
+w
+w
+w
+UPDATE t1
+SET c1 = 'r'
+WHERE c1 = 'w'
+LIMIT 2;
+SELECT * FROM t1 ORDER BY c1;
+c1
+i
+i
+r
+r
+r
+o
+o
+o
+w
+w
+n
+n
+m
+v
+d
+g
+g
+DELETE FROM t1
+WHERE c1 = 'w'
+ORDER BY c1;
+SELECT * FROM t1 ORDER BY c1;
+c1
+i
+i
+r
+r
+r
+o
+o
+o
+n
+n
+m
+v
+d
+g
+g
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
+'b','r','o','w','n', 'f','x',
+'j','m','p','s', 'v', 'e',
+'l','a','z','y', 'd','g') NOT NULL , INDEX(c1))
+ENGINE=cloud;
+INSERT INTO t1 VALUES
+('g'),
+('o'),
+('o'),
+('d'),
+('m'),
+('o'),
+('r'),
+('n'),
+('i'),
+('n'),
+('g'),
+('v'),
+('i'),
+('w'),
+('w'),
+('w'),
+('w');
+SELECT * FROM t1 ORDER BY c1 ASC;
+c1
+i
+i
+r
+o
+o
+o
+w
+w
+w
+w
+n
+n
+m
+v
+d
+g
+g
+SELECT * FROM t1 ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+w
+w
+w
+w
+o
+o
+o
+r
+i
+i
+SELECT * FROM t1 WHERE c1 >  'w' ORDER BY c1 ASC;
+c1
+SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 ASC;
+c1
+w
+w
+w
+w
+SELECT * FROM t1 WHERE c1 <  'w' ORDER BY c1 ASC;
+c1
+i
+i
+r
+o
+o
+o
+n
+n
+m
+v
+d
+g
+g
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 ASC;
+c1
+i
+i
+r
+o
+o
+o
+w
+w
+w
+w
+n
+n
+m
+v
+d
+g
+g
+SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 ASC;
+c1
+w
+w
+w
+w
+SELECT * FROM t1 WHERE c1 >  'w' ORDER BY c1 DESC;
+c1
+SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 DESC;
+c1
+w
+w
+w
+w
+SELECT * FROM t1 WHERE c1 <  'w' ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+o
+o
+o
+r
+i
+i
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+w
+w
+w
+w
+o
+o
+o
+r
+i
+i
+SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 DESC;
+c1
+w
+w
+w
+w
+UPDATE t1
+SET c1 = 'r'
+WHERE c1 = 'w'
+LIMIT 2;
+SELECT * FROM t1 ORDER BY c1;
+c1
+i
+i
+r
+r
+r
+o
+o
+o
+w
+w
+n
+n
+m
+v
+d
+g
+g
+DELETE FROM t1
+WHERE c1 = 'w'
+ORDER BY c1;
+SELECT * FROM t1 ORDER BY c1;
+c1
+i
+i
+r
+r
+r
+o
+o
+o
+n
+n
+m
+v
+d
+g
+g
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
+'b','r','o','w','n', 'f','x',
+'j','m','p','s', 'v', 'e',
+'l','a','z','y', 'd','g') NULL , INDEX(c1))
+ENGINE=cloud;
+INSERT INTO t1 VALUES
+('g'),
+('o'),
+('o'),
+('d'),
+('m'),
+('o'),
+('r'),
+('n'),
+('i'),
+('n'),
+('g'),
+('v'),
+('i'),
+('w'),
+(NULL),
+(NULL),
+(NULL),
+(NULL);
+SELECT * FROM t1 WHERE c1 IS     NULL ORDER BY c1 ASC;
+c1
+NULL
+NULL
+NULL
+NULL
+SELECT * FROM t1 WHERE c1 IS NOT NULL ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+w
+o
+o
+o
+r
+i
+i
+SELECT * FROM t1 WHERE c1 IS     NULL ORDER BY c1 ASC;
+c1
+NULL
+NULL
+NULL
+NULL
+SELECT * FROM t1 WHERE c1 IS NOT NULL ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+w
+o
+o
+o
+r
+i
+i
+UPDATE t1
+SET c1 = 'w'
+WHERE c1 IS NULL
+LIMIT 2;
+SELECT * FROM t1 ORDER BY c1;
+c1
+NULL
+NULL
+i
+i
+r
+o
+o
+o
+w
+w
+w
+n
+n
+m
+v
+d
+g
+g
+DELETE FROM t1
+WHERE c1 IS NULL
+ORDER BY c1;
+SELECT * FROM t1 ORDER BY c1;
+c1
+i
+i
+r
+o
+o
+o
+w
+w
+w
+n
+n
+m
+v
+d
+g
+g
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
+'b','r','o','w','n', 'f','x',
+'j','m','p','s', 'v', 'e',
+'l','a','z','y', 'd','g') NULL , INDEX(c1))
+ENGINE=cloud;
+INSERT INTO t1 VALUES
+('g'),
+('o'),
+('o'),
+('d'),
+('m'),
+('o'),
+('r'),
+('n'),
+('i'),
+('n'),
+('g'),
+('v'),
+('i'),
+('w'),
+('w'),
+('w'),
+('w');
+SELECT * FROM t1 ORDER BY c1 ASC;
+c1
+i
+i
+r
+o
+o
+o
+w
+w
+w
+w
+n
+n
+m
+v
+d
+g
+g
+SELECT * FROM t1 ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+w
+w
+w
+w
+o
+o
+o
+r
+i
+i
+SELECT * FROM t1 WHERE c1 >  'w' ORDER BY c1 ASC;
+c1
+SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 ASC;
+c1
+w
+w
+w
+w
+SELECT * FROM t1 WHERE c1 <  'w' ORDER BY c1 ASC;
+c1
+i
+i
+r
+o
+o
+o
+n
+n
+m
+v
+d
+g
+g
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 ASC;
+c1
+i
+i
+r
+o
+o
+o
+w
+w
+w
+w
+n
+n
+m
+v
+d
+g
+g
+SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 ASC;
+c1
+w
+w
+w
+w
+SELECT * FROM t1 WHERE c1 >  'w' ORDER BY c1 DESC;
+c1
+SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 DESC;
+c1
+w
+w
+w
+w
+SELECT * FROM t1 WHERE c1 <  'w' ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+o
+o
+o
+r
+i
+i
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+w
+w
+w
+w
+o
+o
+o
+r
+i
+i
+SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 DESC;
+c1
+w
+w
+w
+w
+UPDATE t1
+SET c1 = 'r'
+WHERE c1 = 'w'
+LIMIT 2;
+SELECT * FROM t1 ORDER BY c1;
+c1
+i
+i
+r
+r
+r
+o
+o
+o
+w
+w
+n
+n
+m
+v
+d
+g
+g
+DELETE FROM t1
+WHERE c1 = 'w'
+ORDER BY c1;
+SELECT * FROM t1 ORDER BY c1;
+c1
+i
+i
+r
+r
+r
+o
+o
+o
+n
+n
+m
+v
+d
+g
+g
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
+'b','r','o','w','n', 'f','x',
+'j','m','p','s', 'v', 'e',
+'l','a','z','y', 'd','g') NOT NULL )
+ENGINE=cloud;
+INSERT INTO t1 VALUES
+('g'),
+('o'),
+('o'),
+('d'),
+('m'),
+('o'),
+('r'),
+('n'),
+('i'),
+('n'),
+('g'),
+('v'),
+('i'),
+('w'),
+('w'),
+('w'),
+('w');
+SELECT * FROM t1 ORDER BY c1 ASC;
+c1
+i
+i
+r
+o
+o
+o
+w
+w
+w
+w
+n
+n
+m
+v
+d
+g
+g
+SELECT * FROM t1 ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+w
+w
+w
+w
+o
+o
+o
+r
+i
+i
+SELECT * FROM t1 WHERE c1 >  'w' ORDER BY c1 ASC;
+c1
+SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 ASC;
+c1
+w
+w
+w
+w
+SELECT * FROM t1 WHERE c1 <  'w' ORDER BY c1 ASC;
+c1
+i
+i
+r
+o
+o
+o
+n
+n
+m
+v
+d
+g
+g
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 ASC;
+c1
+i
+i
+r
+o
+o
+o
+w
+w
+w
+w
+n
+n
+m
+v
+d
+g
+g
+SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 ASC;
+c1
+w
+w
+w
+w
+SELECT * FROM t1 WHERE c1 >  'w' ORDER BY c1 DESC;
+c1
+SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 DESC;
+c1
+w
+w
+w
+w
+SELECT * FROM t1 WHERE c1 <  'w' ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+o
+o
+o
+r
+i
+i
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+w
+w
+w
+w
+o
+o
+o
+r
+i
+i
+SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 DESC;
+c1
+w
+w
+w
+w
+UPDATE t1
+SET c1 = 'r'
+WHERE c1 = 'w'
+LIMIT 2;
+SELECT * FROM t1 ORDER BY c1;
+c1
+i
+i
+r
+r
+r
+o
+o
+o
+w
+w
+n
+n
+m
+v
+d
+g
+g
+DELETE FROM t1
+WHERE c1 = 'w'
+ORDER BY c1;
+SELECT * FROM t1 ORDER BY c1;
+c1
+i
+i
+r
+r
+r
+o
+o
+o
+n
+n
+m
+v
+d
+g
+g
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
+'b','r','o','w','n', 'f','x',
+'j','m','p','s', 'v', 'e',
+'l','a','z','y', 'd','g') NULL )
+ENGINE=cloud;
+INSERT INTO t1 VALUES
+('g'),
+('o'),
+('o'),
+('d'),
+('m'),
+('o'),
+('r'),
+('n'),
+('i'),
+('n'),
+('g'),
+('v'),
+('i'),
+('w'),
+(NULL),
+(NULL),
+(NULL),
+(NULL);
+SELECT * FROM t1 WHERE c1 IS     NULL ORDER BY c1 ASC;
+c1
+NULL
+NULL
+NULL
+NULL
+SELECT * FROM t1 WHERE c1 IS NOT NULL ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+w
+o
+o
+o
+r
+i
+i
+SELECT * FROM t1 WHERE c1 IS     NULL ORDER BY c1 ASC;
+c1
+NULL
+NULL
+NULL
+NULL
+SELECT * FROM t1 WHERE c1 IS NOT NULL ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+w
+o
+o
+o
+r
+i
+i
+UPDATE t1
+SET c1 = 'w'
+WHERE c1 IS NULL
+LIMIT 2;
+SELECT * FROM t1 ORDER BY c1;
+c1
+NULL
+NULL
+i
+i
+r
+o
+o
+o
+w
+w
+w
+n
+n
+m
+v
+d
+g
+g
+DELETE FROM t1
+WHERE c1 IS NULL
+ORDER BY c1;
+SELECT * FROM t1 ORDER BY c1;
+c1
+i
+i
+r
+o
+o
+o
+w
+w
+w
+n
+n
+m
+v
+d
+g
+g
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
+'b','r','o','w','n', 'f','x',
+'j','m','p','s', 'v', 'e',
+'l','a','z','y', 'd','g') NULL )
+ENGINE=cloud;
+INSERT INTO t1 VALUES
+('g'),
+('o'),
+('o'),
+('d'),
+('m'),
+('o'),
+('r'),
+('n'),
+('i'),
+('n'),
+('g'),
+('v'),
+('i'),
+('w'),
+('w'),
+('w'),
+('w');
+SELECT * FROM t1 ORDER BY c1 ASC;
+c1
+i
+i
+r
+o
+o
+o
+w
+w
+w
+w
+n
+n
+m
+v
+d
+g
+g
+SELECT * FROM t1 ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+w
+w
+w
+w
+o
+o
+o
+r
+i
+i
+SELECT * FROM t1 WHERE c1 >  'w' ORDER BY c1 ASC;
+c1
+SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 ASC;
+c1
+w
+w
+w
+w
+SELECT * FROM t1 WHERE c1 <  'w' ORDER BY c1 ASC;
+c1
+i
+i
+r
+o
+o
+o
+n
+n
+m
+v
+d
+g
+g
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 ASC;
+c1
+i
+i
+r
+o
+o
+o
+w
+w
+w
+w
+n
+n
+m
+v
+d
+g
+g
+SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 ASC;
+c1
+w
+w
+w
+w
+SELECT * FROM t1 WHERE c1 >  'w' ORDER BY c1 DESC;
+c1
+SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 DESC;
+c1
+w
+w
+w
+w
+SELECT * FROM t1 WHERE c1 <  'w' ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+o
+o
+o
+r
+i
+i
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+w
+w
+w
+w
+o
+o
+o
+r
+i
+i
+SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 DESC;
+c1
+w
+w
+w
+w
+UPDATE t1
+SET c1 = 'r'
+WHERE c1 = 'w'
+LIMIT 2;
+SELECT * FROM t1 ORDER BY c1;
+c1
+i
+i
+r
+r
+r
+o
+o
+o
+w
+w
+n
+n
+m
+v
+d
+g
+g
+DELETE FROM t1
+WHERE c1 = 'w'
+ORDER BY c1;
+SELECT * FROM t1 ORDER BY c1;
+c1
+i
+i
+r
+r
+r
+o
+o
+o
+n
+n
+m
+v
+d
+g
+g
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
+'b','r','o','w','n', 'f','x',
+'j','m','p','s', 'v', 'e',
+'l','a','z','y', 'd','g') NOT NULL , INDEX(c1))
+ENGINE=cloud;
+INSERT INTO t1 VALUES
+('g'),
+('o'),
+('o'),
+('d'),
+('m'),
+('o'),
+('r'),
+('n'),
+('i'),
+('n'),
+('g'),
+('v'),
+('i'),
+('w'),
+('w'),
+('w'),
+('w');
+SELECT * FROM t1 ORDER BY c1 ASC;
+c1
+i
+i
+r
+o
+o
+o
+w
+w
+w
+w
+n
+n
+m
+v
+d
+g
+g
+SELECT * FROM t1 ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+w
+w
+w
+w
+o
+o
+o
+r
+i
+i
+SELECT * FROM t1 WHERE c1 >  'w' ORDER BY c1 ASC;
+c1
+SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 ASC;
+c1
+w
+w
+w
+w
+SELECT * FROM t1 WHERE c1 <  'w' ORDER BY c1 ASC;
+c1
+i
+i
+r
+o
+o
+o
+n
+n
+m
+v
+d
+g
+g
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 ASC;
+c1
+i
+i
+r
+o
+o
+o
+w
+w
+w
+w
+n
+n
+m
+v
+d
+g
+g
+SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 ASC;
+c1
+w
+w
+w
+w
+SELECT * FROM t1 WHERE c1 >  'w' ORDER BY c1 DESC;
+c1
+SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 DESC;
+c1
+w
+w
+w
+w
+SELECT * FROM t1 WHERE c1 <  'w' ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+o
+o
+o
+r
+i
+i
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+w
+w
+w
+w
+o
+o
+o
+r
+i
+i
+SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 DESC;
+c1
+w
+w
+w
+w
+UPDATE t1
+SET c1 = 'r'
+WHERE c1 = 'w'
+LIMIT 2;
+SELECT * FROM t1 ORDER BY c1;
+c1
+i
+i
+r
+r
+r
+o
+o
+o
+w
+w
+n
+n
+m
+v
+d
+g
+g
+DELETE FROM t1
+WHERE c1 = 'w'
+ORDER BY c1;
+SELECT * FROM t1 ORDER BY c1;
+c1
+i
+i
+r
+r
+r
+o
+o
+o
+n
+n
+m
+v
+d
+g
+g
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
+'b','r','o','w','n', 'f','x',
+'j','m','p','s', 'v', 'e',
+'l','a','z','y', 'd','g') NULL , INDEX(c1))
+ENGINE=cloud;
+INSERT INTO t1 VALUES
+('g'),
+('o'),
+('o'),
+('d'),
+('m'),
+('o'),
+('r'),
+('n'),
+('i'),
+('n'),
+('g'),
+('v'),
+('i'),
+('w'),
+(NULL),
+(NULL),
+(NULL),
+(NULL);
+SELECT * FROM t1 WHERE c1 IS     NULL ORDER BY c1 ASC;
+c1
+NULL
+NULL
+NULL
+NULL
+SELECT * FROM t1 WHERE c1 IS NOT NULL ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+w
+o
+o
+o
+r
+i
+i
+SELECT * FROM t1 WHERE c1 IS     NULL ORDER BY c1 ASC;
+c1
+NULL
+NULL
+NULL
+NULL
+SELECT * FROM t1 WHERE c1 IS NOT NULL ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+w
+o
+o
+o
+r
+i
+i
+UPDATE t1
+SET c1 = 'w'
+WHERE c1 IS NULL
+LIMIT 2;
+SELECT * FROM t1 ORDER BY c1;
+c1
+NULL
+NULL
+i
+i
+r
+o
+o
+o
+w
+w
+w
+n
+n
+m
+v
+d
+g
+g
+DELETE FROM t1
+WHERE c1 IS NULL
+ORDER BY c1;
+SELECT * FROM t1 ORDER BY c1;
+c1
+i
+i
+r
+o
+o
+o
+w
+w
+w
+n
+n
+m
+v
+d
+g
+g
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
+'b','r','o','w','n', 'f','x',
+'j','m','p','s', 'v', 'e',
+'l','a','z','y', 'd','g') NULL , INDEX(c1))
+ENGINE=cloud;
+INSERT INTO t1 VALUES
+('g'),
+('o'),
+('o'),
+('d'),
+('m'),
+('o'),
+('r'),
+('n'),
+('i'),
+('n'),
+('g'),
+('v'),
+('i'),
+('w'),
+('w'),
+('w'),
+('w');
+SELECT * FROM t1 ORDER BY c1 ASC;
+c1
+i
+i
+r
+o
+o
+o
+w
+w
+w
+w
+n
+n
+m
+v
+d
+g
+g
+SELECT * FROM t1 ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+w
+w
+w
+w
+o
+o
+o
+r
+i
+i
+SELECT * FROM t1 WHERE c1 >  'w' ORDER BY c1 ASC;
+c1
+SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 ASC;
+c1
+w
+w
+w
+w
+SELECT * FROM t1 WHERE c1 <  'w' ORDER BY c1 ASC;
+c1
+i
+i
+r
+o
+o
+o
+n
+n
+m
+v
+d
+g
+g
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 ASC;
+c1
+i
+i
+r
+o
+o
+o
+w
+w
+w
+w
+n
+n
+m
+v
+d
+g
+g
+SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 ASC;
+c1
+w
+w
+w
+w
+SELECT * FROM t1 WHERE c1 >  'w' ORDER BY c1 DESC;
+c1
+SELECT * FROM t1 WHERE c1 >= 'w' ORDER BY c1 DESC;
+c1
+w
+w
+w
+w
+SELECT * FROM t1 WHERE c1 <  'w' ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+o
+o
+o
+r
+i
+i
+SELECT * FROM t1 WHERE c1 <= 'w' ORDER BY c1 DESC;
+c1
+g
+g
+d
+v
+m
+n
+n
+w
+w
+w
+w
+o
+o
+o
+r
+i
+i
+SELECT * FROM t1 WHERE c1 =  'w' ORDER BY c1 DESC;
+c1
+w
+w
+w
+w
+UPDATE t1
+SET c1 = 'r'
+WHERE c1 = 'w'
+LIMIT 2;
+SELECT * FROM t1 ORDER BY c1;
+c1
+i
+i
+r
+r
+r
+o
+o
+o
+w
+w
+n
+n
+m
+v
+d
+g
+g
+DELETE FROM t1
+WHERE c1 = 'w'
+ORDER BY c1;
+SELECT * FROM t1 ORDER BY c1;
+c1
+i
+i
+r
+r
+r
+o
+o
+o
+n
+n
+m
+v
+d
+g
+g

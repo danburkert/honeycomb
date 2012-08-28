@@ -3,3 +3,11 @@ smallint :
 mediumint :
 int :
 bigint :
+decimal :
+float :
+double :
+char :
+varchar :
+binary :
+varbinary :
+enum :

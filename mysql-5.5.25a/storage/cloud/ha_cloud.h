@@ -43,5 +43,6 @@
 #include "Util.h"
 #include "Macros.h"
 #include "JNISetup.h"
+#include "Logging.h"
 
 #endif

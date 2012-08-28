@@ -16,6 +16,8 @@ eval INSERT INTO t1 VALUES
   ($mid_val),
   ($max_val),
   (NULL),
+  (NULL),
+  (NULL),
   (NULL);
 
 ### Read table
@@ -36,7 +38,8 @@ SELECT * FROM t1 ORDER BY c1;
 
 UPDATE t1
   SET c1 = 0
-  WHERE c1 IS NULL;
+  WHERE c1 IS NULL
+  LIMIT 2;
 
 # Check update
 SELECT * FROM t1 ORDER BY c1;
