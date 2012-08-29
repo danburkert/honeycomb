@@ -90,3 +90,48 @@ hbase_data_type extract_field_type(Field *field)
 
   return essentialType;
 }
+
+void extract_mysql_newdate(long tmp, MYSQL_TIME *time)
+{
+  bzero((void*) time, sizeof(*time));
+  time->month = tmp >> 5 & 15;
+  time->day = tmp & 31;
+  time->year = tmp >> 9;
+  time->time_type = MYSQL_TIMESTAMP_DATE;
+}
+
+void extract_mysql_old_date(int32 tmp, MYSQL_TIME *time)
+{
+  bzero((void*) time, sizeof(*time));
+  time->year = (int) ((int32) tmp / 10000L % 10000);
+  time->month = (int) ((int32) tmp / 100 % 100);
+  time->day = (int) ((int32) tmp % 100);
+  time->time_type = MYSQL_TIMESTAMP_DATE;
+}
+
+void extract_mysql_time(long tmp, MYSQL_TIME *time)
+{
+  bzero((void*) time, sizeof(*time));
+  time->hour = (uint) (tmp / 10000);
+  time->minute = (uint) (tmp / 100 % 100);
+  time->second = (uint) (tmp % 100);
+  time->time_type = MYSQL_TIMESTAMP_TIME;
+}
+
+void extract_mysql_datetime(ulonglong tmp, MYSQL_TIME *time)
+{
+  bzero((void*) time, sizeof(*time));
+  long part1, part2;
+  part1 = (long) (tmp / LL(1000000));
+  part2 = (long) (tmp - (ulonglong)part1 * LL(1000000));
+
+  time->month = part1 & 31;
+  time->day = part1 >> 5 & 15;
+  time->year = part1 >> 9;
+
+  time->hour = (uint) (part2 / 10000);
+  time->minute = (uint) (part2 / 100 % 100);
+  time->second = (uint) (part2 % 100);
+
+  time->time_type = MYSQL_TIMESTAMP_DATETIME;
+}

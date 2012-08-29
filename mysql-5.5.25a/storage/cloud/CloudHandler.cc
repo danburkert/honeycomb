@@ -10,6 +10,7 @@
 #include "ha_cloud.h"
 #include "mysql_time.h"
 #include "Util.h"
+#include "m_string.h"
 
 #include <sys/time.h>
 double real_time(timeval start);
@@ -305,9 +306,7 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
     {
       field->store(val, val_length, &my_charset_bin);
     }
-    else if (field_type == JAVA_TIME
-             || field_type == JAVA_DATE
-             || field_type == JAVA_DATETIME)
+    else if (is_date_or_time_field(field->type()))
     {
       MYSQL_TIME mysql_time;
 
@@ -675,7 +674,7 @@ jobject CloudHandler::sql_to_java()
       }
       memcpy(rec_buffer->buffer, &field_value, sizeof(longlong));
     }
-    else if (fieldType == JAVA_TIME)
+    else if (is_date_or_time_field(field->type()))
     {
       MYSQL_TIME mysql_time;
       field->get_time(&mysql_time);
@@ -850,6 +849,7 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
       break;
     default:
       java_find_flag = this->java_find_flag(find_flag);
+      break;
     }
   }
   else
@@ -865,12 +865,42 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
     key_len--;
   }
 
-  if (this->is_integral_field(this->index_field->type()))
+  int index_field_type = this->index_field->type();
+
+  if (this->is_integral_field(index_field_type))
   {
     key_copy = new uchar[sizeof(long long)]; // Store key as 8 bytes
     const bool is_signed = !is_unsigned_field(this->index_field);
     bytes_to_long(key, key_len, is_signed, key_copy);
     key_len = sizeof(longlong);
+  }
+  else if(is_date_or_time_field(index_field_type))
+  {
+    MYSQL_TIME mysql_time;
+
+    switch (index_field_type)
+    {
+    case MYSQL_TYPE_NEWDATE:
+    case MYSQL_TYPE_DATE:
+      extract_mysql_newdate(*(long *)key, &mysql_time);
+      break;
+    case MYSQL_TYPE_TIME:
+      extract_mysql_time(*(long *)key, &mysql_time);
+      break;
+    case MYSQL_TYPE_DATETIME:
+      extract_mysql_datetime(*(ulonglong *)key, &mysql_time);
+      break;
+    }
+
+    char timeString[MAX_DATE_STRING_REP_LENGTH];
+    my_TIME_to_str(&mysql_time, timeString);
+
+    int length = strlen(timeString);
+
+    key_copy = new uchar[length];
+    memcpy(key_copy, timeString, length);
+
+    key_len = length;
   }
   else
   {

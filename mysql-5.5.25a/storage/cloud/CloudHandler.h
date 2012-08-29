@@ -88,13 +88,11 @@ class CloudHandler : public handler
 
     bool is_little_endian()
     {
-      union
-      {
-        uint32_t i;
-        char c[4];
-      } bint = {0x01020304};
-
-      return bint.c[0] == 4;
+      #ifdef WORDS_BIG_ENDIAN
+        return false;
+      #else
+        return true;
+      #endif
     }
 
     void make_big_endian(uchar *begin, uint length)
@@ -114,6 +112,14 @@ class CloudHandler : public handler
           || field_type == MYSQL_TYPE_INT24
           || field_type == MYSQL_TYPE_ENUM
           || field_type == MYSQL_TYPE_YEAR);
+    }
+
+    bool is_date_or_time_field(int field_type)
+    {
+      return (field_type == MYSQL_TYPE_DATE
+          || field_type == MYSQL_TYPE_DATETIME
+          || field_type == MYSQL_TYPE_TIME
+          || field_type == MYSQL_TYPE_NEWDATE);
     }
 
     jclass adapter()
