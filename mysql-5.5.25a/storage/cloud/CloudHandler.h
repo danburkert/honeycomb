@@ -74,6 +74,7 @@ class CloudHandler : public handler
     void attach_thread();
     void detach_thread();
     void store_uuid_ref(jobject index_row, jmethodID get_uuid_method);
+    void bytes_to_long(const uchar* buff, unsigned int buff_length, bool is_signed, uchar* long_buff);
 
     void reverse_bytes(uchar *begin, uint length)
     {

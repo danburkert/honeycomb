@@ -25,7 +25,8 @@ jclass find_jni_class(const char* class_name, JNIEnv* env)
 bool is_unsigned_field(Field *field)
 {
   ha_base_keytype keyType = field->key_type();
-  return (keyType == HA_KEYTYPE_USHORT_INT
+  return (keyType == HA_KEYTYPE_BINARY
+       || keyType == HA_KEYTYPE_USHORT_INT
        || keyType == HA_KEYTYPE_UINT24
        || keyType == HA_KEYTYPE_ULONG_INT
        || keyType == HA_KEYTYPE_ULONGLONG);
