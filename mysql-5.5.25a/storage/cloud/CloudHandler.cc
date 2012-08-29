@@ -870,48 +870,9 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
   if (this->is_integral_field(index_field_type))
   {
     key_copy = new uchar[sizeof(long long)]; // Store key as 8 bytes
-    if (is_unsigned_field(this->index_field))
-    {
-      switch (key_len)
-      {
-        case 1: // tinyint
-          int8store(key_copy, *((uint8_t *) key));
-          break;
-        case 2: // smallint
-          int8store(key_copy, uint2korr(key));
-          break;
-        case 3: // mediumint
-          int8store(key_copy, uint3korr(key));
-          break;
-        case 4: // int
-          int8store(key_copy, uint4korr(key));
-          break;
-        case 8: // bigint
-          int8store(key_copy, uint8korr(key));
-          break;
-      }
-    } else {
-      switch (key_len)
-      {
-        case 1: // tinyint
-          int8store(key_copy, *((int8_t *) key));
-          break;
-        case 2: // smallint
-          int8store(key_copy, sint2korr(key));
-          break;
-        case 3: // mediumint
-          int8store(key_copy, sint3korr(key));
-          break;
-        case 4: // int
-          int8store(key_copy, sint4korr(key));
-          break;
-        case 8: // bigint
-          int8store(key_copy, sint8korr(key));
-          break;
-      }
-    }
+    const bool is_signed = !is_unsigned_field(this->index_field);
+    bytes_to_long(key, key_len, is_signed, key_copy);
     key_len = sizeof(longlong);
-    this->make_big_endian(key_copy, key_len);
   }
   else if(is_date_or_time_field(index_field_type))
   {
@@ -955,9 +916,9 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
   {
     key_copy = new uchar[key_len];
     memcpy(key_copy, key, key_len);
-    this->make_big_endian(key_copy, key_len);
   }
 
+  this->make_big_endian(key_copy, key_len);
   jbyteArray java_key = this->env->NewByteArray(key_len);
   this->env->SetByteArrayRegion(java_key, 0, key_len, (jbyte*)key_copy);
   delete[] key_copy;
@@ -977,6 +938,22 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
   this->unpack_index(buf, uniReg);
 
   DBUG_RETURN(0);
+}
+
+// Convert an integral type of count bytes to a little endian long
+// Convert a buffer of length buff_length into an equivalent long long in long_buff
+void CloudHandler::bytes_to_long(const uchar* buff, unsigned int buff_length, const bool is_signed, uchar* long_buff)
+{
+  if(is_signed && buff[buff_length - 1] >= (uchar) 0x80)
+  {
+    memset(long_buff, 0xFFFFFFFF, sizeof long_buff);
+  } else {
+    memset(long_buff, 0x00000000, sizeof long_buff);
+  }
+  for(int i = 0; i < buff_length; i++)
+  {
+    long_buff[i] = buff[i];
+  }
 }
 
 void CloudHandler::store_uuid_ref(jobject index_row, jmethodID get_uuid_method)
