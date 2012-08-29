@@ -873,6 +873,7 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
     const bool is_signed = !is_unsigned_field(this->index_field);
     bytes_to_long(key, key_len, is_signed, key_copy);
     key_len = sizeof(longlong);
+    this->make_big_endian(key_copy, key_len);
   }
   else if(is_date_or_time_field(index_field_type))
   {
@@ -918,7 +919,6 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
     memcpy(key_copy, key, key_len);
   }
 
-  this->make_big_endian(key_copy, key_len);
   jbyteArray java_key = this->env->NewByteArray(key_len);
   this->env->SetByteArrayRegion(java_key, 0, key_len, (jbyte*)key_copy);
   delete[] key_copy;
