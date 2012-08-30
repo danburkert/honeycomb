@@ -29,6 +29,8 @@ public class HBaseClient {
 
     private HBaseAdmin admin;
 
+    private WriteBuffer writeBuffer;
+
     private static final byte[] SQL = "sql".getBytes();
 
     private static final byte[] NIC = "nic".getBytes();
@@ -64,6 +66,8 @@ public class HBaseClient {
             this.initializeSqlTable();
 
             this.table = new HTable(configuration, tableName);
+
+            this.writeBuffer = new WriteBuffer(table);
         } catch (MasterNotRunningException e) {
             logger.error("MasterNotRunningException thrown", e);
         } catch (ZooKeeperConnectionException e) {
@@ -180,7 +184,7 @@ public class HBaseClient {
 
         //Final put
         start = System.currentTimeMillis();
-        table.put(putList);
+        writeBuffer.put(putList);
         end = System.currentTimeMillis();
         this.hbaseTiming += end - start;
 
@@ -503,7 +507,7 @@ public class HBaseClient {
 
     public void setWriteBufferSize(long numBytes) {
         try {
-            this.table.setWriteBufferSize(numBytes);
+            this.writeBuffer.setWriteBufferLimit(numBytes);
         } catch (IOException e) {
             logger.error("Encountered an error setting write buffer size", e);
         }
@@ -521,7 +525,7 @@ public class HBaseClient {
             this.writeTiming = 0;
             this.valueSetLoopTiming = 0;
             this.createPutListPrologTiming = 0;
-            table.flushCommits();
+            writeBuffer.flushCommits();
         } catch (IOException e) {
             logger.error("Encountered an exception while flushing commits : ", e);
         }
