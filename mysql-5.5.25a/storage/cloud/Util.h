@@ -16,5 +16,6 @@ void extract_mysql_newdate(long tmp, MYSQL_TIME *time);
 void extract_mysql_old_date(int tmp, MYSQL_TIME *time);
 void extract_mysql_time(long tmp, MYSQL_TIME *time);
 void extract_mysql_datetime(ulonglong tmp, MYSQL_TIME *time);
+enum enum_mysql_timestamp_type timestamp_type_of_mysql_type(enum enum_field_types t);
 
 #endif

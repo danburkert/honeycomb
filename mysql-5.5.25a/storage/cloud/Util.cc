@@ -91,6 +91,27 @@ hbase_data_type extract_field_type(Field *field)
   return essentialType;
 }
 
+enum enum_mysql_timestamp_type timestamp_type_of_mysql_type(enum enum_field_types t)
+{
+  switch(t)
+  {
+    case MYSQL_TYPE_DATE:
+    case MYSQL_TYPE_NEWDATE:
+      return MYSQL_TIMESTAMP_DATE;
+      break;
+    case MYSQL_TYPE_TIME:
+      return MYSQL_TIMESTAMP_TIME;
+      break;
+    case MYSQL_TYPE_DATETIME:
+      return MYSQL_TIMESTAMP_DATETIME;
+      break;
+    default:
+      return MYSQL_TIMESTAMP_NONE;
+      break;
+  }
+
+}
+
 void extract_mysql_newdate(long tmp, MYSQL_TIME *time)
 {
   bzero((void*) time, sizeof(*time));

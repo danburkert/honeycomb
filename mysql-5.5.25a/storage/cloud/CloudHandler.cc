@@ -631,8 +631,14 @@ jobject CloudHandler::sql_to_java()
 
   my_bitmap_map *old_map = dbug_tmp_use_all_columns(table, table->read_set);
 
-  char attribute_buffer[1024];
-  String attribute(attribute_buffer, sizeof(attribute_buffer), &my_charset_bin);
+  long long integral_value;
+  double fp_value;
+  long long* fp_ptr;
+  MYSQL_TIME mysql_time;
+  char temporal_value[MAX_DATE_STRING_REP_LENGTH];
+  char string_value_buff[1024];  // TODO: This is going to cause a buffer overflow for large blob/string types
+  String string_value(string_value_buff, sizeof(string_value_buff), &my_charset_bin);
+  uint actualFieldSize;
 
   for (Field **field_ptr=table->field; *field_ptr; field_ptr++)
   {
@@ -649,67 +655,62 @@ jobject CloudHandler::sql_to_java()
       continue;
     }
 
-    hbase_data_type fieldType = extract_field_type(field);
-    uint actualFieldSize = field->field_length;
-
-    if (fieldType == JAVA_LONG || fieldType == JAVA_ULONG)
+    switch (field->type())
     {
-      longlong field_value = field->val_int();
-      if(this->is_little_endian())
-      {
-        field_value = __builtin_bswap64(field_value);
-      }
-
-      actualFieldSize = sizeof(longlong);
-      memcpy(rec_buffer->buffer, &field_value, sizeof(longlong));
-    }
-    else if (fieldType == JAVA_DOUBLE)
-    {
-      double field_value = field->val_real();
-      actualFieldSize = sizeof(double);
-      if(this->is_little_endian())
-      {
-        longlong* long_value = (longlong*)&field_value;
-        *long_value = __builtin_bswap64(*long_value);
-      }
-      memcpy(rec_buffer->buffer, &field_value, sizeof(longlong));
-    }
-    else if (is_date_or_time_field(field->type()))
-    {
-      MYSQL_TIME mysql_time;
-      field->get_time(&mysql_time);
-
-      switch (fieldType)
-      {
-      case JAVA_DATE:
-        mysql_time.time_type = MYSQL_TIMESTAMP_DATE;
+      case MYSQL_TYPE_TINY:
+      case MYSQL_TYPE_SHORT:
+      case MYSQL_TYPE_LONG:
+      case MYSQL_TYPE_LONGLONG:
+      case MYSQL_TYPE_INT24:
+      case MYSQL_TYPE_YEAR:
+        integral_value = field->val_int();
+        if(this->is_little_endian())
+        {
+          integral_value = __builtin_bswap64(integral_value);
+        }
+        actualFieldSize = sizeof integral_value;
+        memcpy(rec_buffer->buffer, &integral_value, actualFieldSize);
         break;
-      case JAVA_DATETIME:
-        mysql_time.time_type = MYSQL_TIMESTAMP_DATETIME;
+      case MYSQL_TYPE_FLOAT:
+      case MYSQL_TYPE_DOUBLE:
+      case MYSQL_TYPE_DECIMAL:
+      case MYSQL_TYPE_NEWDECIMAL:
+        fp_value = field->val_real();
+        if(this->is_little_endian())
+        {
+          fp_ptr = (long long*)&fp_value;
+          *fp_ptr = __builtin_bswap64(*fp_ptr);
+          //fp_value = __builtin_bswap64((long long) fp_value);
+        }
+        actualFieldSize = sizeof fp_value;
+        memcpy(rec_buffer->buffer, fp_ptr, actualFieldSize);
         break;
-      case JAVA_TIME:
-        mysql_time.time_type = MYSQL_TIMESTAMP_TIME;
+      case MYSQL_TYPE_DATE:
+      case MYSQL_TYPE_NEWDATE:
+      case MYSQL_TYPE_TIME:
+      case MYSQL_TYPE_DATETIME:
+        field->get_time(&mysql_time);
+        mysql_time.time_type = timestamp_type_of_mysql_type(field->type());
+        my_TIME_to_str(&mysql_time, temporal_value);
+        actualFieldSize = sizeof temporal_value;
+        memcpy(rec_buffer->buffer, temporal_value, actualFieldSize);
+        break;
+      case MYSQL_TYPE_VARCHAR:
+      case MYSQL_TYPE_STRING:
+      case MYSQL_TYPE_VAR_STRING:
+      case MYSQL_TYPE_BLOB:
+      case MYSQL_TYPE_TINY_BLOB:
+      case MYSQL_TYPE_MEDIUM_BLOB:
+      case MYSQL_TYPE_LONG_BLOB:
+      case MYSQL_TYPE_ENUM:
+        field->val_str(&string_value);
+        actualFieldSize = string_value.length();
+        memcpy(rec_buffer->buffer, string_value.ptr(), actualFieldSize);
         break;
       default:
-        mysql_time.time_type = MYSQL_TIMESTAMP_NONE;
+        actualFieldSize = field->field_length;
+        memcpy(rec_buffer->buffer, field->ptr, field->field_length);
         break;
-      }
-
-      char timeString[MAX_DATE_STRING_REP_LENGTH];
-      my_TIME_to_str(&mysql_time, timeString);
-
-      actualFieldSize = strlen(timeString);
-      memcpy(rec_buffer->buffer, timeString, actualFieldSize);
-    }
-    else if (fieldType == JAVA_STRING)
-    {
-      field->val_str(&attribute);
-      actualFieldSize = attribute.length();
-      memcpy(rec_buffer->buffer, attribute.ptr(), attribute.length());
-    }
-    else
-    {
-      memcpy(rec_buffer->buffer, field->ptr, field->field_length);
     }
 
     jbyteArray java_bytes = this->convert_value_to_java_bytes(rec_buffer->buffer, actualFieldSize);
@@ -901,8 +902,7 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
     memcpy(key_copy, timeString, length);
 
     key_len = length;
-  }
-  else
+  } else
   {
     key_copy = new uchar[key_len];
     memcpy(key_copy, key, key_len);
