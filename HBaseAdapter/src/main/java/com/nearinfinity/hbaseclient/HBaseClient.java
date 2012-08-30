@@ -198,7 +198,6 @@ public class HBaseClient {
         //Build data row key
         byte[] dataKey = RowKeyFactory.buildDataKey(tableId, rowId);
 
-
         //Create put list
         List<Put> putList = new LinkedList<Put>();
 

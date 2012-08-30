@@ -1,5 +1,7 @@
 package com.nearinfinity.hbaseclient;
 
+import org.apache.hadoop.hbase.util.Bytes;
+
 import java.nio.ByteBuffer;
 
 /**
@@ -39,6 +41,10 @@ public class ValueEncoder {
             case DOUBLE: {
                 double doubleValue = ByteBuffer.wrap(value).getDouble();
                 encodedValue = positionOfDouble(doubleValue);
+            } break;
+            case STRING: {
+                String stringValue = new String(value).toLowerCase();
+                encodedValue = Bytes.toBytes(stringValue);
             } break;
             default:
                 encodedValue = value;
