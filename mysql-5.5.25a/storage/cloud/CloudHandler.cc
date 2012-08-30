@@ -690,7 +690,6 @@ jobject CloudHandler::sql_to_java()
       case MYSQL_TYPE_DATETIME:
       case MYSQL_TYPE_TIMESTAMP:
         field->get_time(&mysql_time);
-        mysql_time.time_type = timestamp_type_of_mysql_type(field->type());
         my_TIME_to_str(&mysql_time, temporal_value);
         actualFieldSize = strlen(temporal_value);
         memcpy(rec_buffer->buffer, temporal_value, actualFieldSize);
