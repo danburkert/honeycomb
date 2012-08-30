@@ -119,6 +119,7 @@ class CloudHandler : public handler
       return (field_type == MYSQL_TYPE_DATE
           || field_type == MYSQL_TYPE_DATETIME
           || field_type == MYSQL_TYPE_TIME
+          || field_type == MYSQL_TYPE_TIMESTAMP
           || field_type == MYSQL_TYPE_NEWDATE);
     }
 

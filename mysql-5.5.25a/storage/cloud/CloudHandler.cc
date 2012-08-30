@@ -316,10 +316,10 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
       switch (field_type)
       {
       case JAVA_TIME:
-        str_to_time(val, field->field_length, &mysql_time, &warning);
+        str_to_time(val, val_length, &mysql_time, &warning);
         break;
       default:
-        str_to_datetime(val, field->field_length, &mysql_time, TIME_FUZZY_DATE, &was_cut);
+        str_to_datetime(val, val_length, &mysql_time, TIME_FUZZY_DATE, &was_cut);
         break;
       }
 
@@ -874,6 +874,7 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
     const bool is_signed = !is_unsigned_field(this->index_field);
     bytes_to_long(key, key_len, is_signed, key_copy);
     key_len = sizeof(longlong);
+    this->make_big_endian(key_copy, key_len);
   }
   else if(is_date_or_time_field(index_field_type))
   {
@@ -881,15 +882,25 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
 
     switch (index_field_type)
     {
-    case MYSQL_TYPE_NEWDATE:
     case MYSQL_TYPE_DATE:
-      extract_mysql_newdate(*(long *)key, &mysql_time);
+    case MYSQL_TYPE_NEWDATE:
+      if (key_len == 3)
+      {
+        extract_mysql_newdate((long) uint3korr(key), &mysql_time);
+      }
+      else
+      {
+        extract_mysql_old_date((int32) uint4korr(key), &mysql_time);
+      }
+      break;
+    case MYSQL_TYPE_TIMESTAMP:
+      extract_mysql_timestamp((long) uint4korr(key), &mysql_time, table->in_use);
       break;
     case MYSQL_TYPE_TIME:
-      extract_mysql_time(*(long *)key, &mysql_time);
+      extract_mysql_time((long) uint3korr(key), &mysql_time);
       break;
     case MYSQL_TYPE_DATETIME:
-      extract_mysql_datetime(*(ulonglong *)key, &mysql_time);
+      extract_mysql_datetime((ulonglong) uint8korr(key), &mysql_time);
       break;
     }
 
@@ -908,7 +919,6 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
     memcpy(key_copy, key, key_len);
   }
 
-  this->make_big_endian(key_copy, key_len);
   jbyteArray java_key = this->env->NewByteArray(key_len);
   this->env->SetByteArrayRegion(java_key, 0, key_len, (jbyte*)key_copy);
   delete[] key_copy;
