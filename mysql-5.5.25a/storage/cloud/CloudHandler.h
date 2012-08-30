@@ -95,6 +95,21 @@ class CloudHandler : public handler
       #endif
     }
 
+    float floatGet(const uchar *ptr)
+    {
+      float j;
+      #ifdef WORDS_BIGENDIAN
+        if (table->s->db_low_byte_first)
+        {
+          float4get(j,ptr);
+        }
+        else
+      #endif
+      memcpy(&j, ptr, sizeof(j));
+
+      return j;
+    }
+
     void make_big_endian(uchar *begin, uint length)
     {
       if (is_little_endian())
