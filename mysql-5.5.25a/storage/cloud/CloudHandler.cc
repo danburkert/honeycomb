@@ -680,7 +680,6 @@ jobject CloudHandler::sql_to_java()
         {
           fp_ptr = (long long*)&fp_value;
           *fp_ptr = __builtin_bswap64(*fp_ptr);
-          //fp_value = __builtin_bswap64((long long) fp_value);
         }
         actualFieldSize = sizeof fp_value;
         memcpy(rec_buffer->buffer, fp_ptr, actualFieldSize);
@@ -689,10 +688,11 @@ jobject CloudHandler::sql_to_java()
       case MYSQL_TYPE_NEWDATE:
       case MYSQL_TYPE_TIME:
       case MYSQL_TYPE_DATETIME:
+      case MYSQL_TYPE_TIMESTAMP:
         field->get_time(&mysql_time);
         mysql_time.time_type = timestamp_type_of_mysql_type(field->type());
         my_TIME_to_str(&mysql_time, temporal_value);
-        actualFieldSize = sizeof temporal_value;
+        actualFieldSize = strlen(temporal_value);
         memcpy(rec_buffer->buffer, temporal_value, actualFieldSize);
         break;
       case MYSQL_TYPE_VARCHAR:
