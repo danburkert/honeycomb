@@ -19,6 +19,7 @@ public enum ColumnMetadata {
     DATE("Date".getBytes()),
     DATETIME("DateTime".getBytes()),
     BINARY("Binary".getBytes());
+    DECIMAL("Decimal".getBytes());
 
     private byte[] value;
 

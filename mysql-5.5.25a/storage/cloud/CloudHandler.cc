@@ -673,8 +673,6 @@ jobject CloudHandler::sql_to_java()
         break;
       case MYSQL_TYPE_FLOAT:
       case MYSQL_TYPE_DOUBLE:
-      case MYSQL_TYPE_DECIMAL:
-      case MYSQL_TYPE_NEWDECIMAL:
         fp_value = field->val_real();
         if(this->is_little_endian())
         {
@@ -683,6 +681,17 @@ jobject CloudHandler::sql_to_java()
         }
         actualFieldSize = sizeof fp_value;
         memcpy(rec_buffer->buffer, fp_ptr, actualFieldSize);
+        break;
+      case MYSQL_TYPE_DECIMAL:
+      case MYSQL_TYPE_NEWDECIMAL:
+        //field->val_decimal(&decimal_val);
+        //dec_result = my_decimal2bin(&decimal_val, decimal_buff, 5, 2);
+        actualFieldSize = field->key_length();
+        memcpy(rec_buffer->buffer, field->ptr, actualFieldSize);
+        if(this->is_little_endian())
+        {
+          make_big_endian(rec_buffer->buffer, actualFieldSize);
+        }
         break;
       case MYSQL_TYPE_DATE:
       case MYSQL_TYPE_NEWDATE:
