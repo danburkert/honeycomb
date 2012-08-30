@@ -81,4 +81,12 @@ public class RowKeyFactory {
                 .putLong(uuid.getLeastSignificantBits())
                 .array();
     }
+
+    public static boolean isSecondaryIndexKey(byte[] rowKey) {
+        return rowKey[0] == RowType.SECONDARY_INDEX.getValue();
+    }
+
+    public static boolean isReverseIndexKey(byte[] rowKey) {
+        return rowKey[0] == RowType.REVERSE_INDEX.getValue();
+    }
 }
