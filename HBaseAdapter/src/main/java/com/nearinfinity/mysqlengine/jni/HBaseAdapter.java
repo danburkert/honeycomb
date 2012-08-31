@@ -1,20 +1,18 @@
 package com.nearinfinity.mysqlengine.jni;
 
 import com.nearinfinity.hbaseclient.ColumnMetadata;
-import com.nearinfinity.hbaseclient.Constants;
 import com.nearinfinity.hbaseclient.HBaseClient;
 import com.nearinfinity.hbaseclient.ResultParser;
-import com.nearinfinity.mysqlengine.*;
 import com.nearinfinity.hbaseclient.strategy.*;
-import com.nearinfinity.mysqlengine.scanner.SingleResultScanner;
+import com.nearinfinity.mysqlengine.Connection;
 import com.nearinfinity.mysqlengine.scanner.DoubleResultScanner;
 import com.nearinfinity.mysqlengine.scanner.HBaseResultScanner;
+import com.nearinfinity.mysqlengine.scanner.SingleResultScanner;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -73,8 +71,8 @@ public class HBaseAdapter {
 
             boolean flushChangesImmediately = Boolean.parseBoolean(params.get("flush_changes_immediately"));
             client.setAutoFlushTables(flushChangesImmediately);
-        } catch (FileNotFoundException e) {
-            logger.warn("Static Initializer-> FileNotFoundException:", e);
+        } catch (Exception e) {
+            logger.error("Static Initializer-> Exception:", e);
         }
     }
 
