@@ -930,12 +930,12 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
     }
     case MYSQL_TYPE_FLOAT:
     {
-      float j = floatGet(key);
+      double j = (double)floatGet(key);
 
-      key_copy = new uchar[sizeof(float)];
-      key_len = sizeof(float);
+      key_copy = new uchar[sizeof(double)];
+      key_len = sizeof(double);
 
-      floatstore(key_copy, j);
+      doublestore(key_copy, j);
       reverse_bytes(key_copy, key_len);
     }
       break;
