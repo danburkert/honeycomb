@@ -159,6 +159,7 @@ w
 UPDATE t1
 SET c1 = 'r'
 WHERE c1 = 'w'
+ORDER BY c1
 LIMIT 2;
 SELECT * FROM t1 ORDER BY c1;
 c1
@@ -474,6 +475,7 @@ w
 UPDATE t1
 SET c1 = 'r'
 WHERE c1 = 'w'
+ORDER BY c1
 LIMIT 2;
 SELECT * FROM t1 ORDER BY c1;
 c1
@@ -675,6 +677,7 @@ w
 UPDATE t1
 SET c1 = 'r'
 WHERE c1 = 'w'
+ORDER BY c1
 LIMIT 2;
 SELECT * FROM t1 ORDER BY c1;
 c1
@@ -990,6 +993,7 @@ w
 UPDATE t1
 SET c1 = 'r'
 WHERE c1 = 'w'
+ORDER BY c1
 LIMIT 2;
 SELECT * FROM t1 ORDER BY c1;
 c1
@@ -1191,6 +1195,7 @@ w
 UPDATE t1
 SET c1 = 'r'
 WHERE c1 = 'w'
+ORDER BY c1
 LIMIT 2;
 SELECT * FROM t1 ORDER BY c1;
 c1
@@ -1506,6 +1511,7 @@ w
 UPDATE t1
 SET c1 = 'r'
 WHERE c1 = 'w'
+ORDER BY c1
 LIMIT 2;
 SELECT * FROM t1 ORDER BY c1;
 c1
@@ -1707,6 +1713,7 @@ w
 UPDATE t1
 SET c1 = 'r'
 WHERE c1 = 'w'
+ORDER BY c1
 LIMIT 2;
 SELECT * FROM t1 ORDER BY c1;
 c1
@@ -2022,6 +2029,7 @@ w
 UPDATE t1
 SET c1 = 'r'
 WHERE c1 = 'w'
+ORDER BY c1
 LIMIT 2;
 SELECT * FROM t1 ORDER BY c1;
 c1

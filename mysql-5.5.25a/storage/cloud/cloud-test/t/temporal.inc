@@ -49,6 +49,7 @@ eval SELECT * FROM t1 WHERE c1 =  $comp_val ORDER BY c1 DESC;
 eval UPDATE t1
   SET c1 = $val7
   WHERE c1 = $comp_val
+  ORDER BY c1
   LIMIT 2;
 
 # Check updates
