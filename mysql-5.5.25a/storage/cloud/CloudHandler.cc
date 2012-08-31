@@ -103,6 +103,10 @@ int CloudHandler::update_row(const uchar *old_data, uchar *new_data)
   delete_row_helper();
   write_row_helper(new_data);
 
+  jclass adapter_class = this->adapter();
+  jmethodID end_write_method = this->env->GetStaticMethodID(adapter_class, "flushWrites", "()V");
+  this->env->CallStaticVoidMethod(adapter_class, end_write_method);
+
   DBUG_RETURN(0);
 }
 
