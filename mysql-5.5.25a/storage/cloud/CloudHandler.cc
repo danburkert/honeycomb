@@ -879,12 +879,23 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
     case MYSQL_TYPE_LONGLONG:
     case MYSQL_TYPE_INT24:
     case MYSQL_TYPE_ENUM:
-    case MYSQL_TYPE_YEAR:
     {
       key_copy = new uchar[sizeof(long long)]; // Store key as 8 bytes
       const bool is_signed = !is_unsigned_field(this->index_field);
       bytes_to_long(key, key_len, is_signed, key_copy);
       key_len = sizeof(longlong);
+      this->make_big_endian(key_copy, key_len);
+      break;
+    }
+    case MYSQL_TYPE_YEAR:
+    {
+      key_copy = new uchar[sizeof(long long)];
+      
+      /* It comes to us as one byte, need to cast it to int and add 1900 */
+      uint32_t int_val = (uint32_t)key[0] + 1900;
+      
+      bytes_to_long((uchar *)&int_val, sizeof(uint32_t), false, key_copy);
+      key_len = sizeof(long long);
       this->make_big_endian(key_copy, key_len);
       break;
     }
