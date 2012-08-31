@@ -422,7 +422,7 @@ void CloudHandler::start_bulk_insert(ha_rows rows)
   DBUG_ENTER("CloudHandler::start_bulk_insert");
 
   attach_thread();
-  log_print("INFO", "%d rows to be inserted.", rows);
+  Logging::info("%d rows to be inserted.", rows);
 
   DBUG_VOID_RETURN;
 }
@@ -437,11 +437,6 @@ int CloudHandler::end_bulk_insert()
   jmethodID end_write_method = this->env->GetStaticMethodID(adapter_class, "flushWrites", "()V");
   this->env->CallStaticVoidMethod(adapter_class, end_write_method);
   gettimeofday(&end, NULL);
-  this->hbase_timing += real_time(end) - real_time(start);
-  log_print("INFO", "write_row_helper jni (no hbase): %f seconds", this->write_timing);
-  log_print("INFO", "write_row_helper jni (hbase): %f seconds", this->hbase_timing);
-  this->write_timing = 0;
-  this->hbase_timing = 0;
 
   detach_thread();
   DBUG_RETURN(0);
