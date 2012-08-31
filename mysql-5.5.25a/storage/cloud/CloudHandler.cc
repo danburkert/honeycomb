@@ -276,54 +276,77 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
     hbase_data_type field_type = extract_field_type(field);
     field->move_field_offset(offset);
 
-    if (field_type == JAVA_LONG || field_type == JAVA_ULONG)
+    switch (field->type())
     {
-      longlong long_value = *(longlong*)val;
-      if(this->is_little_endian())
-      {
-        long_value = __builtin_bswap64(long_value);
-      }
-
-      field->store(long_value, false);
-    }
-    else if (field_type == JAVA_DOUBLE)
-    {
-      double double_value;
-      if (this->is_little_endian())
-      {
-        longlong* long_ptr = (longlong*)val;
-        longlong swapped_long = __builtin_bswap64(*long_ptr);
-        double_value = *(double*)&swapped_long;
-      }
-      else
-      {
-        double_value = *(double*)val;
-      }
-
-      field->store(double_value);
-    }
-    else if (field_type == JAVA_STRING || field_type == JAVA_BINARY)
-    {
-      field->store(val, val_length, &my_charset_bin);
-    }
-    else if (is_date_or_time_field(field->type()))
-    {
-      MYSQL_TIME mysql_time;
-
-      int was_cut;
-      int warning;
-
-      switch (field_type)
-      {
-      case JAVA_TIME:
-        str_to_time(val, val_length, &mysql_time, &warning);
+      case MYSQL_TYPE_TINY:
+      case MYSQL_TYPE_SHORT:
+      case MYSQL_TYPE_LONG:
+      case MYSQL_TYPE_LONGLONG:
+      case MYSQL_TYPE_INT24:
+      case MYSQL_TYPE_YEAR:
+        {
+          long long long_value = *(long long*)val;
+          if(this->is_little_endian())
+          {
+            long_value = __builtin_bswap64(long_value);
+          }
+          field->store(long_value, false);
+          break;
+        }
+      case MYSQL_TYPE_FLOAT:
+      case MYSQL_TYPE_DOUBLE:
+        double double_value;
+        if (this->is_little_endian())
+        {
+          long long* long_ptr = (long long*)val;
+          longlong swapped_long = __builtin_bswap64(*long_ptr);
+          double_value = *(double*)&swapped_long;
+        }
+        else
+        {
+          double_value = *(double*)val;
+        }
+        field->store(double_value);
         break;
+
+      case MYSQL_TYPE_DECIMAL:
+      case MYSQL_TYPE_NEWDECIMAL:
+        break;
+      case MYSQL_TYPE_TIME:
+        {
+          MYSQL_TIME mysql_time;
+          int warning;
+          str_to_time(val, val_length, &mysql_time, &warning);
+          field->store_time(&mysql_time, mysql_time.time_type);
+          break;
+        }
+      case MYSQL_TYPE_DATE:
+      case MYSQL_TYPE_NEWDATE:
+      case MYSQL_TYPE_DATETIME:
+      case MYSQL_TYPE_TIMESTAMP:
+        {
+          MYSQL_TIME mysql_time;
+          int was_cut;
+          str_to_datetime(val, val_length, &mysql_time, TIME_FUZZY_DATE, &was_cut);
+          field->store_time(&mysql_time, mysql_time.time_type);
+          break;
+        }
+      case MYSQL_TYPE_STRING:
+      case MYSQL_TYPE_VARCHAR:
+      case MYSQL_TYPE_VAR_STRING:
+      case MYSQL_TYPE_ENUM:
+      case MYSQL_TYPE_TINY_BLOB:
+      case MYSQL_TYPE_MEDIUM_BLOB:
+      case MYSQL_TYPE_BLOB:
+      case MYSQL_TYPE_LONG_BLOB:
+        field->store(val, val_length, &my_charset_bin);
+        break;
+      case MYSQL_TYPE_NULL:
+      case MYSQL_TYPE_BIT:
+      case MYSQL_TYPE_SET:
+      case MYSQL_TYPE_GEOMETRY:
       default:
-        str_to_datetime(val, val_length, &mysql_time, TIME_FUZZY_DATE, &was_cut);
         break;
-      }
-
-      field->store_time(&mysql_time, mysql_time.time_type);
     }
 
     field->move_field_offset(-offset);
@@ -719,6 +742,10 @@ jobject CloudHandler::sql_to_java()
         actualFieldSize = string_value.length();
         memcpy(rec_buffer->buffer, string_value.ptr(), actualFieldSize);
         break;
+      case MYSQL_TYPE_NULL:
+      case MYSQL_TYPE_BIT:
+      case MYSQL_TYPE_SET:
+      case MYSQL_TYPE_GEOMETRY:
       default:
         actualFieldSize = field->field_length;
         memcpy(rec_buffer->buffer, field->ptr, field->field_length);
