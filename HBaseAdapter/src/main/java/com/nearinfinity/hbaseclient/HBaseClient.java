@@ -194,11 +194,11 @@ public class HBaseClient {
 
         Put dataRow = new Put(dataKey);
 
-        byte[] indexQualifier = new byte[0];
-        byte[] indexValue = new byte[0];
+        byte[] uniregQualifier = new byte[0];
+        byte[] uniregValue = new byte[0];
         if (unireg != null) {
-            indexQualifier = UNIREG;
-            indexValue = unireg;
+            uniregQualifier = UNIREG;
+            uniregValue = unireg;
         }
 
         boolean allRowsNull = true;
@@ -214,23 +214,25 @@ public class HBaseClient {
             if (value == null) {
                 // Build null index
                 byte[] nullIndexRow = RowKeyFactory.buildNullIndexKey(tableId, columnId, rowId);
-                putList.add(new Put(nullIndexRow).add(NIC, indexQualifier, indexValue));
+                putList.add(new Put(nullIndexRow).add(NIC, uniregQualifier, uniregValue));
             } else {
                 allRowsNull = false;
                 // Add data column to put
                 dataRow.add(NIC, Bytes.toBytes(columnId), value);
 
+                byte[] canonicalValue = ValueEncoder.canonicalValue(value, columnType);
+
                 // Build value index key
-                byte[] indexRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, rowId);
-                putList.add(new Put(indexRow).add(NIC, indexQualifier, indexValue));
+                byte[] indexRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, canonicalValue, rowId);
+                putList.add(new Put(indexRow).add(NIC, uniregQualifier, uniregValue));
 
                 // Build secondary index key
-                byte[] secondaryIndexRow = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId, value, columnType);
-                putList.add(new Put(secondaryIndexRow).add(NIC, VALUE_COLUMN, value));
+                byte[] secondaryIndexRow = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId, canonicalValue, columnType);
+                putList.add(new Put(secondaryIndexRow).add(NIC, VALUE_COLUMN, canonicalValue));
 
                 // Build reverse index key
-                byte[] reverseIndexRow = RowKeyFactory.buildReverseIndexKey(tableId, columnId, value, columnType);
-                putList.add(new Put(reverseIndexRow).add(NIC, VALUE_COLUMN, value));
+                byte[] reverseIndexRow = RowKeyFactory.buildReverseIndexKey(tableId, columnId, canonicalValue, columnType);
+                putList.add(new Put(reverseIndexRow).add(NIC, VALUE_COLUMN, canonicalValue));
             }
         }
 

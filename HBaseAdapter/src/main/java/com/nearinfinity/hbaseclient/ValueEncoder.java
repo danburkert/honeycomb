@@ -45,6 +45,7 @@ public class ValueEncoder {
                 encodedValue = positionOfDouble(doubleValue);
             } break;
             case STRING: {
+                /* TODO: this should already have been lower-cased in canonical value, can we remove? */
                 String stringValue = new String(value).toLowerCase();
                 encodedValue = Bytes.toBytes(stringValue);
             } break;
@@ -69,5 +70,21 @@ public class ValueEncoder {
     private static boolean isNegative(double value) {
         byte [] bytes = ByteBuffer.allocate(8).putDouble(value).array();
         return (bytes[0] & NEGATIVE_MASK) != 0;
+    }
+
+    public static byte[] canonicalValue(byte[] value, ColumnMetadata columnType) {
+        if (value == null || value.length == 0) {
+            return new byte[0];
+        }
+        byte[] canonicalValue;
+        switch (columnType) {
+            case STRING: {
+                String stringValue = new String(value).toLowerCase();
+                canonicalValue = Bytes.toBytes(stringValue);
+            } break;
+            default:
+                canonicalValue = value;
+        }
+        return canonicalValue;
     }
 }
