@@ -694,8 +694,12 @@ jobject CloudHandler::sql_to_java()
         actualFieldSize = strlen(temporal_value);
         memcpy(rec_buffer->buffer, temporal_value, actualFieldSize);
         break;
-      case MYSQL_TYPE_VARCHAR:
       case MYSQL_TYPE_STRING:
+        field->val_str(&string_value);
+        actualFieldSize = field->field_length;
+        memcpy(rec_buffer->buffer, string_value.ptr(), actualFieldSize);
+        break;
+      case MYSQL_TYPE_VARCHAR:
       case MYSQL_TYPE_VAR_STRING:
       case MYSQL_TYPE_BLOB:
       case MYSQL_TYPE_TINY_BLOB:
@@ -867,55 +871,90 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
 
   int index_field_type = this->index_field->type();
 
-  if (this->is_integral_field(index_field_type))
+  switch(index_field_type)
   {
-    key_copy = new uchar[sizeof(long long)]; // Store key as 8 bytes
-    const bool is_signed = !is_unsigned_field(this->index_field);
-    bytes_to_long(key, key_len, is_signed, key_copy);
-    key_len = sizeof(longlong);
-    this->make_big_endian(key_copy, key_len);
-  }
-  else if(is_date_or_time_field(index_field_type))
-  {
-    MYSQL_TIME mysql_time;
-
-    switch (index_field_type)
+    case MYSQL_TYPE_LONG:
+    case MYSQL_TYPE_SHORT:
+    case MYSQL_TYPE_TINY:
+    case MYSQL_TYPE_LONGLONG:
+    case MYSQL_TYPE_INT24:
+    case MYSQL_TYPE_ENUM:
+    case MYSQL_TYPE_YEAR:
     {
-    case MYSQL_TYPE_DATE:
-    case MYSQL_TYPE_NEWDATE:
-      if (key_len == 3)
-      {
-        extract_mysql_newdate((long) uint3korr(key), &mysql_time);
-      }
-      else
-      {
-        extract_mysql_old_date((int32) uint4korr(key), &mysql_time);
-      }
-      break;
-    case MYSQL_TYPE_TIMESTAMP:
-      extract_mysql_timestamp((long) uint4korr(key), &mysql_time, table->in_use);
-      break;
-    case MYSQL_TYPE_TIME:
-      extract_mysql_time((long) uint3korr(key), &mysql_time);
-      break;
-    case MYSQL_TYPE_DATETIME:
-      extract_mysql_datetime((ulonglong) uint8korr(key), &mysql_time);
+      key_copy = new uchar[sizeof(long long)]; // Store key as 8 bytes
+      const bool is_signed = !is_unsigned_field(this->index_field);
+      bytes_to_long(key, key_len, is_signed, key_copy);
+      key_len = sizeof(longlong);
+      this->make_big_endian(key_copy, key_len);
       break;
     }
+    case MYSQL_TYPE_FLOAT:
+    {
+      float j = floatGet(key);
 
-    char timeString[MAX_DATE_STRING_REP_LENGTH];
-    my_TIME_to_str(&mysql_time, timeString);
+      key_copy = new uchar[sizeof(float)];
+      key_len = sizeof(float);
 
-    int length = strlen(timeString);
+      floatstore(key_copy, j);
+      reverse_bytes(key_copy, key_len);
+    }
+      break;
+    case MYSQL_TYPE_DOUBLE:
+    {
+      double j;
+      doubleget(j, key);
 
-    key_copy = new uchar[length];
-    memcpy(key_copy, timeString, length);
+      key_copy = new uchar[sizeof(double)];
+      key_len = sizeof(double);
 
-    key_len = length;
-  } else
-  {
-    key_copy = new uchar[key_len];
-    memcpy(key_copy, key, key_len);
+      doublestore(key_copy, j);
+      reverse_bytes(key_copy, key_len);
+    }
+      break;
+    case MYSQL_TYPE_DATE:
+    case MYSQL_TYPE_DATETIME:
+    case MYSQL_TYPE_TIME:
+    case MYSQL_TYPE_TIMESTAMP:
+    case MYSQL_TYPE_NEWDATE:
+    {
+      MYSQL_TIME mysql_time;
+
+      switch (index_field_type)
+      {
+      case MYSQL_TYPE_DATE:
+      case MYSQL_TYPE_NEWDATE:
+        if (key_len == 3)
+        {
+          extract_mysql_newdate((long) uint3korr(key), &mysql_time);
+        }
+        else
+        {
+          extract_mysql_old_date((int32) uint4korr(key), &mysql_time);
+        }
+        break;
+      case MYSQL_TYPE_TIMESTAMP:
+        extract_mysql_timestamp((long) uint4korr(key), &mysql_time, table->in_use);
+        break;
+      case MYSQL_TYPE_TIME:
+        extract_mysql_time((long) uint3korr(key), &mysql_time);
+        break;
+      case MYSQL_TYPE_DATETIME:
+        extract_mysql_datetime((ulonglong) uint8korr(key), &mysql_time);
+        break;
+      }
+
+      char timeString[MAX_DATE_STRING_REP_LENGTH];
+      my_TIME_to_str(&mysql_time, timeString);
+      int length = strlen(timeString);
+      key_copy = new uchar[length];
+      memcpy(key_copy, timeString, length);
+      key_len = length;
+    }
+    break;
+    default:
+      key_copy = new uchar[key_len];
+      memcpy(key_copy, key, key_len);
+      break;
   }
 
   jbyteArray java_key = this->env->NewByteArray(key_len);
