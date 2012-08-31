@@ -283,6 +283,7 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
       case MYSQL_TYPE_LONGLONG:
       case MYSQL_TYPE_INT24:
       case MYSQL_TYPE_YEAR:
+      case MYSQL_TYPE_ENUM:
         {
           long long long_value = *(long long*)val;
           if(this->is_little_endian())
@@ -333,7 +334,6 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
       case MYSQL_TYPE_STRING:
       case MYSQL_TYPE_VARCHAR:
       case MYSQL_TYPE_VAR_STRING:
-      case MYSQL_TYPE_ENUM:
       case MYSQL_TYPE_TINY_BLOB:
       case MYSQL_TYPE_MEDIUM_BLOB:
       case MYSQL_TYPE_BLOB:
@@ -662,6 +662,7 @@ jobject CloudHandler::sql_to_java()
       case MYSQL_TYPE_LONGLONG:
       case MYSQL_TYPE_INT24:
       case MYSQL_TYPE_YEAR:
+      case MYSQL_TYPE_ENUM:
         {
           long long integral_value = field->val_int();
           if(this->is_little_endian())
@@ -726,7 +727,6 @@ jobject CloudHandler::sql_to_java()
       case MYSQL_TYPE_TINY_BLOB:
       case MYSQL_TYPE_MEDIUM_BLOB:
       case MYSQL_TYPE_LONG_BLOB:
-      case MYSQL_TYPE_ENUM:
         {
           char string_value_buff[1024];  // TODO: This is going to cause a buffer overflow for large blob/string types
           String string_value(string_value_buff, sizeof(string_value_buff), &my_charset_bin);
