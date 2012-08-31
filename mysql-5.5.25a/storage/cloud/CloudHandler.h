@@ -95,6 +95,21 @@ class CloudHandler : public handler
       #endif
     }
 
+    float floatGet(const uchar *ptr)
+    {
+      float j;
+      #ifdef WORDS_BIGENDIAN
+        if (table->s->db_low_byte_first)
+        {
+          float4get(j,ptr);
+        }
+        else
+      #endif
+      memcpy(&j, ptr, sizeof(j));
+
+      return j;
+    }
+
     void make_big_endian(uchar *begin, uint length)
     {
       if (is_little_endian())
@@ -119,6 +134,7 @@ class CloudHandler : public handler
       return (field_type == MYSQL_TYPE_DATE
           || field_type == MYSQL_TYPE_DATETIME
           || field_type == MYSQL_TYPE_TIME
+          || field_type == MYSQL_TYPE_TIMESTAMP
           || field_type == MYSQL_TYPE_NEWDATE);
     }
 
