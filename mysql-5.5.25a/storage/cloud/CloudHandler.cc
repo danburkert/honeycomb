@@ -312,15 +312,12 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
       case MYSQL_TYPE_DECIMAL:
       case MYSQL_TYPE_NEWDECIMAL:
         {
-          make_big_endian((uchar *) val, val_length);
-          //field->val_decimal(&decimal_val);
-          //dec_result = my_decimal2bin(&decimal_val, decimal_buff, 5, 2);
-          //int binary2my_decimal(uint mask, const uchar *bin, my_decimal *d, int prec,
-          //int scale)
           uint precision;
           uint scale;
+          precision = 5;
+          scale = 2;
           my_decimal decimal_val;
-          binary2my_decimal(0, (const uchar *) val, &decimal_val, 5, 2);
+          binary2my_decimal(0, (const uchar *) val, &decimal_val, precision, scale);
           ((Field_new_decimal *) field)->store_value((const my_decimal*) &decimal_val);
           decimal_val;
           break;
@@ -704,10 +701,6 @@ jobject CloudHandler::sql_to_java()
       case MYSQL_TYPE_NEWDECIMAL:
         actualFieldSize = field->key_length();
         memcpy(rec_buffer->buffer, field->ptr, actualFieldSize);
-        if(this->is_little_endian())
-        {
-          make_big_endian(rec_buffer->buffer, actualFieldSize);
-        }
         break;
       case MYSQL_TYPE_DATE:
       case MYSQL_TYPE_NEWDATE:
@@ -962,6 +955,13 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
       reverse_bytes(key_copy, key_len);
     }
       break;
+    case MYSQL_TYPE_DECIMAL:
+    case MYSQL_TYPE_NEWDECIMAL:
+      {
+        key_copy = new uchar[key_len];
+        memcpy(key_copy, key, key_len);
+        break;
+      }
     case MYSQL_TYPE_DATE:
     case MYSQL_TYPE_DATETIME:
     case MYSQL_TYPE_TIME:
