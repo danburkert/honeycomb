@@ -316,10 +316,8 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
       case MYSQL_TYPE_DECIMAL:
       case MYSQL_TYPE_NEWDECIMAL:
         {
-          uint precision;
-          uint scale;
-          precision = 5;
-          scale = 2;
+          uint precision = ((Field_new_decimal*) field)->precision;
+          uint scale = ((Field_new_decimal*) field)->dec;
           my_decimal decimal_val;
           binary2my_decimal(0, (const uchar *) val, &decimal_val, precision, scale);
           ((Field_new_decimal *) field)->store_value((const my_decimal*) &decimal_val);

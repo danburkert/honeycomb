@@ -44,6 +44,7 @@ eval SELECT * FROM t1 WHERE c1 =  $mid_val ORDER BY c1 DESC;
 eval UPDATE t1
   SET c1 = $mid_val
   WHERE c1 <= 0 + $epsilon AND c1 >= 0 - $epsilon
+  ORDER BY c1 ASC
   LIMIT 2;
 
 # Check updates
