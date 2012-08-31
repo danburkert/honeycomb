@@ -73,13 +73,13 @@ hbase_data_type extract_field_type(Field *field)
     essentialType = JAVA_DATETIME;
   }
   else if (fieldType == MYSQL_TYPE_VARCHAR
-            || fieldType == MYSQL_TYPE_STRING
-            || fieldType == MYSQL_TYPE_VAR_STRING
             || fieldType == MYSQL_TYPE_ENUM)
   {
     essentialType = JAVA_STRING;
   }
   else if (fieldType == MYSQL_TYPE_BLOB
+            || fieldType == MYSQL_TYPE_STRING
+            || fieldType == MYSQL_TYPE_VAR_STRING
             || fieldType == MYSQL_TYPE_TINY_BLOB
             || fieldType == MYSQL_TYPE_MEDIUM_BLOB
             || fieldType == MYSQL_TYPE_LONG_BLOB)
