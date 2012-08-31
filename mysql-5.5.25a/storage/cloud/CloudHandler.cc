@@ -431,12 +431,9 @@ int CloudHandler::end_bulk_insert()
 {
   DBUG_ENTER("CloudHandler::end_bulk_insert");
 
-  timeval start, end;
-  gettimeofday(&start, NULL);
   jclass adapter_class = this->adapter();
   jmethodID end_write_method = this->env->GetStaticMethodID(adapter_class, "flushWrites", "()V");
   this->env->CallStaticVoidMethod(adapter_class, end_write_method);
-  gettimeofday(&end, NULL);
 
   detach_thread();
   DBUG_RETURN(0);
@@ -470,7 +467,6 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
 
   jmethodID create_table_method = this->env->GetStaticMethodID(adapter_class, "createTable", "(Ljava/lang/String;Ljava/util/Map;)Z");
   jboolean result = this->env->CallStaticBooleanMethod(adapter_class, create_table_method, string_to_java_string(table_name), columnMap);
-  INFO(("Result of createTable: %d", result));
   print_java_exception(this->env);
 
   detach_thread();
@@ -604,8 +600,6 @@ int CloudHandler::write_row_helper(uchar* buf)
 {
   DBUG_ENTER("CloudHandler::write_row_helper");
 
-  timeval start, end;
-  gettimeofday(&start, NULL);
   jclass adapter_class = this->adapter();
   jmethodID write_row_method = this->env->GetStaticMethodID(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;[B)Z");
   jstring java_table_name = this->string_to_java_string(this->table->alias);
@@ -626,13 +620,8 @@ int CloudHandler::write_row_helper(uchar* buf)
 
   this->env->SetByteArrayRegion(uniReg, 0, row_length, (jbyte*)buffer);
   delete[] buffer;
-  gettimeofday(&end, NULL);
-  this->write_timing += real_time(end) - real_time(start);
 
-  gettimeofday(&start, NULL);
   this->env->CallStaticBooleanMethod(adapter_class, write_row_method, java_table_name, java_row_map, uniReg);
-  gettimeofday(&end, NULL);
-  this->hbase_timing += real_time(end) - real_time(start);
 
   DBUG_RETURN(0);
 }

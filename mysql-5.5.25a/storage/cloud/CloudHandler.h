@@ -44,8 +44,6 @@ class CloudHandler : public handler
 
     long long curr_scan_id;
 
-    double write_timing, hbase_timing;
-
     // HBase JNI Adapter:
     JNIEnv* env;
     JavaVM* jvm;
@@ -165,8 +163,6 @@ class CloudHandler : public handler
     {
       this->ref_length = 16;
       this->ref = new uchar[this->ref_length];
-      this->write_timing = 0;
-      this->hbase_timing = 0;
     }
 
     ~CloudHandler()
