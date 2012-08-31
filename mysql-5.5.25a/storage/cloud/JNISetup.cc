@@ -3,6 +3,105 @@
 static const char* prefix = "-Djava.class.path=";
 static const int prefix_length = strlen(prefix);
 
+static int line_length(FILE* option_config)
+{
+  int ch;
+  fpos_t start, end;
+  fgetpos(option_config, &start);
+  do
+  {
+    ch = fgetc(option_config);
+  }
+  while(ch != '\n' && ch != EOF);
+  fgetpos(option_config, &end);
+  fsetpos(option_config, &start);
+
+  return end - start;
+}
+
+static int option_count(FILE* option_config)
+{
+  int ch, count = 0;
+  do
+  {
+    ch = fgetc(option_config);
+    if (ch == '\n')
+    {
+      count++;
+    }
+
+  }while(ch != EOF);
+  rewind(option_config);
+
+  return count;
+}
+
+static JavaVMOption* initialize_options(char* class_path, int* opt_count)
+{
+  JavaVMOption* options;
+  FILE* option_config = fopen("/etc/mysql/jvm-options.conf", "r");
+  *opt_count = 1;
+  JavaVMOption* class_path_option = new JavaVMOption();
+  class_path_option->optionString = class_path;
+  int index = 0;
+  if (option_config != NULL)
+  {
+    *opt_count += option_count(option_config);
+    options = new JavaVMOption[*opt_count];
+    options[index++] = *class_path_option;
+    while(!feof(option_config))
+    {
+      int line_len = line_length(option_config);
+      if (line_len == 0)
+      {
+        break;
+      }
+
+      JavaVMOption* option = new JavaVMOption();
+      option->optionString = new char[line_len];
+      fgets(option->optionString, line_len, option_config);
+      fgetc(option_config); // Skip the newline
+      options[index++] = *option;
+      delete option;
+    }
+
+    fclose(option_config);
+  }
+  else
+  {
+    options = new JavaVMOption[*opt_count];
+    options[0] = *class_path_option;
+  }
+
+  delete class_path_option;
+
+  return options;
+}
+
+static void destruct(JavaVMOption* options, int option_count)
+{
+  for(int i = 0 ; i < option_count ; i++)
+  {
+    delete[] options[i].optionString;
+  }
+
+  delete[] options;
+}
+
+static JavaVMOption* get_options(List<JavaVMOption> options)
+{
+  JavaVMOption* option_array = new JavaVMOption[options.elements];
+  JavaVMOption* option;
+  List_iterator<JavaVMOption> iterator(options);
+  int i = 0;
+  while((option = iterator++) != NULL)
+  {
+    option_array[i] = *option;
+    i++;
+  }
+  return option_array;
+}
+
 static void test_jvm(bool attach_thread, JavaVM* jvm, JNIEnv* env)
 {
 #ifndef DBUG_OFF
@@ -90,20 +189,12 @@ void create_or_find_jvm(JavaVM** jvm)
   }
   else
   {
-    JavaVMInitArgs vm_args;
-#ifdef __APPLE__
-    const int option_count = 3;
-    JavaVMOption option[option_count];
-    option[1].optionString = "-Djava.security.krb5.realm=OX.AC.UK";
-    option[2].optionString = "-Djava.security.krb5.kdc=kdc0.ox.ac.uk:kdc1.ox.ac.uk";
-#else
-    const int option_count = 1;
-    JavaVMOption option[option_count];
-#endif
     char* class_path = find_java_classpath();
-    option[0].optionString = class_path;
+    JavaVMInitArgs vm_args;
+    int option_count;
+    JavaVMOption* options = initialize_options(class_path, &option_count);
+    vm_args.options = options;
     vm_args.nOptions = option_count;
-    vm_args.options = option;
     vm_args.version = JNI_VERSION_1_6;
     jint result = JNI_CreateJavaVM(jvm, (void**)&env, &vm_args);
     if (result != 0)
@@ -111,7 +202,7 @@ void create_or_find_jvm(JavaVM** jvm)
       ERROR(("Failed to create JVM"));
     }
 
-    delete[] class_path;
+    destruct(options, option_count);
     test_jvm(false, *jvm, env);
     (*jvm)->DetachCurrentThread();
   }
