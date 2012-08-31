@@ -11,7 +11,7 @@
 #include "Macros.h"
 #include "m_string.h"
 
-enum hbase_data_type { UNKNOWN_TYPE, JAVA_STRING, JAVA_LONG, JAVA_ULONG, JAVA_DOUBLE, JAVA_TIME, JAVA_DATE, JAVA_DATETIME };
+enum hbase_data_type { UNKNOWN_TYPE, JAVA_STRING, JAVA_LONG, JAVA_ULONG, JAVA_DOUBLE, JAVA_TIME, JAVA_DATE, JAVA_DATETIME, JAVA_BINARY };
 
 hbase_data_type extract_field_type(Field *field);
 bool is_unsigned_field(Field *field);

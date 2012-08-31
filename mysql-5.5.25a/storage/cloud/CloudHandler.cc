@@ -302,7 +302,7 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
 
       field->store(double_value);
     }
-    else if (field_type == JAVA_STRING)
+    else if (field_type == JAVA_STRING || field_type == JAVA_BINARY)
     {
       field->store(val, val_length, &my_charset_bin);
     }

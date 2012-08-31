@@ -66,6 +66,9 @@ public:
       case JAVA_ULONG:
         this->java_list_add(list, create_metadata_enum_object("ULONG"));
         break;
+      case JAVA_BINARY:
+        this->java_list_add(list, create_metadata_enum_object("BINARY"));
+        break;
       default:
         break;
     }
