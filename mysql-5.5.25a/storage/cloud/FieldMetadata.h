@@ -41,34 +41,63 @@ public:
   jobject get_field_metadata(Field *field, TABLE *table_arg)
   {
     jobject list = this->create_java_list();
-    hbase_data_type essentialType = extract_field_type(field);
-
-    switch (essentialType)
+    switch (field->real_type())
     {
-      case JAVA_STRING:
-        this->java_list_add(list, create_metadata_enum_object("STRING"));
+      case MYSQL_TYPE_TINY:
+      case MYSQL_TYPE_SHORT:
+      case MYSQL_TYPE_LONG:
+      case MYSQL_TYPE_LONGLONG:
+      case MYSQL_TYPE_INT24:
+      case MYSQL_TYPE_YEAR:
+        if (is_unsigned_field(field))
+        {
+          this->java_list_add(list, create_metadata_enum_object("ULONG"));
+        } else {
+          this->java_list_add(list, create_metadata_enum_object("LONG"));
+        }
         break;
-      case JAVA_DATE:
-        this->java_list_add(list, create_metadata_enum_object("DATE"));
-        break;
-      case JAVA_TIME:
-        this->java_list_add(list, create_metadata_enum_object("TIME"));
-        break;
-      case JAVA_DATETIME:
-        this->java_list_add(list, create_metadata_enum_object("DATETIME"));
-        break;
-      case JAVA_DOUBLE:
+      case MYSQL_TYPE_FLOAT:
+      case MYSQL_TYPE_DOUBLE:
         this->java_list_add(list, create_metadata_enum_object("DOUBLE"));
+          break;
+      case MYSQL_TYPE_DECIMAL:
+      case MYSQL_TYPE_NEWDECIMAL:
+        this->java_list_add(list, create_metadata_enum_object("DECIMAL"));
         break;
-      case JAVA_LONG:
-        this->java_list_add(list, create_metadata_enum_object("LONG"));
+      case MYSQL_TYPE_DATE:
+      case MYSQL_TYPE_NEWDATE:
+          this->java_list_add(list, create_metadata_enum_object("DATE"));
+          break;
+      case MYSQL_TYPE_TIME:
+          this->java_list_add(list, create_metadata_enum_object("TIME"));
+          break;
+      case MYSQL_TYPE_DATETIME:
+      case MYSQL_TYPE_TIMESTAMP:
+          this->java_list_add(list, create_metadata_enum_object("DATETIME"));
+          break;
+      case MYSQL_TYPE_STRING:
+      case MYSQL_TYPE_VARCHAR:
+        if (field->binary())
+        {
+          this->java_list_add(list, create_metadata_enum_object("BINARY"));
+        } else {
+          this->java_list_add(list, create_metadata_enum_object("STRING"));
+        }
         break;
-      case JAVA_ULONG:
-        this->java_list_add(list, create_metadata_enum_object("ULONG"));
-        break;
-      case JAVA_BINARY:
+      case MYSQL_TYPE_BLOB:
+      case MYSQL_TYPE_TINY_BLOB:
+      case MYSQL_TYPE_MEDIUM_BLOB:
+      case MYSQL_TYPE_LONG_BLOB:
         this->java_list_add(list, create_metadata_enum_object("BINARY"));
         break;
+      case MYSQL_TYPE_ENUM:
+        this->java_list_add(list, create_metadata_enum_object("ULONG"));
+        break;
+      case MYSQL_TYPE_NULL:
+      case MYSQL_TYPE_BIT:
+      case MYSQL_TYPE_SET:
+      case MYSQL_TYPE_GEOMETRY:
+      case MYSQL_TYPE_VAR_STRING:
       default:
         break;
     }

@@ -273,10 +273,9 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
     jsize val_length = this->env->GetArrayLength(java_val);
 
     my_ptrdiff_t offset = (my_ptrdiff_t) (buf - this->table->record[0]);
-    hbase_data_type field_type = extract_field_type(field);
     field->move_field_offset(offset);
 
-    switch (field->type())
+    switch (field->real_type())
     {
       case MYSQL_TYPE_TINY:
       case MYSQL_TYPE_SHORT:
@@ -655,7 +654,7 @@ jobject CloudHandler::sql_to_java()
       continue;
     }
 
-    switch (field->type())
+    switch (field->real_type())
     {
       case MYSQL_TYPE_TINY:
       case MYSQL_TYPE_SHORT:
@@ -899,7 +898,7 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
     key_len--;
   }
 
-  int index_field_type = this->index_field->type();
+  int index_field_type = this->index_field->real_type();
 
   switch(index_field_type)
   {
@@ -920,10 +919,10 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
     case MYSQL_TYPE_YEAR:
     {
       key_copy = new uchar[sizeof(long long)];
-      
+
       /* It comes to us as one byte, need to cast it to int and add 1900 */
       uint32_t int_val = (uint32_t)key[0] + 1900;
-      
+
       bytes_to_long((uchar *)&int_val, sizeof(uint32_t), false, key_copy);
       key_len = sizeof(long long);
       this->make_big_endian(key_copy, key_len);
