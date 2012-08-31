@@ -27,6 +27,8 @@ public class HBaseClient {
 
     private HBaseAdmin admin;
 
+    private WriteBuffer writeBuffer;
+
     private static final byte[] SQL = "sql".getBytes();
 
     private static final byte[] NIC = "nic".getBytes();
@@ -59,6 +61,8 @@ public class HBaseClient {
             this.initializeSqlTable();
 
             this.table = new HTable(configuration, tableName);
+
+            this.writeBuffer = new WriteBuffer(table);
         } catch (MasterNotRunningException e) {
             logger.error("MasterNotRunningException thrown", e);
         } catch (ZooKeeperConnectionException e) {
@@ -158,9 +162,9 @@ public class HBaseClient {
         addColumns(tableName, columns, putList);
 
         //Perform all puts
-        table.put(putList);
+        writeBuffer.put(putList);
 
-        table.flushCommits();
+        writeBuffer.flushCommits();
     }
 
     public void writeRow(String tableName, Map<String, byte[]> values) throws IOException {
@@ -171,7 +175,10 @@ public class HBaseClient {
         List<Put> putList = createPutList(tableName, values, unireg);
 
         //Final put
-        table.put(putList);
+        writeBuffer.put(putList);
+        end = System.currentTimeMillis();
+        this.hbaseTiming += end - start;
+
     }
 
     private List<Put> createPutList(String tableName, Map<String, byte[]> values, byte[] unireg) throws IOException {
@@ -184,7 +191,6 @@ public class HBaseClient {
 
         //Build data row key
         byte[] dataKey = RowKeyFactory.buildDataKey(tableId, rowId);
-
 
         //Create put list
         List<Put> putList = new LinkedList<Put>();
@@ -478,7 +484,7 @@ public class HBaseClient {
     }
 
     public void setAutoFlushTables(boolean shouldFlushChangesImmediately) {
-        this.table.setAutoFlush(shouldFlushChangesImmediately);
+        this.writeBuffer.setAutoFlush(shouldFlushChangesImmediately);
 
         logger.info(shouldFlushChangesImmediately
                 ? "Changes to tables will be written to HBase immediately"
@@ -487,7 +493,7 @@ public class HBaseClient {
 
     public void setWriteBufferSize(long numBytes) {
         try {
-            this.table.setWriteBufferSize(numBytes);
+            this.writeBuffer.setWriteBufferLimit(numBytes);
         } catch (IOException e) {
             logger.error("Encountered an error setting write buffer size", e);
         }
@@ -497,7 +503,7 @@ public class HBaseClient {
 
     public void flushWrites() {
         try {
-            table.flushCommits();
+            writeBuffer.flushCommits();
         } catch (IOException e) {
             logger.error("Encountered an exception while flushing commits : ", e);
         }
