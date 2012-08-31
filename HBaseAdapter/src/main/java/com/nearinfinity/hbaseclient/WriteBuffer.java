@@ -41,7 +41,7 @@ public class WriteBuffer {
         return this.bufferLimit;
     }
 
-    public void put(List<Put> putList) throws IOException {
+    public synchronized void put(List<Put> putList) throws IOException {
         for (Put put : putList) {
             byte[] rowKey = put.getRow();
             if (secondaryIndexRows.contains(rowKey)) {
@@ -67,17 +67,17 @@ public class WriteBuffer {
         }
     }
 
-    public void put(Put put) throws IOException {
+    public synchronized void put(Put put) throws IOException {
         this.put(Arrays.asList(put));
     }
 
-    public void flushCommits() throws IOException {
+    public synchronized void flushCommits() throws IOException {
         this.table.put(buffer);
         this.table.flushCommits();
         reset();
     }
 
-    private void reset() {
+    private synchronized void reset() {
         this.secondaryIndexRows = new HashSet<byte[]>();
         this.reverseIndexRows = new HashSet<byte[]>();
         this.buffer = new LinkedList<Put>();
