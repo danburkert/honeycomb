@@ -6,17 +6,18 @@ static const int prefix_length = strlen(prefix);
 static int line_length(FILE* option_config)
 {
   int ch;
-  fpos_t start, end;
+  fpos_t start;
+  long int start_pos = ftell(option_config);
   fgetpos(option_config, &start);
   do
   {
     ch = fgetc(option_config);
   }
   while(ch != '\n' && ch != EOF);
-  fgetpos(option_config, &end);
+  long int end_pos = ftell(option_config);
   fsetpos(option_config, &start);
 
-  return end - start;
+  return end_pos - start_pos;
 }
 
 static int option_count(FILE* option_config)
