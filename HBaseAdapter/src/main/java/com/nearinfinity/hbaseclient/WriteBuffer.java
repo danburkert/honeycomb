@@ -21,10 +21,12 @@ public class WriteBuffer {
     private long bufferSize;
     private long bufferLimit;
     private HTable table;
+    private boolean autoFlush;
 
     public WriteBuffer(HTable table) {
         this.table = table;
         this.bufferLimit = 0L;
+        this.autoFlush = false;
         reset();
     }
 
@@ -60,7 +62,7 @@ public class WriteBuffer {
             bufferSize += put.heapSize();
         }
 
-        if (bufferSize > bufferLimit) {
+        if (autoFlush || bufferSize > bufferLimit) {
             this.flushCommits();
         }
     }
@@ -80,5 +82,9 @@ public class WriteBuffer {
         this.reverseIndexRows = new HashSet<byte[]>();
         this.buffer = new LinkedList<Put>();
         this.bufferSize = 0L;
+    }
+
+    public void setAutoFlush(boolean shouldFlushChangesImmediately) {
+        this.autoFlush = shouldFlushChangesImmediately;
     }
 }

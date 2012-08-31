@@ -167,9 +167,9 @@ public class HBaseClient {
         addColumns(tableName, columns, putList);
 
         //Perform all puts
-        table.put(putList);
+        writeBuffer.put(putList);
 
-        table.flushCommits();
+        writeBuffer.flushCommits();
     }
 
     public void writeRow(String tableName, Map<String, byte[]> values) throws IOException {
@@ -499,7 +499,7 @@ public class HBaseClient {
     }
 
     public void setAutoFlushTables(boolean shouldFlushChangesImmediately) {
-        this.table.setAutoFlush(shouldFlushChangesImmediately);
+        this.writeBuffer.setAutoFlush(shouldFlushChangesImmediately);
 
         logger.info(shouldFlushChangesImmediately
                 ? "Changes to tables will be written to HBase immediately"
