@@ -176,9 +176,6 @@ public class HBaseClient {
 
         //Final put
         writeBuffer.put(putList);
-        end = System.currentTimeMillis();
-        this.hbaseTiming += end - start;
-
     }
 
     private List<Put> createPutList(String tableName, Map<String, byte[]> values, byte[] unireg) throws IOException {
