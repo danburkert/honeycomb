@@ -14,6 +14,8 @@ import java.nio.ByteBuffer;
 public class ValueEncoder {
     private static final byte BYTE_MASK = (byte) 0x000000ff;
 
+    private static final byte NEGATIVE_MASK = (byte)0x00000080;
+
     private static final long INVERT_SIGN_MASK = 0x8000000000000000L;
 
     private static final long INVERT_ALL_BITS_MASK = 0xFFFFFFFFFFFFFFFFL;
@@ -58,9 +60,14 @@ public class ValueEncoder {
 
     private static byte[] positionOfDouble(double value) {
         long longValue = Double.doubleToLongBits(value);
-        if (value < 0.0) {
+        if (isNegative(value)) {
             return ByteBuffer.allocate(8).putLong(longValue ^ INVERT_ALL_BITS_MASK).array();
         }
         return ByteBuffer.allocate(8).putLong(longValue ^ INVERT_SIGN_MASK).array();
+    }
+
+    private static boolean isNegative(double value) {
+        byte [] bytes = ByteBuffer.allocate(8).putDouble(value).array();
+        return (bytes[0] & NEGATIVE_MASK) != 0;
     }
 }

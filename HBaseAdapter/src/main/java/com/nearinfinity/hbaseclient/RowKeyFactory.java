@@ -62,13 +62,13 @@ public class RowKeyFactory {
     }
 
     public static byte[] buildReverseIndexKey(long tableId, long columnId, byte[] value, ColumnMetadata columnType) {
-        byte[] reversedValue = ValueEncoder.reverseValue(value);
-        byte[] encodedValue = ValueEncoder.encodeValue(reversedValue, columnType);
-        return ByteBuffer.allocate(17 + encodedValue.length)
+        byte[] encodedValue = ValueEncoder.encodeValue(value, columnType);
+        byte[] reversedValue = ValueEncoder.reverseValue(encodedValue);
+        return ByteBuffer.allocate(17 + reversedValue.length)
                 .put(RowType.REVERSE_INDEX.getValue())
                 .putLong(tableId)
                 .putLong(columnId)
-                .put(encodedValue)
+                .put(reversedValue)
                 .array();
     }
 
