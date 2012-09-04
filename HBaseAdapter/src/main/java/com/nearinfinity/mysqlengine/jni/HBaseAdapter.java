@@ -117,7 +117,7 @@ public class HBaseAdapter {
             }
 
             //Set values and UUID
-            Map<String, byte[]> values = client.parseRow(result, conn.getTableName());
+            Map<String, byte[]> values = client.parseDataRow(result, conn.getTableName());
             UUID uuid = ResultParser.parseUUID(result);
             row.parse(values, uuid);
         } catch (Exception e) {
@@ -216,7 +216,7 @@ public class HBaseAdapter {
 
             conn.getScanner().setLastResult(result);
 
-            Map<String, byte[]> values = client.parseRow(result, conn.getTableName());
+            Map<String, byte[]> values = client.parseDataRow(result, conn.getTableName());
             row.setUUID(rowUuid);
             row.setRowMap(values);
         } catch (Exception e) {
