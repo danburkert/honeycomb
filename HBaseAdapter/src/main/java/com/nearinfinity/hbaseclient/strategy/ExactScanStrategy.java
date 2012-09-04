@@ -1,9 +1,6 @@
 package com.nearinfinity.hbaseclient.strategy;
 
-import com.nearinfinity.hbaseclient.ColumnMetadata;
-import com.nearinfinity.hbaseclient.RowKeyFactory;
-import com.nearinfinity.hbaseclient.ScanFactory;
-import com.nearinfinity.hbaseclient.TableInfo;
+import com.nearinfinity.hbaseclient.*;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter;
@@ -26,10 +23,10 @@ public class ExactScanStrategy extends ScanStrategyBase {
     public Scan getScan(TableInfo info) {
         long tableId = info.getId();
         long columnId = info.getColumnIdByName(this.columnName);
-        ColumnMetadata columnType = info.getColumnTypeByName(this.columnName);
+        ColumnType columnType = info.getColumnTypeByName(this.columnName);
 
         byte[] startKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId, value, columnType);
-        byte[] endKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId+1, new byte[0], ColumnMetadata.NONE);
+        byte[] endKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId+1, new byte[0], ColumnType.NONE);
 
         Scan scan = ScanFactory.buildScan(startKey, endKey);
 

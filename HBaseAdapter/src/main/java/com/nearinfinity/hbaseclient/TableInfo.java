@@ -1,6 +1,7 @@
 package com.nearinfinity.hbaseclient;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -43,7 +44,7 @@ public class TableInfo {
         return columnIdsToInfo.get(id).getName();
     }
 
-    public void addColumn(String columnName, long id, List<ColumnMetadata> metadata) {
+    public void addColumn(String columnName, long id, Map<ColumnMetadata, byte[]> metadata) {
         ColumnInfo info = new ColumnInfo(id, columnName, metadata);
         columnNamesToInfo.put(columnName, info);
         columnIdsToInfo.put(id, info);
@@ -57,20 +58,13 @@ public class TableInfo {
         return this.columnIdsToInfo.keySet();
     }
 
-    public ColumnMetadata getColumnTypeByName(String columnName) {
+    public ColumnType getColumnTypeByName(String columnName) {
         ColumnInfo info = this.columnNamesToInfo.get(columnName);
-        for (ColumnMetadata metadata : info.getMetadata()) {
-            switch (metadata) {
-                case LONG:
-                case DOUBLE:
-                case STRING:
-                case TIME:
-                    return metadata;
-                default:
-                    // Keep going
-            }
-        }
 
-        return ColumnMetadata.NONE;
+        return ColumnType.getByValue(info.getMetadata().get(ColumnMetadata.COLUMN_TYPE));
+    }
+
+    public byte[] getColumnMetadata(String columnName, ColumnMetadata metadata) {
+        return this.columnNamesToInfo.get(columnName).getMetadata().get(metadata);
     }
 }

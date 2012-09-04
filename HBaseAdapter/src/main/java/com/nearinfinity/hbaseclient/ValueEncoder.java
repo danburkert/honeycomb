@@ -3,6 +3,7 @@ package com.nearinfinity.hbaseclient;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 /**
  * Created with IntelliJ IDEA.
@@ -30,7 +31,7 @@ public class ValueEncoder {
         return buffer.array();
     }
 
-    public static byte[] encodeValue(byte[] value, ColumnMetadata columnType) {
+    public static byte[] encodeValue(byte[] value, ColumnType columnType) {
         if (value == null || value.length == 0) {
             return new byte[0];
         }
@@ -72,7 +73,7 @@ public class ValueEncoder {
         return (bytes[0] & NEGATIVE_MASK) != 0;
     }
 
-    public static byte[] canonicalValue(byte[] value, ColumnMetadata columnType) {
+    public static byte[] canonicalValue(byte[] value, ColumnType columnType) {
         if (value == null || value.length == 0) {
             return new byte[0];
         }
@@ -86,5 +87,15 @@ public class ValueEncoder {
                 canonicalValue = value;
         }
         return canonicalValue;
+    }
+
+    public static byte[] padValue(byte[] value, int padLength) {
+        byte[] paddedValue = new byte[value.length + padLength];
+        Arrays.fill(paddedValue, BYTE_MASK);
+        for (int i = 0 ; i < value.length ; i++) {
+            paddedValue[i] = value[i];
+        }
+
+        return paddedValue;
     }
 }
