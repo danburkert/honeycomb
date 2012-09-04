@@ -1,7 +1,9 @@
 package com.nearinfinity.hbaseclient;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -13,11 +15,11 @@ import java.util.List;
 public class ColumnInfo {
     private long id;
     private String name;
-    private ArrayList<ColumnMetadata> metadata;
-    public ColumnInfo(long id, String name, List<ColumnMetadata> metadata) {
+    private Map<ColumnMetadata, byte[]> metadata;
+    public ColumnInfo(long id, String name, Map<ColumnMetadata, byte[]> metadata) {
         this.id = id;
         this.name = name;
-        this.metadata = new ArrayList<ColumnMetadata>(metadata);
+        this.metadata = new HashMap<ColumnMetadata, byte[]>(metadata);
     }
 
     public long getId() {
@@ -28,7 +30,7 @@ public class ColumnInfo {
         return this.name;
     }
 
-    public ArrayList<ColumnMetadata> getMetadata() {
+    public Map<ColumnMetadata, byte[]> getMetadata() {
         return this.metadata;
     }
 }

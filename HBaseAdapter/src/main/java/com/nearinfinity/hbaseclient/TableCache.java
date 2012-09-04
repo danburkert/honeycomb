@@ -11,6 +11,7 @@ import org.apache.hadoop.hbase.client.Result;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -49,8 +50,8 @@ public class TableCache {
         return info;
     }
 
-    public List<ColumnMetadata> getMetadataForColumn(long tableId, long columnId) throws IOException {
-        ArrayList<ColumnMetadata> metadataList = new ArrayList<ColumnMetadata>();
+    public Map<ColumnMetadata, byte[]> getMetadataForColumn(long tableId, long columnId) throws IOException {
+        HashMap<ColumnMetadata, byte[]> metadataMap = new HashMap<ColumnMetadata, byte[]>();
 
         Get metadataGet = new Get(RowKeyFactory.buildColumnInfoKey(tableId, columnId));
         Result result = table.get(metadataGet);
@@ -63,13 +64,13 @@ public class TableCache {
 
             try {
                 metaDataItem = ColumnMetadata.valueOf(metadataString);
-                metadataList.add(metaDataItem);
+                metadataMap.put(metaDataItem, metadata.get(qualifier));
             } catch (IllegalArgumentException e) {
 
             }
         }
 
-        return metadataList;
+        return metadataMap;
     }
 
     public void addTableInfo(String tableName, TableInfo info) {
