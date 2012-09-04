@@ -168,10 +168,6 @@ public class HBaseClient {
         writeBuffer.flushCommits();
     }
 
-    public void writeRow(String tableName, Map<String, byte[]> values) throws IOException {
-        writeRow(tableName, values, null);
-    }
-
     public void writeRow(String tableName, Map<String, byte[]> values, byte[] unireg) throws IOException {
         List<Put> putList = createPutList(tableName, values, unireg);
 
@@ -319,7 +315,7 @@ public class HBaseClient {
         return metadataMap;
     }
 
-    public Map<String, byte[]> parseRow(Result result, String tableName) throws IOException {
+    public Map<String, byte[]> parseDataRow(Result result, String tableName) throws IOException {
         TableInfo info = getTableInfo(tableName);
 
         //Get columns returned from Result
@@ -350,8 +346,6 @@ public class HBaseClient {
         long tableId = info.getId();
 
         List<Delete> deleteList = new LinkedList<Delete>();
-
-        Filter uuidFilter = new UUIDFilter(uuid);
 
         //Delete dataRows
         byte[] dataRowKey = RowKeyFactory.buildDataKey(tableId, uuid);
