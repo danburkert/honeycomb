@@ -168,90 +168,12 @@ public class HBaseClient {
         writeBuffer.flushCommits();
     }
 
-    public void writeRow(String tableName, Map<String, byte[]> values, byte[] unireg) throws IOException {
-        List<Put> putList = createPutList(tableName, values, unireg);
+    public void writeRow(String tableName, Map<String, byte[]> values) throws IOException {
+        TableInfo info = getTableInfo(tableName);
+        List<Put> putList = PutListFactory.createPutList(values, info);
 
         //Final put
         writeBuffer.put(putList);
-    }
-
-    private List<Put> createPutList(String tableName, Map<String, byte[]> values, byte[] unireg) throws IOException {
-        //Get table id
-        TableInfo info = getTableInfo(tableName);
-        long tableId = info.getId();
-
-        //Get UUID for new entry
-        UUID rowId = UUID.randomUUID();
-
-        //Build data row key
-        byte[] dataKey = RowKeyFactory.buildDataKey(tableId, rowId);
-
-        //Create put list
-        List<Put> putList = new LinkedList<Put>();
-
-        Put dataRow = new Put(dataKey);
-
-        byte[] uniregQualifier = new byte[0];
-        byte[] uniregValue = new byte[0];
-        if (unireg != null) {
-            uniregQualifier = UNIREG;
-            uniregValue = unireg;
-        }
-
-        boolean allRowsNull = true;
-
-        for (String columnName : values.keySet()) {
-
-            //Get column id and value
-            long columnId = info.getColumnIdByName(columnName);
-            ColumnType columnType = info.getColumnTypeByName(columnName);
-            byte[] value = values.get(columnName);
-
-            if (value == null) {
-                // Build null index
-                byte[] nullIndexRow = RowKeyFactory.buildNullIndexKey(tableId, columnId, rowId);
-                putList.add(new Put(nullIndexRow).add(NIC, uniregQualifier, uniregValue));
-            } else {
-
-                int padLength = 0;
-                if (columnType == ColumnType.STRING || columnType == ColumnType.BINARY) {
-                    byte[] maxLengthArray = info.getColumnMetadata(columnName, ColumnMetadata.MAX_LENGTH);
-                    padLength = (int) ByteBuffer.wrap(maxLengthArray).getLong() - value.length;
-                }
-
-                allRowsNull = false;
-                // Add data column to put
-                dataRow.add(NIC, Bytes.toBytes(columnId), value);
-
-                /**
-                 * We need to get the canonical value for STRING types. The secondary index will store all values as
-                 * canonical values. Then, when looking up in the primary index, the row key will contain the matching
-                 * canonical value. The unireg and data rows store the actual value.
-                 */
-                byte[] canonicalValue = ValueEncoder.canonicalValue(value, columnType);
-
-                // Build value index key
-                byte[] indexRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, canonicalValue, rowId);
-                putList.add(new Put(indexRow).add(NIC, uniregQualifier, uniregValue));
-
-                // Build secondary index key
-                byte[] secondaryIndexRow = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId, canonicalValue, columnType);
-                putList.add(new Put(secondaryIndexRow).add(NIC, VALUE_COLUMN, canonicalValue));
-
-                // Build reverse index key
-                byte[] reverseIndexRow = RowKeyFactory.buildReverseIndexKey(tableId, columnId, canonicalValue, columnType, padLength);
-                putList.add(new Put(reverseIndexRow).add(NIC, VALUE_COLUMN, canonicalValue));
-            }
-        }
-
-        if (allRowsNull) {
-            // Add special []->[] data row to signify a row of all null values
-            putList.add(dataRow.add(NIC, new byte[0], new byte[0]));
-        }
-
-        //Add the row to put list
-        putList.add(dataRow);
-        return putList;
     }
 
     public Result getDataRow(UUID uuid, String tableName) throws IOException {
