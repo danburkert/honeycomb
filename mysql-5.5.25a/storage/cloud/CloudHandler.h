@@ -50,7 +50,7 @@ class CloudHandler : public handler
     jclass hbase_adapter;
 
     const char* java_to_string(jstring str);
-    jstring string_to_java_string(const char*);
+    jstring string_to_java_string(const char *string);
     jobject create_java_map();
     jobject java_map_insert(jobject java_map, jobject key, jobject value);
     jbyteArray java_map_get(jobject java_map, jstring key);

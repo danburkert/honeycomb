@@ -51,7 +51,7 @@ public class RowKeyFactory {
                 .array();
     }
 
-    public static byte[] buildSecondaryIndexKey(long tableId, long columnId, byte[] value, ColumnMetadata columnType) {
+    public static byte[] buildSecondaryIndexKey(long tableId, long columnId, byte[] value, ColumnType columnType) {
         byte[] encodedValue = ValueEncoder.encodeValue(value, columnType);
         return ByteBuffer.allocate(17 + encodedValue.length)
                 .put(RowType.SECONDARY_INDEX.getValue())
@@ -61,14 +61,15 @@ public class RowKeyFactory {
                 .array();
     }
 
-    public static byte[] buildReverseIndexKey(long tableId, long columnId, byte[] value, ColumnMetadata columnType) {
+    public static byte[] buildReverseIndexKey(long tableId, long columnId, byte[] value, ColumnType columnType, int padLength) {
         byte[] encodedValue = ValueEncoder.encodeValue(value, columnType);
         byte[] reversedValue = ValueEncoder.reverseValue(encodedValue);
-        return ByteBuffer.allocate(17 + reversedValue.length)
+        byte[] paddedValue = ValueEncoder.padValue(reversedValue, padLength);
+        return ByteBuffer.allocate(17 + paddedValue.length)
                 .put(RowType.REVERSE_INDEX.getValue())
                 .putLong(tableId)
                 .putLong(columnId)
-                .put(reversedValue)
+                .put(paddedValue)
                 .array();
     }
 

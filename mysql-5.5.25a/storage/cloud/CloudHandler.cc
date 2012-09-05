@@ -209,7 +209,7 @@ int CloudHandler::rnd_init(bool scan)
 
   jclass adapter_class = this->adapter();
   jmethodID start_scan_method = this->env->GetStaticMethodID(adapter_class, "startScan", "(Ljava/lang/String;Z)J");
-  jstring java_table_name = this->string_to_java_string(table_name);
+  jstring java_table_name = string_to_java_string(table_name);
 
   jboolean java_scan_boolean = scan ? JNI_TRUE : JNI_FALSE;
 
@@ -613,7 +613,7 @@ int CloudHandler::write_row_helper(uchar* buf)
 
   jclass adapter_class = this->adapter();
   jmethodID write_row_method = this->env->GetStaticMethodID(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;)Z");
-  jstring java_table_name = this->string_to_java_string(this->table->alias);
+  jstring java_table_name = string_to_java_string(this->table->alias);
   jobject java_row_map = sql_to_java();
   this->env->CallStaticBooleanMethod(adapter_class, write_row_method, java_table_name, java_row_map, uniReg);
 
@@ -637,7 +637,7 @@ jobject CloudHandler::sql_to_java()
   for (Field **field_ptr=table->field; *field_ptr; field_ptr++)
   {
     Field * field = *field_ptr;
-    jstring field_name = this->string_to_java_string(field->field_name);
+    jstring field_name = string_to_java_string(field->field_name);
 
     memset(rec_buffer->buffer, 0, rec_buffer->length);
 
@@ -749,7 +749,7 @@ const char* CloudHandler::java_to_string(jstring j_str)
   return this->env->GetStringUTFChars(j_str, NULL);
 }
 
-jstring CloudHandler::string_to_java_string(const char* string)
+jstring CloudHandler::string_to_java_string(const char *string)
 {
   return this->env->NewStringUTF(string);
 }
@@ -985,6 +985,20 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
       key_copy = new uchar[length];
       memcpy(key_copy, timeString, length);
       key_len = length;
+    }
+    break;
+    case MYSQL_TYPE_VARCHAR:
+    {
+      /**
+       * VARCHARs are prefixed with two bytes that represent the actual length of the value.
+       * So we need to read the length into actual_length, then copy those bits to key_copy.
+       * Thank you, MySQL...
+       */
+      uint16_t *short_len_ptr = (uint16_t *)key;
+      key_len = (uint)(*short_len_ptr);
+      key += 2;
+      key_copy = new uchar[key_len];
+      memcpy(key_copy, key, key_len);
     }
     break;
     default:

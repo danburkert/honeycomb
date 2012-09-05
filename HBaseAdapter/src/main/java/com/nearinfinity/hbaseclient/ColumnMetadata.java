@@ -11,15 +11,8 @@ public enum ColumnMetadata {
     NONE("None".getBytes()),
     IS_NULLABLE("IsNullable".getBytes()),
     PRIMARY_KEY("PrimaryKey".getBytes()),
-    STRING("String".getBytes()),
-    LONG("Long".getBytes()),
-    ULONG("ULong".getBytes()),
-    DOUBLE("Double".getBytes()),
-    TIME("Time".getBytes()),
-    DATE("Date".getBytes()),
-    DATETIME("DateTime".getBytes()),
-    BINARY("Binary".getBytes()),
-    DECIMAL("Decimal".getBytes());
+    MAX_LENGTH("MaxLength".getBytes()),
+    COLUMN_TYPE("ColumnType".getBytes());
 
     private byte[] value;
 
