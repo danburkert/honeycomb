@@ -209,7 +209,7 @@ int CloudHandler::rnd_init(bool scan)
 
   jclass adapter_class = this->adapter();
   jmethodID start_scan_method = this->env->GetStaticMethodID(adapter_class, "startScan", "(Ljava/lang/String;Z)J");
-  jstring java_table_name = this->string_to_java_string(table_name);
+  jstring java_table_name = string_to_java_string(table_name);
 
   jboolean java_scan_boolean = scan ? JNI_TRUE : JNI_FALSE;
 
@@ -612,27 +612,10 @@ int CloudHandler::write_row_helper(uchar* buf)
   DBUG_ENTER("CloudHandler::write_row_helper");
 
   jclass adapter_class = this->adapter();
-  jmethodID write_row_method = this->env->GetStaticMethodID(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;[B)Z");
-  jstring java_table_name = this->string_to_java_string(this->table->alias);
+  jmethodID write_row_method = this->env->GetStaticMethodID(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;)Z");
+  jstring java_table_name = string_to_java_string(this->table->alias);
   jobject java_row_map = sql_to_java();
-  uint32 row_length = this->max_row_length();
-  jbyteArray uniReg = this->env->NewByteArray(row_length);
-  uchar* buffer = new uchar[row_length];
-  memcpy(buffer, buf, table->s->null_bytes);
-  uchar* ptr = buffer + table->s->null_bytes;
-  for (Field **field_ptr = table->field ; *field_ptr ; field_ptr++)
-  {
-    Field* field = *field_ptr;
-    if (!field->is_null())
-    {
-      ptr = field->pack(ptr, buf + field->offset(buf));
-    }
-  }
-
-  this->env->SetByteArrayRegion(uniReg, 0, row_length, (jbyte*)buffer);
-  delete[] buffer;
-
-  this->env->CallStaticBooleanMethod(adapter_class, write_row_method, java_table_name, java_row_map, uniReg);
+  this->env->CallStaticBooleanMethod(adapter_class, write_row_method, java_table_name, java_row_map);
 
   DBUG_RETURN(0);
 }
@@ -654,7 +637,7 @@ jobject CloudHandler::sql_to_java()
   for (Field **field_ptr=table->field; *field_ptr; field_ptr++)
   {
     Field * field = *field_ptr;
-    jstring field_name = this->string_to_java_string(field->field_name);
+    jstring field_name = string_to_java_string(field->field_name);
 
     memset(rec_buffer->buffer, 0, rec_buffer->length);
 
@@ -766,7 +749,7 @@ const char* CloudHandler::java_to_string(jstring j_str)
   return this->env->GetStringUTFChars(j_str, NULL);
 }
 
-jstring CloudHandler::string_to_java_string(const char* string)
+jstring CloudHandler::string_to_java_string(const char *string)
 {
   return this->env->NewStringUTF(string);
 }
@@ -1004,6 +987,20 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
       key_len = length;
     }
     break;
+    case MYSQL_TYPE_VARCHAR:
+    {
+      /**
+       * VARCHARs are prefixed with two bytes that represent the actual length of the value.
+       * So we need to read the length into actual_length, then copy those bits to key_copy.
+       * Thank you, MySQL...
+       */
+      uint16_t *short_len_ptr = (uint16_t *)key;
+      key_len = (uint)(*short_len_ptr);
+      key += 2;
+      key_copy = new uchar[key_len];
+      memcpy(key_copy, key, key_len);
+    }
+    break;
     default:
       key_copy = new uchar[key_len];
       memcpy(key_copy, key, key_len);
@@ -1015,18 +1012,10 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
   delete[] key_copy;
   jobject index_row = this->env->CallStaticObjectMethod(adapter_class, index_read_method, java_scan_id, java_key, java_find_flag);
 
-  jclass index_row_class = find_jni_class("IndexRow", this->env);
-  jmethodID get_unireg_method = this->env->GetMethodID(index_row_class, "getUnireg", "()[B");
-  jmethodID get_uuid_method = this->env->GetMethodID(index_row_class, "getUUID", "()[B");
-
-  jbyteArray uniReg = (jbyteArray) this->env->CallObjectMethod(index_row, get_unireg_method);
-  if(uniReg == NULL)
+  if(read_index_row(index_row, buf) == HA_ERR_END_OF_FILE)
   {
     DBUG_RETURN(HA_ERR_END_OF_FILE);
   }
-
-  this->store_uuid_ref(index_row, get_uuid_method);
-  this->unpack_index(buf, uniReg);
 
   DBUG_RETURN(0);
 }
@@ -1069,18 +1058,10 @@ int CloudHandler::index_next(uchar *buf)
   jlong java_scan_id = this->curr_scan_id;
   jobject index_row = this->env->CallStaticObjectMethod(adapter_class, index_next_method, java_scan_id);
 
-  jclass index_row_class = find_jni_class("IndexRow", this->env);
-  jmethodID get_unireg_method = this->env->GetMethodID(index_row_class, "getUnireg", "()[B");
-  jmethodID get_uuid_method = this->env->GetMethodID(index_row_class, "getUUID", "()[B");
-
-  jbyteArray uniReg = (jbyteArray) this->env->CallObjectMethod(index_row, get_unireg_method);
-  if(uniReg == NULL)
+  if(read_index_row(index_row, buf) == HA_ERR_END_OF_FILE)
   {
     DBUG_RETURN(HA_ERR_END_OF_FILE);
   }
-
-  this->store_uuid_ref(index_row, get_uuid_method);
-  this->unpack_index(buf, uniReg);
 
   MYSQL_READ_ROW_DONE(rc);
 
@@ -1120,25 +1101,6 @@ jobject CloudHandler::java_find_flag(enum ha_rkey_function find_flag)
   return this->env->GetStaticObjectField(read_class, field_id);
 }
 
-void CloudHandler::unpack_index(uchar* buf, jbyteArray uniReg)
-{
-  jbyte* buffer = this->env->GetByteArrayElements(uniReg, NULL);
-  jbyte* ptr = buffer;
-  memset(buf, 0, table->s->reclength);
-  memcpy(buf, ptr, table->s->null_bytes);
-  ptr += table->s->null_bytes;
-  for (Field **field_ptr = table->field ; *field_ptr ; field_ptr++)
-  {
-    Field* field = *field_ptr;
-    if (!field->is_null_in_record(buf))
-    {
-      ptr = (jbyte*)field->unpack(buf + field->offset(table->record[0]), (uchar*)ptr);
-    }
-  }
-
-  this->env->ReleaseByteArrayElements(uniReg, buffer, 0);
-}
-
 int CloudHandler::index_prev(uchar *buf)
 {
   int rc = 0;
@@ -1155,20 +1117,11 @@ int CloudHandler::index_prev(uchar *buf)
   jlong java_scan_id = this->curr_scan_id;
   jobject index_row = this->env->CallStaticObjectMethod(adapter_class, index_next_method, java_scan_id);
 
-  jclass index_row_class = find_jni_class("IndexRow", this->env);
-  jmethodID get_unireg_method = this->env->GetMethodID(index_row_class, "getUnireg", "()[B");
-  jmethodID get_uuid_method = this->env->GetMethodID(index_row_class, "getUUID", "()[B");
-
-  jbyteArray uniReg = (jbyteArray) this->env->CallObjectMethod(index_row, get_unireg_method);
-  if(uniReg == NULL)
+  if(read_index_row(index_row, buf) == HA_ERR_END_OF_FILE)
   {
     dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
     DBUG_RETURN(HA_ERR_END_OF_FILE);
   }
-
-  this->store_uuid_ref(index_row, get_uuid_method);
-
-  this->unpack_index(buf, uniReg);
 
   dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
 
@@ -1190,18 +1143,10 @@ int CloudHandler::index_first(uchar *buf)
   jobject java_find_flag = this->env->GetStaticObjectField(read_class, field_id);
   jobject index_row = this->env->CallStaticObjectMethod(adapter_class, index_read_method, java_scan_id, NULL, java_find_flag);
 
-  jclass index_row_class = find_jni_class("IndexRow", this->env);
-  jmethodID get_unireg_method = this->env->GetMethodID(index_row_class, "getUnireg", "()[B");
-  jmethodID get_uuid_method = this->env->GetMethodID(index_row_class, "getUUID", "()[B");
-
-  jbyteArray uniReg = (jbyteArray) this->env->CallObjectMethod(index_row, get_unireg_method);
-  if(uniReg == NULL)
+  if(read_index_row(index_row, buf) == HA_ERR_END_OF_FILE)
   {
     DBUG_RETURN(HA_ERR_END_OF_FILE);
   }
-
-  this->store_uuid_ref(index_row, get_uuid_method);
-  this->unpack_index(buf, uniReg);
 
   DBUG_RETURN(0);
 }
@@ -1219,18 +1164,10 @@ int CloudHandler::index_last(uchar *buf)
   jobject java_find_flag = this->env->GetStaticObjectField(read_class, field_id);
   jobject index_row = this->env->CallStaticObjectMethod(adapter_class, index_read_method, java_scan_id, NULL, java_find_flag);
 
-  jclass index_row_class = find_jni_class("IndexRow", this->env);
-  jmethodID get_unireg_method = this->env->GetMethodID(index_row_class, "getUnireg", "()[B");
-  jmethodID get_uuid_method = this->env->GetMethodID(index_row_class, "getUUID", "()[B");
-
-  jbyteArray uniReg = (jbyteArray) this->env->CallObjectMethod(index_row, get_unireg_method);
-  if(uniReg == NULL)
+  if(read_index_row(index_row, buf) == HA_ERR_END_OF_FILE)
   {
     DBUG_RETURN(HA_ERR_END_OF_FILE);
   }
-
-  this->store_uuid_ref(index_row, get_uuid_method);
-  this->unpack_index(buf, uniReg);
 
   DBUG_RETURN(0);
 }
@@ -1240,6 +1177,25 @@ jobject CloudHandler::java_find_flag_by_name(char *name)
   jclass read_class = find_jni_class("IndexReadType", this->env);
   jfieldID field_id = this->env->GetStaticFieldID(read_class, name, "Lcom/nearinfinity/mysqlengine/jni/IndexReadType;");
   return this->env->GetStaticObjectField(read_class, field_id);
+}
+
+int CloudHandler::read_index_row(jobject index_row, uchar* buf)
+{
+  jclass index_row_class = find_jni_class("IndexRow", this->env);
+  jmethodID get_uuid_method = this->env->GetMethodID(index_row_class, "getUUID", "()[B");
+  jmethodID get_rowmap_method = this->env->GetMethodID(index_row_class, "getRowMap", "()Ljava/util/Map;");
+
+  jobject rowMap = this->env->CallObjectMethod(index_row, get_rowmap_method);
+  if(rowMap == NULL)
+  {
+    return HA_ERR_END_OF_FILE;
+  }
+
+  this->store_uuid_ref(index_row, get_uuid_method);
+
+  this->java_to_sql(buf, rowMap);
+
+  return 0;
 }
 
 bool CloudHandler::is_key_null(const uchar *key)

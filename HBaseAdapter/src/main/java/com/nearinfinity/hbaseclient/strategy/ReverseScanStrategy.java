@@ -1,10 +1,9 @@
 package com.nearinfinity.hbaseclient.strategy;
 
-import com.nearinfinity.hbaseclient.ColumnMetadata;
-import com.nearinfinity.hbaseclient.RowKeyFactory;
-import com.nearinfinity.hbaseclient.ScanFactory;
-import com.nearinfinity.hbaseclient.TableInfo;
+import com.nearinfinity.hbaseclient.*;
 import org.apache.hadoop.hbase.client.Scan;
+
+import java.nio.ByteBuffer;
 
 /**
  * Created with IntelliJ IDEA.
@@ -23,10 +22,10 @@ public class ReverseScanStrategy extends ScanStrategyBase {
     public Scan getScan(TableInfo info) {
         long tableId = info.getId();
         long columnId = info.getColumnIdByName(columnName);
-        ColumnMetadata columnType = info.getColumnTypeByName(columnName);
+        ColumnType columnType = info.getColumnTypeByName(columnName);
 
-        byte[] startKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId, value, columnType);
-        byte[] endKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId+1, new byte[0], ColumnMetadata.NONE);
+        byte[] startKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId, value, columnType, 0);
+        byte[] endKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId+1, new byte[0], ColumnType.NONE, 0);
 
         return ScanFactory.buildScan(startKey, endKey);
     }

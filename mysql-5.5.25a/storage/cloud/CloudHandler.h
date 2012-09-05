@@ -38,7 +38,6 @@ class CloudHandler : public handler
     void destroy_record_buffer(record_buffer *r);
     CloudShare *get_share(const char *table_name, TABLE *table);
     uint32 max_row_length();
-    void unpack_index(uchar* buf, jbyteArray uniReg);
     jobject java_find_flag(enum ha_rkey_function find_flag);
     Field *index_field;
 
@@ -50,7 +49,7 @@ class CloudHandler : public handler
     jclass hbase_adapter;
 
     const char* java_to_string(jstring str);
-    jstring string_to_java_string(const char*);
+    jstring string_to_java_string(const char *string);
     jobject create_java_map();
     jobject java_map_insert(jobject java_map, jobject key, jobject value);
     jbyteArray java_map_get(jobject java_map, jstring key);
@@ -73,6 +72,7 @@ class CloudHandler : public handler
     void detach_thread();
     void store_uuid_ref(jobject index_row, jmethodID get_uuid_method);
     void bytes_to_long(const uchar* buff, unsigned int buff_length, bool is_signed, uchar* long_buff);
+    int read_index_row(jobject index_row, uchar* buf);
 
     void reverse_bytes(uchar *begin, uint length)
     {

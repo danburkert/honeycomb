@@ -1,18 +1,18 @@
 --source enginetype.inc
 
 let $string_type = VARCHAR(15);
-let $val1  = 'AAAAAAAAA';
+let $val1  = 'AAAAAAA';
 let $val2  = 'aaaaaaaaa';
-let $val3  = 'BBBBBBBBB';
+let $val3  = 'BBBBBBBB';
 let $val4  = 'bbbbbbbbb';
-let $val5  = 'ccccccccc';
+let $val5  = 'cccccccc';
 let $val6  = 'CCCCCCCCC';
-let $val7  = 'aAaAaAaAa';
+let $val7  = 'aAaAaAaA';
 let $val8  = '012345678912345';
-let $val9  = 'BBBZ     ';
+let $val9  = 'BBBZxxxx ';
 let $val10 = '!@#\$%^&*()';
-let $val11 = '\n\r\b\0';
-let $val12 = '	';
+let $val11 = 'nrb0';
+let $val12 = ' a ';
 let $val13 = '';
 let $comp_val  = 'BBBZ';
 
