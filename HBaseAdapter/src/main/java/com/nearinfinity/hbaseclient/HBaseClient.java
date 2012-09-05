@@ -194,6 +194,10 @@ public class HBaseClient {
         //Get the table id from HBase
         Get tableIdGet = new Get(RowKeyFactory.ROOT);
         Result result = table.get(tableIdGet);
+        if (result.isEmpty()) {
+            throw new TableNotFoundException(tableName + " was not found.");
+        }
+
         long tableId = ByteBuffer.wrap(result.getValue(NIC, tableName.getBytes())).getLong();
 
         TableInfo info = new TableInfo(tableName, tableId);
