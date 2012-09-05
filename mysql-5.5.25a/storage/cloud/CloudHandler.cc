@@ -612,26 +612,9 @@ int CloudHandler::write_row_helper(uchar* buf)
   DBUG_ENTER("CloudHandler::write_row_helper");
 
   jclass adapter_class = this->adapter();
-  jmethodID write_row_method = this->env->GetStaticMethodID(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;[B)Z");
+  jmethodID write_row_method = this->env->GetStaticMethodID(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;)Z");
   jstring java_table_name = this->string_to_java_string(this->table->alias);
   jobject java_row_map = sql_to_java();
-  uint32 row_length = this->max_row_length();
-  jbyteArray uniReg = this->env->NewByteArray(row_length);
-  uchar* buffer = new uchar[row_length];
-  memcpy(buffer, buf, table->s->null_bytes);
-  uchar* ptr = buffer + table->s->null_bytes;
-  for (Field **field_ptr = table->field ; *field_ptr ; field_ptr++)
-  {
-    Field* field = *field_ptr;
-    if (!field->is_null())
-    {
-      ptr = field->pack(ptr, buf + field->offset(buf));
-    }
-  }
-
-  this->env->SetByteArrayRegion(uniReg, 0, row_length, (jbyte*)buffer);
-  delete[] buffer;
-
   this->env->CallStaticBooleanMethod(adapter_class, write_row_method, java_table_name, java_row_map, uniReg);
 
   DBUG_RETURN(0);
