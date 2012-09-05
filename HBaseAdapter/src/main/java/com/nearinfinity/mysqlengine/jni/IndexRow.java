@@ -4,7 +4,12 @@ import com.nearinfinity.hbaseclient.ResultParser;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.log4j.Logger;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.nio.ByteBuffer;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
 
 /**
@@ -15,31 +20,21 @@ import java.util.UUID;
  * To change this template use File | Settings | File Templates.
  */
 public class IndexRow {
-    private byte[] unireg;
     private byte[] uuid;
+    private TreeMap<String, byte[]> rowMap;
 
     private static final Logger logger = Logger.getLogger(IndexRow.class);
 
     public IndexRow() {
-        this.unireg = null;
         this.uuid = null;
     }
 
-    public IndexRow(byte[] unireg, byte[] uuid) {
-        this.unireg = unireg;
-        this.uuid = uuid;
-    }
-
-    public byte[] getUnireg() {
-        return this.unireg;
+    public Map<String, byte[]> getRowMap() {
+        return this.rowMap;
     }
 
     public byte[] getUUID() {
         return uuid;
-    }
-
-    public void setUnireg(byte[] unireg) {
-        this.unireg = unireg;
     }
 
     public void setUUID(UUID rowUuid) {
@@ -50,7 +45,15 @@ public class IndexRow {
     }
 
     public void parseResult(Result result) {
-        this.setUnireg(ResultParser.parseUnireg(result));
+        byte[] mapBytes = ResultParser.parseUnireg(result);
+        try {
+            ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(mapBytes));
+            this.rowMap = (TreeMap<String, byte[]>) in.readObject();
+            in.close();
+        } catch (IOException e) {
+        } catch (ClassNotFoundException e) {
+        }
+
         this.setUUID(ResultParser.parseUUID(result));
     }
 }
