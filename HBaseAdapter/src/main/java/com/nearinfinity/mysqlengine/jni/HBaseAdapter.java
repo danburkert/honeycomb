@@ -134,9 +134,9 @@ public class HBaseAdapter {
         conn.close();
     }
 
-    public static boolean writeRow(String tableName, Map<String, byte[]> values, byte[] unireg) throws HBaseAdapterException {
+    public static boolean writeRow(String tableName, Map<String, byte[]> values) throws HBaseAdapterException {
         try {
-            client.writeRow(tableName, values, unireg);
+            client.writeRow(tableName, values);
         } catch (Exception e) {
             logger.error("writeRow-> Exception:", e);
             throw new HBaseAdapterException("writeRow", e);
