@@ -2,7 +2,6 @@ package com.nearinfinity.hbaseclient.filter;
 
 import org.apache.hadoop.hbase.filter.FilterBase;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.log4j.Logger;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -48,7 +47,8 @@ public class ExactValueFilter extends FilterBase {
     }
 
     private byte[] parseValueFromIndexRow(byte[] rowKey) {
-        return wrapAndGet(rowKey, 17, value.length);
+        //Get the row minus the last 16 bytes (UUID) minus the first 17 bytes (prefix)
+        return wrapAndGet(rowKey, 17, rowKey.length - 33);
     }
 
     private byte[] wrapAndGet(byte[] array, int offset, int length) {

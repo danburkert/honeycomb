@@ -76,7 +76,7 @@ public class HBaseAdapter {
         }
     }
 
-    public static boolean createTable(String tableName, Map<String, List<ColumnMetadata>> columns) throws HBaseAdapterException {
+    public static boolean createTable(String tableName, Map<String, Map<ColumnMetadata, byte[]>> columns) throws HBaseAdapterException {
         logger.info("creatingTable-> tableName:" + tableName);
 
         try {
@@ -117,7 +117,7 @@ public class HBaseAdapter {
             }
 
             //Set values and UUID
-            Map<String, byte[]> values = client.parseRow(result, conn.getTableName());
+            Map<String, byte[]> values = client.parseDataRow(result, conn.getTableName());
             UUID uuid = ResultParser.parseUUID(result);
             row.parse(values, uuid);
         } catch (Exception e) {
@@ -134,9 +134,9 @@ public class HBaseAdapter {
         conn.close();
     }
 
-    public static boolean writeRow(String tableName, Map<String, byte[]> values, byte[] unireg) throws HBaseAdapterException {
+    public static boolean writeRow(String tableName, Map<String, byte[]> values) throws HBaseAdapterException {
         try {
-            client.writeRow(tableName, values, unireg);
+            client.writeRow(tableName, values);
         } catch (Exception e) {
             logger.error("writeRow-> Exception:", e);
             throw new HBaseAdapterException("writeRow", e);
@@ -216,7 +216,7 @@ public class HBaseAdapter {
 
             conn.getScanner().setLastResult(result);
 
-            Map<String, byte[]> values = client.parseRow(result, conn.getTableName());
+            Map<String, byte[]> values = client.parseDataRow(result, conn.getTableName());
             row.setUUID(rowUuid);
             row.setRowMap(values);
         } catch (Exception e) {

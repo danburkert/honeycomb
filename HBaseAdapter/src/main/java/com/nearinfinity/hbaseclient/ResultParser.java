@@ -3,7 +3,6 @@ package com.nearinfinity.hbaseclient;
 import org.apache.hadoop.hbase.client.Result;
 
 import java.nio.ByteBuffer;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -21,7 +20,7 @@ public class ResultParser {
     }
 
     public static byte[] parseUnireg(Result result) {
-        return result.getValue(Constants.NIC, Constants.UNIREG);
+        return result.getValue(Constants.NIC, Constants.VALUE_MAP);
     }
 
     public static byte[] parseValue(Result result) {
