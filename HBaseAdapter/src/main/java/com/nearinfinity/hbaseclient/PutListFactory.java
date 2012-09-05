@@ -40,7 +40,7 @@ public class PutListFactory {
             if (value == null) {
                 // Build null index
                 byte[] nullIndexRow = RowKeyFactory.buildNullIndexKey(tableId, columnId, rowId);
-                putList.add(new Put(nullIndexRow).add(Constants.NIC, Constants.UNIREG, rowByteArray));
+                putList.add(new Put(nullIndexRow).add(Constants.NIC, Constants.VALUE_MAP, rowByteArray));
             } else {
 
                 int padLength = 0;
@@ -62,7 +62,7 @@ public class PutListFactory {
 
                 // Build value index key
                 byte[] indexRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, canonicalValue, rowId);
-                putList.add(new Put(indexRow).add(Constants.NIC, Constants.UNIREG, rowByteArray));
+                putList.add(new Put(indexRow).add(Constants.NIC, Constants.VALUE_MAP, rowByteArray));
 
                 // Build secondary index key
                 byte[] secondaryIndexRow = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId, canonicalValue, columnType);
