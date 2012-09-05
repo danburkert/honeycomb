@@ -117,7 +117,7 @@ public class HBaseClient {
         tableCache.put(tableName, new TableInfo(tableName, tableId));
     }
 
-    private void addColumns(String tableName, Map<String, List<ColumnMetadata>> columns, List<Put> puts) throws IOException {
+    private void addColumns(String tableName, Map<String, Map<ColumnMetadata, byte[]>> columns, List<Put> puts) throws IOException {
         //Get table id from cache
         long tableId = tableCache.get(tableName).getId();
 
@@ -140,8 +140,9 @@ public class HBaseClient {
             byte[] columnInfoBytes = RowKeyFactory.buildColumnInfoKey(tableId, columnId);
             Put columnInfoPut = new Put(columnInfoBytes);
 
-            for (ColumnMetadata meta : columns.get(columnName)) {
-                columnInfoPut.add(NIC, meta.getValue(), columnName.getBytes());
+            Map<ColumnMetadata, byte[]> metadata = columns.get(columnName);
+            for (ColumnMetadata meta : metadata.keySet()) {
+                columnInfoPut.add(NIC, meta.getValue(), metadata.get(meta));
             }
 
             puts.add(columnInfoPut);
@@ -151,7 +152,7 @@ public class HBaseClient {
         }
     }
 
-    public void createTableFull(String tableName, Map<String, List<ColumnMetadata>> columns) throws IOException {
+    public void createTableFull(String tableName, Map<String, Map<ColumnMetadata, byte[]>> columns) throws IOException {
         //Batch put list
         List<Put> putList = new LinkedList<Put>();
 
@@ -165,10 +166,6 @@ public class HBaseClient {
         writeBuffer.put(putList);
 
         writeBuffer.flushCommits();
-    }
-
-    public void writeRow(String tableName, Map<String, byte[]> values) throws IOException {
-        writeRow(tableName, values, null);
     }
 
     public void writeRow(String tableName, Map<String, byte[]> values, byte[] unireg) throws IOException {
@@ -207,19 +204,30 @@ public class HBaseClient {
 
             //Get column id and value
             long columnId = info.getColumnIdByName(columnName);
-            ColumnMetadata columnType = info.getColumnTypeByName(columnName);
+            ColumnType columnType = info.getColumnTypeByName(columnName);
             byte[] value = values.get(columnName);
-
 
             if (value == null) {
                 // Build null index
                 byte[] nullIndexRow = RowKeyFactory.buildNullIndexKey(tableId, columnId, rowId);
                 putList.add(new Put(nullIndexRow).add(NIC, uniregQualifier, uniregValue));
             } else {
+
+                int padLength = 0;
+                if (columnType == ColumnType.STRING || columnType == ColumnType.BINARY) {
+                    byte[] maxLengthArray = info.getColumnMetadata(columnName, ColumnMetadata.MAX_LENGTH);
+                    padLength = (int) ByteBuffer.wrap(maxLengthArray).getLong() - value.length;
+                }
+
                 allRowsNull = false;
                 // Add data column to put
                 dataRow.add(NIC, Bytes.toBytes(columnId), value);
 
+                /**
+                 * We need to get the canonical value for STRING types. The secondary index will store all values as
+                 * canonical values. Then, when looking up in the primary index, the row key will contain the matching
+                 * canonical value. The unireg and data rows store the actual value.
+                 */
                 byte[] canonicalValue = ValueEncoder.canonicalValue(value, columnType);
 
                 // Build value index key
@@ -231,7 +239,7 @@ public class HBaseClient {
                 putList.add(new Put(secondaryIndexRow).add(NIC, VALUE_COLUMN, canonicalValue));
 
                 // Build reverse index key
-                byte[] reverseIndexRow = RowKeyFactory.buildReverseIndexKey(tableId, columnId, canonicalValue, columnType);
+                byte[] reverseIndexRow = RowKeyFactory.buildReverseIndexKey(tableId, columnId, canonicalValue, columnType, padLength);
                 putList.add(new Put(reverseIndexRow).add(NIC, VALUE_COLUMN, canonicalValue));
             }
         }
@@ -284,8 +292,8 @@ public class HBaseClient {
         return info;
     }
 
-    public List<ColumnMetadata> getMetadataForColumn(long tableId, long columnId) throws IOException {
-        ArrayList<ColumnMetadata> metadataList = new ArrayList<ColumnMetadata>();
+    public Map<ColumnMetadata, byte[]> getMetadataForColumn(long tableId, long columnId) throws IOException {
+        HashMap<ColumnMetadata, byte[]> metadataMap = new HashMap<ColumnMetadata, byte[]>();
 
         Get metadataGet = new Get(RowKeyFactory.buildColumnInfoKey(tableId, columnId));
         Result result = table.get(metadataGet);
@@ -298,16 +306,16 @@ public class HBaseClient {
 
             try {
                 metaDataItem = ColumnMetadata.valueOf(metadataString);
-                metadataList.add(metaDataItem);
+                metadataMap.put(metaDataItem, metadata.get(qualifier));
             } catch (IllegalArgumentException e) {
 
             }
         }
 
-        return metadataList;
+        return metadataMap;
     }
 
-    public Map<String, byte[]> parseRow(Result result, String tableName) throws IOException {
+    public Map<String, byte[]> parseDataRow(Result result, String tableName) throws IOException {
         TableInfo info = getTableInfo(tableName);
 
         //Get columns returned from Result
@@ -338,8 +346,6 @@ public class HBaseClient {
         long tableId = info.getId();
 
         List<Delete> deleteList = new LinkedList<Delete>();
-
-        Filter uuidFilter = new UUIDFilter(uuid);
 
         //Delete dataRows
         byte[] dataRowKey = RowKeyFactory.buildDataKey(tableId, uuid);
