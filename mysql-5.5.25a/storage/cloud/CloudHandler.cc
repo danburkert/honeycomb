@@ -615,7 +615,7 @@ int CloudHandler::write_row_helper(uchar* buf)
   jmethodID write_row_method = this->env->GetStaticMethodID(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;)Z");
   jstring java_table_name = string_to_java_string(this->table->alias);
   jobject java_row_map = sql_to_java();
-  this->env->CallStaticBooleanMethod(adapter_class, write_row_method, java_table_name, java_row_map, uniReg);
+  this->env->CallStaticBooleanMethod(adapter_class, write_row_method, java_table_name, java_row_map);
 
   DBUG_RETURN(0);
 }
