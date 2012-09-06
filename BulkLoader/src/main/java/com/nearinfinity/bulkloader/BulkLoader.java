@@ -6,15 +6,17 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.hbase.mapreduce.TableOutputFormat;
+import org.apache.hadoop.hbase.mapreduce.*;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,11 +30,11 @@ public class BulkLoader {
     public enum Counters { ROWS, FAILED_ROWS }
 
     static class BulkLoaderMapper
-            extends Mapper<LongWritable, Text, ImmutableBytesWritable, Writable> {
+            extends Mapper<LongWritable, Text, ImmutableBytesWritable, Put> {
 
         private byte[] family = null;
-        private TableInfo table_info = null;
-        private String[] column_names = null;
+        private TableInfo tableInfo = null;
+        private String[] columnNames = null;
         private final ValueTransformer valueTransformer = new ValueTransformer();
 
 
@@ -41,43 +43,43 @@ public class BulkLoader {
                 throws IOException, InterruptedException {
 
             Configuration conf = context.getConfiguration();
-            String zk_quorum = conf.get("zk_quorum");
-            String my_table = conf.get("my_table");
-            String hb_table = conf.get("hb_table");
+            String zkQuorum = conf.get("zk_quorum");
+            String sqlTableName = conf.get("sql_table_name");
+            String hbaseTableName = conf.get("hb_table");
 
-            HBaseClient client = new HBaseClient(hb_table, zk_quorum);
+            HBaseClient client = new HBaseClient(hbaseTableName, zkQuorum);
 
-            table_info = client.getTableInfo(my_table);
+            tableInfo = client.getTableInfo(sqlTableName);
             family = conf.get("hb_family").getBytes();
-            column_names = conf.get("my_columns").split(",");
+            columnNames = conf.get("my_columns").split(",");
         }
 
         @Override
         public void map(LongWritable offset, Text line, Context context)
                 throws IOException {
             try {
-                String[] column_data = line.toString().split(",");
+                String[] columnData = line.toString().split(",");
 
-                if(column_data.length != column_names.length) {
+                if(columnData.length != columnNames.length) {
                     System.err.println("Row has wrong number of columns. Expected " +
-                        column_names.length + " got " + column_data.length + ". Line: " + line.toString());
+                        columnNames.length + " got " + columnData.length + ". Line: " + line.toString());
                     context.setStatus("Row with wrong number of columns: see logs.");
                     context.getCounter(Counters.FAILED_ROWS).increment(1);
                 }
 
-                Map<String, byte []> value_map = new TreeMap<String, byte []>();
+                Map<String, byte []> valueMap = new TreeMap<String, byte []>();
 
                 String name;
                 byte[] val;
                 ColumnType t;
-                for (int i = 0; i < column_data.length; i++) {
-                    name = column_names[i];
-                    t = table_info.getColumnTypeByName(name);
-                    val = ValueTransformer.transform(column_data[i], t);
-                    value_map.put(name, val);
+                for (int i = 0; i < columnData.length; i++) {
+                    name = columnNames[i];
+                    t = tableInfo.getColumnTypeByName(name);
+                    val = ValueTransformer.transform(columnData[i], t);
+                    valueMap.put(name, val);
                 }
 
-                java.util.List<Put> puts = PutListFactory.createPutList(value_map, table_info);
+                java.util.List<Put> puts = PutListFactory.createPutList(valueMap, tableInfo);
 
                 for (Put put : puts) {
                     context.write(new ImmutableBytesWritable(put.getRow()), put);
@@ -91,8 +93,8 @@ public class BulkLoader {
     }
 
     public static void main(String[] args) throws Exception {
-        if (args.length != 3) {
-            System.err.println("Usage: com.nearinfinity.bulkloader.BulkLoader <input path> <MySQL table name>" +
+        if (args.length < 4) {
+            System.err.println("Usage: com.nearinfinity.bulkloader.BulkLoader <input path> <output_path> <MySQL table name>" +
                     " <comma seperated MySQL column names>");
             System.exit(-1);
         }
@@ -105,32 +107,51 @@ public class BulkLoader {
             params.put(line.next(), line.next());
         }
 
-        String hb_table = params.get("hbase_table_name");
-        String hb_family = params.get("hbase_family");
-        String zk_quorum = params.get("zk_quorum");
+        String inputPath = args[0];
+        String outputPath = args[1];
+        String sqlTableName = args[2];
+        String columnNames = args[3];
 
-        String input_path = args[0];
-        String my_table = args[1];
-        String my_columns = args[2];
+        String hbaseTableName = params.get("hbase_table_name");
+        String hbaseFamilyName = params.get("hbase_family");
+        String zkQuorum = params.get("zk_quorum");
 
         Configuration conf = HBaseConfiguration.create();
 
-        conf.set("hb_family", hb_family);
-        conf.set("hb_table", hb_table);
-        conf.set("my_table", my_table);
-        conf.set("zk_quorum", zk_quorum);
-        conf.set("my_columns", my_columns);
+        conf.set("hb_family", hbaseFamilyName);
+        conf.set("hb_table", hbaseTableName);
+        conf.set("sql_table_name", sqlTableName);
+        conf.set("zk_quorum", zkQuorum);
+        conf.set("my_columns", columnNames);
 
-        Job job = new Job(conf, "Import from file " + input_path + " into table " + hb_table);
-        job.setJarByClass(com.nearinfinity.bulkloader.BulkLoader.class);
+        HTable table = new HTable(conf, hbaseTableName);
+        Job job = new Job(conf, "Import from file " + inputPath + " into table " + hbaseTableName);
+
+        job.setJarByClass(BulkLoader.class);
+        FileInputFormat.setInputPaths(job, new Path(inputPath));
+        job.setInputFormatClass(TextInputFormat.class);
+
         job.setMapperClass(BulkLoaderMapper.class);
-        job.setOutputFormatClass(TableOutputFormat.class);
-        job.getConfiguration().set(TableOutputFormat.OUTPUT_TABLE, hb_table);
-        job.setOutputKeyClass(ImmutableBytesWritable.class);
-        job.setOutputValueClass(Writable.class);
-        job.setNumReduceTasks(0);
-        FileInputFormat.addInputPath(job, new Path(input_path));
+        job.setMapOutputKeyClass(ImmutableBytesWritable.class);
+        job.setMapOutputValueClass(Put.class);
 
-        System.exit(job.waitForCompletion(true) ? 0 : 1);
+        job.setReducerClass(PutSortReducer.class);
+        FileOutputFormat.setOutputPath(job, new Path(outputPath));
+
+        HFileOutputFormat.configureIncrementalLoad(job, table);
+
+//        job.setJarByClass(com.nearinfinity.bulkloader.BulkLoader.class);
+//        job.setMapperClass(BulkLoaderMapper.class);
+//        job.setOutputFormatClass(TableOutputFormat.class);
+//        job.getConfiguration().set(TableOutputFormat.OUTPUT_TABLE, hbaseTableName);
+//        job.setOutputKeyClass(ImmutableBytesWritable.class);
+//        job.setOutputValueClass(Put.class);
+//        job.setNumReduceTasks(0);
+//        FileInputFormat.addInputPath(job, new Path(inputPath));
+
+        if (job.waitForCompletion(true)) {
+            LoadIncrementalHFiles fileLoader = new LoadIncrementalHFiles(conf);
+            fileLoader.doBulkLoad(new Path(outputPath), table);
+        }
   }
 }
