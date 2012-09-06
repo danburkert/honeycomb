@@ -1,5 +1,6 @@
 package com.nearinfinity.mysqlengine.jni;
 
+import com.nearinfinity.hbaseclient.Constants;
 import com.nearinfinity.hbaseclient.ResultParser;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.log4j.Logger;
@@ -46,6 +47,7 @@ public class IndexRow {
 
     public void parseResult(Result result) {
         byte[] mapBytes = ResultParser.parseUnireg(result);
+
         try {
             ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(mapBytes));
             this.rowMap = (TreeMap<String, byte[]>) in.readObject();

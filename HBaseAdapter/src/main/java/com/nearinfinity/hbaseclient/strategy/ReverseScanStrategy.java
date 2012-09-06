@@ -4,6 +4,7 @@ import com.nearinfinity.hbaseclient.*;
 import org.apache.hadoop.hbase.client.Scan;
 
 import java.nio.ByteBuffer;
+import java.util.UUID;
 
 /**
  * Created with IntelliJ IDEA.
@@ -14,6 +15,8 @@ import java.nio.ByteBuffer;
  */
 public class ReverseScanStrategy extends ScanStrategyBase {
 
+    private static final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(ReverseScanStrategy.class);
+
     public ReverseScanStrategy(String tableName, String columnName, byte[] value) {
         super(tableName, columnName, value);
     }
@@ -22,10 +25,11 @@ public class ReverseScanStrategy extends ScanStrategyBase {
     public Scan getScan(TableInfo info) {
         long tableId = info.getId();
         long columnId = info.getColumnIdByName(columnName);
+
         ColumnType columnType = info.getColumnTypeByName(columnName);
 
-        byte[] startKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId, value, columnType, 0);
-        byte[] endKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId+1, new byte[0], ColumnType.NONE, 0);
+        byte[] startKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId, value, columnType, Constants.ZERO_UUID, 0);
+        byte[] endKey = RowKeyFactory.buildEmptyValueReverseIndexKey(tableId, columnId+1, value, columnType, Constants.ZERO_UUID, 0);
 
         return ScanFactory.buildScan(startKey, endKey);
     }

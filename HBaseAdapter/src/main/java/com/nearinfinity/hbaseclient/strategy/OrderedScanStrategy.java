@@ -3,6 +3,8 @@ package com.nearinfinity.hbaseclient.strategy;
 import com.nearinfinity.hbaseclient.*;
 import org.apache.hadoop.hbase.client.Scan;
 
+import java.nio.ByteBuffer;
+
 /**
  * Created with IntelliJ IDEA.
  * User: jedstrom
@@ -22,8 +24,14 @@ public class OrderedScanStrategy extends ScanStrategyBase {
         long columnId = info.getColumnIdByName(this.columnName);
         ColumnType columnType = info.getColumnTypeByName(this.columnName);
 
-        byte[] startKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId, value, columnType);
-        byte[] endKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId+1, new byte[0], ColumnType.NONE);
+        if (columnType == ColumnType.STRING || columnType == ColumnType.BINARY) {
+            byte[] maxLengthArray = info.getColumnMetadata(columnName, ColumnMetadata.MAX_LENGTH);
+            int maxLength = (int) ByteBuffer.wrap(maxLengthArray).getLong();
+            value = new byte[maxLength];
+        }
+
+        byte[] startKey = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, Constants.ZERO_UUID, columnType, 0);
+        byte[] endKey = RowKeyFactory.buildValueIndexKey(tableId, columnId + 1, value, Constants.ZERO_UUID, columnType, 0);
 
         return ScanFactory.buildScan(startKey, endKey);
     }
