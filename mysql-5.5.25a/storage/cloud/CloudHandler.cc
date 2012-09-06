@@ -13,7 +13,6 @@
 #include "m_string.h"
 
 #include <sys/time.h>
-double real_time(timeval start);
 const char **CloudHandler::bas_ext() const
 {
   static const char *cloud_exts[] =
@@ -103,10 +102,7 @@ int CloudHandler::update_row(const uchar *old_data, uchar *new_data)
   delete_row_helper();
   write_row_helper(new_data);
 
-  jclass adapter_class = this->adapter();
-  jmethodID end_write_method = this->env->GetStaticMethodID(adapter_class, "flushWrites", "()V");
-  this->env->CallStaticVoidMethod(adapter_class, end_write_method);
-
+  this->flushWrites();
   DBUG_RETURN(0);
 }
 
@@ -290,7 +286,7 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
       case MYSQL_TYPE_ENUM:
         {
           long long long_value = *(long long*)val;
-          if(this->is_little_endian())
+          if(is_little_endian())
           {
             long_value = __builtin_bswap64(long_value);
           }
@@ -300,7 +296,7 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
       case MYSQL_TYPE_FLOAT:
       case MYSQL_TYPE_DOUBLE:
         double double_value;
-        if (this->is_little_endian())
+        if (is_little_endian())
         {
           long long* long_ptr = (long long*)val;
           longlong swapped_long = __builtin_bswap64(*long_ptr);
@@ -442,9 +438,7 @@ int CloudHandler::end_bulk_insert()
 {
   DBUG_ENTER("CloudHandler::end_bulk_insert");
 
-  jclass adapter_class = this->adapter();
-  jmethodID end_write_method = this->env->GetStaticMethodID(adapter_class, "flushWrites", "()V");
-  this->env->CallStaticVoidMethod(adapter_class, end_write_method);
+  this->flushWrites();
 
   detach_thread();
   DBUG_RETURN(0);
@@ -584,25 +578,6 @@ int CloudHandler::extra(enum ha_extra_function operation)
   DBUG_RETURN(0);
 }
 
-uint32 CloudHandler::max_row_length()
-{
-  uint32 length = (uint32)(table->s->reclength + table->s->fields*2);
-
-  uint *ptr, *end;
-  for (ptr = table->s->blob_field, end=ptr + table->s->blob_fields ; ptr != end ; ptr++)
-  {
-    if (!table->field[*ptr]->is_null())
-      length += 2 + ((Field_blob*)table->field[*ptr])->get_length();
-  }
-
-  return length;
-}
-
-double real_time(timeval start)
-{
-  return start.tv_sec + (start.tv_usec / 1000000.0);
-}
-
 /* Set up the JNI Environment, and then persist the row to HBase.
  * This helper calls sql_to_java, which returns the row information
  * as a jobject to be sent to the HBaseAdapter.
@@ -660,7 +635,7 @@ jobject CloudHandler::sql_to_java()
       case MYSQL_TYPE_ENUM:
         {
           long long integral_value = field->val_int();
-          if(this->is_little_endian())
+          if(is_little_endian())
           {
             integral_value = __builtin_bswap64(integral_value);
           }
@@ -673,7 +648,7 @@ jobject CloudHandler::sql_to_java()
         {
           double fp_value = field->val_real();
           long long* fp_ptr;
-          if(this->is_little_endian())
+        if(is_little_endian())
           {
             fp_ptr = (long long*)&fp_value;
             *fp_ptr = __builtin_bswap64(*fp_ptr);
@@ -902,7 +877,7 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
       const bool is_signed = !is_unsigned_field(this->index_field);
       bytes_to_long(key, key_len, is_signed, key_copy);
       key_len = sizeof(longlong);
-      this->make_big_endian(key_copy, key_len);
+      make_big_endian(key_copy, key_len);
       break;
     }
     case MYSQL_TYPE_YEAR:
@@ -914,7 +889,7 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
 
       bytes_to_long((uchar *)&int_val, sizeof(uint32_t), false, key_copy);
       key_len = sizeof(long long);
-      this->make_big_endian(key_copy, key_len);
+      make_big_endian(key_copy, key_len);
       break;
     }
     case MYSQL_TYPE_FLOAT:
@@ -1196,6 +1171,13 @@ int CloudHandler::read_index_row(jobject index_row, uchar* buf)
   this->java_to_sql(buf, rowMap);
 
   return 0;
+}
+
+void CloudHandler::flushWrites()
+{
+  jclass adapter_class = this->adapter();
+  jmethodID end_write_method = this->env->GetStaticMethodID(adapter_class, "flushWrites", "()V");
+  this->env->CallStaticVoidMethod(adapter_class, end_write_method);
 }
 
 bool CloudHandler::is_key_null(const uchar *key)

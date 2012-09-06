@@ -73,48 +73,7 @@ class CloudHandler : public handler
     void store_uuid_ref(jobject index_row, jmethodID get_uuid_method);
     void bytes_to_long(const uchar* buff, unsigned int buff_length, bool is_signed, uchar* long_buff);
     int read_index_row(jobject index_row, uchar* buf);
-
-    void reverse_bytes(uchar *begin, uint length)
-    {
-      for(int x = 0, y = length - 1; x < y; x++, y--)
-      {
-        uchar tmp = begin[x];
-        begin[x] = begin[y];
-        begin[y] = tmp;
-      }
-    }
-
-    bool is_little_endian()
-    {
-      #ifdef WORDS_BIG_ENDIAN
-        return false;
-      #else
-        return true;
-      #endif
-    }
-
-    float floatGet(const uchar *ptr)
-    {
-      float j;
-      #ifdef WORDS_BIGENDIAN
-        if (table->s->db_low_byte_first)
-        {
-          float4get(j,ptr);
-        }
-        else
-      #endif
-      memcpy(&j, ptr, sizeof(j));
-
-      return j;
-    }
-
-    void make_big_endian(uchar *begin, uint length)
-    {
-      if (is_little_endian())
-      {
-        reverse_bytes(begin, length);
-      }
-    }
+    void flushWrites();
 
     bool is_integral_field(int field_type)
     {
@@ -139,13 +98,6 @@ class CloudHandler : public handler
     jclass adapter()
     {
       return find_jni_class("HBaseAdapter", this->env);
-    }
-
-    // For those annoying times when you need the table name but actually have its file path
-    const char *extract_table_name_from_path(const char *path)
-    {
-      const char* ptr = strrchr(path, '/');
-      return ptr + 1;
     }
 
     /* Index methods */

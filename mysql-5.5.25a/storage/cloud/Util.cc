@@ -83,3 +83,50 @@ void extract_mysql_timestamp(long tmp, MYSQL_TIME *time, THD *thd)
   thd->variables.time_zone->gmt_sec_to_TIME(time, (my_time_t)tmp);
 }
 
+void reverse_bytes(uchar *begin, uint length)
+{
+  for(int x = 0, y = length - 1; x < y; x++, y--)
+  {
+    uchar tmp = begin[x];
+    begin[x] = begin[y];
+    begin[y] = tmp;
+  }
+}
+
+bool is_little_endian()
+{
+#ifdef WORDS_BIG_ENDIAN
+  return false;
+#else
+  return true;
+#endif
+}
+
+float floatGet(const uchar *ptr)
+{
+  float j;
+#ifdef WORDS_BIGENDIAN
+  if (table->s->db_low_byte_first)
+  {
+    float4get(j,ptr);
+  }
+  else
+#endif
+    memcpy(&j, ptr, sizeof(j));
+
+  return j;
+}
+
+void make_big_endian(uchar *begin, uint length)
+{
+  if (is_little_endian())
+  {
+    reverse_bytes(begin, length);
+  }
+}
+
+const char *extract_table_name_from_path(const char *path)
+{
+  const char* ptr = strrchr(path, '/');
+  return ptr + 1;
+}
