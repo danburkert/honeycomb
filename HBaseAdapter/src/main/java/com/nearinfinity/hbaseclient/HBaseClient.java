@@ -29,22 +29,6 @@ public class HBaseClient {
 
     private WriteBuffer writeBuffer;
 
-    private static final byte[] SQL = "sql".getBytes();
-
-    private static final byte[] NIC = "nic".getBytes();
-
-    private static final byte[] IS_DELETED = "isDeleted".getBytes();
-
-    private static final byte[] DELETED_VAL = Bytes.toBytes(1L);
-
-    private static final byte[] ROW_MAP = "rowmap".getBytes();
-
-    private static final byte[] VALUE_COLUMN = "value".getBytes();
-
-    private static final UUID ZERO_UUID = new UUID(0L, 0L);
-
-    private static final UUID FULL_UUID = UUID.fromString("ffffffff-ffff-ffff-ffff-ffffffffffff");
-
     private final ConcurrentHashMap<String, TableInfo> tableCache = new ConcurrentHashMap<String, TableInfo>();
 
     private static final Logger logger = Logger.getLogger(HBaseClient.class);
@@ -76,42 +60,42 @@ public class HBaseClient {
 
     private void initializeSqlTable() throws IOException, InterruptedException {
         HTableDescriptor sqlTableDescriptor;
-        HColumnDescriptor nicColumn = new HColumnDescriptor(NIC);
+        HColumnDescriptor nicColumn = new HColumnDescriptor(Constants.NIC);
 
-        if (!this.admin.tableExists(SQL)) {
+        if (!this.admin.tableExists(Constants.SQL)) {
             logger.info("Creating sql table");
-            sqlTableDescriptor = new HTableDescriptor(SQL);
+            sqlTableDescriptor = new HTableDescriptor(Constants.SQL);
             sqlTableDescriptor.addFamily(nicColumn);
 
             this.admin.createTable(sqlTableDescriptor);
         }
 
-        sqlTableDescriptor = this.admin.getTableDescriptor(SQL);
-        if (!sqlTableDescriptor.hasFamily(NIC)) {
+        sqlTableDescriptor = this.admin.getTableDescriptor(Constants.SQL);
+        if (!sqlTableDescriptor.hasFamily(Constants.NIC)) {
             logger.info("Adding nic column family to sql table");
 
-            if (!this.admin.isTableDisabled(SQL)) {
+            if (!this.admin.isTableDisabled(Constants.SQL)) {
                 logger.info("Disabling sql table");
-                this.admin.disableTable(SQL);
+                this.admin.disableTable(Constants.SQL);
             }
 
-            this.admin.addColumn(SQL, nicColumn);
+            this.admin.addColumn(Constants.SQL, nicColumn);
         }
 
-        if (this.admin.isTableDisabled(SQL)) {
+        if (this.admin.isTableDisabled(Constants.SQL)) {
             logger.info("Enabling sql table");
-            this.admin.enableTable(SQL);
+            this.admin.enableTable(Constants.SQL);
         }
 
-        this.admin.flush(SQL);
+        this.admin.flush(Constants.SQL);
     }
 
     private void createTable(String tableName, List<Put> puts) throws IOException {
         //Get and increment the table counter (assumes it exists)
-        long tableId = table.incrementColumnValue(RowKeyFactory.ROOT, NIC, new byte[0], 1);
+        long tableId = table.incrementColumnValue(RowKeyFactory.ROOT, Constants.NIC, new byte[0], 1);
 
         //Add a row with the table name
-        puts.add(new Put(RowKeyFactory.ROOT).add(NIC, tableName.getBytes(), Bytes.toBytes(tableId)));
+        puts.add(new Put(RowKeyFactory.ROOT).add(Constants.NIC, tableName.getBytes(), Bytes.toBytes(tableId)));
 
         //Cache the table
         tableCache.put(tableName, new TableInfo(tableName, tableId));
@@ -126,14 +110,14 @@ public class HBaseClient {
 
         //Allocate ids and compute start id
         long numColumns = columns.size();
-        long lastColumnId = table.incrementColumnValue(columnBytes, NIC, new byte[0], numColumns);
+        long lastColumnId = table.incrementColumnValue(columnBytes, Constants.NIC, new byte[0], numColumns);
         long startColumn = lastColumnId - numColumns;
 
         for (String columnName : columns.keySet()) {
             long columnId = ++startColumn;
 
             //Add column
-            Put columnPut = new Put(columnBytes).add(NIC, columnName.getBytes(), Bytes.toBytes(columnId));
+            Put columnPut = new Put(columnBytes).add(Constants.NIC, columnName.getBytes(), Bytes.toBytes(columnId));
             puts.add(columnPut);
 
             // Add column metadata
@@ -142,7 +126,7 @@ public class HBaseClient {
 
             Map<ColumnMetadata, byte[]> metadata = columns.get(columnName);
             for (ColumnMetadata meta : metadata.keySet()) {
-                columnInfoPut.add(NIC, meta.getValue(), metadata.get(meta));
+                columnInfoPut.add(Constants.NIC, meta.getValue(), metadata.get(meta));
             }
 
             puts.add(columnInfoPut);
@@ -186,7 +170,7 @@ public class HBaseClient {
         return table.get(get);
     }
 
-    private TableInfo getTableInfo(String tableName) throws IOException {
+    public TableInfo getTableInfo(String tableName) throws IOException {
         if (tableCache.containsKey(tableName)) {
             return tableCache.get(tableName);
         }
@@ -198,7 +182,7 @@ public class HBaseClient {
             throw new TableNotFoundException(tableName + " was not found.");
         }
 
-        long tableId = ByteBuffer.wrap(result.getValue(NIC, tableName.getBytes())).getLong();
+        long tableId = ByteBuffer.wrap(result.getValue(Constants.NIC, tableName.getBytes())).getLong();
 
         TableInfo info = new TableInfo(tableName, tableId);
 
@@ -206,7 +190,7 @@ public class HBaseClient {
 
         Get columnsGet = new Get(rowKey);
         Result columnsResult = table.get(columnsGet);
-        Map<byte[], byte[]> columns = columnsResult.getFamilyMap(NIC);
+        Map<byte[], byte[]> columns = columnsResult.getFamilyMap(Constants.NIC);
         for (byte[] qualifier : columns.keySet()) {
             String columnName = new String(qualifier);
             long columnId = ByteBuffer.wrap(columns.get(qualifier)).getLong();
@@ -224,7 +208,7 @@ public class HBaseClient {
         Get metadataGet = new Get(RowKeyFactory.buildColumnInfoKey(tableId, columnId));
         Result result = table.get(metadataGet);
 
-        Map<byte[], byte[]> metadata = result.getFamilyMap(NIC);
+        Map<byte[], byte[]> metadata = result.getFamilyMap(Constants.NIC);
         for (byte[] qualifier : metadata.keySet()) {
             // Only the qualifier matters for column metadata - value is not important
             String metadataString = new String(qualifier).toUpperCase();
@@ -246,7 +230,7 @@ public class HBaseClient {
 
         //Get columns returned from Result
         Map<String, byte[]> columns = new HashMap<String, byte[]>();
-        Map<byte[], byte[]> returnedColumns = result.getNoVersionMap().get(NIC);
+        Map<byte[], byte[]> returnedColumns = result.getNoVersionMap().get(Constants.NIC);
 
         if (returnedColumns.size() == 1 && returnedColumns.containsKey(new byte[0])) {
             // The row of all nulls special case strikes again
@@ -402,7 +386,7 @@ public class HBaseClient {
 
     public void deleteTableFromRoot(String tableName) throws IOException {
         Delete delete = new Delete((RowKeyFactory.ROOT));
-        delete.deleteColumns(NIC, tableName.getBytes());
+        delete.deleteColumns(Constants.NIC, tableName.getBytes());
 
         table.delete(delete);
     }
