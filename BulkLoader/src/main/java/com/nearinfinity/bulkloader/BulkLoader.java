@@ -1,4 +1,6 @@
-import com.nearinfinity.hbaseclient.PutListFactory;
+package com.nearinfinity.bulkloader;
+
+import com.nearinfinity.hbaseclient.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -13,8 +15,6 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import com.nearinfinity.hbaseclient.HBaseClient;
-import com.nearinfinity.hbaseclient.TableInfo;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,17 +22,18 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.Scanner;
 
-public class ImportFromCSV {
-    private static final Log LOG = LogFactory.getLog(ImportFromCSV.class);
+public class BulkLoader {
+    private static final Log LOG = LogFactory.getLog(com.nearinfinity.bulkloader.BulkLoader.class);
 
     public enum Counters { ROWS, FAILED_ROWS }
 
-    static class CSVMapper
+    static class BulkLoaderMapper
             extends Mapper<LongWritable, Text, ImmutableBytesWritable, Writable> {
 
         private byte[] family = null;
         private TableInfo table_info = null;
         private String[] column_names = null;
+        private final ValueTransformer valueTransformer = new ValueTransformer();
 
 
         @Override
@@ -66,8 +67,14 @@ public class ImportFromCSV {
 
                 Map<String, byte []> value_map = new TreeMap<String, byte []>();
 
+                String name;
+                byte[] val;
+                ColumnType t;
                 for (int i = 0; i < column_data.length; i++) {
-                    value_map.put(column_names[i], column_data[i].getBytes());
+                    name = column_names[i];
+                    t = table_info.getColumnTypeByName(name);
+                    val = ValueTransformer.transform(column_data[i], t);
+                    value_map.put(name, val);
                 }
 
                 java.util.List<Put> puts = PutListFactory.createPutList(value_map, table_info);
@@ -85,7 +92,8 @@ public class ImportFromCSV {
 
     public static void main(String[] args) throws Exception {
         if (args.length != 3) {
-            System.err.println("Usage: ImportFromCSV <input path> <MySQL table name> <MySQL Column Names (comma seperated)>");
+            System.err.println("Usage: com.nearinfinity.bulkloader.BulkLoader <input path> <MySQL table name>" +
+                    " <comma seperated MySQL column names>");
             System.exit(-1);
         }
 
@@ -114,8 +122,8 @@ public class ImportFromCSV {
         conf.set("my_columns", my_columns);
 
         Job job = new Job(conf, "Import from file " + input_path + " into table " + hb_table);
-        job.setJarByClass(ImportFromCSV.class);
-        job.setMapperClass(CSVMapper.class);
+        job.setJarByClass(com.nearinfinity.bulkloader.BulkLoader.class);
+        job.setMapperClass(BulkLoaderMapper.class);
         job.setOutputFormatClass(TableOutputFormat.class);
         job.getConfiguration().set(TableOutputFormat.OUTPUT_TABLE, hb_table);
         job.setOutputKeyClass(ImmutableBytesWritable.class);
