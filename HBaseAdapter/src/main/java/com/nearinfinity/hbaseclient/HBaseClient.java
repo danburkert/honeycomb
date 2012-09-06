@@ -170,7 +170,7 @@ public class HBaseClient {
         return table.get(get);
     }
 
-    private TableInfo getTableInfo(String tableName) throws IOException {
+    public TableInfo getTableInfo(String tableName) throws IOException {
         if (tableCache.containsKey(tableName)) {
             return tableCache.get(tableName);
         }
