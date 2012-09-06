@@ -3,26 +3,12 @@
 
 #include <jni.h>
 #include "Util.h"
+#include "Java.h"
 
 class FieldMetadata
 {
 private:
   JNIEnv* env;
-
-  jobject create_java_map()
-  {
-    jclass map_class = this->env->FindClass("java/util/HashMap");
-    jmethodID map_constructor = this->env->GetMethodID(map_class, "<init>", "()V");
-    return this->env->NewObject(map_class, map_constructor);
-  }
-
-  void java_map_put(jobject map, jobject key, jobject val)
-  {
-    jclass map_class = this->env->FindClass("java/util/HashMap");
-    jmethodID put_method = this->env->GetMethodID(map_class, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
-
-    this->env->CallObjectMethod(map, put_method, key, val);
-  }
 
   jobject create_metadata_enum_object(const char *name)
   {
@@ -71,7 +57,7 @@ public:
 
   jobject get_field_metadata(Field *field, TABLE *table_arg)
   {
-    jobject map = this->create_java_map();
+    jobject map = create_java_map(this->env);
     switch (field->real_type())
     {
       case MYSQL_TYPE_TINY:
@@ -82,29 +68,29 @@ public:
       case MYSQL_TYPE_YEAR:
         if (is_unsigned_field(field))
         {
-          this->java_map_put(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("ULONG"));
+          java_map_insert(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("ULONG"), this->env);
         } else {
-          this->java_map_put(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("LONG"));
+          java_map_insert(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("LONG"), this->env);
         }
         break;
       case MYSQL_TYPE_FLOAT:
       case MYSQL_TYPE_DOUBLE:
-        this->java_map_put(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("DOUBLE"));
+        java_map_insert(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("DOUBLE"), this->env);
           break;
       case MYSQL_TYPE_DECIMAL:
       case MYSQL_TYPE_NEWDECIMAL:
-        this->java_map_put(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("DECIMAL"));
+        java_map_insert(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("DECIMAL"), this->env);
         break;
       case MYSQL_TYPE_DATE:
       case MYSQL_TYPE_NEWDATE:
-          this->java_map_put(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("DATE"));
+          java_map_insert(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("DATE"), this->env);
           break;
       case MYSQL_TYPE_TIME:
-          this->java_map_put(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("TIME"));
+          java_map_insert(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("TIME"), this->env);
           break;
       case MYSQL_TYPE_DATETIME:
       case MYSQL_TYPE_TIMESTAMP:
-          this->java_map_put(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("DATETIME"));
+          java_map_insert(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("DATETIME"), this->env);
           break;
       case MYSQL_TYPE_STRING:
       case MYSQL_TYPE_VARCHAR:
@@ -115,12 +101,12 @@ public:
             //If the field might be null, MySQL builds an extra byte into max_data_length. We want to ignore that.
             max_data_length--;
           }
-          this->java_map_put(map, create_metadata_enum_object("MAX_LENGTH"), long_to_java_byte_array(max_data_length));
+          java_map_insert(map, create_metadata_enum_object("MAX_LENGTH"), long_to_java_byte_array(max_data_length), this->env);
           if (field->binary())
           {
-            this->java_map_put(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("BINARY"));
+            java_map_insert(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("BINARY"), this->env);
           } else {
-            this->java_map_put(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("STRING"));
+            java_map_insert(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("STRING"), this->env);
           }
         }
         break;
@@ -128,10 +114,10 @@ public:
       case MYSQL_TYPE_TINY_BLOB:
       case MYSQL_TYPE_MEDIUM_BLOB:
       case MYSQL_TYPE_LONG_BLOB:
-        this->java_map_put(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("BINARY"));
+        java_map_insert(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("BINARY"), this->env);
         break;
       case MYSQL_TYPE_ENUM:
-        this->java_map_put(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("ULONG"));
+        java_map_insert(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("ULONG"), this->env);
         break;
       case MYSQL_TYPE_NULL:
       case MYSQL_TYPE_BIT:
@@ -144,7 +130,7 @@ public:
 
     if (field->real_maybe_null())
     {
-      this->java_map_put(map, create_metadata_enum_object("IS_NULLABLE"), string_to_java_byte_array("True"));
+      java_map_insert(map, create_metadata_enum_object("IS_NULLABLE"), string_to_java_byte_array("True"), this->env);
     }
 
     // 64 is obviously some key flag indicating no primary key, but I have no idea where it's defined. Will fix later. - ABC
@@ -152,7 +138,7 @@ public:
     {
       if (strcmp(table_arg->s->key_info[table_arg->s->primary_key].key_part->field->field_name, field->field_name) == 0)
       {
-        this->java_map_put(map, create_metadata_enum_object("PRIMARY_KEY"), string_to_java_byte_array("True"));
+        java_map_insert(map, create_metadata_enum_object("PRIMARY_KEY"), string_to_java_byte_array("True"), this->env);
       }
     }
 

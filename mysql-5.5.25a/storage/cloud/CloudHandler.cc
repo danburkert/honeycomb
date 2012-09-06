@@ -9,7 +9,6 @@
 #include "sql_plugin.h"
 #include "ha_cloud.h"
 #include "mysql_time.h"
-#include "Util.h"
 #include "m_string.h"
 
 #include <sys/time.h>
@@ -102,7 +101,7 @@ int CloudHandler::update_row(const uchar *old_data, uchar *new_data)
   delete_row_helper();
   write_row_helper(new_data);
 
-  this->flushWrites();
+  this->flush_writes();
   DBUG_RETURN(0);
 }
 
@@ -263,7 +262,7 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
     field->set_notnull(); // for some reason the field was inited as null during rnd_pos
     const char* key = field->field_name;
     jstring java_key = string_to_java_string(key);
-    jbyteArray java_val = java_map_get(row_map, java_key);
+    jbyteArray java_val = java_map_get(row_map, java_key, this->env);
     if (java_val == NULL)
     {
       field->set_null();
@@ -411,16 +410,11 @@ int CloudHandler::rnd_end()
 {
   DBUG_ENTER("CloudHandler::rnd_end");
 
-  jclass adapter_class = this->adapter();
-  jmethodID end_scan_method = this->env->GetStaticMethodID(adapter_class, "endScan", "(J)V");
-  jlong java_scan_id = curr_scan_id;
+  this->end_scan();
 
-  this->env->CallStaticVoidMethod(adapter_class, end_scan_method, java_scan_id);
+  this->detach_thread();
 
-  detach_thread();
-
-  curr_scan_id = -1;
-  this->performing_scan = false;
+  this->reset_scan_counter();
   DBUG_RETURN(0);
 }
 
@@ -438,7 +432,7 @@ int CloudHandler::end_bulk_insert()
 {
   DBUG_ENTER("CloudHandler::end_bulk_insert");
 
-  this->flushWrites();
+  this->flush_writes();
 
   detach_thread();
   DBUG_RETURN(0);
@@ -461,13 +455,13 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
 
   const char* table_name = create_info->alias;
 
-  jobject columnMap = this->create_java_map();
+  jobject columnMap = create_java_map(this->env);
   FieldMetadata metadata(this->env);
 
   for (Field **field = table_arg->field ; *field ; field++)
   {
     jobject metadataList = metadata.get_field_metadata(*field, table_arg);
-    this->java_map_insert(columnMap, string_to_java_string((*field)->field_name), metadataList);
+    java_map_insert(columnMap, string_to_java_string((*field)->field_name), metadataList, this->env);
   }
 
   jmethodID create_table_method = this->env->GetStaticMethodID(adapter_class, "createTable", "(Ljava/lang/String;Ljava/util/Map;)Z");
@@ -599,7 +593,7 @@ int CloudHandler::write_row_helper(uchar* buf)
  */
 jobject CloudHandler::sql_to_java()
 {
-  jobject java_map = this->create_java_map();
+  jobject java_map = create_java_map(this->env);
   // Boilerplate stuff every engine has to do on writes
 
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
@@ -620,7 +614,7 @@ jobject CloudHandler::sql_to_java()
 
     if (is_null )
     {
-      java_map_insert(java_map, field_name, NULL);
+      java_map_insert(java_map, field_name, NULL, this->env);
       continue;
     }
 
@@ -711,7 +705,7 @@ jobject CloudHandler::sql_to_java()
 
     jbyteArray java_bytes = this->convert_value_to_java_bytes(rec_buffer->buffer, actualFieldSize);
 
-    java_map_insert(java_map, field_name, java_bytes);
+    java_map_insert(java_map, field_name, java_bytes, this->env);
   }
 
   dbug_tmp_restore_column_map(table->read_set, old_map);
@@ -727,37 +721,6 @@ const char* CloudHandler::java_to_string(jstring j_str)
 jstring CloudHandler::string_to_java_string(const char *string)
 {
   return this->env->NewStringUTF(string);
-}
-
-jobject CloudHandler::create_java_map()
-{
-  jclass map_class = this->env->FindClass("java/util/TreeMap");
-  jmethodID constructor = this->env->GetMethodID(map_class, "<init>", "()V");
-  return this->env->NewObject(map_class, constructor);
-}
-
-jobject CloudHandler::java_map_insert(jobject java_map, jobject key, jobject value)
-{
-  jclass map_class = this->env->FindClass("java/util/TreeMap");
-  jmethodID put_method = this->env->GetMethodID(map_class, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
-
-  return this->env->CallObjectMethod(java_map, put_method, key, value);
-}
-
-jbyteArray CloudHandler::java_map_get(jobject java_map, jstring key)
-{
-  jclass map_class = this->env->FindClass("java/util/TreeMap");
-  jmethodID get_method = this->env->GetMethodID(map_class, "get", "(Ljava/lang/Object;)Ljava/lang/Object;");
-
-  return (jbyteArray) this->env->CallObjectMethod(java_map, get_method, key);
-}
-
-jboolean CloudHandler::java_map_is_empty(jobject java_map)
-{
-  jclass map_class = this->env->FindClass("java/util/TreeMap");
-  jmethodID is_empty_method = this->env->GetMethodID(map_class, "isEmpty", "()Z");
-  jboolean result = env->CallBooleanMethod(java_map, is_empty_method);
-  return (bool) result;
 }
 
 jbyteArray CloudHandler::convert_value_to_java_bytes(uchar* value, uint32 length)
@@ -806,15 +769,9 @@ int CloudHandler::index_end()
 {
   DBUG_ENTER("CloudHandler::index_end");
 
-  jclass adapter_class = this->adapter();
-  jmethodID end_scan_method = this->env->GetStaticMethodID(adapter_class, "endScan", "(J)V");
-  jlong java_scan_id = curr_scan_id;
-
-  this->env->CallStaticVoidMethod(adapter_class, end_scan_method, java_scan_id);
-
-  detach_thread();
-  this->curr_scan_id = -1;
-  this->active_index = -1;
+  this->end_scan();
+  this->detach_thread();
+  this->reset_index_scan_counter();
 
   DBUG_RETURN(0);
 }
@@ -839,19 +796,19 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
     switch (find_flag)
     {
     case HA_READ_KEY_EXACT:
-      java_find_flag = java_find_flag_by_name("INDEX_NULL");
+      java_find_flag = java_find_flag_by_name("INDEX_NULL", this->env);
       break;
     case HA_READ_AFTER_KEY:
-      java_find_flag = java_find_flag_by_name("INDEX_FIRST");
+      java_find_flag = java_find_flag_by_name("INDEX_FIRST", this->env);
       break;
     default:
-      java_find_flag = this->java_find_flag(find_flag);
+      java_find_flag = find_flag_to_java(find_flag, this->env);
       break;
     }
   }
   else
   {
-    java_find_flag = this->java_find_flag(find_flag);
+    java_find_flag = find_flag_to_java(find_flag, this->env);
   }
 
   if (this->index_field->maybe_null())
@@ -1043,39 +1000,6 @@ int CloudHandler::index_next(uchar *buf)
   DBUG_RETURN(rc);
 }
 
-jobject CloudHandler::java_find_flag(enum ha_rkey_function find_flag)
-{
-  const char* index_type_path = "Lcom/nearinfinity/mysqlengine/jni/IndexReadType;";
-  jclass read_class = find_jni_class("IndexReadType", this->env);
-  jfieldID field_id;
-  if (find_flag == HA_READ_KEY_EXACT)
-  {
-    field_id = this->env->GetStaticFieldID(read_class, "HA_READ_KEY_EXACT", index_type_path);
-  }
-  else if(find_flag == HA_READ_AFTER_KEY)
-  {
-    field_id = this->env->GetStaticFieldID(read_class, "HA_READ_AFTER_KEY", index_type_path);
-  }
-  else if(find_flag == HA_READ_KEY_OR_NEXT)
-  {
-    field_id = this->env->GetStaticFieldID(read_class, "HA_READ_KEY_OR_NEXT", index_type_path);
-  }
-  else if(find_flag == HA_READ_KEY_OR_PREV)
-  {
-    field_id = this->env->GetStaticFieldID(read_class, "HA_READ_KEY_OR_PREV", index_type_path);
-  }
-  else if(find_flag == HA_READ_BEFORE_KEY)
-  {
-    field_id = this->env->GetStaticFieldID(read_class, "HA_READ_BEFORE_KEY", index_type_path);
-  }
-  else
-  {
-    return NULL;
-  }
-
-  return this->env->GetStaticObjectField(read_class, field_id);
-}
-
 int CloudHandler::index_prev(uchar *buf)
 {
   int rc = 0;
@@ -1147,13 +1071,6 @@ int CloudHandler::index_last(uchar *buf)
   DBUG_RETURN(0);
 }
 
-jobject CloudHandler::java_find_flag_by_name(char *name)
-{
-  jclass read_class = find_jni_class("IndexReadType", this->env);
-  jfieldID field_id = this->env->GetStaticFieldID(read_class, name, "Lcom/nearinfinity/mysqlengine/jni/IndexReadType;");
-  return this->env->GetStaticObjectField(read_class, field_id);
-}
-
 int CloudHandler::read_index_row(jobject index_row, uchar* buf)
 {
   jclass index_row_class = find_jni_class("IndexRow", this->env);
@@ -1173,11 +1090,32 @@ int CloudHandler::read_index_row(jobject index_row, uchar* buf)
   return 0;
 }
 
-void CloudHandler::flushWrites()
+void CloudHandler::flush_writes()
 {
   jclass adapter_class = this->adapter();
   jmethodID end_write_method = this->env->GetStaticMethodID(adapter_class, "flushWrites", "()V");
   this->env->CallStaticVoidMethod(adapter_class, end_write_method);
+}
+
+void CloudHandler::end_scan()
+{
+  jclass adapter_class = this->adapter();
+  jmethodID end_scan_method = this->env->GetStaticMethodID(adapter_class, "endScan", "(J)V");
+  jlong java_scan_id = curr_scan_id;
+
+  this->env->CallStaticVoidMethod(adapter_class, end_scan_method, java_scan_id);
+}
+
+void CloudHandler::reset_index_scan_counter()
+{
+  this->curr_scan_id = -1;
+  this->active_index = -1;
+}
+
+void CloudHandler::reset_scan_counter()
+{
+  this->curr_scan_id = -1;
+  this->performing_scan = false;
 }
 
 bool CloudHandler::is_key_null(const uchar *key)

@@ -17,6 +17,7 @@
 #include "FieldMetadata.h"
 #include "Util.h"
 #include "Logging.h"
+#include "Java.h"
 
 typedef struct st_record_buffer {
   uchar *buffer;
@@ -38,7 +39,6 @@ class CloudHandler : public handler
     void destroy_record_buffer(record_buffer *r);
     CloudShare *get_share(const char *table_name, TABLE *table);
     uint32 max_row_length();
-    jobject java_find_flag(enum ha_rkey_function find_flag);
     Field *index_field;
 
     long long curr_scan_id;
@@ -50,10 +50,6 @@ class CloudHandler : public handler
 
     const char* java_to_string(jstring str);
     jstring string_to_java_string(const char *string);
-    jobject create_java_map();
-    jobject java_map_insert(jobject java_map, jobject key, jobject value);
-    jbyteArray java_map_get(jobject java_map, jstring key);
-    jboolean java_map_is_empty(jobject java_map);
     jbyteArray convert_value_to_java_bytes(uchar* value, uint32 length);
     void java_to_sql(uchar *buf, jobject row_map);
     int delete_row_helper();
@@ -67,13 +63,15 @@ class CloudHandler : public handler
     void drop_table(const char *name);
     int truncate();
     bool is_key_null(const uchar *key);
-    jobject java_find_flag_by_name(char *name);
     void attach_thread();
     void detach_thread();
     void store_uuid_ref(jobject index_row, jmethodID get_uuid_method);
     void bytes_to_long(const uchar* buff, unsigned int buff_length, bool is_signed, uchar* long_buff);
     int read_index_row(jobject index_row, uchar* buf);
-    void flushWrites();
+    void flush_writes();
+    void end_scan();
+    void reset_index_scan_counter();
+    void reset_scan_counter();
 
     bool is_integral_field(int field_type)
     {

@@ -1,27 +1,5 @@
 #include "Util.h"
 
-void print_java_exception(JNIEnv* env)
-{
-  if(env->ExceptionCheck() == JNI_TRUE)
-  {
-    jthrowable throwable = env->ExceptionOccurred();
-    jclass objClazz = env->GetObjectClass(throwable);
-    jmethodID methodId = env->GetMethodID(objClazz, "toString", "()Ljava/lang/String;");
-    jstring result = (jstring)env->CallObjectMethod(throwable, methodId);
-    const char* string = env->GetStringUTFChars(result, NULL);
-    INFO(("Exception from java: %s", string));
-    env->ReleaseStringUTFChars(result, string);
-  }
-}
-
-jclass find_jni_class(const char* class_name, JNIEnv* env)
-{
-  char buffer[1024];
-  const char* path = JNI_CLASSPATH;
-  sprintf(buffer, "%s%s", path, class_name);
-  return env->FindClass(buffer);
-}
-
 bool is_unsigned_field(Field *field)
 {
   ha_base_keytype keyType = field->key_type();
