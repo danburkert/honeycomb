@@ -1,5 +1,7 @@
 package com.nearinfinity.hbaseclient;
 
+import java.util.Arrays;
+
 /**
  * Created with IntelliJ IDEA.
  * User: acrute
@@ -22,5 +24,14 @@ public enum ColumnMetadata {
 
     public byte[] getValue() {
         return this.value;
+    }
+
+    public static ColumnMetadata getByValue(byte[] qualifier) {
+        for(ColumnMetadata metadata : ColumnMetadata.values()) {
+            if (Arrays.equals(qualifier, metadata.getValue())) {
+                return metadata;
+            }
+        }
+        return ColumnMetadata.NONE;
     }
 }

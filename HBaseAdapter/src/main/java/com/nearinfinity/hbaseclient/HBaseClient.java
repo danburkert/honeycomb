@@ -211,15 +211,8 @@ public class HBaseClient {
         Map<byte[], byte[]> metadata = result.getFamilyMap(Constants.NIC);
         for (byte[] qualifier : metadata.keySet()) {
             // Only the qualifier matters for column metadata - value is not important
-            String metadataString = new String(qualifier).toUpperCase();
-            ColumnMetadata metaDataItem;
-
-            try {
-                metaDataItem = ColumnMetadata.valueOf(metadataString);
-                metadataMap.put(metaDataItem, metadata.get(qualifier));
-            } catch (IllegalArgumentException e) {
-
-            }
+            ColumnMetadata metaDataItem = ColumnMetadata.getByValue(qualifier);
+            metadataMap.put(metaDataItem, metadata.get(qualifier));
         }
 
         return metadataMap;
