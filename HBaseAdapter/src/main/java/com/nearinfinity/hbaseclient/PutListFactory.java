@@ -40,9 +40,8 @@ public class PutListFactory {
             if (value == null) {
                 // Build null index
                 byte[] nullIndexRow = RowKeyFactory.buildNullIndexKey(tableId, columnId, rowId);
-                putList.add(new Put(nullIndexRow).add(Constants.NIC, Constants.UNIREG, rowByteArray));
+                putList.add(new Put(nullIndexRow).add(Constants.NIC, Constants.VALUE_MAP, rowByteArray));
             } else {
-
                 int padLength = 0;
                 if (columnType == ColumnType.STRING || columnType == ColumnType.BINARY) {
                     byte[] maxLengthArray = info.getColumnMetadata(columnName, ColumnMetadata.MAX_LENGTH);
@@ -54,23 +53,19 @@ public class PutListFactory {
                 dataRow.add(Constants.NIC, Bytes.toBytes(columnId), value);
 
                 /**
-                 * We need to get the canonical value for STRING types. The secondary index will store all values as
+                 * We need to get the canonical value for STRING types. The primary index will store all values as
                  * canonical values. Then, when looking up in the primary index, the row key will contain the matching
                  * canonical value. The unireg and data rows store the actual value.
                  */
                 byte[] canonicalValue = ValueEncoder.canonicalValue(value, columnType);
 
                 // Build value index key
-                byte[] indexRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, canonicalValue, rowId);
-                putList.add(new Put(indexRow).add(Constants.NIC, Constants.UNIREG, rowByteArray));
-
-                // Build secondary index key
-                byte[] secondaryIndexRow = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId, canonicalValue, columnType);
-                putList.add(new Put(secondaryIndexRow).add(Constants.NIC, Constants.VALUE_COLUMN, canonicalValue));
+                byte[] indexRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, canonicalValue, rowId, columnType, padLength);
+                putList.add(new Put(indexRow).add(Constants.NIC, Constants.VALUE_MAP, rowByteArray));
 
                 // Build reverse index key
-                byte[] reverseIndexRow = RowKeyFactory.buildReverseIndexKey(tableId, columnId, canonicalValue, columnType, padLength);
-                putList.add(new Put(reverseIndexRow).add(Constants.NIC, Constants.VALUE_COLUMN, canonicalValue));
+                byte[] reverseIndexRow = RowKeyFactory.buildReverseIndexKey(tableId, columnId, canonicalValue, columnType, rowId, padLength);
+                putList.add(new Put(reverseIndexRow).add(Constants.NIC, Constants.VALUE_MAP, rowByteArray));
             }
         }
 
