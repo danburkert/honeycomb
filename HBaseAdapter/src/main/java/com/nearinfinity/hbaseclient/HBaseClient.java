@@ -255,8 +255,8 @@ public class HBaseClient {
         deleteList.add(new Delete(dataRowKey));
 
         //Scan the index rows
-        byte[] indexStartKey = RowKeyFactory.buildValueIndexKey(tableId, 0L, new byte[0], uuid);
-        byte[] indexEndKey = RowKeyFactory.buildValueIndexKey(tableId + 1, 0L, new byte[0], uuid);
+        byte[] indexStartKey = RowKeyFactory.buildValueIndexKey(tableId, 0L, new byte[0], uuid, ColumnType.NONE, 0);
+        byte[] indexEndKey = RowKeyFactory.buildValueIndexKey(tableId + 1, 0L, new byte[0], uuid, ColumnType.NONE, 0);
         deleteList.addAll(scanAndDeleteAllUUIDs(indexStartKey, indexEndKey, uuid));
 
         //Scan the null index rows
@@ -330,12 +330,10 @@ public class HBaseClient {
         int affectedRows = 0;
 
         byte[] valuePrefix = ByteBuffer.allocate(9).put(RowType.PRIMARY_INDEX.getValue()).putLong(tableId).array();
-        byte[] secondaryPrefix = ByteBuffer.allocate(9).put(RowType.SECONDARY_INDEX.getValue()).putLong(tableId).array();
         byte[] reversePrefix = ByteBuffer.allocate(9).put(RowType.REVERSE_INDEX.getValue()).putLong(tableId).array();
         byte[] nullPrefix = ByteBuffer.allocate(9).put(RowType.NULL_INDEX.getValue()).putLong(tableId).array();
 
         affectedRows += deleteRowsWithPrefix(valuePrefix);
-        affectedRows += deleteRowsWithPrefix(secondaryPrefix);
         affectedRows += deleteRowsWithPrefix(reversePrefix);
         affectedRows += deleteRowsWithPrefix(nullPrefix);
 
