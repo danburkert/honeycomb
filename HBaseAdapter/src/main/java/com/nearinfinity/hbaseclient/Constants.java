@@ -13,7 +13,7 @@ public final class Constants {
 
     public static final byte[] DELETED_VAL = Bytes.toBytes(1L);
 
-    public static final byte[] VALUE_MAP = "valuemap".getBytes();
+    public static final byte[] VALUE_MAP = "valueMap".getBytes();
 
     public static final byte[] VALUE_COLUMN = "value".getBytes();
 

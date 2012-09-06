@@ -45,12 +45,13 @@ public class IndexRow {
                 .array();
     }
 
+    @SuppressWarnings("unchecked")
     public void parseResult(Result result) {
         byte[] mapBytes = ResultParser.parseUnireg(result);
 
         try {
             ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(mapBytes));
-            this.rowMap = (TreeMap<String, byte[]>) in.readObject();
+            this.rowMap = (TreeMap<String, byte[]>)in.readObject();
             in.close();
         } catch (IOException e) {
         } catch (ClassNotFoundException e) {
