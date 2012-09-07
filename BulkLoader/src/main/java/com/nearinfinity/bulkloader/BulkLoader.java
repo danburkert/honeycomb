@@ -53,16 +53,13 @@ public class BulkLoader {
         }
 
         @Override
-        public void map(LongWritable offset, Text line, Context context)
-                throws IOException {
+        public void map(LongWritable offset, Text line, Context context) {
             try {
                 String[] column_data = line.toString().split(",");
 
                 if(column_data.length != column_names.length) {
-                    System.err.println("Row has wrong number of columns. Expected " +
-                        column_names.length + " got " + column_data.length + ". Line: " + line.toString());
-                    context.setStatus("Row with wrong number of columns: see logs.");
-                    context.getCounter(Counters.FAILED_ROWS).increment(1);
+                    throw new Exception("Row has wrong number of columns. Expected: " + column_names.length +
+                    ", got: " + column_data.length + ". Line: " + line.toString());
                 }
 
                 Map<String, byte []> value_map = new TreeMap<String, byte []>();
@@ -85,7 +82,10 @@ public class BulkLoader {
 
                 context.getCounter(Counters.ROWS).increment(1);
             } catch (Exception e) {
-                e.printStackTrace();
+                System.err.println(e.getMessage());
+                context.setStatus(e.getMessage() + ". See logs for details");
+                context.getCounter(Counters.FAILED_ROWS).increment(1);
+
             }
         }
     }
