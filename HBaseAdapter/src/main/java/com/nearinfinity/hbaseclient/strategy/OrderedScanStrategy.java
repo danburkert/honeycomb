@@ -25,8 +25,7 @@ public class OrderedScanStrategy extends ScanStrategyBase {
         ColumnType columnType = info.getColumnTypeByName(this.columnName);
 
         if (columnType == ColumnType.STRING || columnType == ColumnType.BINARY) {
-            byte[] maxLengthArray = info.getColumnMetadata(columnName, ColumnMetadata.MAX_LENGTH);
-            int maxLength = (int) ByteBuffer.wrap(maxLengthArray).getLong();
+            int maxLength = info.getColumnMetadata(columnName).getMaxLength();
             value = new byte[maxLength];
         }
 

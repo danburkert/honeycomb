@@ -44,8 +44,8 @@ public class PutListFactory {
             } else {
                 int padLength = 0;
                 if (columnType == ColumnType.STRING || columnType == ColumnType.BINARY) {
-                    byte[] maxLengthArray = info.getColumnMetadata(columnName, ColumnMetadata.MAX_LENGTH);
-                    padLength = (int) ByteBuffer.wrap(maxLengthArray).getLong() - value.length;
+                    long maxLength = info.getColumnMetadata(columnName).getMaxLength();
+                    padLength = (int) maxLength - value.length;
                 }
 
                 allRowsNull = false;
