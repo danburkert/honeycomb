@@ -20,27 +20,37 @@ public class DataCreator {
     private static final String NUM_ROWS = "num_rows";
 
     private static class DataCreatorMapper extends Mapper<LongWritable, Text, Text, Text> {
+        private Faker faker;
+        private Random random;
+        private DataType[] dataTypes;
+        private int numRows;
+
+        @Override
+        public void setup(Context context) throws IOException, InterruptedException {
+            this.faker = new Faker();
+            this.random = new Random();
+
+            Configuration conf = context.getConfiguration();
+            this.numRows = Integer.parseInt(conf.get(NUM_ROWS));
+
+            String [] dataTypeStrings = conf.get(DATA_TYPE_LIST).split(",");
+            this.dataTypes = getDataTypeArray(dataTypeStrings);
+        }
+
         @Override
         public void map(LongWritable key, Text val, Context context) throws IOException, InterruptedException {
-            Configuration conf = context.getConfiguration();
-            int numRows = Integer.parseInt(conf.get(NUM_ROWS));
-            String [] dataTypeStrings = conf.get(DATA_TYPE_LIST).split(",");
-            DataType [] dataTypes = getDataTypeArray(dataTypeStrings);
-
-            Faker faker = new Faker();
-            Random random = new Random();
             for (int i = 0 ; i < numRows ; i++) {
                 StringBuilder sb = new StringBuilder();
                 for (int j = 0 ; j < dataTypes.length ; j++) {
                     if (j > 0) sb.append(",");
-                    appendData(dataTypes[j], faker, random, sb);
+                    appendData(dataTypes[j], sb);
                 }
 
                 context.write(new Text(sb.toString()), new Text(""));
             }
         }
 
-        private void appendData(DataType dataType, Faker faker, Random random, StringBuilder sb) {
+        private void appendData(DataType dataType, StringBuilder sb) {
             switch (dataType) {
                 case NAME:
                     sb.append(faker.name());
