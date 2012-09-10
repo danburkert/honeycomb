@@ -29,7 +29,7 @@ class CloudHandler : public handler
 {
   private:
     THR_LOCK_DATA lock;      	///< MySQL lockCloudShare;
-    CloudShare *share;    		///< Shared lock info
+    CloudShare *share;    		///< Sharedclass lock info
     mysql_mutex_t* cloud_mutex;
     HASH* cloud_open_tables;
     record_buffer *rec_buffer;
@@ -54,7 +54,6 @@ class CloudHandler : public handler
     jobject java_map_insert(jobject java_map, jobject key, jobject value);
     jbyteArray java_map_get(jobject java_map, jstring key);
     jboolean java_map_is_empty(jobject java_map);
-    jbyteArray convert_value_to_java_bytes(uchar* value, uint32 length);
     void java_to_sql(uchar *buf, jobject row_map);
     int delete_row_helper();
     int write_row_helper(uchar* buf);
@@ -67,31 +66,12 @@ class CloudHandler : public handler
     void drop_table(const char *name);
     int truncate();
     bool is_key_null(const uchar *key);
-    jobject java_find_flag_by_name(char *name);
+    jobject java_find_flag_by_name(const char *name);
     void attach_thread();
     void detach_thread();
     void store_uuid_ref(jobject index_row, jmethodID get_uuid_method);
     void bytes_to_long(const uchar* buff, unsigned int buff_length, bool is_signed, uchar* long_buff);
     int read_index_row(jobject index_row, uchar* buf);
-
-    void reverse_bytes(uchar *begin, uint length)
-    {
-      for(int x = 0, y = length - 1; x < y; x++, y--)
-      {
-        uchar tmp = begin[x];
-        begin[x] = begin[y];
-        begin[y] = tmp;
-      }
-    }
-
-    bool is_little_endian()
-    {
-      #ifdef WORDS_BIG_ENDIAN
-        return false;
-      #else
-        return true;
-      #endif
-    }
 
     float floatGet(const uchar *ptr)
     {
@@ -106,14 +86,6 @@ class CloudHandler : public handler
       memcpy(&j, ptr, sizeof(j));
 
       return j;
-    }
-
-    void make_big_endian(uchar *begin, uint length)
-    {
-      if (is_little_endian())
-      {
-        reverse_bytes(begin, length);
-      }
     }
 
     bool is_integral_field(int field_type)

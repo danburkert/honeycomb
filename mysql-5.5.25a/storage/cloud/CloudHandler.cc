@@ -146,7 +146,7 @@ int CloudHandler::delete_all_rows()
   jclass adapter_class = this->adapter();
   jmethodID delete_rows_method = this->env->GetStaticMethodID(adapter_class, "deleteAllRows", "(Ljava/lang/String;)I");
 
-  jboolean result = this->env->CallStaticIntMethod(adapter_class, delete_rows_method, tableName);
+  this->env->CallStaticIntMethod(adapter_class, delete_rows_method, tableName);
 
   detach_thread();
 
@@ -179,7 +179,7 @@ int CloudHandler::delete_table(const char *name)
   jclass adapter_class = this->adapter();
   jmethodID drop_table_method = this->env->GetStaticMethodID(adapter_class, "dropTable", "(Ljava/lang/String;)Z");
 
-  jboolean result = this->env->CallStaticBooleanMethod(adapter_class, drop_table_method, tableName);
+  this->env->CallStaticBooleanMethod(adapter_class, drop_table_method, tableName);
 
   detach_thread();
 
@@ -194,7 +194,7 @@ int CloudHandler::delete_row_helper()
   jmethodID delete_row_method = this->env->GetStaticMethodID(adapter_class, "deleteRow", "(J)Z");
   jlong java_scan_id = curr_scan_id;
 
-  jboolean result = this->env->CallStaticBooleanMethod(adapter_class, delete_row_method, java_scan_id);
+  this->env->CallStaticBooleanMethod(adapter_class, delete_row_method, java_scan_id);
 
   DBUG_RETURN(0);
 }
@@ -290,7 +290,7 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
       case MYSQL_TYPE_ENUM:
         {
           long long long_value = *(long long*)val;
-          if(this->is_little_endian())
+          if(is_little_endian())
           {
             long_value = __builtin_bswap64(long_value);
           }
@@ -300,7 +300,7 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
       case MYSQL_TYPE_FLOAT:
       case MYSQL_TYPE_DOUBLE:
         double double_value;
-        if (this->is_little_endian())
+        if (is_little_endian())
         {
           long long* long_ptr = (long long*)val;
           longlong swapped_long = __builtin_bswap64(*long_ptr);
@@ -316,12 +316,12 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
       case MYSQL_TYPE_DECIMAL:
       case MYSQL_TYPE_NEWDECIMAL:
         {
+          // TODO: Is this reliable? Field_decimal doesn't seem to have these members. Potential crash for old decimal types. - ABC
           uint precision = ((Field_new_decimal*) field)->precision;
           uint scale = ((Field_new_decimal*) field)->dec;
           my_decimal decimal_val;
           binary2my_decimal(0, (const uchar *) val, &decimal_val, precision, scale);
           ((Field_new_decimal *) field)->store_value((const my_decimal*) &decimal_val);
-          decimal_val;
           break;
         }
       case MYSQL_TYPE_TIME:
@@ -392,7 +392,7 @@ int CloudHandler::rnd_pos(uchar *buf, uchar *pos)
   jclass adapter_class = this->adapter();
   jmethodID get_row_method = this->env->GetStaticMethodID(adapter_class, "getRow", "(J[B)Lcom/nearinfinity/mysqlengine/jni/Row;");
   jlong java_scan_id = curr_scan_id;
-  jbyteArray uuid = convert_value_to_java_bytes(pos, 16);
+  jbyteArray uuid = convert_value_to_java_bytes(this->env, pos, 16);
   jobject row = this->env->CallStaticObjectMethod(adapter_class, get_row_method, java_scan_id, uuid);
 
   jclass row_class = find_jni_class("Row", this->env);
@@ -472,12 +472,15 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
 
   for (Field **field = table_arg->field ; *field ; field++)
   {
-    jobject metadataList = metadata.get_field_metadata(*field, table_arg);
-    this->java_map_insert(columnMap, string_to_java_string((*field)->field_name), metadataList);
+    // This jobject needs to be of type ColumnMetadata now
+    jobject java_metadata_obj = metadata.get_field_metadata(*field, table_arg);
+    this->java_map_insert(columnMap, string_to_java_string((*field)->field_name), java_metadata_obj);
   }
 
+  // Now it's a Map<String, ColumnMetadata> and ColumnMetadata is its own class, not just an enum
+
   jmethodID create_table_method = this->env->GetStaticMethodID(adapter_class, "createTable", "(Ljava/lang/String;Ljava/util/Map;)Z");
-  jboolean result = this->env->CallStaticBooleanMethod(adapter_class, create_table_method, string_to_java_string(table_name), columnMap);
+  this->env->CallStaticBooleanMethod(adapter_class, create_table_method, string_to_java_string(table_name), columnMap);
   print_java_exception(this->env);
 
   detach_thread();
@@ -660,7 +663,7 @@ jobject CloudHandler::sql_to_java()
       case MYSQL_TYPE_ENUM:
         {
           long long integral_value = field->val_int();
-          if(this->is_little_endian())
+          if(is_little_endian())
           {
             integral_value = __builtin_bswap64(integral_value);
           }
@@ -673,7 +676,7 @@ jobject CloudHandler::sql_to_java()
         {
           double fp_value = field->val_real();
           long long* fp_ptr;
-          if(this->is_little_endian())
+          if(is_little_endian())
           {
             fp_ptr = (long long*)&fp_value;
             *fp_ptr = __builtin_bswap64(*fp_ptr);
@@ -734,7 +737,7 @@ jobject CloudHandler::sql_to_java()
         break;
     }
 
-    jbyteArray java_bytes = this->convert_value_to_java_bytes(rec_buffer->buffer, actualFieldSize);
+    jbyteArray java_bytes = convert_value_to_java_bytes(this->env, rec_buffer->buffer, actualFieldSize);
 
     java_map_insert(java_map, field_name, java_bytes);
   }
@@ -751,7 +754,7 @@ const char* CloudHandler::java_to_string(jstring j_str)
 
 jstring CloudHandler::string_to_java_string(const char *string)
 {
-  return this->env->NewStringUTF(string);
+  return env->NewStringUTF(string);
 }
 
 jobject CloudHandler::create_java_map()
@@ -783,19 +786,6 @@ jboolean CloudHandler::java_map_is_empty(jobject java_map)
   jmethodID is_empty_method = this->env->GetMethodID(map_class, "isEmpty", "()Z");
   jboolean result = env->CallBooleanMethod(java_map, is_empty_method);
   return (bool) result;
-}
-
-jbyteArray CloudHandler::convert_value_to_java_bytes(uchar* value, uint32 length)
-{
-  jbyteArray byteArray = this->env->NewByteArray(length);
-  jbyte *java_bytes = this->env->GetByteArrayElements(byteArray, 0);
-
-  memcpy(java_bytes, value, length);
-
-  this->env->SetByteArrayRegion(byteArray, 0, length, java_bytes);
-  this->env->ReleaseByteArrayElements(byteArray, java_bytes, 0);
-
-  return byteArray;
 }
 
 int CloudHandler::index_init(uint idx, bool sorted)
@@ -902,7 +892,7 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
       const bool is_signed = !is_unsigned_field(this->index_field);
       bytes_to_long(key, key_len, is_signed, key_copy);
       key_len = sizeof(longlong);
-      this->make_big_endian(key_copy, key_len);
+      make_big_endian(key_copy, key_len);
       break;
     }
     case MYSQL_TYPE_YEAR:
@@ -914,7 +904,7 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
 
       bytes_to_long((uchar *)&int_val, sizeof(uint32_t), false, key_copy);
       key_len = sizeof(long long);
-      this->make_big_endian(key_copy, key_len);
+      make_big_endian(key_copy, key_len);
       break;
     }
     case MYSQL_TYPE_FLOAT:
@@ -1047,7 +1037,6 @@ void CloudHandler::store_uuid_ref(jobject index_row, jmethodID get_uuid_method)
 int CloudHandler::index_next(uchar *buf)
 {
   int rc = 0;
-  my_bitmap_map *orig_bitmap;
 
   DBUG_ENTER("CloudHandler::index_next");
 
@@ -1172,7 +1161,7 @@ int CloudHandler::index_last(uchar *buf)
   DBUG_RETURN(0);
 }
 
-jobject CloudHandler::java_find_flag_by_name(char *name)
+jobject CloudHandler::java_find_flag_by_name(const char *name)
 {
   jclass read_class = find_jni_class("IndexReadType", this->env);
   jfieldID field_id = this->env->GetStaticFieldID(read_class, name, "Lcom/nearinfinity/mysqlengine/jni/IndexReadType;");

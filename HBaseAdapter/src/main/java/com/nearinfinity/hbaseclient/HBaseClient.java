@@ -101,7 +101,7 @@ public class HBaseClient {
         tableCache.put(tableName, new TableInfo(tableName, tableId));
     }
 
-    private void addColumns(String tableName, Map<String, Map<ColumnMetadata, byte[]>> columns, List<Put> puts) throws IOException {
+    private void addColumns(String tableName, Map<String, ColumnMetadata> columns, List<Put> puts) throws IOException {
         //Get table id from cache
         long tableId = tableCache.get(tableName).getId();
 
@@ -124,10 +124,9 @@ public class HBaseClient {
             byte[] columnInfoBytes = RowKeyFactory.buildColumnInfoKey(tableId, columnId);
             Put columnInfoPut = new Put(columnInfoBytes);
 
-            Map<ColumnMetadata, byte[]> metadata = columns.get(columnName);
-            for (ColumnMetadata meta : metadata.keySet()) {
-                columnInfoPut.add(Constants.NIC, meta.getValue(), metadata.get(meta));
-            }
+            ColumnMetadata metadata = columns.get(columnName);
+
+            columnInfoPut.add(Constants.NIC, Constants.METADATA, metadata.toJson());
 
             puts.add(columnInfoPut);
 
@@ -136,7 +135,7 @@ public class HBaseClient {
         }
     }
 
-    public void createTableFull(String tableName, Map<String, Map<ColumnMetadata, byte[]>> columns) throws IOException {
+    public void createTableFull(String tableName, Map<String, ColumnMetadata> columns) throws IOException {
         //Batch put list
         List<Put> putList = new LinkedList<Put>();
 
@@ -202,20 +201,12 @@ public class HBaseClient {
         return info;
     }
 
-    public Map<ColumnMetadata, byte[]> getMetadataForColumn(long tableId, long columnId) throws IOException {
-        HashMap<ColumnMetadata, byte[]> metadataMap = new HashMap<ColumnMetadata, byte[]>();
-
+    public ColumnMetadata getMetadataForColumn(long tableId, long columnId) throws IOException {
         Get metadataGet = new Get(RowKeyFactory.buildColumnInfoKey(tableId, columnId));
         Result result = table.get(metadataGet);
 
-        Map<byte[], byte[]> metadata = result.getFamilyMap(Constants.NIC);
-        for (byte[] qualifier : metadata.keySet()) {
-            // Only the qualifier matters for column metadata - value is not important
-            ColumnMetadata metaDataItem = ColumnMetadata.getByValue(qualifier);
-            metadataMap.put(metaDataItem, metadata.get(qualifier));
-        }
-
-        return metadataMap;
+        byte[] jsonBytes = result.getValue(Constants.NIC, Constants.METADATA);
+        return new ColumnMetadata(jsonBytes);
     }
 
     public Map<String, byte[]> parseDataRow(Result result, String tableName) throws IOException {

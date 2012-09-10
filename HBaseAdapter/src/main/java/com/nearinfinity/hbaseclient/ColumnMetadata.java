@@ -1,37 +1,104 @@
 package com.nearinfinity.hbaseclient;
 
-import java.util.Arrays;
+import com.google.gson.Gson;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.io.Writable;
 
-/**
- * Created with IntelliJ IDEA.
- * User: acrute
- * Date: 8/15/12
- * Time: 4:49 PM
- * To change this template use File | Settings | File Templates.
- */
-public enum ColumnMetadata {
-    NONE("None".getBytes()),
-    IS_NULLABLE("IsNullable".getBytes()),
-    PRIMARY_KEY("PrimaryKey".getBytes()),
-    MAX_LENGTH("MaxLength".getBytes()),
-    COLUMN_TYPE("ColumnType".getBytes());
+import java.io.*;
 
-    private byte[] value;
+public class ColumnMetadata implements Writable {
+    private ColumnType type;
+    private int scale;
+    private int precision;
+    private boolean isNullable;
+    private boolean isPrimaryKey;
+    private int maxLength;
 
-    ColumnMetadata(byte[] value) {
-        this.value = value;
+    public ColumnMetadata() {
+        this.type = ColumnType.NONE;
+        this.scale = 0;
+        this.precision = 0;
+        this.isNullable = false;
+        this.isPrimaryKey = false;
+    }
+
+    public ColumnMetadata(byte[] jsonBytes) {
+        ColumnMetadata meta = new Gson().fromJson(new String(jsonBytes), ColumnMetadata.class);
+
+        this.copy(meta);
+    }
+
+    public ColumnType getType() {
+        return type;
+    }
+
+    public void setType(ColumnType type) {
+        this.type = type;
+    }
+
+    public int getScale() {
+        return scale;
+    }
+
+    public void setScale(int scale) {
+        this.scale = scale;
+    }
+
+    public int getPrecision() {
+        return precision;
+    }
+
+    public void setPrecision(int precision) {
+        this.precision = precision;
+    }
+
+    public boolean isNullable() {
+        return isNullable;
+    }
+
+    public void setNullable(boolean nullable) {
+        isNullable = nullable;
+    }
+
+    public boolean isPrimaryKey() {
+        return isPrimaryKey;
+    }
+
+    public void setPrimaryKey(boolean primaryKey) {
+        isPrimaryKey = primaryKey;
+    }
+
+    public int getMaxLength() {
+        return this.maxLength;
+    }
+
+    public void setMaxLength(int maxLength) {
+        this.maxLength = maxLength;
     }
 
     public byte[] getValue() {
-        return this.value;
+        return this.type.getValue();
     }
 
-    public static ColumnMetadata getByValue(byte[] qualifier) {
-        for(ColumnMetadata metadata : ColumnMetadata.values()) {
-            if (Arrays.equals(qualifier, metadata.getValue())) {
-                return metadata;
-            }
-        }
-        return ColumnMetadata.NONE;
+    public byte[] toJson() throws IOException {
+        return new Gson().toJson(this).getBytes();
+    }
+
+    @Override
+    public void write(DataOutput dataOutput) throws IOException {
+        dataOutput.write(new Gson().toJson(this).getBytes());
+    }
+
+    @Override
+    public void readFields(DataInput dataInput) throws IOException {
+        this.copy(new Gson().fromJson(new String(Bytes.readByteArray(dataInput)), ColumnMetadata.class));
+    }
+
+    private void copy(ColumnMetadata other) {
+        this.type = other.type;
+        this.scale = other.scale;
+        this.precision = other.precision;
+        this.isNullable = other.isNullable();
+        this.isPrimaryKey = other.isPrimaryKey();
     }
 }

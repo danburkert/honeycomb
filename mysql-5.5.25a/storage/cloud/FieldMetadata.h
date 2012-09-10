@@ -33,6 +33,15 @@ private:
     return enum_object;
   }
 
+  jobject create_column_type_enum_object(const char *name)
+  {
+    jclass column_type_class = this->env->FindClass("com/nearinfinity/hbaseclient/ColumnType");
+    jfieldID enum_field = this->env->GetStaticFieldID(column_type_class, name, "Lcom/nearinfinity/hbaseclient/ColumnType;");
+    jobject enum_object = this->env->GetStaticObjectField(column_type_class, enum_field);
+
+    return enum_object;
+  }
+
   jbyteArray type_enum_to_byte_array(const char *name)
   {
     jclass metadata_class = this->env->FindClass("com/nearinfinity/hbaseclient/ColumnType");
@@ -55,7 +64,6 @@ private:
 
   jbyteArray long_to_java_byte_array(longlong val)
   {
-    val = __builtin_bswap64(val);
     uint array_len = sizeof(longlong);
     //TODO: Need to free this? - jre
     jbyteArray array = this->env->NewByteArray(array_len);
@@ -71,7 +79,19 @@ public:
 
   jobject get_field_metadata(Field *field, TABLE *table_arg)
   {
-    jobject map = this->create_java_map();
+    jclass metadata_class = this->env->FindClass("com/nearinfinity/hbaseclient/ColumnMetadata");
+
+    jmethodID metadata_constructor = this->env->GetMethodID(metadata_class, "<init>", "()V");
+
+    jmethodID set_max_length_method = this->env->GetMethodID(metadata_class, "setMaxLength", "(I)V");
+    jmethodID set_precision_method = this->env->GetMethodID(metadata_class, "setPrecision", "(I)V");
+    jmethodID set_scale_method = this->env->GetMethodID(metadata_class, "setScale", "(I)V");
+    jmethodID set_nullable_method = this->env->GetMethodID(metadata_class, "setNullable", "(Z)V");
+    jmethodID set_primary_key_method = this->env->GetMethodID(metadata_class, "setPrimaryKey", "(Z)V");
+    jmethodID set_type_method = this->env->GetMethodID(metadata_class, "setType", "(Lcom/nearinfinity/hbaseclient/ColumnType;)V");
+
+    jobject metadata_object = this->env->NewObject(metadata_class, metadata_constructor);
+
     switch (field->real_type())
     {
       case MYSQL_TYPE_TINY:
@@ -82,45 +102,59 @@ public:
       case MYSQL_TYPE_YEAR:
         if (is_unsigned_field(field))
         {
-          this->java_map_put(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("ULONG"));
-        } else {
-          this->java_map_put(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("LONG"));
+          this->env->CallVoidMethod(metadata_object, set_type_method, this->create_column_type_enum_object("ULONG"));
+        }
+        else
+        {
+          this->env->CallVoidMethod(metadata_object, set_type_method, this->create_column_type_enum_object("LONG"));
         }
         break;
       case MYSQL_TYPE_FLOAT:
       case MYSQL_TYPE_DOUBLE:
-        this->java_map_put(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("DOUBLE"));
+        this->env->CallVoidMethod(metadata_object, set_type_method, this->create_column_type_enum_object("DOUBLE"));
           break;
       case MYSQL_TYPE_DECIMAL:
       case MYSQL_TYPE_NEWDECIMAL:
-        this->java_map_put(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("DECIMAL"));
+      {
+        // TODO: Is this reliable? Field_decimal doesn't seem to have these members. Potential crash for old decimal types. - ABC
+
+        uint precision = ((Field_new_decimal*) field)->precision;
+        uint scale = ((Field_new_decimal*) field)->dec;
+
+        this->env->CallVoidMethod(metadata_object, set_type_method, this->create_column_type_enum_object("DECIMAL"));
+        this->env->CallVoidMethod(metadata_object, set_precision_method, (jint)precision);
+        this->env->CallVoidMethod(metadata_object, set_scale_method, (jint)scale);
+      }
         break;
       case MYSQL_TYPE_DATE:
       case MYSQL_TYPE_NEWDATE:
-          this->java_map_put(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("DATE"));
+        this->env->CallVoidMethod(metadata_object, set_type_method, this->create_column_type_enum_object("DATE"));
           break;
       case MYSQL_TYPE_TIME:
-          this->java_map_put(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("TIME"));
+        this->env->CallVoidMethod(metadata_object, set_type_method, this->create_column_type_enum_object("TIME"));
           break;
       case MYSQL_TYPE_DATETIME:
       case MYSQL_TYPE_TIMESTAMP:
-          this->java_map_put(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("DATETIME"));
+        this->env->CallVoidMethod(metadata_object, set_type_method, this->create_column_type_enum_object("DATETIME"));
           break;
       case MYSQL_TYPE_STRING:
       case MYSQL_TYPE_VARCHAR:
         {
           longlong max_data_length = (longlong)field->max_data_length();
-          if (field->maybe_null())
-          {
-            //If the field might be null, MySQL builds an extra byte into max_data_length. We want to ignore that.
-            max_data_length--;
-          }
-          this->java_map_put(map, create_metadata_enum_object("MAX_LENGTH"), long_to_java_byte_array(max_data_length));
+
+          //If the field might be null, MySQL builds an extra byte into max_data_length. We want to ignore that.
+          // UPDATE: In my experience, MySQL always seems to add the extra byte in (reports 256 for VARCHAR(255), etc.) - ABC
+          max_data_length--;
+
+          this->env->CallVoidMethod(metadata_object, set_max_length_method, (jint)max_data_length);
+
           if (field->binary())
           {
-            this->java_map_put(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("BINARY"));
-          } else {
-            this->java_map_put(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("STRING"));
+            this->env->CallVoidMethod(metadata_object, set_type_method, this->create_column_type_enum_object("BINARY"));
+          }
+          else
+          {
+            this->env->CallVoidMethod(metadata_object, set_type_method, this->create_column_type_enum_object("STRING"));
           }
         }
         break;
@@ -128,10 +162,10 @@ public:
       case MYSQL_TYPE_TINY_BLOB:
       case MYSQL_TYPE_MEDIUM_BLOB:
       case MYSQL_TYPE_LONG_BLOB:
-        this->java_map_put(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("BINARY"));
+        this->env->CallVoidMethod(metadata_object, set_type_method, this->create_column_type_enum_object("BINARY"));
         break;
       case MYSQL_TYPE_ENUM:
-        this->java_map_put(map, create_metadata_enum_object("COLUMN_TYPE"), type_enum_to_byte_array("ULONG"));
+        this->env->CallVoidMethod(metadata_object, set_type_method, this->create_column_type_enum_object("ULONG"));
         break;
       case MYSQL_TYPE_NULL:
       case MYSQL_TYPE_BIT:
@@ -144,7 +178,7 @@ public:
 
     if (field->real_maybe_null())
     {
-      this->java_map_put(map, create_metadata_enum_object("IS_NULLABLE"), string_to_java_byte_array("True"));
+      this->env->CallVoidMethod(metadata_object, set_nullable_method, JNI_TRUE);
     }
 
     // 64 is obviously some key flag indicating no primary key, but I have no idea where it's defined. Will fix later. - ABC
@@ -152,11 +186,11 @@ public:
     {
       if (strcmp(table_arg->s->key_info[table_arg->s->primary_key].key_part->field->field_name, field->field_name) == 0)
       {
-        this->java_map_put(map, create_metadata_enum_object("PRIMARY_KEY"), string_to_java_byte_array("True"));
+        this->env->CallVoidMethod(metadata_object, set_primary_key_method, JNI_TRUE);
       }
     }
 
-    return map;
+    return metadata_object;
   }
 };
 

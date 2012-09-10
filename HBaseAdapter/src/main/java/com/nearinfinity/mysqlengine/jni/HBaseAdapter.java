@@ -75,7 +75,7 @@ public class HBaseAdapter {
         }
     }
 
-    public static boolean createTable(String tableName, Map<String, Map<ColumnMetadata, byte[]>> columns) throws HBaseAdapterException {
+    public static boolean createTable(String tableName, Map<String, ColumnMetadata> columns) throws HBaseAdapterException {
         logger.info("creatingTable-> tableName:" + tableName);
 
         try {
