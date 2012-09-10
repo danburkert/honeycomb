@@ -82,4 +82,3 @@ void extract_mysql_timestamp(long tmp, MYSQL_TIME *time, THD *thd)
   bzero((void*) time, sizeof(*time));
   thd->variables.time_zone->gmt_sec_to_TIME(time, (my_time_t)tmp);
 }
-

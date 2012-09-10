@@ -49,7 +49,7 @@ private:
     jstring java_string = this->env->NewStringUTF(string);
     jclass string_class = this->env->FindClass("java/lang/String");
     jmethodID get_bytes_method = this->env->GetMethodID(string_class, "getBytes", "()[B");
-    
+
     return (jbyteArray)this->env->CallObjectMethod(java_string, get_bytes_method);
   }
 
