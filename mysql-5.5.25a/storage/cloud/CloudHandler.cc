@@ -290,7 +290,7 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
       case MYSQL_TYPE_ENUM:
         {
           long long long_value = *(long long*)val;
-          if(is_little_endian())
+          if(this->is_little_endian())
           {
             long_value = __builtin_bswap64(long_value);
           }
@@ -300,7 +300,7 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
       case MYSQL_TYPE_FLOAT:
       case MYSQL_TYPE_DOUBLE:
         double double_value;
-        if (is_little_endian())
+        if (this->is_little_endian())
         {
           long long* long_ptr = (long long*)val;
           longlong swapped_long = __builtin_bswap64(*long_ptr);
@@ -392,7 +392,7 @@ int CloudHandler::rnd_pos(uchar *buf, uchar *pos)
   jclass adapter_class = this->adapter();
   jmethodID get_row_method = this->env->GetStaticMethodID(adapter_class, "getRow", "(J[B)Lcom/nearinfinity/mysqlengine/jni/Row;");
   jlong java_scan_id = curr_scan_id;
-  jbyteArray uuid = convert_value_to_java_bytes(this->env, pos, 16);
+  jbyteArray uuid = convert_value_to_java_bytes(pos, 16);
   jobject row = this->env->CallStaticObjectMethod(adapter_class, get_row_method, java_scan_id, uuid);
 
   jclass row_class = find_jni_class("Row", this->env);
@@ -465,6 +465,8 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
     DBUG_RETURN(1);
   }
 
+  // TODO: LOOK HERE FOR THINGS MUCKED UP
+
   const char* table_name = create_info->alias;
 
   jobject columnMap = this->create_java_map();
@@ -472,12 +474,9 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
 
   for (Field **field = table_arg->field ; *field ; field++)
   {
-    // This jobject needs to be of type ColumnMetadata now
     jobject java_metadata_obj = metadata.get_field_metadata(*field, table_arg);
     this->java_map_insert(columnMap, string_to_java_string((*field)->field_name), java_metadata_obj);
   }
-
-  // Now it's a Map<String, ColumnMetadata> and ColumnMetadata is its own class, not just an enum
 
   jmethodID create_table_method = this->env->GetStaticMethodID(adapter_class, "createTable", "(Ljava/lang/String;Ljava/util/Map;)Z");
   this->env->CallStaticBooleanMethod(adapter_class, create_table_method, string_to_java_string(table_name), columnMap);
@@ -663,7 +662,7 @@ jobject CloudHandler::sql_to_java()
       case MYSQL_TYPE_ENUM:
         {
           long long integral_value = field->val_int();
-          if(is_little_endian())
+          if(this->is_little_endian())
           {
             integral_value = __builtin_bswap64(integral_value);
           }
@@ -676,7 +675,7 @@ jobject CloudHandler::sql_to_java()
         {
           double fp_value = field->val_real();
           long long* fp_ptr;
-          if(is_little_endian())
+          if(this->is_little_endian())
           {
             fp_ptr = (long long*)&fp_value;
             *fp_ptr = __builtin_bswap64(*fp_ptr);
@@ -737,7 +736,7 @@ jobject CloudHandler::sql_to_java()
         break;
     }
 
-    jbyteArray java_bytes = convert_value_to_java_bytes(this->env, rec_buffer->buffer, actualFieldSize);
+    jbyteArray java_bytes = convert_value_to_java_bytes(rec_buffer->buffer, actualFieldSize);
 
     java_map_insert(java_map, field_name, java_bytes);
   }
@@ -892,7 +891,7 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
       const bool is_signed = !is_unsigned_field(this->index_field);
       bytes_to_long(key, key_len, is_signed, key_copy);
       key_len = sizeof(longlong);
-      make_big_endian(key_copy, key_len);
+      this->make_big_endian(key_copy, key_len);
       break;
     }
     case MYSQL_TYPE_YEAR:
@@ -904,7 +903,7 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
 
       bytes_to_long((uchar *)&int_val, sizeof(uint32_t), false, key_copy);
       key_len = sizeof(long long);
-      make_big_endian(key_copy, key_len);
+      this->make_big_endian(key_copy, key_len);
       break;
     }
     case MYSQL_TYPE_FLOAT:
@@ -915,7 +914,7 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
       key_len = sizeof(double);
 
       doublestore(key_copy, j);
-      reverse_bytes(key_copy, key_len);
+      this->reverse_bytes(key_copy, key_len);
     }
       break;
     case MYSQL_TYPE_DOUBLE:
@@ -927,7 +926,7 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
       key_len = sizeof(double);
 
       doublestore(key_copy, j);
-      reverse_bytes(key_copy, key_len);
+      this->reverse_bytes(key_copy, key_len);
     }
       break;
     case MYSQL_TYPE_DECIMAL:
@@ -1216,4 +1215,17 @@ void CloudHandler::attach_thread()
   {
     this->jvm->AttachCurrentThread((void**)&this->env, &attachArgs);
   }
+}
+
+jbyteArray CloudHandler::convert_value_to_java_bytes(uchar* value, uint32 length)
+{
+  jbyteArray byteArray = this->env->NewByteArray(length);
+  jbyte *java_bytes = this->env->GetByteArrayElements(byteArray, 0);
+
+  memcpy(java_bytes, value, length);
+
+  this->env->SetByteArrayRegion(byteArray, 0, length, java_bytes);
+  this->env->ReleaseByteArrayElements(byteArray, java_bytes, 0);
+
+  return byteArray;
 }

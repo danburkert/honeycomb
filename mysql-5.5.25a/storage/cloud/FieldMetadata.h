@@ -143,6 +143,7 @@ public:
           longlong max_data_length = (longlong)field->max_data_length();
 
           //If the field might be null, MySQL builds an extra byte into max_data_length. We want to ignore that.
+
           // UPDATE: In my experience, MySQL always seems to add the extra byte in (reports 256 for VARCHAR(255), etc.) - ABC
           max_data_length--;
 

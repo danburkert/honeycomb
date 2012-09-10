@@ -1,32 +1,5 @@
 #include "Util.h"
 
-void reverse_bytes(uchar *begin, uint length)
-{
-  for(int x = 0, y = length - 1; x < y; x++, y--)
-  {
-    uchar tmp = begin[x];
-    begin[x] = begin[y];
-    begin[y] = tmp;
-  }
-}
-
-bool is_little_endian()
-{
-  #ifdef WORDS_BIG_ENDIAN
-    return false;
-  #else
-    return true;
-  #endif
-}
-
-void make_big_endian(uchar *begin, uint length)
-{
-  if (is_little_endian())
-  {
-    reverse_bytes(begin, length);
-  }
-}
-
 void print_java_exception(JNIEnv* env)
 {
   if(env->ExceptionCheck() == JNI_TRUE)
@@ -108,17 +81,5 @@ void extract_mysql_timestamp(long tmp, MYSQL_TIME *time, THD *thd)
 {
   bzero((void*) time, sizeof(*time));
   thd->variables.time_zone->gmt_sec_to_TIME(time, (my_time_t)tmp);
-}
-jbyteArray convert_value_to_java_bytes(JNIEnv *env, uchar* value, uint32 length)
-{
-  jbyteArray byteArray = env->NewByteArray(length);
-  jbyte *java_bytes = env->GetByteArrayElements(byteArray, 0);
-
-  memcpy(java_bytes, value, length);
-
-  env->SetByteArrayRegion(byteArray, 0, length, java_bytes);
-  env->ReleaseByteArrayElements(byteArray, java_bytes, 0);
-
-  return byteArray;
 }
 

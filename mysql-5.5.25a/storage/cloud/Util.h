@@ -19,9 +19,5 @@ void extract_mysql_old_date(int32 tmp, MYSQL_TIME *time);
 void extract_mysql_time(long tmp, MYSQL_TIME *time);
 void extract_mysql_datetime(longlong tmp, MYSQL_TIME *time);
 void extract_mysql_timestamp(long tmp, MYSQL_TIME *time, THD *thd);
-jbyteArray convert_value_to_java_bytes(JNIEnv *env, uchar* value, uint32 length);
-void reverse_bytes(uchar *begin, uint length);
-bool is_little_endian();
-void make_big_endian(uchar *begin, uint length);
 
 #endif
