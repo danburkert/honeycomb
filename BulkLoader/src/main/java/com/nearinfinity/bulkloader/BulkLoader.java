@@ -55,8 +55,7 @@ public class BulkLoader {
         }
 
         @Override
-        public void map(LongWritable offset, Text line, Context context)
-                throws IOException {
+        public void map(LongWritable offset, Text line, Context context) {
             try {
                 String[] columnData = line.toString().split(",");
 
@@ -87,7 +86,10 @@ public class BulkLoader {
 
                 context.getCounter(Counters.ROWS).increment(1);
             } catch (Exception e) {
-                e.printStackTrace();
+                System.err.println(e.getMessage());
+                context.setStatus(e.getMessage() + ". See logs for details");
+                context.getCounter(Counters.FAILED_ROWS).increment(1);
+
             }
         }
     }

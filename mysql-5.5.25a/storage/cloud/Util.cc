@@ -61,7 +61,6 @@ bool is_unsigned_field(Field *field)
 
 void extract_mysql_newdate(long tmp, MYSQL_TIME *time)
 {
-
   bzero((void*) time, sizeof(*time));
   time->month = tmp >> 5 & 15;
   time->day = tmp & 31;
@@ -110,7 +109,6 @@ void extract_mysql_timestamp(long tmp, MYSQL_TIME *time, THD *thd)
   bzero((void*) time, sizeof(*time));
   thd->variables.time_zone->gmt_sec_to_TIME(time, (my_time_t)tmp);
 }
-
 jbyteArray convert_value_to_java_bytes(JNIEnv *env, uchar* value, uint32 length)
 {
   jbyteArray byteArray = env->NewByteArray(length);
