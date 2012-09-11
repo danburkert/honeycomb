@@ -241,19 +241,56 @@ public class HBaseClient {
 
         List<Delete> deleteList = new LinkedList<Delete>();
 
-        //Delete dataRows
+        //Delete data row
         byte[] dataRowKey = RowKeyFactory.buildDataKey(tableId, uuid);
         deleteList.add(new Delete(dataRowKey));
 
-        //Scan the index rows
-        byte[] indexStartKey = RowKeyFactory.buildValueIndexKey(tableId, 0L, new byte[0], uuid, ColumnType.NONE, 0);
-        byte[] indexEndKey = RowKeyFactory.buildValueIndexKey(tableId + 1, 0L, new byte[0], uuid, ColumnType.NONE, 0);
-        deleteList.addAll(scanAndDeleteAllUUIDs(indexStartKey, indexEndKey, uuid));
+        Get get = new Get(dataRowKey);
+        Result result = table.get(get);
 
-        //Scan the null index rows
-        byte[] nullStartKey = RowKeyFactory.buildNullIndexKey(tableId, 0L, uuid);
-        byte[] nullEndKey = RowKeyFactory.buildNullIndexKey(tableId + 1, 0L, uuid);
-        deleteList.addAll(scanAndDeleteAllUUIDs(nullStartKey, nullEndKey, uuid));
+        Map<String,byte[]> valueMap = parseDataRow(result, tableName);
+
+        //Loop through ALL columns to determine which should be NULL
+        for (String columnName : valueMap.keySet()) {
+            long columnId = info.getColumnIdByName(columnName);
+            byte[] value = valueMap.get(columnName);
+            ColumnMetadata metadata = info.getColumnMetadata(columnName);
+            ColumnType columnType = metadata.getType();
+
+            if (value == null) {
+                byte[] nullIndexKey = RowKeyFactory.buildNullIndexKey(tableId, columnId, uuid);
+                deleteList.add(new Delete(nullIndexKey));
+                continue;
+            }
+
+            //Determine pad length
+            int padLength = 0;
+            if (columnType == ColumnType.STRING || columnType == ColumnType.BINARY) {
+                long maxLength = metadata.getMaxLength();
+                padLength = (int) maxLength - value.length;
+            }
+
+            byte[] indexKey = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, uuid, columnType, padLength);
+            byte[] reverseKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId, value, columnType, uuid, padLength);
+
+            deleteList.add(new Delete(indexKey));
+            deleteList.add(new Delete(reverseKey));
+        }
+
+//        //Scan the index rows
+//        byte[] indexStartKey = RowKeyFactory.buildValueIndexKey(tableId, 0L, new byte[0], uuid, ColumnType.NONE, 0);
+//        byte[] indexEndKey = RowKeyFactory.buildValueIndexKey(tableId + 1, 0L, new byte[0], uuid, ColumnType.NONE, 0);
+//        deleteList.addAll(scanAndDeleteAllUUIDs(indexStartKey, indexEndKey, uuid));
+//
+//        //Scan the reverse index rows
+//        byte[] reverseStartKey = RowKeyFactory.buildReverseIndexKey(tableId, 0L, new byte[0], ColumnType.NONE, uuid, 0);
+//        byte[] reverseEndKey = RowKeyFactory.buildReverseIndexKey(tableId+1, 0L, new byte[0], ColumnType.NONE, uuid, 0);
+//        deleteList.addAll(scanAndDeleteAllUUIDs(reverseStartKey, reverseEndKey, uuid));
+//
+//        //Scan the null index rows
+//        byte[] nullStartKey = RowKeyFactory.buildNullIndexKey(tableId, 0L, uuid);
+//        byte[] nullEndKey = RowKeyFactory.buildNullIndexKey(tableId + 1, 0L, uuid);
+//        deleteList.addAll(scanAndDeleteAllUUIDs(nullStartKey, nullEndKey, uuid));
 
         table.delete(deleteList);
 
