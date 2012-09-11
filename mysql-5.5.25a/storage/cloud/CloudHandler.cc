@@ -146,7 +146,9 @@ int CloudHandler::delete_all_rows()
   jclass adapter_class = this->adapter();
   jmethodID delete_rows_method = this->env->GetStaticMethodID(adapter_class, "deleteAllRows", "(Ljava/lang/String;)I");
 
-  this->env->CallStaticIntMethod(adapter_class, delete_rows_method, tableName);
+  int count = this->env->CallStaticIntMethod(adapter_class, delete_rows_method, tableName);
+
+  // TODO:  Use the count to actually update the number of deleted rows returned by mysql
 
   detach_thread();
 
@@ -1185,6 +1187,8 @@ int CloudHandler::read_index_row(jobject index_row, uchar* buf)
 
   return 0;
 }
+
+
 
 bool CloudHandler::is_key_null(const uchar *key)
 {
