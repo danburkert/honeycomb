@@ -70,11 +70,11 @@ public class BulkLoader {
 
                 String name;
                 byte[] val;
-                ColumnType t;
+                ColumnMetadata m;
                 for (int i = 0; i < columnData.length; i++) {
                     name = columnNames[i];
-                    t = tableInfo.getColumnTypeByName(name);
-                    val = ValueTransformer.transform(columnData[i], t);
+                    m = tableInfo.getColumnMetadata(name);
+                    val = ValueTransformer.transform(columnData[i], m);
                     valueMap.put(name, val);
                 }
 

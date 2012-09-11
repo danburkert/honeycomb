@@ -1,5 +1,6 @@
 package com.nearinfinity.bulkloader;
 
+import com.nearinfinity.hbaseclient.ColumnMetadata;
 import com.nearinfinity.hbaseclient.ColumnType;
 import org.apache.commons.lang3.time.DateUtils;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -16,8 +17,9 @@ import java.util.Date;
 
 public class ValueTransformer {
 
-    public static byte[] transform(String val, ColumnType t) throws Exception {
+    public static byte[] transform(String val, ColumnMetadata m) throws Exception {
         byte[] ret = null;
+        ColumnType t = m.getType();
         switch (t) {
             case LONG:
                 ret = ByteBuffer.allocate(8).putLong(Long.parseLong(val)).array();
@@ -58,14 +60,14 @@ public class ValueTransformer {
                 ret = time_formatter.format(d).getBytes();
                 break;
             case DECIMAL:
-                int precision = 5;
-                int right_scale = 2;
+                int precision = m.getPrecision();
+                int right_scale = m.getScale();
                 int left_scale = precision - 2;
                 BigDecimal x = new BigDecimal(val);
                 boolean is_negative = x.compareTo(BigDecimal.ZERO) == -1;
                 x = x.abs();
                 BigDecimal left = x.setScale(0, RoundingMode.DOWN);
-                BigDecimal right = x.subtract(left).movePointRight(x.scale());
+                BigDecimal right = x.subtract(left).movePointRight(right_scale);
                 int right_bytes_len = bytesFromDigits(right_scale);
                 int left_bytes_len = bytesFromDigits(left_scale);
                 byte[] left_bytes = left.toBigInteger().toByteArray();
