@@ -19,7 +19,7 @@ public class ColumnInfo {
     public ColumnInfo(long id, String name, ColumnMetadata metadata) {
         this.id = id;
         this.name = name;
-        this.metadata = new ColumnMetadata();
+        this.metadata = metadata;
     }
 
     public long getId() {

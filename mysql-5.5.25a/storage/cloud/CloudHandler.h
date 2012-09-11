@@ -50,6 +50,7 @@ class CloudHandler : public handler
 
     const char* java_to_string(jstring str);
     jstring string_to_java_string(const char *string);
+    jbyteArray convert_value_to_java_bytes(uchar* value, uint32 length);
     jobject create_java_map();
     jobject java_map_insert(jobject java_map, jobject key, jobject value);
     jbyteArray java_map_get(jobject java_map, jstring key);
@@ -86,6 +87,33 @@ class CloudHandler : public handler
       memcpy(&j, ptr, sizeof(j));
 
       return j;
+    }
+
+    void reverse_bytes(uchar *begin, uint length)
+    {
+      for(int x = 0, y = length - 1; x < y; x++, y--)
+      {
+        uchar tmp = begin[x];
+        begin[x] = begin[y];
+        begin[y] = tmp;
+      }
+    }
+
+    bool is_little_endian()
+    {
+      #ifdef WORDS_BIG_ENDIAN
+        return false;
+      #else
+        return true;
+      #endif
+    }
+
+    void make_big_endian(uchar *begin, uint length)
+    {
+      if (is_little_endian())
+      {
+        reverse_bytes(begin, length);
+      }
     }
 
     bool is_integral_field(int field_type)
