@@ -251,7 +251,7 @@ public class HBaseClient {
         Map<String,byte[]> valueMap = parseDataRow(result, tableName);
 
         //Loop through ALL columns to determine which should be NULL
-        for (String columnName : valueMap.keySet()) {
+        for (String columnName : info.getColumnNames()) {
             long columnId = info.getColumnIdByName(columnName);
             byte[] value = valueMap.get(columnName);
             ColumnMetadata metadata = info.getColumnMetadata(columnName);
