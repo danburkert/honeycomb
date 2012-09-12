@@ -12,12 +12,16 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Random;
 
 public class DataCreator {
 
     private static final String DATA_TYPE_LIST = "data_type_list";
     private static final String NUM_ROWS = "num_rows";
+    private static final DateFormat DF = new SimpleDateFormat("yyyyMMdd-HHmmss");
 
     private static class DataCreatorMapper extends Mapper<LongWritable, Text, Text, Text> {
         private Faker faker;
@@ -80,21 +84,25 @@ public class DataCreator {
     }
 
     public static void main(String[] args) throws Exception {
-        if (args.length < 4) {
-            System.out.println("Usage: DataCreator <input_path> <output_path> <num_rows> <data_type_list>");
+        if (args.length < 3) {
+            System.out.println("Usage: DataCreator.jar <input_path> <num_rows> <data_type_list>");
             System.exit(-1);
         }
+        String inputPath = args[0];
+        String numRows = args[1];
+        String dataTypeList = args[2];
+        String outputPath = buildOutputPath(numRows);
 
         Configuration conf = new Configuration();
-        conf.set(DATA_TYPE_LIST, args[3]);
-        conf.set(NUM_ROWS, args[2]);
+        conf.set(DATA_TYPE_LIST, dataTypeList);
+        conf.set(NUM_ROWS, numRows);
 
         Job job = new Job(conf);
         job.setJarByClass(DataCreator.class);
         job.setJobName("Data Creator");
 
-        FileInputFormat.addInputPath(job, new Path(args[0]));
-        FileOutputFormat.setOutputPath(job, new Path(args[1]));
+        FileInputFormat.addInputPath(job, new Path(inputPath));
+        FileOutputFormat.setOutputPath(job, new Path(outputPath));
 
         job.setOutputFormatClass(TextOutputFormat.class);
 
@@ -104,6 +112,15 @@ public class DataCreator {
         job.setMapOutputKeyClass(Text.class);
         job.setMapOutputValueClass(Text.class);
 
-        System.exit(job.waitForCompletion(true) ? 0 : 1);
+        if (!job.waitForCompletion(true)) {
+            System.out.println("Error in running the job!");
+            System.exit(1);
+        }
+
+        System.out.println("Successfully completed job with output path: " + outputPath);
+    }
+
+    private static String buildOutputPath(String numRows) {
+        return "created_data/" + DF.format(new Date()) + "-" + numRows;
     }
 }
