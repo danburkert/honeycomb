@@ -192,8 +192,6 @@ public class ValueTransformerTest {
                 Arrays.copyOfRange(Bytes.toBytes(0x008012d687037al), 2, 8),
                 ValueTransformer.transform("1234567.890", m)
         );
-        System.out.println(Bytes.toStringBinary(Arrays.copyOfRange(Bytes.toBytes(0x008000000501f4l), 2, 8)));
-        System.out.println(Bytes.toStringBinary(ValueTransformer.transform("5.5", m)));
         Assert.assertArrayEquals(
                 Arrays.copyOfRange(Bytes.toBytes(0x008000000501f4l), 2, 8),
                 ValueTransformer.transform("5.5", m)

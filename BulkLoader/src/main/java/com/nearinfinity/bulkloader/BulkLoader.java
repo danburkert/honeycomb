@@ -18,8 +18,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.Scanner;
@@ -69,7 +68,7 @@ public class BulkLoader {
                 Map<String, byte []> valueMap = new TreeMap<String, byte []>();
 
                 String name;
-                byte[] val;
+                byte[] val = null;
                 ColumnMetadata m;
                 for (int i = 0; i < columnData.length; i++) {
                     name = columnNames[i];
@@ -86,10 +85,11 @@ public class BulkLoader {
 
                 context.getCounter(Counters.ROWS).increment(1);
             } catch (Exception e) {
-                System.err.println(e.getMessage());
-                context.setStatus(e.getMessage() + ". See logs for details");
+                Writer trace_writer = new StringWriter();
+                PrintWriter print_writer = new PrintWriter(trace_writer);
+                e.printStackTrace(print_writer);
+                context.setStatus(e.getMessage() + ". See logs for details. Stack Trace: " + trace_writer.toString());
                 context.getCounter(Counters.FAILED_ROWS).increment(1);
-
             }
         }
     }
