@@ -18,6 +18,7 @@ public class ColumnMetadata implements Writable {
         this.type = ColumnType.NONE;
         this.scale = 0;
         this.precision = 0;
+        this.maxLength = 0;
         this.isNullable = false;
         this.isPrimaryKey = false;
     }
@@ -95,9 +96,10 @@ public class ColumnMetadata implements Writable {
     }
 
     private void copy(ColumnMetadata other) {
-        this.type = other.type;
-        this.scale = other.scale;
-        this.precision = other.precision;
+        this.type = other.getType();
+        this.scale = other.getScale();
+        this.precision = other.getPrecision();
+        this.maxLength = other.getMaxLength();
         this.isNullable = other.isNullable();
         this.isPrimaryKey = other.isPrimaryKey();
     }
