@@ -1,10 +1,12 @@
 package com.nearinfinity.bulkloader;
 
 import com.nearinfinity.hbaseclient.*;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
@@ -19,6 +21,7 @@ import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import java.io.*;
+import java.sql.Time;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.Scanner;
@@ -59,10 +62,8 @@ public class BulkLoader {
                 String[] columnData = line.toString().split(",");
 
                 if(columnData.length != columnNames.length) {
-                    System.err.println("Row has wrong number of columns. Expected " +
+                    throw new Exception("Row has wrong number of columns. Expected " +
                         columnNames.length + " got " + columnData.length + ". Line: " + line.toString());
-                    context.setStatus("Row with wrong number of columns: see logs.");
-                    context.getCounter(Counters.FAILED_ROWS).increment(1);
                 }
 
                 Map<String, byte []> valueMap = new TreeMap<String, byte []>();
@@ -95,8 +96,8 @@ public class BulkLoader {
     }
 
     public static void main(String[] args) throws Exception {
-        if (args.length < 4) {
-            System.err.println("Usage: com.nearinfinity.bulkloader.BulkLoader <input path> <output_path> <MySQL table name>" +
+        if (args.length != 3) {
+            System.err.println("Usage: com.nearinfinity.bulkloader.BulkLoader <input path> <MySQL table name>" +
                     " <comma seperated MySQL column names>");
             System.exit(-1);
         }
@@ -110,9 +111,9 @@ public class BulkLoader {
         }
 
         String inputPath = args[0];
-        String outputPath = args[1];
-        String sqlTableName = args[2];
-        String columnNames = args[3];
+        String sqlTableName = args[1];
+        String columnNames = args[2];
+        String outputPath = "bulk_loader_output_" + System.currentTimeMillis() + ".tmp";
 
         String hbaseTableName = params.get("hbase_table_name");
         String hbaseFamilyName = params.get("hbase_family");
@@ -142,18 +143,15 @@ public class BulkLoader {
 
         HFileOutputFormat.configureIncrementalLoad(job, table);
 
-//        job.setJarByClass(com.nearinfinity.bulkloader.BulkLoader.class);
-//        job.setMapperClass(BulkLoaderMapper.class);
-//        job.setOutputFormatClass(TableOutputFormat.class);
-//        job.getConfiguration().set(TableOutputFormat.OUTPUT_TABLE, hbaseTableName);
-//        job.setOutputKeyClass(ImmutableBytesWritable.class);
-//        job.setOutputValueClass(Put.class);
-//        job.setNumReduceTasks(0);
-//        FileInputFormat.addInputPath(job, new Path(inputPath));
-
         if (job.waitForCompletion(true)) {
             LoadIncrementalHFiles fileLoader = new LoadIncrementalHFiles(conf);
             fileLoader.doBulkLoad(new Path(outputPath), table);
         }
+
+        // Delete temporary output folder after completion
+        FileUtils.deleteDirectory(new File(outputPath));
+        FileSystem fileSystem = FileSystem.get(conf);
+        fileSystem.delete(new Path(outputPath), true);
+        fileSystem.close();
   }
 }
