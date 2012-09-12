@@ -140,14 +140,9 @@ public:
       case MYSQL_TYPE_STRING:
       case MYSQL_TYPE_VARCHAR:
         {
-          longlong max_data_length = (longlong)field->max_data_length();
+          longlong max_char_length = (longlong)field->field_length / field->charset()->mbmaxlen;
 
-          //If the field might be null, MySQL builds an extra byte into max_data_length. We want to ignore that.
-
-          // UPDATE: In my experience, MySQL always seems to add the extra byte in (reports 256 for VARCHAR(255), etc.) - ABC
-          max_data_length--;
-
-          this->env->CallVoidMethod(metadata_object, set_max_length_method, (jint)max_data_length);
+          this->env->CallVoidMethod(metadata_object, set_max_length_method, (jint)max_char_length);
 
           if (field->binary())
           {
