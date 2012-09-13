@@ -4,7 +4,6 @@ import com.nearinfinity.hbaseclient.ColumnMetadata;
 import com.nearinfinity.hbaseclient.HBaseClient;
 import com.nearinfinity.hbaseclient.PutListFactory;
 import com.nearinfinity.hbaseclient.TableInfo;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -38,11 +37,8 @@ public class BulkLoader {
     static class BulkLoaderMapper
             extends Mapper<LongWritable, Text, ImmutableBytesWritable, Put> {
 
-        private byte[] family = null;
         private TableInfo tableInfo = null;
         private String[] columnNames = null;
-        private final ValueParser valueParser = new ValueParser();
-
 
         @Override
         protected void setup(Context context)
@@ -56,7 +52,6 @@ public class BulkLoader {
             HBaseClient client = new HBaseClient(hbaseTableName, zkQuorum);
 
             tableInfo = client.getTableInfo(sqlTableName);
-            family = conf.get("hb_family").getBytes();
             columnNames = conf.get("my_columns").split(",");
         }
 
@@ -73,7 +68,7 @@ public class BulkLoader {
                 Map<String, byte[]> valueMap = new TreeMap<String, byte[]>();
 
                 String name;
-                byte[] val = null;
+                byte[] val;
                 ColumnMetadata meta;
                 for (int i = 0; i < columnData.length; i++) {
                     name = columnNames[i];
@@ -153,7 +148,6 @@ public class BulkLoader {
         }
 
         // Delete temporary output folder after completion
-        FileUtils.deleteDirectory(new File(outputPath));
         FileSystem fileSystem = FileSystem.get(conf);
         fileSystem.delete(new Path(outputPath), true);
         fileSystem.close();
