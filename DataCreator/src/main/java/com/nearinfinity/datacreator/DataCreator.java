@@ -1,20 +1,25 @@
 package com.nearinfinity.datacreator;
 
 import com.github.javafaker.Faker;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Random;
 
 public class DataCreator {
@@ -37,46 +42,49 @@ public class DataCreator {
             Configuration conf = context.getConfiguration();
             this.numRows = Integer.parseInt(conf.get(NUM_ROWS));
 
-            String [] dataTypeStrings = conf.get(DATA_TYPE_LIST).split(",");
+            String[] dataTypeStrings = conf.get(DATA_TYPE_LIST).split(",");
             this.dataTypes = getDataTypeArray(dataTypeStrings);
         }
 
         @Override
         public void map(LongWritable key, Text val, Context context) throws IOException, InterruptedException {
-            for (int i = 0 ; i < numRows ; i++) {
-                StringBuilder sb = new StringBuilder();
-                for (int j = 0 ; j < dataTypes.length ; j++) {
-                    if (j > 0) sb.append(",");
-                    appendData(dataTypes[j], sb);
+            for (int i = 0; i < numRows; i++) {
+                List<String> dataList = new ArrayList<String>();
+                for (DataType dt : dataTypes) {
+                    dataList.add(createData(dt));
                 }
 
-                context.write(new Text(sb.toString()), new Text(""));
+                String row = StringUtils.join(dataList, ",");
+
+                context.write(new Text(row), new Text());
             }
         }
 
-        private void appendData(DataType dataType, StringBuilder sb) {
+        private String createData(DataType dataType) {
+            String ret = null;
             switch (dataType) {
                 case NAME:
-                    sb.append(faker.name());
+                    ret = faker.name();
                     break;
                 case ADDRESS:
-                    sb.append(faker.streetAddress(false));
+                    ret = faker.streetAddress(false);
                     break;
                 case PHONE:
-                    sb.append(faker.phoneNumber());
+                    ret = faker.phoneNumber();
                     break;
                 case LONG:
-                    sb.append(random.nextLong());
+                    ret = Double.toString(random.nextLong());
                     break;
                 case DOUBLE:
-                    sb.append(random.nextDouble());
+                    ret = Double.toString(random.nextDouble());
                     break;
             }
+            return ret;
         }
 
         private DataType[] getDataTypeArray(String[] dataTypeStrings) {
             DataType[] dataTypes = new DataType[dataTypeStrings.length];
-            for (int i = 0 ; i < dataTypeStrings.length ; i++) {
+            for (int i = 0; i < dataTypeStrings.length; i++) {
                 dataTypes[i] = DataType.valueOf(dataTypeStrings[i].toUpperCase());
             }
             return dataTypes;
@@ -85,10 +93,10 @@ public class DataCreator {
 
     public static void main(String[] args) throws Exception {
         if (args.length < 3) {
-            System.out.println("Usage: DataCreator.jar <input_path> <num_rows> <data_type_list>");
+            System.out.println("Usage: DataCreator.jar <iterations> <num_rows> <data_type_list>");
             System.exit(-1);
         }
-        String inputPath = args[0];
+        int iterations = Integer.parseInt(args[0]);
         String numRows = args[1];
         String dataTypeList = args[2];
         String outputPath = buildOutputPath(numRows);
@@ -101,7 +109,9 @@ public class DataCreator {
         job.setJarByClass(DataCreator.class);
         job.setJobName("Data Creator");
 
-        FileInputFormat.addInputPath(job, new Path(inputPath));
+        Path inputPath = createInputFolder(iterations, conf);
+
+        FileInputFormat.addInputPath(job, inputPath);
         FileOutputFormat.setOutputPath(job, new Path(outputPath));
 
         job.setOutputFormatClass(TextOutputFormat.class);
@@ -118,9 +128,28 @@ public class DataCreator {
         }
 
         System.out.println("Successfully completed job with output path: " + outputPath);
+
+        // Delete temporary output folder after completion
+        FileSystem fileSystem = FileSystem.get(conf);
+        fileSystem.delete(inputPath, true);
+        fileSystem.close();
     }
 
     private static String buildOutputPath(String numRows) {
         return "created_data/" + DF.format(new Date()) + "-" + numRows;
+    }
+
+    private static Path createInputFolder(int num_files, Configuration conf) throws Exception {
+        Path path = new Path("DataCreator-input-" + System.currentTimeMillis() + ".tmp");
+        FileSystem fileSystem = FileSystem.get(conf);
+        fileSystem.mkdirs(path);
+
+        FSDataOutputStream os;
+        for (int i = 0; i < num_files; i++) {
+            os = fileSystem.create(path.suffix("/" + i));
+            os.writeBytes("foo bah\n");
+        }
+        fileSystem.close();
+        return path;
     }
 }

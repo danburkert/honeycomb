@@ -5,5 +5,5 @@ public enum DataType {
     PHONE,
     NAME,
     LONG,
-    DOUBLE;
+    DOUBLE
 }
