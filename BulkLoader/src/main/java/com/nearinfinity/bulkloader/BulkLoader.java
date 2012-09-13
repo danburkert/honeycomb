@@ -1,17 +1,22 @@
 package com.nearinfinity.bulkloader;
 
-import com.nearinfinity.hbaseclient.*;
+import com.nearinfinity.hbaseclient.ColumnMetadata;
+import com.nearinfinity.hbaseclient.HBaseClient;
+import com.nearinfinity.hbaseclient.PutListFactory;
+import com.nearinfinity.hbaseclient.TableInfo;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.hbase.mapreduce.*;
+import org.apache.hadoop.hbase.mapreduce.HFileOutputFormat;
+import org.apache.hadoop.hbase.mapreduce.LoadIncrementalHFiles;
+import org.apache.hadoop.hbase.mapreduce.PutSortReducer;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -21,15 +26,14 @@ import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import java.io.*;
-import java.sql.Time;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.Scanner;
+import java.util.TreeMap;
 
 public class BulkLoader {
     private static final Log LOG = LogFactory.getLog(com.nearinfinity.bulkloader.BulkLoader.class);
 
-    public enum Counters { ROWS, FAILED_ROWS }
+    public enum Counters {ROWS, FAILED_ROWS}
 
     static class BulkLoaderMapper
             extends Mapper<LongWritable, Text, ImmutableBytesWritable, Put> {
@@ -37,7 +41,7 @@ public class BulkLoader {
         private byte[] family = null;
         private TableInfo tableInfo = null;
         private String[] columnNames = null;
-        private final ValueTransformer valueTransformer = new ValueTransformer();
+        private final ValueParser valueParser = new ValueParser();
 
 
         @Override
@@ -61,20 +65,20 @@ public class BulkLoader {
             try {
                 String[] columnData = line.toString().split(",");
 
-                if(columnData.length != columnNames.length) {
+                if (columnData.length != columnNames.length) {
                     throw new Exception("Row has wrong number of columns. Expected " +
-                        columnNames.length + " got " + columnData.length + ". Line: " + line.toString());
+                            columnNames.length + " got " + columnData.length + ". Line: " + line.toString());
                 }
 
-                Map<String, byte []> valueMap = new TreeMap<String, byte []>();
+                Map<String, byte[]> valueMap = new TreeMap<String, byte[]>();
 
                 String name;
                 byte[] val = null;
-                ColumnMetadata m;
+                ColumnMetadata meta;
                 for (int i = 0; i < columnData.length; i++) {
                     name = columnNames[i];
-                    m = tableInfo.getColumnMetadata(name);
-                    val = ValueTransformer.transform(columnData[i], m);
+                    meta = tableInfo.getColumnMetadata(name);
+                    val = ValueParser.parse(columnData[i], meta);
                     valueMap.put(name, val);
                 }
 
@@ -86,49 +90,17 @@ public class BulkLoader {
 
                 context.getCounter(Counters.ROWS).increment(1);
             } catch (Exception e) {
-                Writer trace_writer = new StringWriter();
-                PrintWriter print_writer = new PrintWriter(trace_writer);
-                e.printStackTrace(print_writer);
-                context.setStatus(e.getMessage() + ". See logs for details. Stack Trace: " + trace_writer.toString());
+                Writer traceWriter = new StringWriter();
+                PrintWriter printWriter = new PrintWriter(traceWriter);
+                e.printStackTrace(printWriter);
+                context.setStatus(e.getMessage() + ". See logs for details. Stack Trace: " + traceWriter.toString());
                 context.getCounter(Counters.FAILED_ROWS).increment(1);
             }
         }
     }
 
-    public static void main(String[] args) throws Exception {
-        if (args.length != 3) {
-            System.err.println("Usage: com.nearinfinity.bulkloader.BulkLoader <input path> <MySQL table name>" +
-                    " <comma seperated MySQL column names>");
-            System.exit(-1);
-        }
-
-        //Read config options from adapter.conf
-        Scanner confFile = new Scanner(new File("/etc/mysql/adapter.conf"));
-        Map<String, String> params = new TreeMap<String, String>();
-        while (confFile.hasNextLine()) {
-            Scanner line = new Scanner(confFile.nextLine());
-            params.put(line.next(), line.next());
-        }
-
-        String inputPath = args[0];
-        String sqlTableName = args[1];
-        String columnNames = args[2];
-        String outputPath = "bulk_loader_output_" + System.currentTimeMillis() + ".tmp";
-
-        String hbaseTableName = params.get("hbase_table_name");
-        String hbaseFamilyName = params.get("hbase_family");
-        String zkQuorum = params.get("zk_quorum");
-
-        Configuration conf = HBaseConfiguration.create();
-
-        conf.set("hb_family", hbaseFamilyName);
-        conf.set("hb_table", hbaseTableName);
-        conf.set("sql_table_name", sqlTableName);
-        conf.set("zk_quorum", zkQuorum);
-        conf.set("my_columns", columnNames);
-
-        HTable table = new HTable(conf, hbaseTableName);
-        Job job = new Job(conf, "Import from file " + inputPath + " into table " + hbaseTableName);
+    private static boolean run(String inputPath, String outputPath, Configuration conf, HTable table) throws Exception {
+        Job job = new Job(conf, "Import from file " + inputPath + " into table " + conf.get("hb_table"));
 
         job.setJarByClass(BulkLoader.class);
         FileInputFormat.setInputPaths(job, new Path(inputPath));
@@ -143,7 +115,39 @@ public class BulkLoader {
 
         HFileOutputFormat.configureIncrementalLoad(job, table);
 
-        if (job.waitForCompletion(true)) {
+        return job.waitForCompletion(true);
+    }
+
+    public static void main(String[] args) throws Exception {
+        // Check for the correct number of arguments supplied
+        if (args.length != 3) {
+            System.err.println("Usage: com.nearinfinity.bulkloader.BulkLoader <input path> <MySQL table name>" +
+                    " <comma seperated MySQL column names>");
+            System.exit(-1);
+        }
+
+        //Read config options from adapter.conf
+        Scanner confFile = new Scanner(new File("/etc/mysql/adapter.conf"));
+        Map<String, String> params = new TreeMap<String, String>();
+        while (confFile.hasNextLine()) {
+            Scanner line = new Scanner(confFile.nextLine());
+            params.put(line.next(), line.next());
+        }
+
+        // Get arguments and setup configuration variables
+        String inputPath = args[0];
+        String outputPath = "bulk_loader_output_" + System.currentTimeMillis() + ".tmp";
+
+        Configuration conf = HBaseConfiguration.create();
+        conf.set("sql_table_name", args[1]);
+        conf.set("my_columns", args[2]);
+        conf.set("hb_family", params.get("hbase_family"));
+        conf.set("zk_quorum", params.get("zk_quorum"));
+        conf.set("hb_table", params.get("hbase_table_name"));
+
+        HTable table = new HTable(conf, conf.get("hb_table"));
+
+        if (run(inputPath, outputPath, conf, table)) {
             LoadIncrementalHFiles fileLoader = new LoadIncrementalHFiles(conf);
             fileLoader.doBulkLoad(new Path(outputPath), table);
         }
@@ -153,5 +157,5 @@ public class BulkLoader {
         FileSystem fileSystem = FileSystem.get(conf);
         fileSystem.delete(new Path(outputPath), true);
         fileSystem.close();
-  }
+    }
 }

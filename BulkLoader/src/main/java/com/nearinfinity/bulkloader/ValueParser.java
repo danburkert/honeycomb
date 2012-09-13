@@ -3,30 +3,26 @@ package com.nearinfinity.bulkloader;
 import com.nearinfinity.hbaseclient.ColumnMetadata;
 import com.nearinfinity.hbaseclient.ColumnType;
 import org.apache.commons.lang3.time.DateUtils;
-import org.apache.hadoop.hbase.util.Bytes;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.math.MathContext;
 import java.math.RoundingMode;
 import java.nio.ByteBuffer;
-import java.text.DateFormat;
-import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class ValueTransformer {
+public class ValueParser {
 
-    public static byte[] transform(String val, ColumnMetadata m) throws Exception {
+    public static byte[] parse(String val, ColumnMetadata meta) throws Exception {
         byte[] ret = null;
-        ColumnType t = m.getType();
+        ColumnType t = meta.getType();
         switch (t) {
             case LONG:
                 ret = ByteBuffer.allocate(8).putLong(Long.parseLong(val)).array();
                 break;
             case ULONG:
                 BigInteger n = new BigInteger(val);
-                if(n.compareTo(BigInteger.ZERO) == -1) {
+                if (n.compareTo(BigInteger.ZERO) == -1) {
                     throw new Exception("negative value provided for unsigned column.  value: ".concat(val));
                 }
                 ret = ByteBuffer.allocate(8).putLong(new BigInteger(val).longValue()).array();
@@ -60,8 +56,8 @@ public class ValueTransformer {
                 ret = time_formatter.format(d).getBytes();
                 break;
             case DECIMAL:
-                int precision = m.getPrecision();
-                int right_scale = m.getScale();
+                int precision = meta.getPrecision();
+                int right_scale = meta.getScale();
                 int left_scale = precision - 2;
                 BigDecimal x = new BigDecimal(val);
                 boolean is_negative = x.compareTo(BigDecimal.ZERO) == -1;
@@ -74,10 +70,10 @@ public class ValueTransformer {
                 byte[] right_bytes = right.toBigInteger().toByteArray();
                 // Bit twiddling is fun
                 byte[] buff = new byte[left_bytes_len + right_bytes_len];
-                for (int i = 0; i < left_bytes.length; i++ ) {
+                for (int i = 0; i < left_bytes.length; i++) {
                     buff[i + left_bytes_len - left_bytes.length] = left_bytes[i];
                 }
-                for (int i = 0; i < right_bytes.length; i++ ) {
+                for (int i = 0; i < right_bytes.length; i++) {
                     buff[i + right_bytes_len - right_bytes.length + left_bytes_len] = right_bytes[i];
                 }
                 buff[0] ^= -128; // Flip first bit, 0x80
