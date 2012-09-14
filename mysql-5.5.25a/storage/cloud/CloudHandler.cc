@@ -84,6 +84,8 @@ int CloudHandler::write_row(uchar *buf)
 
   int ret = write_row_helper(buf);
 
+  stats.records++;
+
   DBUG_RETURN(ret);
 }
 
@@ -142,8 +144,7 @@ int CloudHandler::delete_all_rows()
   jmethodID delete_rows_method = this->env->GetStaticMethodID(adapter_class, "deleteAllRows", "(Ljava/lang/String;)I");
 
   int count = this->env->CallStaticIntMethod(adapter_class, delete_rows_method, tableName);
-
-  // TODO:  Use the count to actually update the number of deleted rows returned by mysql
+  stats.records = 0;
 
   detach_thread();
 
@@ -506,8 +507,6 @@ int CloudHandler::free_share(CloudShare *share)
 int CloudHandler::info(uint)
 {
   DBUG_ENTER("CloudHandler::info");
-  if (stats.records < 2)
-    stats.records= 2;
   DBUG_RETURN(0);
 }
 
