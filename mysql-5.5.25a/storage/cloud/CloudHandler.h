@@ -100,6 +100,15 @@ class CloudHandler : public handler
       return find_jni_class("HBaseAdapter", this->env);
     }
 
+    void initialize_adapter()
+    {
+      attach_thread();
+      jclass adapter_class = this->adapter();
+      jmethodID initialize_method = this->env->GetStaticMethodID(adapter_class, "initialize", "()V");
+      this->env->CallStaticVoidMethod(adapter_class, initialize_method);
+      detach_thread();
+    }
+
     /* Index methods */
     int index_init(uint idx, bool sorted);
     int index_end();
@@ -115,6 +124,7 @@ class CloudHandler : public handler
     {
       this->ref_length = 16;
       this->ref = new uchar[this->ref_length];
+      this->initialize_adapter();
     }
 
     ~CloudHandler()

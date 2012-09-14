@@ -89,18 +89,20 @@ static void destruct(JavaVMOption* options, int option_count)
   delete[] options;
 }
 
-static JavaVMOption* get_options(List<JavaVMOption> options)
-{
-  JavaVMOption* option_array = new JavaVMOption[options.elements];
-  JavaVMOption* option;
-  List_iterator<JavaVMOption> iterator(options);
-  int i = 0;
-  while((option = iterator++) != NULL)
+static void initialize_adapter(bool attach_thread, JavaVM* jvm, JNIEnv* env)
+{  
+  if(attach_thread)
   {
-    option_array[i] = *option;
-    i++;
+    JavaVMAttachArgs attachArgs;
+    attachArgs.version = JNI_VERSION_1_6;
+    attachArgs.name = NULL;
+    attachArgs.group = NULL;
+    jint ok = jvm->AttachCurrentThread((void**)&env, &attachArgs);
   }
-  return option_array;
+
+  jclass adapter_class = find_jni_class("HBaseAdapter", env);
+  jmethodID initialize_method = env->GetStaticMethodID(adapter_class, "initialize", "()V");
+  env->CallStaticVoidMethod(adapter_class, initialize_method);
 }
 
 static void test_jvm(bool attach_thread, JavaVM* jvm, JNIEnv* env)
@@ -186,6 +188,7 @@ void create_or_find_jvm(JavaVM** jvm)
   if (result == 0 && vm_count > 0)
   {
     *jvm = created_vms;
+    initialize_adapter(true, *jvm, env);
     test_jvm(true, *jvm, env);
   }
   else
@@ -205,6 +208,7 @@ void create_or_find_jvm(JavaVM** jvm)
 
     destruct(options, option_count);
     test_jvm(false, *jvm, env);
+    initialize_adapter(false, *jvm, env);
     (*jvm)->DetachCurrentThread();
   }
 }
