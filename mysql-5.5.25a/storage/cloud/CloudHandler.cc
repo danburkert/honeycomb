@@ -141,7 +141,9 @@ int CloudHandler::delete_all_rows()
   jclass adapter_class = this->adapter();
   jmethodID delete_rows_method = this->env->GetStaticMethodID(adapter_class, "deleteAllRows", "(Ljava/lang/String;)I");
 
-  jboolean result = this->env->CallStaticIntMethod(adapter_class, delete_rows_method, tableName);
+  int count = this->env->CallStaticIntMethod(adapter_class, delete_rows_method, tableName);
+
+  // TODO:  Use the count to actually update the number of deleted rows returned by mysql
 
   detach_thread();
 
@@ -174,7 +176,7 @@ int CloudHandler::delete_table(const char *name)
   jclass adapter_class = this->adapter();
   jmethodID drop_table_method = this->env->GetStaticMethodID(adapter_class, "dropTable", "(Ljava/lang/String;)Z");
 
-  jboolean result = this->env->CallStaticBooleanMethod(adapter_class, drop_table_method, tableName);
+  this->env->CallStaticBooleanMethod(adapter_class, drop_table_method, tableName);
 
   detach_thread();
 
@@ -189,7 +191,7 @@ int CloudHandler::delete_row_helper()
   jmethodID delete_row_method = this->env->GetStaticMethodID(adapter_class, "deleteRow", "(J)Z");
   jlong java_scan_id = curr_scan_id;
 
-  jboolean result = this->env->CallStaticBooleanMethod(adapter_class, delete_row_method, java_scan_id);
+  this->env->CallStaticBooleanMethod(adapter_class, delete_row_method, java_scan_id);
 
   DBUG_RETURN(0);
 }
@@ -311,12 +313,12 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
       case MYSQL_TYPE_DECIMAL:
       case MYSQL_TYPE_NEWDECIMAL:
         {
+          // TODO: Is this reliable? Field_decimal doesn't seem to have these members. Potential crash for old decimal types. - ABC
           uint precision = ((Field_new_decimal*) field)->precision;
           uint scale = ((Field_new_decimal*) field)->dec;
           my_decimal decimal_val;
           binary2my_decimal(0, (const uchar *) val, &decimal_val, precision, scale);
           ((Field_new_decimal *) field)->store_value((const my_decimal*) &decimal_val);
-          decimal_val;
           break;
         }
       case MYSQL_TYPE_TIME:
@@ -453,6 +455,8 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
     DBUG_RETURN(1);
   }
 
+  // TODO: LOOK HERE FOR THINGS MUCKED UP
+
   const char* table_name = create_info->alias;
 
   jobject columnMap = create_java_map(this->env);
@@ -460,12 +464,12 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
 
   for (Field **field = table_arg->field ; *field ; field++)
   {
-    jobject metadataList = metadata.get_field_metadata(*field, table_arg);
-    java_map_insert(columnMap, string_to_java_string((*field)->field_name), metadataList, this->env);
+    jobject java_metadata_obj = metadata.get_field_metadata(*field, table_arg);
+    this->java_map_insert(columnMap, string_to_java_string((*field)->field_name), java_metadata_obj, this->env);
   }
 
   jmethodID create_table_method = this->env->GetStaticMethodID(adapter_class, "createTable", "(Ljava/lang/String;Ljava/util/Map;)Z");
-  jboolean result = this->env->CallStaticBooleanMethod(adapter_class, create_table_method, string_to_java_string(table_name), columnMap);
+  this->env->CallStaticBooleanMethod(adapter_class, create_table_method, string_to_java_string(table_name), columnMap);
   print_java_exception(this->env);
 
   detach_thread();
@@ -703,7 +707,7 @@ jobject CloudHandler::sql_to_java()
         break;
     }
 
-    jbyteArray java_bytes = this->convert_value_to_java_bytes(rec_buffer->buffer, actualFieldSize);
+    jbyteArray java_bytes = convert_value_to_java_bytes(rec_buffer->buffer, actualFieldSize);
 
     java_map_insert(java_map, field_name, java_bytes, this->env);
   }
@@ -720,20 +724,7 @@ const char* CloudHandler::java_to_string(jstring j_str)
 
 jstring CloudHandler::string_to_java_string(const char *string)
 {
-  return this->env->NewStringUTF(string);
-}
-
-jbyteArray CloudHandler::convert_value_to_java_bytes(uchar* value, uint32 length)
-{
-  jbyteArray byteArray = this->env->NewByteArray(length);
-  jbyte *java_bytes = this->env->GetByteArrayElements(byteArray, 0);
-
-  memcpy(java_bytes, value, length);
-
-  this->env->SetByteArrayRegion(byteArray, 0, length, java_bytes);
-  this->env->ReleaseByteArrayElements(byteArray, java_bytes, 0);
-
-  return byteArray;
+  return env->NewStringUTF(string);
 }
 
 int CloudHandler::index_init(uint idx, bool sorted)
@@ -857,7 +848,7 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
       key_len = sizeof(double);
 
       doublestore(key_copy, j);
-      reverse_bytes(key_copy, key_len);
+      this->reverse_bytes(key_copy, key_len);
     }
       break;
     case MYSQL_TYPE_DOUBLE:
@@ -869,7 +860,7 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
       key_len = sizeof(double);
 
       doublestore(key_copy, j);
-      reverse_bytes(key_copy, key_len);
+      this->reverse_bytes(key_copy, key_len);
     }
       break;
     case MYSQL_TYPE_DECIMAL:
@@ -979,7 +970,6 @@ void CloudHandler::store_uuid_ref(jobject index_row, jmethodID get_uuid_method)
 int CloudHandler::index_next(uchar *buf)
 {
   int rc = 0;
-  my_bitmap_map *orig_bitmap;
 
   DBUG_ENTER("CloudHandler::index_next");
 
@@ -1147,4 +1137,17 @@ void CloudHandler::attach_thread()
   {
     this->jvm->AttachCurrentThread((void**)&this->env, &attachArgs);
   }
+}
+
+jbyteArray CloudHandler::convert_value_to_java_bytes(uchar* value, uint32 length)
+{
+  jbyteArray byteArray = this->env->NewByteArray(length);
+  jbyte *java_bytes = this->env->GetByteArrayElements(byteArray, 0);
+
+  memcpy(java_bytes, value, length);
+
+  this->env->SetByteArrayRegion(byteArray, 0, length, java_bytes);
+  this->env->ReleaseByteArrayElements(byteArray, java_bytes, 0);
+
+  return byteArray;
 }

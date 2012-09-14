@@ -17,6 +17,8 @@ public final class Constants {
 
     public static final byte[] VALUE_COLUMN = "value".getBytes();
 
+    public static final byte[] METADATA = "metadata".getBytes();
+
     public static final UUID ZERO_UUID = new UUID(0L, 0L);
 
     public static final UUID FULL_UUID = UUID.fromString("ffffffff-ffff-ffff-ffff-ffffffffffff");

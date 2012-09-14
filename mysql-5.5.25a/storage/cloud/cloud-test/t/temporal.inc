@@ -65,4 +65,4 @@ eval DELETE FROM t1
 SELECT * FROM t1 ORDER BY c1;
 
 ### Cleanup
-#DROP TABLE t1;
+DROP TABLE t1;

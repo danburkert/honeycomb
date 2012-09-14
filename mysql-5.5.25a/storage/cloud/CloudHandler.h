@@ -30,7 +30,7 @@ class CloudHandler : public handler
 {
   private:
     THR_LOCK_DATA lock;      	///< MySQL lockCloudShare;
-    CloudShare *share;    		///< Shared lock info
+    CloudShare *share;    		///< Sharedclass lock info
     mysql_mutex_t* cloud_mutex;
     HASH* cloud_open_tables;
     record_buffer *rec_buffer;
