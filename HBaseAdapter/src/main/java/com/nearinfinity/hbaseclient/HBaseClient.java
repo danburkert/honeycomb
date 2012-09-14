@@ -27,8 +27,6 @@ public class HBaseClient {
 
     private HBaseAdmin admin;
 
-    private WriteBuffer writeBuffer;
-
     private final ConcurrentHashMap<String, TableInfo> tableCache = new ConcurrentHashMap<String, TableInfo>();
 
     private static final Logger logger = Logger.getLogger(HBaseClient.class);
@@ -46,7 +44,6 @@ public class HBaseClient {
 
             this.table = new HTable(configuration, tableName);
 
-            this.writeBuffer = new WriteBuffer(table);
         } catch (MasterNotRunningException e) {
             logger.error("MasterNotRunningException thrown", e);
         } catch (ZooKeeperConnectionException e) {
@@ -146,9 +143,9 @@ public class HBaseClient {
         addColumns(tableName, columns, putList);
 
         //Perform all puts
-        writeBuffer.put(putList);
+        this.table.put(putList);
 
-        writeBuffer.flushCommits();
+        this.table.flushCommits();
     }
 
     public void writeRow(String tableName, Map<String, byte[]> values) throws IOException {
@@ -156,7 +153,7 @@ public class HBaseClient {
         List<Put> putList = PutListFactory.createPutList(values, info);
 
         //Final put
-        writeBuffer.put(putList);
+        this.table.put(putList);
     }
 
     public Result getDataRow(UUID uuid, String tableName) throws IOException {
@@ -248,7 +245,7 @@ public class HBaseClient {
         Get get = new Get(dataRowKey);
         Result result = table.get(get);
 
-        Map<String,byte[]> valueMap = parseDataRow(result, tableName);
+        Map<String, byte[]> valueMap = parseDataRow(result, tableName);
 
         //Loop through ALL columns to determine which should be NULL
         for (String columnName : info.getColumnNames()) {
@@ -418,7 +415,7 @@ public class HBaseClient {
     }
 
     public void setAutoFlushTables(boolean shouldFlushChangesImmediately) {
-        this.writeBuffer.setAutoFlush(shouldFlushChangesImmediately);
+        this.table.setAutoFlush(shouldFlushChangesImmediately);
 
         logger.info(shouldFlushChangesImmediately
                 ? "Changes to tables will be written to HBase immediately"
@@ -427,7 +424,7 @@ public class HBaseClient {
 
     public void setWriteBufferSize(long numBytes) {
         try {
-            this.writeBuffer.setWriteBufferLimit(numBytes);
+            this.table.setWriteBufferSize(numBytes);
         } catch (IOException e) {
             logger.error("Encountered an error setting write buffer size", e);
         }
@@ -437,7 +434,7 @@ public class HBaseClient {
 
     public void flushWrites() {
         try {
-            writeBuffer.flushCommits();
+            table.flushCommits();
         } catch (IOException e) {
             logger.error("Encountered an exception while flushing commits : ", e);
         }
