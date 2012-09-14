@@ -413,10 +413,9 @@ int CloudHandler::rnd_end()
   DBUG_ENTER("CloudHandler::rnd_end");
 
   this->end_scan();
-
   this->detach_thread();
-
   this->reset_scan_counter();
+
   DBUG_RETURN(0);
 }
 
@@ -1016,14 +1015,7 @@ int CloudHandler::index_first(uchar *buf)
 {
   DBUG_ENTER("CloudHandler::index_first");
 
-  jclass adapter_class = this->adapter();
-  jmethodID index_read_method = this->env->GetStaticMethodID(adapter_class, "indexRead", "(J[BLcom/nearinfinity/mysqlengine/jni/IndexReadType;)Lcom/nearinfinity/mysqlengine/jni/IndexRow;");
-  jlong java_scan_id = this->curr_scan_id;
-
-  jclass read_class = find_jni_class("IndexReadType", this->env);
-  jfieldID field_id = this->env->GetStaticFieldID(read_class, "INDEX_FIRST", "Lcom/nearinfinity/mysqlengine/jni/IndexReadType;");
-  jobject java_find_flag = this->env->GetStaticObjectField(read_class, field_id);
-  jobject index_row = this->env->CallStaticObjectMethod(adapter_class, index_read_method, java_scan_id, NULL, java_find_flag);
+  jobject index_row = get_index_row("INDEX_FIRST");
 
   if(read_index_row(index_row, buf) == HA_ERR_END_OF_FILE)
   {
@@ -1037,14 +1029,7 @@ int CloudHandler::index_last(uchar *buf)
 {
   DBUG_ENTER("CloudHandler::index_last");
 
-  jclass adapter_class = this->adapter();
-  jmethodID index_read_method = this->env->GetStaticMethodID(adapter_class, "indexRead", "(J[BLcom/nearinfinity/mysqlengine/jni/IndexReadType;)Lcom/nearinfinity/mysqlengine/jni/IndexRow;");
-  jlong java_scan_id = this->curr_scan_id;
-
-  jclass read_class = find_jni_class("IndexReadType", this->env);
-  jfieldID field_id = this->env->GetStaticFieldID(read_class, "INDEX_LAST", "Lcom/nearinfinity/mysqlengine/jni/IndexReadType;");
-  jobject java_find_flag = this->env->GetStaticObjectField(read_class, field_id);
-  jobject index_row = this->env->CallStaticObjectMethod(adapter_class, index_read_method, java_scan_id, NULL, java_find_flag);
+  jobject index_row = get_index_row("INDEX_LAST");
 
   if(read_index_row(index_row, buf) == HA_ERR_END_OF_FILE)
   {
@@ -1052,6 +1037,17 @@ int CloudHandler::index_last(uchar *buf)
   }
 
   DBUG_RETURN(0);
+}
+
+jobject CloudHandler::get_index_row(const char* indexType)
+{
+  jclass adapter_class = this->adapter();
+  jmethodID index_read_method = this->env->GetStaticMethodID(adapter_class, "indexRead", "(J[BLcom/nearinfinity/mysqlengine/jni/IndexReadType;)Lcom/nearinfinity/mysqlengine/jni/IndexRow;");
+  jlong java_scan_id = this->curr_scan_id;
+  jclass read_class = find_jni_class("IndexReadType", this->env);
+  jfieldID field_id = this->env->GetStaticFieldID(read_class, indexType, "Lcom/nearinfinity/mysqlengine/jni/IndexReadType;");
+  jobject java_find_flag = this->env->GetStaticObjectField(read_class, field_id);
+  return this->env->CallStaticObjectMethod(adapter_class, index_read_method, java_scan_id, NULL, java_find_flag);
 }
 
 int CloudHandler::read_index_row(jobject index_row, uchar* buf)
