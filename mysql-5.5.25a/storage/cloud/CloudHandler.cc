@@ -465,7 +465,7 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
   for (Field **field = table_arg->field ; *field ; field++)
   {
     jobject java_metadata_obj = metadata.get_field_metadata(*field, table_arg);
-    this->java_map_insert(columnMap, string_to_java_string((*field)->field_name), java_metadata_obj, this->env);
+    java_map_insert(columnMap, string_to_java_string((*field)->field_name), java_metadata_obj, this->env);
   }
 
   jmethodID create_table_method = this->env->GetStaticMethodID(adapter_class, "createTable", "(Ljava/lang/String;Ljava/util/Map;)Z");
@@ -848,7 +848,7 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
       key_len = sizeof(double);
 
       doublestore(key_copy, j);
-      this->reverse_bytes(key_copy, key_len);
+      reverse_bytes(key_copy, key_len);
     }
       break;
     case MYSQL_TYPE_DOUBLE:
@@ -860,7 +860,7 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
       key_len = sizeof(double);
 
       doublestore(key_copy, j);
-      this->reverse_bytes(key_copy, key_len);
+      reverse_bytes(key_copy, key_len);
     }
       break;
     case MYSQL_TYPE_DECIMAL:
