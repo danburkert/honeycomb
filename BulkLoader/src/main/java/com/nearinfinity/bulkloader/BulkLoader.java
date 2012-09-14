@@ -58,7 +58,9 @@ public class BulkLoader {
         @Override
         public void map(LongWritable offset, Text line, Context context) {
             try {
-                String[] columnData = line.toString().split(",");
+                // NOTE:  the trim below is a stopgap to get rid of the trailing \t that mapreduce inserts
+                //        in the DataCreator.  It should be replaced when we update the CSV parsing.
+                String[] columnData = line.toString().trim().split(",");
 
                 if (columnData.length != columnNames.length) {
                     throw new Exception("Row has wrong number of columns. Expected " +
