@@ -6,6 +6,7 @@
 
 #include "Macros.h"
 #include "Util.h"
+#include "Java.h"
 
 void create_or_find_jvm(JavaVM** jvm);
 
