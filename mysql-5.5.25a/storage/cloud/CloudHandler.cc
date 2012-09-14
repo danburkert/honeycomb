@@ -278,83 +278,83 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
 
     switch (field->real_type())
     {
-      case MYSQL_TYPE_TINY:
-      case MYSQL_TYPE_SHORT:
-      case MYSQL_TYPE_LONG:
-      case MYSQL_TYPE_LONGLONG:
-      case MYSQL_TYPE_INT24:
-      case MYSQL_TYPE_YEAR:
-      case MYSQL_TYPE_ENUM:
-        {
-          long long long_value = *(long long*)val;
-          if(is_little_endian())
-          {
-            long_value = __builtin_bswap64(long_value);
-          }
-          field->store(long_value, false);
-          break;
-        }
-      case MYSQL_TYPE_FLOAT:
-      case MYSQL_TYPE_DOUBLE:
-        double double_value;
-        if (is_little_endian())
-        {
-          long long* long_ptr = (long long*)val;
-          longlong swapped_long = __builtin_bswap64(*long_ptr);
-          double_value = *(double*)&swapped_long;
-        }
-        else
-        {
-          double_value = *(double*)val;
-        }
-        field->store(double_value);
-        break;
+    case MYSQL_TYPE_TINY:
+    case MYSQL_TYPE_SHORT:
+    case MYSQL_TYPE_LONG:
+    case MYSQL_TYPE_LONGLONG:
+    case MYSQL_TYPE_INT24:
+    case MYSQL_TYPE_YEAR:
+    case MYSQL_TYPE_ENUM:
+    {
+      long long long_value = *(long long*)val;
+      if(is_little_endian())
+      {
+        long_value = __builtin_bswap64(long_value);
+      }
+      field->store(long_value, false);
+      break;
+    }
+    case MYSQL_TYPE_FLOAT:
+    case MYSQL_TYPE_DOUBLE:
+      double double_value;
+      if (is_little_endian())
+      {
+        long long* long_ptr = (long long*)val;
+        longlong swapped_long = __builtin_bswap64(*long_ptr);
+        double_value = *(double*)&swapped_long;
+      }
+      else
+      {
+        double_value = *(double*)val;
+      }
+      field->store(double_value);
+      break;
 
-      case MYSQL_TYPE_DECIMAL:
-      case MYSQL_TYPE_NEWDECIMAL:
-        {
-          // TODO: Is this reliable? Field_decimal doesn't seem to have these members. Potential crash for old decimal types. - ABC
-          uint precision = ((Field_new_decimal*) field)->precision;
-          uint scale = ((Field_new_decimal*) field)->dec;
-          my_decimal decimal_val;
-          binary2my_decimal(0, (const uchar *) val, &decimal_val, precision, scale);
-          ((Field_new_decimal *) field)->store_value((const my_decimal*) &decimal_val);
-          break;
-        }
-      case MYSQL_TYPE_TIME:
-        {
-          MYSQL_TIME mysql_time;
-          int warning;
-          str_to_time(val, val_length, &mysql_time, &warning);
-          field->store_time(&mysql_time, mysql_time.time_type);
-          break;
-        }
-      case MYSQL_TYPE_DATE:
-      case MYSQL_TYPE_NEWDATE:
-      case MYSQL_TYPE_DATETIME:
-      case MYSQL_TYPE_TIMESTAMP:
-        {
-          MYSQL_TIME mysql_time;
-          int was_cut;
-          str_to_datetime(val, val_length, &mysql_time, TIME_FUZZY_DATE, &was_cut);
-          field->store_time(&mysql_time, mysql_time.time_type);
-          break;
-        }
-      case MYSQL_TYPE_STRING:
-      case MYSQL_TYPE_VARCHAR:
-      case MYSQL_TYPE_VAR_STRING:
-      case MYSQL_TYPE_TINY_BLOB:
-      case MYSQL_TYPE_MEDIUM_BLOB:
-      case MYSQL_TYPE_BLOB:
-      case MYSQL_TYPE_LONG_BLOB:
-        field->store(val, val_length, &my_charset_bin);
-        break;
-      case MYSQL_TYPE_NULL:
-      case MYSQL_TYPE_BIT:
-      case MYSQL_TYPE_SET:
-      case MYSQL_TYPE_GEOMETRY:
-      default:
-        break;
+    case MYSQL_TYPE_DECIMAL:
+    case MYSQL_TYPE_NEWDECIMAL:
+    {
+      // TODO: Is this reliable? Field_decimal doesn't seem to have these members. Potential crash for old decimal types. - ABC
+      uint precision = ((Field_new_decimal*) field)->precision;
+      uint scale = ((Field_new_decimal*) field)->dec;
+      my_decimal decimal_val;
+      binary2my_decimal(0, (const uchar *) val, &decimal_val, precision, scale);
+      ((Field_new_decimal *) field)->store_value((const my_decimal*) &decimal_val);
+      break;
+    }
+    case MYSQL_TYPE_TIME:
+    {
+      MYSQL_TIME mysql_time;
+      int warning;
+      str_to_time(val, val_length, &mysql_time, &warning);
+      field->store_time(&mysql_time, mysql_time.time_type);
+      break;
+    }
+    case MYSQL_TYPE_DATE:
+    case MYSQL_TYPE_NEWDATE:
+    case MYSQL_TYPE_DATETIME:
+    case MYSQL_TYPE_TIMESTAMP:
+    {
+      MYSQL_TIME mysql_time;
+      int was_cut;
+      str_to_datetime(val, val_length, &mysql_time, TIME_FUZZY_DATE, &was_cut);
+      field->store_time(&mysql_time, mysql_time.time_type);
+      break;
+    }
+    case MYSQL_TYPE_STRING:
+    case MYSQL_TYPE_VARCHAR:
+    case MYSQL_TYPE_VAR_STRING:
+    case MYSQL_TYPE_TINY_BLOB:
+    case MYSQL_TYPE_MEDIUM_BLOB:
+    case MYSQL_TYPE_BLOB:
+    case MYSQL_TYPE_LONG_BLOB:
+      field->store(val, val_length, &my_charset_bin);
+      break;
+    case MYSQL_TYPE_NULL:
+    case MYSQL_TYPE_BIT:
+    case MYSQL_TYPE_SET:
+    case MYSQL_TYPE_GEOMETRY:
+    default:
+      break;
     }
 
     field->move_field_offset(-offset);
@@ -623,87 +623,87 @@ jobject CloudHandler::sql_to_java()
 
     switch (field->real_type())
     {
-      case MYSQL_TYPE_TINY:
-      case MYSQL_TYPE_SHORT:
-      case MYSQL_TYPE_LONG:
-      case MYSQL_TYPE_LONGLONG:
-      case MYSQL_TYPE_INT24:
-      case MYSQL_TYPE_YEAR:
-      case MYSQL_TYPE_ENUM:
-        {
-          long long integral_value = field->val_int();
-          if(is_little_endian())
-          {
-            integral_value = __builtin_bswap64(integral_value);
-          }
-          actualFieldSize = sizeof integral_value;
-          memcpy(rec_buffer->buffer, &integral_value, actualFieldSize);
-          break;
-        }
-      case MYSQL_TYPE_FLOAT:
-      case MYSQL_TYPE_DOUBLE:
-        {
-          double fp_value = field->val_real();
-          long long* fp_ptr;
-        if(is_little_endian())
-          {
-            fp_ptr = (long long*)&fp_value;
-            *fp_ptr = __builtin_bswap64(*fp_ptr);
-          }
-          actualFieldSize = sizeof fp_value;
-          memcpy(rec_buffer->buffer, fp_ptr, actualFieldSize);
-          break;
-        }
-      case MYSQL_TYPE_DECIMAL:
-      case MYSQL_TYPE_NEWDECIMAL:
-        actualFieldSize = field->key_length();
-        memcpy(rec_buffer->buffer, field->ptr, actualFieldSize);
-        break;
-      case MYSQL_TYPE_DATE:
-      case MYSQL_TYPE_NEWDATE:
-      case MYSQL_TYPE_TIME:
-      case MYSQL_TYPE_DATETIME:
-      case MYSQL_TYPE_TIMESTAMP:
-        {
-          MYSQL_TIME mysql_time;
-          char temporal_value[MAX_DATE_STRING_REP_LENGTH];
-          field->get_time(&mysql_time);
-          my_TIME_to_str(&mysql_time, temporal_value);
-          actualFieldSize = strlen(temporal_value);
-          memcpy(rec_buffer->buffer, temporal_value, actualFieldSize);
-          break;
-        }
-      case MYSQL_TYPE_STRING:
-        {
-          char string_value_buff[1024];  // TODO: This is going to cause a buffer overflow for large blob/string types
-          String string_value(string_value_buff, sizeof(string_value_buff), &my_charset_bin);
-          field->val_str(&string_value);
-          actualFieldSize = field->field_length;
-          memcpy(rec_buffer->buffer, string_value.ptr(), actualFieldSize);
-          break;
-        }
-      case MYSQL_TYPE_VARCHAR:
-      case MYSQL_TYPE_VAR_STRING:
-      case MYSQL_TYPE_BLOB:
-      case MYSQL_TYPE_TINY_BLOB:
-      case MYSQL_TYPE_MEDIUM_BLOB:
-      case MYSQL_TYPE_LONG_BLOB:
-        {
-          char string_value_buff[1024];  // TODO: This is going to cause a buffer overflow for large blob/string types
-          String string_value(string_value_buff, sizeof(string_value_buff), &my_charset_bin);
-          field->val_str(&string_value);
-          actualFieldSize = string_value.length();
-          memcpy(rec_buffer->buffer, string_value.ptr(), actualFieldSize);
-          break;
-        }
-      case MYSQL_TYPE_NULL:
-      case MYSQL_TYPE_BIT:
-      case MYSQL_TYPE_SET:
-      case MYSQL_TYPE_GEOMETRY:
-      default:
-        actualFieldSize = field->field_length;
-        memcpy(rec_buffer->buffer, field->ptr, field->field_length);
-        break;
+    case MYSQL_TYPE_TINY:
+    case MYSQL_TYPE_SHORT:
+    case MYSQL_TYPE_LONG:
+    case MYSQL_TYPE_LONGLONG:
+    case MYSQL_TYPE_INT24:
+    case MYSQL_TYPE_YEAR:
+    case MYSQL_TYPE_ENUM:
+    {
+      long long integral_value = field->val_int();
+      if(is_little_endian())
+      {
+        integral_value = __builtin_bswap64(integral_value);
+      }
+      actualFieldSize = sizeof integral_value;
+      memcpy(rec_buffer->buffer, &integral_value, actualFieldSize);
+      break;
+    }
+    case MYSQL_TYPE_FLOAT:
+    case MYSQL_TYPE_DOUBLE:
+    {
+      double fp_value = field->val_real();
+      long long* fp_ptr;
+      if(is_little_endian())
+      {
+        fp_ptr = (long long*)&fp_value;
+        *fp_ptr = __builtin_bswap64(*fp_ptr);
+      }
+      actualFieldSize = sizeof fp_value;
+      memcpy(rec_buffer->buffer, fp_ptr, actualFieldSize);
+      break;
+    }
+    case MYSQL_TYPE_DECIMAL:
+    case MYSQL_TYPE_NEWDECIMAL:
+      actualFieldSize = field->key_length();
+      memcpy(rec_buffer->buffer, field->ptr, actualFieldSize);
+      break;
+    case MYSQL_TYPE_DATE:
+    case MYSQL_TYPE_NEWDATE:
+    case MYSQL_TYPE_TIME:
+    case MYSQL_TYPE_DATETIME:
+    case MYSQL_TYPE_TIMESTAMP:
+    {
+      MYSQL_TIME mysql_time;
+      char temporal_value[MAX_DATE_STRING_REP_LENGTH];
+      field->get_time(&mysql_time);
+      my_TIME_to_str(&mysql_time, temporal_value);
+      actualFieldSize = strlen(temporal_value);
+      memcpy(rec_buffer->buffer, temporal_value, actualFieldSize);
+      break;
+    }
+    case MYSQL_TYPE_STRING:
+    {
+      char string_value_buff[1024];  // TODO: This is going to cause a buffer overflow for large blob/string types
+      String string_value(string_value_buff, sizeof(string_value_buff), &my_charset_bin);
+      field->val_str(&string_value);
+      actualFieldSize = field->field_length;
+      memcpy(rec_buffer->buffer, string_value.ptr(), actualFieldSize);
+      break;
+    }
+    case MYSQL_TYPE_VARCHAR:
+    case MYSQL_TYPE_VAR_STRING:
+    case MYSQL_TYPE_BLOB:
+    case MYSQL_TYPE_TINY_BLOB:
+    case MYSQL_TYPE_MEDIUM_BLOB:
+    case MYSQL_TYPE_LONG_BLOB:
+    {
+      char string_value_buff[1024];  // TODO: This is going to cause a buffer overflow for large blob/string types
+      String string_value(string_value_buff, sizeof(string_value_buff), &my_charset_bin);
+      field->val_str(&string_value);
+      actualFieldSize = string_value.length();
+      memcpy(rec_buffer->buffer, string_value.ptr(), actualFieldSize);
+      break;
+    }
+    case MYSQL_TYPE_NULL:
+    case MYSQL_TYPE_BIT:
+    case MYSQL_TYPE_SET:
+    case MYSQL_TYPE_GEOMETRY:
+    default:
+      actualFieldSize = field->field_length;
+      memcpy(rec_buffer->buffer, field->ptr, field->field_length);
+      break;
     }
 
     jbyteArray java_bytes = convert_value_to_java_bytes(rec_buffer->buffer, actualFieldSize);
@@ -808,120 +808,120 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
 
   switch(index_field_type)
   {
-    case MYSQL_TYPE_LONG:
-    case MYSQL_TYPE_SHORT:
-    case MYSQL_TYPE_TINY:
-    case MYSQL_TYPE_LONGLONG:
-    case MYSQL_TYPE_INT24:
-    case MYSQL_TYPE_ENUM:
+  case MYSQL_TYPE_LONG:
+  case MYSQL_TYPE_SHORT:
+  case MYSQL_TYPE_TINY:
+  case MYSQL_TYPE_LONGLONG:
+  case MYSQL_TYPE_INT24:
+  case MYSQL_TYPE_ENUM:
+  {
+    key_copy = new uchar[sizeof(long long)]; // Store key as 8 bytes
+    const bool is_signed = !is_unsigned_field(this->index_field);
+    bytes_to_long(key, key_len, is_signed, key_copy);
+    key_len = sizeof(longlong);
+    make_big_endian(key_copy, key_len);
+    break;
+  }
+  case MYSQL_TYPE_YEAR:
+  {
+    key_copy = new uchar[sizeof(long long)];
+
+    /* It comes to us as one byte, need to cast it to int and add 1900 */
+    uint32_t int_val = (uint32_t)key[0] + 1900;
+
+    bytes_to_long((uchar *)&int_val, sizeof(uint32_t), false, key_copy);
+    key_len = sizeof(long long);
+    make_big_endian(key_copy, key_len);
+    break;
+  }
+  case MYSQL_TYPE_FLOAT:
+  {
+    double j = (double)floatGet(key);
+
+    key_copy = new uchar[sizeof(double)];
+    key_len = sizeof(double);
+
+    doublestore(key_copy, j);
+    reverse_bytes(key_copy, key_len);
+  }
+  break;
+  case MYSQL_TYPE_DOUBLE:
+  {
+    double j;
+    doubleget(j, key);
+
+    key_copy = new uchar[sizeof(double)];
+    key_len = sizeof(double);
+
+    doublestore(key_copy, j);
+    reverse_bytes(key_copy, key_len);
+  }
+  break;
+  case MYSQL_TYPE_DECIMAL:
+  case MYSQL_TYPE_NEWDECIMAL:
+  {
+    key_copy = new uchar[key_len];
+    memcpy(key_copy, key, key_len);
+    break;
+  }
+  case MYSQL_TYPE_DATE:
+  case MYSQL_TYPE_DATETIME:
+  case MYSQL_TYPE_TIME:
+  case MYSQL_TYPE_TIMESTAMP:
+  case MYSQL_TYPE_NEWDATE:
+  {
+    MYSQL_TIME mysql_time;
+
+    switch (index_field_type)
     {
-      key_copy = new uchar[sizeof(long long)]; // Store key as 8 bytes
-      const bool is_signed = !is_unsigned_field(this->index_field);
-      bytes_to_long(key, key_len, is_signed, key_copy);
-      key_len = sizeof(longlong);
-      make_big_endian(key_copy, key_len);
-      break;
-    }
-    case MYSQL_TYPE_YEAR:
-    {
-      key_copy = new uchar[sizeof(long long)];
-
-      /* It comes to us as one byte, need to cast it to int and add 1900 */
-      uint32_t int_val = (uint32_t)key[0] + 1900;
-
-      bytes_to_long((uchar *)&int_val, sizeof(uint32_t), false, key_copy);
-      key_len = sizeof(long long);
-      make_big_endian(key_copy, key_len);
-      break;
-    }
-    case MYSQL_TYPE_FLOAT:
-    {
-      double j = (double)floatGet(key);
-
-      key_copy = new uchar[sizeof(double)];
-      key_len = sizeof(double);
-
-      doublestore(key_copy, j);
-      reverse_bytes(key_copy, key_len);
-    }
-      break;
-    case MYSQL_TYPE_DOUBLE:
-    {
-      double j;
-      doubleget(j, key);
-
-      key_copy = new uchar[sizeof(double)];
-      key_len = sizeof(double);
-
-      doublestore(key_copy, j);
-      reverse_bytes(key_copy, key_len);
-    }
-      break;
-    case MYSQL_TYPE_DECIMAL:
-    case MYSQL_TYPE_NEWDECIMAL:
-      {
-        key_copy = new uchar[key_len];
-        memcpy(key_copy, key, key_len);
-        break;
-      }
     case MYSQL_TYPE_DATE:
-    case MYSQL_TYPE_DATETIME:
-    case MYSQL_TYPE_TIME:
-    case MYSQL_TYPE_TIMESTAMP:
     case MYSQL_TYPE_NEWDATE:
-    {
-      MYSQL_TIME mysql_time;
-
-      switch (index_field_type)
+      if (key_len == 3)
       {
-      case MYSQL_TYPE_DATE:
-      case MYSQL_TYPE_NEWDATE:
-        if (key_len == 3)
-        {
-          extract_mysql_newdate((long) uint3korr(key), &mysql_time);
-        }
-        else
-        {
-          extract_mysql_old_date((int32) uint4korr(key), &mysql_time);
-        }
-        break;
-      case MYSQL_TYPE_TIMESTAMP:
-        extract_mysql_timestamp((long) uint4korr(key), &mysql_time, table->in_use);
-        break;
-      case MYSQL_TYPE_TIME:
-        extract_mysql_time((long) uint3korr(key), &mysql_time);
-        break;
-      case MYSQL_TYPE_DATETIME:
-        extract_mysql_datetime((ulonglong) uint8korr(key), &mysql_time);
-        break;
+        extract_mysql_newdate((long) uint3korr(key), &mysql_time);
       }
-
-      char timeString[MAX_DATE_STRING_REP_LENGTH];
-      my_TIME_to_str(&mysql_time, timeString);
-      int length = strlen(timeString);
-      key_copy = new uchar[length];
-      memcpy(key_copy, timeString, length);
-      key_len = length;
-    }
-    break;
-    case MYSQL_TYPE_VARCHAR:
-    {
-      /**
-       * VARCHARs are prefixed with two bytes that represent the actual length of the value.
-       * So we need to read the length into actual_length, then copy those bits to key_copy.
-       * Thank you, MySQL...
-       */
-      uint16_t *short_len_ptr = (uint16_t *)key;
-      key_len = (uint)(*short_len_ptr);
-      key += 2;
-      key_copy = new uchar[key_len];
-      memcpy(key_copy, key, key_len);
-    }
-    break;
-    default:
-      key_copy = new uchar[key_len];
-      memcpy(key_copy, key, key_len);
+      else
+      {
+        extract_mysql_old_date((int32) uint4korr(key), &mysql_time);
+      }
       break;
+    case MYSQL_TYPE_TIMESTAMP:
+      extract_mysql_timestamp((long) uint4korr(key), &mysql_time, table->in_use);
+      break;
+    case MYSQL_TYPE_TIME:
+      extract_mysql_time((long) uint3korr(key), &mysql_time);
+      break;
+    case MYSQL_TYPE_DATETIME:
+      extract_mysql_datetime((ulonglong) uint8korr(key), &mysql_time);
+      break;
+    }
+
+    char timeString[MAX_DATE_STRING_REP_LENGTH];
+    my_TIME_to_str(&mysql_time, timeString);
+    int length = strlen(timeString);
+    key_copy = new uchar[length];
+    memcpy(key_copy, timeString, length);
+    key_len = length;
+  }
+  break;
+  case MYSQL_TYPE_VARCHAR:
+  {
+    /**
+     * VARCHARs are prefixed with two bytes that represent the actual length of the value.
+     * So we need to read the length into actual_length, then copy those bits to key_copy.
+     * Thank you, MySQL...
+     */
+    uint16_t *short_len_ptr = (uint16_t *)key;
+    key_len = (uint)(*short_len_ptr);
+    key += 2;
+    key_copy = new uchar[key_len];
+    memcpy(key_copy, key, key_len);
+  }
+  break;
+  default:
+    key_copy = new uchar[key_len];
+    memcpy(key_copy, key, key_len);
+    break;
   }
 
   jbyteArray java_key = this->env->NewByteArray(key_len);
@@ -944,7 +944,9 @@ void CloudHandler::bytes_to_long(const uchar* buff, unsigned int buff_length, co
   if(is_signed && buff[buff_length - 1] >= (uchar) 0x80)
   {
     memset(long_buff, 0xFFFFFFFF, sizeof long_buff);
-  } else {
+  }
+  else
+  {
     memset(long_buff, 0x00000000, sizeof long_buff);
   }
 

@@ -31,7 +31,8 @@ static int option_count(FILE* option_config)
       count++;
     }
 
-  }while(ch != EOF);
+  }
+  while(ch != EOF);
   rewind(option_config);
 
   return count;
@@ -90,7 +91,7 @@ static void destruct(JavaVMOption* options, int option_count)
 }
 
 static void initialize_adapter(bool attach_thread, JavaVM* jvm, JNIEnv* env)
-{  
+{
   if(attach_thread)
   {
     JavaVMAttachArgs attachArgs;
@@ -128,7 +129,7 @@ static char* read_classpath_conf_file(FILE* config)
   fseek(config, 0, SEEK_END);
   long size = ftell(config);
   rewind(config);
-  int class_path_length = prefix_length + size; 
+  int class_path_length = prefix_length + size;
   char* class_path = new char[class_path_length];
   strncpy(class_path, prefix, prefix_length);
   fread(class_path + prefix_length, sizeof(char), size, config);
