@@ -78,6 +78,9 @@ public class DataCreator {
                 case DOUBLE:
                     ret = Double.toString(random.nextDouble());
                     break;
+                case FK:
+                    ret = Integer.toString(random.nextInt(10));
+                    break;
             }
             return ret;
         }
@@ -104,6 +107,10 @@ public class DataCreator {
         Configuration conf = new Configuration();
         conf.set(DATA_TYPE_LIST, dataTypeList);
         conf.set(NUM_ROWS, numRows);
+
+        conf.set("mapreduce.textoutputformat.separator", "");
+        conf.set("mapred.textoutputformat.separator", "");
+        conf.reloadConfiguration();
 
         Job job = new Job(conf);
         job.setJarByClass(DataCreator.class);
