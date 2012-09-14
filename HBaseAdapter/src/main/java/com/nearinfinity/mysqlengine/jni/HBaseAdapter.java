@@ -36,8 +36,13 @@ public class HBaseAdapter {
 
     private static final int DEFAULT_NUM_CACHED_ROWS = 2500;
     private static final long DEFAULT_WRITE_BUFFER_SIZE = 5 * 1024 * 1024;
+    private static boolean isInitialized = false;
 
-    static {
+    public static void initialize() {
+        if (isInitialized) {
+            return;
+        }
+
         try {
             logger.info("Static Initializer-> Begin");
 
@@ -73,6 +78,7 @@ public class HBaseAdapter {
 
             boolean flushChangesImmediately = Boolean.parseBoolean(params.get("flush_changes_immediately"));
             client.setAutoFlushTables(flushChangesImmediately);
+            isInitialized = true;
         } catch (Exception e) {
             logger.error("Static Initializer-> Exception:", e);
         }
