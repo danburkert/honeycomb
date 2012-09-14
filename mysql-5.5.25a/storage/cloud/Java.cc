@@ -1,17 +1,18 @@
 #include "Java.h"
 
 #define JNI_CLASSPATH "com/nearinfinity/mysqlengine/jni/"
+#define MAP_CLASS "java/util/TreeMap"
 
 jobject create_java_map(JNIEnv* env)
 {
-  jclass map_class = env->FindClass("java/util/TreeMap");
+  jclass map_class = env->FindClass(MAP_CLASS);
   jmethodID constructor = env->GetMethodID(map_class, "<init>", "()V");
   return env->NewObject(map_class, constructor);
 }
 
 jobject java_map_insert(jobject java_map, jobject key, jobject value, JNIEnv* env)
 {
-  jclass map_class = env->FindClass("java/util/TreeMap");
+  jclass map_class = env->FindClass(MAP_CLASS);
   jmethodID put_method = env->GetMethodID(map_class, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
 
   return env->CallObjectMethod(java_map, put_method, key, value);
@@ -19,7 +20,7 @@ jobject java_map_insert(jobject java_map, jobject key, jobject value, JNIEnv* en
 
 jbyteArray java_map_get(jobject java_map, jstring key, JNIEnv* env)
 {
-  jclass map_class = env->FindClass("java/util/TreeMap");
+  jclass map_class = env->FindClass(MAP_CLASS);
   jmethodID get_method = env->GetMethodID(map_class, "get", "(Ljava/lang/Object;)Ljava/lang/Object;");
 
   return (jbyteArray) env->CallObjectMethod(java_map, get_method, key);
@@ -27,7 +28,7 @@ jbyteArray java_map_get(jobject java_map, jstring key, JNIEnv* env)
 
 jboolean java_map_is_empty(jobject java_map, JNIEnv* env)
 {
-  jclass map_class = env->FindClass("java/util/TreeMap");
+  jclass map_class = env->FindClass(MAP_CLASS);
   jmethodID is_empty_method = env->GetMethodID(map_class, "isEmpty", "()Z");
   jboolean result = env->CallBooleanMethod(java_map, is_empty_method);
   return (bool) result;

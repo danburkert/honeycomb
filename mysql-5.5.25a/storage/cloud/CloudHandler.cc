@@ -717,11 +717,6 @@ jobject CloudHandler::sql_to_java()
   return java_map;
 }
 
-const char* CloudHandler::java_to_string(jstring j_str)
-{
-  return this->env->GetStringUTFChars(j_str, NULL);
-}
-
 jstring CloudHandler::string_to_java_string(const char *string)
 {
   return env->NewStringUTF(string);
@@ -953,10 +948,8 @@ void CloudHandler::bytes_to_long(const uchar* buff, unsigned int buff_length, co
   } else {
     memset(long_buff, 0x00000000, sizeof long_buff);
   }
-  for(int i = 0; i < buff_length; i++)
-  {
-    long_buff[i] = buff[i];
-  }
+
+  memcpy(long_buff, buff, buff_length);
 }
 
 void CloudHandler::store_uuid_ref(jobject index_row, jmethodID get_uuid_method)
