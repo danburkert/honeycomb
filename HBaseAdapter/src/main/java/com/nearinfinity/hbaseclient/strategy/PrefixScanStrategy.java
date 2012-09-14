@@ -4,7 +4,10 @@ import com.nearinfinity.hbaseclient.*;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter;
+import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.filter.RowFilter;
+
+import java.util.logging.Logger;
 
 /**
  * Created with IntelliJ IDEA.
@@ -13,9 +16,9 @@ import org.apache.hadoop.hbase.filter.RowFilter;
  * Time: 8:18 AM
  * To change this template use File | Settings | File Templates.
  */
-public class ExactScanStrategy extends ScanStrategyBase {
+public class PrefixScanStrategy extends ScanStrategyBase {
 
-    public ExactScanStrategy(String tableName, String columnName, byte[] value) {
+    public PrefixScanStrategy(String tableName, String columnName, byte[] value) {
         super(tableName, columnName, value);
     }
 
@@ -25,12 +28,15 @@ public class ExactScanStrategy extends ScanStrategyBase {
         long columnId = info.getColumnIdByName(this.columnName);
         ColumnType columnType = info.getColumnTypeByName(this.columnName);
 
-        byte[] startKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId, value, columnType);
-        byte[] endKey = RowKeyFactory.buildSecondaryIndexKey(tableId, columnId+1, new byte[0], ColumnType.NONE);
+        byte[] startKey = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, Constants.ZERO_UUID, columnType, 0);
+        byte[] endKey = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, Constants.FULL_UUID, columnType, 0);
+
+        byte[] prefix = RowKeyFactory.buildValueIndexPrefix(tableId, columnId, value, columnType);
 
         Scan scan = ScanFactory.buildScan(startKey, endKey);
 
-        RowFilter filter = new RowFilter(CompareFilter.CompareOp.EQUAL, new BinaryComparator(startKey));
+        PrefixFilter filter = new PrefixFilter(prefix);
+
         scan.setFilter(filter);
 
         return scan;

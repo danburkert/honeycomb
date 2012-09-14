@@ -51,10 +51,7 @@ public class WriteBuffer {
                 continue;
             }
 
-            if (RowKeyFactory.isSecondaryIndexKey(rowKey)) {
-                secondaryIndexRows.add(rowKey);
-            }
-            else if (RowKeyFactory.isReverseIndexKey(rowKey)) {
+            if (RowKeyFactory.isReverseIndexKey(rowKey)) {
                 reverseIndexRows.add(rowKey);
             }
 

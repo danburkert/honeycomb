@@ -101,7 +101,7 @@ public class HBaseClient {
         tableCache.put(tableName, new TableInfo(tableName, tableId));
     }
 
-    private void addColumns(String tableName, Map<String, Map<ColumnMetadata, byte[]>> columns, List<Put> puts) throws IOException {
+    private void addColumns(String tableName, Map<String, ColumnMetadata> columns, List<Put> puts) throws IOException {
         //Get table id from cache
         long tableId = tableCache.get(tableName).getId();
 
@@ -124,10 +124,9 @@ public class HBaseClient {
             byte[] columnInfoBytes = RowKeyFactory.buildColumnInfoKey(tableId, columnId);
             Put columnInfoPut = new Put(columnInfoBytes);
 
-            Map<ColumnMetadata, byte[]> metadata = columns.get(columnName);
-            for (ColumnMetadata meta : metadata.keySet()) {
-                columnInfoPut.add(Constants.NIC, meta.getValue(), metadata.get(meta));
-            }
+            ColumnMetadata metadata = columns.get(columnName);
+
+            columnInfoPut.add(Constants.NIC, Constants.METADATA, metadata.toJson());
 
             puts.add(columnInfoPut);
 
@@ -136,7 +135,7 @@ public class HBaseClient {
         }
     }
 
-    public void createTableFull(String tableName, Map<String, Map<ColumnMetadata, byte[]>> columns) throws IOException {
+    public void createTableFull(String tableName, Map<String, ColumnMetadata> columns) throws IOException {
         //Batch put list
         List<Put> putList = new LinkedList<Put>();
 
@@ -170,7 +169,7 @@ public class HBaseClient {
         return table.get(get);
     }
 
-    private TableInfo getTableInfo(String tableName) throws IOException {
+    public TableInfo getTableInfo(String tableName) throws IOException {
         if (tableCache.containsKey(tableName)) {
             return tableCache.get(tableName);
         }
@@ -202,27 +201,12 @@ public class HBaseClient {
         return info;
     }
 
-    public Map<ColumnMetadata, byte[]> getMetadataForColumn(long tableId, long columnId) throws IOException {
-        HashMap<ColumnMetadata, byte[]> metadataMap = new HashMap<ColumnMetadata, byte[]>();
-
+    public ColumnMetadata getMetadataForColumn(long tableId, long columnId) throws IOException {
         Get metadataGet = new Get(RowKeyFactory.buildColumnInfoKey(tableId, columnId));
         Result result = table.get(metadataGet);
 
-        Map<byte[], byte[]> metadata = result.getFamilyMap(Constants.NIC);
-        for (byte[] qualifier : metadata.keySet()) {
-            // Only the qualifier matters for column metadata - value is not important
-            String metadataString = new String(qualifier).toUpperCase();
-            ColumnMetadata metaDataItem;
-
-            try {
-                metaDataItem = ColumnMetadata.valueOf(metadataString);
-                metadataMap.put(metaDataItem, metadata.get(qualifier));
-            } catch (IllegalArgumentException e) {
-
-            }
-        }
-
-        return metadataMap;
+        byte[] jsonBytes = result.getValue(Constants.NIC, Constants.METADATA);
+        return new ColumnMetadata(jsonBytes);
     }
 
     public Map<String, byte[]> parseDataRow(Result result, String tableName) throws IOException {
@@ -257,19 +241,56 @@ public class HBaseClient {
 
         List<Delete> deleteList = new LinkedList<Delete>();
 
-        //Delete dataRows
+        //Delete data row
         byte[] dataRowKey = RowKeyFactory.buildDataKey(tableId, uuid);
         deleteList.add(new Delete(dataRowKey));
 
-        //Scan the index rows
-        byte[] indexStartKey = RowKeyFactory.buildValueIndexKey(tableId, 0L, new byte[0], uuid);
-        byte[] indexEndKey = RowKeyFactory.buildValueIndexKey(tableId + 1, 0L, new byte[0], uuid);
-        deleteList.addAll(scanAndDeleteAllUUIDs(indexStartKey, indexEndKey, uuid));
+        Get get = new Get(dataRowKey);
+        Result result = table.get(get);
 
-        //Scan the null index rows
-        byte[] nullStartKey = RowKeyFactory.buildNullIndexKey(tableId, 0L, uuid);
-        byte[] nullEndKey = RowKeyFactory.buildNullIndexKey(tableId + 1, 0L, uuid);
-        deleteList.addAll(scanAndDeleteAllUUIDs(nullStartKey, nullEndKey, uuid));
+        Map<String,byte[]> valueMap = parseDataRow(result, tableName);
+
+        //Loop through ALL columns to determine which should be NULL
+        for (String columnName : info.getColumnNames()) {
+            long columnId = info.getColumnIdByName(columnName);
+            byte[] value = valueMap.get(columnName);
+            ColumnMetadata metadata = info.getColumnMetadata(columnName);
+            ColumnType columnType = metadata.getType();
+
+            if (value == null) {
+                byte[] nullIndexKey = RowKeyFactory.buildNullIndexKey(tableId, columnId, uuid);
+                deleteList.add(new Delete(nullIndexKey));
+                continue;
+            }
+
+            //Determine pad length
+            int padLength = 0;
+            if (columnType == ColumnType.STRING || columnType == ColumnType.BINARY) {
+                long maxLength = metadata.getMaxLength();
+                padLength = (int) maxLength - value.length;
+            }
+
+            byte[] indexKey = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, uuid, columnType, padLength);
+            byte[] reverseKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId, value, columnType, uuid, padLength);
+
+            deleteList.add(new Delete(indexKey));
+            deleteList.add(new Delete(reverseKey));
+        }
+
+//        //Scan the index rows
+//        byte[] indexStartKey = RowKeyFactory.buildValueIndexKey(tableId, 0L, new byte[0], uuid, ColumnType.NONE, 0);
+//        byte[] indexEndKey = RowKeyFactory.buildValueIndexKey(tableId + 1, 0L, new byte[0], uuid, ColumnType.NONE, 0);
+//        deleteList.addAll(scanAndDeleteAllUUIDs(indexStartKey, indexEndKey, uuid));
+//
+//        //Scan the reverse index rows
+//        byte[] reverseStartKey = RowKeyFactory.buildReverseIndexKey(tableId, 0L, new byte[0], ColumnType.NONE, uuid, 0);
+//        byte[] reverseEndKey = RowKeyFactory.buildReverseIndexKey(tableId+1, 0L, new byte[0], ColumnType.NONE, uuid, 0);
+//        deleteList.addAll(scanAndDeleteAllUUIDs(reverseStartKey, reverseEndKey, uuid));
+//
+//        //Scan the null index rows
+//        byte[] nullStartKey = RowKeyFactory.buildNullIndexKey(tableId, 0L, uuid);
+//        byte[] nullEndKey = RowKeyFactory.buildNullIndexKey(tableId + 1, 0L, uuid);
+//        deleteList.addAll(scanAndDeleteAllUUIDs(nullStartKey, nullEndKey, uuid));
 
         table.delete(deleteList);
 
@@ -337,12 +358,10 @@ public class HBaseClient {
         int affectedRows = 0;
 
         byte[] valuePrefix = ByteBuffer.allocate(9).put(RowType.PRIMARY_INDEX.getValue()).putLong(tableId).array();
-        byte[] secondaryPrefix = ByteBuffer.allocate(9).put(RowType.SECONDARY_INDEX.getValue()).putLong(tableId).array();
         byte[] reversePrefix = ByteBuffer.allocate(9).put(RowType.REVERSE_INDEX.getValue()).putLong(tableId).array();
         byte[] nullPrefix = ByteBuffer.allocate(9).put(RowType.NULL_INDEX.getValue()).putLong(tableId).array();
 
         affectedRows += deleteRowsWithPrefix(valuePrefix);
-        affectedRows += deleteRowsWithPrefix(secondaryPrefix);
         affectedRows += deleteRowsWithPrefix(reversePrefix);
         affectedRows += deleteRowsWithPrefix(nullPrefix);
 

@@ -15,6 +15,8 @@ import java.util.Arrays;
 public class ValueEncoder {
     private static final byte BYTE_MASK = (byte) 0x000000ff;
 
+    private static final byte ASC_BYTE_MASK = (byte) 0x00000000;
+
     private static final byte NEGATIVE_MASK = (byte)0x00000080;
 
     private static final long INVERT_SIGN_MASK = 0x8000000000000000L;
@@ -89,13 +91,21 @@ public class ValueEncoder {
         return canonicalValue;
     }
 
-    public static byte[] padValue(byte[] value, int padLength) {
+    private static byte[] padValue(byte[] value, int padLength, byte mask) {
         byte[] paddedValue = new byte[value.length + padLength];
-        Arrays.fill(paddedValue, BYTE_MASK);
+        Arrays.fill(paddedValue, mask);
         for (int i = 0 ; i < value.length ; i++) {
             paddedValue[i] = value[i];
         }
 
         return paddedValue;
+    }
+
+    public static byte[] padValueDescending(byte[] value, int padLength) {
+        return padValue(value, padLength, BYTE_MASK);
+    }
+
+    public static byte[] padValueAscending(byte[] value, int padLength) {
+        return padValue(value, padLength, ASC_BYTE_MASK);
     }
 }

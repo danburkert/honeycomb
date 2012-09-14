@@ -5,7 +5,6 @@ import com.nearinfinity.hbaseclient.HBaseClient;
 import com.nearinfinity.hbaseclient.ResultParser;
 import com.nearinfinity.hbaseclient.strategy.*;
 import com.nearinfinity.mysqlengine.Connection;
-import com.nearinfinity.mysqlengine.scanner.DoubleResultScanner;
 import com.nearinfinity.mysqlengine.scanner.HBaseResultScanner;
 import com.nearinfinity.mysqlengine.scanner.SingleResultScanner;
 import org.apache.hadoop.hbase.client.Result;
@@ -79,7 +78,7 @@ public class HBaseAdapter {
         }
     }
 
-    public static boolean createTable(String tableName, Map<String, Map<ColumnMetadata, byte[]>> columns) throws HBaseAdapterException {
+    public static boolean createTable(String tableName, Map<String, ColumnMetadata> columns) throws HBaseAdapterException {
         logger.info("creatingTable-> tableName:" + tableName);
 
         try {
@@ -246,6 +245,7 @@ public class HBaseAdapter {
 
     public static IndexRow indexRead(long scanId, byte[] value, IndexReadType readType) throws HBaseAdapterException {
         logger.info("indexRead-> scanId: " + scanId + ", value: " + Bytes.toString(value) + ", readType " + readType.name());
+
         Connection conn = getConnectionForId(scanId);
         IndexRow indexRow = new IndexRow();
         try {
@@ -257,40 +257,40 @@ public class HBaseAdapter {
 
             switch (readType) {
                 case HA_READ_KEY_EXACT: {
-                    ScanStrategy strategy = new ExactScanStrategy(tableName, columnName, value);
-                    scanner = new DoubleResultScanner(client.getScanner(strategy), tableName, columnName, client);
+                    ScanStrategy strategy = new PrefixScanStrategy(tableName, columnName, value);
+                    scanner = new SingleResultScanner(client.getScanner(strategy));
                 }
                 break;
                 case HA_READ_AFTER_KEY: {
                     ScanStrategy strategy = new OrderedScanStrategy(tableName, columnName, value);
-                    scanner = new DoubleResultScanner(client.getScanner(strategy), tableName, columnName, client);
+                    scanner = new SingleResultScanner(client.getScanner(strategy));
                     valueToSkip = value;
                 }
                 break;
                 case HA_READ_KEY_OR_NEXT: {
                     ScanStrategy strategy = new OrderedScanStrategy(tableName, columnName, value);
-                    scanner = new DoubleResultScanner(client.getScanner(strategy), tableName, columnName, client);
+                    scanner = new SingleResultScanner(client.getScanner(strategy));
                 }
                 break;
                 case HA_READ_BEFORE_KEY: {
                     ScanStrategy strategy = new ReverseScanStrategy(tableName, columnName, value);
-                    scanner = new DoubleResultScanner(client.getScanner(strategy), tableName, columnName, client);
+                    scanner = new SingleResultScanner(client.getScanner(strategy));
                     valueToSkip = value;
                 }
                 break;
                 case HA_READ_KEY_OR_PREV: {
                     ScanStrategy strategy = new ReverseScanStrategy(tableName, columnName, value);
-                    scanner = new DoubleResultScanner(client.getScanner(strategy), tableName, columnName, client);
+                    scanner = new SingleResultScanner(client.getScanner(strategy));
                 }
                 break;
                 case INDEX_FIRST: {
                     ScanStrategy strategy = new OrderedScanStrategy(tableName, columnName, new byte[0]);
-                    scanner = new DoubleResultScanner(client.getScanner(strategy), tableName, columnName, client);
+                    scanner = new SingleResultScanner(client.getScanner(strategy));
                 }
                 break;
                 case INDEX_LAST: {
                     ScanStrategy strategy = new ReverseScanStrategy(tableName, columnName, new byte[0]);
-                    scanner = new DoubleResultScanner(client.getScanner(strategy), tableName, columnName, client);
+                    scanner = new SingleResultScanner(client.getScanner(strategy));
                 }
                 break;
                 case INDEX_NULL: {
@@ -299,6 +299,8 @@ public class HBaseAdapter {
                 }
                 break;
             }
+
+            scanner.setColumnName(columnName);
 
             conn.setScanner(scanner);
             Result result = scanner.next(valueToSkip);

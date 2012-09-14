@@ -44,7 +44,7 @@ public class TableInfo {
         return columnIdsToInfo.get(id).getName();
     }
 
-    public void addColumn(String columnName, long id, Map<ColumnMetadata, byte[]> metadata) {
+    public void addColumn(String columnName, long id, ColumnMetadata metadata) {
         ColumnInfo info = new ColumnInfo(id, columnName, metadata);
         columnNamesToInfo.put(columnName, info);
         columnIdsToInfo.put(id, info);
@@ -61,10 +61,10 @@ public class TableInfo {
     public ColumnType getColumnTypeByName(String columnName) {
         ColumnInfo info = this.columnNamesToInfo.get(columnName);
 
-        return ColumnType.getByValue(info.getMetadata().get(ColumnMetadata.COLUMN_TYPE));
+        return ColumnType.getByValue(info.getMetadata().getType().getValue());
     }
 
-    public byte[] getColumnMetadata(String columnName, ColumnMetadata metadata) {
-        return this.columnNamesToInfo.get(columnName).getMetadata().get(metadata);
+    public ColumnMetadata getColumnMetadata(String columnName) {
+        return this.columnNamesToInfo.get(columnName).getMetadata();
     }
 }

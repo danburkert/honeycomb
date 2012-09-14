@@ -2,7 +2,11 @@ package com.nearinfinity.hbaseclient;
 
 import org.apache.hadoop.hbase.client.Result;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.nio.ByteBuffer;
+import java.util.TreeMap;
 import java.util.UUID;
 
 /**
@@ -24,6 +28,21 @@ public class ResultParser {
     }
 
     public static byte[] parseValue(Result result) {
-        return result.getValue(Constants.NIC, Constants.VALUE_COLUMN);
+        return result.getValue(Constants.NIC, Constants.VALUE_MAP);
+    }
+
+    public static TreeMap<String, byte[]> parseRowMap(Result result) {
+        byte[] mapBytes = parseUnireg(result);
+        TreeMap<String, byte[]> rowMap = null;
+
+        try {
+            ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(mapBytes));
+            rowMap = (TreeMap<String, byte[]>) in.readObject();
+            in.close();
+        } catch (IOException e) {
+        } catch (ClassNotFoundException e) {
+        }
+
+        return rowMap;
     }
 }

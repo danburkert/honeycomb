@@ -1,9 +1,14 @@
 package com.nearinfinity.mysqlengine.scanner;
 
+import com.nearinfinity.hbaseclient.ResultParser;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.util.Arrays;
+import java.util.TreeMap;
 
 /**
  * Created with IntelliJ IDEA.
@@ -15,6 +20,7 @@ import java.io.IOException;
 public class SingleResultScanner implements HBaseResultScanner {
     private ResultScanner scanner;
     private Result lastResult;
+    private String columnName;
 
     public SingleResultScanner(ResultScanner scanner) {
         this.scanner = scanner;
@@ -27,6 +33,30 @@ public class SingleResultScanner implements HBaseResultScanner {
         }
 
         Result result = this.scanner.next();
+
+        if (result == null) {
+            return null;
+        }
+
+        if (valueToSkip != null) {
+            TreeMap<String, byte[]> rowMap = ResultParser.parseRowMap(result);
+            byte[] value = rowMap.get(this.columnName);
+
+            while (Arrays.equals(valueToSkip, value)) {
+                result = this.scanner.next();
+                rowMap = ResultParser.parseRowMap(result);
+                value = rowMap.get(this.columnName);
+            }
+        }
+
+        byte[] value = null;
+
+        while (valueToSkip != null && Arrays.equals(value, valueToSkip))
+        {
+            result = this.scanner.next();
+            value = ResultParser.parseUnireg(result);
+        }
+
         this.lastResult = result;
         return result;
     }
@@ -46,5 +76,10 @@ public class SingleResultScanner implements HBaseResultScanner {
     @Override
     public void setLastResult(Result result) {
         this.lastResult = result;
+    }
+
+    @Override
+    public void setColumnName(String columnName) {
+        this.columnName = columnName;
     }
 }
