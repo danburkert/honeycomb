@@ -69,6 +69,7 @@ class CloudHandler : public handler
     void bytes_to_long(const uchar* buff, unsigned int buff_length, bool is_signed, uchar* long_buff);
     int read_index_row(jobject index_row, uchar* buf);
     jobject get_index_row(const char* indexType);
+    jobject get_next_index_row();
     void flush_writes();
     void end_scan();
     void reset_index_scan_counter();

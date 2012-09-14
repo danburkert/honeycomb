@@ -967,10 +967,7 @@ int CloudHandler::index_next(uchar *buf)
 
   MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, TRUE);
 
-  jclass adapter_class = this->adapter();
-  jmethodID index_next_method = this->env->GetStaticMethodID(adapter_class, "nextIndexRow", "(J)Lcom/nearinfinity/mysqlengine/jni/IndexRow;");
-  jlong java_scan_id = this->curr_scan_id;
-  jobject index_row = this->env->CallStaticObjectMethod(adapter_class, index_next_method, java_scan_id);
+  jobject index_row = get_next_index_row();
 
   if(read_index_row(index_row, buf) == HA_ERR_END_OF_FILE)
   {
@@ -993,10 +990,7 @@ int CloudHandler::index_prev(uchar *buf)
 
   MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, TRUE);
 
-  jclass adapter_class = this->adapter();
-  jmethodID index_next_method = this->env->GetStaticMethodID(adapter_class, "nextIndexRow", "(J)Lcom/nearinfinity/mysqlengine/jni/IndexRow;");
-  jlong java_scan_id = this->curr_scan_id;
-  jobject index_row = this->env->CallStaticObjectMethod(adapter_class, index_next_method, java_scan_id);
+  jobject index_row = get_next_index_row();
 
   if(read_index_row(index_row, buf) == HA_ERR_END_OF_FILE)
   {
@@ -1037,6 +1031,14 @@ int CloudHandler::index_last(uchar *buf)
   }
 
   DBUG_RETURN(0);
+}
+
+jobject CloudHandler::get_next_index_row()
+{
+  jclass adapter_class = this->adapter();
+  jmethodID index_next_method = this->env->GetStaticMethodID(adapter_class, "nextIndexRow", "(J)Lcom/nearinfinity/mysqlengine/jni/IndexRow;");
+  jlong java_scan_id = this->curr_scan_id;
+  return this->env->CallStaticObjectMethod(adapter_class, index_next_method, java_scan_id);
 }
 
 jobject CloudHandler::get_index_row(const char* indexType)
