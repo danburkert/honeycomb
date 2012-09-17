@@ -11,7 +11,7 @@ jobject java_map_insert(jobject java_map, jobject key, jobject value, JNIEnv* en
 jbyteArray java_map_get(jobject java_map, jstring key, JNIEnv* env);
 jboolean java_map_is_empty(jobject java_map, JNIEnv* env);
 jobject find_flag_to_java(enum ha_rkey_function find_flag, JNIEnv* env);
-jobject java_find_flag_by_name(char *name, JNIEnv* env);
+jobject java_find_flag_by_name(const char *name, JNIEnv* env);
 jclass find_jni_class(const char* class_name, JNIEnv* env);
 void print_java_exception(JNIEnv* jni_env);
 

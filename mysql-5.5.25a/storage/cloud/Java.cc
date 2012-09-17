@@ -67,7 +67,7 @@ jobject find_flag_to_java(enum ha_rkey_function find_flag, JNIEnv* env)
   return env->GetStaticObjectField(read_class, field_id);
 }
 
-jobject java_find_flag_by_name(char *name, JNIEnv* env)
+jobject java_find_flag_by_name(const char *name, JNIEnv* env)
 {
   jclass read_class = find_jni_class("IndexReadType", env);
   jfieldID field_id = env->GetStaticFieldID(read_class, name, "Lcom/nearinfinity/mysqlengine/jni/IndexReadType;");
