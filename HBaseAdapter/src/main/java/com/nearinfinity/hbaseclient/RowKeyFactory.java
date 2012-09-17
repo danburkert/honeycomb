@@ -81,19 +81,6 @@ public class RowKeyFactory {
                 .array();
     }
 
-    public static boolean isReverseIndexKey(byte[] rowKey) {
-        return rowKey[0] == RowType.REVERSE_INDEX.getValue();
-    }
-
-    public static String rawByteString(byte[] value) {
-        StringBuilder sb = new StringBuilder();
-        for (byte b : value) {
-            sb.append(String.format("\\x%02x", b));
-        }
-
-        return sb.toString();
-    }
-
     private static byte[] buildReverseIndexKey(long tableId, long columnId, byte[] value, ColumnType columnType, UUID rowId, int padLength, boolean emptyValue) {
         byte[] encodedValue = ValueEncoder.encodeValue(value, columnType);
         byte[] reversedValue = ValueEncoder.reverseValue(encodedValue);

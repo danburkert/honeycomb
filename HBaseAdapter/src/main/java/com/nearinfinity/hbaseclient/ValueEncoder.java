@@ -58,23 +58,6 @@ public class ValueEncoder {
         return encodedValue;
     }
 
-    private static byte[] positionOfLong(long value) {
-        return ByteBuffer.allocate(8).putLong(value ^ INVERT_SIGN_MASK).array();
-    }
-
-    private static byte[] positionOfDouble(double value) {
-        long longValue = Double.doubleToLongBits(value);
-        if (isNegative(value)) {
-            return ByteBuffer.allocate(8).putLong(longValue ^ INVERT_ALL_BITS_MASK).array();
-        }
-        return ByteBuffer.allocate(8).putLong(longValue ^ INVERT_SIGN_MASK).array();
-    }
-
-    private static boolean isNegative(double value) {
-        byte [] bytes = ByteBuffer.allocate(8).putDouble(value).array();
-        return (bytes[0] & NEGATIVE_MASK) != 0;
-    }
-
     public static byte[] canonicalValue(byte[] value, ColumnType columnType) {
         if (value == null || value.length == 0) {
             return new byte[0];
@@ -91,6 +74,14 @@ public class ValueEncoder {
         return canonicalValue;
     }
 
+    public static byte[] padValueDescending(byte[] value, int padLength) {
+        return padValue(value, padLength, BYTE_MASK);
+    }
+
+    public static byte[] padValueAscending(byte[] value, int padLength) {
+        return padValue(value, padLength, ASC_BYTE_MASK);
+    }
+
     private static byte[] padValue(byte[] value, int padLength, byte mask) {
         byte[] paddedValue = new byte[value.length + padLength];
         Arrays.fill(paddedValue, mask);
@@ -101,11 +92,20 @@ public class ValueEncoder {
         return paddedValue;
     }
 
-    public static byte[] padValueDescending(byte[] value, int padLength) {
-        return padValue(value, padLength, BYTE_MASK);
+    private static byte[] positionOfLong(long value) {
+        return ByteBuffer.allocate(8).putLong(value ^ INVERT_SIGN_MASK).array();
     }
 
-    public static byte[] padValueAscending(byte[] value, int padLength) {
-        return padValue(value, padLength, ASC_BYTE_MASK);
+    private static byte[] positionOfDouble(double value) {
+        long longValue = Double.doubleToLongBits(value);
+        if (isNegative(value)) {
+            return ByteBuffer.allocate(8).putLong(longValue ^ INVERT_ALL_BITS_MASK).array();
+        }
+        return ByteBuffer.allocate(8).putLong(longValue ^ INVERT_SIGN_MASK).array();
+    }
+
+    private static boolean isNegative(double value) {
+        byte [] bytes = ByteBuffer.allocate(8).putDouble(value).array();
+        return (bytes[0] & NEGATIVE_MASK) != 0;
     }
 }
