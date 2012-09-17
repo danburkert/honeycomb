@@ -419,7 +419,8 @@ public class HBaseClient {
 
     public long getRowCount(String tableName) throws IOException {
         long tableId = getTableInfo(tableName).getId();
-        return Bytes.readVLong(table.get(new Get(RowKeyFactory.buildTableInfoKey(tableId))).getColumnLatest(Constants.NIC, Constants.ROW_COUNT).getValue(), 0);
+        byte[] rowKey = RowKeyFactory.buildTableInfoKey(tableId);
+        return table.incrementColumnValue(rowKey, Constants.NIC, Constants.ROW_COUNT, 0);
     }
 
     public void deleteTableFromRoot(String tableName) throws IOException {
