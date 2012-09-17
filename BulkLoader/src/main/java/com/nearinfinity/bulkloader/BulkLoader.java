@@ -146,7 +146,7 @@ public class BulkLoader {
 
             long count = job.getCounters().findCounter(Counters.ROWS).getValue();
             HBaseClient client = new HBaseClient(conf.get("hb_table"), conf.get("zk_quorum"));
-            client.incrementRowCount(count);
+            client.incrementRowCount(conf.get("sql_table_name"), count);
         }
 
         // Delete temporary output folder after completion
