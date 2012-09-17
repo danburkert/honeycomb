@@ -128,12 +128,12 @@ int CloudHandler::end_bulk_delete()
 {
   DBUG_ENTER("CloudHandler::end_bulk_delete");
 
-  detach_thread();
   jclass adapter_class = this->adapter();
-  jmethodID update_count_method = this->env->GetStaticMethodID(adapter_class, "incrementRowCount", "(java/lang/String;J)V");
+  jmethodID update_count_method = this->env->GetStaticMethodID(adapter_class, "incrementRowCount", "(Ljava/lang/String;J)V");
   jstring table_name = string_to_java_string(this->table->alias);
   this->env->CallStaticVoidMethod(adapter_class, update_count_method, table_name, (jlong)this->rows_deleted);
   this->rows_deleted = 0;
+  detach_thread();
 
   DBUG_RETURN(0);
 }
@@ -149,9 +149,10 @@ int CloudHandler::delete_all_rows()
   jmethodID delete_rows_method = this->env->GetStaticMethodID(adapter_class, "deleteAllRows", "(Ljava/lang/String;)I");
 
   int count = this->env->CallStaticIntMethod(adapter_class, delete_rows_method, tableName);
-  jmethodID set_count_method = this->env->GetStaticMethodID(adapter_class, "setRowCount", "(java/lang/String;J)V");
+  jmethodID set_count_method = this->env->GetStaticMethodID(adapter_class, "setRowCount", "(Ljava/lang/String;J)V");
   jstring table_name = string_to_java_string(this->table->alias);
   this->env->CallStaticVoidMethod(adapter_class, set_count_method, table_name, (jlong)0);
+  this->flush_writes();
 
   detach_thread();
 
@@ -183,6 +184,10 @@ int CloudHandler::delete_table(const char *name)
   jstring tableName = string_to_java_string(alias);
   jclass adapter_class = this->adapter();
   jmethodID drop_table_method = this->env->GetStaticMethodID(adapter_class, "dropTable", "(Ljava/lang/String;)Z");
+
+  jmethodID set_count_method = this->env->GetStaticMethodID(adapter_class, "setRowCount", "(Ljava/lang/String;J)V");
+  jstring table_name = string_to_java_string(alias);
+  this->env->CallStaticVoidMethod(adapter_class, set_count_method, table_name, (jlong)0);
 
   this->env->CallStaticBooleanMethod(adapter_class, drop_table_method, tableName);
 
@@ -443,7 +448,7 @@ int CloudHandler::end_bulk_insert()
 
   this->flush_writes();
   jclass adapter_class = this->adapter();
-  jmethodID update_count_method = this->env->GetStaticMethodID(adapter_class, "incrementRowCount", "(java/lang/String;J)V");
+  jmethodID update_count_method = this->env->GetStaticMethodID(adapter_class, "incrementRowCount", "(Ljava/lang/String;J)V");
   jstring table_name = string_to_java_string(this->table->alias);
   this->env->CallStaticVoidMethod(adapter_class, update_count_method, table_name, (jlong)this->rows_written);
   this->rows_written = 0;
@@ -520,11 +525,21 @@ int CloudHandler::free_share(CloudShare *share)
 int CloudHandler::info(uint)
 {
   DBUG_ENTER("CloudHandler::info");
+  attach_thread();
   jclass adapter_class = this->adapter();
-  jmethodID get_count_method = this->env->GetStaticMethodID(adapter_class, "retrieveRowCount", "(java/lang/String)J");
+  jmethodID get_count_method = this->env->GetStaticMethodID(adapter_class, "getRowCount", "(Ljava/lang/String;)J");
   jstring table_name = string_to_java_string(this->table->alias);
   jlong row_count = this->env->CallStaticLongMethod(adapter_class, get_count_method, table_name);
   stats.records = row_count;
+  if(stats.records < 2)
+    stats.records = 2;
+  stats.deleted = 0;
+  stats.data_file_length =  stats.records * 64;
+  stats.index_file_length = stats.records * 128;
+  stats.mean_rec_length =   64;
+  stats.delete_length =     stats.deleted * stats.mean_rec_length;
+  stats.check_time =        20;
+  detach_thread();
 
   DBUG_RETURN(0);
 }

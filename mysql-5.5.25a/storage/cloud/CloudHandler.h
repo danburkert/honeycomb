@@ -152,6 +152,7 @@ class CloudHandler : public handler
         HA_BINLOG_STMT_CAPABLE |
         HA_REC_NOT_IN_SEQ |
         HA_NO_TRANSACTIONS |
+        HA_STATS_RECORDS_IS_EXACT | 
         HA_NULL_IN_KEY; // Nulls in indexed columns are allowed
     }
 

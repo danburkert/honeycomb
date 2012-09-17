@@ -372,9 +372,9 @@ public class HBaseAdapter {
         }
     }
 
-    public static void getRowCount(String tableName, long delta) throws HBaseAdapterException {
+    public static long getRowCount(String tableName) throws HBaseAdapterException {
         try {
-            client.getRowCount(tableName);
+            return client.getRowCount(tableName);
         } catch (Exception e) {
             logger.error("getRowCount-> Exception: ", e);
             throw new HBaseAdapterException("getRowCount", e);
