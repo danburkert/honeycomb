@@ -42,6 +42,8 @@ class CloudHandler : public handler
     Field *index_field;
 
     long long curr_scan_id;
+    ulonglong rows_written;
+    long long rows_deleted;
 
     // HBase JNI Adapter:
     JNIEnv* env;
@@ -125,6 +127,8 @@ class CloudHandler : public handler
       this->ref_length = 16;
       this->ref = new uchar[this->ref_length];
       this->initialize_adapter();
+      this->rows_written = 0;
+      this->rows_deleted = 0;
     }
 
     ~CloudHandler()
