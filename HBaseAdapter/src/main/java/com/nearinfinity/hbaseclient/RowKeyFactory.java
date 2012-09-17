@@ -109,4 +109,11 @@ public class RowKeyFactory {
                 .putLong(rowId.getLeastSignificantBits())
                 .array();
     }
+
+    public static byte[] buildTableInfoKey(long tableId) {
+        return ByteBuffer.allocate(9)
+                .put(RowType.TABLE_INFO.getValue())
+                .putLong(tableId)
+                .array();
+    }
 }
