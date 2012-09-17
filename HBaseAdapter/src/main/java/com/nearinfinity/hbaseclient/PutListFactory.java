@@ -7,8 +7,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
-import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 public class PutListFactory {
     public static List<Put> createPutList(Map<String, byte[]> values, TableInfo info) throws IOException {
