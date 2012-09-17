@@ -1,5 +1,6 @@
 package com.nearinfinity.bulkloader;
 
+import au.com.bytecode.opencsv.CSVReader;
 import com.nearinfinity.hbaseclient.ColumnMetadata;
 import com.nearinfinity.hbaseclient.HBaseClient;
 import com.nearinfinity.hbaseclient.PutListFactory;
@@ -29,8 +30,10 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.TreeMap;
 
+import static java.lang.String.*;
+
 public class BulkLoader {
-    private static final Log LOG = LogFactory.getLog(com.nearinfinity.bulkloader.BulkLoader.class);
+    private static final Log LOG = LogFactory.getLog(BulkLoader.class);
 
     public enum Counters {ROWS, FAILED_ROWS}
 
@@ -58,13 +61,11 @@ public class BulkLoader {
         @Override
         public void map(LongWritable offset, Text line, Context context) {
             try {
-                // NOTE:  the trim below is a stopgap to get rid of the trailing \t that mapreduce inserts
-                //        in the DataCreator.  It should be replaced when we update the CSV parsing.
-                String[] columnData = line.toString().trim().split(",");
+                CSVReader reader = new CSVReader(new StringReader(line.toString()));
+                String[] columnData = reader.readNext();
 
                 if (columnData.length != columnNames.length) {
-                    throw new Exception("Row has wrong number of columns. Expected " +
-                            columnNames.length + " got " + columnData.length + ". Line: " + line.toString());
+                    throw new Exception(format("Row has wrong number of columns. Expected %d got %d. Line: %s", columnNames.length, columnData.length, line.toString()));
                 }
 
                 Map<String, byte[]> valueMap = new TreeMap<String, byte[]>();
@@ -104,10 +105,11 @@ public class BulkLoader {
         job.setInputFormatClass(TextInputFormat.class);
 
         job.setMapperClass(BulkLoaderMapper.class);
+        job.setReducerClass(PutSortReducer.class);
+
         job.setMapOutputKeyClass(ImmutableBytesWritable.class);
         job.setMapOutputValueClass(Put.class);
 
-        job.setReducerClass(PutSortReducer.class);
         FileOutputFormat.setOutputPath(job, new Path(outputPath));
 
         HFileOutputFormat.configureIncrementalLoad(job, table);
