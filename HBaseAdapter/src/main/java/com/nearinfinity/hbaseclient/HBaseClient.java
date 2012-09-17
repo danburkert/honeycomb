@@ -94,6 +94,9 @@ public class HBaseClient {
         //Add a row with the table name
         puts.add(new Put(RowKeyFactory.ROOT).add(Constants.NIC, tableName.getBytes(), Bytes.toBytes(tableId)));
 
+        // Add table_metadata column
+        puts.add(new Put(RowKeyFactory.buildTableInfoKey(tableId)).add(Constants.NIC, Constants.ROW_COUNT, Bytes.toBytes(0l)));
+
         //Cache the table
         tableCache.put(tableName, new TableInfo(tableName, tableId));
     }
@@ -400,6 +403,23 @@ public class HBaseClient {
         table.delete(deleteList);
 
         return count;
+    }
+
+    public void incrementRowCount(String tableName, long delta) throws IOException {
+        long tableId = getTableInfo(tableName).getId();
+        byte[] rowKey = RowKeyFactory.buildTableInfoKey(tableId);
+        table.incrementColumnValue(rowKey, Constants.NIC, Constants.ROW_COUNT, delta);
+    }
+
+    public void setRowCount(String tableName, long value) throws IOException {
+        long tableId = getTableInfo(tableName).getId();
+        Put put = new Put(RowKeyFactory.buildTableInfoKey(tableId)).add(Constants.NIC, Constants.ROW_COUNT, Bytes.toBytes(value));
+        table.put(put);
+    }
+
+    public long getRowCount(String tableName) throws IOException {
+        long tableId = getTableInfo(tableName).getId();
+        return Bytes.readVLong(table.get(new Get(RowKeyFactory.buildTableInfoKey(tableId))).getColumnLatest(Constants.NIC, Constants.ROW_COUNT).getValue(), 0);
     }
 
     public void deleteTableFromRoot(String tableName) throws IOException {

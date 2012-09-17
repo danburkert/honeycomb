@@ -353,4 +353,31 @@ public class HBaseAdapter {
         }
         return conn;
     }
+
+    public static void incrementRowCount(String tableName, long delta) throws HBaseAdapterException {
+        try {
+            client.incrementRowCount(tableName, delta);
+        } catch (Exception e) {
+            logger.error("incrementRowCount-> Exception: ", e);
+            throw new HBaseAdapterException("incrementRowCount", e);
+        }
+    }
+
+    public static void setRowCount(String tableName, long delta) throws HBaseAdapterException {
+        try {
+            client.setRowCount(tableName, delta);
+        } catch (Exception e) {
+            logger.error("setRowCount-> Exception: ", e);
+            throw new HBaseAdapterException("setRowCount", e);
+        }
+    }
+
+    public static void getRowCount(String tableName, long delta) throws HBaseAdapterException {
+        try {
+            client.getRowCount(tableName);
+        } catch (Exception e) {
+            logger.error("getRowCount-> Exception: ", e);
+            throw new HBaseAdapterException("getRowCount", e);
+        }
+    }
 }
