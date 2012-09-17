@@ -97,26 +97,6 @@ public class BulkLoader {
         }
     }
 
-    private static boolean run(String inputPath, String outputPath, Configuration conf, HTable table) throws Exception {
-        Job job = new Job(conf, "Import from file " + inputPath + " into table " + conf.get("hb_table"));
-
-        job.setJarByClass(BulkLoader.class);
-        FileInputFormat.setInputPaths(job, new Path(inputPath));
-        job.setInputFormatClass(TextInputFormat.class);
-
-        job.setMapperClass(BulkLoaderMapper.class);
-        job.setReducerClass(PutSortReducer.class);
-
-        job.setMapOutputKeyClass(ImmutableBytesWritable.class);
-        job.setMapOutputValueClass(Put.class);
-
-        FileOutputFormat.setOutputPath(job, new Path(outputPath));
-
-        HFileOutputFormat.configureIncrementalLoad(job, table);
-
-        return job.waitForCompletion(true);
-    }
-
     public static void main(String[] args) throws Exception {
         // Check for the correct number of arguments supplied
         if (args.length != 3) {
@@ -146,9 +126,28 @@ public class BulkLoader {
 
         HTable table = new HTable(conf, conf.get("hb_table"));
 
-        if (run(inputPath, outputPath, conf, table)) {
+        Job job = new Job(conf, "Import from file " + inputPath + " into table " + conf.get("hb_table"));
+
+        job.setJarByClass(BulkLoader.class);
+        FileInputFormat.setInputPaths(job, new Path(inputPath));
+        job.setInputFormatClass(TextInputFormat.class);
+
+        job.setMapperClass(BulkLoaderMapper.class);
+        job.setMapOutputKeyClass(ImmutableBytesWritable.class);
+        job.setMapOutputValueClass(Put.class);
+
+        job.setReducerClass(PutSortReducer.class);
+        FileOutputFormat.setOutputPath(job, new Path(outputPath));
+
+        HFileOutputFormat.configureIncrementalLoad(job, table);
+
+        if(job.waitForCompletion(true)) {
             LoadIncrementalHFiles fileLoader = new LoadIncrementalHFiles(conf);
             fileLoader.doBulkLoad(new Path(outputPath), table);
+
+            long count = job.getCounters().findCounter(Counters.ROWS).getValue();
+            HBaseClient client = new HBaseClient(conf.get("hb_table"), conf.get("zk_quorum"));
+            client.incrementRowCount(conf.get("sql_table_name"), count);
         }
 
         // Delete temporary output folder after completion
