@@ -321,11 +321,17 @@ public class HBaseClient {
         deleteDataRows(tableId);
         deleteColumnInfoRows(info);
         deleteColumns(tableId);
+        deleteTableInfoRows(tableId);
         deleteTableFromRoot(tableName);
 
         logger.info("Table " + tableName + " is no more!");
 
         return true;
+    }
+
+    private int deleteTableInfoRows(long tableId) throws IOException {
+        byte [] prefix = ByteBuffer.allocate(9).put(RowType.TABLE_INFO.getValue()).putLong(tableId).array();
+        return deleteRowsWithPrefix(prefix);
     }
 
     public int deleteAllRows(String tableName) throws IOException {
