@@ -210,6 +210,7 @@ class CloudHandler : public handler
     int rnd_end();
     void start_bulk_insert(ha_rows rows);
     int end_bulk_insert();
+    ha_rows records_in_range(uint inx, key_range *min_key, key_range *max_key);
 };
 
 #endif

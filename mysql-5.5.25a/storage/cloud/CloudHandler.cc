@@ -522,6 +522,11 @@ int CloudHandler::free_share(CloudShare *share)
   DBUG_RETURN(result_code);
 }
 
+ha_rows CloudHandler::records_in_range(uint inx, key_range *min_key, key_range *max_key)
+{
+  return stats.records;
+}
+
 int CloudHandler::info(uint)
 {
   DBUG_ENTER("CloudHandler::info");
@@ -976,11 +981,11 @@ void CloudHandler::bytes_to_long(const uchar* buff, unsigned int buff_length, co
 {
   if(is_signed && buff[buff_length - 1] >= (uchar) 0x80)
   {
-    memset(long_buff, 0xFF, buff_length);
+    memset(long_buff, 0xFF, sizeof(long));
   }
   else
   {
-    memset(long_buff, 0x00, buff_length);
+    memset(long_buff, 0x00, sizeof(long));
   }
 
   memcpy(long_buff, buff, buff_length);
