@@ -50,11 +50,11 @@ void CloudHandler::destroy_record_buffer(record_buffer *r)
   DBUG_VOID_RETURN;
 }
 
-int CloudHandler::open(const char *name, int mode, uint test_if_locked)
+int CloudHandler::open(const char *path, int mode, uint test_if_locked)
 {
   DBUG_ENTER("CloudHandler::open");
 
-  if (!(share = get_share(name, table)))
+  if (!(share = get_share(path, table)))
   {
     DBUG_RETURN(1);
   }
@@ -130,7 +130,7 @@ int CloudHandler::end_bulk_delete()
 
   jclass adapter_class = this->adapter();
   jmethodID update_count_method = this->env->GetStaticMethodID(adapter_class, "incrementRowCount", "(Ljava/lang/String;J)V");
-  jstring table_name = string_to_java_string(this->table->alias);
+  jstring table_name = string_to_java_string(this->table->s->table_name.str);
   this->env->CallStaticVoidMethod(adapter_class, update_count_method, table_name, (jlong)this->rows_deleted);
   this->rows_deleted = 0;
   detach_thread();
@@ -144,13 +144,13 @@ int CloudHandler::delete_all_rows()
 
   attach_thread();
 
-  jstring tableName = string_to_java_string(this->table->alias);
+  jstring tableName = string_to_java_string(this->table->s->table_name.str);
   jclass adapter_class = this->adapter();
   jmethodID delete_rows_method = this->env->GetStaticMethodID(adapter_class, "deleteAllRows", "(Ljava/lang/String;)I");
 
   int count = this->env->CallStaticIntMethod(adapter_class, delete_rows_method, tableName);
   jmethodID set_count_method = this->env->GetStaticMethodID(adapter_class, "setRowCount", "(Ljava/lang/String;J)V");
-  jstring table_name = string_to_java_string(this->table->alias);
+  jstring table_name = string_to_java_string(this->table->s->table_name.str);
   this->env->CallStaticVoidMethod(adapter_class, set_count_method, table_name, (jlong)0);
   this->flush_writes();
 
@@ -166,30 +166,27 @@ int CloudHandler::truncate()
   DBUG_RETURN(delete_all_rows());
 }
 
-void CloudHandler::drop_table(const char *name)
+void CloudHandler::drop_table(const char *path)
 {
   close();
 
-  delete_table(name);
+  delete_table(path);
 }
 
-int CloudHandler::delete_table(const char *name)
+int CloudHandler::delete_table(const char *path)
 {
   DBUG_ENTER("CloudHandler::delete_table");
 
   attach_thread();
 
-  const char *alias = extract_table_name_from_path(name);
+  jstring table_name = string_to_java_string(extract_table_name_from_path(path));
 
-  jstring tableName = string_to_java_string(alias);
   jclass adapter_class = this->adapter();
   jmethodID drop_table_method = this->env->GetStaticMethodID(adapter_class, "dropTable", "(Ljava/lang/String;)Z");
 
   jmethodID set_count_method = this->env->GetStaticMethodID(adapter_class, "setRowCount", "(Ljava/lang/String;J)V");
-  jstring table_name = string_to_java_string(alias);
   this->env->CallStaticVoidMethod(adapter_class, set_count_method, table_name, (jlong)0);
-
-  this->env->CallStaticBooleanMethod(adapter_class, drop_table_method, tableName);
+  this->env->CallStaticBooleanMethod(adapter_class, drop_table_method, table_name);
 
   detach_thread();
 
@@ -213,17 +210,15 @@ int CloudHandler::rnd_init(bool scan)
 {
   DBUG_ENTER("CloudHandler::rnd_init");
 
-  const char* table_name = this->table->alias;
-
   attach_thread();
 
   jclass adapter_class = this->adapter();
   jmethodID start_scan_method = this->env->GetStaticMethodID(adapter_class, "startScan", "(Ljava/lang/String;Z)J");
-  jstring java_table_name = string_to_java_string(table_name);
+  jstring table_name = string_to_java_string(this->table->s->table_name.str);
 
   jboolean java_scan_boolean = scan ? JNI_TRUE : JNI_FALSE;
 
-  this->curr_scan_id = this->env->CallStaticLongMethod(adapter_class, start_scan_method, java_table_name, java_scan_boolean);
+  this->curr_scan_id = this->env->CallStaticLongMethod(adapter_class, start_scan_method, table_name, java_scan_boolean);
 
   this->performing_scan = scan;
 
@@ -449,7 +444,7 @@ int CloudHandler::end_bulk_insert()
   this->flush_writes();
   jclass adapter_class = this->adapter();
   jmethodID update_count_method = this->env->GetStaticMethodID(adapter_class, "incrementRowCount", "(Ljava/lang/String;J)V");
-  jstring table_name = string_to_java_string(this->table->alias);
+  jstring table_name = string_to_java_string(this->table->s->table_name.str);
   this->env->CallStaticVoidMethod(adapter_class, update_count_method, table_name, (jlong)this->rows_written);
   this->rows_written = 0;
 
@@ -457,7 +452,7 @@ int CloudHandler::end_bulk_insert()
   DBUG_RETURN(0);
 }
 
-int CloudHandler::create(const char *name, TABLE *table_arg,
+int CloudHandler::create(const char *path, TABLE *table_arg,
                          HA_CREATE_INFO *create_info)
 {
   DBUG_ENTER("CloudHandler::create");
@@ -474,7 +469,7 @@ int CloudHandler::create(const char *name, TABLE *table_arg,
 
   // TODO: LOOK HERE FOR THINGS MUCKED UP
 
-  const char* table_name = create_info->alias;
+  const char* table_name = extract_table_name_from_path(path);
 
   jobject columnMap = create_java_map(this->env);
   FieldMetadata metadata(this->env);
@@ -533,7 +528,7 @@ int CloudHandler::info(uint)
   attach_thread();
   jclass adapter_class = this->adapter();
   jmethodID get_count_method = this->env->GetStaticMethodID(adapter_class, "getRowCount", "(Ljava/lang/String;)J");
-  jstring table_name = string_to_java_string(this->table->alias);
+  jstring table_name = string_to_java_string(this->table->s->table_name.str);
   jlong row_count = this->env->CallStaticLongMethod(adapter_class, get_count_method, table_name);
   stats.records = row_count;
   if(stats.records < 2)
@@ -623,9 +618,9 @@ int CloudHandler::write_row_helper(uchar* buf)
 
   jclass adapter_class = this->adapter();
   jmethodID write_row_method = this->env->GetStaticMethodID(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;)Z");
-  jstring java_table_name = string_to_java_string(this->table->alias);
+  jstring table_name = string_to_java_string(this->table->s->table_name.str);
   jobject java_row_map = sql_to_java();
-  this->env->CallStaticBooleanMethod(adapter_class, write_row_method, java_table_name, java_row_map);
+  this->env->CallStaticBooleanMethod(adapter_class, write_row_method, table_name, java_row_map);
 
   DBUG_RETURN(0);
 }
@@ -765,7 +760,6 @@ int CloudHandler::index_init(uint idx, bool sorted)
 
   this->active_index = idx;
 
-  const char* table_name = this->table->alias;
   const char* column_name = this->table->s->key_info[idx].key_part->field->field_name;
   for (Field **field_ptr=table->field; *field_ptr; field_ptr++)
   {
@@ -780,10 +774,10 @@ int CloudHandler::index_init(uint idx, bool sorted)
 
   jclass adapter_class = this->adapter();
   jmethodID start_scan_method = this->env->GetStaticMethodID(adapter_class, "startIndexScan", "(Ljava/lang/String;Ljava/lang/String;)J");
-  jstring java_table_name = this->string_to_java_string(table_name);
+  jstring table_name = this->string_to_java_string(this->table->s->table_name.str);
   jstring java_column_name = this->string_to_java_string(column_name);
 
-  this->curr_scan_id = this->env->CallStaticLongMethod(adapter_class, start_scan_method, java_table_name, java_column_name);
+  this->curr_scan_id = this->env->CallStaticLongMethod(adapter_class, start_scan_method, table_name, java_column_name);
 
   DBUG_RETURN(0);
 }
