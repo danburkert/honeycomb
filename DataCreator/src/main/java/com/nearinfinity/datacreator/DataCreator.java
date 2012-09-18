@@ -56,7 +56,7 @@ public class DataCreator {
 
                 String row = StringUtils.join(dataList, ",");
 
-                context.write(new Text(row), new Text());
+                context.write(new Text(row), null);
             }
         }
 
@@ -107,10 +107,6 @@ public class DataCreator {
         Configuration conf = new Configuration();
         conf.set(DATA_TYPE_LIST, dataTypeList);
         conf.set(NUM_ROWS, numRows);
-
-        conf.set("mapreduce.textoutputformat.separator", "");
-        conf.set("mapred.textoutputformat.separator", "");
-        conf.reloadConfiguration();
 
         Job job = new Job(conf);
         job.setJarByClass(DataCreator.class);
