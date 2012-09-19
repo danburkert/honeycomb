@@ -73,7 +73,7 @@ public class DataCreator {
                     ret = faker.phoneNumber();
                     break;
                 case LONG:
-                    ret = Double.toString(random.nextLong());
+                    ret = Long.toString(random.nextLong());
                     break;
                 case DOUBLE:
                     ret = Double.toString(random.nextDouble());

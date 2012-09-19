@@ -277,39 +277,9 @@ public class HBaseClient {
             deleteList.add(new Delete(reverseKey));
         }
 
-//        //Scan the index rows
-//        byte[] indexStartKey = RowKeyFactory.buildValueIndexKey(tableId, 0L, new byte[0], uuid, ColumnType.NONE, 0);
-//        byte[] indexEndKey = RowKeyFactory.buildValueIndexKey(tableId + 1, 0L, new byte[0], uuid, ColumnType.NONE, 0);
-//        deleteList.addAll(scanAndDeleteAllUUIDs(indexStartKey, indexEndKey, uuid));
-//
-//        //Scan the reverse index rows
-//        byte[] reverseStartKey = RowKeyFactory.buildReverseIndexKey(tableId, 0L, new byte[0], ColumnType.NONE, uuid, 0);
-//        byte[] reverseEndKey = RowKeyFactory.buildReverseIndexKey(tableId+1, 0L, new byte[0], ColumnType.NONE, uuid, 0);
-//        deleteList.addAll(scanAndDeleteAllUUIDs(reverseStartKey, reverseEndKey, uuid));
-//
-//        //Scan the null index rows
-//        byte[] nullStartKey = RowKeyFactory.buildNullIndexKey(tableId, 0L, uuid);
-//        byte[] nullEndKey = RowKeyFactory.buildNullIndexKey(tableId + 1, 0L, uuid);
-//        deleteList.addAll(scanAndDeleteAllUUIDs(nullStartKey, nullEndKey, uuid));
-
         table.delete(deleteList);
 
         return true;
-    }
-
-    private List<Delete> scanAndDeleteAllUUIDs(byte[] startKey, byte[] endKey, UUID uuid) throws IOException {
-        List<Delete> deleteList = new LinkedList<Delete>();
-
-        Scan scan = ScanFactory.buildScan(startKey, endKey);
-
-        Filter uuidFilter = new UUIDFilter(uuid);
-        scan.setFilter(uuidFilter);
-
-        for (Result result : table.getScanner(scan)) {
-            deleteList.add(new Delete(result.getRow()));
-        }
-
-        return deleteList;
     }
 
     public boolean dropTable(String tableName) throws IOException {
@@ -352,7 +322,6 @@ public class HBaseClient {
     }
 
     public int deleteColumns(long tableId) throws IOException {
-        // TODO: Update this to delete column info rows when they are done
         logger.info("Deleting all columns");
         byte[] prefix = ByteBuffer.allocate(9).put(RowType.COLUMNS.getValue()).putLong(tableId).array();
         return deleteRowsWithPrefix(prefix);

@@ -467,8 +467,6 @@ int CloudHandler::create(const char *path, TABLE *table_arg,
     DBUG_RETURN(1);
   }
 
-  // TODO: LOOK HERE FOR THINGS MUCKED UP
-
   const char* table_name = extract_table_name_from_path(path);
 
   jobject columnMap = create_java_map(this->env);
