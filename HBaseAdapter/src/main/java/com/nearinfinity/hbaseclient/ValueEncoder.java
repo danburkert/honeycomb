@@ -49,8 +49,7 @@ public class ValueEncoder {
             } break;
             case STRING: {
                 /* TODO: this should already have been lower-cased in canonical value, can we remove? */
-                String stringValue = new String(value).toLowerCase();
-                encodedValue = Bytes.toBytes(stringValue);
+                encodedValue = value;
             } break;
             default:
                 encodedValue = value;
@@ -62,16 +61,8 @@ public class ValueEncoder {
         if (value == null || value.length == 0) {
             return new byte[0];
         }
-        byte[] canonicalValue;
-        switch (columnType) {
-            case STRING: {
-                String stringValue = new String(value).toLowerCase();
-                canonicalValue = Bytes.toBytes(stringValue);
-            } break;
-            default:
-                canonicalValue = value;
-        }
-        return canonicalValue;
+
+        return value;
     }
 
     public static byte[] padValueDescending(byte[] value, int padLength) {
