@@ -101,7 +101,7 @@ public class BulkLoader {
         // Check for the correct number of arguments supplied
         if (args.length != 3) {
             System.err.println("Usage: com.nearinfinity.bulkloader.BulkLoader <input path> <MySQL table name>" +
-                    " <comma seperated MySQL column names>");
+                    " <comma separated MySQL column names>");
             System.exit(-1);
         }
 

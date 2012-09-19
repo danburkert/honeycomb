@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -57,7 +58,7 @@ public class ValueParser {
             case BINARY:
             case NONE:
             default:
-                ret = val.getBytes();
+                ret = val.getBytes(Charset.forName("UTF-8"));
                 break;
         }
         return ret;
