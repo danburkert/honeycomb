@@ -50,6 +50,7 @@ class CloudHandler : public handler
     JavaVM* jvm;
     jclass hbase_adapter;
 
+    jstring table_name();
     const char* java_to_string(jstring str);
     jstring string_to_java_string(const char *string);
     jbyteArray convert_value_to_java_bytes(uchar* value, uint32 length);
