@@ -644,108 +644,19 @@ jobject CloudHandler::sql_to_java()
     Field * field = *field_ptr;
     jstring field_name = string_to_java_string(field->field_name);
 
-    memset(rec_buffer->buffer, 0, rec_buffer->length);
+    HBaseField* hb_field = new HBaseField(field);
 
-    const bool is_null = field->is_null();
-
-    if (is_null )
+    if (hb_field->is_null )
     {
       java_map_insert(java_map, field_name, NULL, this->env);
       continue;
     }
 
-    switch (field->real_type())
-    {
-    case MYSQL_TYPE_TINY:
-    case MYSQL_TYPE_SHORT:
-    case MYSQL_TYPE_LONG:
-    case MYSQL_TYPE_LONGLONG:
-    case MYSQL_TYPE_INT24:
-    case MYSQL_TYPE_YEAR:
-    case MYSQL_TYPE_ENUM:
-    {
-      long long integral_value = field->val_int();
-      if(is_little_endian())
-      {
-        integral_value = __builtin_bswap64(integral_value);
-      }
-      actualFieldSize = sizeof integral_value;
-      memcpy(rec_buffer->buffer, &integral_value, actualFieldSize);
-      break;
-    }
-    case MYSQL_TYPE_FLOAT:
-    case MYSQL_TYPE_DOUBLE:
-    {
-      double fp_value = field->val_real();
-      long long* fp_ptr;
-      if(is_little_endian())
-      {
-        fp_ptr = (long long*)&fp_value;
-        *fp_ptr = __builtin_bswap64(*fp_ptr);
-      }
-      actualFieldSize = sizeof fp_value;
-      memcpy(rec_buffer->buffer, fp_ptr, actualFieldSize);
-      break;
-    }
-    case MYSQL_TYPE_DECIMAL:
-    case MYSQL_TYPE_NEWDECIMAL:
-      actualFieldSize = field->key_length();
-      memcpy(rec_buffer->buffer, field->ptr, actualFieldSize);
-      break;
-    case MYSQL_TYPE_DATE:
-    case MYSQL_TYPE_NEWDATE:
-    case MYSQL_TYPE_TIME:
-    case MYSQL_TYPE_DATETIME:
-    case MYSQL_TYPE_TIMESTAMP:
-    {
-      MYSQL_TIME mysql_time;
-      char temporal_value[MAX_DATE_STRING_REP_LENGTH];
-      field->get_time(&mysql_time);
-      my_TIME_to_str(&mysql_time, temporal_value);
-      actualFieldSize = strlen(temporal_value);
-      memcpy(rec_buffer->buffer, temporal_value, actualFieldSize);
-      break;
-    }
-    case MYSQL_TYPE_STRING:
-    {
-      char string_value_buff[1024];  // TODO: This is going to cause a buffer overflow for large blob/string types
-      String string_value(string_value_buff, sizeof(string_value_buff), &my_charset_bin);
-      field->val_str(&string_value);
-      actualFieldSize = field->field_length;
-      memcpy(rec_buffer->buffer, string_value.ptr(), actualFieldSize);
-      break;
-    }
-    case MYSQL_TYPE_VARCHAR:
-    case MYSQL_TYPE_VAR_STRING:
-    case MYSQL_TYPE_BLOB:
-    case MYSQL_TYPE_TINY_BLOB:
-    case MYSQL_TYPE_MEDIUM_BLOB:
-    case MYSQL_TYPE_LONG_BLOB:
-    {
-      char string_value_buff[1024];  // TODO: This is going to cause a buffer overflow for large blob/string types
-      String string_value(string_value_buff, sizeof(string_value_buff), &my_charset_bin);
-      field->val_str(&string_value);
-      actualFieldSize = string_value.length();
-      memcpy(rec_buffer->buffer, string_value.ptr(), actualFieldSize);
-      break;
-    }
-    case MYSQL_TYPE_NULL:
-    case MYSQL_TYPE_BIT:
-    case MYSQL_TYPE_SET:
-    case MYSQL_TYPE_GEOMETRY:
-    default:
-      actualFieldSize = field->field_length;
-      memcpy(rec_buffer->buffer, field->ptr, field->field_length);
-      break;
-    }
-
-    jbyteArray java_bytes = convert_value_to_java_bytes(rec_buffer->buffer, actualFieldSize);
-
+    jbyteArray java_bytes = convert_value_to_java_bytes(hb_field->byte_val, hb_field->val_len);
     java_map_insert(java_map, field_name, java_bytes, this->env);
   }
 
   dbug_tmp_restore_column_map(table->read_set, old_map);
-
   return java_map;
 }
 
@@ -840,9 +751,9 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
 
   switch(index_field_type)
   {
-  case MYSQL_TYPE_LONG:
-  case MYSQL_TYPE_SHORT:
   case MYSQL_TYPE_TINY:
+  case MYSQL_TYPE_SHORT:
+  case MYSQL_TYPE_LONG:
   case MYSQL_TYPE_LONGLONG:
   case MYSQL_TYPE_INT24:
   case MYSQL_TYPE_ENUM:

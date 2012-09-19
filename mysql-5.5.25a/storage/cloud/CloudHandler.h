@@ -2,13 +2,13 @@
 #define CLOUD_HANDLER_H
 
 #ifdef USE_PRAGMA_INTERFACE
-#pragma interface			/* gcc class implementation */
+#pragma Interface               /* gcc class implementation */
 #endif
 
-#include "my_global.h"                   /* ulonglong */
-#include "thr_lock.h"                    /* THR_LOCK, THR_LOCK_DATA */
-#include "handler.h"                     /* handler */
-#include "my_base.h"                     /* ha_rows */
+#include "my_global.h"          /* ulonglong */
+#include "thr_lock.h"           /* THR_LOCK, THR_LOCK_DATA */
+#include "handler.h"            /* handler */
+#include "my_base.h"            /* ha_rows */
 #include <jni.h>
 #include <string.h>
 
@@ -18,6 +18,7 @@
 #include "Util.h"
 #include "Logging.h"
 #include "Java.h"
+#include "HBaseField.h"
 
 typedef struct st_record_buffer {
   uchar *buffer;
