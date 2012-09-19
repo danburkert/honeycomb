@@ -140,7 +140,7 @@ public:
       case MYSQL_TYPE_STRING:
       case MYSQL_TYPE_VARCHAR:
         {
-          longlong max_char_length = (longlong)field->field_length / field->charset()->mbmaxlen;
+          long long max_char_length = (long long) field->field_length;
 
           this->env->CallVoidMethod(metadata_object, set_max_length_method, (jint)max_char_length);
 
