@@ -54,19 +54,12 @@ public class PutListFactory {
                 // Add data column to put
                 dataRow.add(Constants.NIC, Bytes.toBytes(columnId), value);
 
-                /**
-                 * We need to get the canonical value for STRING types. The primary index will store all values as
-                 * canonical values. Then, when looking up in the primary index, the row key will contain the matching
-                 * canonical value. The unireg and data rows store the actual value.
-                 */
-                byte[] canonicalValue = ValueEncoder.canonicalValue(value, columnType);
-
                 // Build value index key
-                byte[] indexRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, canonicalValue, rowId, columnType, padLength);
+                byte[] indexRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, rowId, columnType, padLength);
                 putList.add(new Put(indexRow).add(Constants.NIC, Constants.VALUE_MAP, rowByteArray));
 
                 // Build reverse index key
-                byte[] reverseIndexRow = RowKeyFactory.buildReverseIndexKey(tableId, columnId, canonicalValue, columnType, rowId, padLength);
+                byte[] reverseIndexRow = RowKeyFactory.buildReverseIndexKey(tableId, columnId, value, columnType, rowId, padLength);
                 putList.add(new Put(reverseIndexRow).add(Constants.NIC, Constants.VALUE_MAP, rowByteArray));
             }
         }
