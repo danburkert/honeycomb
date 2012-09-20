@@ -6,16 +6,11 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jedstrom
- * Date: 8/20/12
- * Time: 3:46 PM
- * To change this template use File | Settings | File Templates.
- */
 public class ResultParser {
     public static UUID parseUUID(Result result) {
         byte[] rowKey = result.getRow();
@@ -24,10 +19,6 @@ public class ResultParser {
     }
 
     public static byte[] parseUnireg(Result result) {
-        return result.getValue(Constants.NIC, Constants.VALUE_MAP);
-    }
-
-    public static byte[] parseValue(Result result) {
         return result.getValue(Constants.NIC, Constants.VALUE_MAP);
     }
 
@@ -44,5 +35,25 @@ public class ResultParser {
         }
 
         return rowMap;
+    }
+
+    public static Map<String, byte[]> parseDataRow(Result result, TableInfo info) {
+        //Get columns returned from Result
+        Map<String, byte[]> columns = new HashMap<String, byte[]>();
+        Map<byte[], byte[]> returnedColumns = result.getNoVersionMap().get(Constants.NIC);
+
+        if (returnedColumns.size() == 1 && returnedColumns.containsKey(new byte[0])) {
+            // The row of all nulls special case strikes again
+            return columns;
+        }
+
+        //Loop through columns, add to returned map
+        for (byte[] qualifier : returnedColumns.keySet()) {
+            long columnId = ByteBuffer.wrap(qualifier).getLong();
+            String columnName = info.getColumnNameById(columnId);
+            columns.put(columnName, returnedColumns.get(qualifier));
+        }
+
+        return columns;
     }
 }

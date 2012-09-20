@@ -1,17 +1,8 @@
 package com.nearinfinity.hbaseclient;
 
-import org.apache.hadoop.hbase.util.Bytes;
-
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jedstrom
- * Date: 8/20/12
- * Time: 4:03 PM
- * To change this template use File | Settings | File Templates.
- */
 public class ValueEncoder {
     private static final byte BYTE_MASK = (byte) 0x000000ff;
 
@@ -26,8 +17,8 @@ public class ValueEncoder {
     public static byte[] reverseValue(byte[] value) {
         ByteBuffer buffer = ByteBuffer.allocate(value.length);
 
-        for (int i = 0; i < value.length; i++) {
-            buffer.put((byte) (BYTE_MASK ^ value[i]));
+        for (byte aValue : value) {
+            buffer.put((byte) (BYTE_MASK ^ aValue));
         }
 
         return buffer.array();

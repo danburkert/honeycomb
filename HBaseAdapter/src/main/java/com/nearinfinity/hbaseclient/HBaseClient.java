@@ -1,11 +1,9 @@
 package com.nearinfinity.hbaseclient;
 
-import com.nearinfinity.hbaseclient.filter.UUIDFilter;
 import com.nearinfinity.hbaseclient.strategy.ScanStrategy;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
@@ -88,17 +86,11 @@ public class HBaseClient {
     }
 
     private void createTable(String tableName, List<Put> puts) throws IOException {
-        //Get and increment the table counter (assumes it exists)
         long tableId = table.incrementColumnValue(RowKeyFactory.ROOT, Constants.NIC, new byte[0], 1);
-
-        //Add a row with the table name
-        puts.add(new Put(RowKeyFactory.ROOT).add(Constants.NIC, tableName.getBytes(), Bytes.toBytes(tableId)));
-
-        // Add table_metadata column
-        puts.add(new Put(RowKeyFactory.buildTableInfoKey(tableId)).add(Constants.NIC, Constants.ROW_COUNT, Bytes.toBytes(0l)));
-
-        //Cache the table
         tableCache.put(tableName, new TableInfo(tableName, tableId));
+
+        puts.add(new Put(RowKeyFactory.ROOT).add(Constants.NIC, tableName.getBytes(), Bytes.toBytes(tableId)));
+        puts.add(new Put(RowKeyFactory.buildTableInfoKey(tableId)).add(Constants.NIC, Constants.ROW_COUNT, Bytes.toBytes(0l)));
     }
 
     private void addColumns(String tableName, Map<String, ColumnMetadata> columns, List<Put> puts) throws IOException {
@@ -209,28 +201,6 @@ public class HBaseClient {
         return new ColumnMetadata(jsonBytes);
     }
 
-    public Map<String, byte[]> parseDataRow(Result result, String tableName) throws IOException {
-        TableInfo info = getTableInfo(tableName);
-
-        //Get columns returned from Result
-        Map<String, byte[]> columns = new HashMap<String, byte[]>();
-        Map<byte[], byte[]> returnedColumns = result.getNoVersionMap().get(Constants.NIC);
-
-        if (returnedColumns.size() == 1 && returnedColumns.containsKey(new byte[0])) {
-            // The row of all nulls special case strikes again
-            return columns;
-        }
-
-        //Loop through columns, add to returned map
-        for (byte[] qualifier : returnedColumns.keySet()) {
-            long columnId = ByteBuffer.wrap(qualifier).getLong();
-            String columnName = info.getColumnNameById(columnId);
-            columns.put(columnName, returnedColumns.get(qualifier));
-        }
-
-        return columns;
-    }
-
     public boolean deleteRow(String tableName, UUID uuid) throws IOException {
         if (uuid == null) {
             return false;
@@ -248,34 +218,8 @@ public class HBaseClient {
         Get get = new Get(dataRowKey);
         Result result = table.get(get);
 
-        Map<String, byte[]> valueMap = parseDataRow(result, tableName);
-
-        //Loop through ALL columns to determine which should be NULL
-        for (String columnName : info.getColumnNames()) {
-            long columnId = info.getColumnIdByName(columnName);
-            byte[] value = valueMap.get(columnName);
-            ColumnMetadata metadata = info.getColumnMetadata(columnName);
-            ColumnType columnType = metadata.getType();
-
-            if (value == null) {
-                byte[] nullIndexKey = RowKeyFactory.buildNullIndexKey(tableId, columnId, uuid);
-                deleteList.add(new Delete(nullIndexKey));
-                continue;
-            }
-
-            //Determine pad length
-            int padLength = 0;
-            if (columnType == ColumnType.STRING || columnType == ColumnType.BINARY) {
-                long maxLength = metadata.getMaxLength();
-                padLength = (int) maxLength - value.length;
-            }
-
-            byte[] indexKey = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, uuid, columnType, padLength);
-            byte[] reverseKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId, value, columnType, uuid, padLength);
-
-            deleteList.add(new Delete(indexKey));
-            deleteList.add(new Delete(reverseKey));
-        }
+        Map<String, byte[]> valueMap = ResultParser.parseDataRow(result, info);
+        deleteList.addAll(DeleteListFactory.createDeleteList(uuid, info, valueMap));
 
         table.delete(deleteList);
 
@@ -300,7 +244,7 @@ public class HBaseClient {
     }
 
     private int deleteTableInfoRows(long tableId) throws IOException {
-        byte [] prefix = ByteBuffer.allocate(9).put(RowType.TABLE_INFO.getValue()).putLong(tableId).array();
+        byte[] prefix = ByteBuffer.allocate(9).put(RowType.TABLE_INFO.getValue()).putLong(tableId).array();
         return deleteRowsWithPrefix(prefix);
     }
 
