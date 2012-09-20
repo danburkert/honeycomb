@@ -22,13 +22,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jedstrom
- * Date: 8/1/12
- * Time: 9:46 AM
- * To change this template use File | Settings | File Templates.
- */
 public class HBaseAdapter {
     private static AtomicLong connectionCounter;
     private static Map<Long, Connection> clientPool;

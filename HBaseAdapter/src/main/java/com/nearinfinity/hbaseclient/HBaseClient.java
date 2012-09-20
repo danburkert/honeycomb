@@ -124,13 +124,10 @@ public class HBaseClient {
         //Batch put list
         List<Put> putList = new LinkedList<Put>();
 
-        //Create table and add to put list
         createTable(tableName, putList);
 
-        //Create columns and add to put list
         addColumns(tableName, columns, putList);
 
-        //Perform all puts
         this.table.put(putList);
 
         this.table.flushCommits();
@@ -206,7 +203,7 @@ public class HBaseClient {
         Get get = new Get(dataRowKey);
         Result result = table.get(get);
 
-        List<Delete> deleteList = DeleteListFactory.createDeleteList(uuid, info, result, dataRowKey);
+        List<Delete> deleteList = DeleteListFactory.createDeleteRowList(uuid, info, result, dataRowKey);
 
         table.delete(deleteList);
 
@@ -236,9 +233,8 @@ public class HBaseClient {
         logger.info("Deleting all rows from table " + tableName + " with tableId " + tableId);
 
         deleteIndexRows(tableId);
-        int rowsAffected = deleteDataRows(tableId);
 
-        return rowsAffected;
+        return deleteDataRows(tableId);
     }
 
     private int deleteTableInfoRows(long tableId) throws IOException {
