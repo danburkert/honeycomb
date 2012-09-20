@@ -1,12 +1,5 @@
 package com.nearinfinity.hbaseclient;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jedstrom
- * Date: 7/25/12
- * Time: 2:07 PM
- * To change this template use File | Settings | File Templates.
- */
 public enum RowType {
     TABLES(0),
     COLUMNS(1),

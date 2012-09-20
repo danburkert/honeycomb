@@ -1,17 +1,8 @@
 package com.nearinfinity.hbaseclient;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jedstrom
- * Date: 7/25/12
- * Time: 2:08 PM
- * To change this template use File | Settings | File Templates.
- */
 public class TableInfo {
     private long id;
 

@@ -3,6 +3,7 @@ package com.nearinfinity.mysqlengine.jni;
 import com.nearinfinity.hbaseclient.ColumnMetadata;
 import com.nearinfinity.hbaseclient.HBaseClient;
 import com.nearinfinity.hbaseclient.ResultParser;
+import com.nearinfinity.hbaseclient.TableInfo;
 import com.nearinfinity.hbaseclient.strategy.*;
 import com.nearinfinity.mysqlengine.Connection;
 import com.nearinfinity.mysqlengine.scanner.HBaseResultScanner;
@@ -21,13 +22,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jedstrom
- * Date: 8/1/12
- * Time: 9:46 AM
- * To change this template use File | Settings | File Templates.
- */
 public class HBaseAdapter {
     private static AtomicLong connectionCounter;
     private static Map<Long, Connection> clientPool;
@@ -125,7 +119,8 @@ public class HBaseAdapter {
             }
 
             //Set values and UUID
-            Map<String, byte[]> values = client.parseDataRow(result, conn.getTableName());
+            TableInfo info = client.getTableInfo(conn.getTableName());
+            Map<String, byte[]> values = ResultParser.parseDataRow(result, info);
             UUID uuid = ResultParser.parseUUID(result);
             row.parse(values, uuid);
         } catch (Exception e) {
@@ -224,7 +219,8 @@ public class HBaseAdapter {
 
             conn.getScanner().setLastResult(result);
 
-            Map<String, byte[]> values = client.parseDataRow(result, conn.getTableName());
+            TableInfo info = client.getTableInfo(conn.getTableName());
+            Map<String, byte[]> values = ResultParser.parseDataRow(result, info);
             row.setUUID(rowUuid);
             row.setRowMap(values);
         } catch (Exception e) {

@@ -1,22 +1,11 @@
 package com.nearinfinity.mysqlengine.jni;
 
-import org.apache.log4j.Logger;
-
 import java.nio.ByteBuffer;
-import java.util.TreeMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jedstrom
- * Date: 8/1/12
- * Time: 10:32 AM
- * To change this template use File | Settings | File Templates.
- */
 public class Row {
-    private static final Logger logger = Logger.getLogger(Row.class);
-
     private Map<String, byte[]> rowMap;
 
     private byte[] uuid;
