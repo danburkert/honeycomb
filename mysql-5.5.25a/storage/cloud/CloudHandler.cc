@@ -714,6 +714,7 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
   uchar* key_copy;
   jobject java_find_flag;
 
+
   if (find_flag == HA_READ_PREFIX_LAST_OR_PREV)
   {
     find_flag = HA_READ_KEY_OR_PREV;
@@ -746,6 +747,21 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
     key++;
     key_len--;
   }
+
+  if (this->index_field->real_type() == MYSQL_TYPE_VARCHAR)
+  {
+    key += 2;
+    key_len -= 2;
+  }
+
+
+  uchar* ptr_copy = new uchar[key_len];
+  memcpy(ptr_copy, this->index_field->ptr, key_len);
+  memcpy(this->index_field->ptr, key, key_len);
+  this->index_field->set_notnull();
+  HBaseField* hb_field = new HBaseField(this->index_field);
+  memcpy(this->index_field->ptr, ptr_copy, key_len);
+  delete[] ptr_copy;
 
   int index_field_type = this->index_field->real_type();
 
@@ -830,98 +846,98 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
       break;
     case MYSQL_TYPE_TIMESTAMP:
       extract_mysql_timestamp((long) uint4korr(key), &mysql_time, table->in_use);
-      break;
-    case MYSQL_TYPE_TIME:
-      extract_mysql_time((long) uint3korr(key), &mysql_time);
-      break;
-    case MYSQL_TYPE_DATETIME:
-      extract_mysql_datetime((ulonglong) uint8korr(key), &mysql_time);
+        break;
+      case MYSQL_TYPE_TIME:
+        extract_mysql_time((long) uint3korr(key), &mysql_time);
+        break;
+      case MYSQL_TYPE_DATETIME:
+        extract_mysql_datetime((ulonglong) uint8korr(key), &mysql_time);
+        break;
+      }
+
+      char timeString[MAX_DATE_STRING_REP_LENGTH];
+      my_TIME_to_str(&mysql_time, timeString);
+      int length = strlen(timeString);
+      key_copy = new uchar[length];
+      memcpy(key_copy, timeString, length);
+      key_len = length;
+    }
+    break;
+    case MYSQL_TYPE_VARCHAR:
+    {
+      /**
+       * VARCHARs are prefixed with two bytes that represent the actual length of the value.
+       * So we need to read the length into actual_length, then copy those bits to key_copy.
+       * Thank you, MySQL...
+       */
+      uint16_t *short_len_ptr = (uint16_t *)key;
+      key_len = (uint)(*short_len_ptr);
+      key += 2;
+      key_copy = new uchar[key_len];
+      memcpy(key_copy, key, key_len);
+    }
+    break;
+    default:
+      key_copy = new uchar[key_len];
+      memcpy(key_copy, key, key_len);
       break;
     }
 
-    char timeString[MAX_DATE_STRING_REP_LENGTH];
-    my_TIME_to_str(&mysql_time, timeString);
-    int length = strlen(timeString);
-    key_copy = new uchar[length];
-    memcpy(key_copy, timeString, length);
-    key_len = length;
+    jbyteArray java_key = this->env->NewByteArray(hb_field->val_len);
+    this->env->SetByteArrayRegion(java_key, 0, hb_field->val_len, (jbyte*)hb_field->byte_val);
+    delete[] key_copy;
+    jobject index_row = this->env->CallStaticObjectMethod(adapter_class, index_read_method, java_scan_id, java_key, java_find_flag);
+
+    if(read_index_row(index_row, buf) == HA_ERR_END_OF_FILE)
+    {
+      DBUG_RETURN(HA_ERR_END_OF_FILE);
+    }
+
+    DBUG_RETURN(0);
   }
-  break;
-  case MYSQL_TYPE_VARCHAR:
+
+  // Convert an integral type of count bytes to a little endian long
+  // Convert a buffer of length buff_length into an equivalent long long in long_buff
+  void CloudHandler::bytes_to_long(const uchar* buff, unsigned int buff_length, const bool is_signed, uchar* long_buff)
   {
-    /**
-     * VARCHARs are prefixed with two bytes that represent the actual length of the value.
-     * So we need to read the length into actual_length, then copy those bits to key_copy.
-     * Thank you, MySQL...
-     */
-    uint16_t *short_len_ptr = (uint16_t *)key;
-    key_len = (uint)(*short_len_ptr);
-    key += 2;
-    key_copy = new uchar[key_len];
-    memcpy(key_copy, key, key_len);
-  }
-  break;
-  default:
-    key_copy = new uchar[key_len];
-    memcpy(key_copy, key, key_len);
-    break;
+    if(is_signed && buff[buff_length - 1] >= (uchar) 0x80)
+    {
+      memset(long_buff, 0xFF, sizeof(long));
+    }
+    else
+    {
+      memset(long_buff, 0x00, sizeof(long));
+    }
+
+    memcpy(long_buff, buff, buff_length);
   }
 
-  jbyteArray java_key = this->env->NewByteArray(key_len);
-  this->env->SetByteArrayRegion(java_key, 0, key_len, (jbyte*)key_copy);
-  delete[] key_copy;
-  jobject index_row = this->env->CallStaticObjectMethod(adapter_class, index_read_method, java_scan_id, java_key, java_find_flag);
-
-  if(read_index_row(index_row, buf) == HA_ERR_END_OF_FILE)
+  void CloudHandler::store_uuid_ref(jobject index_row, jmethodID get_uuid_method)
   {
-    DBUG_RETURN(HA_ERR_END_OF_FILE);
+    jbyteArray uuid = (jbyteArray) this->env->CallObjectMethod(index_row, get_uuid_method);
+    uchar* pos = (uchar*) this->env->GetByteArrayElements(uuid, JNI_FALSE);
+    memcpy(this->ref, pos, 16);
+    this->env->ReleaseByteArrayElements(uuid, (jbyte*)pos, 0);
   }
 
-  DBUG_RETURN(0);
-}
-
-// Convert an integral type of count bytes to a little endian long
-// Convert a buffer of length buff_length into an equivalent long long in long_buff
-void CloudHandler::bytes_to_long(const uchar* buff, unsigned int buff_length, const bool is_signed, uchar* long_buff)
-{
-  if(is_signed && buff[buff_length - 1] >= (uchar) 0x80)
+  int CloudHandler::index_next(uchar *buf)
   {
-    memset(long_buff, 0xFF, sizeof(long));
-  }
-  else
-  {
-    memset(long_buff, 0x00, sizeof(long));
-  }
+    int rc = 0;
 
-  memcpy(long_buff, buff, buff_length);
-}
+    DBUG_ENTER("CloudHandler::index_next");
 
-void CloudHandler::store_uuid_ref(jobject index_row, jmethodID get_uuid_method)
-{
-  jbyteArray uuid = (jbyteArray) this->env->CallObjectMethod(index_row, get_uuid_method);
-  uchar* pos = (uchar*) this->env->GetByteArrayElements(uuid, JNI_FALSE);
-  memcpy(this->ref, pos, 16);
-  this->env->ReleaseByteArrayElements(uuid, (jbyte*)pos, 0);
-}
+    MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, TRUE);
 
-int CloudHandler::index_next(uchar *buf)
-{
-  int rc = 0;
+    jobject index_row = get_next_index_row();
 
-  DBUG_ENTER("CloudHandler::index_next");
+    if(read_index_row(index_row, buf) == HA_ERR_END_OF_FILE)
+    {
+      DBUG_RETURN(HA_ERR_END_OF_FILE);
+    }
 
-  MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, TRUE);
+    MYSQL_READ_ROW_DONE(rc);
 
-  jobject index_row = get_next_index_row();
-
-  if(read_index_row(index_row, buf) == HA_ERR_END_OF_FILE)
-  {
-    DBUG_RETURN(HA_ERR_END_OF_FILE);
-  }
-
-  MYSQL_READ_ROW_DONE(rc);
-
-  DBUG_RETURN(rc);
+    DBUG_RETURN(rc);
 }
 
 int CloudHandler::index_prev(uchar *buf)
