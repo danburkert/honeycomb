@@ -2,13 +2,13 @@
 #define CLOUD_HANDLER_H
 
 #ifdef USE_PRAGMA_INTERFACE
-#pragma interface			/* gcc class implementation */
+#pragma Interface               /* gcc class implementation */
 #endif
 
-#include "my_global.h"                   /* ulonglong */
-#include "thr_lock.h"                    /* THR_LOCK, THR_LOCK_DATA */
-#include "handler.h"                     /* handler */
-#include "my_base.h"                     /* ha_rows */
+#include "my_global.h"          /* ulonglong */
+#include "thr_lock.h"           /* THR_LOCK, THR_LOCK_DATA */
+#include "handler.h"            /* handler */
+#include "my_base.h"            /* ha_rows */
 #include <jni.h>
 #include <string.h>
 
@@ -18,6 +18,7 @@
 #include "Util.h"
 #include "Logging.h"
 #include "Java.h"
+#include "HBaseField.h"
 
 typedef struct st_record_buffer {
   uchar *buffer;
@@ -39,7 +40,7 @@ class CloudHandler : public handler
     void destroy_record_buffer(record_buffer *r);
     CloudShare *get_share(const char *table_name, TABLE *table);
     uint32 max_row_length();
-    Field *index_field;
+    HBaseField* active_index_hb_field;
 
     long long curr_scan_id;
     ulonglong rows_written;
