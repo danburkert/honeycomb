@@ -3,13 +3,6 @@ package com.nearinfinity.hbaseclient;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jedstrom
- * Date: 8/9/12
- * Time: 9:43 AM
- * To change this template use File | Settings | File Templates.
- */
 public class RowKeyFactory {
     public static final byte[] ROOT = ByteBuffer.allocate(7)
                                             .put(RowType.TABLES.getValue())

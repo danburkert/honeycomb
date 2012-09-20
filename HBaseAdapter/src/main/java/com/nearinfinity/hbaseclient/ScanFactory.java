@@ -2,13 +2,6 @@ package com.nearinfinity.hbaseclient;
 
 import org.apache.hadoop.hbase.client.Scan;
 
-/**
- * Created by IntelliJ IDEA.
- * User: showell
- * Date: 8/16/12
- * Time: 3:01 PM
- * To change this template use File | Settings | File Templates.
- */
 public class ScanFactory {
     private static int cacheAmount = 5000;
 

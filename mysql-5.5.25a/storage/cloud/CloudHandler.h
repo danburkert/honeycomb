@@ -51,6 +51,7 @@ class CloudHandler : public handler
     JavaVM* jvm;
     jclass hbase_adapter;
 
+    jstring table_name();
     const char* java_to_string(jstring str);
     jstring string_to_java_string(const char *string);
     jbyteArray convert_value_to_java_bytes(uchar* value, uint32 length);
@@ -154,7 +155,8 @@ class CloudHandler : public handler
         HA_REC_NOT_IN_SEQ |
         HA_NO_TRANSACTIONS |
         HA_STATS_RECORDS_IS_EXACT | 
-        HA_NULL_IN_KEY; // Nulls in indexed columns are allowed
+        HA_NULL_IN_KEY |
+        HA_NO_AUTO_INCREMENT; // Nulls in indexed columns are allowed
     }
 
     ulong index_flags(uint inx, uint part, bool all_parts) const

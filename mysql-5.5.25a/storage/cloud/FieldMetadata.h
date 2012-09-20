@@ -54,7 +54,6 @@ private:
 
   jbyteArray string_to_java_byte_array(const char *string)
   {
-    //TODO: Need to free this? - jre
     jstring java_string = this->env->NewStringUTF(string);
     jclass string_class = this->env->FindClass("java/lang/String");
     jmethodID get_bytes_method = this->env->GetMethodID(string_class, "getBytes", "()[B");
@@ -65,7 +64,6 @@ private:
   jbyteArray long_to_java_byte_array(longlong val)
   {
     uint array_len = sizeof(longlong);
-    //TODO: Need to free this? - jre
     jbyteArray array = this->env->NewByteArray(array_len);
     this->env->SetByteArrayRegion(array, 0, array_len, (jbyte*)&val);
 

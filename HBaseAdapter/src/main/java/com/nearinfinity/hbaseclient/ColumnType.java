@@ -2,13 +2,6 @@ package com.nearinfinity.hbaseclient;
 
 import java.util.Arrays;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jedstrom
- * Date: 9/3/12
- * Time: 12:08 PM
- * To change this template use File | Settings | File Templates.
- */
 public enum ColumnType {
     NONE("None".getBytes()),
     STRING("String".getBytes()),

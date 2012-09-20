@@ -3,13 +3,6 @@ package com.nearinfinity.mysqlengine.jni;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jedstrom
- * Date: 8/1/12
- * Time: 9:53 AM
- * To change this template use File | Settings | File Templates.
- */
 public class HBaseAdapterException extends Exception {
     private String message;
     private Throwable exception;
