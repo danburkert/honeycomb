@@ -22,6 +22,7 @@ public class ResultParser {
         return result.getValue(Constants.NIC, Constants.VALUE_MAP);
     }
 
+    @SuppressWarnings("unchecked")
     public static TreeMap<String, byte[]> parseRowMap(Result result) {
         byte[] mapBytes = parseUnireg(result);
         TreeMap<String, byte[]> rowMap = null;

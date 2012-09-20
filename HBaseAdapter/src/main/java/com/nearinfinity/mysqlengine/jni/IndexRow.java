@@ -1,6 +1,5 @@
 package com.nearinfinity.mysqlengine.jni;
 
-import com.nearinfinity.hbaseclient.Constants;
 import com.nearinfinity.hbaseclient.ResultParser;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.log4j.Logger;
@@ -13,13 +12,6 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jedstrom
- * Date: 8/17/12
- * Time: 10:50 AM
- * To change this template use File | Settings | File Templates.
- */
 public class IndexRow {
     private byte[] uuid;
     private TreeMap<String, byte[]> rowMap;

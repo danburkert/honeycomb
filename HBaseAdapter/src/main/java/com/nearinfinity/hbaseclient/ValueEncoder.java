@@ -59,9 +59,7 @@ public class ValueEncoder {
     private static byte[] padValue(byte[] value, int padLength, byte mask) {
         byte[] paddedValue = new byte[value.length + padLength];
         Arrays.fill(paddedValue, mask);
-        for (int i = 0; i < value.length; i++) {
-            paddedValue[i] = value[i];
-        }
+        System.arraycopy(value, 0, paddedValue, 0, value.length);
 
         return paddedValue;
     }
