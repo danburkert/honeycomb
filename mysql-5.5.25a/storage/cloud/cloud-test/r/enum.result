@@ -3,6 +3,7 @@ CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
 'b','r','o','w','n', 'f','x',
 'j','m','p','s', 'v', 'e',
 'l','a','z','y', 'd','g') NOT NULL )
+DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('g'),
@@ -205,6 +206,7 @@ CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
 'b','r','o','w','n', 'f','x',
 'j','m','p','s', 'v', 'e',
 'l','a','z','y', 'd','g') NULL )
+DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('g'),
@@ -319,6 +321,7 @@ CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
 'b','r','o','w','n', 'f','x',
 'j','m','p','s', 'v', 'e',
 'l','a','z','y', 'd','g') NULL )
+DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('g'),
@@ -521,6 +524,7 @@ CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
 'b','r','o','w','n', 'f','x',
 'j','m','p','s', 'v', 'e',
 'l','a','z','y', 'd','g') NOT NULL , INDEX(c1))
+DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('g'),
@@ -723,6 +727,7 @@ CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
 'b','r','o','w','n', 'f','x',
 'j','m','p','s', 'v', 'e',
 'l','a','z','y', 'd','g') NULL , INDEX(c1))
+DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('g'),
@@ -837,6 +842,7 @@ CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
 'b','r','o','w','n', 'f','x',
 'j','m','p','s', 'v', 'e',
 'l','a','z','y', 'd','g') NULL , INDEX(c1))
+DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('g'),
@@ -1039,6 +1045,7 @@ CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
 'b','r','o','w','n', 'f','x',
 'j','m','p','s', 'v', 'e',
 'l','a','z','y', 'd','g') NOT NULL )
+DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('g'),
@@ -1241,6 +1248,7 @@ CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
 'b','r','o','w','n', 'f','x',
 'j','m','p','s', 'v', 'e',
 'l','a','z','y', 'd','g') NULL )
+DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('g'),
@@ -1355,6 +1363,7 @@ CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
 'b','r','o','w','n', 'f','x',
 'j','m','p','s', 'v', 'e',
 'l','a','z','y', 'd','g') NULL )
+DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('g'),
@@ -1557,6 +1566,7 @@ CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
 'b','r','o','w','n', 'f','x',
 'j','m','p','s', 'v', 'e',
 'l','a','z','y', 'd','g') NOT NULL , INDEX(c1))
+DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('g'),
@@ -1759,6 +1769,7 @@ CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
 'b','r','o','w','n', 'f','x',
 'j','m','p','s', 'v', 'e',
 'l','a','z','y', 'd','g') NULL , INDEX(c1))
+DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('g'),
@@ -1873,6 +1884,7 @@ CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
 'b','r','o','w','n', 'f','x',
 'j','m','p','s', 'v', 'e',
 'l','a','z','y', 'd','g') NULL , INDEX(c1))
+DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('g'),

@@ -5,6 +5,7 @@ DROP TABLE IF EXISTS t1;
 
 ### Create table
 eval CREATE TABLE t1(c1 $string_type $null_flag $index_flag)
+  DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
   ENGINE=$engine_type;
 
 ### Insert Values

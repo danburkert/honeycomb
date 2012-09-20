@@ -1,5 +1,6 @@
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 VARCHAR(15) NOT NULL )
+DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('AAAAAAA'),
@@ -26,32 +27,32 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 BBBZ
 BBBZ
 BBBZ
 BBBZ
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 SELECT * FROM t1 ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
+bbbbbbbbb
+aaaaaaaaa
+aAaAaAaA
+CCCCCCCCC
 BBBZxxxx 
 BBBZ
 BBBZ
 BBBZ
 BBBZ
-bbbbbbbbb
 BBBBBBBB
-aaaaaaaaa
-aAaAaAaA
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -60,8 +61,11 @@ AAAAAAA
 SELECT * FROM t1 WHERE c1 >  'BBBZ' ORDER BY c1 ASC;
 c1
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 SELECT * FROM t1 WHERE c1 >= 'BBBZ' ORDER BY c1 ASC;
 c1
@@ -70,8 +74,11 @@ BBBZ
 BBBZ
 BBBZ
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 SELECT * FROM t1 WHERE c1 <  'BBBZ' ORDER BY c1 ASC;
 c1
@@ -80,10 +87,7 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 SELECT * FROM t1 WHERE c1 <= 'BBBZ' ORDER BY c1 ASC;
 c1
 
@@ -91,10 +95,7 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 BBBZ
 BBBZ
 BBBZ
@@ -108,14 +109,20 @@ BBBZ
 SELECT * FROM t1 WHERE c1 >  'BBBZ' ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
+bbbbbbbbb
+aaaaaaaaa
+aAaAaAaA
+CCCCCCCCC
 BBBZxxxx 
 SELECT * FROM t1 WHERE c1 >= 'BBBZ' ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
+bbbbbbbbb
+aaaaaaaaa
+aAaAaAaA
+CCCCCCCCC
 BBBZxxxx 
 BBBZ
 BBBZ
@@ -123,10 +130,7 @@ BBBZ
 BBBZ
 SELECT * FROM t1 WHERE c1 <  'BBBZ' ORDER BY c1 DESC;
 c1
-bbbbbbbbb
 BBBBBBBB
-aaaaaaaaa
-aAaAaAaA
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -138,10 +142,7 @@ BBBZ
 BBBZ
 BBBZ
 BBBZ
-bbbbbbbbb
 BBBBBBBB
-aaaaaaaaa
-aAaAaAaA
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -165,17 +166,17 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
+BBBBBBBB
+BBBZ
+BBBZ
+BBBZxxxx 
+CCCCCCCCC
 aAaAaAaA
 aAaAaAaA
 aAaAaAaA
 aaaaaaaaa
-BBBBBBBB
 bbbbbbbbb
-BBBZ
-BBBZ
-BBBZxxxx 
 cccccccc
-CCCCCCCCC
 nrb0
 DELETE FROM t1
 WHERE c1 = 'BBBZ'
@@ -187,18 +188,19 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
+BBBBBBBB
+BBBZxxxx 
+CCCCCCCCC
 aAaAaAaA
 aAaAaAaA
 aAaAaAaA
 aaaaaaaaa
-BBBBBBBB
 bbbbbbbbb
-BBBZxxxx 
 cccccccc
-CCCCCCCCC
 nrb0
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 VARCHAR(15) NULL )
+DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('AAAAAAA'),
@@ -228,14 +230,14 @@ NULL
 SELECT * FROM t1 WHERE c1 IS NOT NULL ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
-BBBZxxxx 
-BBBZ
 bbbbbbbbb
-BBBBBBBB
 aaaaaaaaa
 aAaAaAaA
+CCCCCCCCC
+BBBZxxxx 
+BBBZ
+BBBBBBBB
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -250,14 +252,14 @@ NULL
 SELECT * FROM t1 WHERE c1 IS NOT NULL ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
-BBBZxxxx 
-BBBZ
 bbbbbbbbb
-BBBBBBBB
 aaaaaaaaa
 aAaAaAaA
+CCCCCCCCC
+BBBZxxxx 
+BBBZ
+BBBBBBBB
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -276,16 +278,16 @@ NULL
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 BBBZ
 BBBZ
 BBBZ
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 DELETE FROM t1
 WHERE c1 IS NULL
@@ -297,19 +299,20 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 BBBZ
 BBBZ
 BBBZ
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 VARCHAR(15) NULL )
+DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('AAAAAAA'),
@@ -336,32 +339,32 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 BBBZ
 BBBZ
 BBBZ
 BBBZ
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 SELECT * FROM t1 ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
+bbbbbbbbb
+aaaaaaaaa
+aAaAaAaA
+CCCCCCCCC
 BBBZxxxx 
 BBBZ
 BBBZ
 BBBZ
 BBBZ
-bbbbbbbbb
 BBBBBBBB
-aaaaaaaaa
-aAaAaAaA
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -370,8 +373,11 @@ AAAAAAA
 SELECT * FROM t1 WHERE c1 >  'BBBZ' ORDER BY c1 ASC;
 c1
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 SELECT * FROM t1 WHERE c1 >= 'BBBZ' ORDER BY c1 ASC;
 c1
@@ -380,8 +386,11 @@ BBBZ
 BBBZ
 BBBZ
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 SELECT * FROM t1 WHERE c1 <  'BBBZ' ORDER BY c1 ASC;
 c1
@@ -390,10 +399,7 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 SELECT * FROM t1 WHERE c1 <= 'BBBZ' ORDER BY c1 ASC;
 c1
 
@@ -401,10 +407,7 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 BBBZ
 BBBZ
 BBBZ
@@ -418,14 +421,20 @@ BBBZ
 SELECT * FROM t1 WHERE c1 >  'BBBZ' ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
+bbbbbbbbb
+aaaaaaaaa
+aAaAaAaA
+CCCCCCCCC
 BBBZxxxx 
 SELECT * FROM t1 WHERE c1 >= 'BBBZ' ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
+bbbbbbbbb
+aaaaaaaaa
+aAaAaAaA
+CCCCCCCCC
 BBBZxxxx 
 BBBZ
 BBBZ
@@ -433,10 +442,7 @@ BBBZ
 BBBZ
 SELECT * FROM t1 WHERE c1 <  'BBBZ' ORDER BY c1 DESC;
 c1
-bbbbbbbbb
 BBBBBBBB
-aaaaaaaaa
-aAaAaAaA
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -448,10 +454,7 @@ BBBZ
 BBBZ
 BBBZ
 BBBZ
-bbbbbbbbb
 BBBBBBBB
-aaaaaaaaa
-aAaAaAaA
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -475,17 +478,17 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
+BBBBBBBB
+BBBZ
+BBBZ
+BBBZxxxx 
+CCCCCCCCC
 aAaAaAaA
 aAaAaAaA
 aAaAaAaA
 aaaaaaaaa
-BBBBBBBB
 bbbbbbbbb
-BBBZ
-BBBZ
-BBBZxxxx 
 cccccccc
-CCCCCCCCC
 nrb0
 DELETE FROM t1
 WHERE c1 = 'BBBZ'
@@ -497,18 +500,19 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
+BBBBBBBB
+BBBZxxxx 
+CCCCCCCCC
 aAaAaAaA
 aAaAaAaA
 aAaAaAaA
 aaaaaaaaa
-BBBBBBBB
 bbbbbbbbb
-BBBZxxxx 
 cccccccc
-CCCCCCCCC
 nrb0
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 VARCHAR(15) NOT NULL , INDEX(c1))
+DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('AAAAAAA'),
@@ -535,32 +539,32 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 BBBZ
 BBBZ
 BBBZ
 BBBZ
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 SELECT * FROM t1 ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
+bbbbbbbbb
+aaaaaaaaa
+aAaAaAaA
+CCCCCCCCC
 BBBZxxxx 
 BBBZ
 BBBZ
 BBBZ
 BBBZ
-bbbbbbbbb
 BBBBBBBB
-aaaaaaaaa
-aAaAaAaA
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -569,8 +573,11 @@ AAAAAAA
 SELECT * FROM t1 WHERE c1 >  'BBBZ' ORDER BY c1 ASC;
 c1
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 SELECT * FROM t1 WHERE c1 >= 'BBBZ' ORDER BY c1 ASC;
 c1
@@ -579,8 +586,11 @@ BBBZ
 BBBZ
 BBBZ
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 SELECT * FROM t1 WHERE c1 <  'BBBZ' ORDER BY c1 ASC;
 c1
@@ -589,10 +599,7 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 SELECT * FROM t1 WHERE c1 <= 'BBBZ' ORDER BY c1 ASC;
 c1
 
@@ -600,10 +607,7 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 BBBZ
 BBBZ
 BBBZ
@@ -617,14 +621,20 @@ BBBZ
 SELECT * FROM t1 WHERE c1 >  'BBBZ' ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
+bbbbbbbbb
+aaaaaaaaa
+aAaAaAaA
+CCCCCCCCC
 BBBZxxxx 
 SELECT * FROM t1 WHERE c1 >= 'BBBZ' ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
+bbbbbbbbb
+aaaaaaaaa
+aAaAaAaA
+CCCCCCCCC
 BBBZxxxx 
 BBBZ
 BBBZ
@@ -632,10 +642,7 @@ BBBZ
 BBBZ
 SELECT * FROM t1 WHERE c1 <  'BBBZ' ORDER BY c1 DESC;
 c1
-bbbbbbbbb
 BBBBBBBB
-aaaaaaaaa
-aAaAaAaA
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -647,10 +654,7 @@ BBBZ
 BBBZ
 BBBZ
 BBBZ
-bbbbbbbbb
 BBBBBBBB
-aaaaaaaaa
-aAaAaAaA
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -674,17 +678,17 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
+BBBBBBBB
+BBBZ
+BBBZ
+BBBZxxxx 
+CCCCCCCCC
 aAaAaAaA
 aAaAaAaA
 aAaAaAaA
 aaaaaaaaa
-BBBBBBBB
 bbbbbbbbb
-BBBZ
-BBBZ
-BBBZxxxx 
 cccccccc
-CCCCCCCCC
 nrb0
 DELETE FROM t1
 WHERE c1 = 'BBBZ'
@@ -696,18 +700,19 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
+BBBBBBBB
+BBBZxxxx 
+CCCCCCCCC
 aAaAaAaA
 aAaAaAaA
 aAaAaAaA
 aaaaaaaaa
-BBBBBBBB
 bbbbbbbbb
-BBBZxxxx 
 cccccccc
-CCCCCCCCC
 nrb0
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 VARCHAR(15) NULL , INDEX(c1))
+DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('AAAAAAA'),
@@ -737,14 +742,14 @@ NULL
 SELECT * FROM t1 WHERE c1 IS NOT NULL ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
-BBBZxxxx 
-BBBZ
 bbbbbbbbb
-BBBBBBBB
 aaaaaaaaa
 aAaAaAaA
+CCCCCCCCC
+BBBZxxxx 
+BBBZ
+BBBBBBBB
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -759,14 +764,14 @@ NULL
 SELECT * FROM t1 WHERE c1 IS NOT NULL ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
-BBBZxxxx 
-BBBZ
 bbbbbbbbb
-BBBBBBBB
 aaaaaaaaa
 aAaAaAaA
+CCCCCCCCC
+BBBZxxxx 
+BBBZ
+BBBBBBBB
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -785,16 +790,16 @@ NULL
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 BBBZ
 BBBZ
 BBBZ
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 DELETE FROM t1
 WHERE c1 IS NULL
@@ -806,19 +811,20 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 BBBZ
 BBBZ
 BBBZ
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 VARCHAR(15) NULL , INDEX(c1))
+DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('AAAAAAA'),
@@ -845,32 +851,32 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 BBBZ
 BBBZ
 BBBZ
 BBBZ
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 SELECT * FROM t1 ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
+bbbbbbbbb
+aaaaaaaaa
+aAaAaAaA
+CCCCCCCCC
 BBBZxxxx 
 BBBZ
 BBBZ
 BBBZ
 BBBZ
-bbbbbbbbb
 BBBBBBBB
-aaaaaaaaa
-aAaAaAaA
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -879,8 +885,11 @@ AAAAAAA
 SELECT * FROM t1 WHERE c1 >  'BBBZ' ORDER BY c1 ASC;
 c1
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 SELECT * FROM t1 WHERE c1 >= 'BBBZ' ORDER BY c1 ASC;
 c1
@@ -889,8 +898,11 @@ BBBZ
 BBBZ
 BBBZ
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 SELECT * FROM t1 WHERE c1 <  'BBBZ' ORDER BY c1 ASC;
 c1
@@ -899,10 +911,7 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 SELECT * FROM t1 WHERE c1 <= 'BBBZ' ORDER BY c1 ASC;
 c1
 
@@ -910,10 +919,7 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 BBBZ
 BBBZ
 BBBZ
@@ -927,14 +933,20 @@ BBBZ
 SELECT * FROM t1 WHERE c1 >  'BBBZ' ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
+bbbbbbbbb
+aaaaaaaaa
+aAaAaAaA
+CCCCCCCCC
 BBBZxxxx 
 SELECT * FROM t1 WHERE c1 >= 'BBBZ' ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
+bbbbbbbbb
+aaaaaaaaa
+aAaAaAaA
+CCCCCCCCC
 BBBZxxxx 
 BBBZ
 BBBZ
@@ -942,10 +954,7 @@ BBBZ
 BBBZ
 SELECT * FROM t1 WHERE c1 <  'BBBZ' ORDER BY c1 DESC;
 c1
-bbbbbbbbb
 BBBBBBBB
-aaaaaaaaa
-aAaAaAaA
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -957,10 +966,7 @@ BBBZ
 BBBZ
 BBBZ
 BBBZ
-bbbbbbbbb
 BBBBBBBB
-aaaaaaaaa
-aAaAaAaA
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -984,17 +990,17 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
+BBBBBBBB
+BBBZ
+BBBZ
+BBBZxxxx 
+CCCCCCCCC
 aAaAaAaA
 aAaAaAaA
 aAaAaAaA
 aaaaaaaaa
-BBBBBBBB
 bbbbbbbbb
-BBBZ
-BBBZ
-BBBZxxxx 
 cccccccc
-CCCCCCCCC
 nrb0
 DELETE FROM t1
 WHERE c1 = 'BBBZ'
@@ -1006,18 +1012,19 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
+BBBBBBBB
+BBBZxxxx 
+CCCCCCCCC
 aAaAaAaA
 aAaAaAaA
 aAaAaAaA
 aaaaaaaaa
-BBBBBBBB
 bbbbbbbbb
-BBBZxxxx 
 cccccccc
-CCCCCCCCC
 nrb0
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 VARCHAR(15) NOT NULL )
+DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('AAAAAAA'),
@@ -1044,32 +1051,32 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 BBBZ
 BBBZ
 BBBZ
 BBBZ
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 SELECT * FROM t1 ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
+bbbbbbbbb
+aaaaaaaaa
+aAaAaAaA
+CCCCCCCCC
 BBBZxxxx 
 BBBZ
 BBBZ
 BBBZ
 BBBZ
-bbbbbbbbb
 BBBBBBBB
-aaaaaaaaa
-aAaAaAaA
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -1078,8 +1085,11 @@ AAAAAAA
 SELECT * FROM t1 WHERE c1 >  'BBBZ' ORDER BY c1 ASC;
 c1
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 SELECT * FROM t1 WHERE c1 >= 'BBBZ' ORDER BY c1 ASC;
 c1
@@ -1088,8 +1098,11 @@ BBBZ
 BBBZ
 BBBZ
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 SELECT * FROM t1 WHERE c1 <  'BBBZ' ORDER BY c1 ASC;
 c1
@@ -1098,10 +1111,7 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 SELECT * FROM t1 WHERE c1 <= 'BBBZ' ORDER BY c1 ASC;
 c1
 
@@ -1109,10 +1119,7 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 BBBZ
 BBBZ
 BBBZ
@@ -1126,14 +1133,20 @@ BBBZ
 SELECT * FROM t1 WHERE c1 >  'BBBZ' ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
+bbbbbbbbb
+aaaaaaaaa
+aAaAaAaA
+CCCCCCCCC
 BBBZxxxx 
 SELECT * FROM t1 WHERE c1 >= 'BBBZ' ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
+bbbbbbbbb
+aaaaaaaaa
+aAaAaAaA
+CCCCCCCCC
 BBBZxxxx 
 BBBZ
 BBBZ
@@ -1141,10 +1154,7 @@ BBBZ
 BBBZ
 SELECT * FROM t1 WHERE c1 <  'BBBZ' ORDER BY c1 DESC;
 c1
-bbbbbbbbb
 BBBBBBBB
-aaaaaaaaa
-aAaAaAaA
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -1156,10 +1166,7 @@ BBBZ
 BBBZ
 BBBZ
 BBBZ
-bbbbbbbbb
 BBBBBBBB
-aaaaaaaaa
-aAaAaAaA
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -1183,17 +1190,17 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
+BBBBBBBB
+BBBZ
+BBBZ
+BBBZxxxx 
+CCCCCCCCC
 aAaAaAaA
 aAaAaAaA
 aAaAaAaA
 aaaaaaaaa
-BBBBBBBB
 bbbbbbbbb
-BBBZ
-BBBZ
-BBBZxxxx 
 cccccccc
-CCCCCCCCC
 nrb0
 DELETE FROM t1
 WHERE c1 = 'BBBZ'
@@ -1205,18 +1212,19 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
+BBBBBBBB
+BBBZxxxx 
+CCCCCCCCC
 aAaAaAaA
 aAaAaAaA
 aAaAaAaA
 aaaaaaaaa
-BBBBBBBB
 bbbbbbbbb
-BBBZxxxx 
 cccccccc
-CCCCCCCCC
 nrb0
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 VARCHAR(15) NULL )
+DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('AAAAAAA'),
@@ -1246,14 +1254,14 @@ NULL
 SELECT * FROM t1 WHERE c1 IS NOT NULL ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
-BBBZxxxx 
-BBBZ
 bbbbbbbbb
-BBBBBBBB
 aaaaaaaaa
 aAaAaAaA
+CCCCCCCCC
+BBBZxxxx 
+BBBZ
+BBBBBBBB
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -1268,14 +1276,14 @@ NULL
 SELECT * FROM t1 WHERE c1 IS NOT NULL ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
-BBBZxxxx 
-BBBZ
 bbbbbbbbb
-BBBBBBBB
 aaaaaaaaa
 aAaAaAaA
+CCCCCCCCC
+BBBZxxxx 
+BBBZ
+BBBBBBBB
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -1294,16 +1302,16 @@ NULL
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 BBBZ
 BBBZ
 BBBZ
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 DELETE FROM t1
 WHERE c1 IS NULL
@@ -1315,19 +1323,20 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 BBBZ
 BBBZ
 BBBZ
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 VARCHAR(15) NULL )
+DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('AAAAAAA'),
@@ -1354,32 +1363,32 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 BBBZ
 BBBZ
 BBBZ
 BBBZ
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 SELECT * FROM t1 ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
+bbbbbbbbb
+aaaaaaaaa
+aAaAaAaA
+CCCCCCCCC
 BBBZxxxx 
 BBBZ
 BBBZ
 BBBZ
 BBBZ
-bbbbbbbbb
 BBBBBBBB
-aaaaaaaaa
-aAaAaAaA
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -1388,8 +1397,11 @@ AAAAAAA
 SELECT * FROM t1 WHERE c1 >  'BBBZ' ORDER BY c1 ASC;
 c1
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 SELECT * FROM t1 WHERE c1 >= 'BBBZ' ORDER BY c1 ASC;
 c1
@@ -1398,8 +1410,11 @@ BBBZ
 BBBZ
 BBBZ
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 SELECT * FROM t1 WHERE c1 <  'BBBZ' ORDER BY c1 ASC;
 c1
@@ -1408,10 +1423,7 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 SELECT * FROM t1 WHERE c1 <= 'BBBZ' ORDER BY c1 ASC;
 c1
 
@@ -1419,10 +1431,7 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 BBBZ
 BBBZ
 BBBZ
@@ -1436,14 +1445,20 @@ BBBZ
 SELECT * FROM t1 WHERE c1 >  'BBBZ' ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
+bbbbbbbbb
+aaaaaaaaa
+aAaAaAaA
+CCCCCCCCC
 BBBZxxxx 
 SELECT * FROM t1 WHERE c1 >= 'BBBZ' ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
+bbbbbbbbb
+aaaaaaaaa
+aAaAaAaA
+CCCCCCCCC
 BBBZxxxx 
 BBBZ
 BBBZ
@@ -1451,10 +1466,7 @@ BBBZ
 BBBZ
 SELECT * FROM t1 WHERE c1 <  'BBBZ' ORDER BY c1 DESC;
 c1
-bbbbbbbbb
 BBBBBBBB
-aaaaaaaaa
-aAaAaAaA
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -1466,10 +1478,7 @@ BBBZ
 BBBZ
 BBBZ
 BBBZ
-bbbbbbbbb
 BBBBBBBB
-aaaaaaaaa
-aAaAaAaA
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -1493,17 +1502,17 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
+BBBBBBBB
+BBBZ
+BBBZ
+BBBZxxxx 
+CCCCCCCCC
 aAaAaAaA
 aAaAaAaA
 aAaAaAaA
 aaaaaaaaa
-BBBBBBBB
 bbbbbbbbb
-BBBZ
-BBBZ
-BBBZxxxx 
 cccccccc
-CCCCCCCCC
 nrb0
 DELETE FROM t1
 WHERE c1 = 'BBBZ'
@@ -1515,18 +1524,19 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
+BBBBBBBB
+BBBZxxxx 
+CCCCCCCCC
 aAaAaAaA
 aAaAaAaA
 aAaAaAaA
 aaaaaaaaa
-BBBBBBBB
 bbbbbbbbb
-BBBZxxxx 
 cccccccc
-CCCCCCCCC
 nrb0
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 VARCHAR(15) NOT NULL , INDEX(c1))
+DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('AAAAAAA'),
@@ -1553,32 +1563,32 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 BBBZ
 BBBZ
 BBBZ
 BBBZ
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 SELECT * FROM t1 ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
+bbbbbbbbb
+aaaaaaaaa
+aAaAaAaA
+CCCCCCCCC
 BBBZxxxx 
 BBBZ
 BBBZ
 BBBZ
 BBBZ
-bbbbbbbbb
 BBBBBBBB
-aaaaaaaaa
-aAaAaAaA
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -1587,8 +1597,11 @@ AAAAAAA
 SELECT * FROM t1 WHERE c1 >  'BBBZ' ORDER BY c1 ASC;
 c1
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 SELECT * FROM t1 WHERE c1 >= 'BBBZ' ORDER BY c1 ASC;
 c1
@@ -1597,8 +1610,11 @@ BBBZ
 BBBZ
 BBBZ
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 SELECT * FROM t1 WHERE c1 <  'BBBZ' ORDER BY c1 ASC;
 c1
@@ -1607,10 +1623,7 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 SELECT * FROM t1 WHERE c1 <= 'BBBZ' ORDER BY c1 ASC;
 c1
 
@@ -1618,10 +1631,7 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 BBBZ
 BBBZ
 BBBZ
@@ -1635,14 +1645,20 @@ BBBZ
 SELECT * FROM t1 WHERE c1 >  'BBBZ' ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
+bbbbbbbbb
+aaaaaaaaa
+aAaAaAaA
+CCCCCCCCC
 BBBZxxxx 
 SELECT * FROM t1 WHERE c1 >= 'BBBZ' ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
+bbbbbbbbb
+aaaaaaaaa
+aAaAaAaA
+CCCCCCCCC
 BBBZxxxx 
 BBBZ
 BBBZ
@@ -1650,10 +1666,7 @@ BBBZ
 BBBZ
 SELECT * FROM t1 WHERE c1 <  'BBBZ' ORDER BY c1 DESC;
 c1
-bbbbbbbbb
 BBBBBBBB
-aaaaaaaaa
-aAaAaAaA
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -1665,10 +1678,7 @@ BBBZ
 BBBZ
 BBBZ
 BBBZ
-bbbbbbbbb
 BBBBBBBB
-aaaaaaaaa
-aAaAaAaA
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -1692,17 +1702,17 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
+BBBBBBBB
+BBBZ
+BBBZ
+BBBZxxxx 
+CCCCCCCCC
 aAaAaAaA
 aAaAaAaA
 aAaAaAaA
 aaaaaaaaa
-BBBBBBBB
 bbbbbbbbb
-BBBZ
-BBBZ
-BBBZxxxx 
 cccccccc
-CCCCCCCCC
 nrb0
 DELETE FROM t1
 WHERE c1 = 'BBBZ'
@@ -1714,18 +1724,19 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
+BBBBBBBB
+BBBZxxxx 
+CCCCCCCCC
 aAaAaAaA
 aAaAaAaA
 aAaAaAaA
 aaaaaaaaa
-BBBBBBBB
 bbbbbbbbb
-BBBZxxxx 
 cccccccc
-CCCCCCCCC
 nrb0
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 VARCHAR(15) NULL , INDEX(c1))
+DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('AAAAAAA'),
@@ -1755,14 +1766,14 @@ NULL
 SELECT * FROM t1 WHERE c1 IS NOT NULL ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
-BBBZxxxx 
-BBBZ
 bbbbbbbbb
-BBBBBBBB
 aaaaaaaaa
 aAaAaAaA
+CCCCCCCCC
+BBBZxxxx 
+BBBZ
+BBBBBBBB
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -1777,14 +1788,14 @@ NULL
 SELECT * FROM t1 WHERE c1 IS NOT NULL ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
-BBBZxxxx 
-BBBZ
 bbbbbbbbb
-BBBBBBBB
 aaaaaaaaa
 aAaAaAaA
+CCCCCCCCC
+BBBZxxxx 
+BBBZ
+BBBBBBBB
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -1803,16 +1814,16 @@ NULL
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 BBBZ
 BBBZ
 BBBZ
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 DELETE FROM t1
 WHERE c1 IS NULL
@@ -1824,19 +1835,20 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 BBBZ
 BBBZ
 BBBZ
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 VARCHAR(15) NULL , INDEX(c1))
+DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
 ENGINE=cloud;
 INSERT INTO t1 VALUES
 ('AAAAAAA'),
@@ -1863,32 +1875,32 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 BBBZ
 BBBZ
 BBBZ
 BBBZ
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 SELECT * FROM t1 ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
+bbbbbbbbb
+aaaaaaaaa
+aAaAaAaA
+CCCCCCCCC
 BBBZxxxx 
 BBBZ
 BBBZ
 BBBZ
 BBBZ
-bbbbbbbbb
 BBBBBBBB
-aaaaaaaaa
-aAaAaAaA
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -1897,8 +1909,11 @@ AAAAAAA
 SELECT * FROM t1 WHERE c1 >  'BBBZ' ORDER BY c1 ASC;
 c1
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 SELECT * FROM t1 WHERE c1 >= 'BBBZ' ORDER BY c1 ASC;
 c1
@@ -1907,8 +1922,11 @@ BBBZ
 BBBZ
 BBBZ
 BBBZxxxx 
-cccccccc
 CCCCCCCCC
+aAaAaAaA
+aaaaaaaaa
+bbbbbbbbb
+cccccccc
 nrb0
 SELECT * FROM t1 WHERE c1 <  'BBBZ' ORDER BY c1 ASC;
 c1
@@ -1917,10 +1935,7 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 SELECT * FROM t1 WHERE c1 <= 'BBBZ' ORDER BY c1 ASC;
 c1
 
@@ -1928,10 +1943,7 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
-aAaAaAaA
-aaaaaaaaa
 BBBBBBBB
-bbbbbbbbb
 BBBZ
 BBBZ
 BBBZ
@@ -1945,14 +1957,20 @@ BBBZ
 SELECT * FROM t1 WHERE c1 >  'BBBZ' ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
+bbbbbbbbb
+aaaaaaaaa
+aAaAaAaA
+CCCCCCCCC
 BBBZxxxx 
 SELECT * FROM t1 WHERE c1 >= 'BBBZ' ORDER BY c1 DESC;
 c1
 nrb0
-CCCCCCCCC
 cccccccc
+bbbbbbbbb
+aaaaaaaaa
+aAaAaAaA
+CCCCCCCCC
 BBBZxxxx 
 BBBZ
 BBBZ
@@ -1960,10 +1978,7 @@ BBBZ
 BBBZ
 SELECT * FROM t1 WHERE c1 <  'BBBZ' ORDER BY c1 DESC;
 c1
-bbbbbbbbb
 BBBBBBBB
-aaaaaaaaa
-aAaAaAaA
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -1975,10 +1990,7 @@ BBBZ
 BBBZ
 BBBZ
 BBBZ
-bbbbbbbbb
 BBBBBBBB
-aaaaaaaaa
-aAaAaAaA
 AAAAAAA
 012345678912345
 !@#$%^&*()
@@ -2002,17 +2014,17 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
+BBBBBBBB
+BBBZ
+BBBZ
+BBBZxxxx 
+CCCCCCCCC
 aAaAaAaA
 aAaAaAaA
 aAaAaAaA
 aaaaaaaaa
-BBBBBBBB
 bbbbbbbbb
-BBBZ
-BBBZ
-BBBZxxxx 
 cccccccc
-CCCCCCCCC
 nrb0
 DELETE FROM t1
 WHERE c1 = 'BBBZ'
@@ -2024,13 +2036,13 @@ c1
 !@#$%^&*()
 012345678912345
 AAAAAAA
+BBBBBBBB
+BBBZxxxx 
+CCCCCCCCC
 aAaAaAaA
 aAaAaAaA
 aAaAaAaA
 aaaaaaaaa
-BBBBBBBB
 bbbbbbbbb
-BBBZxxxx 
 cccccccc
-CCCCCCCCC
 nrb0
