@@ -40,7 +40,7 @@ class CloudHandler : public handler
     void destroy_record_buffer(record_buffer *r);
     CloudShare *get_share(const char *table_name, TABLE *table);
     uint32 max_row_length();
-    Field *index_field;
+    HBaseField* active_index_hb_field;
 
     long long curr_scan_id;
     ulonglong rows_written;

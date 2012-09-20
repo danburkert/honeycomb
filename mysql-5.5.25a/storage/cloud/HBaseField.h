@@ -10,17 +10,22 @@ public:
   uchar* byte_val;
   long val_len;
   bool is_null;
+  bool nullable;
 
   HBaseField(Field* field)
-  :val_len(0),
-   is_null(false)
+  :byte_val(NULL),
+   val_len(0),
+   is_null(false),
+   nullable(false)
   {
     if (field->is_null())
     {
       byte_val = NULL;
       val_len = NULL;
       is_null = true;
+      nullable = true;
     } else {
+      nullable = field->maybe_null();
 
       unsigned int field_length = field->field_length;
 
@@ -105,6 +110,15 @@ public:
           break;
       }
     }
+  }
+
+  ~HBaseField()
+  {
+    if(byte_val != NULL)
+    {
+      my_free(byte_val);
+    }
+    byte_val = NULL;
   }
 };
 #endif
