@@ -1,6 +1,7 @@
 package com.nearinfinity.hbaseclient;
 
 import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Result;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -8,9 +9,11 @@ import java.util.Map;
 import java.util.UUID;
 
 public class DeleteListFactory {
-    public static List<Delete> createDeleteList(UUID uuid, TableInfo info, Map<String, byte[]> valueMap) {
+    public static List<Delete> createDeleteList(UUID uuid, TableInfo info, Result result, byte[] dataRowKey) {
         long tableId = info.getId();
         List<Delete> deleteList = new LinkedList<Delete>();
+        Map<String, byte[]> valueMap = ResultParser.parseDataRow(result, info);
+        deleteList.add(new Delete(dataRowKey));
 
         //Loop through ALL columns to determine which should be NULL
         for (String columnName : info.getColumnNames()) {
