@@ -4,19 +4,10 @@ import com.nearinfinity.hbaseclient.ResultParser;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.util.Arrays;
 import java.util.TreeMap;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jedstrom
- * Date: 8/21/12
- * Time: 9:05 AM
- * To change this template use File | Settings | File Templates.
- */
 public class SingleResultScanner implements HBaseResultScanner {
     private ResultScanner scanner;
     private Result lastResult;

@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public class DeleteListFactory {
-    public static List<Delete> createDeleteList(UUID uuid, TableInfo info, Result result, byte[] dataRowKey) {
+    public static List<Delete> createDeleteRowList(UUID uuid, TableInfo info, Result result, byte[] dataRowKey) {
         long tableId = info.getId();
         List<Delete> deleteList = new LinkedList<Delete>();
         Map<String, byte[]> valueMap = ResultParser.parseDataRow(result, info);
