@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public class PutListFactory {
-    public static List<Put> createPutList(Map<String, byte[]> values, TableInfo info) throws IOException {
+    public static List<Put> createPutList(Map<String, byte[]> values, TableInfo info) {
         //Get table id
         long tableId = info.getId();
 
