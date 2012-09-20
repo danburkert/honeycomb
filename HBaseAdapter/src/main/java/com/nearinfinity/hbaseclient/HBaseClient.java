@@ -13,13 +13,6 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jedstrom
- * Date: 7/25/12
- * Time: 2:09 PM
- * To change this template use File | Settings | File Templates.
- */
 public class HBaseClient {
     private HTable table;
 
@@ -209,17 +202,11 @@ public class HBaseClient {
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
 
-        List<Delete> deleteList = new LinkedList<Delete>();
-
-        //Delete data row
         byte[] dataRowKey = RowKeyFactory.buildDataKey(tableId, uuid);
-        deleteList.add(new Delete(dataRowKey));
-
         Get get = new Get(dataRowKey);
         Result result = table.get(get);
 
-        Map<String, byte[]> valueMap = ResultParser.parseDataRow(result, info);
-        deleteList.addAll(DeleteListFactory.createDeleteList(uuid, info, valueMap));
+        List<Delete> deleteList = DeleteListFactory.createDeleteList(uuid, info, result, dataRowKey);
 
         table.delete(deleteList);
 
@@ -243,11 +230,6 @@ public class HBaseClient {
         return true;
     }
 
-    private int deleteTableInfoRows(long tableId) throws IOException {
-        byte[] prefix = ByteBuffer.allocate(9).put(RowType.TABLE_INFO.getValue()).putLong(tableId).array();
-        return deleteRowsWithPrefix(prefix);
-    }
-
     public int deleteAllRows(String tableName) throws IOException {
         long tableId = getTableInfo(tableName).getId();
 
@@ -259,19 +241,24 @@ public class HBaseClient {
         return rowsAffected;
     }
 
-    public int deleteDataRows(long tableId) throws IOException {
+    private int deleteTableInfoRows(long tableId) throws IOException {
+        byte[] prefix = ByteBuffer.allocate(9).put(RowType.TABLE_INFO.getValue()).putLong(tableId).array();
+        return deleteRowsWithPrefix(prefix);
+    }
+
+    private int deleteDataRows(long tableId) throws IOException {
         logger.info("Deleting all data rows");
         byte[] prefix = ByteBuffer.allocate(9).put(RowType.DATA.getValue()).putLong(tableId).array();
         return deleteRowsWithPrefix(prefix);
     }
 
-    public int deleteColumns(long tableId) throws IOException {
+    private int deleteColumns(long tableId) throws IOException {
         logger.info("Deleting all columns");
         byte[] prefix = ByteBuffer.allocate(9).put(RowType.COLUMNS.getValue()).putLong(tableId).array();
         return deleteRowsWithPrefix(prefix);
     }
 
-    public int deleteIndexRows(long tableId) throws IOException {
+    private int deleteIndexRows(long tableId) throws IOException {
         logger.info("Deleting all index rows");
 
         int affectedRows = 0;
@@ -287,7 +274,7 @@ public class HBaseClient {
         return affectedRows;
     }
 
-    public int deleteColumnInfoRows(TableInfo info) throws IOException {
+    private int deleteColumnInfoRows(TableInfo info) throws IOException {
         logger.info("Deleting all column metadata rows");
 
         long tableId = info.getId();
@@ -301,7 +288,7 @@ public class HBaseClient {
         return affectedRows;
     }
 
-    public int deleteRowsWithPrefix(byte[] prefix) throws IOException {
+    private int deleteRowsWithPrefix(byte[] prefix) throws IOException {
         Scan scan = ScanFactory.buildScan();
         PrefixFilter filter = new PrefixFilter(prefix);
         scan.setFilter(filter);
