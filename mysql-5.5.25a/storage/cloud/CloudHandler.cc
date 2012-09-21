@@ -464,6 +464,7 @@ int CloudHandler::create(const char *path, TABLE *table_arg,
   {
     print_java_exception(this->env);
     ERROR(("Could not find adapter class HBaseAdapter"));
+    detach_thread();
     DBUG_RETURN(1);
   }
 
@@ -474,6 +475,22 @@ int CloudHandler::create(const char *path, TABLE *table_arg,
 
   for (Field **field = table_arg->field ; *field ; field++)
   {
+    switch ((*field)->real_type())
+    {
+    case MYSQL_TYPE_STRING:
+    case MYSQL_TYPE_VARCHAR:
+    case MYSQL_TYPE_BLOB:
+      if (strncmp((*field)->charset()->name, "utf8_bin", 8) != 0 &&
+          (*field)->binary() == false)
+      {
+        ERROR(("Encoding must be utf8 and Collation must be utf8_bin"));
+        detach_thread();
+        DBUG_RETURN(1);
+      }
+      break;
+    default:
+      break;
+    }
     jobject java_metadata_obj = metadata.get_field_metadata(*field, table_arg);
     java_map_insert(columnMap, string_to_java_string((*field)->field_name), java_metadata_obj, this->env);
   }
