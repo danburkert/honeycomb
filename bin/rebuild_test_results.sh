@@ -38,3 +38,8 @@ rm *.result.InnoDB
 cd $MYSQL_HOME/mysql-test/suite/cloud-test/t/
 sed -i.InnoDB s/InnoDB/cloud/ enginetype.inc
 rm enginetype.inc.InnoDB
+
+# Move test results that are manually built
+cd $MYSQL_HOME/mysql-test/suite/cloud-test/
+cp t/manual_results/* r/
+
