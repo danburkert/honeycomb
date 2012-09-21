@@ -27,8 +27,6 @@ public:
     } else {
       nullable = field->maybe_null();
 
-      unsigned int field_length = field->field_length;
-
       switch (field->real_type())
       {
         case MYSQL_TYPE_TINY:

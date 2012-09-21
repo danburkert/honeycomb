@@ -1,0 +1,13 @@
+--source enginetype.inc
+--source Person.inc
+--source Department.inc
+
+select * from Person, Department
+where Person.Department_Id = Department_Id
+order by Person.Name
+limit 100;
+
+--disable_warnings
+DROP TABLE IF EXISTS Person;
+DROP TABLE IF EXISTS Department;
+--enable_warnings

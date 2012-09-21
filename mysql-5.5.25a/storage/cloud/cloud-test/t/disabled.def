@@ -1,19 +1,20 @@
-tinyint :
-smallint :
-mediumint :
-int :
-bigint :
-decimal :
-float :
-double :
-char :
-varchar :
-binary :
-varbinary :
-enum :
-date :
-time :
-datetime :
-timestamp :
-year :
-encoding_collation :
+tinyint : foo
+smallint : foo
+mediumint : foo
+int : foo
+bigint : foo
+decimal : foo
+float : foo
+double : foo
+char : foo
+varchar : foo
+binary : foo
+varbinary : foo
+enum : foo
+date : foo
+time : foo
+datetime : foo
+timestamp : foo
+year : foo
+encoding_collation : foo
+joins :
