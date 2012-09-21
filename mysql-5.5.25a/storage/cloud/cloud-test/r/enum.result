@@ -201,6 +201,7 @@ v
 d
 g
 g
+DROP TABLE t1;
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
 'b','r','o','w','n', 'f','x',
@@ -519,6 +520,7 @@ v
 d
 g
 g
+DROP TABLE t1;
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
 'b','r','o','w','n', 'f','x',
@@ -722,6 +724,7 @@ v
 d
 g
 g
+DROP TABLE t1;
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
 'b','r','o','w','n', 'f','x',
@@ -1040,6 +1043,7 @@ v
 d
 g
 g
+DROP TABLE t1;
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
 'b','r','o','w','n', 'f','x',
@@ -1243,6 +1247,7 @@ v
 d
 g
 g
+DROP TABLE t1;
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
 'b','r','o','w','n', 'f','x',
@@ -1561,6 +1566,7 @@ v
 d
 g
 g
+DROP TABLE t1;
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
 'b','r','o','w','n', 'f','x',
@@ -1764,6 +1770,7 @@ v
 d
 g
 g
+DROP TABLE t1;
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 ENUM('t','h', 'q','u','i','c','k',
 'b','r','o','w','n', 'f','x',
@@ -2082,3 +2089,4 @@ v
 d
 g
 g
+DROP TABLE t1;

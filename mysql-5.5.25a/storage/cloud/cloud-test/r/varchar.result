@@ -198,6 +198,7 @@ aaaaaaaaa
 bbbbbbbbb
 cccccccc
 nrb0
+DROP TABLE t1;
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 VARCHAR(15) NULL )
 DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
@@ -510,6 +511,7 @@ aaaaaaaaa
 bbbbbbbbb
 cccccccc
 nrb0
+DROP TABLE t1;
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 VARCHAR(15) NOT NULL , INDEX(c1))
 DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
@@ -710,6 +712,7 @@ aaaaaaaaa
 bbbbbbbbb
 cccccccc
 nrb0
+DROP TABLE t1;
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 VARCHAR(15) NULL , INDEX(c1))
 DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
@@ -1022,6 +1025,7 @@ aaaaaaaaa
 bbbbbbbbb
 cccccccc
 nrb0
+DROP TABLE t1;
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 VARCHAR(15) NOT NULL )
 DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
@@ -1222,6 +1226,7 @@ aaaaaaaaa
 bbbbbbbbb
 cccccccc
 nrb0
+DROP TABLE t1;
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 VARCHAR(15) NULL )
 DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
@@ -1534,6 +1539,7 @@ aaaaaaaaa
 bbbbbbbbb
 cccccccc
 nrb0
+DROP TABLE t1;
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 VARCHAR(15) NOT NULL , INDEX(c1))
 DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
@@ -1734,6 +1740,7 @@ aaaaaaaaa
 bbbbbbbbb
 cccccccc
 nrb0
+DROP TABLE t1;
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1(c1 VARCHAR(15) NULL , INDEX(c1))
 DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
@@ -2046,3 +2053,4 @@ aaaaaaaaa
 bbbbbbbbb
 cccccccc
 nrb0
+DROP TABLE t1;
