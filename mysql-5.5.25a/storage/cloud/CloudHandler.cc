@@ -22,34 +22,6 @@ const char **CloudHandler::bas_ext() const
   return cloud_exts;
 }
 
-record_buffer *CloudHandler::create_record_buffer(unsigned int length)
-{
-  DBUG_ENTER("CloudHandler::create_record_buffer");
-  record_buffer *r;
-  if (!(r = (record_buffer*) my_malloc(sizeof(record_buffer), MYF(MY_WME))))
-  {
-    DBUG_RETURN(NULL);
-  }
-
-  r->length= (int)length;
-
-  if (!(r->buffer= (uchar*) my_malloc(r->length, MYF(MY_WME))))
-  {
-    my_free(r);
-    DBUG_RETURN(NULL);
-  }
-
-  DBUG_RETURN(r);
-}
-
-void CloudHandler::destroy_record_buffer(record_buffer *r)
-{
-  DBUG_ENTER("CloudHandler::destroy_record_buffer");
-  my_free(r->buffer);
-  my_free(r);
-  DBUG_VOID_RETURN;
-}
-
 int CloudHandler::open(const char *path, int mode, uint test_if_locked)
 {
   DBUG_ENTER("CloudHandler::open");
@@ -67,8 +39,6 @@ int CloudHandler::open(const char *path, int mode, uint test_if_locked)
 int CloudHandler::close(void)
 {
   DBUG_ENTER("CloudHandler::close");
-
-  destroy_record_buffer(rec_buffer);
 
   DBUG_RETURN(free_share(share));
 }
@@ -564,15 +534,6 @@ CloudShare *CloudHandler::get_share(const char *table_name, TABLE *table)
   CloudShare *share;
   char *tmp_path_name;
   uint path_length;
-
-  rec_buffer= create_record_buffer(table->s->reclength);
-
-  if (!rec_buffer)
-  {
-    DBUG_PRINT("CloudHandler", ("Ran out of memory while allocating record buffer"));
-
-    return NULL;
-  }
 
   mysql_mutex_lock(cloud_mutex);
   path_length=(uint) strlen(table_name);
