@@ -11,3 +11,9 @@ varchar :
 binary :
 varbinary :
 enum :
+date :
+time :
+datetime :
+timestamp :
+year :
+encoding_collation :

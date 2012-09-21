@@ -1,0 +1,33 @@
+### Table creation should fail if encoding or collation is wrong on string types
+
+let $type=CHAR;
+--source illegal_encoding_collation_options.inc
+
+let $type=VARCHAR(10);
+--source illegal_encoding_collation_options.inc
+
+let $type=TEXT;
+--source illegal_encoding_collation_options.inc
+
+### Table creation should work if encoding or collation is wrong on non string types
+
+let $type=INT;
+--source encoding_collation_options.inc
+
+let $type=DECIMAL;
+--source encoding_collation_options.inc
+
+let $type=DOUBLE;
+--source encoding_collation_options.inc
+
+let $type=BINARY;
+--source encoding_collation_options.inc
+
+let $type=VARBINARY(10);
+--source encoding_collation_options.inc
+
+let $type=BLOB;
+--source encoding_collation_options.inc
+
+let $type=BIT;
+--source encoding_collation_options.inc
