@@ -620,17 +620,97 @@ jobject CloudHandler::sql_to_java()
     Field * field = *field_ptr;
     jstring field_name = string_to_java_string(field->field_name);
 
-    HBaseField* hb_field = new HBaseField(field);
+    const bool is_null = field->is_null();
+    uchar* byte_val;
 
-    if (hb_field->is_null )
+    if (is_null)
     {
       java_map_insert(java_map, field_name, NULL, this->env);
       continue;
     }
+    switch (field->real_type())
+    {
+      case MYSQL_TYPE_TINY:
+      case MYSQL_TYPE_SHORT:
+      case MYSQL_TYPE_LONG:
+      case MYSQL_TYPE_LONGLONG:
+      case MYSQL_TYPE_INT24:
+      case MYSQL_TYPE_YEAR:
+      case MYSQL_TYPE_ENUM:
+      {
+        long long integral_value = field->val_int();
+        if(is_little_endian())
+        {
+          integral_value = __builtin_bswap64(integral_value);
+        }
+        actualFieldSize = sizeof integral_value;
+        byte_val = (uchar*) my_malloc(actualFieldSize, MYF(MY_WME));
+        memcpy(byte_val, &integral_value, actualFieldSize);
+        break;
+      }
+      case MYSQL_TYPE_FLOAT:
+      case MYSQL_TYPE_DOUBLE:
+      {
+        double fp_value = field->val_real();
+        long long* fp_ptr = (long long*) &fp_value;
+        if(is_little_endian())
+        {
+          *fp_ptr = __builtin_bswap64(*fp_ptr);
+        }
+        actualFieldSize = sizeof fp_value;
+        byte_val = (uchar*) my_malloc(actualFieldSize, MYF(MY_WME));
+        memcpy(byte_val, fp_ptr, actualFieldSize);
+        break;
+      }
+      case MYSQL_TYPE_DECIMAL:
+      case MYSQL_TYPE_NEWDECIMAL:
+        actualFieldSize = field->key_length();
+        byte_val = (uchar*) my_malloc(actualFieldSize, MYF(MY_WME));
+        memcpy(byte_val, field->ptr, actualFieldSize);
+        break;
+      case MYSQL_TYPE_DATE:
+      case MYSQL_TYPE_NEWDATE:
+      case MYSQL_TYPE_TIME:
+      case MYSQL_TYPE_DATETIME:
+      case MYSQL_TYPE_TIMESTAMP:
+      {
+        MYSQL_TIME mysql_time;
+        char temporal_value[MAX_DATE_STRING_REP_LENGTH];
+        field->get_time(&mysql_time);
+        my_TIME_to_str(&mysql_time, temporal_value);
+        actualFieldSize = strlen(temporal_value);
+        byte_val = (uchar*) my_malloc(actualFieldSize, MYF(MY_WME));
+        memcpy(byte_val, temporal_value, actualFieldSize);
+        break;
+      }
+      case MYSQL_TYPE_VARCHAR:
+      case MYSQL_TYPE_VAR_STRING:
+      case MYSQL_TYPE_BLOB:
+      case MYSQL_TYPE_TINY_BLOB:
+      case MYSQL_TYPE_MEDIUM_BLOB:
+      case MYSQL_TYPE_LONG_BLOB:
+      {
+        char string_value_buff[field->field_length];
+        String string_value(string_value_buff, sizeof(string_value_buff), field->charset());
+        field->val_str(&string_value);
+        actualFieldSize = string_value.length();
+        byte_val = (uchar*) my_malloc(actualFieldSize, MYF(MY_WME));
+        memcpy(byte_val, string_value.ptr(), actualFieldSize);
+        break;
+      }
+      case MYSQL_TYPE_NULL:
+      case MYSQL_TYPE_BIT:
+      case MYSQL_TYPE_SET:
+      case MYSQL_TYPE_GEOMETRY:
+      default:
+        actualFieldSize = field->key_length();
+        byte_val = (uchar*) my_malloc(actualFieldSize, MYF(MY_WME));
+        memcpy(byte_val, field->ptr, actualFieldSize);
+        break;
+    }
 
-    jbyteArray java_bytes = convert_value_to_java_bytes(hb_field->byte_val, hb_field->val_len);
+    jbyteArray java_bytes = convert_value_to_java_bytes(byte_val, actualFieldSize);
     java_map_insert(java_map, field_name, java_bytes, this->env);
-    delete hb_field;
   }
 
   dbug_tmp_restore_column_map(table->read_set, old_map);
@@ -650,7 +730,6 @@ int CloudHandler::index_init(uint idx, bool sorted)
 
   const char* column_name = this->table->s->key_info[idx].key_part->field->field_name;
   Field *field = table->field[idx];
-  active_index_hb_field = new HBaseField(field);
   attach_thread();
 
   jclass adapter_class = this->adapter();
@@ -670,7 +749,6 @@ int CloudHandler::index_end()
   this->end_scan();
   this->detach_thread();
   this->reset_index_scan_counter();
-  delete this->active_index_hb_field;
 
   DBUG_RETURN(0);
 }
@@ -682,6 +760,7 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
   jclass adapter_class = this->adapter();
   jmethodID index_read_method = this->env->GetStaticMethodID(adapter_class, "indexRead", "(J[BLcom/nearinfinity/mysqlengine/jni/IndexReadType;)Lcom/nearinfinity/mysqlengine/jni/IndexRow;");
   jlong java_scan_id = this->curr_scan_id;
+  uchar* key_copy;
   jobject java_find_flag;
 
   if (find_flag == HA_READ_PREFIX_LAST_OR_PREV)
@@ -689,10 +768,12 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
     find_flag = HA_READ_KEY_OR_PREV;
   }
 
+  Field* index_field = this->table->field[this->active_index];
+
   // Check if a nullable field is null.  This can happen on a non 'where x is null'
   // scan when MySQL decides to scan from the index beggining.
   // Only way to tell is to look at the first bit of the key.
-  if (active_index_hb_field->nullable && key[0] != 0)
+  if (index_field->maybe_null() && key[0] != 0)
   {
     switch (find_flag)
     {
@@ -712,8 +793,136 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len, enum ha
     java_find_flag = find_flag_to_java(find_flag, this->env);
   }
 
-  jbyteArray java_key = this->env->NewByteArray(active_index_hb_field->val_len);
-  this->env->SetByteArrayRegion(java_key, 0, active_index_hb_field->val_len, (jbyte*)active_index_hb_field->byte_val);
+  if (index_field->maybe_null())
+  {
+    // If the index is nullable, then the first byte is the null flag.  Ignore it.
+    key++;
+    key_len--;
+  }
+
+  int index_field_type = index_field->real_type();
+
+  switch(index_field_type)
+  {
+    case MYSQL_TYPE_TINY:
+    case MYSQL_TYPE_SHORT:
+    case MYSQL_TYPE_INT24:
+    case MYSQL_TYPE_LONG:
+    case MYSQL_TYPE_LONGLONG:
+    case MYSQL_TYPE_ENUM:
+      {
+        key_copy = new uchar[sizeof(long long)];
+        const bool is_signed = !is_unsigned_field(index_field);
+        bytes_to_long(key, key_len, is_signed, key_copy);
+        key_len = sizeof(long long);
+        make_big_endian(key_copy, key_len);
+        break;
+      }
+    case MYSQL_TYPE_YEAR:
+      {
+        key_copy = new uchar[sizeof(long long)];
+        // It comes to us as one byte, need to cast it to int and add 1900
+        uint32_t int_val = (uint32_t)key[0] + 1900;
+
+        bytes_to_long((uchar *)&int_val, sizeof(uint32_t), false, key_copy);
+        key_len = sizeof(long long);
+        make_big_endian(key_copy, key_len);
+        break;
+      }
+    case MYSQL_TYPE_FLOAT:
+      {
+        double j = (double) floatGet(key);
+
+        key_copy = new uchar[sizeof(double)];
+        key_len = sizeof(double);
+
+        doublestore(key_copy, j);
+        reverse_bytes(key_copy, key_len);
+        break;
+      }
+    case MYSQL_TYPE_DOUBLE:
+      {
+        double j = (double) floatGet(key);
+        doubleget(j, key);
+
+        key_copy = new uchar[sizeof(double)];
+        key_len = sizeof(double);
+
+        doublestore(key_copy, j);
+        reverse_bytes(key_copy, key_len);
+        break;
+      }
+    case MYSQL_TYPE_DECIMAL:
+    case MYSQL_TYPE_NEWDECIMAL:
+      {
+        key_copy = new uchar[key_len];
+        memcpy(key_copy, key, key_len);
+        break;
+      }
+    case MYSQL_TYPE_DATE:
+    case MYSQL_TYPE_DATETIME:
+    case MYSQL_TYPE_TIME:
+    case MYSQL_TYPE_TIMESTAMP:
+    case MYSQL_TYPE_NEWDATE:
+      {
+        MYSQL_TIME mysql_time;
+
+        switch (index_field_type)
+        {
+
+          case MYSQL_TYPE_DATE:
+          case MYSQL_TYPE_NEWDATE:
+            if (key_len == 3)
+            {
+              extract_mysql_newdate((long) uint3korr(key), &mysql_time);
+            }
+            else
+            {
+              extract_mysql_old_date((int32) uint4korr(key), &mysql_time);
+            }
+            break;
+          case MYSQL_TYPE_TIMESTAMP:
+            extract_mysql_timestamp((long) uint4korr(key), &mysql_time, table->in_use);
+            break;
+          case MYSQL_TYPE_TIME:
+            extract_mysql_time((long) uint3korr(key), &mysql_time);
+            break;
+          case MYSQL_TYPE_DATETIME:
+            extract_mysql_datetime((ulonglong) uint8korr(key), &mysql_time);
+            break;
+        }
+
+        char timeString[MAX_DATE_STRING_REP_LENGTH];
+        my_TIME_to_str(&mysql_time, timeString);
+        int length = strlen(timeString);
+        key_copy = new uchar[length];
+        memcpy(key_copy, timeString, length);
+        key_len = length;
+        break;
+      }
+    case MYSQL_TYPE_VARCHAR:
+      {
+        /**
+         * VARCHARs are prefixed with two bytes that represent the actual length of the value.
+         * So we need to read the length into actual_length, then copy those bits to key_copy.
+         * Thank you, MySQL...
+         */
+        uint16_t *short_len_ptr = (uint16_t *)key;
+        key_len = (uint)(*short_len_ptr);
+        key += 2;
+        key_copy = new uchar[key_len];
+        memcpy(key_copy, key, key_len);
+        break;
+      }
+    default:
+      key_copy = new uchar[key_len];
+      memcpy(key_copy, key, key_len);
+      break;
+  }
+
+  jbyteArray java_key = this->env->NewByteArray(key_len);
+  this->env->SetByteArrayRegion(java_key, 0, key_len, (jbyte*) key_copy);
+  delete[] key_copy;
   jobject index_row = this->env->CallStaticObjectMethod(adapter_class, index_read_method, java_scan_id, java_key, java_find_flag);
 
   if(read_index_row(index_row, buf) == HA_ERR_END_OF_FILE)

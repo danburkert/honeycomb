@@ -18,7 +18,6 @@
 #include "Util.h"
 #include "Logging.h"
 #include "Java.h"
-#include "HBaseField.h"
 
 static __thread int thread_ref_count=0;
 
@@ -32,7 +31,6 @@ class CloudHandler : public handler
     bool performing_scan;
     CloudShare *get_share(const char *table_name, TABLE *table);
     uint32 max_row_length();
-    HBaseField* active_index_hb_field;
 
     long long curr_scan_id;
     ulonglong rows_written;
