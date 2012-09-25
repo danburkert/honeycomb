@@ -552,6 +552,8 @@ int CloudHandler::info(uint flag)
   stats.delete_length = stats.deleted * stats.mean_rec_length;
   stats.check_time = 20;
 
+  // Update index cardinality - see ::analyze() function for more explanation
+
   for (int i = 0; i < this->table->s->keys; i++)
   {
     for (int j = 0; j < table->key_info[i].key_parts; j++)
@@ -1026,19 +1028,10 @@ int CloudHandler::index_next(uchar *buf)
 int CloudHandler::analyze(THD* thd, HA_CHECK_OPT* check_opt)
 {
   DBUG_ENTER("CloudHandler::analyze");
-  attach_thread();
 
-  jclass adapter_class = this->adapter();
-  jmethodID get_count_method = this->env->GetStaticMethodID(adapter_class,
-      "getRowCount", "(Ljava/lang/String;)J");
-  jstring table_name = this->table_name();
-  jlong row_count = this->env->CallStaticLongMethod(adapter_class,
-      get_count_method, table_name);
-
-  if (row_count == 0)
-  {
-    row_count = 1;
-  }
+  // For each key, just tell MySQL that there is only one value per keypart.
+  // This is, in effect, like telling MySQL that all our indexes are unique, and should essentially always be used for lookups.
+  // If you don't do this, the optimizer REALLY tries to do scans, even when they're not ideal. - ABC
 
   for (int i = 0; i < this->table->s->keys; i++)
   {
@@ -1048,9 +1041,22 @@ int CloudHandler::analyze(THD* thd, HA_CHECK_OPT* check_opt)
     }
   }
 
+  DBUG_RETURN(0);
+}
+
+ha_rows CloudHandler::estimate_rows_upper_bound()
+{
+  DBUG_ENTER("CloudHandler::estimate_rows_upper_bound");
+  attach_thread();
+
+  jclass adapter_class = this->adapter();
+  jmethodID get_count_method = this->env->GetStaticMethodID(adapter_class, "getRowCount", "(Ljava/lang/String;)J");
+  jstring table_name = this->table_name();
+  jlong row_count = this->env->CallStaticLongMethod(adapter_class, get_count_method, table_name);
+
   detach_thread();
 
-  DBUG_RETURN(0);
+  DBUG_RETURN(row_count);
 }
 
 int CloudHandler::index_prev(uchar *buf)
