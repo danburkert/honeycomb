@@ -1,0 +1,38 @@
+--source enginetype.inc
+--source Person.inc
+--source Department.inc
+
+SELECT COUNT(*) as count
+FROM Person
+GROUP BY Department_Id
+ORDER BY count;
+
+SELECT Name, COUNT(*) as Count
+FROM Person
+GROUP BY Name
+HAVING Count > 1
+ORDER BY Name;
+
+SELECT D.Name as `Department Name`, COUNT(*) as Count
+FROM Person as P, Department as D
+WHERE P.Department_Id = D.Id
+GROUP BY D.Id
+ORDER BY `Department Name`;
+
+SELECT D.Name as `Department Name`, COUNT(*) as Employees, SUM(ROUND(Salary, 4)) as Payroll
+FROM Person as P, Department as D
+WHERE P.Department_Id = D.Id
+GROUP BY D.Id
+ORDER BY `Department Name`;
+
+SELECT D.Name as `Department Name`, COUNT(*) as Employees, SUM(ROUND(Salary, 4)) as Payroll
+FROM Person as P, Department as D
+WHERE P.Department_Id = D.Id
+GROUP BY D.Id
+HAVING Payroll > 50
+ORDER BY `Department Name`;
+
+--disable_warnings
+DROP TABLE IF EXISTS Person;
+DROP TABLE IF EXISTS Department;
+--enable_warnings
