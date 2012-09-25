@@ -183,6 +183,32 @@ public class HBaseClient {
         return info;
     }
 
+    public void renameTable(String from, String to) throws IOException {
+        logger.info("Renaming table " + from + " to " + to);
+
+        TableInfo info = tableCache.get(from);
+
+        byte[] rowKey = RowKeyFactory.ROOT;
+
+        Delete oldNameDelete = new Delete(rowKey);
+
+        oldNameDelete.deleteColumn(Constants.NIC, from.getBytes());
+
+        this.table.delete(oldNameDelete);
+
+        Put nameChangePut = new Put(rowKey);
+        nameChangePut.add(Constants.NIC, to.getBytes(), Bytes.toBytes(info.getId()));
+
+        this.table.put(nameChangePut);
+
+        info.setName(to);
+
+        tableCache.remove(from);
+        tableCache.put(to, info);
+
+        logger.info("Rename complete!");
+    }
+
     public ColumnMetadata getMetadataForColumn(long tableId, long columnId) throws IOException {
         Get metadataGet = new Get(RowKeyFactory.buildColumnInfoKey(tableId, columnId));
         Result result = table.get(metadataGet);
