@@ -376,4 +376,13 @@ public class HBaseAdapter {
             throw new HBaseAdapterException("getRowCount", e);
         }
     }
+
+    public static void renameTable(String from, String to) throws HBaseAdapterException {
+        try {
+            client.renameTable(from, to);
+        } catch (Exception e) {
+            logger.error("renameTable-> Exception: ", e);
+            throw new HBaseAdapterException("renameTable", e);
+        }
+    }
 }

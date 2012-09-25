@@ -619,6 +619,78 @@ int CloudHandler::extra(enum ha_extra_function operation)
   DBUG_RETURN(0);
 }
 
+int CloudHandler::rename_table(const char *from, const char *to)
+{
+  DBUG_ENTER("CloudHandler::rename_table");
+
+  attach_thread();
+
+  jclass adapter_class = this->adapter();
+  jmethodID rename_table_method = this->env->GetStaticMethodID(adapter_class, "renameTable", "(Ljava/lang/String;Ljava/lang/String;)V");
+  jstring current_table_name = string_to_java_string(extract_table_name_from_path(from));
+  jstring new_table_name = string_to_java_string(extract_table_name_from_path(to));
+  this->env->CallStaticVoidMethod(adapter_class, rename_table_method, current_table_name, new_table_name);
+
+  detach_thread();
+
+  DBUG_RETURN(0);
+}
+
+bool CloudHandler::check_if_incompatible_data(HA_CREATE_INFO *create_info, uint table_changes)
+{
+  if (table_changes != IS_EQUAL_YES) {
+
+    return(COMPATIBLE_DATA_NO);
+  }
+
+  if (this->check_for_renamed_column(table, NULL)) {
+    return COMPATIBLE_DATA_NO;
+  }
+
+  /* Check that row format didn't change */
+  if ((create_info->used_fields & HA_CREATE_USED_ROW_FORMAT)
+      && create_info->row_type != ROW_TYPE_DEFAULT
+      && create_info->row_type != get_row_type()) {
+
+    return(COMPATIBLE_DATA_NO);
+  }
+
+  /* Specifying KEY_BLOCK_SIZE requests a rebuild of the table. */
+  if (create_info->used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE) {
+    return(COMPATIBLE_DATA_NO);
+  }
+
+  return(COMPATIBLE_DATA_YES);
+}
+
+bool CloudHandler::check_for_renamed_column(const TABLE*  table, const char* col_name)
+{
+  uint k;
+  Field* field;
+
+  for (k = 0; k < table->s->fields; k++)
+  {
+    field = table->field[k];
+
+    if (field->flags & FIELD_IS_RENAMED)
+    {
+
+      // If col_name is not provided, return if the field is marked as being renamed.
+      if (!col_name) {
+        return(true);
+      }
+
+      // If col_name is provided, return only if names match
+      if (my_strcasecmp(system_charset_info, field->field_name, col_name) == 0)
+      {
+        return(true);
+      }
+    }
+  }
+
+  return(false);
+}
+
 /* Set up the JNI Environment, and then persist the row to HBase.
  * This helper calls sql_to_java, which returns the row information
  * as a jobject to be sent to the HBaseAdapter.
