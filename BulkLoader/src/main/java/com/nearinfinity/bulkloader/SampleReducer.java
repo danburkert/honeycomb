@@ -28,11 +28,7 @@ public class SampleReducer extends TableReducer<ImmutableBytesWritable, Put, Wri
 
     @Override
     public void reduce(ImmutableBytesWritable key, Iterable<Put> rowKeys, Context context) throws IOException, InterruptedException {
-        List<Put> copyRowKeys = new LinkedList<Put>();
-        for (Put put : rowKeys) {
-            copyRowKeys.add(put);
-        }
-        Set<byte[]> splits = createSplits(copyRowKeys, regionSize);
+        Set<byte[]> splits = createSplits(rowKeys, regionSize);
 
         for (byte[] split : splits) {
             LOG.info("Split key: " + Bytes.toStringBinary(split));
@@ -41,15 +37,18 @@ public class SampleReducer extends TableReducer<ImmutableBytesWritable, Put, Wri
         }
     }
 
-    public static Set<byte[]> createSplits(List<Put> rowKeys, long regionSize) throws IOException, InterruptedException {
+    public static Set<byte[]> createSplits(Iterable<Put> rowKeys, long regionSize) throws IOException, InterruptedException {
         long putSize = 0;
-        LOG.info("Row key size " + rowKeys.size());
+        boolean first = false;
         Set<byte[]> splits = new HashSet<byte[]>();
+        Put firstPut = null;
         for (Put put : rowKeys) {
-            LOG.info("Row key " + Bytes.toStringBinary(put.getRow()));
+            if (!first) {
+                firstPut = new Put(put);
+            }
 
             long increment = putSize + put.heapSize();
-            LOG.info("Increment " + increment);
+
             if (increment >= regionSize) {
                 byte[] row = put.getRow();
                 splits.add(row);
@@ -60,7 +59,7 @@ public class SampleReducer extends TableReducer<ImmutableBytesWritable, Put, Wri
         }
 
         if (splits.isEmpty()) {
-            splits.add(rowKeys.get(0).getRow());
+            splits.add(firstPut.getRow());
         }
 
         return splits;
