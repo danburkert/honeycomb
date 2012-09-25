@@ -89,6 +89,23 @@ public class BulkLoader {
         admin.flush(Constants.SQL);
     }
 
+    private static void deleteDummyFamily(HBaseAdmin admin) throws IOException, InterruptedException {
+        HTableDescriptor sqlTableDescriptor = admin.getTableDescriptor(Constants.SQL);
+        if (!sqlTableDescriptor.hasFamily(SampleReducer.DUMMY_FAMILY)) {
+            if (!admin.isTableDisabled(Constants.SQL)) {
+                admin.disableTable(Constants.SQL);
+            }
+
+            admin.deleteColumn(Constants.SQL, SampleReducer.DUMMY_FAMILY);
+        }
+
+        if (admin.isTableDisabled(Constants.SQL)) {
+            admin.enableTable(Constants.SQL);
+        }
+
+        admin.flush(Constants.SQL);
+    }
+
     public static void createSamplingJob(Configuration conf, String inputPath, String outputPath) throws IOException, ClassNotFoundException, InterruptedException {
         int columnCount = conf.get("my_columns").split(",").length;
         SamplePartitioner.setColumnCount(conf, columnCount);
@@ -219,5 +236,7 @@ public class BulkLoader {
         createBulkLoadJob(conf, inputPath, outputPath);
 
         deleteDummyData(conf);
+
+        deleteDummyFamily(admin);
     }
 }
