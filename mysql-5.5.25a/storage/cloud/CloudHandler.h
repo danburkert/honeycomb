@@ -18,7 +18,6 @@
 #include "Util.h"
 #include "Logging.h"
 #include "Java.h"
-#include "HBaseField.h"
 
 static __thread int thread_ref_count=0;
 
@@ -32,7 +31,6 @@ class CloudHandler : public handler
     bool performing_scan;
     CloudShare *get_share(const char *table_name, TABLE *table);
     uint32 max_row_length();
-    HBaseField* active_index_hb_field;
 
     long long curr_scan_id;
     ulonglong rows_written;
@@ -70,6 +68,7 @@ class CloudHandler : public handler
     void end_scan();
     void reset_index_scan_counter();
     void reset_scan_counter();
+    bool check_for_renamed_column(const TABLE*  table, const char* col_name);
 
     bool is_integral_field(int field_type)
     {
@@ -140,6 +139,16 @@ class CloudHandler : public handler
       return "HASH";
     }
 
+    uint alter_table_flags(uint flags)
+    {
+      if (ht->alter_table_flags)
+      {
+        return ht->alter_table_flags(flags);
+      }
+
+      return 0;
+    }
+
     ulonglong table_flags() const
     {
       return HA_FAST_KEY_READ |
@@ -147,8 +156,9 @@ class CloudHandler : public handler
         HA_REC_NOT_IN_SEQ |
         HA_NO_TRANSACTIONS |
         HA_STATS_RECORDS_IS_EXACT | 
-        HA_NULL_IN_KEY |
-        HA_NO_AUTO_INCREMENT; // Nulls in indexed columns are allowed
+        HA_NULL_IN_KEY | // Nulls in indexed columns are allowed
+        HA_NO_AUTO_INCREMENT |
+        HA_TABLE_SCAN_ON_INDEX;
     }
 
     ulong index_flags(uint inx, uint part, bool all_parts) const
@@ -186,6 +196,26 @@ class CloudHandler : public handler
       return (double) rows /  20.0+1;
     }
 
+    virtual int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add)
+    {
+      return 0;
+    }
+
+    virtual int final_add_index(handler_add_index *add, bool commit)
+    {
+      return 0;
+    }
+
+    virtual int prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys)
+    {
+      return 0;
+    }
+
+    virtual int final_drop_index(TABLE *table_arg)
+    {
+      return 0;
+    }
+
     const char **bas_ext() const;
     int open(const char *name, int mode, uint test_if_locked);    // required
     int close(void);                                              // required
@@ -206,6 +236,10 @@ class CloudHandler : public handler
     void start_bulk_insert(ha_rows rows);
     int end_bulk_insert();
     ha_rows records_in_range(uint inx, key_range *min_key, key_range *max_key);
+    int analyze(THD* thd, HA_CHECK_OPT* check_opt);
+    ha_rows estimate_rows_upper_bound();
+    bool check_if_incompatible_data(HA_CREATE_INFO *create_info, uint table_changes);
+    int rename_table(const char *from, const char *to);
 };
 
 #endif

@@ -48,6 +48,22 @@ static void init_cloud_psi_keys()
 }
 #endif
 
+static uint cloud_alter_table_flags(uint flags)
+{
+  return HA_INPLACE_ADD_INDEX_NO_READ_WRITE |
+    HA_INPLACE_DROP_INDEX_NO_READ_WRITE |
+    HA_INPLACE_ADD_UNIQUE_INDEX_NO_READ_WRITE |
+    HA_INPLACE_DROP_UNIQUE_INDEX_NO_READ_WRITE |
+    HA_INPLACE_ADD_PK_INDEX_NO_READ_WRITE |
+    HA_INPLACE_DROP_PK_INDEX_NO_READ_WRITE |
+    HA_INPLACE_ADD_INDEX_NO_WRITE |
+    HA_INPLACE_DROP_INDEX_NO_WRITE |
+    HA_INPLACE_ADD_UNIQUE_INDEX_NO_WRITE |
+    HA_INPLACE_DROP_UNIQUE_INDEX_NO_WRITE |
+    HA_INPLACE_ADD_PK_INDEX_NO_WRITE |
+    HA_INPLACE_DROP_PK_INDEX_NO_WRITE;
+}
+
 static int cloud_init_func(void *p)
 {
   DBUG_ENTER("ha_cloud::cloud_init_func");
@@ -63,7 +79,8 @@ static int cloud_init_func(void *p)
 
   cloud_hton->state = SHOW_OPTION_YES;
   cloud_hton->create = cloud_create_handler;
-  cloud_hton->flags = HTON_ALTER_NOT_SUPPORTED;
+  cloud_hton->flags = HTON_TEMPORARY_NOT_SUPPORTED;
+  cloud_hton->alter_table_flags = cloud_alter_table_flags;
 
   Logging::setup_logging(NULL);
   create_or_find_jvm(&jvm);
