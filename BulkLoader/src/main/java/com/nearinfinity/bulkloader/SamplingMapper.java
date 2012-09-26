@@ -6,7 +6,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -18,13 +17,13 @@ import java.util.Random;
 
 import static java.lang.String.format;
 
-public class SampleMapper extends Mapper<LongWritable, Text, ImmutableBytesWritable, Put> {
+public class SamplingMapper extends Mapper<LongWritable, Text, ImmutableBytesWritable, Put> {
     private Random random;
     private String[] columnNames;
     private TableInfo tableInfo;
     private long dataSize, sampleSize;
     private double samplePercent;
-    private static final Log LOG = LogFactory.getLog(SampleMapper.class);
+    private static final Log LOG = LogFactory.getLog(SamplingMapper.class);
 
     @Override
     protected void setup(Context context) throws IOException {
@@ -34,7 +33,7 @@ public class SampleMapper extends Mapper<LongWritable, Text, ImmutableBytesWrita
         sampleSize = conf.getLong("sample_size", 110);
         dataSize = conf.getLong("data_size", 1024);
         samplePercent = sampleSize / (double) dataSize;
-        LOG.info(format("Sample size %d, Data size %d, Sample Percent %f", sampleSize, dataSize, samplePercent));
+        LOG.debug(format("Sample size %d, Data size %d, Sample Percent %f", sampleSize, dataSize, samplePercent));
 
         tableInfo = BulkLoader.extractTableInfo(conf);
         columnNames = conf.get("my_columns").split(",");
@@ -45,7 +44,7 @@ public class SampleMapper extends Mapper<LongWritable, Text, ImmutableBytesWrita
         double coinFlip = random.nextDouble();
         if (samplePercent >= coinFlip) {
             try {
-                List<Put> puts = BulkLoader.createPuts(line, context, tableInfo, columnNames);
+                List<Put> puts = BulkLoader.createPuts(line, tableInfo, columnNames);
                 for (Put put : puts) {
                     ByteBuffer rowBuffer = ByteBuffer.wrap(put.getRow());
                     byte[] row;
@@ -56,7 +55,6 @@ public class SampleMapper extends Mapper<LongWritable, Text, ImmutableBytesWrita
                     }
 
                     rowBuffer.get(row);
-                    LOG.info("Emitting key " + Bytes.toStringBinary(row));
                     context.write(new ImmutableBytesWritable(row), put);
                 }
 
