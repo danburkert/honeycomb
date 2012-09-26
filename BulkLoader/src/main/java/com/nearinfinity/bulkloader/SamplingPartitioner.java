@@ -24,11 +24,9 @@ public class SamplingPartitioner extends Partitioner<ImmutableBytesWritable, Put
             case 3:
                 return 0;
             case 4:
-                int indexRow = (1 + (int) Bytes.toLong(row, 9, 8)) % numPartitions;
-                return indexRow;
+                return (1 + (int) Bytes.toLong(row, 9, 8)) % numPartitions;
             case 5:
-                int reverseIndexRow = (1 + columnCount + (int) Bytes.toLong(row, 9, 8)) % numPartitions;
-                return reverseIndexRow;
+                return (1 + columnCount + (int) Bytes.toLong(row, 9, 8)) % numPartitions;
         }
 
         return 0;

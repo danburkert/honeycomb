@@ -23,6 +23,7 @@ public class SamplingReducer extends TableReducer<ImmutableBytesWritable, Put, W
 
     @Override
     public void reduce(ImmutableBytesWritable key, Iterable<Put> rowKeys, Context context) throws IOException, InterruptedException {
+        // Row keys can only be iterated over *once*
         Set<byte[]> splits = createSplits(rowKeys, regionSize);
 
         for (byte[] split : splits) {
@@ -31,14 +32,15 @@ public class SamplingReducer extends TableReducer<ImmutableBytesWritable, Put, W
         }
     }
 
-    public static Set<byte[]> createSplits(Iterable<Put> rowKeys, long regionSize) throws IOException, InterruptedException {
+    public static Set<byte[]> createSplits(Iterable<Put> rowKeys, long regionSize) {
         long putSize = 0;
-        boolean first = false;
+        boolean first = true;
         Set<byte[]> splits = new HashSet<byte[]>();
-        Put firstPut = null;
+        Put firstPut = new Put();
         for (Put put : rowKeys) {
-            if (!first) {
+            if (first) {
                 firstPut = new Put(put);
+                first = false;
             }
 
             long increment = putSize + put.heapSize();
