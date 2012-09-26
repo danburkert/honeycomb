@@ -10,8 +10,6 @@ import org.apache.hadoop.fs.ContentSummary;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.HFileOutputFormat;
@@ -36,6 +34,8 @@ import static java.lang.String.format;
 public class BulkLoader extends Configured implements Tool {
     private static final Log LOG = LogFactory.getLog(BulkLoader.class);
 
+    public enum Counters {ROWS, FAILED_ROWS}
+
     @Override
     public int run(String[] args) throws Exception {
         // Check for the correct number of arguments supplied
@@ -55,7 +55,7 @@ public class BulkLoader extends Configured implements Tool {
 
         HBaseAdmin admin = new HBaseAdmin(conf);
 
-        addDummyFamily(admin);
+        HBaseAdminColumn.addDummyFamily(admin);
 
         createSamplingJob(conf);
 
@@ -65,12 +65,10 @@ public class BulkLoader extends Configured implements Tool {
 
         deleteDummyData(conf);
 
-        deleteDummyFamily(admin);
+        HBaseAdminColumn.deleteDummyFamily(admin);
 
         return 0;
     }
-
-    public enum Counters {ROWS, FAILED_ROWS}
 
     public static List<Put> createPuts(Text line, TableInfo tableInfo, String[] columnNames) throws IOException, ParseException {
         CSVReader reader = new CSVReader(new StringReader(line.toString()));
@@ -103,41 +101,6 @@ public class BulkLoader extends Configured implements Tool {
         HBaseClient client = new HBaseClient(hbaseTableName, zkQuorum);
 
         return client.getTableInfo(sqlTableName);
-    }
-
-    private static void addDummyFamily(HBaseAdmin admin) throws IOException, InterruptedException {
-        HColumnDescriptor dummyColumn = new HColumnDescriptor(SamplingReducer.DUMMY_FAMILY);
-        HTableDescriptor sqlTableDescriptor = admin.getTableDescriptor(Constants.SQL);
-        if (!sqlTableDescriptor.hasFamily(SamplingReducer.DUMMY_FAMILY)) {
-            if (!admin.isTableDisabled(Constants.SQL)) {
-                admin.disableTable(Constants.SQL);
-            }
-
-            admin.addColumn(Constants.SQL, dummyColumn);
-        }
-
-        if (admin.isTableDisabled(Constants.SQL)) {
-            admin.enableTable(Constants.SQL);
-        }
-
-        admin.flush(Constants.SQL);
-    }
-
-    private static void deleteDummyFamily(HBaseAdmin admin) throws IOException, InterruptedException {
-        HTableDescriptor sqlTableDescriptor = admin.getTableDescriptor(Constants.SQL);
-        if (!sqlTableDescriptor.hasFamily(SamplingReducer.DUMMY_FAMILY)) {
-            if (!admin.isTableDisabled(Constants.SQL)) {
-                admin.disableTable(Constants.SQL);
-            }
-
-            admin.deleteColumn(Constants.SQL, SamplingReducer.DUMMY_FAMILY);
-        }
-
-        if (admin.isTableDisabled(Constants.SQL)) {
-            admin.enableTable(Constants.SQL);
-        }
-
-        admin.flush(Constants.SQL);
     }
 
     public static void createSamplingJob(Configuration conf) throws IOException, ClassNotFoundException, InterruptedException {
@@ -190,7 +153,6 @@ public class BulkLoader extends Configured implements Tool {
             client.incrementRowCount(conf.get("sql_table_name"), count);
         }
 
-        // Delete temporary output folder after completion
         deletePath(conf, outputPath);
     }
 

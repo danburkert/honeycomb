@@ -11,7 +11,6 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Random;
 
@@ -21,7 +20,6 @@ public class SamplingMapper extends Mapper<LongWritable, Text, ImmutableBytesWri
     private Random random;
     private String[] columnNames;
     private TableInfo tableInfo;
-    private long dataSize, sampleSize;
     private double samplePercent;
     private static final Log LOG = LogFactory.getLog(SamplingMapper.class);
 
@@ -30,8 +28,8 @@ public class SamplingMapper extends Mapper<LongWritable, Text, ImmutableBytesWri
         random = new Random();
         Configuration conf = context.getConfiguration();
 
-        sampleSize = conf.getLong("sample_size", 110);
-        dataSize = Math.max(conf.getLong("data_size", 1024), 1);
+        long sampleSize = Math.max(conf.getLong("sample_size", 110), 0);
+        long dataSize = Math.max(conf.getLong("data_size", 1024), 1);
         samplePercent = Math.min(sampleSize / (double) dataSize, 1.0); // Clamp the values between 0.0 and 1.0
         LOG.debug(format("Sample size %d, Data size %d, Sample Percent %f", sampleSize, dataSize, samplePercent));
 
@@ -46,15 +44,7 @@ public class SamplingMapper extends Mapper<LongWritable, Text, ImmutableBytesWri
             try {
                 List<Put> puts = BulkLoader.createPuts(line, tableInfo, columnNames);
                 for (Put put : puts) {
-                    ByteBuffer rowBuffer = ByteBuffer.wrap(put.getRow());
-                    byte[] row;
-                    if (rowBuffer.get(0) == 3) {
-                        row = new byte[9];
-                    } else {
-                        row = new byte[17];
-                    }
-
-                    rowBuffer.get(row);
+                    byte[] row = extractReduceKey(put);
                     context.write(new ImmutableBytesWritable(row), put);
                 }
 
@@ -63,5 +53,18 @@ public class SamplingMapper extends Mapper<LongWritable, Text, ImmutableBytesWri
                 e.printStackTrace();
             }
         }
+    }
+
+    public static byte[] extractReduceKey(Put put) {
+        byte[] rowBuffer = put.getRow();
+        byte[] row;
+        if (rowBuffer[0] == 3) {
+            row = new byte[9];
+        } else {
+            row = new byte[17];
+        }
+
+        System.arraycopy(rowBuffer, 0, row, 0, row.length);
+        return row;
     }
 }
