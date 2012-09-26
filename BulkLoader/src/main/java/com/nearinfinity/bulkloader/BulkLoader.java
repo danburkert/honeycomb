@@ -5,6 +5,7 @@ import com.nearinfinity.hbaseclient.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.ContentSummary;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -23,18 +24,51 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.util.Tool;
+import org.apache.hadoop.util.ToolRunner;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.StringReader;
+import java.io.*;
 import java.text.ParseException;
 import java.util.*;
 
 import static java.lang.String.format;
 
-public class BulkLoader {
+public class BulkLoader extends Configured implements Tool {
     private static final Log LOG = LogFactory.getLog(BulkLoader.class);
+
+    @Override
+    public int run(String[] args) throws Exception {
+        // Check for the correct number of arguments supplied
+        if (args.length != 3) {
+            System.err.println("Usage: com.nearinfinity.bulkloader.BulkLoader [generic arguments] <input path> <MySQL table name>" +
+                    " <comma separated MySQL column names>");
+            return -1;
+        }
+
+        Map<String, String> params = readConfigOptions();
+
+        Configuration argConf = getConf();
+        Configuration conf = HBaseConfiguration.create();
+        HBaseConfiguration.merge(conf, argConf);
+
+        updateConfiguration(conf, args, params);
+
+        HBaseAdmin admin = new HBaseAdmin(conf);
+
+        addDummyFamily(admin);
+
+        createSamplingJob(conf);
+
+        createSplits(conf, admin);
+
+        createBulkLoadJob(conf);
+
+        deleteDummyData(conf);
+
+        deleteDummyFamily(admin);
+
+        return 0;
+    }
 
     public enum Counters {ROWS, FAILED_ROWS}
 
@@ -106,16 +140,10 @@ public class BulkLoader {
         admin.flush(Constants.SQL);
     }
 
-    public static void createSamplingJob(Configuration conf, String inputPath, String outputPath) throws IOException, ClassNotFoundException, InterruptedException {
-        int columnCount = conf.get("my_columns").split(",").length;
-        SamplingPartitioner.setColumnCount(conf, columnCount);
-        FileSystem fileSystem = FileSystem.get(conf);
-        ContentSummary summary = fileSystem.getContentSummary(new Path(inputPath));
-        long dataLength = summary.getLength();
-        conf.setLong("data_size", dataLength);
-        fileSystem.close();
-        conf.setLong("sample_size", dataLength / 10);
-
+    public static void createSamplingJob(Configuration conf) throws IOException, ClassNotFoundException, InterruptedException {
+        String outputPath = conf.get("output_path");
+        String inputPath = conf.get("input_path");
+        int columnCount = conf.getInt(SamplingPartitioner.COLUMN_COUNT, 3);
         Job job = new Job(conf, "Sample data in " + inputPath);
         job.setJarByClass(SamplingMapper.class);
 
@@ -133,7 +161,9 @@ public class BulkLoader {
         deletePath(conf, outputPath);
     }
 
-    private static void createBulkLoadJob(Configuration conf, String inputPath, String outputPath) throws Exception {
+    private static void createBulkLoadJob(Configuration conf) throws Exception {
+        String outputPath = conf.get("output_path");
+        String inputPath = conf.get("input_path");
         HTable table = new HTable(conf, conf.get("hb_table"));
 
         Job job = new Job(conf, "Import from file " + inputPath + " into table " + conf.get("hb_table"));
@@ -222,16 +252,29 @@ public class BulkLoader {
         fileSystem.close();
     }
 
-    private static Configuration createConfiguration(String[] args, Map<String, String> params) {
-        Configuration conf = HBaseConfiguration.create();
-        conf.set("sql_table_name", args[1]);
-        conf.set("my_columns", args[2]);
-        conf.set("hb_family", params.get("hbase_family"));
-        conf.set("zk_quorum", params.get("zk_quorum"));
+    private static void updateConfiguration(Configuration conf, String[] args, Map<String, String> params) throws IOException {
+        String inputPath = args[0];
+        String sqlTable = args[1];
+        String columns = args[2];
+        int columnCount = columns.split(",").length;
+        conf.setIfUnset("sql_table_name", sqlTable);
+        conf.setIfUnset("my_columns", columns);
+        conf.setIfUnset("hb_family", params.get("hbase_family"));
+        conf.setIfUnset("zk_quorum", params.get("zk_quorum"));
         conf.setIfUnset("hbase.zookeeper.quorum", params.get("zk_quorum"));
-        conf.set("hb_table", params.get("hbase_table_name"));
-        conf.set("region_size", params.get("region_size"));
-        return conf;
+        conf.setIfUnset("hb_table", params.get("hbase_table_name"));
+        conf.setIfUnset("region_size", params.get("region_size"));
+        conf.setIfUnset("output_path", "bulk_loader_output_" + System.currentTimeMillis() + ".tmp");
+        conf.setIfUnset("input_path", inputPath);
+
+        SamplingPartitioner.setColumnCount(conf, columnCount);
+        FileSystem fileSystem = FileSystem.get(conf);
+        ContentSummary summary = fileSystem.getContentSummary(new Path(inputPath));
+        long dataLength = summary.getLength();
+        conf.setLong("data_size", dataLength);
+        fileSystem.close();
+        Long boxed = dataLength / 10;
+        conf.setIfUnset("sample_size", boxed.toString());
     }
 
     private static Map<String, String> readConfigOptions() throws FileNotFoundException {
@@ -246,33 +289,7 @@ public class BulkLoader {
     }
 
     public static void main(String[] args) throws Exception {
-        // Check for the correct number of arguments supplied
-        if (args.length != 3) {
-            System.err.println("Usage: com.nearinfinity.bulkloader.BulkLoader <input path> <MySQL table name>" +
-                    " <comma separated MySQL column names>");
-            System.exit(-1);
-        }
-
-        Map<String, String> params = readConfigOptions();
-
-        // Get arguments and setup configuration variables
-        String inputPath = args[0];
-        String outputPath = "bulk_loader_output_" + System.currentTimeMillis() + ".tmp";
-
-        Configuration conf = createConfiguration(args, params);
-
-        HBaseAdmin admin = new HBaseAdmin(conf);
-
-        addDummyFamily(admin);
-
-        createSamplingJob(conf, inputPath, outputPath);
-
-        createSplits(conf, admin);
-
-        createBulkLoadJob(conf, inputPath, outputPath);
-
-        deleteDummyData(conf);
-
-        deleteDummyFamily(admin);
+        int exitCode = ToolRunner.run(new BulkLoader(), args);
+        System.exit(exitCode);
     }
 }

@@ -31,8 +31,8 @@ public class SamplingMapper extends Mapper<LongWritable, Text, ImmutableBytesWri
         Configuration conf = context.getConfiguration();
 
         sampleSize = conf.getLong("sample_size", 110);
-        dataSize = conf.getLong("data_size", 1024);
-        samplePercent = sampleSize / (double) dataSize;
+        dataSize = Math.max(conf.getLong("data_size", 1024), 1);
+        samplePercent = Math.min(sampleSize / (double) dataSize, 1.0); // Clamp the values between 0.0 and 1.0
         LOG.debug(format("Sample size %d, Data size %d, Sample Percent %f", sampleSize, dataSize, samplePercent));
 
         tableInfo = BulkLoader.extractTableInfo(conf);
