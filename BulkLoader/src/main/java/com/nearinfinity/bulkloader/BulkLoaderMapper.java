@@ -32,7 +32,7 @@ class BulkLoaderMapper
     @Override
     public void map(LongWritable offset, Text line, Context context) {
         try {
-            List<Put> puts = BulkLoader.createPuts(line, context, tableInfo, columnNames);
+            List<Put> puts = BulkLoader.createPuts(line, tableInfo, columnNames);
             for (Put put : puts) {
                 context.write(new ImmutableBytesWritable(put.getRow()), put);
             }

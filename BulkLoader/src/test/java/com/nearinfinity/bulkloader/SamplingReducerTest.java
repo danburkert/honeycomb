@@ -8,7 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-public class SampleReducerTest {
+public class SamplingReducerTest {
     @Test
     public void testCreateSplits() throws Exception {
         List<Put> putList = new LinkedList<Put>();
@@ -18,9 +18,9 @@ public class SampleReducerTest {
         heapSize += createPut(10, putList);
         heapSize += createPut(10, putList);
         heapSize += createPut(10, putList);
-        Set<byte[]> splits = SampleReducer.createSplits(putList, heapSize / 2);
+        Set<byte[]> splits = SamplingReducer.createSplits(putList, heapSize / 2);
         Assert.assertEquals(2, splits.size());
-        splits = SampleReducer.createSplits(putList, heapSize + 1);
+        splits = SamplingReducer.createSplits(putList, heapSize + 1);
         Assert.assertEquals(1, splits.size());
     }
 

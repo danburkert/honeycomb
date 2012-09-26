@@ -8,20 +8,9 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.mapreduce.Partitioner;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
+public class SamplingPartitioner extends Partitioner<ImmutableBytesWritable, Put> implements Configurable {
 
-public class SamplePartitioner extends Partitioner<ImmutableBytesWritable, Put> implements Configurable {
-    private static BufferedWriter LOG = null;
     public static final String COLUMN_COUNT = "mapreduce.samplepartitioner.columncount";
-
-    static {
-        try {
-            LOG = new BufferedWriter(new FileWriter("/tmp/partitioner.log"));
-        } catch (Exception e) {
-
-        }
-    }
 
     private int columnCount;
 
@@ -53,20 +42,10 @@ public class SamplePartitioner extends Partitioner<ImmutableBytesWritable, Put> 
     public void setConf(Configuration conf) {
         this.conf = conf;
         this.columnCount = conf.getInt(COLUMN_COUNT, 3);
-        info("Partitioner column count " + this.columnCount);
     }
 
     @Override
     public Configuration getConf() {
         return this.conf;
-    }
-
-    private void info(String message) {
-        try {
-            LOG.write(message + "\n");
-            LOG.flush();
-        } catch (Exception e) {
-
-        }
     }
 }

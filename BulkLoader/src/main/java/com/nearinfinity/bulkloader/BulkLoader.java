@@ -20,15 +20,15 @@ import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.hadoop.mapreduce.lib.partition.HashPartitioner;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.StringReader;
+import java.text.ParseException;
 import java.util.*;
 
 import static java.lang.String.format;
@@ -38,12 +38,12 @@ public class BulkLoader {
 
     public enum Counters {ROWS, FAILED_ROWS}
 
-    public static List<Put> createPuts(Text line, Mapper.Context context, TableInfo tableInfo, String[] columnNames) throws Exception {
+    public static List<Put> createPuts(Text line, TableInfo tableInfo, String[] columnNames) throws IOException, ParseException {
         CSVReader reader = new CSVReader(new StringReader(line.toString()));
         String[] columnData = reader.readNext();
 
         if (columnData.length != columnNames.length) {
-            throw new Exception(format("Row has wrong number of columns. Expected %d got %d. Line: %s", columnNames.length, columnData.length, line.toString()));
+            throw new IllegalStateException(format("Row has wrong number of columns. Expected %d got %d. Line: %s", columnNames.length, columnData.length, line.toString()));
         }
 
         Map<String, byte[]> valueMap = new TreeMap<String, byte[]>();
@@ -72,9 +72,9 @@ public class BulkLoader {
     }
 
     private static void addDummyFamily(HBaseAdmin admin) throws IOException, InterruptedException {
-        HColumnDescriptor dummyColumn = new HColumnDescriptor(SampleReducer.DUMMY_FAMILY);
+        HColumnDescriptor dummyColumn = new HColumnDescriptor(SamplingReducer.DUMMY_FAMILY);
         HTableDescriptor sqlTableDescriptor = admin.getTableDescriptor(Constants.SQL);
-        if (!sqlTableDescriptor.hasFamily(SampleReducer.DUMMY_FAMILY)) {
+        if (!sqlTableDescriptor.hasFamily(SamplingReducer.DUMMY_FAMILY)) {
             if (!admin.isTableDisabled(Constants.SQL)) {
                 admin.disableTable(Constants.SQL);
             }
@@ -91,12 +91,12 @@ public class BulkLoader {
 
     private static void deleteDummyFamily(HBaseAdmin admin) throws IOException, InterruptedException {
         HTableDescriptor sqlTableDescriptor = admin.getTableDescriptor(Constants.SQL);
-        if (!sqlTableDescriptor.hasFamily(SampleReducer.DUMMY_FAMILY)) {
+        if (!sqlTableDescriptor.hasFamily(SamplingReducer.DUMMY_FAMILY)) {
             if (!admin.isTableDisabled(Constants.SQL)) {
                 admin.disableTable(Constants.SQL);
             }
 
-            admin.deleteColumn(Constants.SQL, SampleReducer.DUMMY_FAMILY);
+            admin.deleteColumn(Constants.SQL, SamplingReducer.DUMMY_FAMILY);
         }
 
         if (admin.isTableDisabled(Constants.SQL)) {
@@ -108,26 +108,27 @@ public class BulkLoader {
 
     public static void createSamplingJob(Configuration conf, String inputPath, String outputPath) throws IOException, ClassNotFoundException, InterruptedException {
         int columnCount = conf.get("my_columns").split(",").length;
-        SamplePartitioner.setColumnCount(conf, columnCount);
+        SamplingPartitioner.setColumnCount(conf, columnCount);
         FileSystem fileSystem = FileSystem.get(conf);
         ContentSummary summary = fileSystem.getContentSummary(new Path(inputPath));
         long dataLength = summary.getLength();
         conf.setLong("data_size", dataLength);
         fileSystem.close();
         conf.setLong("sample_size", dataLength / 10);
+
         Job job = new Job(conf, "Sample data in " + inputPath);
-        job.setJarByClass(SampleMapper.class);
+        job.setJarByClass(SamplingMapper.class);
 
         FileInputFormat.setInputPaths(job, new Path(inputPath));
         job.setInputFormatClass(TextInputFormat.class);
 
-        job.setMapperClass(SampleMapper.class);
+        job.setMapperClass(SamplingMapper.class);
 
         job.setMapOutputKeyClass(ImmutableBytesWritable.class);
         job.setMapOutputValueClass(Put.class);
         FileOutputFormat.setOutputPath(job, new Path(outputPath));
         job.setNumReduceTasks(2 * columnCount + 1);
-        TableMapReduceUtil.initTableReducerJob(conf.get("hb_table"), SampleReducer.class, job, SamplePartitioner.class);
+        TableMapReduceUtil.initTableReducerJob(conf.get("hb_table"), SamplingReducer.class, job, SamplingPartitioner.class);
         job.waitForCompletion(true);
         deletePath(conf, outputPath);
     }
@@ -178,23 +179,70 @@ public class BulkLoader {
         String tableName = conf.get("hb_table");
         HTable table = new HTable(conf, tableName);
         ResultScanner splitScanner = table.getScanner("dummy".getBytes());
-        int splitCount = 0;
+        List<byte[]> retrySplits = new LinkedList<byte[]>();
         for (Result result : splitScanner) {
             try {
-                splitCount++;
                 admin.split(tableName.getBytes(), result.getRow());
             } catch (Exception e) {
-                LOG.warn("Split " + Bytes.toStringBinary(result.getRow()) + " threw exception", e);
+                retrySplits.add(result.getRow());
+                LOG.warn("Split " + Bytes.toStringBinary(result.getRow()) + " threw exception");
             }
         }
 
-        LOG.info("Splits " + splitCount);
+        if (!retrySplits.isEmpty()) {
+            retryFailedSplits(admin, tableName, retrySplits);
+        }
+    }
+
+    private static void retryFailedSplits(HBaseAdmin admin, String tableName, List<byte[]> retrySplits) {
+        int retryCount = 3;
+        for (int x = 0; x < retrySplits.size(); x++) {
+            try {
+                LOG.info("Retrying split " + Bytes.toStringBinary(retrySplits.get(x)));
+                admin.split(tableName.getBytes(), retrySplits.get(x));
+            } catch (Exception e) {
+                retryCount--;
+                if (retryCount == 0) {
+                    LOG.info(format("Skipping %s too many failed retries.", Bytes.toStringBinary(retrySplits.get(x))));
+                    retryCount = 3;
+                } else {
+                    x--;
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException ignored) {
+                    }
+                }
+            }
+        }
     }
 
     private static void deletePath(Configuration conf, String path) throws IOException {
         FileSystem fileSystem = FileSystem.get(conf);
         fileSystem.delete(new Path(path), true);
         fileSystem.close();
+    }
+
+    private static Configuration createConfiguration(String[] args, Map<String, String> params) {
+        Configuration conf = HBaseConfiguration.create();
+        conf.set("sql_table_name", args[1]);
+        conf.set("my_columns", args[2]);
+        conf.set("hb_family", params.get("hbase_family"));
+        conf.set("zk_quorum", params.get("zk_quorum"));
+        conf.setIfUnset("hbase.zookeeper.quorum", params.get("zk_quorum"));
+        conf.set("hb_table", params.get("hbase_table_name"));
+        conf.set("region_size", params.get("region_size"));
+        return conf;
+    }
+
+    private static Map<String, String> readConfigOptions() throws FileNotFoundException {
+        //Read config options from adapter.conf
+        Scanner confFile = new Scanner(new File("/etc/mysql/adapter.conf"));
+        Map<String, String> params = new TreeMap<String, String>();
+        while (confFile.hasNextLine()) {
+            Scanner line = new Scanner(confFile.nextLine());
+            params.put(line.next(), line.next());
+        }
+        return params;
     }
 
     public static void main(String[] args) throws Exception {
@@ -205,25 +253,13 @@ public class BulkLoader {
             System.exit(-1);
         }
 
-        //Read config options from adapter.conf
-        Scanner confFile = new Scanner(new File("/etc/mysql/adapter.conf"));
-        Map<String, String> params = new TreeMap<String, String>();
-        while (confFile.hasNextLine()) {
-            Scanner line = new Scanner(confFile.nextLine());
-            params.put(line.next(), line.next());
-        }
+        Map<String, String> params = readConfigOptions();
 
         // Get arguments and setup configuration variables
         String inputPath = args[0];
         String outputPath = "bulk_loader_output_" + System.currentTimeMillis() + ".tmp";
 
-        Configuration conf = HBaseConfiguration.create();
-        conf.set("sql_table_name", args[1]);
-        conf.set("my_columns", args[2]);
-        conf.set("hb_family", params.get("hbase_family"));
-        conf.set("zk_quorum", params.get("zk_quorum"));
-        conf.set("hb_table", params.get("hbase_table_name"));
-        conf.set("region_size", params.get("region_size"));
+        Configuration conf = createConfiguration(args, params);
 
         HBaseAdmin admin = new HBaseAdmin(conf);
 
