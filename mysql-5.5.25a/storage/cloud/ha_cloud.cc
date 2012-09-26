@@ -8,6 +8,7 @@
 #include "probes_mysql.h"
 #include "sql_plugin.h"
 #include <stdlib.h>
+#include "Transaction.h"
 
 static handler *cloud_create_handler(handlerton *hton,
     TABLE_SHARE *table,
@@ -81,6 +82,16 @@ static int cloud_init_func(void *p)
   cloud_hton->create = cloud_create_handler;
   cloud_hton->flags = HTON_TEMPORARY_NOT_SUPPORTED;
   cloud_hton->alter_table_flags = cloud_alter_table_flags;
+
+  // Commit and rollback must be implemented to have transaction support
+  cloud_hton->commit = cloud_commit;
+  cloud_hton->rollback = cloud_rollback;
+
+  // Must implement these following functions/members to have support for savepoints
+  cloud_hton->savepoint_set = 0;
+  cloud_hton->savepoint_rollback = 0;
+  cloud_hton->savepoint_release = 0;
+  cloud_hton->savepoint_offset = 0;
 
   Logging::setup_logging(NULL);
   create_or_find_jvm(&jvm);

@@ -18,6 +18,7 @@
 #include "Util.h"
 #include "Logging.h"
 #include "Java.h"
+#include "Transaction.h"
 
 static __thread int thread_ref_count=0;
 
@@ -26,9 +27,11 @@ class CloudHandler : public handler
   private:
     THR_LOCK_DATA lock;      	///< MySQL lockCloudShare;
     CloudShare *share;    		///< Sharedclass lock info
+    THD *mysql_thread;
     mysql_mutex_t* cloud_mutex;
     HASH* cloud_open_tables;
     bool performing_scan;
+    ulong current_trx_id;
     CloudShare *get_share(const char *table_name, TABLE *table);
     uint32 max_row_length();
 
@@ -122,6 +125,8 @@ class CloudHandler : public handler
       this->initialize_adapter();
       this->rows_written = 0;
       this->rows_deleted = 0;
+      this->mysql_thread = this->ha_thd();
+      this->current_trx_id = 0;
     }
 
     ~CloudHandler()
@@ -154,7 +159,7 @@ class CloudHandler : public handler
       return HA_FAST_KEY_READ |
         HA_BINLOG_STMT_CAPABLE |
         HA_REC_NOT_IN_SEQ |
-        HA_NO_TRANSACTIONS |
+        // HA_NO_TRANSACTIONS |
         HA_STATS_RECORDS_IS_EXACT | 
         HA_NULL_IN_KEY | // Nulls in indexed columns are allowed
         HA_NO_AUTO_INCREMENT |
@@ -224,7 +229,6 @@ class CloudHandler : public handler
     int rnd_pos(uchar *buf, uchar *pos);                          ///< required
     void position(const uchar *record);                           ///< required
     int info(uint);                                               ///< required
-    int external_lock(THD *thd, int lock_type);                   ///< required
     int create(const char *name, TABLE *form, HA_CREATE_INFO *create_info); ///< required
     THR_LOCK_DATA **store_lock(THD *thd, THR_LOCK_DATA **to, enum thr_lock_type lock_type);     ///< required
     int extra(enum ha_extra_function operation);
@@ -240,6 +244,11 @@ class CloudHandler : public handler
     ha_rows estimate_rows_upper_bound();
     bool check_if_incompatible_data(HA_CREATE_INFO *create_info, uint table_changes);
     int rename_table(const char *from, const char *to);
+
+    // TRANSACTION FUNCTIONS
+
+    int external_lock(THD *thd, int lock_type);
+    int start_stmt(THD *thd, thr_lock_type lock_type);
 };
 
 #endif

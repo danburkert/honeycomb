@@ -2,6 +2,8 @@
 #pragma implementation        // gcc: Class implementation
 #endif
 
+#define MYSQL_SERVER 1
+
 #include "sql_priv.h"
 #include "sql_class.h"           // MYSQL_HANDLERTON_INTERFACE_VERSION
 #include "CloudHandler.h"
@@ -357,12 +359,6 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
   dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
 
   return;
-}
-
-int CloudHandler::external_lock(THD *thd, int lock_type)
-{
-  DBUG_ENTER("CloudHandler::external_lock");
-  DBUG_RETURN(0);
 }
 
 void CloudHandler::position(const uchar *record)
@@ -1306,3 +1302,80 @@ jbyteArray CloudHandler::convert_value_to_java_bytes(uchar* value,
 
   return byteArray;
 }
+// ===================================
+//            TRANSACTIONS
+// ===================================
+
+/******************************************************************//**
+As MySQL will execute an external lock for every new table it uses when it
+starts to process an SQL statement (an exception is when MySQL calls
+start_stmt for the handle) we can use this function to store the pointer to
+the THD in the handle. We will also use this function to communicate
+to InnoDB that a new SQL statement has started and that we must store a
+savepoint to our transaction handle, so that we are able to roll back
+the SQL statement in case of an error.
+@return 0 */
+int CloudHandler::external_lock(THD* thd, int lock_type)
+{
+  DBUG_ENTER("CloudHandler::external_lock");
+  DBUG_PRINT("enter",("lock_type: %d", lock_type));
+
+  cloud_trx *trx = get_current_transaction(thd, this->ht);
+
+  if (trx == NULL)
+  {
+    trx = new_cloud_trx(thd, this->ht);
+  }
+
+  if (lock_type != F_UNLCK) {
+    /* MySQL is setting a new table lock */
+    // Register the transaction somehow
+
+    trx->lock_count++;
+    trx->tx_isolation = thd->variables.tx_isolation;
+
+    register_cloud_trx(this->ht, thd, trx);
+
+    DBUG_RETURN(0);
+  }
+
+  /* MySQL is releasing a table lock */
+
+  /* If the MySQL lock count drops to zero we know that the current SQL
+  statement has ended */
+
+  /* This should trigger a commit */
+
+  if (trx->lock_count > 0)
+  {
+    trx->lock_count--;
+  }
+
+  if (trx->lock_count == 0)
+  {
+    cloud_commit(this->ht, thd, TRUE);
+    delete_cloud_trx(thd, this->ht);
+  }
+
+  DBUG_RETURN(0);
+}
+
+/******************************************************************//**
+MySQL calls this function at the start of each SQL statement inside LOCK
+TABLES. Inside LOCK TABLES the ::external_lock method does not work to
+mark SQL statement borders. Note also a special case: if a temporary table
+is created inside LOCK TABLES, MySQL has not called external_lock() at all
+on that table.
+MySQL-5.0 also calls this before each statement in an execution of a stored
+procedure. To make the execution more deterministic for binlogging, MySQL-5.0
+locks all tables involved in a stored procedure with full explicit table
+locks (thd_in_lock_tables(thd) holds in store_lock()) before executing the
+procedure.
+@return 0 or error code */
+int CloudHandler::start_stmt(THD* thd, thr_lock_type lock_type)
+{
+  // Register the transaction somehow
+
+  return(0);
+}
+
