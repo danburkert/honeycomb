@@ -245,6 +245,19 @@ public class HBaseAdapter {
         return scanId;
     }
 
+    public static boolean hasDuplicateValues(String tableName, Map<String, byte[]> values) throws HBaseAdapterException {
+        boolean hasDuplicates;
+
+        try {
+            hasDuplicates = client.hasDuplicateValues(tableName, values);
+        } catch (Exception e) {
+            logger.error("hasDuplicateValues-> Exception:", e);
+            throw new HBaseAdapterException("hasDuplicateValues", e);
+        }
+
+        return hasDuplicates;
+    }
+
     public static IndexRow indexRead(long scanId, byte[] value, IndexReadType readType) throws HBaseAdapterException {
         logger.info("indexRead-> scanId: " + scanId + ", value: " + Bytes.toString(value) + ", readType " + readType.name());
 
