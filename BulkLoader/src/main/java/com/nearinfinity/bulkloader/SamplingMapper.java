@@ -11,6 +11,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.List;
 import java.util.Random;
 
@@ -31,27 +32,31 @@ public class SamplingMapper extends Mapper<LongWritable, Text, ImmutableBytesWri
         long sampleSize = Math.max(conf.getLong("sample_size", 110), 0);
         long dataSize = Math.max(conf.getLong("data_size", 1024), 1);
         samplePercent = Math.min(sampleSize / (double) dataSize, 1.0); // Clamp the values between 0.0 and 1.0
-        LOG.debug(format("Sample size %d, Data size %d, Sample Percent %f", sampleSize, dataSize, samplePercent));
+        LOG.info(format("Sample size %d, Data size %d, Sample Percent %f", sampleSize, dataSize, samplePercent));
 
         tableInfo = BulkLoader.extractTableInfo(conf);
         columnNames = conf.get("my_columns").split(",");
     }
 
     @Override
-    public void map(LongWritable offset, Text line, Context context) {
+    public void map(LongWritable offset, Text line, Context context) throws IOException, InterruptedException {
         double coinFlip = random.nextDouble();
         if (samplePercent >= coinFlip) {
-            try {
-                List<Put> puts = BulkLoader.createPuts(line, tableInfo, columnNames);
-                for (Put put : puts) {
-                    byte[] row = extractReduceKey(put);
-                    context.write(new ImmutableBytesWritable(row), put);
-                }
 
-                context.getCounter(BulkLoader.Counters.ROWS).increment(1);
-            } catch (Exception e) {
-                e.printStackTrace();
+            LOG.info("Adding to sample");
+            List<Put> puts = null;
+            try {
+                puts = BulkLoader.createPuts(line, tableInfo, columnNames);
+            } catch (ParseException e) {
+                LOG.error("Parse error", e);
             }
+            for (Put put : puts) {
+                byte[] row = extractReduceKey(put);
+                context.write(new ImmutableBytesWritable(row), put);
+            }
+
+            context.getCounter(BulkLoader.Counters.ROWS).increment(1);
+
         }
     }
 

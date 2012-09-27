@@ -171,7 +171,15 @@ public class HBaseClient {
 
         Get columnsGet = new Get(rowKey);
         Result columnsResult = table.get(columnsGet);
+
+        if (columnsResult.isEmpty()) {
+            throw new IllegalStateException("Column result from the get was empty for row key " + Bytes.toStringBinary(rowKey));
+        }
         Map<byte[], byte[]> columns = columnsResult.getFamilyMap(Constants.NIC);
+        if (columns == null) {
+            throw new NullPointerException("columns was null after getting family map.");
+        }
+
         for (byte[] qualifier : columns.keySet()) {
             String columnName = new String(qualifier);
             long columnId = ByteBuffer.wrap(columns.get(qualifier)).getLong();
