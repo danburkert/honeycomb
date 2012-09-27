@@ -1,6 +1,10 @@
 package com.nearinfinity.hbaseclient;
 
+import com.nearinfinity.hbaseclient.strategy.PrefixScanStrategy;
 import com.nearinfinity.hbaseclient.strategy.ScanStrategy;
+import com.nearinfinity.mysqlengine.jni.HBaseAdapterException;
+import com.nearinfinity.mysqlengine.scanner.HBaseResultScanner;
+import com.nearinfinity.mysqlengine.scanner.SingleResultScanner;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
@@ -377,6 +381,24 @@ public class HBaseClient {
         logger.info(shouldFlushChangesImmediately
                 ? "Changes to tables will be written to HBase immediately"
                 : "Changes to tables will be written to HBase when the write buffer has become full");
+    }
+
+    public boolean hasDuplicateValues(String tableName, Map<String, byte[]> values) throws IOException {
+        logger.info("Checking for duplicate values");
+
+        for (Map.Entry<String, byte[]> entry : values.entrySet()) {
+            String columnName = entry.getKey();
+            byte[] columnValue = entry.getValue();
+
+            PrefixScanStrategy strategy = new PrefixScanStrategy(tableName, columnName, columnValue);
+            HBaseResultScanner scanner = new SingleResultScanner(getScanner(strategy));
+
+            if (scanner.next(null) != null) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public void setWriteBufferSize(long numBytes) {

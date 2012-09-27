@@ -11,6 +11,7 @@
 #include "my_base.h"            /* ha_rows */
 #include <jni.h>
 #include <string.h>
+#include <limits.h>
 
 #include "CloudShare.h"
 #include "Macros.h"
@@ -69,6 +70,7 @@ class CloudHandler : public handler
     void reset_index_scan_counter();
     void reset_scan_counter();
     bool check_for_renamed_column(const TABLE*  table, const char* col_name);
+    bool field_has_unique_index(Field *field);
 
     bool is_integral_field(int field_type)
     {
@@ -183,7 +185,12 @@ class CloudHandler : public handler
 
     uint max_supported_key_length() const
     {
-      return 255;
+      return UINT_MAX;
+    }
+
+    uint max_supported_key_part_length() const
+    {
+      return UINT_MAX;
     }
 
     virtual double scan_time()
@@ -198,6 +205,9 @@ class CloudHandler : public handler
 
     virtual int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add)
     {
+      // TODO: If someone is trying to add a unique index to a column that has duplicate values, do we allow it?
+      // InnoDB doesn't. But that could be billions of records to look over. O_O - ABC
+
       return 0;
     }
 

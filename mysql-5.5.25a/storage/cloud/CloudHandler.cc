@@ -40,21 +40,6 @@ int CloudHandler::close(void)
   DBUG_RETURN(free_share(share));
 }
 
-int CloudHandler::write_row(uchar *buf)
-{
-  DBUG_ENTER("CloudHandler::write_row");
-
-  if (share->crashed)
-    DBUG_RETURN(HA_ERR_CRASHED_ON_USAGE);
-
-  ha_statistic_increment(&SSV::ha_write_count);
-
-  int ret = write_row_helper(buf);
-  this->rows_written++;
-
-  DBUG_RETURN(ret);
-}
-
 /*
  This will be called in a table scan right before the previous ::rnd_next()
  call.
@@ -296,7 +281,8 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
         long long* long_ptr = (long long*) val;
         longlong swapped_long = __builtin_bswap64(*long_ptr);
         double_value = *(double*) &swapped_long;
-      } else {
+      } else
+      {
         double_value = *(double*) val;
       }
       field->store(double_value);
@@ -431,9 +417,11 @@ int CloudHandler::end_bulk_insert()
 
   this->flush_writes();
   jclass adapter_class = this->adapter();
-  jmethodID update_count_method = this->env->GetStaticMethodID(adapter_class, "incrementRowCount", "(Ljava/lang/String;J)V");
+  jmethodID update_count_method = this->env->GetStaticMethodID(adapter_class,
+      "incrementRowCount", "(Ljava/lang/String;J)V");
   jstring table_name = this->table_name();
-  this->env->CallStaticVoidMethod(adapter_class, update_count_method, table_name, (jlong) this->rows_written);
+  this->env->CallStaticVoidMethod(adapter_class, update_count_method,
+      table_name, (jlong) this->rows_written);
   this->rows_written = 0;
 
   detach_thread();
@@ -546,11 +534,12 @@ int CloudHandler::info(uint flag)
   if (stats.records < 2)
     stats.records = 2;
   stats.deleted = 0;
-  stats.data_file_length = stats.records * 64;
-  stats.index_file_length = stats.records * 128;
-  stats.mean_rec_length = 64;
+  stats.max_data_file_length = this->max_supported_record_length();
+  stats.data_file_length = stats.records * this->table->s->reclength;
+  stats.index_file_length = this->max_supported_key_length();
+  stats.mean_rec_length = 1337;
   stats.delete_length = stats.deleted * stats.mean_rec_length;
-  stats.check_time = 20;
+  stats.check_time = time(NULL);
 
   // Update index cardinality - see ::analyze() function for more explanation
 
@@ -626,44 +615,54 @@ int CloudHandler::rename_table(const char *from, const char *to)
   attach_thread();
 
   jclass adapter_class = this->adapter();
-  jmethodID rename_table_method = this->env->GetStaticMethodID(adapter_class, "renameTable", "(Ljava/lang/String;Ljava/lang/String;)V");
-  jstring current_table_name = string_to_java_string(extract_table_name_from_path(from));
-  jstring new_table_name = string_to_java_string(extract_table_name_from_path(to));
-  this->env->CallStaticVoidMethod(adapter_class, rename_table_method, current_table_name, new_table_name);
+  jmethodID rename_table_method = this->env->GetStaticMethodID(adapter_class,
+      "renameTable", "(Ljava/lang/String;Ljava/lang/String;)V");
+  jstring current_table_name = string_to_java_string(
+      extract_table_name_from_path(from));
+  jstring new_table_name = string_to_java_string(
+      extract_table_name_from_path(to));
+  this->env->CallStaticVoidMethod(adapter_class, rename_table_method,
+      current_table_name, new_table_name);
 
   detach_thread();
 
   DBUG_RETURN(0);
 }
 
-bool CloudHandler::check_if_incompatible_data(HA_CREATE_INFO *create_info, uint table_changes)
+bool CloudHandler::check_if_incompatible_data(HA_CREATE_INFO *create_info,
+    uint table_changes)
 {
-  if (table_changes != IS_EQUAL_YES) {
+  if (table_changes != IS_EQUAL_YES)
+  {
 
-    return(COMPATIBLE_DATA_NO);
+    return (COMPATIBLE_DATA_NO);
   }
 
-  if (this->check_for_renamed_column(table, NULL)) {
+  if (this->check_for_renamed_column(table, NULL))
+  {
     return COMPATIBLE_DATA_NO;
   }
 
   /* Check that row format didn't change */
   if ((create_info->used_fields & HA_CREATE_USED_ROW_FORMAT)
       && create_info->row_type != ROW_TYPE_DEFAULT
-      && create_info->row_type != get_row_type()) {
+      && create_info->row_type != get_row_type())
+  {
 
-    return(COMPATIBLE_DATA_NO);
+    return (COMPATIBLE_DATA_NO);
   }
 
   /* Specifying KEY_BLOCK_SIZE requests a rebuild of the table. */
-  if (create_info->used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE) {
-    return(COMPATIBLE_DATA_NO);
+  if (create_info->used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE)
+  {
+    return (COMPATIBLE_DATA_NO);
   }
 
-  return(COMPATIBLE_DATA_YES);
+  return (COMPATIBLE_DATA_YES);
 }
 
-bool CloudHandler::check_for_renamed_column(const TABLE*  table, const char* col_name)
+bool CloudHandler::check_for_renamed_column(const TABLE* table,
+    const char* col_name)
 {
   uint k;
   Field* field;
@@ -676,45 +675,51 @@ bool CloudHandler::check_for_renamed_column(const TABLE*  table, const char* col
     {
 
       // If col_name is not provided, return if the field is marked as being renamed.
-      if (!col_name) {
-        return(true);
+      if (!col_name)
+      {
+        return (true);
       }
 
       // If col_name is provided, return only if names match
       if (my_strcasecmp(system_charset_info, field->field_name, col_name) == 0)
       {
-        return(true);
+        return (true);
       }
     }
   }
 
-  return(false);
+  return (false);
+}
+
+int CloudHandler::write_row(uchar *buf)
+{
+  DBUG_ENTER("CloudHandler::write_row");
+
+  if (share->crashed)
+    DBUG_RETURN(HA_ERR_CRASHED_ON_USAGE);
+
+  ha_statistic_increment(&SSV::ha_write_count);
+
+  int ret = write_row_helper(buf);
+  this->rows_written++;
+
+  DBUG_RETURN(ret);
 }
 
 /* Set up the JNI Environment, and then persist the row to HBase.
- * This helper calls sql_to_java, which returns the row information
- * as a jobject to be sent to the HBaseAdapter.
+ * This helper turns the row information into a jobject to be sent to the HBaseAdapter.
+ * It also checks for duplicate values for columns that have unique indexes.
  */
 int CloudHandler::write_row_helper(uchar* buf)
 {
   DBUG_ENTER("CloudHandler::write_row_helper");
 
   jclass adapter_class = this->adapter();
-  jmethodID write_row_method = this->env->GetStaticMethodID(adapter_class,
-      "writeRow", "(Ljava/lang/String;Ljava/util/Map;)Z");
+  jmethodID write_row_method = this->env->GetStaticMethodID(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;)Z");
   jstring table_name = this->table_name();
-  jobject java_row_map = sql_to_java();
-  this->env->CallStaticBooleanMethod(adapter_class, write_row_method,
-      table_name, java_row_map);
-
-  DBUG_RETURN(0);
-}
-
-/* Read fields into a java map.
- */
-jobject CloudHandler::sql_to_java()
-{
-  jobject java_map = create_java_map(this->env);
+  //--------------------------------
+  jobject java_row_map = create_java_map(this->env);
+  jobject unique_values_map = create_java_map(this->env);
   // Boilerplate stuff every engine has to do on writes
 
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
@@ -723,6 +728,8 @@ jobject CloudHandler::sql_to_java()
   my_bitmap_map *old_map = dbug_tmp_use_all_columns(table, table->read_set);
 
   uint actualFieldSize;
+
+  char **unique_indexed_fields[table->s->keys];
 
   for (Field **field_ptr = table->field; *field_ptr; field_ptr++)
   {
@@ -734,7 +741,7 @@ jobject CloudHandler::sql_to_java()
 
     if (is_null)
     {
-      java_map_insert(java_map, field_name, NULL, this->env);
+      java_map_insert(java_row_map, field_name, NULL, this->env);
       continue;
     }
     switch (field->real_type())
@@ -819,13 +826,44 @@ jobject CloudHandler::sql_to_java()
       break;
     }
 
-    jbyteArray java_bytes = convert_value_to_java_bytes(byte_val,
-        actualFieldSize);
-    java_map_insert(java_map, field_name, java_bytes, this->env);
+    jbyteArray java_bytes = convert_value_to_java_bytes(byte_val, actualFieldSize);
+    java_map_insert(java_row_map, field_name, java_bytes, this->env);
+
+    // Remember this field for later if we find that it has a unique index, need to check it
+    if (this->field_has_unique_index(field))
+    {
+      java_map_insert(unique_values_map, field_name, java_bytes, this->env);
+    }
   }
 
   dbug_tmp_restore_column_map(table->read_set, old_map);
-  return java_map;
+
+  // Send it to HBase, see if there's already something in there with this value
+  jmethodID has_duplicates_method = this->env->GetStaticMethodID(adapter_class, "hasDuplicateValues", "(Ljava/lang/String;Ljava/util/Map;)Z");
+  jboolean has_duplicates = this->env->CallStaticBooleanMethod(adapter_class, has_duplicates_method, table_name, unique_values_map);
+
+  if (has_duplicates)
+  {
+    DBUG_RETURN(HA_ERR_FOUND_DUPP_UNIQUE);
+  }
+
+  this->env->CallStaticBooleanMethod(adapter_class, write_row_method, table_name, java_row_map);
+
+  DBUG_RETURN(0);
+}
+
+bool CloudHandler::field_has_unique_index(Field *field)
+{
+  for (int i = 0; i < table->s->keys; i++)
+  {
+    if ((table->key_info[i].flags & HA_NOSAME)
+        && strcmp(table->key_info[i].key_part->field->field_name, field->field_name) == 0)
+    {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 jstring CloudHandler::string_to_java_string(const char *string)
@@ -904,8 +942,7 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len,
       java_find_flag = find_flag_to_java(find_flag, this->env);
       break;
     }
-  }
-  else
+  } else
   {
     java_find_flag = find_flag_to_java(find_flag, this->env);
   }
@@ -1058,8 +1095,7 @@ void CloudHandler::bytes_to_long(const uchar* buff, unsigned int buff_length,
   if (is_signed && buff[buff_length - 1] >= (uchar) 0x80)
   {
     memset(long_buff, 0xFF, sizeof(long));
-  }
-  else
+  } else
   {
     memset(long_buff, 0x00, sizeof(long));
   }
@@ -1067,8 +1103,7 @@ void CloudHandler::bytes_to_long(const uchar* buff, unsigned int buff_length,
   memcpy(long_buff, buff, buff_length);
 }
 
-void CloudHandler::store_uuid_ref(jobject index_row,
-    jmethodID get_uuid_method)
+void CloudHandler::store_uuid_ref(jobject index_row, jmethodID get_uuid_method)
 {
   jbyteArray uuid = (jbyteArray) this->env->CallObjectMethod(index_row,
       get_uuid_method);
@@ -1122,9 +1157,11 @@ ha_rows CloudHandler::estimate_rows_upper_bound()
   attach_thread();
 
   jclass adapter_class = this->adapter();
-  jmethodID get_count_method = this->env->GetStaticMethodID(adapter_class, "getRowCount", "(Ljava/lang/String;)J");
+  jmethodID get_count_method = this->env->GetStaticMethodID(adapter_class,
+      "getRowCount", "(Ljava/lang/String;)J");
   jstring table_name = this->table_name();
-  jlong row_count = this->env->CallStaticLongMethod(adapter_class, get_count_method, table_name);
+  jlong row_count = this->env->CallStaticLongMethod(adapter_class,
+      get_count_method, table_name);
 
   detach_thread();
 
