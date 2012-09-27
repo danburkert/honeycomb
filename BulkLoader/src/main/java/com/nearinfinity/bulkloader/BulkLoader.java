@@ -38,7 +38,6 @@ public class BulkLoader extends Configured implements Tool {
 
     @Override
     public int run(String[] args) throws Exception {
-        // Check for the correct number of arguments supplied
         if (args.length != 3) {
             System.err.println("Usage: com.nearinfinity.bulkloader.BulkLoader [generic arguments] <input path> <MySQL table name>" +
                     " <comma separated MySQL column names>");
@@ -104,6 +103,7 @@ public class BulkLoader extends Configured implements Tool {
     }
 
     public static void createSamplingJob(Configuration conf) throws IOException, ClassNotFoundException, InterruptedException {
+        LOG.info("Setting up the sampling job");
         String outputPath = conf.get("output_path");
         String inputPath = conf.get("input_path");
         int columnCount = conf.getInt(SamplingPartitioner.COLUMN_COUNT, 3);
@@ -120,6 +120,7 @@ public class BulkLoader extends Configured implements Tool {
         FileOutputFormat.setOutputPath(job, new Path(outputPath));
         job.setNumReduceTasks(2 * columnCount + 1);
         TableMapReduceUtil.initTableReducerJob(conf.get("hb_table"), SamplingReducer.class, job, SamplingPartitioner.class);
+        LOG.info(format("*** Using quorum %s ***", job.getConfiguration().get("hbase.zookeeper.quorum")));
         job.waitForCompletion(true);
         deletePath(conf, outputPath);
     }
@@ -144,6 +145,7 @@ public class BulkLoader extends Configured implements Tool {
 
         HFileOutputFormat.configureIncrementalLoad(job, table);
 
+        LOG.info(format("*** Using quorum %s ***", job.getConfiguration().get("hbase.zookeeper.quorum")));
         if (job.waitForCompletion(true)) {
             LoadIncrementalHFiles fileLoader = new LoadIncrementalHFiles(conf);
             fileLoader.doBulkLoad(new Path(outputPath), table);
@@ -223,7 +225,11 @@ public class BulkLoader extends Configured implements Tool {
         conf.setIfUnset("my_columns", columns);
         conf.setIfUnset("hb_family", params.get("hbase_family"));
         conf.setIfUnset("zk_quorum", params.get("zk_quorum"));
-        conf.setIfUnset("hbase.zookeeper.quorum", params.get("zk_quorum"));
+        if ("localhost".equalsIgnoreCase(conf.get("hbase.zookeeper.quorum"))) {
+            conf.set("hbase.zookeeper.quorum", params.get("zk_quorum"));
+        } else {
+            conf.setIfUnset("hbase.zookeeper.quorum", params.get("zk_quorum"));
+        }
         conf.setIfUnset("hb_table", params.get("hbase_table_name"));
         conf.setIfUnset("region_size", params.get("region_size"));
         conf.setIfUnset("output_path", "bulk_loader_output_" + System.currentTimeMillis() + ".tmp");
