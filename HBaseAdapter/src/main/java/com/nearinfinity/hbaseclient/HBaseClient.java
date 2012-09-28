@@ -8,7 +8,10 @@ import com.nearinfinity.mysqlengine.scanner.SingleResultScanner;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.PrefixFilter;
+import org.apache.hadoop.hbase.filter.QualifierFilter;
+import org.apache.hadoop.hbase.filter.WritableByteArrayComparable;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
 
@@ -384,11 +387,11 @@ public class HBaseClient {
     }
 
     public boolean hasDuplicateValues(String tableName, Map<String, byte[]> values) throws IOException {
-        logger.info("Checking for duplicate values");
-
         for (Map.Entry<String, byte[]> entry : values.entrySet()) {
             String columnName = entry.getKey();
             byte[] columnValue = entry.getValue();
+
+            logger.debug("Checking for duplicate values in unique-indexed column " + columnName);
 
             PrefixScanStrategy strategy = new PrefixScanStrategy(tableName, columnName, columnValue);
             HBaseResultScanner scanner = new SingleResultScanner(getScanner(strategy));
@@ -396,6 +399,37 @@ public class HBaseClient {
             if (scanner.next(null) != null) {
                 return true;
             }
+        }
+
+        return false;
+    }
+
+    public boolean columnContainsDuplicates(String tableName, String columnName) throws IOException {
+        logger.info("Checking column " + columnName + " in table " + tableName + " for duplicate values");
+
+        TableInfo info = this.tableCache.get(tableName);
+
+        Scan scan = ScanFactory.buildScan();
+        byte[] prefix = ByteBuffer.allocate(9).put(RowType.DATA.getValue()).putLong(info.getId()).array();
+        byte[] columnIdBytes = Bytes.toBytes(info.getColumnIdByName(columnName));
+
+        PrefixFilter prefixFilter = new PrefixFilter(prefix);
+        scan.addColumn(Constants.NIC, columnIdBytes);
+
+        scan.setFilter(prefixFilter);
+
+        HashSet<ByteBuffer> columnValues = new HashSet<ByteBuffer>();
+
+        ResultScanner scanner = this.table.getScanner(scan);
+        Result result;
+
+        while((result = scanner.next()) != null) {
+            ByteBuffer value = ByteBuffer.wrap(result.getValue(Constants.NIC, columnIdBytes));
+            if (columnValues.contains(value)) {
+                return true;
+            }
+
+            columnValues.add(value);
         }
 
         return false;
