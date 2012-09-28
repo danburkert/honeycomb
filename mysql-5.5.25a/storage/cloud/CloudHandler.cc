@@ -717,7 +717,7 @@ int CloudHandler::write_row_helper(uchar* buf)
   jclass adapter_class = this->adapter();
   jmethodID write_row_method = this->env->GetStaticMethodID(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;)Z");
   jstring table_name = this->table_name();
-  //--------------------------------
+
   jobject java_row_map = create_java_map(this->env);
   jobject unique_values_map = create_java_map(this->env);
   // Boilerplate stuff every engine has to do on writes
@@ -864,6 +864,19 @@ bool CloudHandler::field_has_unique_index(Field *field)
   }
 
   return false;
+}
+
+bool CloudHandler::column_contains_duplicates(Field *field)
+{
+  attach_thread();
+
+  jclass adapter = this->adapter();
+  jmethodID column_has_duplicates_method = this->env->GetStaticMethodID(adapter, "columnContainsDuplicates", "(Ljava/lang/String;Ljava/lang/String;)Z");
+  jboolean has_duplicates = this->env->CallStaticBooleanMethod(adapter, column_has_duplicates_method, this->table_name(), string_to_java_string(field->field_name));
+
+  detach_thread();
+
+  return has_duplicates;
 }
 
 jstring CloudHandler::string_to_java_string(const char *string)

@@ -71,6 +71,7 @@ class CloudHandler : public handler
     void reset_scan_counter();
     bool check_for_renamed_column(const TABLE*  table, const char* col_name);
     bool field_has_unique_index(Field *field);
+    bool column_contains_duplicates(Field *field);
 
     bool is_integral_field(int field_type)
     {
@@ -205,10 +206,10 @@ class CloudHandler : public handler
 
     virtual int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add)
     {
-      // TODO: If someone is trying to add a unique index to a column that has duplicate values, do we allow it?
-      // InnoDB doesn't. But that could be billions of records to look over. O_O - ABC
+      Field *field_being_indexed = key_info->key_part->field;
+      bool column_has_duplicates = this->column_contains_duplicates(field_being_indexed);
 
-      return 0;
+      return column_has_duplicates ? HA_ERR_FOUND_DUPP_UNIQUE : 0;
     }
 
     virtual int final_add_index(handler_add_index *add, bool commit)

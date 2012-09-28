@@ -258,6 +258,19 @@ public class HBaseAdapter {
         return hasDuplicates;
     }
 
+    public static boolean columnContainsDuplicates(String tableName, String columnName) throws HBaseAdapterException {
+        boolean containsDuplicates;
+
+        try {
+            containsDuplicates = client.columnContainsDuplicates(tableName, columnName);
+        } catch (Exception e) {
+            logger.error("columnContainsDuplicates-> Exception:", e);
+            throw new HBaseAdapterException("columnContainsDuplicates", e);
+        }
+
+        return containsDuplicates;
+    }
+
     public static IndexRow indexRead(long scanId, byte[] value, IndexReadType readType) throws HBaseAdapterException {
         logger.info("indexRead-> scanId: " + scanId + ", value: " + Bytes.toString(value) + ", readType " + readType.name());
 
