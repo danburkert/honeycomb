@@ -13,6 +13,8 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static java.lang.String.format;
+
 public class HBaseClient {
     private HTable table;
 
@@ -154,6 +156,10 @@ public class HBaseClient {
     public TableInfo getTableInfo(String tableName) throws IOException {
         if (tableCache.containsKey(tableName)) {
             return tableCache.get(tableName);
+        }
+
+        if (table == null) {
+            throw new IllegalStateException(format("Table %s was null. Cannot get table information from null table.", tableName));
         }
 
         //Get the table id from HBase
