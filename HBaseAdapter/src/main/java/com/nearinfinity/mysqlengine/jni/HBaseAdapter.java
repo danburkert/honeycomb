@@ -10,6 +10,7 @@ import com.nearinfinity.mysqlengine.scanner.HBaseResultScanner;
 import com.nearinfinity.mysqlengine.scanner.SingleResultScanner;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.Pair;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -245,30 +246,30 @@ public class HBaseAdapter {
         return scanId;
     }
 
-    public static boolean hasDuplicateValues(String tableName, Map<String, byte[]> values) throws HBaseAdapterException {
-        boolean hasDuplicates;
+    public static String findDuplicateKey(String tableName, Map<String, byte[]> values) throws HBaseAdapterException {
+        String result = null;
 
         try {
-            hasDuplicates = client.hasDuplicateValues(tableName, values);
+            result = client.findDuplicateKey(tableName, values);
         } catch (Exception e) {
             logger.error("hasDuplicateValues-> Exception:", e);
             throw new HBaseAdapterException("hasDuplicateValues", e);
         }
 
-        return hasDuplicates;
+        return result;
     }
 
-    public static boolean columnContainsDuplicates(String tableName, String columnName) throws HBaseAdapterException {
-        boolean containsDuplicates;
+    public static byte[] findDuplicateValue(String tableName, String columnName) throws HBaseAdapterException {
+        byte[] duplicate;
 
         try {
-            containsDuplicates = client.columnContainsDuplicates(tableName, columnName);
+            duplicate = client.findDuplicateValue(tableName, columnName);
         } catch (Exception e) {
             logger.error("columnContainsDuplicates-> Exception:", e);
             throw new HBaseAdapterException("columnContainsDuplicates", e);
         }
 
-        return containsDuplicates;
+        return duplicate;
     }
 
     public static IndexRow indexRead(long scanId, byte[] value, IndexReadType readType) throws HBaseAdapterException {
