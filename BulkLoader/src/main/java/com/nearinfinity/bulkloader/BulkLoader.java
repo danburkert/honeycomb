@@ -7,6 +7,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.ContentSummary;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -141,14 +142,19 @@ public class BulkLoader extends Configured implements Tool {
         job.setMapOutputValueClass(Put.class);
 
         job.setReducerClass(PutSortReducer.class);
-        FileOutputFormat.setOutputPath(job, new Path(outputPath));
+        Path outputDir = new Path(outputPath);
+        FileOutputFormat.setOutputPath(job, outputDir);
 
         HFileOutputFormat.configureIncrementalLoad(job, table);
 
         LOG.info(format("*** Using quorum %s ***", job.getConfiguration().get("hbase.zookeeper.quorum")));
         if (job.waitForCompletion(true)) {
             LoadIncrementalHFiles fileLoader = new LoadIncrementalHFiles(conf);
-            fileLoader.doBulkLoad(new Path(outputPath), table);
+            try {
+                fileLoader.doBulkLoad(new Path(outputPath), table);
+            } catch (Exception e) {
+                LOG.error("Failure during bulk load", e);
+            }
 
             long count = job.getCounters().findCounter(Counters.ROWS).getValue();
             HBaseClient client = new HBaseClient(conf.get("hb_table"), conf.get("zk_quorum"));
