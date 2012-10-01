@@ -13,6 +13,7 @@ import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.filter.QualifierFilter;
 import org.apache.hadoop.hbase.filter.WritableByteArrayComparable;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.Pair;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -386,7 +387,7 @@ public class HBaseClient {
                 : "Changes to tables will be written to HBase when the write buffer has become full");
     }
 
-    public boolean hasDuplicateValues(String tableName, Map<String, byte[]> values) throws IOException {
+    public String findDuplicateKey(String tableName, Map<String, byte[]> values) throws IOException {
         for (Map.Entry<String, byte[]> entry : values.entrySet()) {
             String columnName = entry.getKey();
             byte[] columnValue = entry.getValue();
@@ -397,14 +398,14 @@ public class HBaseClient {
             HBaseResultScanner scanner = new SingleResultScanner(getScanner(strategy));
 
             if (scanner.next(null) != null) {
-                return true;
+                return columnName;
             }
         }
 
-        return false;
+        return null;
     }
 
-    public boolean columnContainsDuplicates(String tableName, String columnName) throws IOException {
+    public byte[] findDuplicateValue(String tableName, String columnName) throws IOException {
         logger.info("Checking column " + columnName + " in table " + tableName + " for duplicate values");
 
         TableInfo info = this.tableCache.get(tableName);
@@ -426,13 +427,13 @@ public class HBaseClient {
         while((result = scanner.next()) != null) {
             ByteBuffer value = ByteBuffer.wrap(result.getValue(Constants.NIC, columnIdBytes));
             if (columnValues.contains(value)) {
-                return true;
+                return value.array();
             }
 
             columnValues.add(value);
         }
 
-        return false;
+        return null;
     }
 
     public void setWriteBufferSize(long numBytes) {
