@@ -471,9 +471,9 @@ int CloudHandler::create(const char *path, TABLE *table_arg,
       if (strncmp((*field)->charset()->name, "utf8_bin", 8) != 0
           && (*field)->binary() == false)
       {
-        ERROR(("Encoding must be utf8 and Collation must be utf8_bin"));
+        my_error(ER_CREATE_FILEGROUP_FAILED, MYF(0), "table. Required: character set utf8 collate utf8_bin");
         detach_thread();
-        DBUG_RETURN(1);
+        DBUG_RETURN(HA_WRONG_CREATE_OPTION);
       }
       break;
     default:
