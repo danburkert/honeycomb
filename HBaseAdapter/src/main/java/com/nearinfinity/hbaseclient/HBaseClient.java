@@ -1,11 +1,19 @@
 package com.nearinfinity.hbaseclient;
 
+import com.nearinfinity.hbaseclient.strategy.PrefixScanStrategy;
 import com.nearinfinity.hbaseclient.strategy.ScanStrategy;
+import com.nearinfinity.mysqlengine.jni.HBaseAdapterException;
+import com.nearinfinity.mysqlengine.scanner.HBaseResultScanner;
+import com.nearinfinity.mysqlengine.scanner.SingleResultScanner;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.PrefixFilter;
+import org.apache.hadoop.hbase.filter.QualifierFilter;
+import org.apache.hadoop.hbase.filter.WritableByteArrayComparable;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.Pair;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -383,6 +391,55 @@ public class HBaseClient {
         logger.info(shouldFlushChangesImmediately
                 ? "Changes to tables will be written to HBase immediately"
                 : "Changes to tables will be written to HBase when the write buffer has become full");
+    }
+
+    public String findDuplicateKey(String tableName, Map<String, byte[]> values) throws IOException {
+        for (Map.Entry<String, byte[]> entry : values.entrySet()) {
+            String columnName = entry.getKey();
+            byte[] columnValue = entry.getValue();
+
+            logger.debug("Checking for duplicate values in unique-indexed column " + columnName);
+
+            PrefixScanStrategy strategy = new PrefixScanStrategy(tableName, columnName, columnValue);
+            HBaseResultScanner scanner = new SingleResultScanner(getScanner(strategy));
+
+            if (scanner.next(null) != null) {
+                return columnName;
+            }
+        }
+
+        return null;
+    }
+
+    public byte[] findDuplicateValue(String tableName, String columnName) throws IOException {
+        logger.info("Checking column " + columnName + " in table " + tableName + " for duplicate values");
+
+        TableInfo info = this.tableCache.get(tableName);
+
+        Scan scan = ScanFactory.buildScan();
+        byte[] prefix = ByteBuffer.allocate(9).put(RowType.DATA.getValue()).putLong(info.getId()).array();
+        byte[] columnIdBytes = Bytes.toBytes(info.getColumnIdByName(columnName));
+
+        PrefixFilter prefixFilter = new PrefixFilter(prefix);
+        scan.addColumn(Constants.NIC, columnIdBytes);
+
+        scan.setFilter(prefixFilter);
+
+        HashSet<ByteBuffer> columnValues = new HashSet<ByteBuffer>();
+
+        ResultScanner scanner = this.table.getScanner(scan);
+        Result result;
+
+        while((result = scanner.next()) != null) {
+            ByteBuffer value = ByteBuffer.wrap(result.getValue(Constants.NIC, columnIdBytes));
+            if (columnValues.contains(value)) {
+                return value.array();
+            }
+
+            columnValues.add(value);
+        }
+
+        return null;
     }
 
     public void setWriteBufferSize(long numBytes) {
