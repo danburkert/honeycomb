@@ -1,13 +1,15 @@
 package com.nearinfinity.bulkloader;
 
 import au.com.bytecode.opencsv.CSVReader;
-import com.nearinfinity.hbaseclient.*;
+import com.nearinfinity.hbaseclient.ColumnMetadata;
+import com.nearinfinity.hbaseclient.HBaseClient;
+import com.nearinfinity.hbaseclient.PutListFactory;
+import com.nearinfinity.hbaseclient.TableInfo;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.ContentSummary;
-import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -26,7 +28,10 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.StringReader;
 import java.text.ParseException;
 import java.util.*;
 
@@ -37,37 +42,9 @@ public class BulkLoader extends Configured implements Tool {
 
     public enum Counters {ROWS, FAILED_ROWS}
 
-    @Override
-    public int run(String[] args) throws Exception {
-        if (args.length != 3) {
-            System.err.println("Usage: com.nearinfinity.bulkloader.BulkLoader [generic arguments] <input path> <MySQL table name>" +
-                    " <comma separated MySQL column names>");
-            return -1;
-        }
-
-        Map<String, String> params = readConfigOptions();
-
-        Configuration argConf = getConf();
-        Configuration conf = HBaseConfiguration.create();
-        HBaseConfiguration.merge(conf, argConf);
-
-        updateConfiguration(conf, args, params);
-
-        HBaseAdmin admin = new HBaseAdmin(conf);
-
-        HBaseAdminColumn.addDummyFamily(admin);
-
-        createSamplingJob(conf);
-
-        createSplits(conf, admin);
-
-        createBulkLoadJob(conf);
-
-        deleteDummyData(conf);
-
-        HBaseAdminColumn.deleteDummyFamily(admin);
-
-        return 0;
+    public static void main(String[] args) throws Exception {
+        int exitCode = ToolRunner.run(new BulkLoader(), args);
+        System.exit(exitCode);
     }
 
     public static List<Put> createPuts(Text line, TableInfo tableInfo, String[] columnNames) throws IOException, ParseException {
@@ -103,7 +80,44 @@ public class BulkLoader extends Configured implements Tool {
         return client.getTableInfo(sqlTableName);
     }
 
-    public static void createSamplingJob(Configuration conf) throws IOException, ClassNotFoundException, InterruptedException {
+    @Override
+    public int run(String[] args) throws Exception {
+        if (args.length != 3) {
+            System.err.println("Usage: com.nearinfinity.bulkloader.BulkLoader [generic arguments] <input path> <MySQL table name>" +
+                    " <comma separated MySQL column names>");
+            return -1;
+        }
+
+        Map<String, String> params = readConfigOptions();
+
+        Configuration argConf = getConf();
+        Configuration conf = HBaseConfiguration.create();
+        HBaseConfiguration.merge(conf, argConf);
+
+        updateConfiguration(conf, args, params);
+
+        HBaseAdmin admin = new HBaseAdmin(conf);
+
+        HBaseAdminColumn.addDummyFamily(admin);
+
+        createSamplingJob(conf);
+
+        createSplits(conf, admin);
+
+        createBulkLoadJob(conf);
+
+        deleteDummyData(conf);
+
+        HBaseAdminColumn.deleteDummyFamily(admin);
+
+        return 0;
+    }
+
+    private static void printQuorum(Job job) {
+        LOG.info(format("*** Using quorum %s ***", job.getConfiguration().get("hbase.zookeeper.quorum")));
+    }
+
+    private static void createSamplingJob(Configuration conf) throws IOException, ClassNotFoundException, InterruptedException {
         LOG.info("Setting up the sampling job");
         String outputPath = conf.get("output_path");
         String inputPath = conf.get("input_path");
@@ -121,7 +135,7 @@ public class BulkLoader extends Configured implements Tool {
         FileOutputFormat.setOutputPath(job, new Path(outputPath));
         job.setNumReduceTasks(2 * columnCount + 1);
         TableMapReduceUtil.initTableReducerJob(conf.get("hb_table"), SamplingReducer.class, job, SamplingPartitioner.class);
-        LOG.info(format("*** Using quorum %s ***", job.getConfiguration().get("hbase.zookeeper.quorum")));
+        printQuorum(job);
         job.waitForCompletion(true);
         deletePath(conf, outputPath);
     }
@@ -147,15 +161,10 @@ public class BulkLoader extends Configured implements Tool {
 
         HFileOutputFormat.configureIncrementalLoad(job, table);
 
-        LOG.info(format("*** Using quorum %s ***", job.getConfiguration().get("hbase.zookeeper.quorum")));
+        printQuorum(job);
         if (job.waitForCompletion(true)) {
             LoadIncrementalHFiles fileLoader = new LoadIncrementalHFiles(conf);
-            try {
-                fileLoader.doBulkLoad(new Path(outputPath), table);
-            } catch (Exception e) {
-                LOG.error("Failure during bulk load", e);
-            }
-
+            fileLoader.doBulkLoad(outputDir, table);
             long count = job.getCounters().findCounter(Counters.ROWS).getValue();
             HBaseClient client = new HBaseClient(conf.get("hb_table"), conf.get("zk_quorum"));
             client.incrementRowCount(conf.get("sql_table_name"), count);
@@ -260,10 +269,5 @@ public class BulkLoader extends Configured implements Tool {
             params.put(line.next(), line.next());
         }
         return params;
-    }
-
-    public static void main(String[] args) throws Exception {
-        int exitCode = ToolRunner.run(new BulkLoader(), args);
-        System.exit(exitCode);
     }
 }

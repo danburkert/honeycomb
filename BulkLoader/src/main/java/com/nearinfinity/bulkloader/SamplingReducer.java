@@ -18,7 +18,8 @@ public class SamplingReducer extends TableReducer<ImmutableBytesWritable, Put, W
     @Override
     protected void setup(Context context) throws IOException {
         Configuration conf = context.getConfiguration();
-        regionSize = Math.min(conf.getLong("region_size", _1GB), _1GB);
+        long hbaseRegionSize = conf.getLong("hbase.hregion.max.filesize", _1GB);
+        regionSize = Math.min(conf.getLong("region_size", _1GB), hbaseRegionSize);
     }
 
     @Override

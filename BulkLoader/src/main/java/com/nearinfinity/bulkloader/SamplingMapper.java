@@ -42,7 +42,6 @@ public class SamplingMapper extends Mapper<LongWritable, Text, ImmutableBytesWri
     public void map(LongWritable offset, Text line, Context context) throws IOException, InterruptedException {
         double coinFlip = random.nextDouble();
         if (samplePercent >= coinFlip) {
-
             LOG.info("Adding to sample");
             List<Put> puts = null;
             try {
