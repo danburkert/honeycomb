@@ -11,6 +11,7 @@
 #include "my_base.h"            /* ha_rows */
 #include <jni.h>
 #include <string.h>
+#include <limits.h>
 
 #include "CloudShare.h"
 #include "Macros.h"
@@ -38,6 +39,8 @@ class CloudHandler : public handler
     long long curr_scan_id;
     ulonglong rows_written;
     long long rows_deleted;
+
+    uint failed_key_index;
 
     // HBase JNI Adapter:
     JNIEnv* env;
@@ -72,6 +75,13 @@ class CloudHandler : public handler
     void reset_index_scan_counter();
     void reset_scan_counter();
     bool check_for_renamed_column(const TABLE*  table, const char* col_name);
+    bool field_has_unique_index(Field *field);
+    jbyteArray find_duplicate_column_values(Field *field);
+    bool row_has_duplicate_values(jobject value_map);
+    int get_failed_key_index(const char *key_name);
+    char *char_array_from_java_bytes(jbyteArray java_bytes);
+    void store_field_value(Field *field, char *key, int length);
+    int java_array_length(jarray array);
 
     bool is_integral_field(int field_type)
     {
@@ -91,6 +101,35 @@ class CloudHandler : public handler
           || field_type == MYSQL_TYPE_TIME
           || field_type == MYSQL_TYPE_TIMESTAMP
           || field_type == MYSQL_TYPE_NEWDATE);
+    }
+
+    bool is_floating_point_field(int field_type)
+    {
+      return (field_type == MYSQL_TYPE_FLOAT || field_type == MYSQL_TYPE_DOUBLE);
+    }
+
+    bool is_decimal_field(int field_type)
+    {
+      return (field_type == MYSQL_TYPE_DECIMAL || field_type == MYSQL_TYPE_NEWDECIMAL);
+    }
+
+    bool is_byte_field(int field_type)
+    {
+      return (field_type == MYSQL_TYPE_VARCHAR
+    || field_type == MYSQL_TYPE_VAR_STRING
+    || field_type == MYSQL_TYPE_STRING
+    || field_type == MYSQL_TYPE_BLOB
+    || field_type == MYSQL_TYPE_TINY_BLOB
+    || field_type == MYSQL_TYPE_MEDIUM_BLOB
+    || field_type == MYSQL_TYPE_LONG_BLOB);
+    }
+
+    bool is_unsupported_field(int field_type)
+    {
+      return (field_type == MYSQL_TYPE_NULL
+      || field_type == MYSQL_TYPE_BIT
+      || field_type == MYSQL_TYPE_SET
+      || field_type == MYSQL_TYPE_GEOMETRY);
     }
 
     jclass adapter()
@@ -188,7 +227,12 @@ class CloudHandler : public handler
 
     uint max_supported_key_length() const
     {
-      return 255;
+      return UINT_MAX;
+    }
+
+    uint max_supported_key_part_length() const
+    {
+      return UINT_MAX;
     }
 
     virtual double scan_time()
@@ -203,7 +247,19 @@ class CloudHandler : public handler
 
     virtual int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add)
     {
-      return 0;
+      Field *field_being_indexed = key_info->key_part->field;
+      jbyteArray duplicate_value = this->find_duplicate_column_values(field_being_indexed);
+
+      int error = duplicate_value != NULL ? HA_ERR_FOUND_DUPP_KEY : 0;
+
+      if (error != 0)
+      {
+        int length = this->java_array_length(duplicate_value);
+        char *value_key = this->char_array_from_java_bytes(duplicate_value);
+        this->store_field_value(field_being_indexed, value_key, length);
+      }
+
+      return error;
     }
 
     virtual int final_add_index(handler_add_index *add, bool commit)
