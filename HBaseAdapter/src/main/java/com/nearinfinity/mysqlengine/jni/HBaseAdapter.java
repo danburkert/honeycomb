@@ -10,6 +10,7 @@ import com.nearinfinity.mysqlengine.scanner.HBaseResultScanner;
 import com.nearinfinity.mysqlengine.scanner.SingleResultScanner;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.Pair;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -245,6 +246,32 @@ public class HBaseAdapter {
         return scanId;
     }
 
+    public static String findDuplicateKey(String tableName, Map<String, byte[]> values) throws HBaseAdapterException {
+        String result = null;
+
+        try {
+            result = client.findDuplicateKey(tableName, values);
+        } catch (Exception e) {
+            logger.error("hasDuplicateValues-> Exception:", e);
+            throw new HBaseAdapterException("hasDuplicateValues", e);
+        }
+
+        return result;
+    }
+
+    public static byte[] findDuplicateValue(String tableName, String columnName) throws HBaseAdapterException {
+        byte[] duplicate;
+
+        try {
+            duplicate = client.findDuplicateValue(tableName, columnName);
+        } catch (Exception e) {
+            logger.error("columnContainsDuplicates-> Exception:", e);
+            throw new HBaseAdapterException("columnContainsDuplicates", e);
+        }
+
+        return duplicate;
+    }
+
     public static IndexRow indexRead(long scanId, byte[] value, IndexReadType readType) throws HBaseAdapterException {
         logger.info("indexRead-> scanId: " + scanId + ", value: " + Bytes.toString(value) + ", readType " + readType.name());
 
@@ -374,6 +401,15 @@ public class HBaseAdapter {
         } catch (Exception e) {
             logger.error("getRowCount-> Exception: ", e);
             throw new HBaseAdapterException("getRowCount", e);
+        }
+    }
+
+    public static void renameTable(String from, String to) throws HBaseAdapterException {
+        try {
+            client.renameTable(from, to);
+        } catch (Exception e) {
+            logger.error("renameTable-> Exception: ", e);
+            throw new HBaseAdapterException("renameTable", e);
         }
     }
 }

@@ -11,6 +11,7 @@
 #include "my_base.h"            /* ha_rows */
 #include <jni.h>
 #include <string.h>
+#include <limits.h>
 
 #include "CloudShare.h"
 #include "Macros.h"
@@ -35,6 +36,8 @@ class CloudHandler : public handler
     long long curr_scan_id;
     ulonglong rows_written;
     long long rows_deleted;
+
+    uint failed_key_index;
 
     // HBase JNI Adapter:
     JNIEnv* env;
@@ -68,6 +71,14 @@ class CloudHandler : public handler
     void end_scan();
     void reset_index_scan_counter();
     void reset_scan_counter();
+    bool check_for_renamed_column(const TABLE*  table, const char* col_name);
+    bool field_has_unique_index(Field *field);
+    jbyteArray find_duplicate_column_values(Field *field);
+    bool row_has_duplicate_values(jobject value_map);
+    int get_failed_key_index(const char *key_name);
+    char *char_array_from_java_bytes(jbyteArray java_bytes);
+    void store_field_value(Field *field, char *key, int length);
+    int java_array_length(jarray array);
 
     bool is_integral_field(int field_type)
     {
@@ -87,6 +98,35 @@ class CloudHandler : public handler
           || field_type == MYSQL_TYPE_TIME
           || field_type == MYSQL_TYPE_TIMESTAMP
           || field_type == MYSQL_TYPE_NEWDATE);
+    }
+
+    bool is_floating_point_field(int field_type)
+    {
+      return (field_type == MYSQL_TYPE_FLOAT || field_type == MYSQL_TYPE_DOUBLE);
+    }
+
+    bool is_decimal_field(int field_type)
+    {
+      return (field_type == MYSQL_TYPE_DECIMAL || field_type == MYSQL_TYPE_NEWDECIMAL);
+    }
+
+    bool is_byte_field(int field_type)
+    {
+      return (field_type == MYSQL_TYPE_VARCHAR
+    || field_type == MYSQL_TYPE_VAR_STRING
+    || field_type == MYSQL_TYPE_STRING
+    || field_type == MYSQL_TYPE_BLOB
+    || field_type == MYSQL_TYPE_TINY_BLOB
+    || field_type == MYSQL_TYPE_MEDIUM_BLOB
+    || field_type == MYSQL_TYPE_LONG_BLOB);
+    }
+
+    bool is_unsupported_field(int field_type)
+    {
+      return (field_type == MYSQL_TYPE_NULL
+      || field_type == MYSQL_TYPE_BIT
+      || field_type == MYSQL_TYPE_SET
+      || field_type == MYSQL_TYPE_GEOMETRY);
     }
 
     jclass adapter()
@@ -138,6 +178,16 @@ class CloudHandler : public handler
       return "HASH";
     }
 
+    uint alter_table_flags(uint flags)
+    {
+      if (ht->alter_table_flags)
+      {
+        return ht->alter_table_flags(flags);
+      }
+
+      return 0;
+    }
+
     ulonglong table_flags() const
     {
       return HA_FAST_KEY_READ |
@@ -147,8 +197,7 @@ class CloudHandler : public handler
         HA_STATS_RECORDS_IS_EXACT | 
         HA_NULL_IN_KEY | // Nulls in indexed columns are allowed
         HA_NO_AUTO_INCREMENT |
-        HA_TABLE_SCAN_ON_INDEX |
-        HA_ANY_INDEX_MAY_BE_UNIQUE;
+        HA_TABLE_SCAN_ON_INDEX;
     }
 
     ulong index_flags(uint inx, uint part, bool all_parts) const
@@ -173,7 +222,12 @@ class CloudHandler : public handler
 
     uint max_supported_key_length() const
     {
-      return 255;
+      return UINT_MAX;
+    }
+
+    uint max_supported_key_part_length() const
+    {
+      return UINT_MAX;
     }
 
     virtual double scan_time()
@@ -184,6 +238,38 @@ class CloudHandler : public handler
     virtual double read_time(uint, uint, ha_rows rows)
     {
       return (double) rows /  20.0+1;
+    }
+
+    virtual int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add)
+    {
+      Field *field_being_indexed = key_info->key_part->field;
+      jbyteArray duplicate_value = this->find_duplicate_column_values(field_being_indexed);
+
+      int error = duplicate_value != NULL ? HA_ERR_FOUND_DUPP_KEY : 0;
+
+      if (error != 0)
+      {
+        int length = this->java_array_length(duplicate_value);
+        char *value_key = this->char_array_from_java_bytes(duplicate_value);
+        this->store_field_value(field_being_indexed, value_key, length);
+      }
+
+      return error;
+    }
+
+    virtual int final_add_index(handler_add_index *add, bool commit)
+    {
+      return 0;
+    }
+
+    virtual int prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys)
+    {
+      return 0;
+    }
+
+    virtual int final_drop_index(TABLE *table_arg)
+    {
+      return 0;
     }
 
     const char **bas_ext() const;
@@ -207,6 +293,9 @@ class CloudHandler : public handler
     int end_bulk_insert();
     ha_rows records_in_range(uint inx, key_range *min_key, key_range *max_key);
     int analyze(THD* thd, HA_CHECK_OPT* check_opt);
+    ha_rows estimate_rows_upper_bound();
+    bool check_if_incompatible_data(HA_CREATE_INFO *create_info, uint table_changes);
+    int rename_table(const char *from, const char *to);
 };
 
 #endif

@@ -40,21 +40,6 @@ int CloudHandler::close(void)
   DBUG_RETURN(free_share(share));
 }
 
-int CloudHandler::write_row(uchar *buf)
-{
-  DBUG_ENTER("CloudHandler::write_row");
-
-  if (share->crashed)
-    DBUG_RETURN(HA_ERR_CRASHED_ON_USAGE);
-
-  ha_statistic_increment(&SSV::ha_write_count);
-
-  int ret = write_row_helper(buf);
-  this->rows_written++;
-
-  DBUG_RETURN(ret);
-}
-
 /*
  This will be called in a table scan right before the previous ::rnd_next()
  call.
@@ -246,6 +231,69 @@ int CloudHandler::rnd_next(uchar *buf)
   DBUG_RETURN(rc);
 }
 
+void CloudHandler::store_field_value(Field *field, char *val, int val_length)
+{
+  int type = field->real_type();
+
+  if (!is_unsupported_field(type))
+  {
+    if (is_integral_field(type))
+    {
+      long long long_value = *(long long*) val;
+      if (is_little_endian())
+      {
+        long_value = __builtin_bswap64(long_value);
+      }
+      field->store(long_value, false);
+    }
+    else if (is_byte_field(type))
+    {
+      field->store(val, val_length, &my_charset_bin);
+    }
+    else if (is_date_or_time_field(type))
+    {
+      if (type == MYSQL_TYPE_TIME)
+      {
+        MYSQL_TIME mysql_time;
+        int warning;
+        str_to_time(val, val_length, &mysql_time, &warning);
+        field->store_time(&mysql_time, mysql_time.time_type);
+      }
+      else
+      {
+        MYSQL_TIME mysql_time;
+        int was_cut;
+        str_to_datetime(val, val_length, &mysql_time, TIME_FUZZY_DATE, &was_cut);
+        field->store_time(&mysql_time, mysql_time.time_type);
+      }
+    }
+    else if (is_decimal_field(type))
+    {
+      // TODO: Is this reliable? Field_decimal doesn't seem to have these members. Potential crash for old decimal types. - ABC
+      uint precision = ((Field_new_decimal*) field)->precision;
+      uint scale = ((Field_new_decimal*) field)->dec;
+      my_decimal decimal_val;
+      binary2my_decimal(0, (const uchar *) val, &decimal_val, precision, scale);
+      ((Field_new_decimal *) field)->store_value(
+          (const my_decimal*) &decimal_val);
+    }
+    else if (is_floating_point_field(type))
+    {
+      double double_value;
+      if (is_little_endian())
+      {
+        long long* long_ptr = (long long*) val;
+        longlong swapped_long = __builtin_bswap64(*long_ptr);
+        double_value = *(double*) &swapped_long;
+      } else
+      {
+        double_value = *(double*) val;
+      }
+      field->store(double_value);
+    }
+  }
+}
+
 void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
 {
   jboolean is_copy = JNI_FALSE;
@@ -270,85 +318,7 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
     my_ptrdiff_t offset = (my_ptrdiff_t) (buf - this->table->record[0]);
     field->move_field_offset(offset);
 
-    switch (field->real_type())
-    {
-    case MYSQL_TYPE_TINY:
-    case MYSQL_TYPE_SHORT:
-    case MYSQL_TYPE_LONG:
-    case MYSQL_TYPE_LONGLONG:
-    case MYSQL_TYPE_INT24:
-    case MYSQL_TYPE_YEAR:
-    case MYSQL_TYPE_ENUM:
-    {
-      long long long_value = *(long long*) val;
-      if (is_little_endian())
-      {
-        long_value = __builtin_bswap64(long_value);
-      }
-      field->store(long_value, false);
-      break;
-    }
-    case MYSQL_TYPE_FLOAT:
-    case MYSQL_TYPE_DOUBLE:
-      double double_value;
-      if (is_little_endian())
-      {
-        long long* long_ptr = (long long*) val;
-        longlong swapped_long = __builtin_bswap64(*long_ptr);
-        double_value = *(double*) &swapped_long;
-      } else {
-        double_value = *(double*) val;
-      }
-      field->store(double_value);
-      break;
-
-    case MYSQL_TYPE_DECIMAL:
-    case MYSQL_TYPE_NEWDECIMAL:
-    {
-      // TODO: Is this reliable? Field_decimal doesn't seem to have these members. Potential crash for old decimal types. - ABC
-      uint precision = ((Field_new_decimal*) field)->precision;
-      uint scale = ((Field_new_decimal*) field)->dec;
-      my_decimal decimal_val;
-      binary2my_decimal(0, (const uchar *) val, &decimal_val, precision, scale);
-      ((Field_new_decimal *) field)->store_value(
-          (const my_decimal*) &decimal_val);
-      break;
-    }
-    case MYSQL_TYPE_TIME:
-    {
-      MYSQL_TIME mysql_time;
-      int warning;
-      str_to_time(val, val_length, &mysql_time, &warning);
-      field->store_time(&mysql_time, mysql_time.time_type);
-      break;
-    }
-    case MYSQL_TYPE_DATE:
-    case MYSQL_TYPE_NEWDATE:
-    case MYSQL_TYPE_DATETIME:
-    case MYSQL_TYPE_TIMESTAMP:
-    {
-      MYSQL_TIME mysql_time;
-      int was_cut;
-      str_to_datetime(val, val_length, &mysql_time, TIME_FUZZY_DATE, &was_cut);
-      field->store_time(&mysql_time, mysql_time.time_type);
-      break;
-    }
-    case MYSQL_TYPE_STRING:
-    case MYSQL_TYPE_VARCHAR:
-    case MYSQL_TYPE_VAR_STRING:
-    case MYSQL_TYPE_TINY_BLOB:
-    case MYSQL_TYPE_MEDIUM_BLOB:
-    case MYSQL_TYPE_BLOB:
-    case MYSQL_TYPE_LONG_BLOB:
-      field->store(val, val_length, &my_charset_bin);
-      break;
-    case MYSQL_TYPE_NULL:
-    case MYSQL_TYPE_BIT:
-    case MYSQL_TYPE_SET:
-    case MYSQL_TYPE_GEOMETRY:
-    default:
-      break;
-    }
+    this->store_field_value(field, val, val_length);
 
     field->move_field_offset(-offset);
     this->env->ReleaseByteArrayElements(java_val, (jbyte*) val, 0);
@@ -431,9 +401,11 @@ int CloudHandler::end_bulk_insert()
 
   this->flush_writes();
   jclass adapter_class = this->adapter();
-  jmethodID update_count_method = this->env->GetStaticMethodID(adapter_class, "incrementRowCount", "(Ljava/lang/String;J)V");
+  jmethodID update_count_method = this->env->GetStaticMethodID(adapter_class,
+      "incrementRowCount", "(Ljava/lang/String;J)V");
   jstring table_name = this->table_name();
-  this->env->CallStaticVoidMethod(adapter_class, update_count_method, table_name, (jlong) this->rows_written);
+  this->env->CallStaticVoidMethod(adapter_class, update_count_method,
+      table_name, (jlong) this->rows_written);
   this->rows_written = 0;
 
   detach_thread();
@@ -471,9 +443,9 @@ int CloudHandler::create(const char *path, TABLE *table_arg,
       if (strncmp((*field)->charset()->name, "utf8_bin", 8) != 0
           && (*field)->binary() == false)
       {
-        ERROR(("Encoding must be utf8 and Collation must be utf8_bin"));
+        my_error(ER_CREATE_FILEGROUP_FAILED, MYF(0), "table. Required: character set utf8 collate utf8_bin");
         detach_thread();
-        DBUG_RETURN(1);
+        DBUG_RETURN(HA_WRONG_CREATE_OPTION);
       }
       break;
     default:
@@ -530,6 +502,9 @@ ha_rows CloudHandler::records_in_range(uint inx, key_range *min_key,
   return stats.records;
 }
 
+// MySQL calls this function all over the place whenever it needs you to update some crucial piece of info.
+// It expects you to use this to set information about your indexes and error codes, as well as general info about your engine.
+// The bit flags (defined in my_base.h) passed in will vary depending on what it wants you to update during this call. - ABC
 int CloudHandler::info(uint flag)
 {
   // TODO: Update this function to take into account the flag being passed in, like the other engines
@@ -546,11 +521,14 @@ int CloudHandler::info(uint flag)
   if (stats.records < 2)
     stats.records = 2;
   stats.deleted = 0;
-  stats.data_file_length = stats.records * 64;
-  stats.index_file_length = stats.records * 128;
-  stats.mean_rec_length = 64;
+  stats.max_data_file_length = this->max_supported_record_length();
+  stats.data_file_length = stats.records * this->table->s->reclength;
+  stats.index_file_length = this->max_supported_key_length();
+  stats.mean_rec_length = 1337;
   stats.delete_length = stats.deleted * stats.mean_rec_length;
-  stats.check_time = 20;
+  stats.check_time = time(NULL);
+
+  // Update index cardinality - see ::analyze() function for more explanation
 
   for (int i = 0; i < this->table->s->keys; i++)
   {
@@ -558,6 +536,15 @@ int CloudHandler::info(uint flag)
     {
       this->table->key_info[i].rec_per_key[j] = 1;
     }
+  }
+
+  // MySQL needs us to tell it the index of the key which caused the last operation to fail
+  // Should be saved in this->failed_key_index for now
+  // Later, when we implement transactions, we should use this opportunity to grab the info from the trx itself.
+  if (flag & HA_STATUS_ERRKEY)
+  {
+    this->errkey = this->failed_key_index;
+    this->failed_key_index = -1;
   }
 
   detach_thread();
@@ -617,30 +604,118 @@ int CloudHandler::extra(enum ha_extra_function operation)
   DBUG_RETURN(0);
 }
 
+int CloudHandler::rename_table(const char *from, const char *to)
+{
+  DBUG_ENTER("CloudHandler::rename_table");
+
+  attach_thread();
+
+  jclass adapter_class = this->adapter();
+  jmethodID rename_table_method = this->env->GetStaticMethodID(adapter_class,
+      "renameTable", "(Ljava/lang/String;Ljava/lang/String;)V");
+  jstring current_table_name = string_to_java_string(
+      extract_table_name_from_path(from));
+  jstring new_table_name = string_to_java_string(
+      extract_table_name_from_path(to));
+  this->env->CallStaticVoidMethod(adapter_class, rename_table_method,
+      current_table_name, new_table_name);
+
+  detach_thread();
+
+  DBUG_RETURN(0);
+}
+
+bool CloudHandler::check_if_incompatible_data(HA_CREATE_INFO *create_info,
+    uint table_changes)
+{
+  if (table_changes != IS_EQUAL_YES)
+  {
+
+    return (COMPATIBLE_DATA_NO);
+  }
+
+  if (this->check_for_renamed_column(table, NULL))
+  {
+    return COMPATIBLE_DATA_NO;
+  }
+
+  /* Check that row format didn't change */
+  if ((create_info->used_fields & HA_CREATE_USED_ROW_FORMAT)
+      && create_info->row_type != ROW_TYPE_DEFAULT
+      && create_info->row_type != get_row_type())
+  {
+
+    return (COMPATIBLE_DATA_NO);
+  }
+
+  /* Specifying KEY_BLOCK_SIZE requests a rebuild of the table. */
+  if (create_info->used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE)
+  {
+    return (COMPATIBLE_DATA_NO);
+  }
+
+  return (COMPATIBLE_DATA_YES);
+}
+
+bool CloudHandler::check_for_renamed_column(const TABLE* table,
+    const char* col_name)
+{
+  uint k;
+  Field* field;
+
+  for (k = 0; k < table->s->fields; k++)
+  {
+    field = table->field[k];
+
+    if (field->flags & FIELD_IS_RENAMED)
+    {
+
+      // If col_name is not provided, return if the field is marked as being renamed.
+      if (!col_name)
+      {
+        return (true);
+      }
+
+      // If col_name is provided, return only if names match
+      if (my_strcasecmp(system_charset_info, field->field_name, col_name) == 0)
+      {
+        return (true);
+      }
+    }
+  }
+
+  return (false);
+}
+
+int CloudHandler::write_row(uchar *buf)
+{
+  DBUG_ENTER("CloudHandler::write_row");
+
+  if (share->crashed)
+    DBUG_RETURN(HA_ERR_CRASHED_ON_USAGE);
+
+  ha_statistic_increment(&SSV::ha_write_count);
+
+  int ret = write_row_helper(buf);
+  this->rows_written++;
+
+  DBUG_RETURN(ret);
+}
+
 /* Set up the JNI Environment, and then persist the row to HBase.
- * This helper calls sql_to_java, which returns the row information
- * as a jobject to be sent to the HBaseAdapter.
+ * This helper turns the row information into a jobject to be sent to the HBaseAdapter.
+ * It also checks for duplicate values for columns that have unique indexes.
  */
 int CloudHandler::write_row_helper(uchar* buf)
 {
   DBUG_ENTER("CloudHandler::write_row_helper");
 
   jclass adapter_class = this->adapter();
-  jmethodID write_row_method = this->env->GetStaticMethodID(adapter_class,
-      "writeRow", "(Ljava/lang/String;Ljava/util/Map;)Z");
+  jmethodID write_row_method = this->env->GetStaticMethodID(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;)Z");
   jstring table_name = this->table_name();
-  jobject java_row_map = sql_to_java();
-  this->env->CallStaticBooleanMethod(adapter_class, write_row_method,
-      table_name, java_row_map);
 
-  DBUG_RETURN(0);
-}
-
-/* Read fields into a java map.
- */
-jobject CloudHandler::sql_to_java()
-{
-  jobject java_map = create_java_map(this->env);
+  jobject java_row_map = create_java_map(this->env);
+  jobject unique_values_map = create_java_map(this->env);
   // Boilerplate stuff every engine has to do on writes
 
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
@@ -660,7 +735,7 @@ jobject CloudHandler::sql_to_java()
 
     if (is_null)
     {
-      java_map_insert(java_map, field_name, NULL, this->env);
+      java_map_insert(java_row_map, field_name, NULL, this->env);
       continue;
     }
     switch (field->real_type())
@@ -745,18 +820,107 @@ jobject CloudHandler::sql_to_java()
       break;
     }
 
-    jbyteArray java_bytes = convert_value_to_java_bytes(byte_val,
-        actualFieldSize);
-    java_map_insert(java_map, field_name, java_bytes, this->env);
+    jbyteArray java_bytes = convert_value_to_java_bytes(byte_val, actualFieldSize);
+    java_map_insert(java_row_map, field_name, java_bytes, this->env);
+
+    // Remember this field for later if we find that it has a unique index, need to check it
+    if (this->field_has_unique_index(field))
+    {
+      java_map_insert(unique_values_map, field_name, java_bytes, this->env);
+    }
   }
 
   dbug_tmp_restore_column_map(table->read_set, old_map);
-  return java_map;
+
+  if (this->row_has_duplicate_values(unique_values_map))
+  {
+    DBUG_RETURN(HA_ERR_FOUND_DUPP_KEY);
+  }
+
+  this->env->CallStaticBooleanMethod(adapter_class, write_row_method, table_name, java_row_map);
+
+  DBUG_RETURN(0);
+}
+
+bool CloudHandler::row_has_duplicate_values(jobject value_map)
+{
+    jclass adapter_class = this->adapter();
+    jmethodID has_duplicates_method = this->env->GetStaticMethodID(adapter_class, "findDuplicateKey", "(Ljava/lang/String;Ljava/util/Map;)Ljava/lang/String;");
+    jstring duplicate_column = (jstring) this->env->CallStaticObjectMethod(adapter_class, has_duplicates_method, this->table_name(), value_map);
+
+    bool error = duplicate_column != NULL;
+
+    if (error)
+    {
+      const char *key_name = this->java_to_string(duplicate_column);
+      this->failed_key_index = this->get_failed_key_index(key_name);
+
+      this->env->ReleaseStringUTFChars(duplicate_column, key_name);
+    }
+
+    return error;
+}
+
+int CloudHandler::get_failed_key_index(const char *key_name)
+{
+  if (this->table->s->keys == 0)
+  {
+    return 0;
+  }
+
+  for(int i = 0; i < this->table->s->keys; i++)
+  {
+    if (strcmp(table->key_info[i].key_part->field->field_name, key_name) == 0)
+    {
+      return i;
+    }
+  }
+
+  return -1;
+}
+
+jbyteArray CloudHandler::find_duplicate_column_values(Field *field)
+{
+  attach_thread();
+
+  jclass adapter = this->adapter();
+  jmethodID column_has_duplicates_method = this->env->GetStaticMethodID(adapter, "findDuplicateValue", "(Ljava/lang/String;Ljava/lang/String;)[B");
+  jbyteArray duplicate_value = (jbyteArray) this->env->CallStaticObjectMethod(adapter, column_has_duplicates_method, this->table_name(), string_to_java_string(field->field_name));
+
+  if (duplicate_value != NULL)
+  {
+      this->failed_key_index = this->get_failed_key_index(field->field_name);
+  }
+
+  detach_thread();
+
+  return duplicate_value;
+}
+
+
+
+bool CloudHandler::field_has_unique_index(Field *field)
+{
+  for (int i = 0; i < table->s->keys; i++)
+  {
+    if ((table->key_info[i].flags & HA_NOSAME)
+        && strcmp(table->key_info[i].key_part->field->field_name, field->field_name) == 0)
+    {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 jstring CloudHandler::string_to_java_string(const char *string)
 {
-  return env->NewStringUTF(string);
+  return this->env->NewStringUTF(string);
+}
+
+const char *CloudHandler::java_to_string(jstring string)
+{
+  return this->env->GetStringUTFChars(string, JNI_FALSE);
 }
 
 int CloudHandler::index_init(uint idx, bool sorted)
@@ -830,8 +994,7 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len,
       java_find_flag = find_flag_to_java(find_flag, this->env);
       break;
     }
-  }
-  else
+  } else
   {
     java_find_flag = find_flag_to_java(find_flag, this->env);
   }
@@ -984,8 +1147,7 @@ void CloudHandler::bytes_to_long(const uchar* buff, unsigned int buff_length,
   if (is_signed && buff[buff_length - 1] >= (uchar) 0x80)
   {
     memset(long_buff, 0xFF, sizeof(long));
-  }
-  else
+  } else
   {
     memset(long_buff, 0x00, sizeof(long));
   }
@@ -993,8 +1155,7 @@ void CloudHandler::bytes_to_long(const uchar* buff, unsigned int buff_length,
   memcpy(long_buff, buff, buff_length);
 }
 
-void CloudHandler::store_uuid_ref(jobject index_row,
-    jmethodID get_uuid_method)
+void CloudHandler::store_uuid_ref(jobject index_row, jmethodID get_uuid_method)
 {
   jbyteArray uuid = (jbyteArray) this->env->CallObjectMethod(index_row,
       get_uuid_method);
@@ -1026,19 +1187,10 @@ int CloudHandler::index_next(uchar *buf)
 int CloudHandler::analyze(THD* thd, HA_CHECK_OPT* check_opt)
 {
   DBUG_ENTER("CloudHandler::analyze");
-  attach_thread();
 
-  jclass adapter_class = this->adapter();
-  jmethodID get_count_method = this->env->GetStaticMethodID(adapter_class,
-      "getRowCount", "(Ljava/lang/String;)J");
-  jstring table_name = this->table_name();
-  jlong row_count = this->env->CallStaticLongMethod(adapter_class,
-      get_count_method, table_name);
-
-  if (row_count == 0)
-  {
-    row_count = 1;
-  }
+  // For each key, just tell MySQL that there is only one value per keypart.
+  // This is, in effect, like telling MySQL that all our indexes are unique, and should essentially always be used for lookups.
+  // If you don't do this, the optimizer REALLY tries to do scans, even when they're not ideal. - ABC
 
   for (int i = 0; i < this->table->s->keys; i++)
   {
@@ -1048,9 +1200,24 @@ int CloudHandler::analyze(THD* thd, HA_CHECK_OPT* check_opt)
     }
   }
 
+  DBUG_RETURN(0);
+}
+
+ha_rows CloudHandler::estimate_rows_upper_bound()
+{
+  DBUG_ENTER("CloudHandler::estimate_rows_upper_bound");
+  attach_thread();
+
+  jclass adapter_class = this->adapter();
+  jmethodID get_count_method = this->env->GetStaticMethodID(adapter_class,
+      "getRowCount", "(Ljava/lang/String;)J");
+  jstring table_name = this->table_name();
+  jlong row_count = this->env->CallStaticLongMethod(adapter_class,
+      get_count_method, table_name);
+
   detach_thread();
 
-  DBUG_RETURN(0);
+  DBUG_RETURN(row_count);
 }
 
 int CloudHandler::index_prev(uchar *buf)
@@ -1227,4 +1394,33 @@ jbyteArray CloudHandler::convert_value_to_java_bytes(uchar* value,
   this->env->ReleaseByteArrayElements(byteArray, java_bytes, 0);
 
   return byteArray;
+}
+
+char *CloudHandler::char_array_from_java_bytes(jbyteArray java_bytes)
+{
+  attach_thread();
+
+  int length = (int) this->env->GetArrayLength(java_bytes);
+  jbyte *jbytes = this->env->GetByteArrayElements(java_bytes, JNI_FALSE);
+
+  char ret[length];
+
+  memcpy(ret, jbytes, length);
+
+  this->env->ReleaseByteArrayElements(java_bytes, jbytes, 0);
+
+  detach_thread();
+
+  return ret;
+}
+
+int CloudHandler::java_array_length(jarray array)
+{
+  attach_thread();
+
+  int length = (int) this->env->GetArrayLength(array);
+
+  detach_thread();
+
+  return length;
 }

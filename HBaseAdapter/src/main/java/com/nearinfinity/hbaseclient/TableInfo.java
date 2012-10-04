@@ -27,6 +27,10 @@ public class TableInfo {
         return this.name;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public long getColumnIdByName(String columnName) {
         return columnNamesToInfo.get(columnName).getId();
     }
