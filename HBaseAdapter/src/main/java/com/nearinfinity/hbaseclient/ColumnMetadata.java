@@ -103,4 +103,32 @@ public class ColumnMetadata implements Writable {
         this.isNullable = other.isNullable();
         this.isPrimaryKey = other.isPrimaryKey();
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ColumnMetadata metadata = (ColumnMetadata) o;
+
+        if (isNullable != metadata.isNullable) return false;
+        if (isPrimaryKey != metadata.isPrimaryKey) return false;
+        if (maxLength != metadata.maxLength) return false;
+        if (precision != metadata.precision) return false;
+        if (scale != metadata.scale) return false;
+        if (type != metadata.type) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = type != null ? type.hashCode() : 0;
+        result = 31 * result + scale;
+        result = 31 * result + precision;
+        result = 31 * result + (isNullable ? 1 : 0);
+        result = 31 * result + (isPrimaryKey ? 1 : 0);
+        result = 31 * result + maxLength;
+        return result;
+    }
 }
