@@ -1,9 +1,16 @@
 package com.nearinfinity.hbaseclient;
 
+import com.google.gson.Gson;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.io.Writable;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class TableInfo {
+public class TableInfo implements Writable {
     private long id;
 
     private String name;
@@ -61,5 +68,48 @@ public class TableInfo {
 
     public ColumnMetadata getColumnMetadata(String columnName) {
         return this.columnNamesToInfo.get(columnName).getMetadata();
+    }
+
+    @Override
+    public void write(DataOutput out) throws IOException {
+        out.write(new Gson().toJson(this).getBytes());
+    }
+
+    @Override
+    public void readFields(DataInput in) throws IOException {
+        this.copy(new Gson().fromJson(new String(Bytes.readByteArray(in)), TableInfo.class));
+    }
+
+    private void copy(TableInfo tableInfo) {
+        this.id = tableInfo.id;
+        this.name = tableInfo.name;
+        this.columnIdsToInfo.putAll(tableInfo.columnIdsToInfo);
+        this.columnNamesToInfo.putAll(tableInfo.columnNamesToInfo);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        TableInfo tableInfo = (TableInfo) o;
+
+        if (id != tableInfo.id) return false;
+        if (columnIdsToInfo != null ? !columnIdsToInfo.equals(tableInfo.columnIdsToInfo) : tableInfo.columnIdsToInfo != null)
+            return false;
+        if (columnNamesToInfo != null ? !columnNamesToInfo.equals(tableInfo.columnNamesToInfo) : tableInfo.columnNamesToInfo != null)
+            return false;
+        if (name != null ? !name.equals(tableInfo.name) : tableInfo.name != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = (int) (id ^ (id >>> 32));
+        result = 31 * result + (name != null ? name.hashCode() : 0);
+        result = 31 * result + (columnNamesToInfo != null ? columnNamesToInfo.hashCode() : 0);
+        result = 31 * result + (columnIdsToInfo != null ? columnIdsToInfo.hashCode() : 0);
+        return result;
     }
 }
