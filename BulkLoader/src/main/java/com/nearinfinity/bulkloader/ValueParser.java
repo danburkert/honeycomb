@@ -15,7 +15,7 @@ import java.util.Date;
 
 public class ValueParser {
 
-    public static byte[] parse(String val, ColumnMetadata meta) throws Exception {
+    public static byte[] parse(String val, ColumnMetadata meta) throws ParseException {
         byte[] ret;
         ColumnType t = meta.getType();
         switch (t) {
@@ -25,7 +25,7 @@ public class ValueParser {
             case ULONG:
                 BigInteger n = new BigInteger(val);
                 if (n.compareTo(BigInteger.ZERO) == -1) {
-                    throw new Exception("negative value provided for unsigned column.  value: " + val);
+                    throw new IllegalArgumentException("negative value provided for unsigned column.  value: " + val);
                 }
                 ret = ByteBuffer.allocate(8).putLong(new BigInteger(val).longValue()).array();
                 break;
