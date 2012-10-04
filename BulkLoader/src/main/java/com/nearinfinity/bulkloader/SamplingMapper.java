@@ -29,11 +29,7 @@ public class SamplingMapper extends Mapper<LongWritable, Text, ImmutableBytesWri
         random = new Random();
         Configuration conf = context.getConfiguration();
 
-        long sampleSize = Math.max(conf.getLong("sample_size", 110), 0);
-        long dataSize = Math.max(conf.getLong("data_size", 1024), 1);
-        samplePercent = Math.min(sampleSize / (double) dataSize, 1.0); // Clamp the values between 0.0 and 1.0
-        LOG.info(format("Sample size %d, Data size %d, Sample Percent %f", sampleSize, dataSize, samplePercent));
-
+        samplePercent = Double.parseDouble(conf.get("sample_percent"));
         tableInfo = BulkLoader.extractTableInfo(conf);
         columnNames = conf.get("my_columns").split(",");
     }
@@ -42,7 +38,6 @@ public class SamplingMapper extends Mapper<LongWritable, Text, ImmutableBytesWri
     public void map(LongWritable offset, Text line, Context context) throws IOException, InterruptedException {
         double coinFlip = random.nextDouble();
         if (samplePercent >= coinFlip) {
-            LOG.info("Adding to sample");
             List<Put> puts = null;
             try {
                 puts = BulkLoader.createPuts(line, tableInfo, columnNames);

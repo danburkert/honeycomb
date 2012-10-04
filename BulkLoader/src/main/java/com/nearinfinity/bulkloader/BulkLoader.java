@@ -12,7 +12,7 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.ContentSummary;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.HFileOutputFormat;
@@ -163,11 +163,13 @@ public class BulkLoader extends Configured implements Tool {
 
         printQuorum(job);
         if (job.waitForCompletion(true)) {
-            LoadIncrementalHFiles fileLoader = new LoadIncrementalHFiles(conf);
+            SequentialLoadIncrementalHFiles fileLoader = new SequentialLoadIncrementalHFiles(conf);
             fileLoader.doBulkLoad(outputDir, table);
             long count = job.getCounters().findCounter(Counters.ROWS).getValue();
             HBaseClient client = new HBaseClient(conf.get("hb_table"), conf.get("zk_quorum"));
             client.incrementRowCount(conf.get("sql_table_name"), count);
+        } else {
+            LOG.error("*** Bulk load job failed during run. Not loading data into HBase.***");
         }
 
         deletePath(conf, outputPath);
@@ -246,18 +248,47 @@ public class BulkLoader extends Configured implements Tool {
             conf.setIfUnset("hbase.zookeeper.quorum", params.get("zk_quorum"));
         }
         conf.setIfUnset("hb_table", params.get("hbase_table_name"));
-        conf.setIfUnset("region_size", params.get("region_size"));
         conf.setIfUnset("output_path", "bulk_loader_output_" + System.currentTimeMillis() + ".tmp");
         conf.setIfUnset("input_path", inputPath);
 
         SamplingPartitioner.setColumnCount(conf, columnCount);
+        updateDataInfo(conf, inputPath);
+    }
+
+    private static void updateDataInfo(Configuration conf, String inputPath) throws IOException {
         FileSystem fileSystem = FileSystem.get(conf);
         ContentSummary summary = fileSystem.getContentSummary(new Path(inputPath));
         long dataLength = summary.getLength();
-        conf.setLong("data_size", dataLength);
         fileSystem.close();
-        Long boxed = dataLength / 10;
-        conf.setIfUnset("sample_size", boxed.toString());
+        conf.setLong("data_size", dataLength);
+
+        long hfileSize = SamplingReducer._1GB;
+        long hfilesExpected = calculateExpectedHFileCount(dataLength, hfileSize);
+
+        conf.setLong("hbase.hregion.max.filesize", hfileSize);
+
+        LOG.info(format("HBase HFile size %s", conf.get("hbase.hregion.max.filesize")));
+        LOG.info(format("Size of data to load %d", dataLength));
+        LOG.info(format("*** Expected number hfiles created: %d per reducer/%d total. ***", hfilesExpected, hfilesExpected * 3));
+
+        conf.setLong("hfiles_expected", hfilesExpected);
+        long sampleSize = Math.round(dataLength * 0.30);
+        double samplePercent = sampleSize / (float) dataLength;
+        conf.setIfUnset("sample_size", Long.toString(sampleSize));
+        conf.set("sample_percent", Double.toString(samplePercent));
+
+        LOG.info(format("Sample size %d, Data size %d, Sample Percent %f", sampleSize, dataLength, samplePercent));
+    }
+
+    public static long calculateExpectedHFileCount(long dataSize, long hfileSize) {
+        long expandedSize = 62 * dataSize;
+        if (hfileSize > expandedSize) {
+            return 1;
+        }
+
+        long expectedHFiles = expandedSize / hfileSize;
+        long hfilesPerPartition = expectedHFiles / 3;
+        return 10 * Math.max(hfilesPerPartition, 1);
     }
 
     private static Map<String, String> readConfigOptions() throws FileNotFoundException {
