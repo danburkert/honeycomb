@@ -1,9 +1,16 @@
 package com.nearinfinity.bulkloader;
 
+import com.google.gson.Gson;
+import com.nearinfinity.hbaseclient.TableInfo;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;

@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class TableInfo implements Writable {
+public class TableInfo  {
     private long id;
 
     private String name;
@@ -70,14 +70,12 @@ public class TableInfo implements Writable {
         return this.columnNamesToInfo.get(columnName).getMetadata();
     }
 
-    @Override
-    public void write(DataOutput out) throws IOException {
-        out.write(new Gson().toJson(this).getBytes());
+    public String write() {
+        return new Gson().toJson(this);
     }
 
-    @Override
-    public void readFields(DataInput in) throws IOException {
-        this.copy(new Gson().fromJson(new String(Bytes.readByteArray(in)), TableInfo.class));
+    public void read(String data){
+        this.copy(new Gson().fromJson(data, TableInfo.class));
     }
 
     private void copy(TableInfo tableInfo) {
