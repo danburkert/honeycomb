@@ -8,6 +8,8 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.io.hfile.CacheConfig;
@@ -65,17 +67,6 @@ public class LoadStrategy {
         deleteDummyData();
 
         HBaseAdminColumn.deleteDummyFamily(admin);
-
-        removeEmptyRegions(admin);
-    }
-
-    private void removeEmptyRegions(HBaseAdmin admin) throws IOException {
-        try {
-            admin.disableTable(hb_table);
-            HMerge.merge(conf, FileSystem.get(conf), hb_table.getBytes());
-        } finally {
-            admin.enableTable(hb_table);
-        }
     }
 
     private void loadHFileStartKeys() throws IOException {
