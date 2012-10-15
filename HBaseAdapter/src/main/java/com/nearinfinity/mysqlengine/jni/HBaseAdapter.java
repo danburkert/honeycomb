@@ -272,6 +272,18 @@ public class HBaseAdapter {
         return duplicate;
     }
 
+    public static long getNextAutoincrementValue(String tableName, String columnName) throws HBaseAdapterException {
+        long autoIncrementValue = 0;
+        try {
+            autoIncrementValue = client.getNextAutoincrementValue(tableName, columnName);
+        } catch (Exception e) {
+            logger.error("columnContainsDuplicates-> Exception:", e);
+            throw new HBaseAdapterException("columnContainsDuplicates", e);
+        }
+
+        return autoIncrementValue;
+    }
+
     public static IndexRow indexRead(long scanId, byte[] value, IndexReadType readType) throws HBaseAdapterException {
         logger.info("indexRead-> scanId: " + scanId + ", value: " + Bytes.toString(value) + ", readType " + readType.name());
 

@@ -196,7 +196,6 @@ class CloudHandler : public handler
         HA_NO_TRANSACTIONS |
         HA_STATS_RECORDS_IS_EXACT | 
         HA_NULL_IN_KEY | // Nulls in indexed columns are allowed
-        HA_NO_AUTO_INCREMENT |
         HA_TABLE_SCAN_ON_INDEX;
     }
 
@@ -252,6 +251,7 @@ class CloudHandler : public handler
         int length = this->java_array_length(duplicate_value);
         char *value_key = this->char_array_from_java_bytes(duplicate_value);
         this->store_field_value(field_being_indexed, value_key, length);
+        delete[] value_key;
       }
 
       return error;
@@ -296,6 +296,7 @@ class CloudHandler : public handler
     ha_rows estimate_rows_upper_bound();
     bool check_if_incompatible_data(HA_CREATE_INFO *create_info, uint table_changes);
     int rename_table(const char *from, const char *to);
+    void get_auto_increment(ulonglong offset, ulonglong increment, ulonglong nb_desired_values, ulonglong *first_value, ulonglong *nb_reserved_values);
 };
 
 #endif

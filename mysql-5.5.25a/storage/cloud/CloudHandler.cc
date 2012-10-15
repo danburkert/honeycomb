@@ -687,6 +687,20 @@ bool CloudHandler::check_for_renamed_column(const TABLE* table,
   return (false);
 }
 
+void CloudHandler::get_auto_increment(ulonglong offset, ulonglong increment,
+                                 ulonglong nb_desired_values,
+                                 ulonglong *first_value,
+                                 ulonglong *nb_reserved_values)
+{
+  DBUG_ENTER("CloudHandler::get_auto_increment");
+  jclass adapter_class = this->adapter();
+  jmethodID get_auto_increment_method = this->env->GetStaticMethodID(adapter_class, "getNextAutoincrementValue", "(Ljava/lang/String;Ljava/lang/String;)J");
+  jlong increment_value = (jlong) this->env->CallStaticObjectMethod(adapter_class, get_auto_increment_method, this->table_name(), string_to_java_string(table->next_number_field->field_name));
+  *first_value = (ulonglong)increment_value;
+  *nb_reserved_values = ULONGLONG_MAX;
+  DBUG_VOID_RETURN;
+}
+
 int CloudHandler::write_row(uchar *buf)
 {
   DBUG_ENTER("CloudHandler::write_row");
@@ -720,6 +734,15 @@ int CloudHandler::write_row_helper(uchar* buf)
 
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
     table->timestamp_field->set_time();
+
+  if(table->next_number_field && buf == table->record[0])
+  {
+    int res;
+    if((res = update_auto_increment()))
+    {
+      DBUG_RETURN(res);
+    }
+  }
 
   my_bitmap_map *old_map = dbug_tmp_use_all_columns(table, table->read_set);
 
@@ -1403,7 +1426,7 @@ char *CloudHandler::char_array_from_java_bytes(jbyteArray java_bytes)
   int length = (int) this->env->GetArrayLength(java_bytes);
   jbyte *jbytes = this->env->GetByteArrayElements(java_bytes, JNI_FALSE);
 
-  char ret[length];
+  char* ret = new char[length];
 
   memcpy(ret, jbytes, length);
 

@@ -87,6 +87,7 @@ public:
     jmethodID set_nullable_method = this->env->GetMethodID(metadata_class, "setNullable", "(Z)V");
     jmethodID set_primary_key_method = this->env->GetMethodID(metadata_class, "setPrimaryKey", "(Z)V");
     jmethodID set_type_method = this->env->GetMethodID(metadata_class, "setType", "(Lcom/nearinfinity/hbaseclient/ColumnType;)V");
+    jmethodID set_autoincrement_method = this->env->GetMethodID(metadata_class, "setAutoincrement", "(Z)V");
 
     jobject metadata_object = this->env->NewObject(metadata_class, metadata_constructor);
 
@@ -173,6 +174,11 @@ public:
     if (field->real_maybe_null())
     {
       this->env->CallVoidMethod(metadata_object, set_nullable_method, JNI_TRUE);
+    }
+
+    if(table_arg->found_next_number_field != NULL && field == table_arg->found_next_number_field) 
+    {
+      this->env->CallVoidMethod(metadata_object, set_autoincrement_method, JNI_TRUE);
     }
 
     // 64 is obviously some key flag indicating no primary key, but I have no idea where it's defined. Will fix later. - ABC

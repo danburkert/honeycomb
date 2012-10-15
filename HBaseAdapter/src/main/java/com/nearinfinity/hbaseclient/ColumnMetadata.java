@@ -13,6 +13,7 @@ public class ColumnMetadata implements Writable {
     private boolean isNullable;
     private boolean isPrimaryKey;
     private int maxLength;
+    private boolean isAutoincrement;
 
     public ColumnMetadata() {
         this.type = ColumnType.NONE;
@@ -81,6 +82,14 @@ public class ColumnMetadata implements Writable {
         return this.type.getValue();
     }
 
+    public boolean isAutoincrement() {
+        return this.isAutoincrement;
+    }
+
+    public void setAutoincrement(boolean autoincrement) {
+        this.isAutoincrement = autoincrement;
+    }
+
     public byte[] toJson() throws IOException {
         return new Gson().toJson(this).getBytes();
     }
@@ -102,6 +111,7 @@ public class ColumnMetadata implements Writable {
         this.maxLength = other.getMaxLength();
         this.isNullable = other.isNullable();
         this.isPrimaryKey = other.isPrimaryKey();
+        this.isAutoincrement = other.isAutoincrement();
     }
 
     @Override

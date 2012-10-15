@@ -2,18 +2,13 @@ package com.nearinfinity.hbaseclient;
 
 import com.nearinfinity.hbaseclient.strategy.PrefixScanStrategy;
 import com.nearinfinity.hbaseclient.strategy.ScanStrategy;
-import com.nearinfinity.mysqlengine.jni.HBaseAdapterException;
 import com.nearinfinity.mysqlengine.scanner.HBaseResultScanner;
 import com.nearinfinity.mysqlengine.scanner.SingleResultScanner;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.PrefixFilter;
-import org.apache.hadoop.hbase.filter.QualifierFilter;
-import org.apache.hadoop.hbase.filter.WritableByteArrayComparable;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.hbase.util.Pair;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -122,6 +117,9 @@ public class HBaseClient {
             ColumnMetadata metadata = columns.get(columnName);
 
             columnInfoPut.add(Constants.NIC, Constants.METADATA, metadata.toJson());
+            if (metadata.isAutoincrement()) {
+                columnInfoPut.add(Constants.NIC, new byte[0], Bytes.toBytes(0L));
+            }
 
             puts.add(columnInfoPut);
 
@@ -430,7 +428,7 @@ public class HBaseClient {
         ResultScanner scanner = this.table.getScanner(scan);
         Result result;
 
-        while((result = scanner.next()) != null) {
+        while ((result = scanner.next()) != null) {
             ByteBuffer value = ByteBuffer.wrap(result.getValue(Constants.NIC, columnIdBytes));
             if (columnValues.contains(value)) {
                 return value.array();
@@ -466,5 +464,13 @@ public class HBaseClient {
         Scan scan = strategy.getScan(info);
 
         return table.getScanner(scan);
+    }
+
+    public long getNextAutoincrementValue(String tableName, String columnName) throws IOException {
+        TableInfo info = this.tableCache.get(tableName);
+        long columnId = info.getColumnIdByName(columnName);
+        long tableId = info.getId();
+        byte[] columnInfoBytes = RowKeyFactory.buildColumnInfoKey(tableId, columnId);
+        return table.incrementColumnValue(columnInfoBytes, Constants.NIC, new byte[0], 1);
     }
 }
