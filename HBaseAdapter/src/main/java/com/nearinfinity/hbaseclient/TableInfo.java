@@ -15,9 +15,9 @@ public class TableInfo  {
 
     private String name;
 
-    private ConcurrentHashMap<String, ColumnInfo> columnNamesToInfo;
+    private final ConcurrentHashMap<String, ColumnInfo> columnNamesToInfo;
 
-    private ConcurrentHashMap<Long, ColumnInfo> columnIdsToInfo;
+    private final ConcurrentHashMap<Long, ColumnInfo> columnIdsToInfo;
 
     public TableInfo(String name, long id) {
         this.name = name;
