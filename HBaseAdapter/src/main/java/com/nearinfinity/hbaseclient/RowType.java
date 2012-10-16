@@ -8,7 +8,9 @@ public enum RowType {
     PRIMARY_INDEX(4),
     REVERSE_INDEX(5),
     NULL_INDEX(6),
-    TABLE_INFO(7);
+    TABLE_INFO(7),
+    MULTIPART_INDEX(8),
+    MULIPART_REVERSE_INDEX(9);
 
     private byte value;
 

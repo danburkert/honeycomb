@@ -7,10 +7,13 @@ import org.apache.hadoop.io.Writable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class TableInfo  {
+public class TableInfo {
     private long id;
 
     private String name;
@@ -19,11 +22,17 @@ public class TableInfo  {
 
     private final ConcurrentHashMap<Long, ColumnInfo> columnIdsToInfo;
 
+    private final ConcurrentHashMap<String, Long> columnNameToId;
+
+    private final ConcurrentHashMap<byte[], byte[]> tableMetadata;
+
     public TableInfo(String name, long id) {
         this.name = name;
         this.id = id;
         this.columnNamesToInfo = new ConcurrentHashMap<String, ColumnInfo>();
         this.columnIdsToInfo = new ConcurrentHashMap<Long, ColumnInfo>();
+        this.columnNameToId = new ConcurrentHashMap<String, Long>();
+        this.tableMetadata = new ConcurrentHashMap<byte[], byte[]>();
     }
 
     public long getId() {
@@ -60,6 +69,10 @@ public class TableInfo  {
         return this.columnIdsToInfo.keySet();
     }
 
+    public Map<String, Long> columnNameToIdMap() {
+        return this.columnNameToId;
+    }
+
     public ColumnType getColumnTypeByName(String columnName) {
         ColumnInfo info = this.columnNamesToInfo.get(columnName);
 
@@ -70,11 +83,15 @@ public class TableInfo  {
         return this.columnNamesToInfo.get(columnName).getMetadata();
     }
 
+    public Map<byte[], byte[]> tableMetadata() {
+        return this.tableMetadata;
+    }
+
     public String write() {
         return new Gson().toJson(this);
     }
 
-    public void read(String data){
+    public void read(String data) {
         this.copy(new Gson().fromJson(data, TableInfo.class));
     }
 
@@ -83,31 +100,11 @@ public class TableInfo  {
         this.name = tableInfo.name;
         this.columnIdsToInfo.putAll(tableInfo.columnIdsToInfo);
         this.columnNamesToInfo.putAll(tableInfo.columnNamesToInfo);
+        this.columnNameToId.putAll(tableInfo.columnNameToId);
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        TableInfo tableInfo = (TableInfo) o;
-
-        if (id != tableInfo.id) return false;
-        if (columnIdsToInfo != null ? !columnIdsToInfo.equals(tableInfo.columnIdsToInfo) : tableInfo.columnIdsToInfo != null)
-            return false;
-        if (columnNamesToInfo != null ? !columnNamesToInfo.equals(tableInfo.columnNamesToInfo) : tableInfo.columnNamesToInfo != null)
-            return false;
-        if (name != null ? !name.equals(tableInfo.name) : tableInfo.name != null) return false;
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = (int) (id ^ (id >>> 32));
-        result = 31 * result + (name != null ? name.hashCode() : 0);
-        result = 31 * result + (columnNamesToInfo != null ? columnNamesToInfo.hashCode() : 0);
-        result = 31 * result + (columnIdsToInfo != null ? columnIdsToInfo.hashCode() : 0);
-        return result;
+    public void setTableMetadata(Map<byte[], byte[]> metadata) {
+        tableMetadata.clear();
+        tableMetadata.putAll(metadata);
     }
 }
