@@ -5,9 +5,9 @@ import java.util.UUID;
 
 public class RowKeyFactory {
     public static final byte[] ROOT = ByteBuffer.allocate(7)
-                                            .put(RowType.TABLES.getValue())
-                                            .put("TABLES".getBytes())
-                                            .array();
+            .put(RowType.TABLES.getValue())
+            .put("TABLES".getBytes())
+            .array();
 
     public static byte[] buildColumnsKey(long tableId) {
         return ByteBuffer.allocate(9)
@@ -94,6 +94,17 @@ public class RowKeyFactory {
         return ByteBuffer.allocate(9)
                 .put(RowType.TABLE_INFO.getValue())
                 .putLong(tableId)
+                .array();
+    }
+
+    public static byte[] buildMultipartIndexKey(long tableId, byte[] columnIds, byte[] values, UUID uuid) {
+        return ByteBuffer.allocate(17 + columnIds.length + values.length)
+                .put(RowType.MULTIPART_INDEX.getValue())
+                .putLong(tableId)
+                .put(columnIds)
+                .put(values)
+                .putLong(uuid.getMostSignificantBits())
+                .putLong(uuid.getLeastSignificantBits())
                 .array();
     }
 }

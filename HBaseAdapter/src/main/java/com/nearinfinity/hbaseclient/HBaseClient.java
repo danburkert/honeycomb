@@ -23,7 +23,7 @@ public class HBaseClient {
 
     private HBaseAdmin admin;
 
-    private final ConcurrentHashMap<String, TableInfo> tableCache = new ConcurrentHashMap<String, TableInfo>();
+    private final static ConcurrentHashMap<String, TableInfo> tableCache = new ConcurrentHashMap<String, TableInfo>();
 
     private static final Logger logger = Logger.getLogger(HBaseClient.class);
 
@@ -83,12 +83,15 @@ public class HBaseClient {
         this.admin.flush(Constants.SQL);
     }
 
-    private void createTable(String tableName, List<Put> puts) throws IOException {
+    private void createTable(String tableName, List<Put> puts, TableMultipartKeys multipartKeys) throws IOException {
         long tableId = table.incrementColumnValue(RowKeyFactory.ROOT, Constants.NIC, new byte[0], 1);
         tableCache.put(tableName, new TableInfo(tableName, tableId));
 
         puts.add(new Put(RowKeyFactory.ROOT).add(Constants.NIC, tableName.getBytes(), Bytes.toBytes(tableId)));
-        puts.add(new Put(RowKeyFactory.buildTableInfoKey(tableId)).add(Constants.NIC, Constants.ROW_COUNT, Bytes.toBytes(0l)));
+        Put put = new Put(RowKeyFactory.buildTableInfoKey(tableId));
+        put.add(Constants.NIC, Constants.ROW_COUNT, Bytes.toBytes(0l));
+        put.add(Constants.NIC, Constants.MULTIPART_KEY, multipartKeys.toJson().getBytes());
+        puts.add(put);
     }
 
     private void addColumns(String tableName, Map<String, ColumnMetadata> columns, List<Put> puts) throws IOException {
@@ -128,11 +131,11 @@ public class HBaseClient {
         }
     }
 
-    public void createTableFull(String tableName, Map<String, ColumnMetadata> columns) throws IOException {
+    public void createTableFull(String tableName, Map<String, ColumnMetadata> columns, TableMultipartKeys multipartKeys) throws IOException {
         //Batch put list
         List<Put> putList = new LinkedList<Put>();
 
-        createTable(tableName, putList);
+        createTable(tableName, putList, multipartKeys);
 
         addColumns(tableName, columns, putList);
 
@@ -143,7 +146,8 @@ public class HBaseClient {
 
     public void writeRow(String tableName, Map<String, byte[]> values) throws IOException {
         TableInfo info = getTableInfo(tableName);
-        List<Put> putList = PutListFactory.createPutList(values, info);
+        LinkedList<LinkedList<String>> multipartIndex = MultipartIndex.indexForTable(info.tableMetadata());
+        List<Put> putList = PutListFactory.createPutList(values, info, multipartIndex);
 
         //Final put
         this.table.put(putList);
@@ -172,10 +176,15 @@ public class HBaseClient {
         Get tableIdGet = new Get(RowKeyFactory.ROOT);
         Result result = table.get(tableIdGet);
         if (result.isEmpty()) {
-            throw new TableNotFoundException(tableName + " was not found.");
+            throw new TableNotFoundException("SQL table " + tableName + " was not found.");
         }
 
-        long tableId = ByteBuffer.wrap(result.getValue(Constants.NIC, tableName.getBytes())).getLong();
+        byte[] sqlTableBytes = result.getValue(Constants.NIC, tableName.getBytes());
+        if (sqlTableBytes == null) {
+            throw new TableNotFoundException("SQL table " + tableName + " was not found.");
+        }
+
+        long tableId = ByteBuffer.wrap(sqlTableBytes).getLong();
 
         TableInfo info = new TableInfo(tableName, tableId);
 
@@ -197,6 +206,10 @@ public class HBaseClient {
             long columnId = ByteBuffer.wrap(columns.get(qualifier)).getLong();
             info.addColumn(columnName, columnId, getMetadataForColumn(tableId, columnId));
         }
+
+        rowKey = RowKeyFactory.buildTableInfoKey(tableId);
+        Result tableMetadata = table.get(new Get(rowKey));
+        info.setTableMetadata(tableMetadata.getFamilyMap(Constants.NIC));
 
         tableCache.put(tableName, info);
 
@@ -366,7 +379,8 @@ public class HBaseClient {
     }
 
     public long getRowCount(String tableName) throws IOException {
-        long tableId = getTableInfo(tableName).getId();
+        TableInfo tableInfo = getTableInfo(tableName);
+        long tableId = tableInfo.getId();
         byte[] rowKey = RowKeyFactory.buildTableInfoKey(tableId);
         return table.incrementColumnValue(rowKey, Constants.NIC, Constants.ROW_COUNT, 0);
     }
@@ -412,7 +426,7 @@ public class HBaseClient {
     public byte[] findDuplicateValue(String tableName, String columnName) throws IOException {
         logger.info("Checking column " + columnName + " in table " + tableName + " for duplicate values");
 
-        TableInfo info = this.tableCache.get(tableName);
+        TableInfo info = getTableInfo(tableName);
 
         Scan scan = ScanFactory.buildScan();
         byte[] prefix = ByteBuffer.allocate(9).put(RowType.DATA.getValue()).putLong(info.getId()).array();
@@ -467,7 +481,7 @@ public class HBaseClient {
     }
 
     public long getNextAutoincrementValue(String tableName, String columnName) throws IOException {
-        TableInfo info = this.tableCache.get(tableName);
+        TableInfo info = getTableInfo(tableName);
         long columnId = info.getColumnIdByName(columnName);
         long tableId = info.getId();
         byte[] columnInfoBytes = RowKeyFactory.buildColumnInfoKey(tableId, columnId);

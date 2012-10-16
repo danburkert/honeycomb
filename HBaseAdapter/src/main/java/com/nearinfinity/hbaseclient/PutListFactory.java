@@ -1,5 +1,6 @@
 package com.nearinfinity.hbaseclient;
 
+import com.google.common.collect.Lists;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -7,46 +8,49 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class PutListFactory {
-    public static List<Put> createPutList(Map<String, byte[]> values, TableInfo info) {
+
+    public static List<Put> createPutList(final Map<String, byte[]> values, final TableInfo info) {
+        return createPutList(values, info, new LinkedList<LinkedList<String>>());
+    }
+
+    public static List<Put> createPutList(final Map<String, byte[]> values, final TableInfo info, final LinkedList<LinkedList<String>> multipartKeys) {
         //Get table id
-        long tableId = info.getId();
+        final long tableId = info.getId();
+        Map<String, Long> columnNameToId = info.columnNameToIdMap();
 
         //Get UUID for new entry
-        UUID rowId = UUID.randomUUID();
+        final UUID rowId = UUID.randomUUID();
 
         //Build data row key
-        byte[] dataKey = RowKeyFactory.buildDataKey(tableId, rowId);
+        final byte[] dataKey = RowKeyFactory.buildDataKey(tableId, rowId);
 
         //Create put list
-        List<Put> putList = new LinkedList<Put>();
+        final List<Put> putList = new LinkedList<Put>();
 
-        Put dataRow = new Put(dataKey);
+        final Put dataRow = new Put(dataKey);
+
+        final byte[] rowByteArray = createRowFromMap(values);
 
         boolean allRowsNull = true;
-
-        byte[] rowByteArray = createRowFromMap(values);
 
         for (String columnName : values.keySet()) {
 
             //Get column id and value
-            long columnId = info.getColumnIdByName(columnName);
-            ColumnType columnType = info.getColumnTypeByName(columnName);
-            byte[] value = values.get(columnName);
+            final long columnId = columnNameToId.get(columnName);
+            final ColumnType columnType = info.getColumnTypeByName(columnName);
+            final byte[] value = values.get(columnName);
 
             if (value == null) {
                 // Build null index
-                byte[] nullIndexRow = RowKeyFactory.buildNullIndexKey(tableId, columnId, rowId);
+                final byte[] nullIndexRow = RowKeyFactory.buildNullIndexKey(tableId, columnId, rowId);
                 putList.add(new Put(nullIndexRow).add(Constants.NIC, Constants.VALUE_MAP, rowByteArray));
             } else {
                 int padLength = 0;
                 if (columnType == ColumnType.STRING || columnType == ColumnType.BINARY) {
-                    long maxLength = info.getColumnMetadata(columnName).getMaxLength();
+                    final long maxLength = info.getColumnMetadata(columnName).getMaxLength();
                     padLength = (int) maxLength - value.length;
                 }
 
@@ -55,13 +59,17 @@ public class PutListFactory {
                 dataRow.add(Constants.NIC, Bytes.toBytes(columnId), value);
 
                 // Build value index key
-                byte[] indexRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, rowId, columnType, padLength);
+                final byte[] indexRow = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, rowId, columnType, padLength);
                 putList.add(new Put(indexRow).add(Constants.NIC, Constants.VALUE_MAP, rowByteArray));
 
                 // Build reverse index key
-                byte[] reverseIndexRow = RowKeyFactory.buildReverseIndexKey(tableId, columnId, value, columnType, rowId, padLength);
+                final byte[] reverseIndexRow = RowKeyFactory.buildReverseIndexKey(tableId, columnId, value, columnType, rowId, padLength);
                 putList.add(new Put(reverseIndexRow).add(Constants.NIC, Constants.VALUE_MAP, rowByteArray));
             }
+        }
+
+        for (List<String> columns : multipartKeys) {
+            putList.add(MultipartIndex.createPut(values, tableId, columnNameToId, rowId, rowByteArray, columns));
         }
 
         if (allRowsNull) {
@@ -75,9 +83,9 @@ public class PutListFactory {
     }
 
     private static byte[] createRowFromMap(Map<String, byte[]> values) {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try {
-            ObjectOutput out = new ObjectOutputStream(bos);
+            final ObjectOutput out = new ObjectOutputStream(bos);
             out.writeObject(values);
             out.close();
         } catch (IOException e) {

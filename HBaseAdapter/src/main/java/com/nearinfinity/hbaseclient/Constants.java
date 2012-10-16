@@ -24,4 +24,6 @@ public final class Constants {
     public static final UUID FULL_UUID = UUID.fromString("ffffffff-ffff-ffff-ffff-ffffffffffff");
 
     public static final byte[] ROW_COUNT = "RowCount".getBytes();
+
+    public static final byte[] MULTIPART_KEY = "MultipartKey".getBytes();
 }

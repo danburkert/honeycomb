@@ -12,6 +12,7 @@
 #include "m_string.h"
 
 #include <sys/time.h>
+
 const char **CloudHandler::bas_ext() const
 {
   static const char *cloud_exts[] = { NullS };
@@ -416,8 +417,43 @@ int CloudHandler::create(const char *path, TABLE *table_arg,
     HA_CREATE_INFO *create_info)
 {
   DBUG_ENTER("CloudHandler::create");
-
   attach_thread();
+  uint keys = table_arg->s->keys;
+  jclass multipart_keys_class = this->env->FindClass("com/nearinfinity/hbaseclient/TableMultipartKeys");
+  jmethodID constructor = this->env->GetMethodID(multipart_keys_class, "<init>", "()V");
+  jmethodID add_key_method = this->env->GetMethodID(multipart_keys_class, "addMultipartKey", "(Ljava/lang/String;)V");
+  jobject java_keys = this->env->NewObject(multipart_keys_class, constructor);
+
+  for (uint key = 0; key < keys; key++)
+  {
+    KEY *pos = table_arg->key_info + key;
+    KEY_PART_INFO *key_part = pos->key_part;
+    KEY_PART_INFO *key_part_end = key_part + pos->key_parts;
+    size_t size = 0;
+
+    for (; key_part != key_part_end; key_part++)
+    {
+      Field *field = key_part->field;
+      size += strlen(field->field_name);
+    }
+
+    key_part = pos->key_part;
+    char* name = (char*)malloc(size + pos->key_parts);
+    memset(name, 0, size + pos->key_parts);
+    for (; key_part != key_part_end; key_part++)
+    {
+      Field *field = key_part->field;
+      strcat(name, field->field_name);
+      if ((key_part+1) != key_part_end)
+      {
+        strcat(name, ",");
+      }
+    }
+
+    this->env->CallVoidMethod(java_keys, add_key_method, string_to_java_string(name));
+    free(name);
+    name = NULL;
+  }
 
   jclass adapter_class = this->adapter();
   if (adapter_class == NULL)
@@ -451,15 +487,15 @@ int CloudHandler::create(const char *path, TABLE *table_arg,
     default:
       break;
     }
+
     jobject java_metadata_obj = metadata.get_field_metadata(*field, table_arg);
-    java_map_insert(columnMap, string_to_java_string((*field)->field_name),
-        java_metadata_obj, this->env);
+    java_map_insert(columnMap, string_to_java_string((*field)->field_name), java_metadata_obj, this->env);
   }
 
   jmethodID create_table_method = this->env->GetStaticMethodID(adapter_class,
-      "createTable", "(Ljava/lang/String;Ljava/util/Map;)Z");
+      "createTable", "(Ljava/lang/String;Ljava/util/Map;Lcom/nearinfinity/hbaseclient/TableMultipartKeys;)Z");
   this->env->CallStaticBooleanMethod(adapter_class, create_table_method,
-      string_to_java_string(table_name), columnMap);
+      string_to_java_string(table_name), columnMap, java_keys);
   print_java_exception(this->env);
 
   detach_thread();
@@ -978,6 +1014,12 @@ int CloudHandler::index_end()
   this->reset_index_scan_counter();
 
   DBUG_RETURN(0);
+}
+
+int CloudHandler::index_read_map(uchar * buf, const uchar * key, key_part_map keypart_map, enum ha_rkey_function find_flag)
+{
+    uint key_len = calculate_key_len(table, active_index, key, keypart_map);
+    return 0;
 }
 
 int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len,

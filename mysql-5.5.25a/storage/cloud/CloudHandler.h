@@ -214,11 +214,6 @@ class CloudHandler : public handler
       return MAX_INDEXES;
     }
 
-    uint max_supported_key_parts() const
-    {
-      return 1;
-    }
-
     uint max_supported_key_length() const
     {
       return UINT_MAX;
@@ -297,6 +292,7 @@ class CloudHandler : public handler
     bool check_if_incompatible_data(HA_CREATE_INFO *create_info, uint table_changes);
     int rename_table(const char *from, const char *to);
     void get_auto_increment(ulonglong offset, ulonglong increment, ulonglong nb_desired_values, ulonglong *first_value, ulonglong *nb_reserved_values);
+    int index_read_map(uchar * buf, const uchar * key, key_part_map keypart_map, enum ha_rkey_function find_flag);
 };
 
 #endif

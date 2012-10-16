@@ -1,9 +1,6 @@
 package com.nearinfinity.mysqlengine.jni;
 
-import com.nearinfinity.hbaseclient.ColumnMetadata;
-import com.nearinfinity.hbaseclient.HBaseClient;
-import com.nearinfinity.hbaseclient.ResultParser;
-import com.nearinfinity.hbaseclient.TableInfo;
+import com.nearinfinity.hbaseclient.*;
 import com.nearinfinity.hbaseclient.strategy.*;
 import com.nearinfinity.mysqlengine.Connection;
 import com.nearinfinity.mysqlengine.scanner.HBaseResultScanner;
@@ -79,11 +76,11 @@ public class HBaseAdapter {
         }
     }
 
-    public static boolean createTable(String tableName, Map<String, ColumnMetadata> columns) throws HBaseAdapterException {
+    public static boolean createTable(String tableName, Map<String, ColumnMetadata> columns, TableMultipartKeys multipartKeys) throws HBaseAdapterException {
         logger.info("creatingTable-> tableName:" + tableName);
 
         try {
-            client.createTableFull(tableName, columns);
+            client.createTableFull(tableName, columns, multipartKeys);
         } catch (Exception e) {
             logger.error("createTable-> Exception:", e);
             throw new HBaseAdapterException("createTable", e);
