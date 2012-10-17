@@ -90,7 +90,7 @@ public class HBaseClient {
         puts.add(new Put(RowKeyFactory.ROOT).add(Constants.NIC, tableName.getBytes(), Bytes.toBytes(tableId)));
         Put put = new Put(RowKeyFactory.buildTableInfoKey(tableId));
         put.add(Constants.NIC, Constants.ROW_COUNT, Bytes.toBytes(0l));
-        put.add(Constants.NIC, Constants.MULTIPART_KEY, multipartKeys.toJson().getBytes());
+        put.add(Constants.NIC, Constants.INDEXES, multipartKeys.toJson().getBytes());
         puts.add(put);
     }
 
@@ -146,7 +146,7 @@ public class HBaseClient {
 
     public void writeRow(String tableName, Map<String, byte[]> values) throws IOException {
         TableInfo info = getTableInfo(tableName);
-        LinkedList<LinkedList<String>> multipartIndex = MultipartIndex.indexForTable(info.tableMetadata());
+        LinkedList<LinkedList<String>> multipartIndex = Index.indexForTable(info.tableMetadata());
         List<Put> putList = PutListFactory.createPutList(values, info, multipartIndex);
 
         //Final put

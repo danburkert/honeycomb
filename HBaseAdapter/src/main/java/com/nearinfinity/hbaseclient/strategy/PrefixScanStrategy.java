@@ -7,31 +7,26 @@ import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.filter.RowFilter;
 
+import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jedstrom
- * Date: 8/21/12
- * Time: 8:18 AM
- * To change this template use File | Settings | File Templates.
- */
 public class PrefixScanStrategy extends ScanStrategyBase {
 
-    public PrefixScanStrategy(String tableName, String columnName, byte[] value) {
+    public PrefixScanStrategy(String tableName, List<String> columnName, byte[] value) {
         super(tableName, columnName, value);
     }
 
     @Override
     public Scan getScan(TableInfo info) {
         long tableId = info.getId();
-        long columnId = info.getColumnIdByName(this.columnName);
         ColumnType columnType = info.getColumnTypeByName(this.columnName);
+        byte[] columnId = Index.createColumnIds(this.columnName, info.columnNameToIdMap());
+        byte[] paddedValue = ValueEncoder.ascendingEncode(value, columnType, 0);
 
-        byte[] startKey = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, Constants.ZERO_UUID, columnType, 0);
-        byte[] endKey = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, Constants.FULL_UUID, columnType, 0);
+        byte[] startKey = RowKeyFactory.buildIndexKey(tableId, columnId, paddedValue, Constants.ZERO_UUID);
+        byte[] endKey = RowKeyFactory.buildIndexKey(tableId, columnId, paddedValue, Constants.FULL_UUID);
 
-        byte[] prefix = RowKeyFactory.buildValueIndexPrefix(tableId, columnId, value, columnType);
+        byte[] prefix = RowKeyFactory.buildValueIndexPrefix(tableId, columnId, value);
 
         Scan scan = ScanFactory.buildScan(startKey, endKey);
 

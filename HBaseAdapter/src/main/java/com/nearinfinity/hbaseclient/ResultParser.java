@@ -18,13 +18,13 @@ public class ResultParser {
         return new UUID(byteBuffer.getLong(), byteBuffer.getLong());
     }
 
-    public static byte[] parseUnireg(Result result) {
+    public static byte[] parseValueMap(Result result) {
         return result.getValue(Constants.NIC, Constants.VALUE_MAP);
     }
 
     @SuppressWarnings("unchecked")
     public static TreeMap<String, byte[]> parseRowMap(Result result) {
-        byte[] mapBytes = parseUnireg(result);
+        byte[] mapBytes = parseValueMap(result);
         TreeMap<String, byte[]> rowMap = null;
 
         try {

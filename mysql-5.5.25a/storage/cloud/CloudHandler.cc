@@ -413,11 +413,34 @@ int CloudHandler::end_bulk_insert()
   DBUG_RETURN(0);
 }
 
-int CloudHandler::create(const char *path, TABLE *table_arg,
-    HA_CREATE_INFO *create_info)
+char* CloudHandler::index_name(KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts)
 {
-  DBUG_ENTER("CloudHandler::create");
-  attach_thread();
+    size_t size = 0;
+
+    KEY_PART_INFO* start = key_part;
+    for (; key_part != key_part_end; key_part++)
+    {
+      Field *field = key_part->field;
+      size += strlen(field->field_name);
+    }
+
+    key_part = start;
+    char* name = new char[size + key_parts];
+    for (; key_part != key_part_end; key_part++)
+    {
+      Field *field = key_part->field;
+      strcat(name, field->field_name);
+      if ((key_part+1) != key_part_end)
+      {
+        strcat(name, ",");
+      }
+    }
+
+    return name;
+}
+
+jobject CloudHandler::create_multipart_keys(TABLE* table_arg)
+{
   uint keys = table_arg->s->keys;
   jclass multipart_keys_class = this->env->FindClass("com/nearinfinity/hbaseclient/TableMultipartKeys");
   jmethodID constructor = this->env->GetMethodID(multipart_keys_class, "<init>", "()V");
@@ -429,32 +452,21 @@ int CloudHandler::create(const char *path, TABLE *table_arg,
     KEY *pos = table_arg->key_info + key;
     KEY_PART_INFO *key_part = pos->key_part;
     KEY_PART_INFO *key_part_end = key_part + pos->key_parts;
-    size_t size = 0;
-
-    for (; key_part != key_part_end; key_part++)
-    {
-      Field *field = key_part->field;
-      size += strlen(field->field_name);
-    }
-
-    key_part = pos->key_part;
-    char* name = (char*)malloc(size + pos->key_parts);
-    memset(name, 0, size + pos->key_parts);
-    for (; key_part != key_part_end; key_part++)
-    {
-      Field *field = key_part->field;
-      strcat(name, field->field_name);
-      if ((key_part+1) != key_part_end)
-      {
-        strcat(name, ",");
-      }
-    }
-
+    char* name = index_name(key_part, key_part_end, pos->key_parts);
     this->env->CallVoidMethod(java_keys, add_key_method, string_to_java_string(name));
-    free(name);
+    delete[] name;
     name = NULL;
   }
 
+  return java_keys;
+}
+
+int CloudHandler::create(const char *path, TABLE *table_arg, HA_CREATE_INFO *create_info)
+{
+  DBUG_ENTER("CloudHandler::create");
+  attach_thread();
+
+  jobject java_keys = this->create_multipart_keys(table_arg);
   jclass adapter_class = this->adapter();
   if (adapter_class == NULL)
   {
@@ -988,8 +1000,10 @@ int CloudHandler::index_init(uint idx, bool sorted)
 
   this->active_index = idx;
 
-  const char* column_name =
-      this->table->s->key_info[idx].key_part->field->field_name;
+  KEY *pos = this->table->s->key_info + idx;
+  KEY_PART_INFO *key_part = pos->key_part;
+  KEY_PART_INFO *key_part_end = key_part + pos->key_parts;
+  const char* column_names = this->index_name(key_part, key_part_end, pos->key_parts);
   Field *field = table->field[idx];
   attach_thread();
 
@@ -997,10 +1011,10 @@ int CloudHandler::index_init(uint idx, bool sorted)
   jmethodID start_scan_method = this->env->GetStaticMethodID(adapter_class,
       "startIndexScan", "(Ljava/lang/String;Ljava/lang/String;)J");
   jstring table_name = this->table_name();
-  jstring java_column_name = this->string_to_java_string(column_name);
+  jstring java_column_names = this->string_to_java_string(column_names);
 
-  this->curr_scan_id = this->env->CallStaticLongMethod(adapter_class,
-      start_scan_method, table_name, java_column_name);
+  this->curr_scan_id = this->env->CallStaticLongMethod(adapter_class, start_scan_method, table_name, java_column_names);
+  delete[] column_names;
 
   DBUG_RETURN(0);
 }
@@ -1019,6 +1033,15 @@ int CloudHandler::index_end()
 int CloudHandler::index_read_map(uchar * buf, const uchar * key, key_part_map keypart_map, enum ha_rkey_function find_flag)
 {
     uint key_len = calculate_key_len(table, active_index, key, keypart_map);
+    KEY *key_info = table->s->key_info + this->active_index;
+    KEY_PART_INFO *key_part = key_info->key_part;
+    KEY_PART_INFO *end_key_part = key_part + key_info->key_parts;
+
+    while (key_part < end_key_part && keypart_map)
+    {
+      keypart_map >>= 1;
+      key_part++;
+    }
     return 0;
 }
 

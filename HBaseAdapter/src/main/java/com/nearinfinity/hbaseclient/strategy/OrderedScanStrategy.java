@@ -4,17 +4,11 @@ import com.nearinfinity.hbaseclient.*;
 import org.apache.hadoop.hbase.client.Scan;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jedstrom
- * Date: 8/21/12
- * Time: 7:51 AM
- * To change this template use File | Settings | File Templates.
- */
 public class OrderedScanStrategy extends ScanStrategyBase {
 
-    public OrderedScanStrategy(String tableName, String columnName, byte[] value) {
+    public OrderedScanStrategy(String tableName, List<String> columnName, byte[] value) {
         super(tableName, columnName, value);
     }
 
@@ -29,8 +23,10 @@ public class OrderedScanStrategy extends ScanStrategyBase {
             value = new byte[maxLength];
         }
 
-        byte[] startKey = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, Constants.ZERO_UUID, columnType, 0);
-        byte[] endKey = RowKeyFactory.buildValueIndexKey(tableId, columnId + 1, value, Constants.ZERO_UUID, columnType, 0);
+        byte[] encodedValue = ValueEncoder.encodeValue(value, columnType);
+        byte[] paddedValue = ValueEncoder.padValueAscending(encodedValue, 0);
+        byte[] startKey = RowKeyFactory.buildValueIndexKey(tableId, columnId, paddedValue, Constants.ZERO_UUID);
+        byte[] endKey = RowKeyFactory.buildValueIndexKey(tableId, columnId + 1, paddedValue, Constants.ZERO_UUID);
 
         return ScanFactory.buildScan(startKey, endKey);
     }

@@ -13,10 +13,7 @@ import org.apache.log4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Scanner;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -288,7 +285,7 @@ public class HBaseAdapter {
         IndexRow indexRow = new IndexRow();
         try {
             String tableName = conn.getTableName();
-            String columnName = conn.getColumnName();
+            List<String> columnName = conn.getColumnName();
 
             byte[] valueToSkip = null;
             HBaseResultScanner scanner = null;
@@ -357,8 +354,6 @@ public class HBaseAdapter {
     }
 
     public static IndexRow nextIndexRow(long scanId) throws HBaseAdapterException {
-        logger.info("nextIndexRow-> scanId: " + scanId);
-
         Connection conn = getConnectionForId(scanId);
 
         IndexRow indexRow = new IndexRow();

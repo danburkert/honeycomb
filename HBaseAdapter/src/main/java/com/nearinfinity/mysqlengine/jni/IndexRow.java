@@ -39,7 +39,7 @@ public class IndexRow {
 
     @SuppressWarnings("unchecked")
     public void parseResult(Result result) {
-        byte[] mapBytes = ResultParser.parseUnireg(result);
+        byte[] mapBytes = ResultParser.parseValueMap(result);
 
         try {
             ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(mapBytes));

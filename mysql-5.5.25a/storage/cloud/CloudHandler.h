@@ -79,6 +79,8 @@ class CloudHandler : public handler
     char *char_array_from_java_bytes(jbyteArray java_bytes);
     void store_field_value(Field *field, char *key, int length);
     int java_array_length(jarray array);
+    jobject create_multipart_keys(TABLE* table_arg);
+    char* index_name(KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts);
 
     bool is_integral_field(int field_type)
     {

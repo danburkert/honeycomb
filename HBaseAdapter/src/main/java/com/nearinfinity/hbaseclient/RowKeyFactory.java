@@ -33,60 +33,34 @@ public class RowKeyFactory {
                 .array();
     }
 
-    public static byte[] buildValueIndexKey(long tableId, long columnId, byte[] value, UUID uuid, ColumnType columnType, int padLength) {
-        byte[] encodedValue = ValueEncoder.encodeValue(value, columnType);
-        byte[] paddedValue = ValueEncoder.padValueAscending(encodedValue, padLength);
-        return ByteBuffer.allocate(33 + paddedValue.length)
+    public static byte[] buildValueIndexKey(long tableId, byte[] columnIds, byte[] value, UUID uuid) {
+        return ByteBuffer.allocate(25 + value.length + columnIds.length)
                 .put(RowType.PRIMARY_INDEX.getValue())
                 .putLong(tableId)
-                .putLong(columnId)
-                .put(paddedValue)
+                .put(columnIds)
+                .put(value)
                 .putLong(uuid.getMostSignificantBits())
                 .putLong(uuid.getLeastSignificantBits())
                 .array();
     }
 
-    public static byte[] buildReverseIndexKey(long tableId, long columnId, byte[] value, ColumnType columnType, UUID rowId, int padLength) {
-        return buildReverseIndexKey(tableId, columnId, value, columnType, rowId, padLength, false);
-    }
-
-    public static byte[] buildEmptyValueReverseIndexKey(long tableId, long columnId, byte[] value, ColumnType columnType, UUID rowId, int padLength) {
-        return buildReverseIndexKey(tableId, columnId, value, columnType, rowId, padLength, true);
-    }
-
-    public static byte[] buildNullIndexKey(long tableId, long columnId, UUID uuid) {
-        return ByteBuffer.allocate(33)
-                .put(RowType.NULL_INDEX.getValue())
-                .putLong(tableId)
-                .putLong(columnId)
-                .putLong(uuid.getMostSignificantBits())
-                .putLong(uuid.getLeastSignificantBits())
-                .array();
-    }
-
-    public static byte[] buildValueIndexPrefix(long tableId, long columnId, byte[] value, ColumnType columnType) {
-        byte[] encodedValue = ValueEncoder.encodeValue(value, columnType);
-        return ByteBuffer.allocate(17 + encodedValue.length)
-                .put(RowType.PRIMARY_INDEX.getValue())
-                .putLong(tableId)
-                .putLong(columnId)
-                .put(encodedValue)
-                .array();
-    }
-
-    private static byte[] buildReverseIndexKey(long tableId, long columnId, byte[] value, ColumnType columnType, UUID rowId, int padLength, boolean emptyValue) {
-        byte[] encodedValue = ValueEncoder.encodeValue(value, columnType);
-        byte[] reversedValue = ValueEncoder.reverseValue(encodedValue);
-        byte[] paddedValue = ValueEncoder.padValueDescending(reversedValue, padLength);
-        byte[] putValue = emptyValue ? new byte[paddedValue.length] : paddedValue;
-
-        return ByteBuffer.allocate(33 + paddedValue.length)
+    public static byte[] buildReverseIndexKey(long tableId, long columnId, byte[] value, UUID rowId) {
+        return ByteBuffer.allocate(33 + value.length)
                 .put(RowType.REVERSE_INDEX.getValue())
                 .putLong(tableId)
                 .putLong(columnId)
-                .put(putValue)
+                .put(value)
                 .putLong(rowId.getMostSignificantBits())
                 .putLong(rowId.getLeastSignificantBits())
+                .array();
+    }
+
+    public static byte[] buildValueIndexPrefix(long tableId, byte[] columnId, byte[] value) {
+        return ByteBuffer.allocate(9 + value.length + columnId.length)
+                .put(RowType.PRIMARY_INDEX.getValue())
+                .putLong(tableId)
+                .put(columnId)
+                .put(value)
                 .array();
     }
 
@@ -97,9 +71,20 @@ public class RowKeyFactory {
                 .array();
     }
 
-    public static byte[] buildMultipartIndexKey(long tableId, byte[] columnIds, byte[] values, UUID uuid) {
-        return ByteBuffer.allocate(17 + columnIds.length + values.length)
-                .put(RowType.MULTIPART_INDEX.getValue())
+    public static byte[] buildIndexKey(long tableId, byte[] columnIds, byte[] values, UUID uuid) {
+        return ByteBuffer.allocate(25 + columnIds.length + values.length)
+                .put(RowType.PRIMARY_INDEX.getValue())
+                .putLong(tableId)
+                .put(columnIds)
+                .put(values)
+                .putLong(uuid.getMostSignificantBits())
+                .putLong(uuid.getLeastSignificantBits())
+                .array();
+    }
+
+    public static byte[] buildReverseIndexKey(long tableId, byte[] columnIds, byte[] values, UUID uuid) {
+        return ByteBuffer.allocate(25 + columnIds.length + values.length)
+                .put(RowType.REVERSE_INDEX.getValue())
                 .putLong(tableId)
                 .put(columnIds)
                 .put(values)

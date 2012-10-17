@@ -14,17 +14,19 @@ public class ValueEncoder {
 
     private static final long INVERT_ALL_BITS_MASK = 0xFFFFFFFFFFFFFFFFL;
 
-    public static byte[] reverseValue(byte[] value) {
-        ByteBuffer buffer = ByteBuffer.allocate(value.length);
-
-        for (byte aValue : value) {
-            buffer.put((byte) (BYTE_MASK ^ aValue));
-        }
-
-        return buffer.array();
+    public static byte[] descendingEncode(final byte[] value, final ColumnType columnType, final int padLength) {
+        final byte[] encodedValue = ValueEncoder.encodeValue(value, columnType);
+        final byte[] reversedValue = ValueEncoder.reverseValue(encodedValue);
+        final byte[] paddedValue = ValueEncoder.padValueDescending(reversedValue, padLength);
+        return paddedValue;
     }
 
-    public static byte[] encodeValue(byte[] value, ColumnType columnType) {
+    public static byte[] ascendingEncode(final byte[] value, final ColumnType columnType, final int padLength) {
+        final byte[] encodedValue = ValueEncoder.encodeValue(value, columnType);
+        return ValueEncoder.padValueAscending(encodedValue, padLength);
+    }
+
+    private static byte[] encodeValue(byte[] value, ColumnType columnType) {
         if (value == null || value.length == 0) {
             return new byte[0];
         }
@@ -48,12 +50,22 @@ public class ValueEncoder {
         return encodedValue;
     }
 
-    public static byte[] padValueDescending(byte[] value, int padLength) {
+    private static byte[] padValueDescending(byte[] value, int padLength) {
         return padValue(value, padLength, BYTE_MASK);
     }
 
-    public static byte[] padValueAscending(byte[] value, int padLength) {
+    private static byte[] padValueAscending(byte[] value, int padLength) {
         return padValue(value, padLength, ASC_BYTE_MASK);
+    }
+
+    private static byte[] reverseValue(byte[] value) {
+        ByteBuffer buffer = ByteBuffer.allocate(value.length);
+
+        for (byte aValue : value) {
+            buffer.put((byte) (~aValue));
+        }
+
+        return buffer.array();
     }
 
     private static byte[] padValue(byte[] value, int padLength, byte mask) {

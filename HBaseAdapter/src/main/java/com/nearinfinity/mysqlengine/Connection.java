@@ -2,6 +2,9 @@ package com.nearinfinity.mysqlengine;
 
 import com.nearinfinity.mysqlengine.scanner.HBaseResultScanner;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class Connection {
     private String tableName;
     private String columnName;
@@ -39,8 +42,8 @@ public class Connection {
         return this.tableName;
     }
 
-    public String getColumnName() {
-        return this.columnName;
+    public List<String> getColumnName() {
+        return Arrays.asList(this.columnName.split(","));
     }
 
 }

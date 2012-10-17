@@ -4,13 +4,10 @@ public enum RowType {
     TABLES(0),
     COLUMNS(1),
     COLUMN_INFO(2),
-    DATA(3),
-    PRIMARY_INDEX(4),
-    REVERSE_INDEX(5),
-    NULL_INDEX(6),
-    TABLE_INFO(7),
-    MULTIPART_INDEX(8),
-    MULIPART_REVERSE_INDEX(9);
+    TABLE_INFO(3),
+    DATA(4),
+    PRIMARY_INDEX(5),
+    REVERSE_INDEX(6);
 
     private byte value;
 
