@@ -2,31 +2,27 @@ package com.nearinfinity.hbaseclient.strategy;
 
 import com.nearinfinity.hbaseclient.*;
 import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.filter.BinaryComparator;
-import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.PrefixFilter;
-import org.apache.hadoop.hbase.filter.RowFilter;
 
-import java.util.List;
-import java.util.logging.Logger;
+import java.util.Map;
 
-public class PrefixScanStrategy extends ScanStrategyBase {
+public class PrefixScanStrategy implements ScanStrategy {
+    private final ScanStrategyInfo scanInfo;
 
-    public PrefixScanStrategy(String tableName, List<String> columnName, byte[] value) {
-        super(tableName, columnName, value);
+    public PrefixScanStrategy(ScanStrategyInfo scanInfo) {
+        this.scanInfo = scanInfo;
     }
-
     @Override
     public Scan getScan(TableInfo info) {
         long tableId = info.getId();
-        ColumnType columnType = info.getColumnTypeByName(this.columnName);
-        byte[] columnId = Index.createColumnIds(this.columnName, info.columnNameToIdMap());
-        byte[] paddedValue = ValueEncoder.ascendingEncode(value, columnType, 0);
+        Map<String, byte[]> ascendingValueMap = PutListFactory.correctAscendingValuePadding(info, this.scanInfo.keyValueMap());
+        byte[] columnId = Index.createColumnIds(this.scanInfo.columnNames(), info.columnNameToIdMap());
+        byte[] paddedValue = Index.createValues(this.scanInfo.keyValueColumns(), ascendingValueMap);
 
-        byte[] startKey = RowKeyFactory.buildIndexKey(tableId, columnId, paddedValue, Constants.ZERO_UUID);
-        byte[] endKey = RowKeyFactory.buildIndexKey(tableId, columnId, paddedValue, Constants.FULL_UUID);
+        byte[] startKey = RowKeyFactory.buildIndexRowKey(tableId, columnId, paddedValue, Constants.ZERO_UUID);
+        byte[] endKey = RowKeyFactory.buildIndexRowKey(tableId, columnId, paddedValue, Constants.FULL_UUID);
 
-        byte[] prefix = RowKeyFactory.buildValueIndexPrefix(tableId, columnId, value);
+        byte[] prefix = RowKeyFactory.buildValueIndexPrefix(tableId, columnId, paddedValue);
 
         Scan scan = ScanFactory.buildScan(startKey, endKey);
 
@@ -35,5 +31,10 @@ public class PrefixScanStrategy extends ScanStrategyBase {
         scan.setFilter(filter);
 
         return scan;
+    }
+
+    @Override
+    public String getTableName() {
+        return this.scanInfo.tableName();
     }
 }

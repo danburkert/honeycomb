@@ -33,28 +33,6 @@ public class RowKeyFactory {
                 .array();
     }
 
-    public static byte[] buildValueIndexKey(long tableId, byte[] columnIds, byte[] value, UUID uuid) {
-        return ByteBuffer.allocate(25 + value.length + columnIds.length)
-                .put(RowType.PRIMARY_INDEX.getValue())
-                .putLong(tableId)
-                .put(columnIds)
-                .put(value)
-                .putLong(uuid.getMostSignificantBits())
-                .putLong(uuid.getLeastSignificantBits())
-                .array();
-    }
-
-    public static byte[] buildReverseIndexKey(long tableId, long columnId, byte[] value, UUID rowId) {
-        return ByteBuffer.allocate(33 + value.length)
-                .put(RowType.REVERSE_INDEX.getValue())
-                .putLong(tableId)
-                .putLong(columnId)
-                .put(value)
-                .putLong(rowId.getMostSignificantBits())
-                .putLong(rowId.getLeastSignificantBits())
-                .array();
-    }
-
     public static byte[] buildValueIndexPrefix(long tableId, byte[] columnId, byte[] value) {
         return ByteBuffer.allocate(9 + value.length + columnId.length)
                 .put(RowType.PRIMARY_INDEX.getValue())
@@ -71,7 +49,7 @@ public class RowKeyFactory {
                 .array();
     }
 
-    public static byte[] buildIndexKey(long tableId, byte[] columnIds, byte[] values, UUID uuid) {
+    public static byte[] buildIndexRowKey(long tableId, byte[] columnIds, byte[] values, UUID uuid) {
         return ByteBuffer.allocate(25 + columnIds.length + values.length)
                 .put(RowType.PRIMARY_INDEX.getValue())
                 .putLong(tableId)
@@ -82,7 +60,7 @@ public class RowKeyFactory {
                 .array();
     }
 
-    public static byte[] buildReverseIndexKey(long tableId, byte[] columnIds, byte[] values, UUID uuid) {
+    public static byte[] buildReverseIndexRowKey(long tableId, byte[] columnIds, byte[] values, UUID uuid) {
         return ByteBuffer.allocate(25 + columnIds.length + values.length)
                 .put(RowType.REVERSE_INDEX.getValue())
                 .putLong(tableId)

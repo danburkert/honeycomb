@@ -108,3 +108,141 @@ const char *extract_table_name_from_path(const char *path)
   const char* ptr = strrchr(path, '/');
   return ptr + 1;
 }
+
+// Convert an integral type of count bytes to a little endian long
+// Convert a buffer of length buff_length into an equivalent long long in long_buff
+void bytes_to_long(const uchar* buff, unsigned int buff_length,
+    const bool is_signed, uchar* long_buff)
+{
+  if (is_signed && buff[buff_length - 1] >= (uchar) 0x80)
+  {
+    memset(long_buff, 0xFF, sizeof(long));
+  } else
+  {
+    memset(long_buff, 0x00, sizeof(long));
+  }
+
+  memcpy(long_buff, buff, buff_length);
+}
+
+uchar* create_key_copy(Field* index_field, const uchar* key, uint* key_len, THD* thd)
+{
+  int index_field_type = index_field->real_type();
+  uchar* key_copy;
+  switch (index_field_type)
+  {
+    case MYSQL_TYPE_TINY:
+    case MYSQL_TYPE_SHORT:
+    case MYSQL_TYPE_INT24:
+    case MYSQL_TYPE_LONG:
+    case MYSQL_TYPE_LONGLONG:
+    case MYSQL_TYPE_ENUM:
+      {
+        key_copy = new uchar[sizeof(long long)];
+        const bool is_signed = !is_unsigned_field(index_field);
+        bytes_to_long(key, *key_len, is_signed, key_copy);
+        *key_len = sizeof(long long);
+        make_big_endian(key_copy, *key_len);
+        break;
+      }
+    case MYSQL_TYPE_YEAR:
+      {
+        key_copy = new uchar[sizeof(long long)];
+        // It comes to us as one byte, need to cast it to int and add 1900
+        uint32_t int_val = (uint32_t) key[0] + 1900;
+
+        bytes_to_long((uchar *) &int_val, sizeof(uint32_t), false, key_copy);
+        *key_len = sizeof(long long);
+        make_big_endian(key_copy, *key_len);
+        break;
+      }
+    case MYSQL_TYPE_FLOAT:
+      {
+        double j = (double) floatGet(key);
+
+        key_copy = new uchar[sizeof(double)];
+        *key_len = sizeof(double);
+
+        doublestore(key_copy, j);
+        reverse_bytes(key_copy, *key_len);
+        break;
+      }
+    case MYSQL_TYPE_DOUBLE:
+      {
+        double j = (double) floatGet(key);
+        doubleget(j, key);
+
+        key_copy = new uchar[sizeof(double)];
+        *key_len = sizeof(double);
+
+        doublestore(key_copy, j);
+        reverse_bytes(key_copy, *key_len);
+      }
+    case MYSQL_TYPE_DECIMAL:
+    case MYSQL_TYPE_NEWDECIMAL:
+      {
+        key_copy = new uchar[*key_len];
+        memcpy(key_copy, key, *key_len);
+        break;
+      }
+    case MYSQL_TYPE_DATE:
+    case MYSQL_TYPE_DATETIME:
+    case MYSQL_TYPE_TIME:
+    case MYSQL_TYPE_TIMESTAMP:
+    case MYSQL_TYPE_NEWDATE:
+      {
+        MYSQL_TIME mysql_time;
+
+        switch (index_field_type)
+        {
+          case MYSQL_TYPE_DATE:
+          case MYSQL_TYPE_NEWDATE:
+            if (*key_len == 3)
+            {
+              extract_mysql_newdate((long) uint3korr(key), &mysql_time);
+            } else
+            {
+              extract_mysql_old_date((int32) uint4korr(key), &mysql_time);
+            }
+            break;
+          case MYSQL_TYPE_TIMESTAMP:
+            extract_mysql_timestamp((long) uint4korr(key), &mysql_time, thd);
+            break;
+          case MYSQL_TYPE_TIME:
+            extract_mysql_time((long) uint3korr(key), &mysql_time);
+            break;
+          case MYSQL_TYPE_DATETIME:
+            extract_mysql_datetime((ulonglong) uint8korr(key), &mysql_time);
+            break;
+        }
+
+        char timeString[MAX_DATE_STRING_REP_LENGTH];
+        my_TIME_to_str(&mysql_time, timeString);
+        int length = strlen(timeString);
+        key_copy = new uchar[length];
+        memcpy(key_copy, timeString, length);
+        *key_len = length;
+        break;
+      }
+    case MYSQL_TYPE_VARCHAR:
+      {
+        /**
+         * VARCHARs are prefixed with two bytes that represent the actual length of the value.
+         * So we need to read the length into actual_length, then copy those bits to key_copy.
+         * Thank you, MySQL...
+         */
+        uint16_t *short_len_ptr = (uint16_t *) key;
+        *key_len = (uint) (*short_len_ptr);
+        key += 2;
+        key_copy = new uchar[*key_len];
+        memcpy(key_copy, key, *key_len);
+        break;
+      }
+    default:
+      key_copy = new uchar[*key_len];
+      memcpy(key_copy, key, *key_len);
+      break;
+  }
+
+  return key_copy;
+}

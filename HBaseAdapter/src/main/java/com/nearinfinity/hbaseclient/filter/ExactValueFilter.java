@@ -9,13 +9,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jedstrom
- * Date: 8/16/12
- * Time: 7:35 AM
- * To change this template use File | Settings | File Templates.
- */
 public class ExactValueFilter extends FilterBase {
 
     private byte[] value;

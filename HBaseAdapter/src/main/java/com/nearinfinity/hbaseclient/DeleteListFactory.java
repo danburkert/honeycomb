@@ -1,6 +1,7 @@
 package com.nearinfinity.hbaseclient;
 
 import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 
 import java.util.LinkedList;
@@ -9,37 +10,28 @@ import java.util.Map;
 import java.util.UUID;
 
 public class DeleteListFactory {
-    public static List<Delete> createDeleteRowList(UUID uuid, TableInfo info, Result result, byte[] dataRowKey) {
+    public static List<Delete> createDeleteRowList(UUID uuid, TableInfo info, Result result, byte[] dataRowKey, final LinkedList<LinkedList<String>> indexedKeys) {
         long tableId = info.getId();
         List<Delete> deleteList = new LinkedList<Delete>();
-        Map<String, byte[]> valueMap = ResultParser.parseDataRow(result, info);
+        Map<String, byte[]> values = ResultParser.parseDataRow(result, info);
         deleteList.add(new Delete(dataRowKey));
 
-        //Loop through ALL columns to determine which should be NULL
-        for (String columnName : info.getColumnNames()) {
-            long columnId = info.getColumnIdByName(columnName);
-            byte[] value = valueMap.get(columnName);
-            ColumnMetadata metadata = info.getColumnMetadata(columnName);
-            ColumnType columnType = metadata.getType();
+        final Map<String, Long> columnNameToId = info.columnNameToIdMap();
 
-            if (value == null) {
-                byte[] nullIndexKey = RowKeyFactory.buildNullIndexKey(tableId, columnId, uuid);
-                deleteList.add(new Delete(nullIndexKey));
-                continue;
-            }
+        final Map<String, byte[]> ascendingValues = PutListFactory.correctAscendingValuePadding(info, values);
+        final Map<String, byte[]> descendingValues = PutListFactory.correctDescendingValuePadding(info, values);
 
-            //Determine pad length
-            int padLength = 0;
-            if (columnType == ColumnType.STRING || columnType == ColumnType.BINARY) {
-                long maxLength = metadata.getMaxLength();
-                padLength = (int) maxLength - value.length;
-            }
+        for (List<String> columns : indexedKeys) {
+            final byte[] columnIds = Index.createColumnIds(columns, columnNameToId);
 
-            byte[] indexKey = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, uuid, columnType, padLength);
-            byte[] reverseKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId, value, columnType, uuid, padLength);
+            final byte[] ascendingIndexValues = Index.createValues(columns, ascendingValues);
+            final byte[] descendingIndexValues = Index.createValues(columns, descendingValues);
 
-            deleteList.add(new Delete(indexKey));
-            deleteList.add(new Delete(reverseKey));
+            final byte[] ascendingIndexKey = RowKeyFactory.buildIndexRowKey(tableId, columnIds, ascendingIndexValues, uuid);
+            final byte[] descendingIndexKey = RowKeyFactory.buildReverseIndexRowKey(tableId, columnIds, descendingIndexValues, uuid);
+
+            deleteList.add(new Delete(ascendingIndexKey));
+            deleteList.add(new Delete(descendingIndexKey));
         }
 
         return deleteList;

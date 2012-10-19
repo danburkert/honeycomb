@@ -81,6 +81,7 @@ class CloudHandler : public handler
     int java_array_length(jarray array);
     jobject create_multipart_keys(TABLE* table_arg);
     char* index_name(KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts);
+    jobject create_key_value_list(int index, uint* key_sizes, uchar** key_copies, const char** key_names, jboolean* key_null_bits);
 
     bool is_integral_field(int field_type)
     {
@@ -148,7 +149,6 @@ class CloudHandler : public handler
     /* Index methods */
     int index_init(uint idx, bool sorted);
     int index_end();
-    int index_read(uchar *buf, const uchar *key, uint key_len, enum ha_rkey_function find_flag);
     int index_next(uchar *buf);
     int index_prev(uchar *buf);
     int index_first(uchar *buf);
@@ -224,6 +224,11 @@ class CloudHandler : public handler
     uint max_supported_key_part_length() const
     {
       return UINT_MAX;
+    }
+  
+    uint max_supported_key_parts() const 
+    {
+      return 4; 
     }
 
     virtual double scan_time()

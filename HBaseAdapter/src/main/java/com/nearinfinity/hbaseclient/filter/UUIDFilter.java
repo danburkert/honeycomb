@@ -12,13 +12,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jedstrom
- * Date: 8/9/12
- * Time: 4:05 PM
- * To change this template use File | Settings | File Templates.
- */
 public class UUIDFilter extends FilterBase {
 
     private byte[] value;
