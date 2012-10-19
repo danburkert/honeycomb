@@ -6,6 +6,7 @@ import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.lang.reflect.Type;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -16,7 +17,13 @@ public class Index {
     public static LinkedList<LinkedList<String>> indexForTable(final Map<byte[], byte[]> tableMetadata) {
         Type type = new TypeToken<LinkedList<LinkedList<String>>>() {
         }.getType();
-        byte[] jsonBytes = tableMetadata.get(Constants.INDEXES);
+        byte[] jsonBytes = null;
+        for (Map.Entry<byte[], byte[]> entry : tableMetadata.entrySet()) {
+            if (Arrays.equals(entry.getKey(), Constants.INDEXES)) {
+                jsonBytes = entry.getValue();
+            }
+        }
+
         if (jsonBytes == null) {
             return new LinkedList<LinkedList<String>>();
         }

@@ -331,7 +331,7 @@ public class HBaseAdapter {
                 break;
             }
 
-            // scanner.setColumnName(columnName); // TODO: fix the scanner set column name
+            scanner.setColumnName(Iterables.getLast(scanInfo.columnNames()));
 
             conn.setScanner(scanner);
             Result result = scanner.next(valueToSkip);

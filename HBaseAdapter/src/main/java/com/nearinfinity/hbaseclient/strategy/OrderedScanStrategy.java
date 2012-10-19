@@ -17,7 +17,7 @@ public class OrderedScanStrategy implements ScanStrategy {
     @Override
     public Scan getScan(TableInfo info) {
         long tableId = info.getId();
-        Map<String, byte[]> ascendingValueMap = PutListFactory.correctAscendingValuePadding(info, this.scanInfo.keyValueMap());
+        Map<String, byte[]> ascendingValueMap = PutListFactory.correctAscendingValuePadding(info, this.scanInfo.keyValueMap(), this.scanInfo.nullSearchColumns());
         List<String> columns = this.scanInfo.columnNames();
 
         byte[] columnIds = Index.createColumnIds(columns, info.columnNameToIdMap());
