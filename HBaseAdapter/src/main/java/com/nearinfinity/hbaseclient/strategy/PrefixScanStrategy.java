@@ -15,7 +15,7 @@ public class PrefixScanStrategy implements ScanStrategy {
     @Override
     public Scan getScan(TableInfo info) {
         long tableId = info.getId();
-        Map<String, byte[]> ascendingValueMap = PutListFactory.correctAscendingValuePadding(info, this.scanInfo.keyValueMap());
+        Map<String, byte[]> ascendingValueMap = PutListFactory.correctAscendingValuePadding(info, this.scanInfo.keyValueMap(), this.scanInfo.nullSearchColumns());
         byte[] columnId = Index.createColumnIds(this.scanInfo.columnNames(), info.columnNameToIdMap());
         byte[] paddedValue = Index.createValues(this.scanInfo.keyValueColumns(), ascendingValueMap);
 

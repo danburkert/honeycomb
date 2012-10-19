@@ -2,11 +2,13 @@ package com.nearinfinity.hbaseclient.strategy;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.nearinfinity.hbaseclient.KeyValue;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public final class ScanStrategyInfo {
     private final String tableName;
@@ -58,5 +60,16 @@ public final class ScanStrategyInfo {
 
     public final Map<String, byte[]> keyValueMap() {
         return this.keyValueMap;
+    }
+
+    public final Set<String> nullSearchColumns() {
+        ImmutableSet.Builder<String> builder = ImmutableSet.builder();
+        for (KeyValue keyValue : this.keyValues) {
+            if (keyValue.isNull()) {
+                builder.add(keyValue.key());
+            }
+        }
+
+        return builder.build();
     }
 }

@@ -8,10 +8,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class PutListFactory {
     public static List<Put> createPutList(final Map<String, byte[]> values, final TableInfo info, final LinkedList<LinkedList<String>> indexedKeys) {
@@ -62,7 +59,15 @@ public class PutListFactory {
     }
 
     public static Map<String, byte[]> correctAscendingValuePadding(TableInfo info, Map<String, byte[]> values) {
-        return convertToCorrectOrder(info, values, new Function<byte[], ColumnType, Integer, byte[]>() {
+        return correctAscendingValuePadding(info, values, new HashSet<String>());
+    }
+
+    public static Map<String, byte[]> correctDescendingValuePadding(TableInfo info, Map<String, byte[]> values) {
+        return correctDescendingValuePadding(info, values, new HashSet<String>());
+    }
+
+    public static Map<String, byte[]> correctAscendingValuePadding(TableInfo info, Map<String, byte[]> values, Set<String> nullSearchColumns) {
+        return convertToCorrectOrder(info, values, nullSearchColumns, new Function<byte[], ColumnType, Integer, byte[]>() {
             @Override
             public byte[] apply(byte[] value, ColumnType columnType, Integer padLength) {
                 return ValueEncoder.ascendingEncode(value, columnType, padLength);
@@ -70,8 +75,8 @@ public class PutListFactory {
         });
     }
 
-    public static Map<String, byte[]> correctDescendingValuePadding(TableInfo info, Map<String, byte[]> values) {
-        return convertToCorrectOrder(info, values, new Function<byte[], ColumnType, Integer, byte[]>() {
+    public static Map<String, byte[]> correctDescendingValuePadding(TableInfo info, Map<String, byte[]> values, Set<String> nullSearchColumns) {
+        return convertToCorrectOrder(info, values, nullSearchColumns, new Function<byte[], ColumnType, Integer, byte[]>() {
             @Override
             public byte[] apply(byte[] value, ColumnType columnType, Integer padLength) {
                 return ValueEncoder.descendingEncode(value, columnType, padLength);
@@ -79,13 +84,13 @@ public class PutListFactory {
         });
     }
 
-    private static Map<String, byte[]> convertToCorrectOrder(TableInfo info, Map<String, byte[]> values, Function<byte[], ColumnType, Integer, byte[]> convert) {
+    private static Map<String, byte[]> convertToCorrectOrder(TableInfo info, Map<String, byte[]> values, Set<String> nullSearchColumns, Function<byte[], ColumnType, Integer, byte[]> convert) {
         ImmutableMap.Builder<String, byte[]> result = ImmutableMap.builder();
         for (String columnName : values.keySet()) {
             final ColumnMetadata metadata = info.getColumnMetadata(columnName);
             final ColumnType columnType = info.getColumnTypeByName(columnName);
             byte[] value = values.get(columnName);
-            boolean isNull = value == null;
+            boolean isNull = value == null || nullSearchColumns.contains(columnName);
             if (isNull) {
                 value = new byte[metadata.getMaxLength()];
             }

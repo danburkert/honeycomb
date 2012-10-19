@@ -1031,17 +1031,17 @@ int CloudHandler::index_end()
   DBUG_RETURN(0);
 }
 
-jobject CloudHandler::create_key_value_list(int index, uint* key_sizes, uchar** key_copies, const char** key_names, jboolean* key_null_bits)
+jobject CloudHandler::create_key_value_list(int index, uint* key_sizes, uchar** key_copies, const char** key_names, jboolean* key_null_bits, jboolean* key_is_null)
 {
   jobject key_values = create_java_list(this->env);
   jclass key_value_class = this->env->FindClass("com/nearinfinity/hbaseclient/KeyValue");
-  jmethodID key_value_ctor = this->env->GetMethodID(key_value_class, "<init>", "(Ljava/lang/String;[BZ)V");
+  jmethodID key_value_ctor = this->env->GetMethodID(key_value_class, "<init>", "(Ljava/lang/String;[BZZ)V");
   for(int x = 0; x < index; x++)
   {
     jbyteArray java_key = this->env->NewByteArray(key_sizes[x]);
     this->env->SetByteArrayRegion(java_key, 0, key_sizes[x], (jbyte*) key_copies[x]);
     jstring key_name = string_to_java_string(key_names[x]);
-    jobject key_value = this->env->NewObject(key_value_class, key_value_ctor, key_name, java_key, key_null_bits[x]);
+    jobject key_value = this->env->NewObject(key_value_class, key_value_ctor, key_name, java_key, key_null_bits[x], key_is_null[x]);
     java_list_insert(key_values, key_value, this->env);
   }
 
@@ -1072,8 +1072,10 @@ int CloudHandler::index_read_map(uchar * buf, const uchar * key, key_part_map ke
   uchar* key_copies[key_count];
   uint key_sizes[key_count];
   jboolean key_null_bits[key_count];
+  jboolean key_is_null[key_count];
   const char* key_names[key_count];
   memset(key_null_bits, JNI_FALSE, key_count);
+  memset(key_is_null, JNI_FALSE, key_count);
   memset(key_copies, 0, key_count);
   uchar* key_iter = (uchar*)key;
   int index = 0;
@@ -1086,6 +1088,18 @@ int CloudHandler::index_read_map(uchar * buf, const uchar * key, key_part_map ke
     uint offset = store_length;
     if (field->maybe_null())
     {
+      if(key_iter[0] == 1) 
+      {
+        if(index == (key_count - 1) && find_flag == HA_READ_AFTER_KEY)
+        {
+          key_is_null[index] = JNI_FALSE;
+        }
+        else
+        {
+          key_is_null[index] = JNI_TRUE;
+        }
+      }
+
       // If the index is nullable, then the first byte is the null flag.  Ignore it.
       key_iter++;
       offset--;
@@ -1102,7 +1116,7 @@ int CloudHandler::index_read_map(uchar * buf, const uchar * key, key_part_map ke
     index++;
   }
 
-  jobject key_values = create_key_value_list(index, key_sizes, key_copies, key_names, key_null_bits);
+  jobject key_values = create_key_value_list(index, key_sizes, key_copies, key_names, key_null_bits, key_is_null);
 
   jobject java_find_flag = find_flag_to_java(find_flag, this->env);
   jobject index_row = this->env->CallStaticObjectMethod(adapter_class, index_read_method, this->curr_scan_id, key_values, java_find_flag);
