@@ -6,10 +6,11 @@ import com.nearinfinity.hbaseclient.ScanFactory;
 import com.nearinfinity.hbaseclient.TableInfo;
 import org.apache.hadoop.hbase.client.Scan;
 
-public class FullTableScanStrategy extends ScanStrategyBase {
+public class FullTableScanStrategy implements ScanStrategy {
+    private final ScanStrategyInfo scanInfo;
 
-    public FullTableScanStrategy(String tableName, String columnName, byte[] value) {
-        super(tableName, columnName, value);
+    public FullTableScanStrategy(ScanStrategyInfo scanInfo) {
+        this.scanInfo = scanInfo;
     }
 
     @Override
@@ -21,5 +22,10 @@ public class FullTableScanStrategy extends ScanStrategyBase {
         byte[] endRow = RowKeyFactory.buildDataKey(tableId + 1, Constants.ZERO_UUID);
 
         return ScanFactory.buildScan(startRow, endRow);
+    }
+
+    @Override
+    public String getTableName() {
+        return this.scanInfo.tableName();
     }
 }

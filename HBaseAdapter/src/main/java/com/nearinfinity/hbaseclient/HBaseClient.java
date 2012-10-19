@@ -2,6 +2,7 @@ package com.nearinfinity.hbaseclient;
 
 import com.nearinfinity.hbaseclient.strategy.PrefixScanStrategy;
 import com.nearinfinity.hbaseclient.strategy.ScanStrategy;
+import com.nearinfinity.hbaseclient.strategy.ScanStrategyInfo;
 import com.nearinfinity.mysqlengine.scanner.HBaseResultScanner;
 import com.nearinfinity.mysqlengine.scanner.SingleResultScanner;
 import org.apache.hadoop.conf.Configuration;
@@ -90,7 +91,11 @@ public class HBaseClient {
         puts.add(new Put(RowKeyFactory.ROOT).add(Constants.NIC, tableName.getBytes(), Bytes.toBytes(tableId)));
         Put put = new Put(RowKeyFactory.buildTableInfoKey(tableId));
         put.add(Constants.NIC, Constants.ROW_COUNT, Bytes.toBytes(0l));
-        put.add(Constants.NIC, Constants.INDEXES, multipartKeys.toJson().getBytes());
+        final byte[] bytes = multipartKeys.toJson().getBytes();
+        tableCache.get(tableName).setTableMetadata(new HashMap<byte[], byte[]>(){{
+            put(Constants.INDEXES, bytes);
+        }});
+        put.add(Constants.NIC, Constants.INDEXES, bytes);
         puts.add(put);
     }
 
@@ -262,7 +267,7 @@ public class HBaseClient {
         Get get = new Get(dataRowKey);
         Result result = table.get(get);
 
-        List<Delete> deleteList = DeleteListFactory.createDeleteRowList(uuid, info, result, dataRowKey);
+        List<Delete> deleteList = DeleteListFactory.createDeleteRowList(uuid, info, result, dataRowKey, Index.indexForTable(info.tableMetadata()));
 
         table.delete(deleteList);
 
@@ -320,11 +325,9 @@ public class HBaseClient {
 
         byte[] valuePrefix = ByteBuffer.allocate(9).put(RowType.PRIMARY_INDEX.getValue()).putLong(tableId).array();
         byte[] reversePrefix = ByteBuffer.allocate(9).put(RowType.REVERSE_INDEX.getValue()).putLong(tableId).array();
-        byte[] nullPrefix = ByteBuffer.allocate(9).put(RowType.NULL_INDEX.getValue()).putLong(tableId).array();
 
         affectedRows += deleteRowsWithPrefix(valuePrefix);
         affectedRows += deleteRowsWithPrefix(reversePrefix);
-        affectedRows += deleteRowsWithPrefix(nullPrefix);
 
         return affectedRows;
     }
@@ -406,13 +409,14 @@ public class HBaseClient {
     }
 
     public String findDuplicateKey(String tableName, Map<String, byte[]> values) throws IOException {
+        PrefixScanStrategy strategy = new PrefixScanStrategy(null); // TODO: fix the duplicate key scan
         for (Map.Entry<String, byte[]> entry : values.entrySet()) {
             String columnName = entry.getKey();
             byte[] columnValue = entry.getValue();
 
             logger.debug("Checking for duplicate values in unique-indexed column " + columnName);
 
-            PrefixScanStrategy strategy = new PrefixScanStrategy(tableName, columnName, columnValue);
+
             HBaseResultScanner scanner = new SingleResultScanner(getScanner(strategy));
 
             if (scanner.next(null) != null) {

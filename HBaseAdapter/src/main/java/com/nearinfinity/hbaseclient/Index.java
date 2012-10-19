@@ -42,6 +42,15 @@ public class Index {
         });
     }
 
+    public static int calculateIndexValuesFullLength(List<String> columns, TableInfo info) {
+        int size = 0;
+        for (String column : columns) {
+            size += info.getColumnMetadata(column).getMaxLength();
+        }
+
+        return size;
+    }
+
     private static byte[] correctColumnIdSize(byte[] columnIds) {
         int expectedSize = 4 * Bytes.SIZEOF_LONG;
         if (columnIds.length > expectedSize) {
@@ -52,9 +61,7 @@ public class Index {
             return columnIds;
         }
 
-        byte[] expandedColumnIds = new byte[expectedSize];
-        System.arraycopy(columnIds, 0, expandedColumnIds, 0, columnIds.length);
-        return expandedColumnIds;
+        return Bytes.padTail(columnIds, expectedSize - columnIds.length);
     }
 
     private static byte[] convertToByteArray(final List<String> columns,
@@ -79,5 +86,29 @@ public class Index {
         }
 
         return mergedArray;
+    }
+
+    public static byte[] incrementColumn(byte[] columnIds, int offset) {
+        if (columnIds == null) {
+            throw new IllegalArgumentException("columnIds cannot be null");
+        }
+
+        if (offset < 0) {
+            throw new IllegalArgumentException("offset must be positive");
+        }
+
+        if (offset > (columnIds.length - Bytes.SIZEOF_LONG)) {
+            throw new IllegalArgumentException("offset must be less than the length of columnIds");
+        }
+
+        final byte[] nextColumn = new byte[columnIds.length];
+        final long nextColumnId = Bytes.toLong(columnIds, offset) + 1;
+        final int finalOffset = offset + Bytes.SIZEOF_LONG;
+
+        System.arraycopy(columnIds, 0, nextColumn, 0, offset);
+        System.arraycopy(Bytes.toBytes(nextColumnId), 0, nextColumn, offset, Bytes.SIZEOF_LONG);
+        System.arraycopy(columnIds, finalOffset, nextColumn, finalOffset, columnIds.length - finalOffset);
+
+        return nextColumn;
     }
 }

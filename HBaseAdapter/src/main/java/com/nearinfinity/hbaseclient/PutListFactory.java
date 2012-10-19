@@ -16,10 +16,11 @@ import java.util.UUID;
 public class PutListFactory {
     public static List<Put> createPutList(final Map<String, byte[]> values, final TableInfo info, final LinkedList<LinkedList<String>> indexedKeys) {
         final long tableId = info.getId();
-        final Map<String, Long> columnNameToId = info.columnNameToIdMap();
-        final UUID rowId = UUID.randomUUID();
-        final byte[] dataKey = RowKeyFactory.buildDataKey(tableId, rowId);
         final List<Put> putList = new LinkedList<Put>();
+        final UUID rowId = UUID.randomUUID();
+
+        final Map<String, Long> columnNameToId = info.columnNameToIdMap();
+        final byte[] dataKey = RowKeyFactory.buildDataKey(tableId, rowId);
         final Put dataRow = createDataRows(dataKey, values, columnNameToId);
 
         if (values.size() == 0) {
@@ -39,8 +40,8 @@ public class PutListFactory {
             final byte[] ascendingIndexValues = Index.createValues(columns, ascendingValues);
             final byte[] descendingIndexValues = Index.createValues(columns, descendingValues);
 
-            final byte[] ascendingIndexKey = RowKeyFactory.buildIndexKey(tableId, columnIds, ascendingIndexValues, rowId);
-            final byte[] descendingIndexKey = RowKeyFactory.buildReverseIndexKey(tableId, columnIds, descendingIndexValues, rowId);
+            final byte[] ascendingIndexKey = RowKeyFactory.buildIndexRowKey(tableId, columnIds, ascendingIndexValues, rowId);
+            final byte[] descendingIndexKey = RowKeyFactory.buildReverseIndexRowKey(tableId, columnIds, descendingIndexValues, rowId);
 
             putList.add(new Put(ascendingIndexKey).add(Constants.NIC, Constants.VALUE_MAP, rowByteArray));
             putList.add(new Put(descendingIndexKey).add(Constants.NIC, Constants.VALUE_MAP, rowByteArray));
@@ -60,7 +61,7 @@ public class PutListFactory {
         return dataRow;
     }
 
-    private static Map<String, byte[]> correctAscendingValuePadding(TableInfo info, Map<String, byte[]> values) {
+    public static Map<String, byte[]> correctAscendingValuePadding(TableInfo info, Map<String, byte[]> values) {
         return convertToCorrectOrder(info, values, new Function<byte[], ColumnType, Integer, byte[]>() {
             @Override
             public byte[] apply(byte[] value, ColumnType columnType, Integer padLength) {
@@ -69,7 +70,7 @@ public class PutListFactory {
         });
     }
 
-    private static Map<String, byte[]> correctDescendingValuePadding(TableInfo info, Map<String, byte[]> values) {
+    public static Map<String, byte[]> correctDescendingValuePadding(TableInfo info, Map<String, byte[]> values) {
         return convertToCorrectOrder(info, values, new Function<byte[], ColumnType, Integer, byte[]>() {
             @Override
             public byte[] apply(byte[] value, ColumnType columnType, Integer padLength) {
@@ -81,21 +82,28 @@ public class PutListFactory {
     private static Map<String, byte[]> convertToCorrectOrder(TableInfo info, Map<String, byte[]> values, Function<byte[], ColumnType, Integer, byte[]> convert) {
         ImmutableMap.Builder<String, byte[]> result = ImmutableMap.builder();
         for (String columnName : values.keySet()) {
+            final ColumnMetadata metadata = info.getColumnMetadata(columnName);
             final ColumnType columnType = info.getColumnTypeByName(columnName);
             byte[] value = values.get(columnName);
-            if (value == null) {
-                value = new byte[1];  // TODO: Figure out how to get the null value.
-                value[0] = 1;
+            boolean isNull = value == null;
+            if (isNull) {
+                value = new byte[metadata.getMaxLength()];
             }
 
             int padLength = 0;
             if (columnType == ColumnType.STRING || columnType == ColumnType.BINARY) {
-                final long maxLength = info.getColumnMetadata(columnName).getMaxLength();
+                final long maxLength = metadata.getMaxLength();
                 padLength = (int) maxLength - value.length;
             }
 
             byte[] paddedValue = convert.apply(value, columnType, padLength);
-            result.put(columnName, paddedValue);
+            if (metadata.isNullable()) {
+                byte[] nullPadValue = Bytes.padHead(paddedValue, 1);
+                nullPadValue[0] = isNull ? (byte) 1 : 0;
+                result.put(columnName, nullPadValue);
+            } else {
+                result.put(columnName, paddedValue);
+            }
         }
 
         return result.build();

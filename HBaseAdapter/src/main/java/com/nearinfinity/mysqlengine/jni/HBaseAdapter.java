@@ -1,5 +1,7 @@
 package com.nearinfinity.mysqlengine.jni;
 
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.nearinfinity.hbaseclient.*;
 import com.nearinfinity.hbaseclient.strategy.*;
 import com.nearinfinity.mysqlengine.Connection;
@@ -90,9 +92,9 @@ public class HBaseAdapter {
         long scanId = connectionCounter.incrementAndGet();
         logger.info("startScan-> tableName: " + tableName + ", scanId: " + scanId + ", isFullTableScan: " + isFullTableScan);
         try {
-            ScanStrategy strategy = new FullTableScanStrategy(tableName, "", new byte[0]);
-            SingleResultScanner dataScanner = new SingleResultScanner(client.getScanner(strategy));
-            clientPool.put(scanId, new Connection(tableName, dataScanner));
+//            ScanStrategy strategy = new FullTableScanStrategy(tableName, "", new byte[0]);
+//            SingleResultScanner dataScanner = new SingleResultScanner(client.getScanner(strategy));
+//            clientPool.put(scanId, new Connection(tableName, dataScanner));
         } catch (Exception e) {
             logger.error("startScan-> Exception:", e);
             throw new HBaseAdapterException("startScan", e);
@@ -227,7 +229,7 @@ public class HBaseAdapter {
     }
 
     public static long startIndexScan(String tableName, String columnName) throws HBaseAdapterException {
-        logger.info("startIndexScan-> tableName " + tableName + ", columnName: " + columnName);
+        logger.info("startIndexScan-> tableName " + tableName + ", columnNames: " + columnName);
 
         long scanId = connectionCounter.incrementAndGet();
         try {
@@ -244,7 +246,7 @@ public class HBaseAdapter {
         String result = null;
 
         try {
-            result = client.findDuplicateKey(tableName, values);
+            // result = client.findDuplicateKey(tableName, values);
         } catch (Exception e) {
             logger.error("hasDuplicateValues-> Exception:", e);
             throw new HBaseAdapterException("hasDuplicateValues", e);
@@ -278,64 +280,58 @@ public class HBaseAdapter {
         return autoIncrementValue;
     }
 
-    public static IndexRow indexRead(long scanId, byte[] value, IndexReadType readType) throws HBaseAdapterException {
-        logger.info("indexRead-> scanId: " + scanId + ", value: " + Bytes.toString(value) + ", readType " + readType.name());
-
+    public static IndexRow indexRead(long scanId, List<KeyValue> keyValues, IndexReadType readType) throws HBaseAdapterException {
         Connection conn = getConnectionForId(scanId);
         IndexRow indexRow = new IndexRow();
         try {
             String tableName = conn.getTableName();
             List<String> columnName = conn.getColumnName();
+            ScanStrategyInfo scanInfo = new ScanStrategyInfo(tableName, columnName, keyValues);
 
             byte[] valueToSkip = null;
             HBaseResultScanner scanner = null;
 
             switch (readType) {
                 case HA_READ_KEY_EXACT: {
-                    ScanStrategy strategy = new PrefixScanStrategy(tableName, columnName, value);
+                    ScanStrategy strategy = new PrefixScanStrategy(scanInfo);
                     scanner = new SingleResultScanner(client.getScanner(strategy));
                 }
                 break;
                 case HA_READ_AFTER_KEY: {
-                    ScanStrategy strategy = new OrderedScanStrategy(tableName, columnName, value);
+                    ScanStrategy strategy = new OrderedScanStrategy(scanInfo);
                     scanner = new SingleResultScanner(client.getScanner(strategy));
-                    valueToSkip = value;
+                    valueToSkip = Iterables.getLast(scanInfo.keyValueValues());
                 }
                 break;
                 case HA_READ_KEY_OR_NEXT: {
-                    ScanStrategy strategy = new OrderedScanStrategy(tableName, columnName, value);
+                    ScanStrategy strategy = new OrderedScanStrategy(scanInfo);
                     scanner = new SingleResultScanner(client.getScanner(strategy));
                 }
                 break;
                 case HA_READ_BEFORE_KEY: {
-                    ScanStrategy strategy = new ReverseScanStrategy(tableName, columnName, value);
+                    ScanStrategy strategy = new ReverseScanStrategy(scanInfo);
                     scanner = new SingleResultScanner(client.getScanner(strategy));
-                    valueToSkip = value;
+                    valueToSkip = Iterables.getLast(scanInfo.keyValueValues());
                 }
                 break;
                 case HA_READ_KEY_OR_PREV: {
-                    ScanStrategy strategy = new ReverseScanStrategy(tableName, columnName, value);
+                    ScanStrategy strategy = new ReverseScanStrategy(scanInfo);
                     scanner = new SingleResultScanner(client.getScanner(strategy));
                 }
                 break;
                 case INDEX_FIRST: {
-                    ScanStrategy strategy = new OrderedScanStrategy(tableName, columnName, new byte[0]);
+                    ScanStrategy strategy = new OrderedScanStrategy(scanInfo);
                     scanner = new SingleResultScanner(client.getScanner(strategy));
                 }
                 break;
                 case INDEX_LAST: {
-                    ScanStrategy strategy = new ReverseScanStrategy(tableName, columnName, new byte[0]);
-                    scanner = new SingleResultScanner(client.getScanner(strategy));
-                }
-                break;
-                case INDEX_NULL: {
-                    ScanStrategy strategy = new NullScanStrategy(tableName, columnName, null);
+                    ScanStrategy strategy = new ReverseScanStrategy(scanInfo);
                     scanner = new SingleResultScanner(client.getScanner(strategy));
                 }
                 break;
             }
 
-            scanner.setColumnName(columnName);
+            // scanner.setColumnName(columnName); // TODO: fix the scanner set column name
 
             conn.setScanner(scanner);
             Result result = scanner.next(valueToSkip);

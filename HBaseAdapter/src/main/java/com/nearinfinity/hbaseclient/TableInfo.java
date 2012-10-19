@@ -59,6 +59,7 @@ public class TableInfo {
         ColumnInfo info = new ColumnInfo(id, columnName, metadata);
         columnNamesToInfo.put(columnName, info);
         columnIdsToInfo.put(id, info);
+        columnNameToId.put(columnName, id);
     }
 
     public Set<String> getColumnNames() {
