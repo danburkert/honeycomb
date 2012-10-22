@@ -23,7 +23,7 @@ public class PutListFactory {
         final byte[] dataKey = RowKeyFactory.buildDataKey(tableId, rowId);
         final Put dataRow = createDataRows(dataKey, values, columnNameToId);
 
-        if (values.size() == 0) {
+        if (dataRow.getFamilyMap().size() == 0) {
             // Add special []->[] data row to signify a row of all null values
             putList.add(dataRow.add(Constants.NIC, new byte[0], new byte[0]));
         } else {
@@ -55,7 +55,9 @@ public class PutListFactory {
         for (String columnName : values.keySet()) {
             final long columnId = columnNameToId.get(columnName);
             final byte[] value = values.get(columnName);
-            dataRow.add(Constants.NIC, Bytes.toBytes(columnId), value);
+            if (value != null) {
+                dataRow.add(Constants.NIC, Bytes.toBytes(columnId), value);
+            }
         }
 
         return dataRow;

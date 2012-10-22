@@ -177,6 +177,7 @@ uchar* create_key_copy(Field* index_field, const uchar* key, uint* key_len, THD*
 
         doublestore(key_copy, j);
         reverse_bytes(key_copy, *key_len);
+        break;
       }
     case MYSQL_TYPE_DECIMAL:
     case MYSQL_TYPE_NEWDECIMAL:
