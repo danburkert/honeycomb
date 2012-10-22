@@ -1048,6 +1048,13 @@ jobject CloudHandler::create_key_value_list(int index, uint* key_sizes, uchar** 
   return key_values;
 }
 
+bool CloudHandler::is_field_nullable(const char* table_name, const char* field_name)
+{
+  jclass adapter_class = this->adapter();
+  jmethodID is_nullable_method = this->env->GetStaticMethodID(adapter_class, "isNullable", "(Ljava/lang/String;Ljava/lang/String;)Z");
+  return (bool)this->env->CallStaticBooleanMethod(adapter_class, is_nullable_method, string_to_java_string(table_name), string_to_java_string(field_name));
+}
+
 int CloudHandler::index_read_map(uchar * buf, const uchar * key, key_part_map keypart_map, enum ha_rkey_function find_flag)
 {
   DBUG_ENTER("CloudHandler::index_read_map");
@@ -1086,13 +1093,14 @@ int CloudHandler::index_read_map(uchar * buf, const uchar * key, key_part_map ke
     key_names[index] = field->field_name;
     uint store_length = key_part->store_length;
     uint offset = store_length;
-    if (field->maybe_null())
+    if (this->is_field_nullable(table->s->table_name.str, field->field_name))  
     {
-      if(key_iter[0] == 1) 
+      if(key_iter[0] == 1)
       {
         if(index == (key_count - 1) && find_flag == HA_READ_AFTER_KEY)
         {
           key_is_null[index] = JNI_FALSE;
+          DBUG_RETURN(index_first(buf));
         }
         else
         {
@@ -1266,9 +1274,7 @@ jobject CloudHandler::get_next_index_row()
 jobject CloudHandler::get_index_row(const char* indexType)
 {
   jclass adapter_class = this->adapter();
-  jmethodID index_read_method =
-      this->env->GetStaticMethodID(adapter_class, "indexRead",
-          "(J[BLcom/nearinfinity/mysqlengine/jni/IndexReadType;)Lcom/nearinfinity/mysqlengine/jni/IndexRow;");
+  jmethodID index_read_method = this->env->GetStaticMethodID(adapter_class, "indexRead", "(JLjava/util/List;Lcom/nearinfinity/mysqlengine/jni/IndexReadType;)Lcom/nearinfinity/mysqlengine/jni/IndexRow;");
   jlong java_scan_id = this->curr_scan_id;
   jclass read_class = find_jni_class("IndexReadType", this->env);
   jfieldID field_id = this->env->GetStaticFieldID(read_class, indexType,

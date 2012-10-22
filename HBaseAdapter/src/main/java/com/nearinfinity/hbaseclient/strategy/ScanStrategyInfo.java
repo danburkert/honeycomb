@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.nearinfinity.hbaseclient.KeyValue;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -16,7 +17,11 @@ public final class ScanStrategyInfo {
     private final List<KeyValue> keyValues;
     private final Map<String, byte[]> keyValueMap;
 
-    public ScanStrategyInfo(final String tableName, final List<String> columnNames, final List<KeyValue> keyValues) {
+    public ScanStrategyInfo(final String tableName, final List<String> columnNames, List<KeyValue> keyValues) {
+        if (keyValues == null) {
+            keyValues = new LinkedList<KeyValue>();
+        }
+
         this.tableName = tableName;
         this.columnNames = columnNames;
         this.keyValues = keyValues;

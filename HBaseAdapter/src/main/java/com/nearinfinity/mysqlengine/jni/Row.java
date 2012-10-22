@@ -26,6 +26,11 @@ public class Row {
 
     public void setRowMap(Map<String, byte[]> rowMap) {
         this.rowMap = new TreeMap<String, byte[]>(rowMap);
+        for (String key : this.rowMap.keySet()) {
+            if (this.rowMap.get(key).length == 0) {
+                this.rowMap.put(key, null);
+            }
+        }
     }
 
     public void setUUID(UUID rowUuid) {

@@ -1,5 +1,7 @@
 package com.nearinfinity.mysqlengine.jni;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.nearinfinity.hbaseclient.ResultParser;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.log4j.Logger;
@@ -7,7 +9,9 @@ import org.apache.log4j.Logger;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
@@ -40,15 +44,11 @@ public class IndexRow {
     @SuppressWarnings("unchecked")
     public void parseResult(Result result) {
         byte[] mapBytes = ResultParser.parseValueMap(result);
+        Gson gson = new Gson();
+        Type type = new TypeToken<TreeMap<String, byte[]>>() {
+        }.getType();
 
-        try {
-            ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(mapBytes));
-            this.rowMap = (TreeMap<String, byte[]>)in.readObject();
-            in.close();
-        } catch (IOException e) {
-        } catch (ClassNotFoundException e) {
-        }
-
+        this.rowMap = gson.fromJson(new String(mapBytes), type);
         this.setUUID(ResultParser.parseUUID(result));
     }
 }

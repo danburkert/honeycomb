@@ -92,9 +92,9 @@ public class HBaseAdapter {
         long scanId = connectionCounter.incrementAndGet();
         logger.info("startScan-> tableName: " + tableName + ", scanId: " + scanId + ", isFullTableScan: " + isFullTableScan);
         try {
-//            ScanStrategy strategy = new FullTableScanStrategy(tableName, "", new byte[0]);
-//            SingleResultScanner dataScanner = new SingleResultScanner(client.getScanner(strategy));
-//            clientPool.put(scanId, new Connection(tableName, dataScanner));
+            ScanStrategy strategy = new FullTableScanStrategy(tableName);
+            SingleResultScanner dataScanner = new SingleResultScanner(client.getScanner(strategy));
+            clientPool.put(scanId, new Connection(tableName, dataScanner));
         } catch (Exception e) {
             logger.error("startScan-> Exception:", e);
             throw new HBaseAdapterException("startScan", e);
@@ -286,6 +286,16 @@ public class HBaseAdapter {
         try {
             String tableName = conn.getTableName();
             List<String> columnName = conn.getColumnName();
+            if (keyValues == null) {
+                if (readType != IndexReadType.INDEX_FIRST && readType != IndexReadType.INDEX_LAST) {
+                    throw new IllegalArgumentException("keyValues can't be null unless first/last index read");
+                }
+
+                keyValues = new LinkedList<KeyValue>();
+                byte fill = (byte) (readType == IndexReadType.INDEX_FIRST ? 0x00 : 0xFF);
+                client.setupKeyValues(tableName, columnName, keyValues, fill);
+            }
+
             ScanStrategyInfo scanInfo = new ScanStrategyInfo(tableName, columnName, keyValues);
 
             byte[] valueToSkip = null;
@@ -320,18 +330,18 @@ public class HBaseAdapter {
                 }
                 break;
                 case INDEX_FIRST: {
-                    ScanStrategy strategy = new OrderedScanStrategy(scanInfo);
+                    ScanStrategy strategy = new OrderedScanStrategy(scanInfo, true);
                     scanner = new SingleResultScanner(client.getScanner(strategy));
                 }
                 break;
                 case INDEX_LAST: {
-                    ScanStrategy strategy = new ReverseScanStrategy(scanInfo);
+                    ScanStrategy strategy = new ReverseScanStrategy(scanInfo, true);
                     scanner = new SingleResultScanner(client.getScanner(strategy));
                 }
                 break;
             }
 
-            scanner.setColumnName(Iterables.getLast(scanInfo.columnNames()));
+            scanner.setColumnName(Iterables.getLast(scanInfo.keyValueColumns()));
 
             conn.setScanner(scanner);
             Result result = scanner.next(valueToSkip);
@@ -411,5 +421,16 @@ public class HBaseAdapter {
             logger.error("renameTable-> Exception: ", e);
             throw new HBaseAdapterException("renameTable", e);
         }
+    }
+
+    public static boolean isNullable(String tableName, String columnName) {
+        boolean result = false;
+        try {
+            result = client.isNullable(tableName, columnName);
+        } catch (Exception e) {
+            logger.error("isNullable->Exception: ", e);
+        }
+
+        return result;
     }
 }
