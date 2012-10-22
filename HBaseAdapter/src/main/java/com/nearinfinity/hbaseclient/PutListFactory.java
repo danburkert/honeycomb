@@ -1,6 +1,8 @@
 package com.nearinfinity.hbaseclient;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -8,6 +10,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
+import java.lang.reflect.Type;
 import java.util.*;
 
 public class PutListFactory {
@@ -115,15 +118,10 @@ public class PutListFactory {
     }
 
     private static byte[] createRowFromMap(Map<String, byte[]> values) {
-        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        try {
-            final ObjectOutput out = new ObjectOutputStream(bos);
-            out.writeObject(values);
-            out.close();
-        } catch (IOException e) {
-            return new byte[0];
-        }
-        return bos.toByteArray();
+        Gson gson = new Gson();
+        Type type = new TypeToken<TreeMap<String, byte[]>>() {
+        }.getType();
+        return gson.toJson(values, type).getBytes();
     }
 
     private interface Function<F1, F2, F3, T> {

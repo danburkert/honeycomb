@@ -7,10 +7,11 @@ import com.nearinfinity.hbaseclient.TableInfo;
 import org.apache.hadoop.hbase.client.Scan;
 
 public class FullTableScanStrategy implements ScanStrategy {
-    private final ScanStrategyInfo scanInfo;
+    private final String tableName;
 
-    public FullTableScanStrategy(ScanStrategyInfo scanInfo) {
-        this.scanInfo = scanInfo;
+    public FullTableScanStrategy(String tableName) {
+
+        this.tableName = tableName;
     }
 
     @Override
@@ -26,6 +27,6 @@ public class FullTableScanStrategy implements ScanStrategy {
 
     @Override
     public String getTableName() {
-        return this.scanInfo.tableName();
+        return this.tableName;
     }
 }

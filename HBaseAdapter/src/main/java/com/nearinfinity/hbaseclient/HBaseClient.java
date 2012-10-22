@@ -92,7 +92,7 @@ public class HBaseClient {
         Put put = new Put(RowKeyFactory.buildTableInfoKey(tableId));
         put.add(Constants.NIC, Constants.ROW_COUNT, Bytes.toBytes(0l));
         final byte[] bytes = multipartKeys.toJson().getBytes();
-        tableCache.get(tableName).setTableMetadata(new HashMap<byte[], byte[]>(){{
+        tableCache.get(tableName).setTableMetadata(new HashMap<byte[], byte[]>() {{
             put(Constants.INDEXES, bytes);
         }});
         put.add(Constants.NIC, Constants.INDEXES, bytes);
@@ -490,5 +490,20 @@ public class HBaseClient {
         long tableId = info.getId();
         byte[] columnInfoBytes = RowKeyFactory.buildColumnInfoKey(tableId, columnId);
         return table.incrementColumnValue(columnInfoBytes, Constants.NIC, new byte[0], 1);
+    }
+
+    public void setupKeyValues(String tableName, List<String> columnName, List<KeyValue> keyValues, byte fill) throws IOException {
+        TableInfo info = getTableInfo(tableName);
+        for (String column : columnName) {
+            ColumnMetadata metadata = info.getColumnMetadata(column);
+            byte[] value = new byte[metadata.getMaxLength()];
+            Arrays.fill(value, fill);
+            keyValues.add(new KeyValue(column, value, metadata.isNullable(), false));
+        }
+    }
+
+    public boolean isNullable(String tableName, String columnName) throws IOException {
+        TableInfo info = getTableInfo(tableName);
+        return info.getColumnMetadata(columnName).isNullable();
     }
 }
