@@ -13,8 +13,15 @@ public class DeleteListFactory {
     public static List<Delete> createDeleteRowList(UUID uuid, TableInfo info, Result result, byte[] dataRowKey, final LinkedList<LinkedList<String>> indexedKeys) {
         long tableId = info.getId();
         List<Delete> deleteList = new LinkedList<Delete>();
-        Map<String, byte[]> values = ResultParser.parseDataRow(result, info);
         deleteList.add(new Delete(dataRowKey));
+
+        Map<String, byte[]> values = ResultParser.parseDataRow(result, info);
+        for (String columnName : info.getColumnNames()) {
+            ColumnMetadata metadata = info.getColumnMetadata(columnName);
+            if (!values.containsKey(columnName)) {
+                values.put(columnName, new byte[metadata.getMaxLength()]);
+            }
+        }
 
         final Map<String, Long> columnNameToId = info.columnNameToIdMap();
 
