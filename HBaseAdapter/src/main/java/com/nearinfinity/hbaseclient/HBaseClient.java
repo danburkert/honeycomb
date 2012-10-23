@@ -427,27 +427,38 @@ public class HBaseClient {
         return null;
     }
 
-    public byte[] findDuplicateValue(String tableName, String columnName) throws IOException {
-        logger.info("Checking column " + columnName + " in table " + tableName + " for duplicate values");
-
+    public byte[] findDuplicateValue(String tableName, String columnNameStrings) throws IOException {
         TableInfo info = getTableInfo(tableName);
+        List<String> columnNames = Arrays.asList(columnNameStrings.split(","));
 
         Scan scan = ScanFactory.buildScan();
         byte[] prefix = ByteBuffer.allocate(9).put(RowType.DATA.getValue()).putLong(info.getId()).array();
-        byte[] columnIdBytes = Bytes.toBytes(info.getColumnIdByName(columnName));
-
         PrefixFilter prefixFilter = new PrefixFilter(prefix);
-        scan.addColumn(Constants.NIC, columnIdBytes);
+
+        List<byte[]> columnIds = new LinkedList<byte[]>();
+        for (String columnName : columnNames) {
+            byte[] columnIdBytes = Bytes.toBytes(info.getColumnIdByName(columnName));
+            columnIds.add(columnIdBytes);
+            scan.addColumn(Constants.NIC, columnIdBytes);
+        }
 
         scan.setFilter(prefixFilter);
 
-        HashSet<ByteBuffer> columnValues = new HashSet<ByteBuffer>();
+        Set<ByteBuffer> columnValues = new HashSet<ByteBuffer>();
 
         ResultScanner scanner = this.table.getScanner(scan);
         Result result;
 
         while ((result = scanner.next()) != null) {
-            ByteBuffer value = ByteBuffer.wrap(result.getValue(Constants.NIC, columnIdBytes));
+            List<byte[]> values = new LinkedList<byte[]>();
+            int size = 0;
+            for (byte[] columnIdBytes : columnIds) {
+                byte[] value = result.getValue(Constants.NIC, columnIdBytes);
+                values.add(value);
+                size += value.length;
+            }
+            ByteBuffer value = ByteBuffer.wrap(Index.mergeByteArrayList(values, size));
+
             if (columnValues.contains(value)) {
                 return value.array();
             }

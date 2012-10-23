@@ -58,6 +58,17 @@ public class Index {
         return size;
     }
 
+    public static byte[] mergeByteArrayList(final Iterable<byte[]> pieces, final int size) {
+        int offset = 0;
+        final byte[] mergedArray = new byte[size];
+        for (final byte[] piece : pieces) {
+            System.arraycopy(piece, 0, mergedArray, offset, piece.length);
+            offset += piece.length;
+        }
+
+        return mergedArray;
+    }
+
     private static byte[] correctColumnIdSize(final byte[] columnIds) {
         int expectedSize = 4 * Bytes.SIZEOF_LONG;
         if (columnIds.length > expectedSize) {
@@ -82,17 +93,6 @@ public class Index {
         }
 
         return mergeByteArrayList(pieces, size);
-    }
-
-    private static byte[] mergeByteArrayList(final Iterable<byte[]> pieces, final int size) {
-        int offset = 0;
-        final byte[] mergedArray = new byte[size];
-        for (final byte[] piece : pieces) {
-            System.arraycopy(piece, 0, mergedArray, offset, piece.length);
-            offset += piece.length;
-        }
-
-        return mergedArray;
     }
 
     public static byte[] incrementColumn(final byte[] columnIds, final int offset) {
