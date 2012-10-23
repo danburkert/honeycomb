@@ -50,7 +50,7 @@ public class PutListFactory {
         return putList;
     }
 
-    private static Put createDataRows(byte[] dataKey, Map<String, byte[]> values, Map<String, Long> columnNameToId) {
+    private static Put createDataRows(final byte[] dataKey, final Map<String, byte[]> values, final Map<String, Long> columnNameToId) {
         final Put dataRow = new Put(dataKey);
         for (String columnName : values.keySet()) {
             final long columnId = columnNameToId.get(columnName);
@@ -63,15 +63,15 @@ public class PutListFactory {
         return dataRow;
     }
 
-    public static Map<String, byte[]> correctAscendingValuePadding(TableInfo info, Map<String, byte[]> values) {
+    public static Map<String, byte[]> correctAscendingValuePadding(final TableInfo info, final Map<String, byte[]> values) {
         return correctAscendingValuePadding(info, values, new HashSet<String>());
     }
 
-    public static Map<String, byte[]> correctDescendingValuePadding(TableInfo info, Map<String, byte[]> values) {
+    public static Map<String, byte[]> correctDescendingValuePadding(final TableInfo info, final Map<String, byte[]> values) {
         return correctDescendingValuePadding(info, values, new HashSet<String>());
     }
 
-    public static Map<String, byte[]> correctAscendingValuePadding(TableInfo info, Map<String, byte[]> values, Set<String> nullSearchColumns) {
+    public static Map<String, byte[]> correctAscendingValuePadding(final TableInfo info, final Map<String, byte[]> values, final Set<String> nullSearchColumns) {
         return convertToCorrectOrder(info, values, nullSearchColumns, new Function<byte[], ColumnType, Integer, byte[]>() {
             @Override
             public byte[] apply(byte[] value, ColumnType columnType, Integer padLength) {
@@ -80,7 +80,7 @@ public class PutListFactory {
         });
     }
 
-    public static Map<String, byte[]> correctDescendingValuePadding(TableInfo info, Map<String, byte[]> values, Set<String> nullSearchColumns) {
+    public static Map<String, byte[]> correctDescendingValuePadding(final TableInfo info, final Map<String, byte[]> values, final Set<String> nullSearchColumns) {
         return convertToCorrectOrder(info, values, nullSearchColumns, new Function<byte[], ColumnType, Integer, byte[]>() {
             @Override
             public byte[] apply(byte[] value, ColumnType columnType, Integer padLength) {
@@ -89,7 +89,7 @@ public class PutListFactory {
         });
     }
 
-    private static Map<String, byte[]> convertToCorrectOrder(TableInfo info, Map<String, byte[]> values, Set<String> nullSearchColumns, Function<byte[], ColumnType, Integer, byte[]> convert) {
+    private static Map<String, byte[]> convertToCorrectOrder(final TableInfo info, final Map<String, byte[]> values, final Set<String> nullSearchColumns, Function<byte[], ColumnType, Integer, byte[]> convert) {
         ImmutableMap.Builder<String, byte[]> result = ImmutableMap.builder();
         for (String columnName : values.keySet()) {
             final ColumnMetadata metadata = info.getColumnMetadata(columnName);
@@ -119,7 +119,7 @@ public class PutListFactory {
         return result.build();
     }
 
-    private static byte[] createRowFromMap(Map<String, byte[]> values) {
+    private static byte[] createRowFromMap(final Map<String, byte[]> values) {
         Gson gson = new Gson();
         Type type = new TypeToken<TreeMap<String, byte[]>>() {
         }.getType();
