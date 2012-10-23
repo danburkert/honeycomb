@@ -951,37 +951,72 @@ int CloudHandler::get_failed_key_index(const char *key_name)
   return -1;
 }
 
-int CloudHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add)
+int CloudHandler::prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys)
 {
-  KEY_PART_INFO *key_part = key_info->key_part;
-  KEY_PART_INFO *end_key_part = key_part + key_info->key_parts;
-  Field *field_being_indexed = key_info->key_part->field;
-  jbyteArray duplicate_value = this->find_duplicate_column_values(field_being_indexed);
+  uint keys = num_of_keys;
+  attach_thread();
 
-  int error = duplicate_value != NULL ? HA_ERR_FOUND_DUPP_KEY : 0;
+  jclass adapter = this->adapter();
+  jmethodID add_index_method = this->env->GetStaticMethodID(adapter, "dropIndex", "(Ljava/lang/String;Ljava/lang/String;)V");
 
-  if (error != 0)
+  for (uint key = 0; key < keys; key++)
   {
-    int length = this->java_array_length(duplicate_value);
-    char *value_key = this->char_array_from_java_bytes(duplicate_value);
-    this->store_field_value(field_being_indexed, value_key, length);
-    delete[] value_key;
+    KEY *pos = table_arg->key_info + key;
+    KEY_PART_INFO *key_part = pos->key_part;
+    KEY_PART_INFO *key_part_end = key_part + pos->key_parts;
+    char* name = index_name(key_part, key_part_end, pos->key_parts);
+    this->env->CallStaticVoidMethod(adapter, add_index_method, this->table_name(), string_to_java_string(name));
+    delete[] name;
+    name = NULL;
   }
 
-  return error;
+  return 0;
 }
 
-jbyteArray CloudHandler::find_duplicate_column_values(Field *field)
+int CloudHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add)
+{
+  attach_thread();
+  for(uint key = 0; key < num_of_keys; key++)
+  {
+    KEY* pos = key_info + key;
+    KEY_PART_INFO *key_part = pos->key_part;
+    KEY_PART_INFO *end_key_part = key_part + key_info->key_parts;
+    Field *field_being_indexed = key_info->key_part->field;
+    char* index_columns = this->index_name(key_part, end_key_part, key_info->key_parts);
+    jbyteArray duplicate_value = this->find_duplicate_column_values(index_columns);
+
+    int error = duplicate_value != NULL ? HA_ERR_FOUND_DUPP_KEY : 0;
+
+    if (error == HA_ERR_FOUND_DUPP_KEY)
+    {
+      int length = this->java_array_length(duplicate_value);
+      char *value_key = this->char_array_from_java_bytes(duplicate_value);
+      this->store_field_value(field_being_indexed, value_key, length);
+      delete[] value_key;
+      detach_thread();
+      return error;
+    }
+
+    jclass adapter = this->adapter();
+    jmethodID add_index_method = this->env->GetStaticMethodID(adapter, "addIndex", "(Ljava/lang/String;Ljava/lang/String;)V");
+    this->env->CallStaticVoidMethod(adapter, add_index_method, this->table_name(), string_to_java_string(index_columns));
+  }
+
+  detach_thread();
+  return 0;
+}
+
+jbyteArray CloudHandler::find_duplicate_column_values(char* columns)
 {
   attach_thread();
 
   jclass adapter = this->adapter();
   jmethodID column_has_duplicates_method = this->env->GetStaticMethodID(adapter, "findDuplicateValue", "(Ljava/lang/String;Ljava/lang/String;)[B");
-  jbyteArray duplicate_value = (jbyteArray) this->env->CallStaticObjectMethod(adapter, column_has_duplicates_method, this->table_name(), string_to_java_string(field->field_name));
+  jbyteArray duplicate_value = (jbyteArray) this->env->CallStaticObjectMethod(adapter, column_has_duplicates_method, this->table_name(), string_to_java_string(columns));
 
   if (duplicate_value != NULL)
   {
-      this->failed_key_index = this->get_failed_key_index(field->field_name);
+      // this->failed_key_index = this->get_failed_key_index(field->field_name);
   }
 
   detach_thread();

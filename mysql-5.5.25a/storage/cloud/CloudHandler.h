@@ -73,7 +73,7 @@ class CloudHandler : public handler
     void reset_scan_counter();
     bool check_for_renamed_column(const TABLE*  table, const char* col_name);
     bool field_has_unique_index(Field *field);
-    jbyteArray find_duplicate_column_values(Field *field);
+    jbyteArray find_duplicate_column_values(char* columns);
     bool row_has_duplicate_values(jobject value_map);
     int get_failed_key_index(const char *key_name);
     char *char_array_from_java_bytes(jbyteArray java_bytes);
@@ -247,11 +247,6 @@ class CloudHandler : public handler
       return 0;
     }
 
-    virtual int prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys)
-    {
-      return 0;
-    }
-
     virtual int final_drop_index(TABLE *table_arg)
     {
       return 0;
@@ -284,6 +279,7 @@ class CloudHandler : public handler
     void get_auto_increment(ulonglong offset, ulonglong increment, ulonglong nb_desired_values, ulonglong *first_value, ulonglong *nb_reserved_values);
     int index_read_map(uchar * buf, const uchar * key, key_part_map keypart_map, enum ha_rkey_function find_flag);
     int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add);
+    int prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys);
 };
 
 #endif

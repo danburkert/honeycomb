@@ -5,7 +5,6 @@ import com.nearinfinity.hbaseclient.*;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.util.List;
 import java.util.Map;
 
 public class OrderedScanStrategy implements ScanStrategy {
@@ -24,7 +23,7 @@ public class OrderedScanStrategy implements ScanStrategy {
     @Override
     public Scan getScan(TableInfo info) {
         long tableId = info.getId();
-        Map<String, byte[]> ascendingValueMap = PutListFactory.correctAscendingValuePadding(info, this.scanInfo.keyValueMap(), this.scanInfo.nullSearchColumns());
+        Map<String, byte[]> ascendingValueMap = ValueEncoder.correctAscendingValuePadding(info, this.scanInfo.keyValueMap(), this.scanInfo.nullSearchColumns());
         Iterable<String> columns = this.scanInfo.columnNames();
         final int columnCount = Iterables.size(columns);
 

@@ -22,10 +22,24 @@ public class DeleteListFactory {
             }
         }
 
+        deleteList.addAll(createDeleteForIndex(values, info, indexedKeys, uuid));
+
+        return deleteList;
+    }
+
+    public static List<Delete> createDeleteForIndex(Map<String, byte[]> values, TableInfo info, List<String> indexedKeys, UUID uuid) {
+        LinkedList<LinkedList<String>> newIndexColumns = new LinkedList<LinkedList<String>>();
+        newIndexColumns.add(new LinkedList<String>(indexedKeys));
+        return createDeleteForIndex(values, info, newIndexColumns, uuid);
+    }
+
+    public static List<Delete> createDeleteForIndex(Map<String, byte[]> values, TableInfo info, LinkedList<LinkedList<String>> indexedKeys, UUID uuid) {
+        final long tableId = info.getId();
+        List<Delete> deleteList = new LinkedList<Delete>();
         final Map<String, Long> columnNameToId = info.columnNameToIdMap();
 
-        final Map<String, byte[]> ascendingValues = PutListFactory.correctAscendingValuePadding(info, values);
-        final Map<String, byte[]> descendingValues = PutListFactory.correctDescendingValuePadding(info, values);
+        final Map<String, byte[]> ascendingValues = ValueEncoder.correctAscendingValuePadding(info, values);
+        final Map<String, byte[]> descendingValues = ValueEncoder.correctDescendingValuePadding(info, values);
 
         for (List<String> columns : indexedKeys) {
             final byte[] columnIds = Index.createColumnIds(columns, columnNameToId);

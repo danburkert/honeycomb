@@ -1,6 +1,5 @@
 package com.nearinfinity.hbaseclient;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.hbase.client.Put;
@@ -10,7 +9,7 @@ import java.lang.reflect.Type;
 import java.util.*;
 
 public class PutListFactory {
-    public static List<Put> createPutList(final Map<String, byte[]> values, final TableInfo info, final LinkedList<LinkedList<String>> indexedKeys) {
+    public static List<Put> createDataInsertPutList(final Map<String, byte[]> values, final TableInfo info, final LinkedList<LinkedList<String>> indexedKeys) {
         final long tableId = info.getId();
         final List<Put> putList = new LinkedList<Put>();
         final Map<String, Long> columnNameToId = info.columnNameToIdMap();
@@ -30,13 +29,19 @@ public class PutListFactory {
         return putList;
     }
 
+    public static List<Put> createIndexForColumns(Map<String, byte[]> values, TableInfo info, List<String> indexedKeys, UUID rowId) {
+        LinkedList<LinkedList<String>> newIndexColumns = new LinkedList<LinkedList<String>>();
+        newIndexColumns.add(new LinkedList<String>(indexedKeys));
+        return createIndexForColumns(values, info, newIndexColumns, rowId);
+    }
+
     public static List<Put> createIndexForColumns(Map<String, byte[]> values, TableInfo info, LinkedList<LinkedList<String>> indexedKeys, UUID rowId) {
         final long tableId = info.getId();
         final Map<String, Long> columnNameToId = info.columnNameToIdMap();
         List<Put> putList = new LinkedList<Put>();
         final byte[] rowByteArray = createRowFromMap(values);
-        final Map<String, byte[]> ascendingValues = correctAscendingValuePadding(info, values);
-        final Map<String, byte[]> descendingValues = correctDescendingValuePadding(info, values);
+        final Map<String, byte[]> ascendingValues = ValueEncoder.correctAscendingValuePadding(info, values);
+        final Map<String, byte[]> descendingValues = ValueEncoder.correctDescendingValuePadding(info, values);
 
         for (List<String> columns : indexedKeys) {
             final byte[] columnIds = Index.createColumnIds(columns, columnNameToId);
@@ -78,62 +83,6 @@ public class PutListFactory {
         return dataRow;
     }
 
-    public static Map<String, byte[]> correctAscendingValuePadding(final TableInfo info, final Map<String, byte[]> values) {
-        return correctAscendingValuePadding(info, values, new HashSet<String>());
-    }
-
-    public static Map<String, byte[]> correctDescendingValuePadding(final TableInfo info, final Map<String, byte[]> values) {
-        return correctDescendingValuePadding(info, values, new HashSet<String>());
-    }
-
-    public static Map<String, byte[]> correctAscendingValuePadding(final TableInfo info, final Map<String, byte[]> values, final Set<String> nullSearchColumns) {
-        return convertToCorrectOrder(info, values, nullSearchColumns, new Function<byte[], ColumnType, Integer, byte[]>() {
-            @Override
-            public byte[] apply(byte[] value, ColumnType columnType, Integer padLength) {
-                return ValueEncoder.ascendingEncode(value, columnType, padLength);
-            }
-        });
-    }
-
-    public static Map<String, byte[]> correctDescendingValuePadding(final TableInfo info, final Map<String, byte[]> values, final Set<String> nullSearchColumns) {
-        return convertToCorrectOrder(info, values, nullSearchColumns, new Function<byte[], ColumnType, Integer, byte[]>() {
-            @Override
-            public byte[] apply(byte[] value, ColumnType columnType, Integer padLength) {
-                return ValueEncoder.descendingEncode(value, columnType, padLength);
-            }
-        });
-    }
-
-    private static Map<String, byte[]> convertToCorrectOrder(final TableInfo info, final Map<String, byte[]> values, final Set<String> nullSearchColumns, Function<byte[], ColumnType, Integer, byte[]> convert) {
-        ImmutableMap.Builder<String, byte[]> result = ImmutableMap.builder();
-        for (String columnName : values.keySet()) {
-            final ColumnMetadata metadata = info.getColumnMetadata(columnName);
-            final ColumnType columnType = info.getColumnTypeByName(columnName);
-            byte[] value = values.get(columnName);
-            boolean isNull = value == null || nullSearchColumns.contains(columnName);
-            if (isNull) {
-                value = new byte[metadata.getMaxLength()];
-            }
-
-            int padLength = 0;
-            if (columnType == ColumnType.STRING || columnType == ColumnType.BINARY) {
-                final long maxLength = metadata.getMaxLength();
-                padLength = (int) maxLength - value.length;
-            }
-
-            byte[] paddedValue = convert.apply(value, columnType, padLength);
-            if (metadata.isNullable()) {
-                byte[] nullPadValue = Bytes.padHead(paddedValue, 1);
-                nullPadValue[0] = isNull ? (byte) 1 : 0;
-                result.put(columnName, nullPadValue);
-            } else {
-                result.put(columnName, paddedValue);
-            }
-        }
-
-        return result.build();
-    }
-
     private static byte[] createRowFromMap(final Map<String, byte[]> values) {
         Gson gson = new Gson();
         Type type = new TypeToken<TreeMap<String, byte[]>>() {
@@ -141,7 +90,4 @@ public class PutListFactory {
         return gson.toJson(values, type).getBytes();
     }
 
-    private interface Function<F1, F2, F3, T> {
-        T apply(F1 f1, F2 f2, F3 f3);
-    }
 }

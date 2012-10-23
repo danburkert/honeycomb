@@ -5,7 +5,6 @@ import com.nearinfinity.hbaseclient.*;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.util.List;
 import java.util.Map;
 
 public class ReverseScanStrategy implements ScanStrategy {
@@ -27,7 +26,7 @@ public class ReverseScanStrategy implements ScanStrategy {
         final Iterable<String> columns = this.scanInfo.columnNames();
         final int columnCount = Iterables.size(columns);
         final int indexValuesFullLength = Index.calculateIndexValuesFullLength(columns, info);
-        final Map<String, byte[]> descendingValueMap = PutListFactory.correctDescendingValuePadding(info, this.scanInfo.keyValueMap());
+        final Map<String, byte[]> descendingValueMap = ValueEncoder.correctDescendingValuePadding(info, this.scanInfo.keyValueMap());
 
         final byte[] columnIds = Index.createColumnIds(columns, info.columnNameToIdMap());
         final byte[] nextColumnIds = Index.incrementColumn(columnIds, Bytes.SIZEOF_LONG * (columnCount - 1));
