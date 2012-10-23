@@ -57,4 +57,48 @@ eval DELETE FROM t1
 SELECT * FROM t1 ORDER BY c1;
 
 ### Cleanup
-#DROP TABLE t1;
+DROP TABLE t1;
+
+eval CREATE TABLE t1(c1 $string_type $null_flag, c2 $string_type $null_flag $multi_index_flag)
+  DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
+  ENGINE=$engine_type;
+eval INSERT INTO t1 VALUES
+  ($comp_val, $val1),
+  ($comp_val, $val2),
+  ($comp_val, $val3),
+  ($comp_val, $val4),
+  ($comp_val, $val5),
+  ($comp_val, $val6),
+  ($comp_val, $val7),
+  ($comp_val, $val8),
+  ($comp_val, $val9),
+  ($comp_val, $val10),
+  ($comp_val, $val11),
+  ($comp_val, $val12),
+  ($comp_val, $val13),
+  ($comp_val, $comp_val),
+  ($comp_val, $comp_val),
+  ($comp_val, $comp_val),
+  ($comp_val, NULL),
+  ($comp_val, NULL),
+  ($comp_val, NULL),
+  ($comp_val, NULL),
+  ($comp_val, $comp_val);
+
+### Read table
+eval SELECT * FROM t1 WHERE c1 = $comp_val AND c2 > $comp_val ORDER BY c2 ASC;
+eval SELECT * FROM t1 WHERE c1 = $comp_val AND c2 >= $comp_val ORDER BY c2 ASC;
+eval SELECT * FROM t1 WHERE c1 = $comp_val AND c2 < $comp_val ORDER BY c2 ASC;
+eval SELECT * FROM t1 WHERE c1 = $comp_val AND c2 <= $comp_val ORDER BY c2 ASC;
+eval SELECT * FROM t1 WHERE c1 = $comp_val AND c2 is null ORDER BY c1 ASC;
+eval SELECT * FROM t1 WHERE c1 = $comp_val AND c2 is not null ORDER BY c2 ASC;
+
+eval SELECT * FROM t1 WHERE c1 = $comp_val AND c2 > $comp_val ORDER BY c2 DESC;
+eval SELECT * FROM t1 WHERE c1 = $comp_val AND c2 >= $comp_val ORDER BY c2 DESC;
+eval SELECT * FROM t1 WHERE c1 = $comp_val AND c2 < $comp_val ORDER BY c2 DESC;
+eval SELECT * FROM t1 WHERE c1 = $comp_val AND c2 <= $comp_val ORDER BY c2 DESC;
+eval SELECT * FROM t1 WHERE c1 = $comp_val AND c2 is null ORDER BY c1 DESC;
+eval SELECT * FROM t1 WHERE c1 = $comp_val AND c2 is not null ORDER BY c2 DESC;
+
+### Cleanup
+DROP TABLE t1;
