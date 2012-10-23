@@ -7,7 +7,9 @@ import java.lang.reflect.Type;
 import java.util.LinkedList;
 
 public class TableMultipartKeys {
-    private LinkedList<LinkedList<String>> multipartKeys = new LinkedList<LinkedList<String>>();
+    private final LinkedList<LinkedList<String>> multipartKeys = new LinkedList<LinkedList<String>>();
+    private static final Type type = new TypeToken<LinkedList<LinkedList<String>>>() {
+    }.getType();
 
     public void addMultipartKey(String keys) {
         String[] keyPieces = keys.split(",");
@@ -19,9 +21,11 @@ public class TableMultipartKeys {
         multipartKeys.add(addition);
     }
 
-    public String toJson() {
-        Type type = new TypeToken<LinkedList<LinkedList<String>>>() {
-        }.getType();
-        return new Gson().toJson(multipartKeys, type);
+    public byte[] toJson() {
+        return new Gson().toJson(multipartKeys, type).getBytes();
+    }
+
+    public static byte[] indexJson(final LinkedList<LinkedList<String>> keys) {
+        return new Gson().toJson(keys, type).getBytes();
     }
 }

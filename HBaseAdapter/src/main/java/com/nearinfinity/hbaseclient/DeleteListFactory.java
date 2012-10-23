@@ -30,11 +30,8 @@ public class DeleteListFactory {
         for (List<String> columns : indexedKeys) {
             final byte[] columnIds = Index.createColumnIds(columns, columnNameToId);
 
-            final byte[] ascendingIndexValues = Index.createValues(columns, ascendingValues);
-            final byte[] descendingIndexValues = Index.createValues(columns, descendingValues);
-
-            final byte[] ascendingIndexKey = RowKeyFactory.buildIndexRowKey(tableId, columnIds, ascendingIndexValues, uuid);
-            final byte[] descendingIndexKey = RowKeyFactory.buildReverseIndexRowKey(tableId, columnIds, descendingIndexValues, uuid);
+            final byte[] ascendingIndexKey = PutListFactory.createPrimaryIndex(tableId, uuid, ascendingValues, columns, columnIds);
+            final byte[] descendingIndexKey = PutListFactory.createReverseIndex(tableId, uuid, descendingValues, columns, columnIds);
 
             deleteList.add(new Delete(ascendingIndexKey));
             deleteList.add(new Delete(descendingIndexKey));

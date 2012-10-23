@@ -1,5 +1,6 @@
 package com.nearinfinity.hbaseclient;
 
+import com.google.common.base.Joiner;
 import com.nearinfinity.hbaseclient.strategy.PrefixScanStrategy;
 import com.nearinfinity.hbaseclient.strategy.ScanStrategy;
 import com.nearinfinity.hbaseclient.strategy.ScanStrategyInfo;
@@ -91,12 +92,16 @@ public class HBaseClient {
         puts.add(new Put(RowKeyFactory.ROOT).add(Constants.NIC, tableName.getBytes(), Bytes.toBytes(tableId)));
         Put put = new Put(RowKeyFactory.buildTableInfoKey(tableId));
         put.add(Constants.NIC, Constants.ROW_COUNT, Bytes.toBytes(0l));
-        final byte[] bytes = multipartKeys.toJson().getBytes();
+        final byte[] bytes = multipartKeys.toJson();
+        updateTableCacheIndex(tableName, bytes);
+        put.add(Constants.NIC, Constants.INDEXES, bytes);
+        puts.add(put);
+    }
+
+    private void updateTableCacheIndex(String tableName, final byte[] bytes) {
         tableCache.get(tableName).setTableMetadata(new HashMap<byte[], byte[]>() {{
             put(Constants.INDEXES, bytes);
         }});
-        put.add(Constants.NIC, Constants.INDEXES, bytes);
-        puts.add(put);
     }
 
     private void addColumns(String tableName, Map<String, ColumnMetadata> columns, List<Put> puts) throws IOException {
@@ -409,19 +414,13 @@ public class HBaseClient {
     }
 
     public String findDuplicateKey(String tableName, Map<String, byte[]> values) throws IOException {
-        PrefixScanStrategy strategy = new PrefixScanStrategy(null); // TODO: fix the duplicate key scan
-        for (Map.Entry<String, byte[]> entry : values.entrySet()) {
-            String columnName = entry.getKey();
-            byte[] columnValue = entry.getValue();
+        ScanStrategyInfo scanInfo = new ScanStrategyInfo(tableName, values.keySet(), valueMapToKeyValues(tableName, values));
+        PrefixScanStrategy strategy = new PrefixScanStrategy(scanInfo);
 
-            logger.debug("Checking for duplicate values in unique-indexed column " + columnName);
+        HBaseResultScanner scanner = new SingleResultScanner(getScanner(strategy));
 
-
-            HBaseResultScanner scanner = new SingleResultScanner(getScanner(strategy));
-
-            if (scanner.next(null) != null) {
-                return columnName;
-            }
+        if (scanner.next(null) != null) {
+            return Joiner.on(", ").join(scanInfo.columnNames());
         }
 
         return null;
@@ -505,5 +504,52 @@ public class HBaseClient {
     public boolean isNullable(String tableName, String columnName) throws IOException {
         TableInfo info = getTableInfo(tableName);
         return info.getColumnMetadata(columnName).isNullable();
+    }
+
+    private List<KeyValue> valueMapToKeyValues(String tableName, Map<String, byte[]> valueMap) throws IOException {
+        TableInfo info = getTableInfo(tableName);
+        List<KeyValue> keyValues = new LinkedList<KeyValue>();
+        for (Map.Entry<String, byte[]> entry : valueMap.entrySet()) {
+            String key = entry.getKey();
+            ColumnMetadata metadata = info.getColumnMetadata(key);
+            byte[] value = entry.getValue();
+            keyValues.add(new KeyValue(key, value, metadata.isNullable(), value == null));
+        }
+
+        return keyValues;
+    }
+
+    public void addIndex(String tableName, LinkedList<String> columnsToIndex) throws IOException {
+        TableInfo info = getTableInfo(tableName);
+        final long tableId = info.getId();
+        addNewIndexEntry(tableName, columnsToIndex, info);
+        LinkedList<LinkedList<String>> newIndexColumns = new LinkedList<LinkedList<String>>();
+        newIndexColumns.add(columnsToIndex);
+
+        byte[] startKey = RowKeyFactory.buildDataKey(tableId, Constants.ZERO_UUID);
+        byte[] endKey = RowKeyFactory.buildDataKey(tableId, Constants.FULL_UUID);
+        Scan scan = ScanFactory.buildScan(startKey, endKey);
+        ResultScanner scanner = this.table.getScanner(scan);
+        Result result;
+        while ((result = scanner.next()) != null) {
+            Map<String, byte[]> values = ResultParser.parseDataRow(result, info);
+            UUID rowId = ResultParser.parseUUID(result);
+            List<Put> puts = PutListFactory.createIndexForColumns(values, info, newIndexColumns, rowId);
+            table.put(puts);
+        }
+
+        table.flushCommits();
+    }
+
+    private void addNewIndexEntry(String tableName, LinkedList<String> columnsToIndex, TableInfo info) throws IOException {
+        long tableId = info.getId();
+        LinkedList<LinkedList<String>> index = Index.indexForTable(info.tableMetadata());
+        index.add(columnsToIndex);
+        final byte[] bytes = TableMultipartKeys.indexJson(index);
+        updateTableCacheIndex(tableName, bytes);
+
+        Put indexUpdate = new Put(RowKeyFactory.buildTableInfoKey(tableId));
+        indexUpdate.add(Constants.NIC, Constants.INDEXES, bytes);
+        this.table.put(indexUpdate);
     }
 }

@@ -13,11 +13,11 @@ import java.util.Set;
 
 public final class ScanStrategyInfo {
     private final String tableName;
-    private final List<String> columnNames;
+    private final Iterable<String> columnNames;
     private final List<KeyValue> keyValues;
     private final Map<String, byte[]> keyValueMap;
 
-    public ScanStrategyInfo(final String tableName, final List<String> columnNames, List<KeyValue> keyValues) {
+    public ScanStrategyInfo(final String tableName, final Iterable<String> columnNames, List<KeyValue> keyValues) {
         if (keyValues == null) {
             keyValues = new LinkedList<KeyValue>();
         }
@@ -37,7 +37,7 @@ public final class ScanStrategyInfo {
         return tableName;
     }
 
-    public final List<String> columnNames() {
+    public final Iterable<String> columnNames() {
         return columnNames;
     }
 

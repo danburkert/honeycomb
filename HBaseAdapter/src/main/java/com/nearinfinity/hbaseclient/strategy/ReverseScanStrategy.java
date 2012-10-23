@@ -1,5 +1,6 @@
 package com.nearinfinity.hbaseclient.strategy;
 
+import com.google.common.collect.Iterables;
 import com.nearinfinity.hbaseclient.*;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -23,12 +24,13 @@ public class ReverseScanStrategy implements ScanStrategy {
     @Override
     public Scan getScan(TableInfo info) {
         final long tableId = info.getId();
-        final List<String> columns = this.scanInfo.columnNames();
+        final Iterable<String> columns = this.scanInfo.columnNames();
+        final int columnCount = Iterables.size(columns);
         final int indexValuesFullLength = Index.calculateIndexValuesFullLength(columns, info);
         final Map<String, byte[]> descendingValueMap = PutListFactory.correctDescendingValuePadding(info, this.scanInfo.keyValueMap());
 
         final byte[] columnIds = Index.createColumnIds(columns, info.columnNameToIdMap());
-        final byte[] nextColumnIds = Index.incrementColumn(columnIds, Bytes.SIZEOF_LONG * (columns.size() - 1));
+        final byte[] nextColumnIds = Index.incrementColumn(columnIds, Bytes.SIZEOF_LONG * (columnCount - 1));
 
         byte[] paddedValue = Index.createValues(this.scanInfo.keyValueColumns(), descendingValueMap);
         paddedValue = Bytes.padTail(paddedValue, Math.max(indexValuesFullLength - paddedValue.length, 0));
