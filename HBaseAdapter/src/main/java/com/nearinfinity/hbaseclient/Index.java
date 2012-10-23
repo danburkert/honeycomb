@@ -49,7 +49,7 @@ public class Index {
         });
     }
 
-    public static int calculateIndexValuesFullLength(List<String> columns, TableInfo info) {
+    public static int calculateIndexValuesFullLength(final List<String> columns, final TableInfo info) {
         int size = 0;
         for (String column : columns) {
             size += info.getColumnMetadata(column).getMaxLength();
@@ -58,7 +58,7 @@ public class Index {
         return size;
     }
 
-    private static byte[] correctColumnIdSize(byte[] columnIds) {
+    private static byte[] correctColumnIdSize(final byte[] columnIds) {
         int expectedSize = 4 * Bytes.SIZEOF_LONG;
         if (columnIds.length > expectedSize) {
             throw new IllegalStateException(format("There should never be more than %d columns indexed. Found %d columns.", expectedSize / Bytes.SIZEOF_LONG, columnIds.length / Bytes.SIZEOF_LONG));
@@ -95,7 +95,7 @@ public class Index {
         return mergedArray;
     }
 
-    public static byte[] incrementColumn(byte[] columnIds, int offset) {
+    public static byte[] incrementColumn(final byte[] columnIds, final int offset) {
         if (columnIds == null) {
             throw new IllegalArgumentException("columnIds cannot be null");
         }
