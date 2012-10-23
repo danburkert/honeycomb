@@ -242,24 +242,6 @@ class CloudHandler : public handler
       return (double) rows /  20.0+1;
     }
 
-    virtual int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add)
-    {
-      Field *field_being_indexed = key_info->key_part->field;
-      jbyteArray duplicate_value = this->find_duplicate_column_values(field_being_indexed);
-
-      int error = duplicate_value != NULL ? HA_ERR_FOUND_DUPP_KEY : 0;
-
-      if (error != 0)
-      {
-        int length = this->java_array_length(duplicate_value);
-        char *value_key = this->char_array_from_java_bytes(duplicate_value);
-        this->store_field_value(field_being_indexed, value_key, length);
-        delete[] value_key;
-      }
-
-      return error;
-    }
-
     virtual int final_add_index(handler_add_index *add, bool commit)
     {
       return 0;
@@ -301,6 +283,7 @@ class CloudHandler : public handler
     int rename_table(const char *from, const char *to);
     void get_auto_increment(ulonglong offset, ulonglong increment, ulonglong nb_desired_values, ulonglong *first_value, ulonglong *nb_reserved_values);
     int index_read_map(uchar * buf, const uchar * key, key_part_map keypart_map, enum ha_rkey_function find_flag);
+    int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add);
 };
 
 #endif

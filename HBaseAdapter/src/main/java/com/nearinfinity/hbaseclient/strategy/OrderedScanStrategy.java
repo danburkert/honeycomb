@@ -1,5 +1,6 @@
 package com.nearinfinity.hbaseclient.strategy;
 
+import com.google.common.collect.Iterables;
 import com.nearinfinity.hbaseclient.*;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -24,10 +25,11 @@ public class OrderedScanStrategy implements ScanStrategy {
     public Scan getScan(TableInfo info) {
         long tableId = info.getId();
         Map<String, byte[]> ascendingValueMap = PutListFactory.correctAscendingValuePadding(info, this.scanInfo.keyValueMap(), this.scanInfo.nullSearchColumns());
-        List<String> columns = this.scanInfo.columnNames();
+        Iterable<String> columns = this.scanInfo.columnNames();
+        final int columnCount = Iterables.size(columns);
 
         byte[] columnIds = Index.createColumnIds(columns, info.columnNameToIdMap());
-        byte[] nextColumnIds = Index.incrementColumn(columnIds, Bytes.SIZEOF_LONG * (columns.size() - 1));
+        byte[] nextColumnIds = Index.incrementColumn(columnIds, Bytes.SIZEOF_LONG * (columnCount - 1));
 
         int indexValuesFullLength = Index.calculateIndexValuesFullLength(columns, info);
         byte[] paddedValue = Index.createValues(this.scanInfo.keyValueColumns(), ascendingValueMap);

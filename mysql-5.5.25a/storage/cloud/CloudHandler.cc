@@ -951,6 +951,26 @@ int CloudHandler::get_failed_key_index(const char *key_name)
   return -1;
 }
 
+int CloudHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add)
+{
+  KEY_PART_INFO *key_part = key_info->key_part;
+  KEY_PART_INFO *end_key_part = key_part + key_info->key_parts;
+  Field *field_being_indexed = key_info->key_part->field;
+  jbyteArray duplicate_value = this->find_duplicate_column_values(field_being_indexed);
+
+  int error = duplicate_value != NULL ? HA_ERR_FOUND_DUPP_KEY : 0;
+
+  if (error != 0)
+  {
+    int length = this->java_array_length(duplicate_value);
+    char *value_key = this->char_array_from_java_bytes(duplicate_value);
+    this->store_field_value(field_being_indexed, value_key, length);
+    delete[] value_key;
+  }
+
+  return error;
+}
+
 jbyteArray CloudHandler::find_duplicate_column_values(Field *field)
 {
   attach_thread();
@@ -969,16 +989,22 @@ jbyteArray CloudHandler::find_duplicate_column_values(Field *field)
   return duplicate_value;
 }
 
-
-
 bool CloudHandler::field_has_unique_index(Field *field)
 {
   for (int i = 0; i < table->s->keys; i++)
   {
-    if ((table->key_info[i].flags & HA_NOSAME)
-        && strcmp(table->key_info[i].key_part->field->field_name, field->field_name) == 0)
+    KEY *key_info = table->s->key_info + i;
+    KEY_PART_INFO *key_part = key_info->key_part;
+    KEY_PART_INFO *end_key_part = key_part + key_info->key_parts;
+
+    while(key_part < end_key_part)
     {
-      return true;
+      if ((key_info->flags & HA_NOSAME) && strcmp(key_part->field->field_name, field->field_name) == 0)
+      {
+        return true;
+      }
+
+      key_part++;
     }
   }
 

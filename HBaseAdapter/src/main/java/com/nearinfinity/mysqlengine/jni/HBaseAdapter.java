@@ -246,7 +246,7 @@ public class HBaseAdapter {
         String result = null;
 
         try {
-            // result = client.findDuplicateKey(tableName, values);
+            result = client.findDuplicateKey(tableName, values);
         } catch (Exception e) {
             logger.error("hasDuplicateValues-> Exception:", e);
             throw new HBaseAdapterException("hasDuplicateValues", e);
@@ -432,5 +432,13 @@ public class HBaseAdapter {
         }
 
         return result;
+    }
+
+    public static void addIndex(String tableName, LinkedList<String> columnsToIndex) {
+        try {
+            client.addIndex(tableName, columnsToIndex);
+        } catch (Exception e) {
+            logger.error("addIndex->Exception: ", e);
+        }
     }
 }

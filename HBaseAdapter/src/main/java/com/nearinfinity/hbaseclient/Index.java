@@ -31,7 +31,7 @@ public class Index {
         return new Gson().fromJson(new String(jsonBytes), type);
     }
 
-    public static byte[] createColumnIds(final List<String> columns, final Map<String, Long> columnNameToId) {
+    public static byte[] createColumnIds(final Iterable<String> columns, final Map<String, Long> columnNameToId) {
         return correctColumnIdSize(convertToByteArray(columns, new Function<String, byte[]>() {
             @Override
             public byte[] apply(String column) {
@@ -40,7 +40,7 @@ public class Index {
         }));
     }
 
-    public static byte[] createValues(final List<String> columns, final Map<String, byte[]> values) {
+    public static byte[] createValues(final Iterable<String> columns, final Map<String, byte[]> values) {
         return convertToByteArray(columns, new Function<String, byte[]>() {
             @Override
             public byte[] apply(String column) {
@@ -49,7 +49,7 @@ public class Index {
         });
     }
 
-    public static int calculateIndexValuesFullLength(final List<String> columns, final TableInfo info) {
+    public static int calculateIndexValuesFullLength(final Iterable<String> columns, final TableInfo info) {
         int size = 0;
         for (String column : columns) {
             size += info.getColumnMetadata(column).getMaxLength();
@@ -71,7 +71,7 @@ public class Index {
         return Bytes.padTail(columnIds, expectedSize - columnIds.length);
     }
 
-    private static byte[] convertToByteArray(final List<String> columns,
+    private static byte[] convertToByteArray(final Iterable<String> columns,
                                              final Function<String, byte[]> conversion) {
         List<byte[]> pieces = new LinkedList<byte[]>();
         int size = 0;
@@ -84,7 +84,7 @@ public class Index {
         return mergeByteArrayList(pieces, size);
     }
 
-    private static byte[] mergeByteArrayList(final List<byte[]> pieces, final int size) {
+    private static byte[] mergeByteArrayList(final Iterable<byte[]> pieces, final int size) {
         int offset = 0;
         final byte[] mergedArray = new byte[size];
         for (final byte[] piece : pieces) {
