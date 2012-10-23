@@ -434,9 +434,17 @@ public class HBaseAdapter {
         return result;
     }
 
-    public static void addIndex(String tableName, LinkedList<String> columnsToIndex) {
+    public static void addIndex(String tableName, String columnsToIndex) {
         try {
             client.addIndex(tableName, columnsToIndex);
+        } catch (Exception e) {
+            logger.error("addIndex->Exception: ", e);
+        }
+    }
+
+    public static void dropIndex(String tableName, String indexToDrop) {
+        try {
+            client.dropIndex(tableName, indexToDrop);
         } catch (Exception e) {
             logger.error("addIndex->Exception: ", e);
         }

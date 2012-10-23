@@ -1,5 +1,6 @@
 package com.nearinfinity.hbaseclient;
 
+import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.nearinfinity.hbaseclient.strategy.PrefixScanStrategy;
 import com.nearinfinity.hbaseclient.strategy.ScanStrategy;
@@ -157,7 +158,7 @@ public class HBaseClient {
     public void writeRow(String tableName, Map<String, byte[]> values) throws IOException {
         TableInfo info = getTableInfo(tableName);
         LinkedList<LinkedList<String>> multipartIndex = Index.indexForTable(info.tableMetadata());
-        List<Put> putList = PutListFactory.createPutList(values, info, multipartIndex);
+        List<Put> putList = PutListFactory.createDataInsertPutList(values, info, multipartIndex);
 
         //Final put
         this.table.put(putList);
@@ -519,13 +520,73 @@ public class HBaseClient {
         return keyValues;
     }
 
-    public void addIndex(String tableName, LinkedList<String> columnsToIndex) throws IOException {
-        TableInfo info = getTableInfo(tableName);
-        final long tableId = info.getId();
-        addNewIndexEntry(tableName, columnsToIndex, info);
-        LinkedList<LinkedList<String>> newIndexColumns = new LinkedList<LinkedList<String>>();
-        newIndexColumns.add(columnsToIndex);
+    public void addIndex(String tableName, String columnString) throws IOException {
+        final LinkedList<String> columnsToIndex = new LinkedList<String>(Arrays.asList(columnString.split(","))); // Super special because of serialization: must be a linked list.
+        final TableInfo info = getTableInfo(tableName);
+        updateIndexEntryToMetadata(info, new Function<LinkedList<LinkedList<String>>, Void>() {
+            @Override
+            public Void apply(LinkedList<LinkedList<String>> index) {
+                index.add(columnsToIndex);
+                return null;
+            }
+        });
 
+        changeIndex(info, new IndexFunction<Map<String, byte[]>, UUID, Void>() {
+            @Override
+            public Void apply(Map<String, byte[]> values, UUID uuid) {
+                List<Put> puts = PutListFactory.createIndexForColumns(values, info, columnsToIndex, uuid);
+                try {
+                    table.put(puts);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                return null;
+            }
+        });
+    }
+
+    public void dropIndex(String tableName, String indexToDrop) throws IOException {
+        final LinkedList<String> indexColumns = new LinkedList<String>(Arrays.asList(indexToDrop.split(","))); // Super special because of serialization: must be a linked list.
+        final TableInfo info = getTableInfo(tableName);
+        updateIndexEntryToMetadata(info, new Function<LinkedList<LinkedList<String>>, Void>() {
+            @Override
+            public Void apply(LinkedList<LinkedList<String>> index) {
+                index.remove(indexColumns);
+                return null;
+            }
+        });
+
+        changeIndex(info, new IndexFunction<Map<String, byte[]>, UUID, Void>() {
+            @Override
+            public Void apply(Map<String, byte[]> values, UUID rowId) {
+                List<Delete> deletes = DeleteListFactory.createDeleteForIndex(values, info, indexColumns, rowId);
+                try {
+                    table.delete(deletes);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+        });
+    }
+
+    private void updateIndexEntryToMetadata(TableInfo info, Function<LinkedList<LinkedList<String>>, Void> updateFunc) throws IOException {
+        final String tableName = info.getName();
+        final long tableId = info.getId();
+        LinkedList<LinkedList<String>> index = Index.indexForTable(info.tableMetadata());
+        updateFunc.apply(index);
+        final byte[] bytes = TableMultipartKeys.indexJson(index);
+        updateTableCacheIndex(tableName, bytes);
+
+        Put indexUpdate = new Put(RowKeyFactory.buildTableInfoKey(tableId));
+        indexUpdate.add(Constants.NIC, Constants.INDEXES, bytes);
+        this.table.put(indexUpdate);
+        this.table.flushCommits();
+    }
+
+    private void changeIndex(TableInfo info, IndexFunction<Map<String, byte[]>, UUID, Void> function) throws IOException {
+        final long tableId = info.getId();
         byte[] startKey = RowKeyFactory.buildDataKey(tableId, Constants.ZERO_UUID);
         byte[] endKey = RowKeyFactory.buildDataKey(tableId, Constants.FULL_UUID);
         Scan scan = ScanFactory.buildScan(startKey, endKey);
@@ -534,22 +595,13 @@ public class HBaseClient {
         while ((result = scanner.next()) != null) {
             Map<String, byte[]> values = ResultParser.parseDataRow(result, info);
             UUID rowId = ResultParser.parseUUID(result);
-            List<Put> puts = PutListFactory.createIndexForColumns(values, info, newIndexColumns, rowId);
-            table.put(puts);
+            function.apply(values, rowId);
         }
 
         table.flushCommits();
     }
 
-    private void addNewIndexEntry(String tableName, LinkedList<String> columnsToIndex, TableInfo info) throws IOException {
-        long tableId = info.getId();
-        LinkedList<LinkedList<String>> index = Index.indexForTable(info.tableMetadata());
-        index.add(columnsToIndex);
-        final byte[] bytes = TableMultipartKeys.indexJson(index);
-        updateTableCacheIndex(tableName, bytes);
-
-        Put indexUpdate = new Put(RowKeyFactory.buildTableInfoKey(tableId));
-        indexUpdate.add(Constants.NIC, Constants.INDEXES, bytes);
-        this.table.put(indexUpdate);
+    private interface IndexFunction<F1, F2, T> {
+        T apply(F1 f1, F2 f2);
     }
 }
