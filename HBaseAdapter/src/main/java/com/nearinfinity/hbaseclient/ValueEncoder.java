@@ -75,6 +75,10 @@ public class ValueEncoder {
     }
 
     private static byte[] padValue(byte[] value, int padLength, byte mask) {
+        if (padLength < 0) {
+            throw new IllegalArgumentException("padLength cannot be less than zero. Value: " + padLength);
+        }
+
         byte[] paddedValue = new byte[value.length + padLength];
         Arrays.fill(paddedValue, mask);
         System.arraycopy(value, 0, paddedValue, 0, value.length);

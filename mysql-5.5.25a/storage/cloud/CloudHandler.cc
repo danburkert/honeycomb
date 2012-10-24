@@ -145,10 +145,6 @@ int CloudHandler::delete_table(const char *path)
   jmethodID drop_table_method = this->env->GetStaticMethodID(adapter_class,
       "dropTable", "(Ljava/lang/String;)Z");
 
-  jmethodID set_count_method = this->env->GetStaticMethodID(adapter_class,
-      "setRowCount", "(Ljava/lang/String;J)V");
-  this->env->CallStaticVoidMethod(adapter_class, set_count_method, table_name,
-      (jlong) 0);
   this->env->CallStaticBooleanMethod(adapter_class, drop_table_method,
       table_name);
 
