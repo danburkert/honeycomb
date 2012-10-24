@@ -73,12 +73,16 @@ class CloudHandler : public handler
     void reset_scan_counter();
     bool check_for_renamed_column(const TABLE*  table, const char* col_name);
     bool field_has_unique_index(Field *field);
-    jbyteArray find_duplicate_column_values(Field *field);
+    jbyteArray find_duplicate_column_values(char* columns);
     bool row_has_duplicate_values(jobject value_map);
     int get_failed_key_index(const char *key_name);
     char *char_array_from_java_bytes(jbyteArray java_bytes);
     void store_field_value(Field *field, char *key, int length);
     int java_array_length(jarray array);
+    jobject create_multipart_keys(TABLE* table_arg);
+    char* index_name(KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts);
+    jobject create_key_value_list(int index, uint* key_sizes, uchar** key_copies, const char** key_names, jboolean* key_null_bits, jboolean* key_is_null);
+    bool is_field_nullable(const char* table_name, const char* field_name);
 
     bool is_integral_field(int field_type)
     {
@@ -146,7 +150,6 @@ class CloudHandler : public handler
     /* Index methods */
     int index_init(uint idx, bool sorted);
     int index_end();
-    int index_read(uchar *buf, const uchar *key, uint key_len, enum ha_rkey_function find_flag);
     int index_next(uchar *buf);
     int index_prev(uchar *buf);
     int index_first(uchar *buf);
@@ -196,7 +199,6 @@ class CloudHandler : public handler
         HA_NO_TRANSACTIONS |
         HA_STATS_RECORDS_IS_EXACT | 
         HA_NULL_IN_KEY | // Nulls in indexed columns are allowed
-        HA_NO_AUTO_INCREMENT |
         HA_TABLE_SCAN_ON_INDEX;
     }
 
@@ -215,11 +217,6 @@ class CloudHandler : public handler
       return MAX_INDEXES;
     }
 
-    uint max_supported_key_parts() const
-    {
-      return 1;
-    }
-
     uint max_supported_key_length() const
     {
       return UINT_MAX;
@@ -227,7 +224,12 @@ class CloudHandler : public handler
 
     uint max_supported_key_part_length() const
     {
-      return UINT_MAX;
+      return 255;
+    }
+  
+    uint max_supported_key_parts() const 
+    {
+      return 4; 
     }
 
     virtual double scan_time()
@@ -240,29 +242,7 @@ class CloudHandler : public handler
       return (double) rows /  20.0+1;
     }
 
-    virtual int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add)
-    {
-      Field *field_being_indexed = key_info->key_part->field;
-      jbyteArray duplicate_value = this->find_duplicate_column_values(field_being_indexed);
-
-      int error = duplicate_value != NULL ? HA_ERR_FOUND_DUPP_KEY : 0;
-
-      if (error != 0)
-      {
-        int length = this->java_array_length(duplicate_value);
-        char *value_key = this->char_array_from_java_bytes(duplicate_value);
-        this->store_field_value(field_being_indexed, value_key, length);
-      }
-
-      return error;
-    }
-
     virtual int final_add_index(handler_add_index *add, bool commit)
-    {
-      return 0;
-    }
-
-    virtual int prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys)
     {
       return 0;
     }
@@ -296,6 +276,10 @@ class CloudHandler : public handler
     ha_rows estimate_rows_upper_bound();
     bool check_if_incompatible_data(HA_CREATE_INFO *create_info, uint table_changes);
     int rename_table(const char *from, const char *to);
+    void get_auto_increment(ulonglong offset, ulonglong increment, ulonglong nb_desired_values, ulonglong *first_value, ulonglong *nb_reserved_values);
+    int index_read_map(uchar * buf, const uchar * key, key_part_map keypart_map, enum ha_rkey_function find_flag);
+    int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add);
+    int prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys);
 };
 
 #endif

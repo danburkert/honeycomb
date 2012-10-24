@@ -61,3 +61,33 @@ SELECT * FROM t1 ORDER BY c1;
 
 ### Cleanup
 DROP TABLE t1;
+
+eval CREATE TABLE t1(c1 $numeric_type $sign_flag $null_flag, c2 $numeric_type $sign_flag $null_flag $multi_index_flag)
+    engine = $engine_type;
+eval INSERT INTO t1 VALUES
+  ($min_val, $min_val),
+  (0, 0),
+  (0, 0),
+  (0, 0),
+  (0, 0),
+  ($mid_val, $mid_val - 2),
+  ($mid_val, $mid_val - 1),
+  ($mid_val, $mid_val),
+  ($mid_val, $mid_val),
+  ($mid_val, $mid_val + 1),
+  ($mid_val, $mid_val + 2),
+  ($max_val, $max_val);
+
+### Read table
+eval SELECT * FROM t1 WHERE c1 = $mid_val AND c2 > $mid_val ORDER BY c2 ASC;
+eval SELECT * FROM t1 WHERE c1 = $mid_val AND c2 >= $mid_val ORDER BY c2 ASC;
+eval SELECT * FROM t1 WHERE c1 = $mid_val AND c2 < $mid_val ORDER BY c2 ASC;
+eval SELECT * FROM t1 WHERE c1 = $mid_val AND c2 <= $mid_val ORDER BY c2 ASC;
+
+eval SELECT * FROM t1 WHERE c1 = $mid_val AND c2 > $mid_val ORDER BY c2 DESC;
+eval SELECT * FROM t1 WHERE c1 = $mid_val AND c2 >= $mid_val ORDER BY c2 DESC;
+eval SELECT * FROM t1 WHERE c1 = $mid_val AND c2 < $mid_val ORDER BY c2 DESC;
+eval SELECT * FROM t1 WHERE c1 = $mid_val AND c2 <= $mid_val ORDER BY c2 DESC;
+
+### Cleanup
+DROP TABLE t1;

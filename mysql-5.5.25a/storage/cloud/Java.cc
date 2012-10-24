@@ -2,6 +2,29 @@
 
 #define JNI_CLASSPATH "com/nearinfinity/mysqlengine/jni/"
 #define MAP_CLASS "java/util/TreeMap"
+#define LIST_CLASS "java/util/LinkedList"
+
+jobject create_java_list(JNIEnv* env)
+{
+  jclass list_class = env->FindClass(LIST_CLASS);
+  jmethodID constructor = env->GetMethodID(list_class, "<init>", "()V");
+  return env->NewObject(list_class, constructor);
+}
+
+jobject java_list_insert(jobject java_list, jobject value, JNIEnv* env)
+{
+  jclass list_class = env->FindClass(LIST_CLASS);
+  jmethodID add_method = env->GetMethodID(list_class, "add", "(Ljava/lang/Object;)Z");
+
+  return env->CallObjectMethod(java_list, add_method, value);
+}
+
+jobject create_java_boolean(jboolean boolean, JNIEnv* env)
+{
+  jclass bool_class = env->FindClass("java/lang/Boolean");
+  jmethodID constructor = env->GetMethodID(bool_class, "<init>", "(Z)V");
+  return env->NewObject(bool_class, constructor, boolean);
+}
 
 jobject create_java_map(JNIEnv* env)
 {

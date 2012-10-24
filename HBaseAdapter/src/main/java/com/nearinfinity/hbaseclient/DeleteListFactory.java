@@ -9,37 +9,46 @@ import java.util.Map;
 import java.util.UUID;
 
 public class DeleteListFactory {
-    public static List<Delete> createDeleteRowList(UUID uuid, TableInfo info, Result result, byte[] dataRowKey) {
+    public static List<Delete> createDeleteRowList(UUID uuid, TableInfo info, Result result, byte[] dataRowKey, final LinkedList<LinkedList<String>> indexedKeys) {
         long tableId = info.getId();
         List<Delete> deleteList = new LinkedList<Delete>();
-        Map<String, byte[]> valueMap = ResultParser.parseDataRow(result, info);
         deleteList.add(new Delete(dataRowKey));
 
-        //Loop through ALL columns to determine which should be NULL
+        Map<String, byte[]> values = ResultParser.parseDataRow(result, info);
         for (String columnName : info.getColumnNames()) {
-            long columnId = info.getColumnIdByName(columnName);
-            byte[] value = valueMap.get(columnName);
             ColumnMetadata metadata = info.getColumnMetadata(columnName);
-            ColumnType columnType = metadata.getType();
-
-            if (value == null) {
-                byte[] nullIndexKey = RowKeyFactory.buildNullIndexKey(tableId, columnId, uuid);
-                deleteList.add(new Delete(nullIndexKey));
-                continue;
+            if (!values.containsKey(columnName)) {
+                values.put(columnName, new byte[metadata.getMaxLength()]);
             }
+        }
 
-            //Determine pad length
-            int padLength = 0;
-            if (columnType == ColumnType.STRING || columnType == ColumnType.BINARY) {
-                long maxLength = metadata.getMaxLength();
-                padLength = (int) maxLength - value.length;
-            }
+        deleteList.addAll(createDeleteForIndex(values, info, indexedKeys, uuid));
 
-            byte[] indexKey = RowKeyFactory.buildValueIndexKey(tableId, columnId, value, uuid, columnType, padLength);
-            byte[] reverseKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId, value, columnType, uuid, padLength);
+        return deleteList;
+    }
 
-            deleteList.add(new Delete(indexKey));
-            deleteList.add(new Delete(reverseKey));
+    public static List<Delete> createDeleteForIndex(Map<String, byte[]> values, TableInfo info, List<String> indexedKeys, UUID uuid) {
+        LinkedList<LinkedList<String>> newIndexColumns = new LinkedList<LinkedList<String>>();
+        newIndexColumns.add(new LinkedList<String>(indexedKeys));
+        return createDeleteForIndex(values, info, newIndexColumns, uuid);
+    }
+
+    public static List<Delete> createDeleteForIndex(Map<String, byte[]> values, TableInfo info, LinkedList<LinkedList<String>> indexedKeys, UUID uuid) {
+        final long tableId = info.getId();
+        List<Delete> deleteList = new LinkedList<Delete>();
+        final Map<String, Long> columnNameToId = info.columnNameToIdMap();
+
+        final Map<String, byte[]> ascendingValues = ValueEncoder.correctAscendingValuePadding(info, values);
+        final Map<String, byte[]> descendingValues = ValueEncoder.correctDescendingValuePadding(info, values);
+
+        for (List<String> columns : indexedKeys) {
+            final byte[] columnIds = Index.createColumnIds(columns, columnNameToId);
+
+            final byte[] ascendingIndexKey = PutListFactory.createPrimaryIndex(tableId, uuid, ascendingValues, columns, columnIds);
+            final byte[] descendingIndexKey = PutListFactory.createReverseIndex(tableId, uuid, descendingValues, columns, columnIds);
+
+            deleteList.add(new Delete(ascendingIndexKey));
+            deleteList.add(new Delete(descendingIndexKey));
         }
 
         return deleteList;

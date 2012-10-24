@@ -12,6 +12,7 @@
 #include "m_string.h"
 
 #include <sys/time.h>
+
 const char **CloudHandler::bas_ext() const
 {
   static const char *cloud_exts[] = { NullS };
@@ -144,10 +145,6 @@ int CloudHandler::delete_table(const char *path)
   jmethodID drop_table_method = this->env->GetStaticMethodID(adapter_class,
       "dropTable", "(Ljava/lang/String;)Z");
 
-  jmethodID set_count_method = this->env->GetStaticMethodID(adapter_class,
-      "setRowCount", "(Ljava/lang/String;J)V");
-  this->env->CallStaticVoidMethod(adapter_class, set_count_method, table_name,
-      (jlong) 0);
   this->env->CallStaticBooleanMethod(adapter_class, drop_table_method,
       table_name);
 
@@ -412,13 +409,61 @@ int CloudHandler::end_bulk_insert()
   DBUG_RETURN(0);
 }
 
-int CloudHandler::create(const char *path, TABLE *table_arg,
-    HA_CREATE_INFO *create_info)
+char* CloudHandler::index_name(KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts)
+{
+    size_t size = 0;
+
+    KEY_PART_INFO* start = key_part;
+    for (; key_part != key_part_end; key_part++)
+    {
+      Field *field = key_part->field;
+      size += strlen(field->field_name);
+    }
+
+    key_part = start;
+    char* name = new char[size + key_parts];
+    memset(name, 0, size + key_parts);
+    for (; key_part != key_part_end; key_part++)
+    {
+      Field *field = key_part->field;
+      strcat(name, field->field_name);
+      if ((key_part+1) != key_part_end)
+      {
+        strcat(name, ",");
+      }
+    }
+
+    return name;
+}
+
+jobject CloudHandler::create_multipart_keys(TABLE* table_arg)
+{
+  uint keys = table_arg->s->keys;
+  jclass multipart_keys_class = this->env->FindClass("com/nearinfinity/hbaseclient/TableMultipartKeys");
+  jmethodID constructor = this->env->GetMethodID(multipart_keys_class, "<init>", "()V");
+  jmethodID add_key_method = this->env->GetMethodID(multipart_keys_class, "addMultipartKey", "(Ljava/lang/String;)V");
+  jobject java_keys = this->env->NewObject(multipart_keys_class, constructor);
+
+  for (uint key = 0; key < keys; key++)
+  {
+    KEY *pos = table_arg->key_info + key;
+    KEY_PART_INFO *key_part = pos->key_part;
+    KEY_PART_INFO *key_part_end = key_part + pos->key_parts;
+    char* name = index_name(key_part, key_part_end, pos->key_parts);
+    this->env->CallVoidMethod(java_keys, add_key_method, string_to_java_string(name));
+    delete[] name;
+    name = NULL;
+  }
+
+  return java_keys;
+}
+
+int CloudHandler::create(const char *path, TABLE *table_arg, HA_CREATE_INFO *create_info)
 {
   DBUG_ENTER("CloudHandler::create");
-
   attach_thread();
 
+  jobject java_keys = this->create_multipart_keys(table_arg);
   jclass adapter_class = this->adapter();
   if (adapter_class == NULL)
   {
@@ -451,15 +496,15 @@ int CloudHandler::create(const char *path, TABLE *table_arg,
     default:
       break;
     }
+
     jobject java_metadata_obj = metadata.get_field_metadata(*field, table_arg);
-    java_map_insert(columnMap, string_to_java_string((*field)->field_name),
-        java_metadata_obj, this->env);
+    java_map_insert(columnMap, string_to_java_string((*field)->field_name), java_metadata_obj, this->env);
   }
 
   jmethodID create_table_method = this->env->GetStaticMethodID(adapter_class,
-      "createTable", "(Ljava/lang/String;Ljava/util/Map;)Z");
+      "createTable", "(Ljava/lang/String;Ljava/util/Map;Lcom/nearinfinity/hbaseclient/TableMultipartKeys;)Z");
   this->env->CallStaticBooleanMethod(adapter_class, create_table_method,
-      string_to_java_string(table_name), columnMap);
+      string_to_java_string(table_name), columnMap, java_keys);
   print_java_exception(this->env);
 
   detach_thread();
@@ -687,6 +732,20 @@ bool CloudHandler::check_for_renamed_column(const TABLE* table,
   return (false);
 }
 
+void CloudHandler::get_auto_increment(ulonglong offset, ulonglong increment,
+                                 ulonglong nb_desired_values,
+                                 ulonglong *first_value,
+                                 ulonglong *nb_reserved_values)
+{
+  DBUG_ENTER("CloudHandler::get_auto_increment");
+  jclass adapter_class = this->adapter();
+  jmethodID get_auto_increment_method = this->env->GetStaticMethodID(adapter_class, "getNextAutoincrementValue", "(Ljava/lang/String;Ljava/lang/String;)J");
+  jlong increment_value = (jlong) this->env->CallStaticObjectMethod(adapter_class, get_auto_increment_method, this->table_name(), string_to_java_string(table->next_number_field->field_name));
+  *first_value = (ulonglong)increment_value;
+  *nb_reserved_values = ULONGLONG_MAX;
+  DBUG_VOID_RETURN;
+}
+
 int CloudHandler::write_row(uchar *buf)
 {
   DBUG_ENTER("CloudHandler::write_row");
@@ -720,6 +779,15 @@ int CloudHandler::write_row_helper(uchar* buf)
 
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
     table->timestamp_field->set_time();
+
+  if(table->next_number_field && buf == table->record[0])
+  {
+    int res;
+    if((res = update_auto_increment()))
+    {
+      DBUG_RETURN(res);
+    }
+  }
 
   my_bitmap_map *old_map = dbug_tmp_use_all_columns(table, table->read_set);
 
@@ -879,34 +947,91 @@ int CloudHandler::get_failed_key_index(const char *key_name)
   return -1;
 }
 
-jbyteArray CloudHandler::find_duplicate_column_values(Field *field)
+int CloudHandler::prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys)
+{
+  uint keys = num_of_keys;
+  attach_thread();
+
+  jclass adapter = this->adapter();
+  jmethodID add_index_method = this->env->GetStaticMethodID(adapter, "dropIndex", "(Ljava/lang/String;Ljava/lang/String;)V");
+
+  for (uint key = 0; key < keys; key++)
+  {
+    KEY *pos = table_arg->key_info + key;
+    KEY_PART_INFO *key_part = pos->key_part;
+    KEY_PART_INFO *key_part_end = key_part + pos->key_parts;
+    char* name = index_name(key_part, key_part_end, pos->key_parts);
+    this->env->CallStaticVoidMethod(adapter, add_index_method, this->table_name(), string_to_java_string(name));
+    delete[] name;
+    name = NULL;
+  }
+
+  return 0;
+}
+
+int CloudHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add)
+{
+  attach_thread();
+  for(uint key = 0; key < num_of_keys; key++)
+  {
+    KEY* pos = key_info + key;
+    KEY_PART_INFO *key_part = pos->key_part;
+    KEY_PART_INFO *end_key_part = key_part + key_info->key_parts;
+    Field *field_being_indexed = key_info->key_part->field;
+    char* index_columns = this->index_name(key_part, end_key_part, key_info->key_parts);
+    jbyteArray duplicate_value = this->find_duplicate_column_values(index_columns);
+
+    int error = duplicate_value != NULL ? HA_ERR_FOUND_DUPP_KEY : 0;
+
+    if (error == HA_ERR_FOUND_DUPP_KEY)
+    {
+      int length = this->java_array_length(duplicate_value);
+      char *value_key = this->char_array_from_java_bytes(duplicate_value);
+      this->store_field_value(field_being_indexed, value_key, length);
+      delete[] value_key;
+      this->failed_key_index = this->get_failed_key_index(key_part->field->field_name);
+      detach_thread();
+      return error;
+    }
+
+    jclass adapter = this->adapter();
+    jmethodID add_index_method = this->env->GetStaticMethodID(adapter, "addIndex", "(Ljava/lang/String;Ljava/lang/String;)V");
+    this->env->CallStaticVoidMethod(adapter, add_index_method, this->table_name(), string_to_java_string(index_columns));
+  }
+
+  detach_thread();
+  return 0;
+}
+
+jbyteArray CloudHandler::find_duplicate_column_values(char* columns)
 {
   attach_thread();
 
   jclass adapter = this->adapter();
   jmethodID column_has_duplicates_method = this->env->GetStaticMethodID(adapter, "findDuplicateValue", "(Ljava/lang/String;Ljava/lang/String;)[B");
-  jbyteArray duplicate_value = (jbyteArray) this->env->CallStaticObjectMethod(adapter, column_has_duplicates_method, this->table_name(), string_to_java_string(field->field_name));
-
-  if (duplicate_value != NULL)
-  {
-      this->failed_key_index = this->get_failed_key_index(field->field_name);
-  }
+  jbyteArray duplicate_value = (jbyteArray) this->env->CallStaticObjectMethod(adapter, column_has_duplicates_method, this->table_name(), string_to_java_string(columns));
 
   detach_thread();
 
   return duplicate_value;
 }
 
-
-
 bool CloudHandler::field_has_unique_index(Field *field)
 {
   for (int i = 0; i < table->s->keys; i++)
   {
-    if ((table->key_info[i].flags & HA_NOSAME)
-        && strcmp(table->key_info[i].key_part->field->field_name, field->field_name) == 0)
+    KEY *key_info = table->s->key_info + i;
+    KEY_PART_INFO *key_part = key_info->key_part;
+    KEY_PART_INFO *end_key_part = key_part + key_info->key_parts;
+
+    while(key_part < end_key_part)
     {
-      return true;
+      if ((key_info->flags & HA_NOSAME) && strcmp(key_part->field->field_name, field->field_name) == 0)
+      {
+        return true;
+      }
+
+      key_part++;
     }
   }
 
@@ -929,8 +1054,10 @@ int CloudHandler::index_init(uint idx, bool sorted)
 
   this->active_index = idx;
 
-  const char* column_name =
-      this->table->s->key_info[idx].key_part->field->field_name;
+  KEY *pos = this->table->s->key_info + idx;
+  KEY_PART_INFO *key_part = pos->key_part;
+  KEY_PART_INFO *key_part_end = key_part + pos->key_parts;
+  const char* column_names = this->index_name(key_part, key_part_end, pos->key_parts);
   Field *field = table->field[idx];
   attach_thread();
 
@@ -938,10 +1065,10 @@ int CloudHandler::index_init(uint idx, bool sorted)
   jmethodID start_scan_method = this->env->GetStaticMethodID(adapter_class,
       "startIndexScan", "(Ljava/lang/String;Ljava/lang/String;)J");
   jstring table_name = this->table_name();
-  jstring java_column_name = this->string_to_java_string(column_name);
+  jstring java_column_names = this->string_to_java_string(column_names);
 
-  this->curr_scan_id = this->env->CallStaticLongMethod(adapter_class,
-      start_scan_method, table_name, java_column_name);
+  this->curr_scan_id = this->env->CallStaticLongMethod(adapter_class, start_scan_method, table_name, java_column_names);
+  delete[] column_names;
 
   DBUG_RETURN(0);
 }
@@ -957,179 +1084,108 @@ int CloudHandler::index_end()
   DBUG_RETURN(0);
 }
 
-int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len,
-    enum ha_rkey_function find_flag)
+jobject CloudHandler::create_key_value_list(int index, uint* key_sizes, uchar** key_copies, const char** key_names, jboolean* key_null_bits, jboolean* key_is_null)
 {
-  DBUG_ENTER("CloudHandler::index_read");
+  jobject key_values = create_java_list(this->env);
+  jclass key_value_class = this->env->FindClass("com/nearinfinity/hbaseclient/KeyValue");
+  jmethodID key_value_ctor = this->env->GetMethodID(key_value_class, "<init>", "(Ljava/lang/String;[BZZ)V");
+  for(int x = 0; x < index; x++)
+  {
+    jbyteArray java_key = this->env->NewByteArray(key_sizes[x]);
+    this->env->SetByteArrayRegion(java_key, 0, key_sizes[x], (jbyte*) key_copies[x]);
+    jstring key_name = string_to_java_string(key_names[x]);
+    jobject key_value = this->env->NewObject(key_value_class, key_value_ctor, key_name, java_key, key_null_bits[x], key_is_null[x]);
+    java_list_insert(key_values, key_value, this->env);
+  }
 
+  return key_values;
+}
+
+bool CloudHandler::is_field_nullable(const char* table_name, const char* field_name)
+{
   jclass adapter_class = this->adapter();
-  jmethodID index_read_method =
-      this->env->GetStaticMethodID(adapter_class, "indexRead",
-          "(J[BLcom/nearinfinity/mysqlengine/jni/IndexReadType;)Lcom/nearinfinity/mysqlengine/jni/IndexRow;");
-  jlong java_scan_id = this->curr_scan_id;
-  uchar* key_copy;
-  jobject java_find_flag;
+  jmethodID is_nullable_method = this->env->GetStaticMethodID(adapter_class, "isNullable", "(Ljava/lang/String;Ljava/lang/String;)Z");
+  return (bool)this->env->CallStaticBooleanMethod(adapter_class, is_nullable_method, string_to_java_string(table_name), string_to_java_string(field_name));
+}
+
+int CloudHandler::index_read_map(uchar * buf, const uchar * key, key_part_map keypart_map, enum ha_rkey_function find_flag)
+{
+  DBUG_ENTER("CloudHandler::index_read_map");
+  jclass adapter_class = this->adapter();
+  jmethodID index_read_method = this->env->GetStaticMethodID(adapter_class, "indexRead", "(JLjava/util/List;Lcom/nearinfinity/mysqlengine/jni/IndexReadType;)Lcom/nearinfinity/mysqlengine/jni/IndexRow;");
+  KEY *key_info = table->s->key_info + this->active_index;
+  KEY_PART_INFO *key_part = key_info->key_part;
+  KEY_PART_INFO *end_key_part = key_part + key_info->key_parts;
+  key_part_map counter = keypart_map;
+  int key_count = 0;
+  while(counter)
+  {
+    counter >>= 1;
+    key_count++;
+  }
 
   if (find_flag == HA_READ_PREFIX_LAST_OR_PREV)
   {
     find_flag = HA_READ_KEY_OR_PREV;
   }
 
-  Field* index_field = this->table->field[this->active_index];
+  uchar* key_copies[key_count];
+  uint key_sizes[key_count];
+  jboolean key_null_bits[key_count];
+  jboolean key_is_null[key_count];
+  const char* key_names[key_count];
+  memset(key_null_bits, JNI_FALSE, key_count);
+  memset(key_is_null, JNI_FALSE, key_count);
+  memset(key_copies, 0, key_count);
+  uchar* key_iter = (uchar*)key;
+  int index = 0;
 
-  // Check if a nullable field is null.  This can happen on a non 'where x is null'
-  // scan when MySQL decides to scan from the index beggining.
-  // Only way to tell is to look at the first bit of the key.
-  if (index_field->maybe_null() && key[0] != 0)
+  while (key_part < end_key_part && keypart_map)
   {
-    switch (find_flag)
+    Field* field = key_part->field;
+    key_names[index] = field->field_name;
+    uint store_length = key_part->store_length;
+    uint offset = store_length;
+    if (this->is_field_nullable(table->s->table_name.str, field->field_name))  
     {
-    case HA_READ_KEY_EXACT:
-      java_find_flag = java_find_flag_by_name("INDEX_NULL", this->env);
-      break;
-    case HA_READ_AFTER_KEY:
-      java_find_flag = java_find_flag_by_name("INDEX_FIRST", this->env);
-      break;
-    default:
-      java_find_flag = find_flag_to_java(find_flag, this->env);
-      break;
-    }
-  } else
-  {
-    java_find_flag = find_flag_to_java(find_flag, this->env);
-  }
-
-  if (index_field->maybe_null())
-  {
-    // If the index is nullable, then the first byte is the null flag.  Ignore it.
-    key++;
-    key_len--;
-  }
-
-  int index_field_type = index_field->real_type();
-
-  switch (index_field_type)
-  {
-  case MYSQL_TYPE_TINY:
-  case MYSQL_TYPE_SHORT:
-  case MYSQL_TYPE_INT24:
-  case MYSQL_TYPE_LONG:
-  case MYSQL_TYPE_LONGLONG:
-  case MYSQL_TYPE_ENUM:
-  {
-    key_copy = new uchar[sizeof(long long)];
-    const bool is_signed = !is_unsigned_field(index_field);
-    bytes_to_long(key, key_len, is_signed, key_copy);
-    key_len = sizeof(long long);
-    make_big_endian(key_copy, key_len);
-    break;
-  }
-  case MYSQL_TYPE_YEAR:
-  {
-    key_copy = new uchar[sizeof(long long)];
-    // It comes to us as one byte, need to cast it to int and add 1900
-    uint32_t int_val = (uint32_t) key[0] + 1900;
-
-    bytes_to_long((uchar *) &int_val, sizeof(uint32_t), false, key_copy);
-    key_len = sizeof(long long);
-    make_big_endian(key_copy, key_len);
-    break;
-  }
-  case MYSQL_TYPE_FLOAT:
-  {
-    double j = (double) floatGet(key);
-
-    key_copy = new uchar[sizeof(double)];
-    key_len = sizeof(double);
-
-    doublestore(key_copy, j);
-    reverse_bytes(key_copy, key_len);
-    break;
-  }
-  case MYSQL_TYPE_DOUBLE:
-  {
-    double j = (double) floatGet(key);
-    doubleget(j, key);
-
-    key_copy = new uchar[sizeof(double)];
-    key_len = sizeof(double);
-
-    doublestore(key_copy, j);
-    reverse_bytes(key_copy, key_len);
-    break;
-  }
-  case MYSQL_TYPE_DECIMAL:
-  case MYSQL_TYPE_NEWDECIMAL:
-  {
-    key_copy = new uchar[key_len];
-    memcpy(key_copy, key, key_len);
-    break;
-  }
-  case MYSQL_TYPE_DATE:
-  case MYSQL_TYPE_DATETIME:
-  case MYSQL_TYPE_TIME:
-  case MYSQL_TYPE_TIMESTAMP:
-  case MYSQL_TYPE_NEWDATE:
-  {
-    MYSQL_TIME mysql_time;
-
-    switch (index_field_type)
-    {
-    case MYSQL_TYPE_DATE:
-    case MYSQL_TYPE_NEWDATE:
-      if (key_len == 3)
+      if(key_iter[0] == 1)
       {
-        extract_mysql_newdate((long) uint3korr(key), &mysql_time);
-      } else
-      {
-        extract_mysql_old_date((int32) uint4korr(key), &mysql_time);
+        if(index == (key_count - 1) && find_flag == HA_READ_AFTER_KEY)
+        {
+          key_is_null[index] = JNI_FALSE;
+          DBUG_RETURN(index_first(buf));
+        }
+        else
+        {
+          key_is_null[index] = JNI_TRUE;
+        }
       }
-      break;
-    case MYSQL_TYPE_TIMESTAMP:
-      extract_mysql_timestamp((long) uint4korr(key), &mysql_time,
-          table->in_use);
-      break;
-    case MYSQL_TYPE_TIME:
-      extract_mysql_time((long) uint3korr(key), &mysql_time);
-      break;
-    case MYSQL_TYPE_DATETIME:
-      extract_mysql_datetime((ulonglong) uint8korr(key), &mysql_time);
-      break;
+
+      // If the index is nullable, then the first byte is the null flag.  Ignore it.
+      key_iter++;
+      offset--;
+      key_null_bits[index] = JNI_TRUE;
+      store_length--;
     }
 
-    char timeString[MAX_DATE_STRING_REP_LENGTH];
-    my_TIME_to_str(&mysql_time, timeString);
-    int length = strlen(timeString);
-    key_copy = new uchar[length];
-    memcpy(key_copy, timeString, length);
-    key_len = length;
-    break;
-  }
-  case MYSQL_TYPE_VARCHAR:
-  {
-    /**
-     * VARCHARs are prefixed with two bytes that represent the actual length of the value.
-     * So we need to read the length into actual_length, then copy those bits to key_copy.
-     * Thank you, MySQL...
-     */
-    uint16_t *short_len_ptr = (uint16_t *) key;
-    key_len = (uint) (*short_len_ptr);
-    key += 2;
-    key_copy = new uchar[key_len];
-    memcpy(key_copy, key, key_len);
-    break;
-  }
-  default:
-    key_copy = new uchar[key_len];
-    memcpy(key_copy, key, key_len);
-    break;
+    uchar* key_copy = create_key_copy(field, key_iter, &store_length, table->in_use);
+    key_sizes[index] = store_length;
+    key_copies[index] = key_copy;
+    keypart_map >>= 1;
+    key_part++;
+    key_iter += offset;
+    index++;
   }
 
-  jbyteArray java_key = this->env->NewByteArray(key_len);
-  this->env->SetByteArrayRegion(java_key, 0, key_len, (jbyte*) key_copy);
-  delete[] key_copy;
-  jobject index_row = this->env->CallStaticObjectMethod(adapter_class,
-      index_read_method, java_scan_id, java_key, java_find_flag);
+  jobject key_values = create_key_value_list(index, key_sizes, key_copies, key_names, key_null_bits, key_is_null);
+
+  jobject java_find_flag = find_flag_to_java(find_flag, this->env);
+  jobject index_row = this->env->CallStaticObjectMethod(adapter_class, index_read_method, this->curr_scan_id, key_values, java_find_flag);
+
+  for (int x = 0; x < index; x++)
+  {
+    delete[] key_copies[x];
+  }
 
   if (read_index_row(index_row, buf) == HA_ERR_END_OF_FILE)
   {
@@ -1137,22 +1193,6 @@ int CloudHandler::index_read(uchar *buf, const uchar *key, uint key_len,
   }
 
   DBUG_RETURN(0);
-}
-
-// Convert an integral type of count bytes to a little endian long
-// Convert a buffer of length buff_length into an equivalent long long in long_buff
-void CloudHandler::bytes_to_long(const uchar* buff, unsigned int buff_length,
-    const bool is_signed, uchar* long_buff)
-{
-  if (is_signed && buff[buff_length - 1] >= (uchar) 0x80)
-  {
-    memset(long_buff, 0xFF, sizeof(long));
-  } else
-  {
-    memset(long_buff, 0x00, sizeof(long));
-  }
-
-  memcpy(long_buff, buff, buff_length);
 }
 
 void CloudHandler::store_uuid_ref(jobject index_row, jmethodID get_uuid_method)
@@ -1287,9 +1327,7 @@ jobject CloudHandler::get_next_index_row()
 jobject CloudHandler::get_index_row(const char* indexType)
 {
   jclass adapter_class = this->adapter();
-  jmethodID index_read_method =
-      this->env->GetStaticMethodID(adapter_class, "indexRead",
-          "(J[BLcom/nearinfinity/mysqlengine/jni/IndexReadType;)Lcom/nearinfinity/mysqlengine/jni/IndexRow;");
+  jmethodID index_read_method = this->env->GetStaticMethodID(adapter_class, "indexRead", "(JLjava/util/List;Lcom/nearinfinity/mysqlengine/jni/IndexReadType;)Lcom/nearinfinity/mysqlengine/jni/IndexRow;");
   jlong java_scan_id = this->curr_scan_id;
   jclass read_class = find_jni_class("IndexReadType", this->env);
   jfieldID field_id = this->env->GetStaticFieldID(read_class, indexType,
@@ -1403,7 +1441,7 @@ char *CloudHandler::char_array_from_java_bytes(jbyteArray java_bytes)
   int length = (int) this->env->GetArrayLength(java_bytes);
   jbyte *jbytes = this->env->GetByteArrayElements(java_bytes, JNI_FALSE);
 
-  char ret[length];
+  char* ret = new char[length];
 
   memcpy(ret, jbytes, length);
 

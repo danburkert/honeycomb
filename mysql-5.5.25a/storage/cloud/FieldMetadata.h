@@ -87,6 +87,7 @@ public:
     jmethodID set_nullable_method = this->env->GetMethodID(metadata_class, "setNullable", "(Z)V");
     jmethodID set_primary_key_method = this->env->GetMethodID(metadata_class, "setPrimaryKey", "(Z)V");
     jmethodID set_type_method = this->env->GetMethodID(metadata_class, "setType", "(Lcom/nearinfinity/hbaseclient/ColumnType;)V");
+    jmethodID set_autoincrement_method = this->env->GetMethodID(metadata_class, "setAutoincrement", "(Z)V");
 
     jobject metadata_object = this->env->NewObject(metadata_class, metadata_constructor);
 
@@ -106,10 +107,13 @@ public:
         {
           this->env->CallVoidMethod(metadata_object, set_type_method, this->create_column_type_enum_object("LONG"));
         }
+
+        this->env->CallVoidMethod(metadata_object, set_max_length_method, (jint)8);
         break;
       case MYSQL_TYPE_FLOAT:
       case MYSQL_TYPE_DOUBLE:
         this->env->CallVoidMethod(metadata_object, set_type_method, this->create_column_type_enum_object("DOUBLE"));
+        this->env->CallVoidMethod(metadata_object, set_max_length_method, (jint)8);
           break;
       case MYSQL_TYPE_DECIMAL:
       case MYSQL_TYPE_NEWDECIMAL:
@@ -122,18 +126,22 @@ public:
         this->env->CallVoidMethod(metadata_object, set_type_method, this->create_column_type_enum_object("DECIMAL"));
         this->env->CallVoidMethod(metadata_object, set_precision_method, (jint)precision);
         this->env->CallVoidMethod(metadata_object, set_scale_method, (jint)scale);
+        this->env->CallVoidMethod(metadata_object, set_max_length_method, (jint)field->field_length);
       }
         break;
       case MYSQL_TYPE_DATE:
       case MYSQL_TYPE_NEWDATE:
         this->env->CallVoidMethod(metadata_object, set_type_method, this->create_column_type_enum_object("DATE"));
+        this->env->CallVoidMethod(metadata_object, set_max_length_method, (jint)field->field_length);
           break;
       case MYSQL_TYPE_TIME:
         this->env->CallVoidMethod(metadata_object, set_type_method, this->create_column_type_enum_object("TIME"));
+        this->env->CallVoidMethod(metadata_object, set_max_length_method, (jint)field->field_length);
           break;
       case MYSQL_TYPE_DATETIME:
       case MYSQL_TYPE_TIMESTAMP:
         this->env->CallVoidMethod(metadata_object, set_type_method, this->create_column_type_enum_object("DATETIME"));
+        this->env->CallVoidMethod(metadata_object, set_max_length_method, (jint)field->field_length);
           break;
       case MYSQL_TYPE_STRING:
       case MYSQL_TYPE_VARCHAR:
@@ -173,6 +181,11 @@ public:
     if (field->real_maybe_null())
     {
       this->env->CallVoidMethod(metadata_object, set_nullable_method, JNI_TRUE);
+    }
+
+    if(table_arg->found_next_number_field != NULL && field == table_arg->found_next_number_field) 
+    {
+      this->env->CallVoidMethod(metadata_object, set_autoincrement_method, JNI_TRUE);
     }
 
     // 64 is obviously some key flag indicating no primary key, but I have no idea where it's defined. Will fix later. - ABC

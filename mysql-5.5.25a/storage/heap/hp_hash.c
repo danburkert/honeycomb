@@ -793,13 +793,13 @@ uint hp_rb_make_key(HP_KEYDEF *keydef, uchar *key,
 
 
 uint hp_rb_pack_key(HP_KEYDEF *keydef, uchar *key, const uchar *old,
-                    key_part_map keypart_map)
+    key_part_map keypart_map)
 {
   HA_KEYSEG *seg, *endseg;
   uchar *start_key= key;
 
   for (seg= keydef->seg, endseg= seg + keydef->keysegs;
-       seg < endseg && keypart_map; old+= seg->length, seg++)
+      seg < endseg && keypart_map; old+= seg->length, seg++)
   {
     uint char_length;
     keypart_map>>= 1;
@@ -807,15 +807,15 @@ uint hp_rb_pack_key(HP_KEYDEF *keydef, uchar *key, const uchar *old,
     {
       if (!(*key++= (char) 1 - *old++))
         continue;
-      }
+    }
     if (seg->flag & HA_SWAP_KEY)
     {
       uint length= seg->length;
       uchar *pos= (uchar*) old + length;
-      
+
       while (length--)
       {
-	*key++= *--pos;
+        *key++= *--pos;
       }
       continue;
     }
@@ -839,11 +839,11 @@ uint hp_rb_pack_key(HP_KEYDEF *keydef, uchar *key, const uchar *old,
     if (seg->charset->mbmaxlen > 1)
     {
       char_length= my_charpos(seg->charset, old, old+char_length,
-                              char_length / seg->charset->mbmaxlen);
+          char_length / seg->charset->mbmaxlen);
       set_if_smaller(char_length, seg->length); /* QQ: ok to remove? */
       if (char_length < seg->length)
         seg->charset->cset->fill(seg->charset, (char*) key + char_length, 
-                                 seg->length - char_length, ' ');
+            seg->length - char_length, ' ');
     }
     memcpy(key, old, (size_t) char_length);
     key+= seg->length;
