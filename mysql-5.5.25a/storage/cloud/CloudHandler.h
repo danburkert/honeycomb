@@ -224,7 +224,7 @@ class CloudHandler : public handler
 
     uint max_supported_key_part_length() const
     {
-      return UINT_MAX;
+      return 255;
     }
   
     uint max_supported_key_parts() const 

@@ -993,6 +993,7 @@ int CloudHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, h
       char *value_key = this->char_array_from_java_bytes(duplicate_value);
       this->store_field_value(field_being_indexed, value_key, length);
       delete[] value_key;
+      this->failed_key_index = this->get_failed_key_index(key_part->field->field_name);
       detach_thread();
       return error;
     }
@@ -1013,11 +1014,6 @@ jbyteArray CloudHandler::find_duplicate_column_values(char* columns)
   jclass adapter = this->adapter();
   jmethodID column_has_duplicates_method = this->env->GetStaticMethodID(adapter, "findDuplicateValue", "(Ljava/lang/String;Ljava/lang/String;)[B");
   jbyteArray duplicate_value = (jbyteArray) this->env->CallStaticObjectMethod(adapter, column_has_duplicates_method, this->table_name(), string_to_java_string(columns));
-
-  if (duplicate_value != NULL)
-  {
-      // this->failed_key_index = this->get_failed_key_index(field->field_name);
-  }
 
   detach_thread();
 
