@@ -45,7 +45,7 @@ public class SingleResultScanner implements HBaseResultScanner {
         while (valueToSkip != null && Arrays.equals(value, valueToSkip))
         {
             result = this.scanner.next();
-            value = ResultParser.parseUnireg(result);
+            value = ResultParser.parseValueMap(result);
         }
 
         this.lastResult = result;

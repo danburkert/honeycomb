@@ -1,5 +1,6 @@
 package com.nearinfinity.bulkloader;
 
+import com.nearinfinity.hbaseclient.Index;
 import com.nearinfinity.hbaseclient.TableInfo;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -12,6 +13,7 @@ import org.apache.hadoop.mapreduce.Mapper;
 
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
@@ -23,29 +25,26 @@ public class SamplingMapper extends Mapper<LongWritable, Text, ImmutableBytesWri
     private TableInfo tableInfo;
     private double samplePercent;
     private static final Log LOG = LogFactory.getLog(SamplingMapper.class);
+    private LinkedList<LinkedList<String>> indexColumns;
 
     @Override
     protected void setup(Context context) throws IOException {
         random = new Random();
         Configuration conf = context.getConfiguration();
 
-        long sampleSize = Math.max(conf.getLong("sample_size", 110), 0);
-        long dataSize = Math.max(conf.getLong("data_size", 1024), 1);
-        samplePercent = Math.min(sampleSize / (double) dataSize, 1.0); // Clamp the values between 0.0 and 1.0
-        LOG.info(format("Sample size %d, Data size %d, Sample Percent %f", sampleSize, dataSize, samplePercent));
-
+        samplePercent = Double.parseDouble(conf.get("sample_percent"));
         tableInfo = BulkLoader.extractTableInfo(conf);
         columnNames = conf.get("my_columns").split(",");
+        indexColumns = Index.indexForTable(tableInfo.tableMetadata());
     }
 
     @Override
     public void map(LongWritable offset, Text line, Context context) throws IOException, InterruptedException {
         double coinFlip = random.nextDouble();
         if (samplePercent >= coinFlip) {
-            LOG.info("Adding to sample");
             List<Put> puts = null;
             try {
-                puts = BulkLoader.createPuts(line, tableInfo, columnNames);
+                puts = BulkLoader.createPuts(line, tableInfo, columnNames, indexColumns);
             } catch (ParseException e) {
                 LOG.error("Parse error", e);
             }

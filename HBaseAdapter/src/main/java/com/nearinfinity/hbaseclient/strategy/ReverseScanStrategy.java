@@ -1,36 +1,51 @@
 package com.nearinfinity.hbaseclient.strategy;
 
+import com.google.common.collect.Iterables;
 import com.nearinfinity.hbaseclient.*;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.util.Bytes;
 
-import java.nio.ByteBuffer;
-import java.util.UUID;
+import java.util.Map;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jedstrom
- * Date: 8/21/12
- * Time: 8:20 AM
- * To change this template use File | Settings | File Templates.
- */
-public class ReverseScanStrategy extends ScanStrategyBase {
+public class ReverseScanStrategy implements ScanStrategy {
+    private ScanStrategyInfo scanInfo;
+    private final boolean indexLast;
 
-    private static final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(ReverseScanStrategy.class);
+    public ReverseScanStrategy(ScanStrategyInfo scanInfo) {
+        this(scanInfo, false);
+    }
 
-    public ReverseScanStrategy(String tableName, String columnName, byte[] value) {
-        super(tableName, columnName, value);
+    public ReverseScanStrategy(ScanStrategyInfo scanInfo, boolean indexLast) {
+        this.scanInfo = scanInfo;
+        this.indexLast = indexLast;
     }
 
     @Override
     public Scan getScan(TableInfo info) {
-        long tableId = info.getId();
-        long columnId = info.getColumnIdByName(columnName);
+        final long tableId = info.getId();
+        final Iterable<String> columns = this.scanInfo.columnNames();
+        final int columnCount = Iterables.size(columns);
+        final int indexValuesFullLength = Index.calculateIndexValuesFullLength(columns, info);
+        final Map<String, byte[]> descendingValueMap = ValueEncoder.correctDescendingValuePadding(info, this.scanInfo.keyValueMap());
 
-        ColumnType columnType = info.getColumnTypeByName(columnName);
+        final byte[] columnIds = Index.createColumnIds(columns, info.columnNameToIdMap());
+        final byte[] nextColumnIds = Index.incrementColumn(columnIds, Bytes.SIZEOF_LONG * (columnCount - 1));
 
-        byte[] startKey = RowKeyFactory.buildReverseIndexKey(tableId, columnId, value, columnType, Constants.ZERO_UUID, 0);
-        byte[] endKey = RowKeyFactory.buildEmptyValueReverseIndexKey(tableId, columnId+1, value, columnType, Constants.ZERO_UUID, 0);
+        byte[] paddedValue = Index.createValues(this.scanInfo.keyValueColumns(), descendingValueMap);
+        paddedValue = Bytes.padTail(paddedValue, Math.max(indexValuesFullLength - paddedValue.length, 0));
+
+        if (indexLast) {
+            paddedValue = new byte[paddedValue.length];
+        }
+
+        byte[] startKey = RowKeyFactory.buildReverseIndexRowKey(tableId, columnIds, paddedValue, Constants.ZERO_UUID);
+        byte[] endKey = RowKeyFactory.buildReverseIndexRowKey(tableId, nextColumnIds, new byte[paddedValue.length], Constants.ZERO_UUID);
 
         return ScanFactory.buildScan(startKey, endKey);
+    }
+
+    @Override
+    public String getTableName() {
+        return this.scanInfo.tableName();
     }
 }
