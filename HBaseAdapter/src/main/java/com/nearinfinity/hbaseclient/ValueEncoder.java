@@ -139,7 +139,7 @@ public class ValueEncoder {
             int padLength = 0;
             if (columnType == ColumnType.STRING || columnType == ColumnType.BINARY) {
                 final long maxLength = metadata.getMaxLength();
-                padLength = (int) maxLength - value.length;
+                padLength = (int) Math.abs(maxLength - value.length);
             }
 
             byte[] paddedValue = convert.apply(value, columnType, padLength);
