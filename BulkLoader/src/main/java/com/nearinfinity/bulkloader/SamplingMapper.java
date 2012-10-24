@@ -1,5 +1,6 @@
 package com.nearinfinity.bulkloader;
 
+import com.nearinfinity.hbaseclient.Index;
 import com.nearinfinity.hbaseclient.TableInfo;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -12,6 +13,7 @@ import org.apache.hadoop.mapreduce.Mapper;
 
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
@@ -23,6 +25,7 @@ public class SamplingMapper extends Mapper<LongWritable, Text, ImmutableBytesWri
     private TableInfo tableInfo;
     private double samplePercent;
     private static final Log LOG = LogFactory.getLog(SamplingMapper.class);
+    private LinkedList<LinkedList<String>> indexColumns;
 
     @Override
     protected void setup(Context context) throws IOException {
@@ -32,6 +35,7 @@ public class SamplingMapper extends Mapper<LongWritable, Text, ImmutableBytesWri
         samplePercent = Double.parseDouble(conf.get("sample_percent"));
         tableInfo = BulkLoader.extractTableInfo(conf);
         columnNames = conf.get("my_columns").split(",");
+        indexColumns = Index.indexForTable(tableInfo.tableMetadata());
     }
 
     @Override
@@ -40,7 +44,7 @@ public class SamplingMapper extends Mapper<LongWritable, Text, ImmutableBytesWri
         if (samplePercent >= coinFlip) {
             List<Put> puts = null;
             try {
-                puts = BulkLoader.createPuts(line, tableInfo, columnNames);
+                puts = BulkLoader.createPuts(line, tableInfo, columnNames, indexColumns);
             } catch (ParseException e) {
                 LOG.error("Parse error", e);
             }

@@ -102,6 +102,7 @@ public class TableInfo {
         this.columnIdsToInfo.putAll(tableInfo.columnIdsToInfo);
         this.columnNamesToInfo.putAll(tableInfo.columnNamesToInfo);
         this.columnNameToId.putAll(tableInfo.columnNameToId);
+        this.tableMetadata.putAll(tableInfo.tableMetadata);
     }
 
     public void setTableMetadata(Map<byte[], byte[]> metadata) {

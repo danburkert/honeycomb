@@ -1,5 +1,6 @@
 package com.nearinfinity.bulkloader;
 
+import com.nearinfinity.hbaseclient.Index;
 import com.nearinfinity.hbaseclient.TableInfo;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Put;
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.LinkedList;
 import java.util.List;
 
 class BulkLoaderMapper
@@ -19,6 +21,7 @@ class BulkLoaderMapper
 
     private TableInfo tableInfo = null;
     private String[] columnNames = null;
+    private LinkedList<LinkedList<String>> indexColumns;
 
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
@@ -27,12 +30,13 @@ class BulkLoaderMapper
 
         tableInfo = BulkLoader.extractTableInfo(conf);
         columnNames = conf.get("my_columns").split(",");
+        indexColumns = Index.indexForTable(tableInfo.tableMetadata());
     }
 
     @Override
     public void map(LongWritable offset, Text line, Context context) {
         try {
-            List<Put> puts = BulkLoader.createPuts(line, tableInfo, columnNames);
+            List<Put> puts = BulkLoader.createPuts(line, tableInfo, columnNames, indexColumns);
             for (Put put : puts) {
                 context.write(new ImmutableBytesWritable(put.getRow()), put);
             }
