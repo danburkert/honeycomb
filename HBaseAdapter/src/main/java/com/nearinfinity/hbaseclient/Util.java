@@ -76,10 +76,18 @@ public final class Util {
     }
 
     public static byte[] serializeList(final List<List<String>> list) {
+        if (list == null) {
+            throw new IllegalArgumentException("list cannot be null");
+        }
+
         return gson.toJson(list, listType).getBytes();
     }
 
     public static List<List<String>> deserializeList(byte[] bytes) {
+        if (bytes == null) {
+            throw new IllegalArgumentException("bytes cannot be null");
+        }
+
         return gson.fromJson(new String(bytes), listType);
     }
 }

@@ -134,6 +134,16 @@ public class HBaseAdapter {
         conn.close();
     }
 
+    public static boolean writeBlob(String tableName, String columnName, ByteBuffer blob) {
+        try {
+            client.writeBlob(tableName, columnName, blob);
+        } catch (Exception e) {
+            logger.error("writeBlob->Exception: ", e);
+        }
+
+        return true;
+    }
+
     public static boolean writeRow(String tableName, Map<String, byte[]> values) throws HBaseAdapterException {
         try {
             client.writeRow(tableName, values);
