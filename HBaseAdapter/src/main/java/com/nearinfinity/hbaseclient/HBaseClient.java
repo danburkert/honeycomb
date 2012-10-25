@@ -280,6 +280,7 @@ public class HBaseClient {
         List<Delete> deleteList = DeleteListFactory.createDeleteRowList(uuid, info, result, dataRowKey, Index.indexForTable(info.tableMetadata()));
 
         table.delete(deleteList);
+        incrementRowCount(tableName, -1);
 
         return true;
     }
