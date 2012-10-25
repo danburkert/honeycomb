@@ -770,7 +770,7 @@ int CloudHandler::write_row_helper(uchar* buf)
   DBUG_ENTER("CloudHandler::write_row_helper");
 
   jclass adapter_class = this->adapter();
-  jmethodID write_row_method = this->env->GetStaticMethodID(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;)Z");
+  jmethodID write_row_method = this->env->GetStaticMethodID(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;Ljava/util/List;)Z");
   jstring table_name = this->table_name();
 
   jobject java_row_map = create_java_map(this->env);
@@ -793,6 +793,9 @@ int CloudHandler::write_row_helper(uchar* buf)
 
   uint actualFieldSize;
 
+  jobject blob_list = create_java_list(this->env);
+  jclass blob_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/Blob");
+  jmethodID blob_constructor = this->env->GetMethodID(blob_class, "<init>", "(Ljava/nio/ByteBuffer;Ljava/lang/String;)V");
   for (Field **field_ptr = table->field; *field_ptr; field_ptr++)
   {
     Field * field = *field_ptr;
@@ -806,6 +809,7 @@ int CloudHandler::write_row_helper(uchar* buf)
       java_map_insert(java_row_map, field_name, NULL, this->env);
       continue;
     }
+
     switch (field->real_type())
     {
     case MYSQL_TYPE_TINY:
@@ -870,9 +874,9 @@ int CloudHandler::write_row_helper(uchar* buf)
       field->val_str(&buff);
       actualFieldSize = buff.length();
       byte_val = (uchar*)buff.ptr(); 
-      jmethodID write_blob_method = this->env->GetStaticMethodID(adapter_class, "writeBlob", "(Ljava/lang/String;Ljava/lang/String;Ljava/nio/ByteBuffer;)Z");
       jobject byte_buffer = this->env->NewDirectByteBuffer(byte_val, actualFieldSize);
-      this->env->CallStaticBooleanMethod(adapter_class, write_blob_method, table_name, field_name, byte_buffer);
+      jobject blob_object = this->env->NewObject(blob_class, blob_constructor, byte_buffer, field_name);
+      java_list_insert(blob_list, blob_object, this->env);
       continue;
     }
     case MYSQL_TYPE_VARCHAR:
@@ -913,7 +917,7 @@ int CloudHandler::write_row_helper(uchar* buf)
     DBUG_RETURN(HA_ERR_FOUND_DUPP_KEY);
   }
 
-  this->env->CallStaticBooleanMethod(adapter_class, write_row_method, table_name, java_row_map);
+  this->env->CallStaticBooleanMethod(adapter_class, write_row_method, table_name, java_row_map, blob_list);
 
   DBUG_RETURN(0);
 }
