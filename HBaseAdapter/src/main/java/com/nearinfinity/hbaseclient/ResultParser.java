@@ -1,17 +1,10 @@
 package com.nearinfinity.hbaseclient;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.hbase.client.Result;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.UUID;
 
 public class ResultParser {
@@ -25,13 +18,9 @@ public class ResultParser {
         return result.getValue(Constants.NIC, Constants.VALUE_MAP);
     }
 
-    @SuppressWarnings("unchecked")
-    public static TreeMap<String, byte[]> parseRowMap(Result result) {
+    public static Map<String, byte[]> parseRowMap(Result result) {
         byte[] mapBytes = parseValueMap(result);
-        Gson gson = new Gson();
-        Type type = new TypeToken<TreeMap<String, byte[]>>() {
-        }.getType();
-        return gson.fromJson(new String(mapBytes), type);
+        return Util.deserializeMap(mapBytes);
     }
 
     public static Map<String, byte[]> parseDataRow(Result result, TableInfo info) {

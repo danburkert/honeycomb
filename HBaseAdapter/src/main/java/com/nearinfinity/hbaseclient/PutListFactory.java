@@ -1,15 +1,12 @@
 package com.nearinfinity.hbaseclient;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.lang.reflect.Type;
 import java.util.*;
 
 public class PutListFactory {
-    public static List<Put> createDataInsertPutList(final Map<String, byte[]> values, final TableInfo info, final LinkedList<LinkedList<String>> indexedKeys) {
+    public static List<Put> createDataInsertPutList(final Map<String, byte[]> values, final TableInfo info, final List<List<String>> indexedKeys) {
         final long tableId = info.getId();
         final List<Put> putList = new LinkedList<Put>();
         final Map<String, Long> columnNameToId = info.columnNameToIdMap();
@@ -29,17 +26,17 @@ public class PutListFactory {
         return putList;
     }
 
-    public static List<Put> createIndexForColumns(Map<String, byte[]> values, TableInfo info, List<String> indexedKeys, UUID rowId) {
-        LinkedList<LinkedList<String>> newIndexColumns = new LinkedList<LinkedList<String>>();
+    public static List<Put> createIndexForColumns(Map<String, byte[]> values, TableInfo info, UUID rowId, List<String> indexedKeys) {
+        List<List<String>> newIndexColumns = new LinkedList<List<String>>();
         newIndexColumns.add(new LinkedList<String>(indexedKeys));
         return createIndexForColumns(values, info, newIndexColumns, rowId);
     }
 
-    public static List<Put> createIndexForColumns(Map<String, byte[]> values, TableInfo info, LinkedList<LinkedList<String>> indexedKeys, UUID rowId) {
+    public static List<Put> createIndexForColumns(Map<String, byte[]> values, TableInfo info, List<List<String>> indexedKeys, UUID rowId) {
         final long tableId = info.getId();
         final Map<String, Long> columnNameToId = info.columnNameToIdMap();
-        List<Put> putList = new LinkedList<Put>();
-        final byte[] rowByteArray = createRowFromMap(values);
+        final List<Put> putList = new LinkedList<Put>();
+        final byte[] rowByteArray = Util.serializeMap(values);
         final Map<String, byte[]> ascendingValues = ValueEncoder.correctAscendingValuePadding(info, values);
         final Map<String, byte[]> descendingValues = ValueEncoder.correctDescendingValuePadding(info, values);
 
@@ -81,13 +78,6 @@ public class PutListFactory {
         }
 
         return dataRow;
-    }
-
-    private static byte[] createRowFromMap(final Map<String, byte[]> values) {
-        Gson gson = new Gson();
-        Type type = new TypeToken<TreeMap<String, byte[]>>() {
-        }.getType();
-        return gson.toJson(values, type).getBytes();
     }
 
 }

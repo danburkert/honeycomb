@@ -18,18 +18,23 @@ public class ValueEncoder {
 
     private static final long INVERT_SIGN_MASK = 0x8000000000000000L;
 
-    private static final long INVERT_ALL_BITS_MASK = 0xFFFFFFFFFFFFFFFFL;
-
     public static byte[] descendingEncode(final byte[] value, final ColumnType columnType, final int padLength) {
-        final byte[] encodedValue = ValueEncoder.encodeValue(value, columnType);
-        final byte[] reversedValue = ValueEncoder.reverseValue(encodedValue);
-        final byte[] paddedValue = ValueEncoder.padValueDescending(reversedValue, padLength);
-        return paddedValue;
+        checkPadLength(padLength);
+        final byte[] encodedValue = encodeValue(value, columnType);
+        final byte[] reversedValue = reverseValue(encodedValue);
+        return padValueDescending(reversedValue, padLength);
     }
 
     public static byte[] ascendingEncode(final byte[] value, final ColumnType columnType, final int padLength) {
-        final byte[] encodedValue = ValueEncoder.encodeValue(value, columnType);
-        return ValueEncoder.padValueAscending(encodedValue, padLength);
+        checkPadLength(padLength);
+        final byte[] encodedValue = encodeValue(value, columnType);
+        return padValueAscending(encodedValue, padLength);
+    }
+
+    private static void checkPadLength(final int padLength) {
+        if (padLength < 0) {
+            throw new IllegalArgumentException("padLength cannot be less than zero. Value: " + padLength);
+        }
     }
 
     private static byte[] encodeValue(byte[] value, ColumnType columnType) {
@@ -41,12 +46,12 @@ public class ValueEncoder {
         switch (columnType) {
             case LONG: {
                 long longValue = ByteBuffer.wrap(value).getLong();
-                encodedValue = positionOfLong(longValue);
+                encodedValue = encodeLong(longValue);
             }
             break;
             case DOUBLE: {
                 double doubleValue = ByteBuffer.wrap(value).getDouble();
-                encodedValue = positionOfDouble(doubleValue);
+                encodedValue = encodeDouble(doubleValue);
             }
             break;
             default:
@@ -75,10 +80,6 @@ public class ValueEncoder {
     }
 
     private static byte[] padValue(byte[] value, int padLength, byte mask) {
-        if (padLength < 0) {
-            throw new IllegalArgumentException("padLength cannot be less than zero. Value: " + padLength);
-        }
-
         byte[] paddedValue = new byte[value.length + padLength];
         Arrays.fill(paddedValue, mask);
         System.arraycopy(value, 0, paddedValue, 0, value.length);
@@ -86,20 +87,20 @@ public class ValueEncoder {
         return paddedValue;
     }
 
-    private static byte[] positionOfLong(long value) {
+    private static byte[] encodeLong(long value) {
         return ByteBuffer.allocate(8).putLong(value ^ INVERT_SIGN_MASK).array();
     }
 
-    private static byte[] positionOfDouble(double value) {
+    private static byte[] encodeDouble(double value) {
         long longValue = Double.doubleToLongBits(value);
         if (isNegative(value)) {
-            return ByteBuffer.allocate(8).putLong(longValue ^ INVERT_ALL_BITS_MASK).array();
+            return ByteBuffer.allocate(8).putLong(~longValue).array();
         }
         return ByteBuffer.allocate(8).putLong(longValue ^ INVERT_SIGN_MASK).array();
     }
 
     private static boolean isNegative(double value) {
-        byte[] bytes = ByteBuffer.allocate(8).putDouble(value).array();
+        byte[] bytes = ByteBuffer.allocate(8).putDouble(value).array(); // TODO: Why isn't this: value < 0.0?
         return (bytes[0] & NEGATIVE_MASK) != 0;
     }
 
