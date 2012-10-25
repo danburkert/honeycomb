@@ -861,19 +861,28 @@ int CloudHandler::write_row_helper(uchar* buf)
       memcpy(byte_val, temporal_value, actualFieldSize);
       break;
     }
-    case MYSQL_TYPE_VARCHAR:
-    case MYSQL_TYPE_VAR_STRING:
-    case MYSQL_TYPE_STRING:
     case MYSQL_TYPE_BLOB:
     case MYSQL_TYPE_TINY_BLOB:
     case MYSQL_TYPE_MEDIUM_BLOB:
     case MYSQL_TYPE_LONG_BLOB:
     {
+      String buff;
+      field->val_str(&buff);
+      actualFieldSize = buff.length();
+      byte_val = (uchar*)buff.ptr(); 
+      jmethodID write_blob_method = this->env->GetStaticMethodID(adapter_class, "writeBlob", "(Ljava/lang/String;Ljava/lang/String;Ljava/nio/ByteBuffer;)Z");
+      jobject byte_buffer = this->env->NewDirectByteBuffer(byte_val, actualFieldSize);
+      this->env->CallStaticBooleanMethod(adapter_class, write_blob_method, table_name, field_name, byte_buffer);
+      continue;
+    }
+    case MYSQL_TYPE_VARCHAR:
+    case MYSQL_TYPE_VAR_STRING:
+    case MYSQL_TYPE_STRING:
+    {
       String buff; // These *do not* need to have a buffer backing them. Look at sql_string.h:164
       field->val_str(&buff);
       actualFieldSize = buff.length();
-      byte_val = (uchar*) my_malloc(actualFieldSize, MYF(MY_WME));
-      memcpy(byte_val, buff.ptr(), actualFieldSize);
+      byte_val = (uchar*)buff.ptr(); // Remove the unnecessary data copying.
       break;
     }
     case MYSQL_TYPE_NULL:

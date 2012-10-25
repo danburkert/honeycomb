@@ -611,6 +611,41 @@ public class HBaseClient {
         table.flushCommits();
     }
 
+    public void writeBlob(String tableName, String columnName, ByteBuffer blob) throws IOException {
+        // This is a nasty hack to reduce the memory used by blobs when writing to HBase.
+        TableInfo info = getTableInfo(tableName);
+        UUID rowId = UUID.randomUUID();
+        int vlength = blob.capacity();
+        long columnId = info.columnNameToIdMap().get(columnName);
+        byte[] rowKey = RowKeyFactory.buildDataKey(info.getId(), rowId);
+        byte[] qualifier = Bytes.toBytes(columnId);
+        int qlength = qualifier.length;
+        int flength = Constants.NIC.length;
+        int keyLength = org.apache.hadoop.hbase.KeyValue.KEY_INFRASTRUCTURE_SIZE + vlength + flength + qlength;
+        int offset = org.apache.hadoop.hbase.KeyValue.KEY_INFRASTRUCTURE_SIZE + keyLength;
+        org.apache.hadoop.hbase.KeyValue keyValue = new org.apache.hadoop.hbase.KeyValue(
+                rowKey,
+                0,
+                rowKey.length,
+                Constants.NIC,
+                0,
+                flength,
+                qualifier,
+                0,
+                qlength,
+                HConstants.LATEST_TIMESTAMP,
+                org.apache.hadoop.hbase.KeyValue.Type.Put,
+                new byte[0],
+                0,
+                vlength);
+        byte[] buffer = keyValue.getBuffer();
+        blob.get(buffer, offset, vlength);
+        Put put = new Put(rowKey);
+        put.add(keyValue);
+        table.put(put);
+        table.flushCommits();
+    }
+
     private interface IndexFunction<F1, F2, T> {
         T apply(F1 f1, F2 f2);
     }

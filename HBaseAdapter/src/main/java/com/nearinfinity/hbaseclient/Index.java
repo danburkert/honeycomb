@@ -1,11 +1,8 @@
 package com.nearinfinity.hbaseclient;
 
 import com.google.common.base.Function;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
