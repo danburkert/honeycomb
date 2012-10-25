@@ -7,6 +7,7 @@ import com.nearinfinity.hbaseclient.strategy.*;
 import com.nearinfinity.mysqlengine.Connection;
 import com.nearinfinity.mysqlengine.scanner.HBaseResultScanner;
 import com.nearinfinity.mysqlengine.scanner.SingleResultScanner;
+import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
@@ -134,19 +135,9 @@ public class HBaseAdapter {
         conn.close();
     }
 
-    public static boolean writeBlob(String tableName, String columnName, ByteBuffer blob) {
+    public static boolean writeRow(String tableName, Map<String, byte[]> values, List<Blob> blobs) throws HBaseAdapterException {
         try {
-            client.writeBlob(tableName, columnName, blob);
-        } catch (Exception e) {
-            logger.error("writeBlob->Exception: ", e);
-        }
-
-        return true;
-    }
-
-    public static boolean writeRow(String tableName, Map<String, byte[]> values) throws HBaseAdapterException {
-        try {
-            client.writeRow(tableName, values);
+            client.writeRow(tableName, values, blobs);
         } catch (Exception e) {
             logger.error("writeRow-> Exception:", e);
             throw new HBaseAdapterException("writeRow", e);

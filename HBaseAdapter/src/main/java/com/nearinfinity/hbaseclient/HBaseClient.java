@@ -5,6 +5,7 @@ import com.google.common.base.Joiner;
 import com.nearinfinity.hbaseclient.strategy.PrefixScanStrategy;
 import com.nearinfinity.hbaseclient.strategy.ScanStrategy;
 import com.nearinfinity.hbaseclient.strategy.ScanStrategyInfo;
+import com.nearinfinity.mysqlengine.jni.Blob;
 import com.nearinfinity.mysqlengine.scanner.HBaseResultScanner;
 import com.nearinfinity.mysqlengine.scanner.SingleResultScanner;
 import org.apache.hadoop.conf.Configuration;
@@ -155,12 +156,15 @@ public class HBaseClient {
         this.table.flushCommits();
     }
 
-    public void writeRow(String tableName, Map<String, byte[]> values) throws IOException {
+    public void writeRow(String tableName, Map<String, byte[]> values, List<Blob> blobs) throws IOException {
         TableInfo info = getTableInfo(tableName);
         List<List<String>> multipartIndex = Index.indexForTable(info.tableMetadata());
         List<Put> putList = PutListFactory.createDataInsertPutList(values, info, multipartIndex);
+        Put dataRow = putList.get(0);
+        for (Blob blob : blobs) {
+            writeBlob(tableName, blob.getColumnName(), blob.getData(), dataRow);
+        }
 
-        //Final put
         this.table.put(putList);
     }
 
@@ -611,18 +615,15 @@ public class HBaseClient {
         table.flushCommits();
     }
 
-    public void writeBlob(String tableName, String columnName, ByteBuffer blob) throws IOException {
+    private void writeBlob(String tableName, String columnName, ByteBuffer blob, Put blobPut) throws IOException {
         // This is a nasty hack to reduce the memory used by blobs when writing to HBase.
         TableInfo info = getTableInfo(tableName);
-        UUID rowId = UUID.randomUUID();
         int vlength = blob.capacity();
         long columnId = info.columnNameToIdMap().get(columnName);
-        byte[] rowKey = RowKeyFactory.buildDataKey(info.getId(), rowId);
+        byte[] rowKey = blobPut.getRow();
         byte[] qualifier = Bytes.toBytes(columnId);
         int qlength = qualifier.length;
         int flength = Constants.NIC.length;
-        int keyLength = org.apache.hadoop.hbase.KeyValue.KEY_INFRASTRUCTURE_SIZE + vlength + flength + qlength;
-        int offset = org.apache.hadoop.hbase.KeyValue.KEY_INFRASTRUCTURE_SIZE + keyLength;
         org.apache.hadoop.hbase.KeyValue keyValue = new org.apache.hadoop.hbase.KeyValue(
                 rowKey,
                 0,
@@ -639,11 +640,8 @@ public class HBaseClient {
                 0,
                 vlength);
         byte[] buffer = keyValue.getBuffer();
-        blob.get(buffer, offset, vlength);
-        Put put = new Put(rowKey);
-        put.add(keyValue);
-        table.put(put);
-        table.flushCommits();
+        blob.get(buffer, buffer.length - vlength, vlength);
+        blobPut.add(keyValue);
     }
 
     private interface IndexFunction<F1, F2, T> {

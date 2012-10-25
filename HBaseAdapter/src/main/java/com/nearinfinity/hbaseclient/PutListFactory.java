@@ -7,10 +7,10 @@ import java.util.*;
 
 public class PutListFactory {
     public static List<Put> createDataInsertPutList(final Map<String, byte[]> values, final TableInfo info, final List<List<String>> indexedKeys) {
+        UUID rowId = UUID.randomUUID();
         final long tableId = info.getId();
         final List<Put> putList = new LinkedList<Put>();
         final Map<String, Long> columnNameToId = info.columnNameToIdMap();
-        final UUID rowId = UUID.randomUUID();
         final byte[] dataKey = RowKeyFactory.buildDataKey(tableId, rowId);
         final Put dataRow = createDataRows(dataKey, values, columnNameToId);
 
