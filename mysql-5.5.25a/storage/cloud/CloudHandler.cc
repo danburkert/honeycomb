@@ -64,7 +64,6 @@ int CloudHandler::delete_row(const uchar *buf)
   DBUG_ENTER("CloudHandler::delete_row");
   ha_statistic_increment(&SSV::ha_delete_count);
   delete_row_helper();
-  this->rows_deleted--;
   DBUG_RETURN(0);
 }
 
@@ -82,12 +81,6 @@ int CloudHandler::end_bulk_delete()
   DBUG_ENTER("CloudHandler::end_bulk_delete");
 
   jclass adapter_class = this->adapter();
-  jmethodID update_count_method = this->env->GetStaticMethodID(adapter_class,
-      "incrementRowCount", "(Ljava/lang/String;J)V");
-  jstring table_name = this->table_name();
-  this->env->CallStaticVoidMethod(adapter_class, update_count_method,
-      table_name, (jlong) this->rows_deleted);
-  this->rows_deleted = 0;
   detach_thread();
 
   DBUG_RETURN(0);
