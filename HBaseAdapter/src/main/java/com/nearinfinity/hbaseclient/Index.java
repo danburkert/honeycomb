@@ -5,6 +5,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.*;
 
+import static com.google.common.base.Preconditions.checkState;
 import static java.lang.String.format;
 
 public class Index {
@@ -37,9 +38,7 @@ public class Index {
 
     private static byte[] correctColumnIdSize(final byte[] columnIds) {
         int expectedSize = Constants.KEY_PART_COUNT * Bytes.SIZEOF_LONG;
-        if (columnIds.length > expectedSize) {
-            throw new IllegalStateException(format("There should never be more than %d columns indexed. Found %d columns.", expectedSize / Bytes.SIZEOF_LONG, columnIds.length / Bytes.SIZEOF_LONG));
-        }
+        checkState(columnIds.length < expectedSize, format("There should never be more than %d columns indexed. Found %d columns.", expectedSize / Bytes.SIZEOF_LONG, columnIds.length / Bytes.SIZEOF_LONG));
 
         if (columnIds.length == expectedSize) {
             return columnIds;
@@ -54,8 +53,10 @@ public class Index {
         int size = 0;
         for (final String column : columns) {
             byte[] bytes = conversion.apply(column);
-            size += bytes.length;
-            pieces.add(bytes);
+            if (bytes != null) {
+                size += bytes.length;
+                pieces.add(bytes);
+            }
         }
 
         return Util.mergeByteArrays(pieces, size);
