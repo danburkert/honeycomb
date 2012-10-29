@@ -25,7 +25,7 @@ public class SamplingMapper extends Mapper<LongWritable, Text, ImmutableBytesWri
     private TableInfo tableInfo;
     private double samplePercent;
     private static final Log LOG = LogFactory.getLog(SamplingMapper.class);
-    private LinkedList<LinkedList<String>> indexColumns;
+    private List<List<String>> indexColumns;
 
     @Override
     protected void setup(Context context) throws IOException {
