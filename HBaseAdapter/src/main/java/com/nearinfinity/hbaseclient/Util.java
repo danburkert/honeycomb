@@ -8,6 +8,8 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
+import static com.google.common.base.Preconditions.*;
+
 public final class Util {
     private static Type mapType = new TypeToken<Map<String, byte[]>>() {
     }.getType();
@@ -16,17 +18,14 @@ public final class Util {
     private static Gson gson = new Gson();
 
     public static byte[] mergeByteArrays(final Iterable<byte[]> pieces, final int size) {
-        if (size < 0) {
-            throw new IllegalArgumentException("size must be positive.");
-        }
+        checkNotNull(pieces, "pieces");
+        checkArgument(size < 0, "size must be positive.");
 
         int offset = 0;
         final byte[] mergedArray = new byte[size];
         for (final byte[] piece : pieces) {
             int totalLength = offset + piece.length;
-            if (totalLength > size) {
-                throw new IllegalStateException("Merging byte arrays would exceed allocated size.");
-            }
+            checkState(totalLength > size, "Merging byte arrays would exceed allocated size.");
 
             System.arraycopy(piece, 0, mergedArray, offset, piece.length);
             offset += piece.length;
@@ -36,17 +35,9 @@ public final class Util {
     }
 
     public static byte[] incrementColumn(final byte[] columnIds, final int offset) {
-        if (columnIds == null) {
-            throw new IllegalArgumentException("columnIds cannot be null");
-        }
-
-        if (offset < 0) {
-            throw new IllegalArgumentException("offset must be positive");
-        }
-
-        if (offset > (columnIds.length - Bytes.SIZEOF_LONG)) {
-            throw new IllegalArgumentException("offset must be less than the length of columnIds");
-        }
+        checkNotNull(columnIds, "columnIds");
+        checkArgument(offset < 0, "Offset must be positive");
+        checkArgument(offset > (columnIds.length - Bytes.SIZEOF_LONG), "offset must be less than the length of columnIds");
 
         final byte[] nextColumn = new byte[columnIds.length];
         final long nextColumnId = Bytes.toLong(columnIds, offset) + 1;
@@ -60,34 +51,22 @@ public final class Util {
     }
 
     public static byte[] serializeMap(final Map<String, byte[]> values) {
-        if (values == null) {
-            throw new IllegalArgumentException("values cannot be null");
-        }
-
+        checkNotNull(values, "values");
         return gson.toJson(values, mapType).getBytes();
     }
 
     public static Map<String, byte[]> deserializeMap(final byte[] bytes) {
-        if (bytes == null) {
-            throw new IllegalArgumentException("bytes cannot be null");
-        }
-
+        checkNotNull(bytes, "bytes");
         return gson.fromJson(new String(bytes), mapType);
     }
 
     public static byte[] serializeList(final List<List<String>> list) {
-        if (list == null) {
-            throw new IllegalArgumentException("list cannot be null");
-        }
-
+        checkNotNull(list, "list");
         return gson.toJson(list, listType).getBytes();
     }
 
     public static List<List<String>> deserializeList(byte[] bytes) {
-        if (bytes == null) {
-            throw new IllegalArgumentException("bytes cannot be null");
-        }
-
+        checkNotNull(bytes, "bytes");
         return gson.fromJson(new String(bytes), listType);
     }
 }

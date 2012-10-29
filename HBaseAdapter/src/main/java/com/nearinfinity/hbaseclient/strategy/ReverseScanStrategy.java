@@ -25,7 +25,7 @@ public class ReverseScanStrategy implements ScanStrategy {
         final long tableId = info.getId();
         final Iterable<String> columns = this.scanInfo.columnNames();
         final int columnCount = Iterables.size(columns);
-        final int indexValuesFullLength = Index.calculateIndexValuesFullLength(columns, info);
+        final int indexValuesFullLength = Index.calculateIndexValuesFullLength(columns, info.columnLengthMap());
         final Map<String, byte[]> descendingValueMap = ValueEncoder.correctDescendingValuePadding(info, this.scanInfo.keyValueMap());
 
         final byte[] columnIds = Index.createColumnIds(columns, info.columnNameToIdMap());

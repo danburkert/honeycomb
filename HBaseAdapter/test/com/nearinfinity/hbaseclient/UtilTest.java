@@ -1,4 +1,4 @@
-package com.nearinfinity.hbaseclient.strategy;
+package com.nearinfinity.hbaseclient;
 
 import com.nearinfinity.hbaseclient.Util;
 import org.junit.Assert;
@@ -56,7 +56,7 @@ public class UtilTest {
     }
 
     @Test
-    public void blah() {
+    public void utilCorrectlySerializesLists() {
         List<List<String>> s = new LinkedList<List<String>>();
         s.add(new LinkedList<String>() {{
             add("Test");
