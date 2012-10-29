@@ -28,9 +28,9 @@ public class OrderedScanStrategy implements ScanStrategy {
         final int columnCount = Iterables.size(columns);
 
         byte[] columnIds = Index.createColumnIds(columns, info.columnNameToIdMap());
-        byte[] nextColumnIds = Index.incrementColumn(columnIds, Bytes.SIZEOF_LONG * (columnCount - 1));
+        byte[] nextColumnIds = Util.incrementColumn(columnIds, Bytes.SIZEOF_LONG * (columnCount - 1));
 
-        int indexValuesFullLength = Index.calculateIndexValuesFullLength(columns, info);
+        int indexValuesFullLength = Index.calculateIndexValuesFullLength(columns, info.columnLengthMap());
         byte[] paddedValue = Index.createValues(this.scanInfo.keyValueColumns(), ascendingValueMap);
         paddedValue = Bytes.padTail(paddedValue, Math.max(indexValuesFullLength - paddedValue.length, 0));
 

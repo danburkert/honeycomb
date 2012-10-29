@@ -64,7 +64,6 @@ int CloudHandler::delete_row(const uchar *buf)
   DBUG_ENTER("CloudHandler::delete_row");
   ha_statistic_increment(&SSV::ha_delete_count);
   delete_row_helper();
-  this->rows_deleted--;
   DBUG_RETURN(0);
 }
 
@@ -82,12 +81,6 @@ int CloudHandler::end_bulk_delete()
   DBUG_ENTER("CloudHandler::end_bulk_delete");
 
   jclass adapter_class = this->adapter();
-  jmethodID update_count_method = this->env->GetStaticMethodID(adapter_class,
-      "incrementRowCount", "(Ljava/lang/String;J)V");
-  jstring table_name = this->table_name();
-  this->env->CallStaticVoidMethod(adapter_class, update_count_method,
-      table_name, (jlong) this->rows_deleted);
-  this->rows_deleted = 0;
   detach_thread();
 
   DBUG_RETURN(0);
@@ -770,7 +763,7 @@ int CloudHandler::write_row_helper(uchar* buf)
   DBUG_ENTER("CloudHandler::write_row_helper");
 
   jclass adapter_class = this->adapter();
-  jmethodID write_row_method = this->env->GetStaticMethodID(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;)Z");
+  jmethodID write_row_method = this->env->GetStaticMethodID(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;Ljava/util/List;)Z");
   jstring table_name = this->table_name();
 
   jobject java_row_map = create_java_map(this->env);
@@ -793,6 +786,9 @@ int CloudHandler::write_row_helper(uchar* buf)
 
   uint actualFieldSize;
 
+  jobject blob_list = create_java_list(this->env);
+  jclass blob_class = this->env->FindClass("com/nearinfinity/mysqlengine/jni/Blob");
+  jmethodID blob_constructor = this->env->GetMethodID(blob_class, "<init>", "(Ljava/nio/ByteBuffer;Ljava/lang/String;)V");
   for (Field **field_ptr = table->field; *field_ptr; field_ptr++)
   {
     Field * field = *field_ptr;
@@ -806,6 +802,7 @@ int CloudHandler::write_row_helper(uchar* buf)
       java_map_insert(java_row_map, field_name, NULL, this->env);
       continue;
     }
+
     switch (field->real_type())
     {
     case MYSQL_TYPE_TINY:
@@ -861,20 +858,28 @@ int CloudHandler::write_row_helper(uchar* buf)
       memcpy(byte_val, temporal_value, actualFieldSize);
       break;
     }
-    case MYSQL_TYPE_VARCHAR:
-    case MYSQL_TYPE_VAR_STRING:
     case MYSQL_TYPE_BLOB:
     case MYSQL_TYPE_TINY_BLOB:
     case MYSQL_TYPE_MEDIUM_BLOB:
     case MYSQL_TYPE_LONG_BLOB:
     {
-      char string_value_buff[field->field_length];
-      String string_value(string_value_buff, sizeof(string_value_buff),
-          field->charset());
-      field->val_str(&string_value);
-      actualFieldSize = string_value.length();
-      byte_val = (uchar*) my_malloc(actualFieldSize, MYF(MY_WME));
-      memcpy(byte_val, string_value.ptr(), actualFieldSize);
+      String buff;
+      field->val_str(&buff);
+      actualFieldSize = buff.length();
+      byte_val = (uchar*)buff.ptr(); 
+      jobject byte_buffer = this->env->NewDirectByteBuffer(byte_val, actualFieldSize);
+      jobject blob_object = this->env->NewObject(blob_class, blob_constructor, byte_buffer, field_name);
+      java_list_insert(blob_list, blob_object, this->env);
+      continue;
+    }
+    case MYSQL_TYPE_VARCHAR:
+    case MYSQL_TYPE_VAR_STRING:
+    case MYSQL_TYPE_STRING:
+    {
+      String buff; // These *do not* need to have a buffer backing them. Look at sql_string.h:164
+      field->val_str(&buff);
+      actualFieldSize = buff.length();
+      byte_val = (uchar*)buff.ptr(); // Remove the unnecessary data copying.
       break;
     }
     case MYSQL_TYPE_NULL:
@@ -905,7 +910,7 @@ int CloudHandler::write_row_helper(uchar* buf)
     DBUG_RETURN(HA_ERR_FOUND_DUPP_KEY);
   }
 
-  this->env->CallStaticBooleanMethod(adapter_class, write_row_method, table_name, java_row_map);
+  this->env->CallStaticBooleanMethod(adapter_class, write_row_method, table_name, java_row_map, blob_list);
 
   DBUG_RETURN(0);
 }

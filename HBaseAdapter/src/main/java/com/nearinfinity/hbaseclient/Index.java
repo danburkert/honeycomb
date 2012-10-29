@@ -1,36 +1,13 @@
 package com.nearinfinity.hbaseclient;
 
 import com.google.common.base.Function;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.lang.reflect.Type;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static java.lang.String.format;
 
 public class Index {
-    public static LinkedList<LinkedList<String>> indexForTable(final Map<byte[], byte[]> tableMetadata) {
-        Type type = new TypeToken<LinkedList<LinkedList<String>>>() {
-        }.getType();
-        byte[] jsonBytes = null;
-        for (Map.Entry<byte[], byte[]> entry : tableMetadata.entrySet()) {
-            if (Arrays.equals(entry.getKey(), Constants.INDEXES)) {
-                jsonBytes = entry.getValue();
-            }
-        }
-
-        if (jsonBytes == null) {
-            return new LinkedList<LinkedList<String>>();
-        }
-
-        return new Gson().fromJson(new String(jsonBytes), type);
-    }
-
     public static byte[] createColumnIds(final Iterable<String> columns, final Map<String, Long> columnNameToId) {
         return correctColumnIdSize(convertToByteArray(columns, new Function<String, byte[]>() {
             @Override
@@ -49,24 +26,13 @@ public class Index {
         });
     }
 
-    public static int calculateIndexValuesFullLength(final Iterable<String> columns, final TableInfo info) {
+    public static int calculateIndexValuesFullLength(final Iterable<String> columns, final Map<String, Integer> columnLengthMap) {
         int size = 0;
         for (String column : columns) {
-            size += info.getColumnMetadata(column).getMaxLength();
+            size += columnLengthMap.get(column);
         }
 
         return size;
-    }
-
-    public static byte[] mergeByteArrayList(final Iterable<byte[]> pieces, final int size) {
-        int offset = 0;
-        final byte[] mergedArray = new byte[size];
-        for (final byte[] piece : pieces) {
-            System.arraycopy(piece, 0, mergedArray, offset, piece.length);
-            offset += piece.length;
-        }
-
-        return mergedArray;
     }
 
     private static byte[] correctColumnIdSize(final byte[] columnIds) {
@@ -92,30 +58,31 @@ public class Index {
             pieces.add(bytes);
         }
 
-        return mergeByteArrayList(pieces, size);
+        return Util.mergeByteArrays(pieces, size);
     }
 
-    public static byte[] incrementColumn(final byte[] columnIds, final int offset) {
-        if (columnIds == null) {
-            throw new IllegalArgumentException("columnIds cannot be null");
+    public static List<List<String>> indexForTable(final Map<byte[], byte[]> tableMetadata) {
+        byte[] jsonBytes = null;
+        for (Map.Entry<byte[], byte[]> entry : tableMetadata.entrySet()) {
+            if (Arrays.equals(entry.getKey(), Constants.INDEXES)) {
+                jsonBytes = entry.getValue();
+            }
         }
 
-        if (offset < 0) {
-            throw new IllegalArgumentException("offset must be positive");
+        if (jsonBytes == null) {
+            return new LinkedList<List<String>>();
         }
 
-        if (offset > (columnIds.length - Bytes.SIZEOF_LONG)) {
-            throw new IllegalArgumentException("offset must be less than the length of columnIds");
-        }
+        return Util.deserializeList(jsonBytes);
+    }
 
-        final byte[] nextColumn = new byte[columnIds.length];
-        final long nextColumnId = Bytes.toLong(columnIds, offset) + 1;
-        final int finalOffset = offset + Bytes.SIZEOF_LONG;
+    public static byte[] createReverseIndex(long tableId, UUID rowId, Map<String, byte[]> descendingValues, List<String> columns, byte[] columnIds) {
+        final byte[] descendingIndexValues = createValues(columns, descendingValues);
+        return RowKeyFactory.buildReverseIndexRowKey(tableId, columnIds, descendingIndexValues, rowId);
+    }
 
-        System.arraycopy(columnIds, 0, nextColumn, 0, offset);
-        System.arraycopy(Bytes.toBytes(nextColumnId), 0, nextColumn, offset, Bytes.SIZEOF_LONG);
-        System.arraycopy(columnIds, finalOffset, nextColumn, finalOffset, columnIds.length - finalOffset);
-
-        return nextColumn;
+    public static byte[] createPrimaryIndex(long tableId, UUID rowId, Map<String, byte[]> ascendingValues, List<String> columns, byte[] columnIds) {
+        final byte[] ascendingIndexValues = createValues(columns, ascendingValues);
+        return RowKeyFactory.buildIndexRowKey(tableId, columnIds, ascendingIndexValues, rowId);
     }
 }

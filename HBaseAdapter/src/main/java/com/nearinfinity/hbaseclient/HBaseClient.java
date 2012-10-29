@@ -5,6 +5,7 @@ import com.google.common.base.Joiner;
 import com.nearinfinity.hbaseclient.strategy.PrefixScanStrategy;
 import com.nearinfinity.hbaseclient.strategy.ScanStrategy;
 import com.nearinfinity.hbaseclient.strategy.ScanStrategyInfo;
+import com.nearinfinity.mysqlengine.jni.Blob;
 import com.nearinfinity.mysqlengine.scanner.HBaseResultScanner;
 import com.nearinfinity.mysqlengine.scanner.SingleResultScanner;
 import org.apache.hadoop.conf.Configuration;
@@ -155,12 +156,15 @@ public class HBaseClient {
         this.table.flushCommits();
     }
 
-    public void writeRow(String tableName, Map<String, byte[]> values) throws IOException {
+    public void writeRow(String tableName, Map<String, byte[]> values, List<Blob> blobs) throws IOException {
         TableInfo info = getTableInfo(tableName);
-        LinkedList<LinkedList<String>> multipartIndex = Index.indexForTable(info.tableMetadata());
+        List<List<String>> multipartIndex = Index.indexForTable(info.tableMetadata());
         List<Put> putList = PutListFactory.createDataInsertPutList(values, info, multipartIndex);
+        Put dataRow = putList.get(0);
+        for (Blob blob : blobs) {
+            writeBlob(tableName, blob.getColumnName(), blob.getData(), dataRow);
+        }
 
-        //Final put
         this.table.put(putList);
     }
 
@@ -276,6 +280,7 @@ public class HBaseClient {
         List<Delete> deleteList = DeleteListFactory.createDeleteRowList(uuid, info, result, dataRowKey, Index.indexForTable(info.tableMetadata()));
 
         table.delete(deleteList);
+        incrementRowCount(tableName, -1);
 
         return true;
     }
@@ -362,7 +367,6 @@ public class HBaseClient {
         int count = 0;
 
         for (Result result : scanner) {
-            //Delete the data row key
             byte[] rowKey = result.getRow();
             Delete rowDelete = new Delete(rowKey);
             deleteList.add(rowDelete);
@@ -457,7 +461,7 @@ public class HBaseClient {
                 values.add(value);
                 size += value.length;
             }
-            ByteBuffer value = ByteBuffer.wrap(Index.mergeByteArrayList(values, size));
+            ByteBuffer value = ByteBuffer.wrap(Util.mergeByteArrays(values, size));
 
             if (columnValues.contains(value)) {
                 return value.array();
@@ -532,11 +536,11 @@ public class HBaseClient {
     }
 
     public void addIndex(String tableName, String columnString) throws IOException {
-        final LinkedList<String> columnsToIndex = new LinkedList<String>(Arrays.asList(columnString.split(","))); // Super special because of serialization: must be a linked list.
+        final List<String> columnsToIndex = Arrays.asList(columnString.split(","));
         final TableInfo info = getTableInfo(tableName);
-        updateIndexEntryToMetadata(info, new Function<LinkedList<LinkedList<String>>, Void>() {
+        updateIndexEntryToMetadata(info, new Function<List<List<String>>, Void>() {
             @Override
-            public Void apply(LinkedList<LinkedList<String>> index) {
+            public Void apply(List<List<String>> index) {
                 index.add(columnsToIndex);
                 return null;
             }
@@ -545,7 +549,7 @@ public class HBaseClient {
         changeIndex(info, new IndexFunction<Map<String, byte[]>, UUID, Void>() {
             @Override
             public Void apply(Map<String, byte[]> values, UUID uuid) {
-                List<Put> puts = PutListFactory.createIndexForColumns(values, info, columnsToIndex, uuid);
+                List<Put> puts = PutListFactory.createIndexForColumns(values, info, uuid, columnsToIndex);
                 try {
                     table.put(puts);
                 } catch (IOException e) {
@@ -558,11 +562,11 @@ public class HBaseClient {
     }
 
     public void dropIndex(String tableName, String indexToDrop) throws IOException {
-        final LinkedList<String> indexColumns = new LinkedList<String>(Arrays.asList(indexToDrop.split(","))); // Super special because of serialization: must be a linked list.
+        final List<String> indexColumns = Arrays.asList(indexToDrop.split(","));
         final TableInfo info = getTableInfo(tableName);
-        updateIndexEntryToMetadata(info, new Function<LinkedList<LinkedList<String>>, Void>() {
+        updateIndexEntryToMetadata(info, new Function<List<List<String>>, Void>() {
             @Override
-            public Void apply(LinkedList<LinkedList<String>> index) {
+            public Void apply(List<List<String>> index) {
                 index.remove(indexColumns);
                 return null;
             }
@@ -571,7 +575,7 @@ public class HBaseClient {
         changeIndex(info, new IndexFunction<Map<String, byte[]>, UUID, Void>() {
             @Override
             public Void apply(Map<String, byte[]> values, UUID rowId) {
-                List<Delete> deletes = DeleteListFactory.createDeleteForIndex(values, info, indexColumns, rowId);
+                List<Delete> deletes = DeleteListFactory.createDeleteForIndex(values, info, rowId, indexColumns);
                 try {
                     table.delete(deletes);
                 } catch (IOException e) {
@@ -582,10 +586,10 @@ public class HBaseClient {
         });
     }
 
-    private void updateIndexEntryToMetadata(TableInfo info, Function<LinkedList<LinkedList<String>>, Void> updateFunc) throws IOException {
+    private void updateIndexEntryToMetadata(TableInfo info, Function<List<List<String>>, Void> updateFunc) throws IOException {
         final String tableName = info.getName();
         final long tableId = info.getId();
-        LinkedList<LinkedList<String>> index = Index.indexForTable(info.tableMetadata());
+        List<List<String>> index = Index.indexForTable(info.tableMetadata());
         updateFunc.apply(index);
         final byte[] bytes = TableMultipartKeys.indexJson(index);
         updateTableCacheIndex(tableName, bytes);
@@ -610,6 +614,35 @@ public class HBaseClient {
         }
 
         table.flushCommits();
+    }
+
+    private void writeBlob(String tableName, String columnName, ByteBuffer blob, Put blobPut) throws IOException {
+        // This is a nasty hack to reduce the memory used by blobs when writing to HBase.
+        TableInfo info = getTableInfo(tableName);
+        int vlength = blob.capacity();
+        long columnId = info.columnNameToIdMap().get(columnName);
+        byte[] rowKey = blobPut.getRow();
+        byte[] qualifier = Bytes.toBytes(columnId);
+        int qlength = qualifier.length;
+        int flength = Constants.NIC.length;
+        org.apache.hadoop.hbase.KeyValue keyValue = new org.apache.hadoop.hbase.KeyValue(
+                rowKey,
+                0,
+                rowKey.length,
+                Constants.NIC,
+                0,
+                flength,
+                qualifier,
+                0,
+                qlength,
+                HConstants.LATEST_TIMESTAMP,
+                org.apache.hadoop.hbase.KeyValue.Type.Put,
+                new byte[0],
+                0,
+                vlength);
+        byte[] buffer = keyValue.getBuffer();
+        blob.get(buffer, buffer.length - vlength, vlength);
+        blobPut.add(keyValue);
     }
 
     private interface IndexFunction<F1, F2, T> {

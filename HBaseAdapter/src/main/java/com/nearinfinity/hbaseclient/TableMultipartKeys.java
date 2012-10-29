@@ -1,15 +1,10 @@
 package com.nearinfinity.hbaseclient;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
-import java.lang.reflect.Type;
 import java.util.LinkedList;
+import java.util.List;
 
 public class TableMultipartKeys {
-    private final LinkedList<LinkedList<String>> multipartKeys = new LinkedList<LinkedList<String>>();
-    private static final Type type = new TypeToken<LinkedList<LinkedList<String>>>() {
-    }.getType();
+    private final List<List<String>> multipartKeys = new LinkedList<List<String>>();
 
     public void addMultipartKey(String keys) {
         String[] keyPieces = keys.split(",");
@@ -22,10 +17,10 @@ public class TableMultipartKeys {
     }
 
     public byte[] toJson() {
-        return new Gson().toJson(multipartKeys, type).getBytes();
+        return Util.serializeList(multipartKeys);
     }
 
-    public static byte[] indexJson(final LinkedList<LinkedList<String>> keys) {
-        return new Gson().toJson(keys, type).getBytes();
+    public static byte[] indexJson(final List<List<String>> keys) {
+        return Util.serializeList(keys);
     }
 }

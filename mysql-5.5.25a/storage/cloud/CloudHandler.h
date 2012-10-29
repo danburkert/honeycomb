@@ -35,7 +35,6 @@ class CloudHandler : public handler
 
     long long curr_scan_id;
     ulonglong rows_written;
-    long long rows_deleted;
 
     uint failed_key_index;
 
@@ -163,7 +162,6 @@ class CloudHandler : public handler
       this->ref = new uchar[this->ref_length];
       this->initialize_adapter();
       this->rows_written = 0;
-      this->rows_deleted = 0;
     }
 
     ~CloudHandler()
