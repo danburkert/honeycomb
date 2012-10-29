@@ -39,7 +39,7 @@ public class BulkLoader extends Configured implements Tool {
         System.exit(exitCode);
     }
 
-    public static List<Put> createPuts(Text line, TableInfo tableInfo, String[] columnNames, LinkedList<LinkedList<String>> indexColumns) throws IOException, ParseException {
+    public static List<Put> createPuts(Text line, TableInfo tableInfo, String[] columnNames, List<List<String>> indexColumns) throws IOException, ParseException {
         CSVReader reader = new CSVReader(new StringReader(line.toString()));
         String[] columnData = reader.readNext();
 
