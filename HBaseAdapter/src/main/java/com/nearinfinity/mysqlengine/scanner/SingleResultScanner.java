@@ -6,6 +6,7 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.TreeMap;
 
 public class SingleResultScanner implements HBaseResultScanner {
@@ -30,7 +31,7 @@ public class SingleResultScanner implements HBaseResultScanner {
         }
 
         if (valueToSkip != null) {
-            TreeMap<String, byte[]> rowMap = ResultParser.parseRowMap(result);
+            Map<String, byte[]> rowMap = ResultParser.parseRowMap(result);
             byte[] value = rowMap.get(this.columnName);
 
             while (Arrays.equals(valueToSkip, value)) {

@@ -9,8 +9,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public class DeleteListFactory {
-    public static List<Delete> createDeleteRowList(UUID uuid, TableInfo info, Result result, byte[] dataRowKey, final LinkedList<LinkedList<String>> indexedKeys) {
-        long tableId = info.getId();
+    public static List<Delete> createDeleteRowList(UUID uuid, TableInfo info, Result result, byte[] dataRowKey, final List<List<String>> indexedKeys) {
         List<Delete> deleteList = new LinkedList<Delete>();
         deleteList.add(new Delete(dataRowKey));
 
@@ -27,13 +26,13 @@ public class DeleteListFactory {
         return deleteList;
     }
 
-    public static List<Delete> createDeleteForIndex(Map<String, byte[]> values, TableInfo info, List<String> indexedKeys, UUID uuid) {
-        LinkedList<LinkedList<String>> newIndexColumns = new LinkedList<LinkedList<String>>();
+    public static List<Delete> createDeleteForIndex(Map<String, byte[]> values, TableInfo info, UUID uuid, List<String> indexedKeys) {
+        List<List<String>> newIndexColumns = new LinkedList<List<String>>();
         newIndexColumns.add(new LinkedList<String>(indexedKeys));
         return createDeleteForIndex(values, info, newIndexColumns, uuid);
     }
 
-    public static List<Delete> createDeleteForIndex(Map<String, byte[]> values, TableInfo info, LinkedList<LinkedList<String>> indexedKeys, UUID uuid) {
+    public static List<Delete> createDeleteForIndex(Map<String, byte[]> values, TableInfo info, List<List<String>> indexedKeys, UUID uuid) {
         final long tableId = info.getId();
         List<Delete> deleteList = new LinkedList<Delete>();
         final Map<String, Long> columnNameToId = info.columnNameToIdMap();
@@ -44,8 +43,8 @@ public class DeleteListFactory {
         for (List<String> columns : indexedKeys) {
             final byte[] columnIds = Index.createColumnIds(columns, columnNameToId);
 
-            final byte[] ascendingIndexKey = PutListFactory.createPrimaryIndex(tableId, uuid, ascendingValues, columns, columnIds);
-            final byte[] descendingIndexKey = PutListFactory.createReverseIndex(tableId, uuid, descendingValues, columns, columnIds);
+            final byte[] ascendingIndexKey = Index.createPrimaryIndex(tableId, uuid, ascendingValues, columns, columnIds);
+            final byte[] descendingIndexKey = Index.createReverseIndex(tableId, uuid, descendingValues, columns, columnIds);
 
             deleteList.add(new Delete(ascendingIndexKey));
             deleteList.add(new Delete(descendingIndexKey));
