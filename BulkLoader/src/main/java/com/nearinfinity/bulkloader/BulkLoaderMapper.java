@@ -21,7 +21,7 @@ class BulkLoaderMapper
 
     private TableInfo tableInfo = null;
     private String[] columnNames = null;
-    private LinkedList<LinkedList<String>> indexColumns;
+    private List<List<String>> indexColumns;
 
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
