@@ -43,24 +43,14 @@ public class PutListFactory {
         for (List<String> columns : indexedKeys) {
             final byte[] columnIds = Index.createColumnIds(columns, columnNameToId);
 
-            byte[] ascendingIndexKey = createPrimaryIndex(tableId, rowId, ascendingValues, columns, columnIds);
-            byte[] descendingIndexKey = createReverseIndex(tableId, rowId, descendingValues, columns, columnIds);
+            byte[] ascendingIndexKey = Index.createPrimaryIndex(tableId, rowId, ascendingValues, columns, columnIds);
+            byte[] descendingIndexKey = Index.createReverseIndex(tableId, rowId, descendingValues, columns, columnIds);
 
             putList.add(createIndexPut(ascendingIndexKey, rowByteArray));
             putList.add(createIndexPut(descendingIndexKey, rowByteArray));
         }
 
         return putList;
-    }
-
-    public static byte[] createReverseIndex(long tableId, UUID rowId, Map<String, byte[]> descendingValues, List<String> columns, byte[] columnIds) {
-        final byte[] descendingIndexValues = Index.createValues(columns, descendingValues);
-        return RowKeyFactory.buildReverseIndexRowKey(tableId, columnIds, descendingIndexValues, rowId);
-    }
-
-    public static byte[] createPrimaryIndex(long tableId, UUID rowId, Map<String, byte[]> ascendingValues, List<String> columns, byte[] columnIds) {
-        final byte[] ascendingIndexValues = Index.createValues(columns, ascendingValues);
-        return RowKeyFactory.buildIndexRowKey(tableId, columnIds, ascendingIndexValues, rowId);
     }
 
     private static Put createIndexPut(byte[] key, byte[] rowByteArray) {

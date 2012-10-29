@@ -1,15 +1,9 @@
 package com.nearinfinity.hbaseclient;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.io.Writable;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.NavigableMap;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -72,6 +66,15 @@ public class TableInfo {
 
     public Map<String, Long> columnNameToIdMap() {
         return this.columnNameToId;
+    }
+
+    public Map<String, Integer> columnLengthMap(){
+        ImmutableMap.Builder<String, Integer> builder = ImmutableMap.builder();
+        for(Map.Entry<String, ColumnInfo> entry : this.columnNamesToInfo.entrySet()){
+            builder.put(entry.getKey(), entry.getValue().getMetadata().getMaxLength());
+        }
+
+        return builder.build();
     }
 
     public ColumnType getColumnTypeByName(String columnName) {

@@ -3,10 +3,7 @@ package com.nearinfinity.hbaseclient;
 import com.google.common.base.Function;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static java.lang.String.format;
 
@@ -29,10 +26,10 @@ public class Index {
         });
     }
 
-    public static int calculateIndexValuesFullLength(final Iterable<String> columns, final TableInfo info) {
+    public static int calculateIndexValuesFullLength(final Iterable<String> columns, final Map<String, Integer> columnLengthMap) {
         int size = 0;
         for (String column : columns) {
-            size += info.getColumnMetadata(column).getMaxLength();
+            size += columnLengthMap.get(column);
         }
 
         return size;
@@ -77,5 +74,15 @@ public class Index {
         }
 
         return Util.deserializeList(jsonBytes);
+    }
+
+    public static byte[] createReverseIndex(long tableId, UUID rowId, Map<String, byte[]> descendingValues, List<String> columns, byte[] columnIds) {
+        final byte[] descendingIndexValues = createValues(columns, descendingValues);
+        return RowKeyFactory.buildReverseIndexRowKey(tableId, columnIds, descendingIndexValues, rowId);
+    }
+
+    public static byte[] createPrimaryIndex(long tableId, UUID rowId, Map<String, byte[]> ascendingValues, List<String> columns, byte[] columnIds) {
+        final byte[] ascendingIndexValues = createValues(columns, ascendingValues);
+        return RowKeyFactory.buildIndexRowKey(tableId, columnIds, ascendingIndexValues, rowId);
     }
 }
