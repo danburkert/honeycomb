@@ -36,8 +36,8 @@ public final class Util {
 
     public static byte[] incrementColumn(final byte[] columnIds, final int offset) {
         checkNotNull(columnIds, "columnIds");
-        checkArgument(offset < 0, "Offset must be positive");
-        checkArgument(offset > (columnIds.length - Bytes.SIZEOF_LONG), "offset must be less than the length of columnIds");
+        checkArgument(offset > 0, "Offset must be positive");
+        checkArgument(offset <= (columnIds.length - Bytes.SIZEOF_LONG), "offset must be less than the length of columnIds");
 
         final byte[] nextColumn = new byte[columnIds.length];
         final long nextColumnId = Bytes.toLong(columnIds, offset) + 1;
