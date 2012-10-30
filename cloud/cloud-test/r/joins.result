@@ -1,0 +1,238 @@
+DROP TABLE IF EXISTS `Person`;
+CREATE TABLE `Person` (
+`Name` varchar(50) COLLATE utf8_bin DEFAULT NULL,
+`Address` varchar(50) COLLATE utf8_bin DEFAULT NULL,
+`Phone` varchar(50) COLLATE utf8_bin DEFAULT NULL,
+`Salary` double DEFAULT NULL,
+`Department_Id` int(11) DEFAULT NULL,
+KEY `Name` (`Name`),
+KEY `Address` (`Address`),
+KEY `Phone` (`Phone`),
+KEY `Salary` (`Salary`),
+KEY `Department_Id` (`Department_Id`)
+) ENGINE=cloud DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+INSERT INTO `Person` VALUES
+('Ms. Riley Kautzer','042 Sipes Club','994-262-7273 x14182',0.8370113712457038,3),
+('Laurianne Aufderhar PhD','3938 Kaylie Brooks','(539)726-8978 x62352',0.6849694380631943,7),
+('Gabe Kreiger','23570 Bahringer Isle','1-358-881-3403 x443',0.35682074464514235,0),
+('Allan Reilly PhD','950 Ted Avenue','697-704-6598 x6363',0.4051977211226956,1),
+('Friedrich Langworth','00649 Kohler Lodge','878-466-3203 x75389',0.9134551138616549,1),
+('Adrianna Schmidt','24104 Anderson Garden','1-103-955-3534',0.9957350864319396,5),
+('Tina Bogisich','6144 Hane Rapid','378-067-1416 x378',0.5213392748078312,2),
+('Aaliyah Cummerata','5445 Beahan Crossroad','806-811-9035 x1961',0.7558464512255089,9),
+('Zelda Ortiz','75441 Kamren Port','1-177-780-8570 x21950',0.8785204232065656,4),
+('Roslyn Borer I','958 Stracke Oval','1-934-334-2960',0.2230640788994409,4),
+('Bella Waters','5396 Lexi Village','689.711.8457 x3313',0.5254171169972417,6),
+('Jeff Berge','805 Pacocha Walks','738-438-8624 x127',0.1462392640384279,1),
+('Violet Reynolds','7454 Russel Inlet','(150)318-5666 x0252',0.6498179278624603,6),
+('Mrs. Olen Pfeffer','8377 Grant Motorway','(242)910-9921 x193',0.18190874078236186,6),
+('Kip Roberts','61491 Georgette Drive','1-379-702-5232 x37433',0.3966881654100691,6),
+('Lucio Bauch Sr.','149 Russel Trafficway','(300)470-4254 x936',0.6028545626562343,3),
+('Eldred Hickle','20274 Linnie Turnpike','1-768-259-1927 x68159',0.35502899576586566,4),
+('Joe Haley','4973 Schuppe Rue','1-886-233-4549 x50691',0.9361112295062606,6),
+('Deonte Dietrich','3862 Darrel Via','924-581-5089 x6429',0.03517758793588688,9),
+('Jaleel Howe','79315 Lind Skyway','(610)463-2335 x50718',0.685196487308248,9),
+('Lou Emard','46036 Herzog Drive','1-749-535-9488 x141',0.24741062588658158,8),
+('Elwyn Runolfsson','2653 Mills Roads','326-944-5500',0.29357039873125523,4),
+('Sammy Kling','8285 Schumm Villages','856-653-2561 x566',0.9100099288647724,9),
+('Nicole Vandervort','7414 Fadel Stream','(801)127-2675 x1558',0.9147690464651954,6),
+('Randi O\'Connell IV','56615 Gino Plaza','(883)606-4034 x023',0.2787066411949347,3),
+('Unique Frami Jr.','3703 Graham Fords','(508)293-9572',0.3487161895852353,2),
+('Tiffany Homenick Sr.','8412 Brent Underpass','(257)883-7553',0.28892873296660426,0),
+('Shanel Schneider','12514 Thompson Fall','(515)013-4928 x963',0.8133587716682343,3),
+('Donny Wyman','051 Windler Keys','472.891.7316 x0352',0.5932770013415417,5),
+('Joel Bradtke','397 Larson Light','(238)190-6149 x56672',0.040104606702542345,2),
+('Fabiola Brekke','7268 Benjamin Freeway','207.517.1047 x54966',0.8785976607973387,9),
+('Hassan Wiegand','26625 Marquardt Rapid','(730)583-6177 x5902',0.6500189932185652,8),
+('Florian Balistreri','187 Crooks View','006.292.8157 x2094',0.94484011669548,4),
+('Dr. Amiya Emard','2390 Paris Way','145.663.4068',0.4109113747219817,5),
+('Miss Fiona Flatley','7280 Bins Creek','485-617-1268 x5735',0.003363511745710368,0),
+('Dr. Joy Breitenberg','6080 Kaci Isle','992-492-8374 x816',0.5325415450621309,8),
+('Beaulah Bashirian','2461 Lynch Terrace','1-245-368-8344',0.2240325303379208,2),
+('Lindsay Gorczany','0475 Bode Garden','1-292-185-1359 x221',0.10621998004819577,7),
+('Lisette Schowalter','2880 Nedra Station','212-556-4051',0.949302542796692,3),
+('Shirley Pfannerstill','41254 Sipes Mews','(787)885-3022 x73242',0.3167018311700813,2),
+('Brent Lind','010 Grayce Trail','076.615.7029 x09840',0.03465078070014649,6),
+('Zella McKenzie','67859 Bartell Drive','724.035.8740 x0639',0.3774513931994722,3),
+('Ms. Isom Schamberger','07972 Robyn Cliffs','217-121-6927 x186',0.08791025124385077,9),
+('Gilberto Beahan','733 Felipe Brook','(825)285-6031',0.6119247789996749,6),
+('Emmie Lehner','907 Lina Neck','996.262.1685 x4996',0.5992193481292886,3),
+('Dion Conn','58037 Hettinger Turnpike','1-072-608-5566 x4311',0.8959418180073313,7),
+('Melba Walsh DVM','847 Bechtelar Valleys','942-853-3085 x045',0.9871111359938055,3),
+('Emanuel Baumbach','45339 Mercedes Shoals','(439)505-4202',0.0041655747195396,0),
+('Darion Strosin','6985 Schinner Mill','(650)858-9189 x1363',0.9038248996387492,6),
+('Jazlyn Pagac','7728 Dooley Place','(877)123-7078',0.7594369889967058,7),
+('Deja Champlin','764 Jewess Dale','1-727-157-4335',0.17096359660979654,8),
+('Tyrel Walsh III','672 Madison Mount','939-228-2761 x5908',0.9957666645886306,2),
+('Laurianne Bailey II','03282 West Fords','(086)258-2916 x7770',0.10317097544416898,9),
+('Muhammad Hessel','302 Antoinette Wells','(135)509-4044 x91666',0.7263744415204745,6),
+('Mrs. Aglae Bogan','11438 Turner Springs','479-260-8384 x7775',0.9392614025527949,5),
+('Ms. Lesly Rath','1670 Donavon Trace','633.220.4544 x830',0.7185082282742178,6),
+('Anya Olson','361 Crooks Street','331.566.5601 x789',0.05255124756971119,6),
+('Mrs. Bell Moen','515 Titus Trace','(334)132-1696 x5879',0.22929057801117458,6),
+('Miss Penelope Nicolas','508 Harris Causeway','1-888-418-3614 x945',0.9419520382779948,7),
+('Miss Cassidy Mosciski','3431 Kianna Village','856.292.9507',0.904102960794189,4),
+('Floyd Zemlak','24962 Joel Extensions','(497)851-3148',0.862254881628746,2),
+('Kaya Stokes','801 Raynor Highway','474.195.3253 x69823',0.7171303443251058,8),
+('Philip Welch','6183 Ernesto Parkways','536.286.1548',0.6114876295119772,6),
+('Josie Collier','433 Rodolfo Tunnel','616-864-9799 x6817',0.0514686582240248,5),
+('Miss Clifton Weimann','30888 Larson Key','1-012-585-4040',0.18107739183365656,0),
+('Vicky Bahringer','761 Brando Center','1-349-540-1232 x61544',0.766813410134635,7),
+('Marianne Toy','49736 Daniel Plaza','690.489.0143 x78948',0.1332683859471111,2),
+('Matilde Hessel','014 Madisen Lakes','649.839.1396 x0754',0.8368300128153052,6),
+('Zechariah Reichel Sr.','24990 Price Flat','(094)989-2613',0.6798699931042463,7),
+('Naomie Kutch','499 Sanford Stravenue','670.571.8065 x76714',0.5440058641353273,1),
+('Mathilde Hettinger','0947 Florine Prairie','284.401.5358 x912',0.572568580332997,8),
+('Alta Lubowitz','85287 Jon Island','660-356-2287 x37437',0.4762146951062639,6),
+('Blanche Turcotte','393 Nyah Shore','(917)195-6630 x0699',0.13525407705349068,2),
+('Ms. Elsie Connelly','5687 Tyler Ville','642.797.2983 x911',0.4480930575490327,1),
+('Ms. Wiley Lubowitz','6064 Veum Field','956-057-9268',0.6857374676220509,5),
+('Shea Larkin II','5288 Jonas Lane','689-287-7757',0.20673459086614587,9),
+('Tevin Shanahan Sr.','908 Cierra Ferry','(855)745-8631 x337',0.4183124230529469,5),
+('Boris Will','4967 Ismael Glens','258-208-5552 x593',0.37056558727457845,6),
+('Ms. Trent Hermiston','40934 Roberts Spur','015-074-7963 x97931',0.5760927644718643,3),
+('Kenny Krajcik','637 Giovanni Crossroad','(040)564-7651',0.1333716139176785,8),
+('Rudy Becker','912 Rocio Skyway','(702)378-0542 x4589',0.3510721187069977,5),
+('Virgie Brakus','967 Abdul Freeway','185.191.9746 x90833',0.9062324906041995,6),
+('Abraham Doyle','7987 Mann Fort','220.254.4853 x45732',0.6359294052148822,7),
+('Mrs. Ardith Olson','68300 Megane Row','924.860.0982',0.28269378190917915,9),
+('Kiarra Daniel','949 Noelia Inlet','281-154-6836 x09039',0.9655386404967633,4),
+('Velma Romaguera','50694 Hildegard Pines','1-212-760-1336 x9360',0.8502780852206304,6),
+('Berniece Bosco','21864 Kovacek Course','(698)387-6984',0.4712016220593219,8),
+('Brandi Corkery DVM','451 Little Dam','1-957-557-0182 x2365',0.6376262158041432,8),
+('Beryl Mayert','514 Daphne Junction','309.317.7863',0.5487231559860443,6),
+('Brock Abshire','6796 Eudora Port','(683)591-2953 x38478',0.7475833542107163,2),
+('Christa Sporer','037 Roberts Greens','(301)127-8108',0.7371435011579845,0),
+('Mr. Lila Klocko','8930 Matilde Via','(826)723-9476 x1291',0.41455950980717593,9),
+('Roslyn Price','187 Noah Coves','582.080.0871 x75960',0.9009340685953284,7),
+('Orlo Ebert','980 Treva Knoll','490-477-5937 x2448',0.7832137485987515,9),
+('Favian Toy','010 Stracke Hill','061-593-1563 x80023',0.3943979807918745,2),
+('Whitney Hammes','6703 Schumm Estate','(748)861-0240 x4046',0.8714402746533686,2),
+('Viola Padberg','82625 Walker Camp','1-740-962-0123 x7813',0.33281233912525976,7),
+('Clovis Konopelski','122 Hyatt Harbor','520-379-9402',0.5679874875491837,1),
+('Golden Von','82498 Bulah Lakes','(388)186-1441',0.4959604283488217,7),
+('Katharina Luettgen','484 Rusty Brooks','(644)285-8053 x656',0.7576771769049832,7),
+('Johann Greenfelder','47707 Shanahan Avenue','1-110-406-4648 x76932',0.8035170850485343,3),
+('Breana Rosenbaum','253 Kaley Key','(251)084-7537 x1355',0.6775568290897822,7),
+('Theo Gutmann','55717 Doyle Curve','1-345-026-1269 x62766',0.7067715519929799,1),
+('Mrs. Hilbert Torphy','0306 Dereck Oval','(755)794-1886',0.6912079690540345,6),
+('Angus Towne','354 Grady Plain','710.944.1223 x5343',0.47465906496320553,3),
+('Cayla Hermiston','005 Watsica Street','1-758-722-9872 x979',0.8278284752236658,0),
+('Mr. Skyla Quigley','1011 Yoshiko Light','(949)951-7661 x591',0.1934305480351588,4),
+('Maximillia Hintz','7633 Magdalena Extension','586-034-3981',0.3063454879650196,2),
+('Francisca Stokes','491 Kassulke Courts','(713)328-3204 x008',0.6697358924852935,6),
+('Emmanuelle Okuneva','4787 Stokes Drives','(730)681-6890',0.7293704324046282,1),
+('Tomas Ryan','8451 Block Knolls','682.579.1042 x0833',0.6689977507905315,4),
+('Mrs. Ed Koepp','73919 Crist Fall','659.949.7015 x896',0.14950854014582904,2),
+('Miles Fritsch','310 Emerson Club','1-283-533-8252 x624',0.6617454630845778,9),
+('Tremaine Hickle','3813 Tevin Landing','1-624-820-6985 x642',0.008936672526874911,0),
+('Olga Stroman','61565 Flatley Corner','021.775.6367',0.9662564524318791,1),
+('Miss Celestino Shields','44985 Madeline Plaza','812.484.0584 x963',0.033326585446425194,3),
+('Sylvia Romaguera','494 Newell Creek','386-434-9353 x62783',0.7360920024136621,3),
+('Reginald Hamill','7565 Dickens Island','343-301-7927 x3260',0.5148581567002324,7),
+('Alva Watsica PhD','1655 Florida Ford','(446)326-2220',0.1876923822666714,8),
+('Kathryn Volkman III','71347 Kaya Mews','452-093-3402',0.5830720132631189,4),
+('Sylvan Hills','66258 Pfannerstill Garden','1-057-871-8419 x21283',0.8771974784544283,4),
+('Wilber Hartmann V','53226 Casper Stravenue','1-528-647-5871 x4704',0.08005741277056933,8),
+('Roger Von II','96233 Kling Groves','901.256.7067',0.7393538478046572,4),
+('Samantha Collier','16257 Magali Hollow','(090)856-9045 x845',0.36932356937298483,0),
+('Ted Jacobs','8900 Barton Dale','414-962-4700 x72789',0.6762425014725619,9),
+('Dr. Lilyan Emmerich','38030 Isaac Place','(132)696-3214 x865',0.46131822605649486,3),
+('Daron Swaniawski','373 Braun Light','659-720-3734 x036',0.4547647481651206,3),
+('Mose Botsford','022 Dustin Walk','579-803-0944 x0562',0.7903843217018157,4),
+('Camilla Schroeder','5412 Kulas Groves','(769)168-7701 x7757',0.3255682897039238,3),
+('Mr. Armando Ondricka','81720 Spencer Extension','986.593.4050',0.9887190245305345,6),
+('Abby Kuhn','712 McCullough Lodge','(186)964-7843 x464',0.3379281511389436,2),
+('Luz Lehner','4236 Greenfelder Road','1-104-307-1888 x6490',0.9405770869821641,9),
+('Dr. Bria Collier','8669 Terrill Flats','1-432-517-3888',0.5378711132988906,0),
+('Carson Schamberger','741 Hirthe Mountain','(625)137-8958 x005',0.9544308249486423,1),
+('Loyal Kunze','07528 Darien Springs','(643)221-2143 x27329',0.56821430119671,9),
+('Mrs. Magali Luettgen','21520 Erdman Parkway','(208)758-9726',0.3478401510714745,7),
+('Leatha Swift MD','7691 Gorczany Circles','(921)371-3994',0.8442176195237288,2),
+('Quincy Schneider','00616 Witting Landing','1-454-282-2572',0.4479675626248929,8),
+('Mrs. Chloe Bradtke','71855 Bergstrom Corner','(096)344-1022 x9838',0.03318903897393144,6),
+('Edwina Abshire','59391 Bogan Drive','791-999-4252 x4722',0.6984517075555048,6),
+('Gabrielle Crooks','4541 Dedrick Points','280.388.5827',0.16589794628394938,6),
+('Candelario Gulgowski','12840 Wilkinson Rapid','329.693.9912',0.6364999117971679,3),
+('Charlene Frami','490 Adonis Hill','1-606-317-4712 x1178',0.043637293132860466,6),
+('Meaghan Kihn','066 Muller Mission','(120)894-5013',0.3003238676923432,5),
+('Mr. Ervin Wilkinson','322 Mollie Groves','1-307-973-1325',0.9513264786796386,0),
+('Douglas Kuphal','16513 Hannah Hills','(079)690-0812',0.923106672934733,5),
+('Mr. Darien Berge','06162 Orn Avenue','820.771.9413',0.8285654892482752,8),
+('Rosalinda Hessel DVM','228 Clarabelle Ramp','738.983.5475 x259',0.44436922495763265,3),
+('Stuart Thompson','6091 Vandervort Shore','1-663-337-3283',0.6803167702001885,3),
+('Jamel Kutch I','26572 Kshlerin Manors','275.818.0694',0.9165040975974856,6);
+DROP TABLE IF EXISTS `Department`;
+CREATE TABLE `Department` (
+`Id` int(11) DEFAULT NULL,
+`Name` varchar(50) COLLATE utf8_bin DEFAULT NULL,
+KEY `Id` (`Id`),
+KEY `Name` (`Name`)
+) ENGINE=cloud DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+INSERT INTO `Department` VALUES (2,'Quality Control'),(7,'Manufacturing'),(6,'Shipping'),(8,'Maintenance'),(4,'Operations'),(0,'Research & Development'),(3,'Human Resources'),(1,'Legal'),(5,'Business Development'),(9,'Accounting');
+SELECT *
+FROM Person AS P, Department AS D
+WHERE P.Department_Id = D.Id
+ORDER BY P.Name
+LIMIT 10;
+Name	Address	Phone	Salary	Department_Id	Id	Name
+Aaliyah Cummerata	5445 Beahan Crossroad	806-811-9035 x1961	0.7558464512255089	9	9	Accounting
+Abby Kuhn	712 McCullough Lodge	(186)964-7843 x464	0.3379281511389436	2	2	Quality Control
+Abraham Doyle	7987 Mann Fort	220.254.4853 x45732	0.6359294052148822	7	7	Manufacturing
+Adrianna Schmidt	24104 Anderson Garden	1-103-955-3534	0.9957350864319396	5	5	Business Development
+Allan Reilly PhD	950 Ted Avenue	697-704-6598 x6363	0.4051977211226956	1	1	Legal
+Alta Lubowitz	85287 Jon Island	660-356-2287 x37437	0.4762146951062639	6	6	Shipping
+Alva Watsica PhD	1655 Florida Ford	(446)326-2220	0.1876923822666714	8	8	Maintenance
+Angus Towne	354 Grady Plain	710.944.1223 x5343	0.47465906496320553	3	3	Human Resources
+Anya Olson	361 Crooks Street	331.566.5601 x789	0.05255124756971119	6	6	Shipping
+Beaulah Bashirian	2461 Lynch Terrace	1-245-368-8344	0.2240325303379208	2	2	Quality Control
+SELECT *
+FROM Person AS P, Department AS D
+WHERE D.Id = P.Department_Id
+ORDER BY P.Name
+LIMIT 10;
+Name	Address	Phone	Salary	Department_Id	Id	Name
+Aaliyah Cummerata	5445 Beahan Crossroad	806-811-9035 x1961	0.7558464512255089	9	9	Accounting
+Abby Kuhn	712 McCullough Lodge	(186)964-7843 x464	0.3379281511389436	2	2	Quality Control
+Abraham Doyle	7987 Mann Fort	220.254.4853 x45732	0.6359294052148822	7	7	Manufacturing
+Adrianna Schmidt	24104 Anderson Garden	1-103-955-3534	0.9957350864319396	5	5	Business Development
+Allan Reilly PhD	950 Ted Avenue	697-704-6598 x6363	0.4051977211226956	1	1	Legal
+Alta Lubowitz	85287 Jon Island	660-356-2287 x37437	0.4762146951062639	6	6	Shipping
+Alva Watsica PhD	1655 Florida Ford	(446)326-2220	0.1876923822666714	8	8	Maintenance
+Angus Towne	354 Grady Plain	710.944.1223 x5343	0.47465906496320553	3	3	Human Resources
+Anya Olson	361 Crooks Street	331.566.5601 x789	0.05255124756971119	6	6	Shipping
+Beaulah Bashirian	2461 Lynch Terrace	1-245-368-8344	0.2240325303379208	2	2	Quality Control
+SELECT *
+FROM Person AS P INNER JOIN Department AS D
+ON P.Department_Id = D.Id
+ORDER BY P.Salary
+LIMIT 10;
+Name	Address	Phone	Salary	Department_Id	Id	Name
+Miss Fiona Flatley	7280 Bins Creek	485-617-1268 x5735	0.003363511745710368	0	0	Research & Development
+Emanuel Baumbach	45339 Mercedes Shoals	(439)505-4202	0.0041655747195396	0	0	Research & Development
+Tremaine Hickle	3813 Tevin Landing	1-624-820-6985 x642	0.008936672526874911	0	0	Research & Development
+Mrs. Chloe Bradtke	71855 Bergstrom Corner	(096)344-1022 x9838	0.03318903897393144	6	6	Shipping
+Miss Celestino Shields	44985 Madeline Plaza	812.484.0584 x963	0.033326585446425194	3	3	Human Resources
+Brent Lind	010 Grayce Trail	076.615.7029 x09840	0.03465078070014649	6	6	Shipping
+Deonte Dietrich	3862 Darrel Via	924-581-5089 x6429	0.03517758793588688	9	9	Accounting
+Joel Bradtke	397 Larson Light	(238)190-6149 x56672	0.040104606702542345	2	2	Quality Control
+Charlene Frami	490 Adonis Hill	1-606-317-4712 x1178	0.043637293132860466	6	6	Shipping
+Josie Collier	433 Rodolfo Tunnel	616-864-9799 x6817	0.0514686582240248	5	5	Business Development
+SELECT *
+FROM Person AS P LEFT JOIN Department AS D
+ON P.Department_Id = D.Id
+ORDER BY D.Id, P.Phone
+LIMIT 10;
+Name	Address	Phone	Salary	Department_Id	Id	Name
+Samantha Collier	16257 Magali Hollow	(090)856-9045 x845	0.36932356937298483	0	0	Research & Development
+Tiffany Homenick Sr.	8412 Brent Underpass	(257)883-7553	0.28892873296660426	0	0	Research & Development
+Christa Sporer	037 Roberts Greens	(301)127-8108	0.7371435011579845	0	0	Research & Development
+Emanuel Baumbach	45339 Mercedes Shoals	(439)505-4202	0.0041655747195396	0	0	Research & Development
+Miss Clifton Weimann	30888 Larson Key	1-012-585-4040	0.18107739183365656	0	0	Research & Development
+Mr. Ervin Wilkinson	322 Mollie Groves	1-307-973-1325	0.9513264786796386	0	0	Research & Development
+Gabe Kreiger	23570 Bahringer Isle	1-358-881-3403 x443	0.35682074464514235	0	0	Research & Development
+Dr. Bria Collier	8669 Terrill Flats	1-432-517-3888	0.5378711132988906	0	0	Research & Development
+Tremaine Hickle	3813 Tevin Landing	1-624-820-6985 x642	0.008936672526874911	0	0	Research & Development
+Cayla Hermiston	005 Watsica Street	1-758-722-9872 x979	0.8278284752236658	0	0	Research & Development
+DROP TABLE IF EXISTS Person;
+DROP TABLE IF EXISTS Department;

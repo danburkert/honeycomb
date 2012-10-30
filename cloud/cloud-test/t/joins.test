@@ -1,0 +1,32 @@
+--source enginetype.inc
+--source Person.inc
+--source Department.inc
+
+SELECT *
+FROM Person AS P, Department AS D
+WHERE P.Department_Id = D.Id
+ORDER BY P.Name
+LIMIT 10;
+
+SELECT *
+FROM Person AS P, Department AS D
+WHERE D.Id = P.Department_Id
+ORDER BY P.Name
+LIMIT 10;
+
+SELECT *
+FROM Person AS P INNER JOIN Department AS D
+ON P.Department_Id = D.Id
+ORDER BY P.Salary
+LIMIT 10;
+
+SELECT *
+FROM Person AS P LEFT JOIN Department AS D
+ON P.Department_Id = D.Id
+ORDER BY D.Id, P.Phone
+LIMIT 10;
+
+--disable_warnings
+DROP TABLE IF EXISTS Person;
+DROP TABLE IF EXISTS Department;
+--enable_warnings

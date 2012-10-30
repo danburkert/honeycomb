@@ -1,0 +1,19 @@
+--source enginetype.inc
+
+let $temporal_type = YEAR;
+let $val1  = '1955';
+let $val2  = '1956';
+let $val3  = '1957';
+let $val4  = '1959';
+let $val5  = '1961';
+let $val6  = '1962';
+let $val7  = '2012';
+let $val8  = '1901';
+let $val9  = '2155';
+let $val10 = '0';
+let $val11 = '69';
+let $val12 = '70';
+let $val13 = '2121';
+let $comp_val  = '1958';
+
+--source temporal_options.inc

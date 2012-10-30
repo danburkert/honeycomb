@@ -1,0 +1,14 @@
+--source enginetype.inc
+
+let $numeric_type=MEDIUMINT;
+
+let $signed_min   = -8388608;
+let $signed_mid   =  4194304;
+let $signed_max   =  8388607;
+let $unsigned_min =        0;
+let $unsigned_mid =  8388608;
+let $unsigned_max = 16777215;
+
+let $epsilon = 0;
+
+--source numeric_options.inc

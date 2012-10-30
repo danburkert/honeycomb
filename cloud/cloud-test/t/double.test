@@ -1,0 +1,17 @@
+--source enginetype.inc
+
+let $numeric_type=DOUBLE;
+
+# NOTE:  An unsigned double doesn't extend the range,
+# it just disallows negatives.
+
+let $signed_min   = -1.7976931348623157E+308;
+let $signed_mid   = -1.2345e+200;
+let $signed_max   =  1.7976931348623157E+308;
+let $unsigned_min =  0.0;
+let $unsigned_mid =  1.234567e+200;
+let $unsigned_max =  1.7976931348623157E+308;
+
+let $epsilon = 1000;
+
+--source numeric_options.inc

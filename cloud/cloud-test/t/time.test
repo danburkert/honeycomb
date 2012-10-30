@@ -1,0 +1,19 @@
+--source enginetype.inc
+
+let $temporal_type = TIME;
+let $val1  = '01:02:03';
+let $val2  = '01:02:04';
+let $val3  = '01:02:05';
+let $val4  = '01:02:07';
+let $val5  = '01:02:08';
+let $val6  = '01:02:09';
+let $val7  = '01:02:10';
+let $val8  = '00:00:00';
+let $val9  = '01:02:02';
+let $val10 = '-838:59:59';
+let $val11 = '838:59:59';
+let $val12 = '9:00:01';
+let $val13 = '03:14:07';
+let $comp_val  = '01:02:06';
+
+--source temporal_options.inc

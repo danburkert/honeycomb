@@ -1,0 +1,14 @@
+--source enginetype.inc
+
+let $numeric_type=TINYINT;
+
+let $signed_min   = -128;
+let $signed_mid   =   64;
+let $signed_max   =  127;
+let $unsigned_min =    0;
+let $unsigned_mid =  128;
+let $unsigned_max =  255;
+
+let $epsilon = 0;
+
+--source numeric_options.inc

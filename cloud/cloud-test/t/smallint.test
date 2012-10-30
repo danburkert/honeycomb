@@ -1,0 +1,14 @@
+--source enginetype.inc
+
+let $numeric_type=SMALLINT;
+
+let $signed_min   = -32768;
+let $signed_mid   =  16384;
+let $signed_max   =  32767;
+let $unsigned_min =      0;
+let $unsigned_mid =  32768;
+let $unsigned_max =  65535;
+
+let $epsilon = 0;
+
+--source numeric_options.inc
