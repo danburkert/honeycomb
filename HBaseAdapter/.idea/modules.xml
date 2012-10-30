@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/HBaseAdapter.iml" filepath="$PROJECT_DIR$/HBaseAdapter.iml" />
+      <module fileurl="file://$PROJECT_DIR$/mysqlengine.iml" filepath="$PROJECT_DIR$/mysqlengine.iml" />
     </modules>
   </component>
 </project>
