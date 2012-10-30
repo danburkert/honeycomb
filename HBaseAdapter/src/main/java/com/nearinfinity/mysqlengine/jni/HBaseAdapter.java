@@ -1,25 +1,26 @@
 package com.nearinfinity.mysqlengine.jni;
 
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.nearinfinity.hbaseclient.*;
 import com.nearinfinity.hbaseclient.strategy.*;
 import com.nearinfinity.mysqlengine.Connection;
 import com.nearinfinity.mysqlengine.scanner.HBaseResultScanner;
 import com.nearinfinity.mysqlengine.scanner.SingleResultScanner;
-import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.hbase.util.Pair;
 import org.apache.log4j.Logger;
 import org.jruby.compiler.ir.operands.Nil;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static java.text.MessageFormat.format;
 
 public class HBaseAdapter {
     private static AtomicLong connectionCounter;
@@ -31,50 +32,64 @@ public class HBaseAdapter {
     private static final long DEFAULT_WRITE_BUFFER_SIZE = 5 * 1024 * 1024;
     private static boolean isInitialized = false;
 
-    public static void initialize() {
+    public static void initialize() throws IOException {
         if (isInitialized) {
             return;
         }
+        logger.info("Static Initializer-> Begin");
+
+        //Read config options from adapter.conf
+        File source = new File("/etc/mysql/adapter.conf");
+        if (!(source.exists() && source.canRead() && source.isFile())) {
+            throw new FileNotFoundException("/etc/mysql/adapter.conf doesn't exist or cannot be read.");
+        }
+
+        Map<String, String> params = readParameters(source);
+        logger.info(format("Read in {0} parameters.", params.size()));
 
         try {
-            logger.info("Static Initializer-> Begin");
-
-            //Read config options from adapter.conf
-            Scanner confFile = new Scanner(new File("/etc/mysql/adapter.conf"));
-            Map<String, String> params = new HashMap<String, String>();
-            while (confFile.hasNextLine()) {
-                Scanner line = new Scanner(confFile.nextLine());
-                params.put(line.next(), line.next());
-            }
-
-            //Initialize class variables
             client = new HBaseClient(params.get("hbase_table_name"), params.get("zk_quorum"));
-            connectionCounter = new AtomicLong(0L);
-            clientPool = new ConcurrentHashMap<Long, Connection>();
-
-            try {
-                int cacheSize = Integer.parseInt(params.get("table_scan_cache_rows"));
-                client.setCacheSize(cacheSize);
-            } catch (NumberFormatException e) {
-                logger.info("Static Initializer-> Number of rows to cache was not provided or invalid" +
-                        " - using default of " + DEFAULT_NUM_CACHED_ROWS);
-                client.setCacheSize(DEFAULT_NUM_CACHED_ROWS);
-            }
-
-            try {
-                long writeBufferSize = Long.parseLong(params.get("write_buffer_size"));
-                client.setWriteBufferSize(writeBufferSize);
-            } catch (NumberFormatException e) {
-                logger.info("Static Initializer-> Write buffer size was not provided or invalid - using default of " + DEFAULT_WRITE_BUFFER_SIZE);
-                client.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
-            }
-
-            boolean flushChangesImmediately = Boolean.parseBoolean(params.get("flush_changes_immediately"));
-            client.setAutoFlushTables(flushChangesImmediately);
-            isInitialized = true;
-        } catch (Exception e) {
-            logger.error("Static Initializer-> Exception:", e);
+        } catch (ZooKeeperConnectionException e) {
+            logger.fatal("Could not connect to zookeeper. ", e);
+            throw e;
+        } catch (IOException e) {
+            logger.fatal("Could not create HBase client. Aborting initialization.");
+            throw e;
         }
+        logger.info("HBaseClient successfully created.");
+        connectionCounter = new AtomicLong(0L);
+        clientPool = new ConcurrentHashMap<Long, Connection>();
+
+        try {
+            int cacheSize = Integer.parseInt(params.get("table_scan_cache_rows"));
+            client.setCacheSize(cacheSize);
+        } catch (NumberFormatException e) {
+            logger.info(format("Static Initializer-> Number of rows to cache was not provided or invalid - using default of {0}", DEFAULT_NUM_CACHED_ROWS));
+            client.setCacheSize(DEFAULT_NUM_CACHED_ROWS);
+        }
+
+        try {
+            long writeBufferSize = Long.parseLong(params.get("write_buffer_size"));
+            client.setWriteBufferSize(writeBufferSize);
+        } catch (NumberFormatException e) {
+            logger.info(format("Static Initializer-> Write buffer size was not provided or invalid - using default of {0}", DEFAULT_WRITE_BUFFER_SIZE));
+            client.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
+        }
+
+        boolean flushChangesImmediately = Boolean.parseBoolean(params.get("flush_changes_immediately"));
+        client.setAutoFlushTables(flushChangesImmediately);
+        isInitialized = true;
+        logger.info("Static Initializer-> End");
+    }
+
+    private static Map<String, String> readParameters(File source) throws FileNotFoundException {
+        Scanner confFile = new Scanner(source);
+        Map<String, String> params = new HashMap<String, String>();
+        while (confFile.hasNextLine()) {
+            Scanner line = new Scanner(confFile.nextLine());
+            params.put(line.next(), line.next());
+        }
+        return params;
     }
 
     public static boolean createTable(String tableName, Map<String, ColumnMetadata> columns, TableMultipartKeys multipartKeys) throws HBaseAdapterException {
