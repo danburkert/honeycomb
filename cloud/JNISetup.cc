@@ -170,7 +170,7 @@ static char* find_java_classpath()
   FILE* config = fopen("/etc/mysql/classpath.conf", "r");
   if(config != NULL)
   {
-	Logging::info("Reading the path to HBaseAdapter jar out of /etc/mysql/classpath.conf")
+	Logging::info("Reading the path to HBaseAdapter jar out of /etc/mysql/classpath.conf");
     class_path = read_classpath_conf_file(config);
   }
   else
