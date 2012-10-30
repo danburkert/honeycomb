@@ -12,6 +12,7 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 import org.apache.log4j.Logger;
+import org.jruby.compiler.ir.operands.Nil;
 
 import java.io.File;
 import java.io.IOException;
@@ -78,6 +79,9 @@ public class HBaseAdapter {
 
     public static boolean createTable(String tableName, Map<String, ColumnMetadata> columns, TableMultipartKeys multipartKeys) throws HBaseAdapterException {
         logger.info("creatingTable-> tableName:" + tableName);
+        if(client == null) {
+            logger.info("createTable -> client is null!");
+        }
 
         try {
             client.createTableFull(tableName, columns, multipartKeys);
