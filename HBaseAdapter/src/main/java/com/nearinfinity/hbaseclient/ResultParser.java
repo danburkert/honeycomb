@@ -24,7 +24,6 @@ public class ResultParser {
     }
 
     public static Map<String, byte[]> parseDataRow(Result result, TableInfo info) {
-        //Get columns returned from Result
         Map<String, byte[]> columns = new HashMap<String, byte[]>();
         Map<byte[], byte[]> returnedColumns = result.getNoVersionMap().get(Constants.NIC);
 

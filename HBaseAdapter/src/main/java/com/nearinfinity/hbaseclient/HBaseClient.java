@@ -31,31 +31,22 @@ public class HBaseClient {
 
     private static final Logger logger = Logger.getLogger(HBaseClient.class);
 
-    public HBaseClient(String tableName, String zkQuorum) {
+    public HBaseClient(String tableName, String zkQuorum) throws IOException {
         logger.info("HBaseClient: Constructing with HBase table name: " + tableName);
         logger.info("HBaseClient: Constructing with ZK Quorum: " + zkQuorum);
 
         Configuration configuration = HBaseConfiguration.create();
         configuration.set("hbase.zookeeper.quorum", zkQuorum);
 
-        try {
-            this.admin = new HBaseAdmin(configuration);
-            this.initializeSqlTable();
+        this.admin = new HBaseAdmin(configuration);
+        this.initializeSqlTable();
+        logger.info("Sql table successfully initialized.");
 
-            this.table = new HTable(configuration, tableName);
-
-        } catch (MasterNotRunningException e) {
-            logger.error("MasterNotRunningException thrown", e);
-        } catch (ZooKeeperConnectionException e) {
-            logger.error("ZooKeeperConnectionException thrown", e);
-        } catch (IOException e) {
-            logger.error("IOException thrown", e);
-        } catch (InterruptedException e) {
-            logger.error("InterruptedException thrown", e);
-        }
+        this.table = new HTable(configuration, tableName);
+        logger.info("HTable successfully created.");
     }
 
-    private void initializeSqlTable() throws IOException, InterruptedException {
+    private void initializeSqlTable() throws IOException {
         HTableDescriptor sqlTableDescriptor;
         HColumnDescriptor nicColumn = new HColumnDescriptor(Constants.NIC);
 
@@ -84,7 +75,16 @@ public class HBaseClient {
             this.admin.enableTable(Constants.SQL);
         }
 
-        this.admin.flush(Constants.SQL);
+        try {
+            this.admin.flush(Constants.SQL);
+        } catch (InterruptedException e) {
+            logger.warn("HBaseAdmin flush was interrupted. Retrying.");
+            try {
+                this.admin.flush(Constants.SQL);
+            } catch (InterruptedException e1) {
+                throw new RuntimeException(e1);
+            }
+        }
     }
 
     private void createTable(String tableName, List<Put> puts, TableMultipartKeys multipartKeys) throws IOException {
