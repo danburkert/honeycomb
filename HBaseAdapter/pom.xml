@@ -8,6 +8,19 @@
     <artifactId>mysqlengine</artifactId>
     <version>0.1</version>
 
+    <repositories>
+        <repository>
+            <id>cloudera-releases</id>
+            <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
     <build>
         <plugins>
             <plugin>
@@ -58,13 +71,13 @@
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-common</artifactId>
-            <version>0.23.1</version>
+            <artifactId>hadoop-client</artifactId>
+            <version>0.20.2-cdh3u5</version>
         </dependency>
         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase</artifactId>
-            <version>0.94.1</version>
+            <version>0.90.6-cdh3u5</version>
         </dependency>
         <dependency>
             <groupId>log4j</groupId>
