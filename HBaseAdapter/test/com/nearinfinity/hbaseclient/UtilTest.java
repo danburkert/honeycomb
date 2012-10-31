@@ -24,7 +24,7 @@ public class UtilTest {
         Assert.assertArrayEquals(expected, result);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = IllegalStateException.class)
     public void testMergeByteArray() throws Exception {
         final byte[] first = ByteBuffer.allocate(8 * 3)
                 .putLong(1)
