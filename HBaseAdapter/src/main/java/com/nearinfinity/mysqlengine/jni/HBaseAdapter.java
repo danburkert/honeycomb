@@ -442,30 +442,33 @@ public class HBaseAdapter {
         }
     }
 
-    public static boolean isNullable(String tableName, String columnName) {
+    public static boolean isNullable(String tableName, String columnName) throws HBaseAdapterException {
         boolean result = false;
         try {
             result = client.isNullable(tableName, columnName);
         } catch (Exception e) {
             logger.error("isNullable->Exception: ", e);
+            throw new HBaseAdapterException("isNullable", e);
         }
 
         return result;
     }
 
-    public static void addIndex(String tableName, String columnsToIndex) {
+    public static void addIndex(String tableName, String columnsToIndex) throws HBaseAdapterException {
         try {
             client.addIndex(tableName, columnsToIndex);
         } catch (Exception e) {
             logger.error("addIndex->Exception: ", e);
+            throw new HBaseAdapterException("addIndex", e);
         }
     }
 
-    public static void dropIndex(String tableName, String indexToDrop) {
+    public static void dropIndex(String tableName, String indexToDrop) throws HBaseAdapterException {
         try {
             client.dropIndex(tableName, indexToDrop);
         } catch (Exception e) {
             logger.error("addIndex->Exception: ", e);
+            throw new HBaseAdapterException("dropIndex", e);
         }
     }
 }
