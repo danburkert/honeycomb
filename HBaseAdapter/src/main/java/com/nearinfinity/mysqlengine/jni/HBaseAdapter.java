@@ -10,7 +10,6 @@ import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
-import org.jruby.compiler.ir.operands.Nil;
 
 import java.io.File;
 import java.io.FileNotFoundException;
