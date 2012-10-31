@@ -193,7 +193,7 @@ void create_or_find_jvm(JavaVM** jvm)
   {
     *jvm = created_vms;
     initialize_adapter(true, *jvm, env);
-    test_jvm(false, *jvm, env);
+    test_jvm(true, *jvm, env);
   }
   else
   {
