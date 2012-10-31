@@ -35,6 +35,7 @@ public class HBaseAdapter {
         if (isInitialized) {
             return;
         }
+
         logger.info("Static Initializer-> Begin");
 
         //Read config options from adapter.conf
