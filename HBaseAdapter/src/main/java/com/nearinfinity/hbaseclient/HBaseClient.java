@@ -2,6 +2,7 @@ package com.nearinfinity.hbaseclient;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.collect.Maps;
 import com.nearinfinity.hbaseclient.strategy.PrefixScanStrategy;
 import com.nearinfinity.hbaseclient.strategy.ScanStrategy;
 import com.nearinfinity.hbaseclient.strategy.ScanStrategyInfo;
@@ -101,8 +102,8 @@ public class HBaseClient {
     }
 
     private void updateTableCacheIndex(String tableName, final byte[] bytes) {
-        tableCache.get(tableName).setTableMetadata(new HashMap<byte[], byte[]>() {{
-            put(Constants.INDEXES, bytes);
+        tableCache.get(tableName).setTableMetadata(new HashMap<String, byte[]>() {{
+            put(Constants.INDEXES_STRING, bytes);
         }});
     }
 
@@ -224,7 +225,12 @@ public class HBaseClient {
 
         rowKey = RowKeyFactory.buildTableInfoKey(tableId);
         Result tableMetadata = table.get(new Get(rowKey));
-        info.setTableMetadata(tableMetadata.getFamilyMap(Constants.NIC));
+        NavigableMap<byte[], byte[]> familyMap = tableMetadata.getFamilyMap(Constants.NIC);
+        Map<String, byte[]> stringFamily = Maps.newHashMap();
+        for (Map.Entry<byte[], byte[]> entry : familyMap.entrySet()) {
+            stringFamily.put(new String(entry.getKey()), entry.getValue());
+        }
+        info.setTableMetadata(stringFamily);
 
         tableCache.put(tableName, info);
 
@@ -248,6 +254,7 @@ public class HBaseClient {
         nameChangePut.add(Constants.NIC, to.getBytes(), Bytes.toBytes(info.getId()));
 
         this.table.put(nameChangePut);
+        this.table.flushCommits();
 
         info.setName(to);
 
@@ -579,7 +586,7 @@ public class HBaseClient {
                 try {
                     table.delete(deletes);
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    throw new RuntimeException(e);
                 }
                 return null;
             }

@@ -42,12 +42,8 @@ public class SamplingMapper extends Mapper<LongWritable, Text, ImmutableBytesWri
     public void map(LongWritable offset, Text line, Context context) throws IOException, InterruptedException {
         double coinFlip = random.nextDouble();
         if (samplePercent >= coinFlip) {
-            List<Put> puts = null;
-            try {
-                puts = BulkLoader.createPuts(line, tableInfo, columnNames, indexColumns);
-            } catch (ParseException e) {
-                LOG.error("Parse error", e);
-            }
+            List<Put> puts = BulkLoader.createPuts(line, tableInfo, columnNames, indexColumns);
+
             for (Put put : puts) {
                 byte[] row = extractReduceKey(put);
                 context.write(new ImmutableBytesWritable(row), put);

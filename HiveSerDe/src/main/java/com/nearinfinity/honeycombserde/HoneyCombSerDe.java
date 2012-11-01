@@ -21,7 +21,13 @@ public class HoneyCombSerDe implements SerDe {
     public void initialize(Configuration entries, Properties properties) throws SerDeException {
         // Retrieve HoneyComb metadata for table.
         String sqlTableName = properties.getProperty(Constants.META_TABLE_NAME);
-        HBaseClient client = new HBaseClient("sql", "localhost"); // TODO: How to get ZK Quorum and hbase table?
+        HBaseClient client; // TODO: How to get ZK Quorum and hbase table?
+        try {
+            client = new HBaseClient("sql", "localhost");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
         TableInfo info;
         try {
             info = client.getTableInfo(sqlTableName);

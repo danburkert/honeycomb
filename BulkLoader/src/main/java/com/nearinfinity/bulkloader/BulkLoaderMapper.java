@@ -25,7 +25,6 @@ class BulkLoaderMapper
 
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
-
         Configuration conf = context.getConfiguration();
 
         tableInfo = BulkLoader.extractTableInfo(conf);
