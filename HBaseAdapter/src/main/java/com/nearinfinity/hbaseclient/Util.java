@@ -20,7 +20,7 @@ public final class Util {
 
     public static byte[] mergeByteArrays(final Iterable<byte[]> pieces, final int size) {
         checkNotNull(pieces, "pieces");
-        checkArgument(size > 0, format("size must be positive. {0}", size));
+        checkArgument(size >= 0, format("size must be positive. {0}", size));
 
         int offset = 0;
         final byte[] mergedArray = new byte[size];
@@ -39,7 +39,7 @@ public final class Util {
 
     public static byte[] incrementColumn(final byte[] columnIds, final int offset) {
         checkNotNull(columnIds, "columnIds");
-        checkArgument(offset > 0, "Offset must be positive");
+        checkArgument(offset >= 0, "Offset must be positive");
         checkArgument(offset <= (columnIds.length - Bytes.SIZEOF_LONG), "offset must be less than the length of columnIds");
 
         final byte[] nextColumn = new byte[columnIds.length];

@@ -1,32 +1,33 @@
 package com.nearinfinity.hbaseclient;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
 
 public class TableInfo {
     private long id;
 
     private String name;
 
-    private final ConcurrentHashMap<String, ColumnInfo> columnNamesToInfo;
+    private final Map<String, byte[]> tableMetadata;
 
-    private final ConcurrentHashMap<Long, ColumnInfo> columnIdsToInfo;
+    private final Map<Long, String> idColumnNameMap;
 
-    private final ConcurrentHashMap<String, Long> columnNameToId;
+    private final Map<String, Long> columnNameIdMap;
 
-    private final ConcurrentHashMap<byte[], byte[]> tableMetadata;
+    private final Map<String, ColumnMetadata> metadataMap;
 
     public TableInfo(String name, long id) {
         this.name = name;
         this.id = id;
-        this.columnNamesToInfo = new ConcurrentHashMap<String, ColumnInfo>();
-        this.columnIdsToInfo = new ConcurrentHashMap<Long, ColumnInfo>();
-        this.columnNameToId = new ConcurrentHashMap<String, Long>();
-        this.tableMetadata = new ConcurrentHashMap<byte[], byte[]>();
+        this.tableMetadata = Maps.newConcurrentMap();
+        this.metadataMap = Maps.newConcurrentMap();
+        this.idColumnNameMap = Maps.newConcurrentMap();
+        this.columnNameIdMap = Maps.newConcurrentMap();
     }
 
     public long getId() {
@@ -42,52 +43,51 @@ public class TableInfo {
     }
 
     public long getColumnIdByName(String columnName) {
-        return columnNamesToInfo.get(columnName).getId();
+        return columnNameIdMap.get(columnName);
     }
 
     public String getColumnNameById(long id) {
-        return columnIdsToInfo.get(id).getName();
+        return idColumnNameMap.get(id);
     }
 
     public void addColumn(String columnName, long id, ColumnMetadata metadata) {
-        ColumnInfo info = new ColumnInfo(id, columnName, metadata);
-        columnNamesToInfo.put(columnName, info);
-        columnIdsToInfo.put(id, info);
-        columnNameToId.put(columnName, id);
+        idColumnNameMap.put(id, columnName);
+        columnNameIdMap.put(columnName, id);
+        metadataMap.put(columnName, metadata);
     }
 
     public Set<String> getColumnNames() {
-        return this.columnNamesToInfo.keySet();
+        return this.columnNameIdMap.keySet();
     }
 
-    public Set<Long> getColumnIds() {
-        return this.columnIdsToInfo.keySet();
+    public Collection<Long> getColumnIds() {
+        return this.idColumnNameMap.keySet();
     }
 
     public Map<String, Long> columnNameToIdMap() {
-        return this.columnNameToId;
+        return this.columnNameIdMap;
     }
 
-    public Map<String, Integer> columnLengthMap(){
+    public Map<String, Integer> columnLengthMap() {
         ImmutableMap.Builder<String, Integer> builder = ImmutableMap.builder();
-        for(Map.Entry<String, ColumnInfo> entry : this.columnNamesToInfo.entrySet()){
-            builder.put(entry.getKey(), entry.getValue().getMetadata().getMaxLength());
+        for (Map.Entry<String, ColumnMetadata> entry : this.metadataMap.entrySet()) {
+            builder.put(entry.getKey(), entry.getValue().getMaxLength());
         }
 
         return builder.build();
     }
 
     public ColumnType getColumnTypeByName(String columnName) {
-        ColumnInfo info = this.columnNamesToInfo.get(columnName);
+        ColumnMetadata info = this.metadataMap.get(columnName);
 
-        return ColumnType.getByValue(info.getMetadata().getType().getValue());
+        return ColumnType.getByValue(info.getType().getValue());
     }
 
     public ColumnMetadata getColumnMetadata(String columnName) {
-        return this.columnNamesToInfo.get(columnName).getMetadata();
+        return this.metadataMap.get(columnName);
     }
 
-    public Map<byte[], byte[]> tableMetadata() {
+    public Map<String, byte[]> tableMetadata() {
         return this.tableMetadata;
     }
 
@@ -102,13 +102,13 @@ public class TableInfo {
     private void copy(TableInfo tableInfo) {
         this.id = tableInfo.id;
         this.name = tableInfo.name;
-        this.columnIdsToInfo.putAll(tableInfo.columnIdsToInfo);
-        this.columnNamesToInfo.putAll(tableInfo.columnNamesToInfo);
-        this.columnNameToId.putAll(tableInfo.columnNameToId);
         this.tableMetadata.putAll(tableInfo.tableMetadata);
+        this.idColumnNameMap.putAll(tableInfo.idColumnNameMap);
+        this.columnNameIdMap.putAll(tableInfo.columnNameIdMap);
+        this.metadataMap.putAll(tableInfo.metadataMap);
     }
 
-    public void setTableMetadata(Map<byte[], byte[]> metadata) {
+    public void setTableMetadata(Map<String, byte[]> metadata) {
         tableMetadata.clear();
         tableMetadata.putAll(metadata);
     }
