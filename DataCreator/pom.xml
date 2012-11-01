@@ -8,6 +8,19 @@
     <artifactId>DataCreator</artifactId>
     <version>1.0</version>
 
+    <repositories>
+        <repository>
+            <id>cloudera-releases</id>
+            <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
     <build>
         <plugins>
             <plugin>
@@ -42,14 +55,14 @@
 
     <dependencies>
         <dependency>
-        <groupId>com.github.javafaker</groupId>
-        <artifactId>javafaker</artifactId>
-        <version>0.2</version>
-    </dependency>
+            <groupId>com.github.javafaker</groupId>
+            <artifactId>javafaker</artifactId>
+            <version>0.2</version>
+        </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-core</artifactId>
-            <version>1.0.3</version>
+            <artifactId>hadoop-client</artifactId>
+            <version>0.20.2-cdh3u5</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
