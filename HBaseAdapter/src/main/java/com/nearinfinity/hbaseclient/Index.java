@@ -62,10 +62,10 @@ public class Index {
         return Util.mergeByteArrays(pieces, size);
     }
 
-    public static List<List<String>> indexForTable(final Map<byte[], byte[]> tableMetadata) {
+    public static List<List<String>> indexForTable(final Map<String, byte[]> tableMetadata) {
         byte[] jsonBytes = null;
-        for (Map.Entry<byte[], byte[]> entry : tableMetadata.entrySet()) {
-            if (Arrays.equals(entry.getKey(), Constants.INDEXES)) {
+        for (Map.Entry<String, byte[]> entry : tableMetadata.entrySet()) {
+            if (Arrays.equals(entry.getKey().getBytes(), Constants.INDEXES)) {
                 jsonBytes = entry.getValue();
             }
         }

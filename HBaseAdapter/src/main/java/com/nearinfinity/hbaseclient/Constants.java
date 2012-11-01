@@ -25,7 +25,9 @@ public final class Constants {
 
     public static final byte[] ROW_COUNT = "RowCount".getBytes();
 
-    public static final byte[] INDEXES = "Indexes".getBytes();
+    public static final String INDEXES_STRING = "Indexes";
+
+    public static final byte[] INDEXES = INDEXES_STRING.getBytes();
 
     public static final int KEY_PART_COUNT = 4;
 }
