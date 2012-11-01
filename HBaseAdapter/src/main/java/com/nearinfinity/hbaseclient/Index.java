@@ -38,7 +38,7 @@ public class Index {
 
     private static byte[] correctColumnIdSize(final byte[] columnIds) {
         int expectedSize = Constants.KEY_PART_COUNT * Bytes.SIZEOF_LONG;
-        checkState(columnIds.length < expectedSize, format("There should never be more than %d columns indexed. Found %d columns.", expectedSize / Bytes.SIZEOF_LONG, columnIds.length / Bytes.SIZEOF_LONG));
+        checkState(columnIds.length <= expectedSize, format("There should never be more than %d columns indexed. Found %d columns.", expectedSize / Bytes.SIZEOF_LONG, columnIds.length / Bytes.SIZEOF_LONG));
 
         if (columnIds.length == expectedSize) {
             return columnIds;

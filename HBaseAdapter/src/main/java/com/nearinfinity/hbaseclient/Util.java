@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.*;
+import static java.text.MessageFormat.format;
 
 public final class Util {
     private static Type mapType = new TypeToken<Map<String, byte[]>>() {
@@ -19,13 +20,15 @@ public final class Util {
 
     public static byte[] mergeByteArrays(final Iterable<byte[]> pieces, final int size) {
         checkNotNull(pieces, "pieces");
-        checkArgument(size < 0, "size must be positive.");
+        checkArgument(size > 0, format("size must be positive. {0}", size));
 
         int offset = 0;
         final byte[] mergedArray = new byte[size];
         for (final byte[] piece : pieces) {
             int totalLength = offset + piece.length;
-            checkState(totalLength > size, "Merging byte arrays would exceed allocated size.");
+            if(totalLength > size){
+                throw new IllegalStateException(format("Merging byte arrays would exceed allocated size. Size {0}/Total {1}", size, totalLength));
+            }
 
             System.arraycopy(piece, 0, mergedArray, offset, piece.length);
             offset += piece.length;
