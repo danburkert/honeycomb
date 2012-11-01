@@ -1,6 +1,5 @@
 package com.nearinfinity.datacreator;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -18,7 +17,8 @@ import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.Scanner;
 
 public class DiasporaDataCreator extends Configured implements Tool {
     private static final DateFormat DF = new SimpleDateFormat("yyyyMMdd-HHmmss");
@@ -44,7 +44,7 @@ public class DiasporaDataCreator extends Configured implements Tool {
     private static String generateUserList(File userFile) throws IOException {
         StringBuilder sb = new StringBuilder();
 
-        Scanner scan = new Scanner(userFile);
+        Scanner scan = new Scanner(userFile);   // Format:20 DiasporaHandle
         while (scan.hasNextLine()) {
             Scanner line = new Scanner(scan.nextLine());
             sb.append(line.next());
@@ -101,11 +101,6 @@ public class DiasporaDataCreator extends Configured implements Tool {
         }
 
         System.out.println("Successfully completed job with output path: " + outputPath);
-
-        // Delete temporary output folder after completion
-//        FileSystem fileSystem = FileSystem.get(conf);
-//        fileSystem.delete(inputPath, true);
-//        fileSystem.close();
 
         return 0;
     }

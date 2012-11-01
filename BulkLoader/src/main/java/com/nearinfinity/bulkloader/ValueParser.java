@@ -13,11 +13,18 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class ValueParser {
+import static com.google.common.base.Preconditions.checkNotNull;
 
+public class ValueParser {
     public static byte[] parse(String val, ColumnMetadata meta) throws ParseException {
+        checkNotNull(val, "Should not be parsing null. Something went terribly wrong.");
+
         byte[] ret;
         ColumnType t = meta.getType();
+        if (val.length() == 0 && t != ColumnType.STRING && t != ColumnType.BINARY) {
+            return null;
+        }
+
         switch (t) {
             case LONG:
                 ret = ByteBuffer.allocate(8).putLong(Long.parseLong(val)).array();
@@ -27,25 +34,25 @@ public class ValueParser {
                 if (n.compareTo(BigInteger.ZERO) == -1) {
                     throw new IllegalArgumentException("negative value provided for unsigned column.  value: " + val);
                 }
-                ret = ByteBuffer.allocate(8).putLong(new BigInteger(val).longValue()).array();
+                ret = ByteBuffer.allocate(8).putLong(n.longValue()).array();
                 break;
             case DOUBLE:
                 ret = ByteBuffer.allocate(8).putDouble(Double.parseDouble(val)).array();
                 break;
             case DATE:
-                ret = extractDate(val,"yyyy-MM-dd",
+                ret = extractDate(val, "yyyy-MM-dd",
                         "yyyy-MM-dd",
                         "yyyy/MM/dd",
                         "yyyy.MM.dd",
                         "yyyyMMdd");
                 break;
             case TIME:
-                ret = extractDate(val,"HH:mm:ss",
+                ret = extractDate(val, "HH:mm:ss",
                         "HH:mm:ss",
                         "HHmmss");
                 break;
             case DATETIME:
-                ret = extractDate(val,"yyyy-MM-dd HH:mm:ss",
+                ret = extractDate(val, "yyyy-MM-dd HH:mm:ss",
                         "yyyy-MM-dd HH:mm:ss",
                         "yyyy/MM/dd HH:mm:ss",
                         "yyyy.MM.dd HH:mm:ss",

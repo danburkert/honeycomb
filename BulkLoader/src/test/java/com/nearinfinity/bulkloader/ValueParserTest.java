@@ -8,13 +8,6 @@ import org.junit.Test;
 
 import java.util.Arrays;
 
-/**
- * Created with IntelliJ IDEA.
- * User: dburkert
- * Date: 9/6/12
- * Time: 3:36 PM
- * To change this template use File | Settings | File Templates.
- */
 public class ValueParserTest {
     @Test
     public void testParseLong() throws Exception {
