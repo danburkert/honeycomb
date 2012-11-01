@@ -1,7 +1,19 @@
-mysql-cloud-engine
+Honeycomb
 ==================
 
-MySql storage engine for the cloud
+```
+      ,-.            __
+      \_/         __/  \__
+     {|||)<    __/  \__/  \__
+      / \     /  \__/  \__/  \
+      `-'     \__/  \__/  \__/
+              /  \__/  \__/  \
+              \__/  \__/  \__/
+                 \__/  \__/
+                    \__/
+
+```
+
 
 
 Building MySQL and Storage Engine Plugin
