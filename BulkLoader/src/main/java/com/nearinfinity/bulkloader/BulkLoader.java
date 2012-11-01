@@ -39,12 +39,15 @@ public class BulkLoader extends Configured implements Tool {
         System.exit(exitCode);
     }
 
-    public static List<Put> createPuts(Text line, TableInfo tableInfo, String[] columnNames, List<List<String>> indexColumns) throws IOException, ParseException {
+    public static List<Put> createPuts(Text line, TableInfo tableInfo, String[] columnNames,
+                                       List<List<String>> indexColumns)
+            throws IOException, ParseException {
         CSVReader reader = new CSVReader(new StringReader(line.toString()));
         String[] columnData = reader.readNext();
 
         if (columnData.length != columnNames.length) {
-            throw new IllegalStateException(format("Row has wrong number of columns. Expected %d got %d. Line: %s", columnNames.length, columnData.length, line.toString()));
+            throw new IllegalStateException(format("Row has wrong number of columns. Expected %d got %d. Line: %s",
+                    columnNames.length, columnData.length, line.toString()));
         }
 
         Map<String, byte[]> valueMap = new TreeMap<String, byte[]>();
@@ -81,8 +84,8 @@ public class BulkLoader extends Configured implements Tool {
     @Override
     public int run(String[] args) throws Exception {
         if (args.length != 3) {
-            System.err.println("Usage: com.nearinfinity.bulkloader.BulkLoader [generic arguments] <input path> <MySQL table name>" +
-                    " <comma separated MySQL column names>");
+            System.err.println("Usage: com.nearinfinity.bulkloader.BulkLoader [generic arguments]" +
+                    " <input path> <MySQL table name> <comma separated MySQL column names>");
             return -1;
         }
 
@@ -105,7 +108,8 @@ public class BulkLoader extends Configured implements Tool {
         conf.set(TableInfoPath, info.write());
     }
 
-    private static void updateConfiguration(Configuration conf, String[] args, Map<String, String> params) throws IOException {
+    private static void updateConfiguration(Configuration conf, String[] args, Map<String, String> params)
+            throws IOException {
         String inputPath = args[0];
         String sqlTable = args[1];
         String columns = args[2];
@@ -142,7 +146,8 @@ public class BulkLoader extends Configured implements Tool {
 
         LOG.info(format("HBase HFile size %s", conf.get("hbase.hregion.max.filesize")));
         LOG.info(format("Size of data to load %d", dataLength));
-        LOG.info(format("*** Expected number hfiles created: %d per reducer/%d total. ***", hfilesExpected, hfilesExpected * 3));
+        LOG.info(format("*** Expected number hfiles created: %d per reducer/%d total. ***",
+                hfilesExpected, hfilesExpected * 3));
 
         conf.setLong("hfiles_expected", hfilesExpected);
         long sampleSize = Math.round(dataLength * 0.30);
