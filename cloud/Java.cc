@@ -102,11 +102,23 @@ void print_java_exception(JNIEnv* env)
   if(env->ExceptionCheck() == JNI_TRUE)
   {
     jthrowable throwable = env->ExceptionOccurred();
-    jclass objClazz = env->GetObjectClass(throwable);
-    jmethodID methodId = env->GetMethodID(objClazz, "toString", "()Ljava/lang/String;");
-    jstring result = (jstring)env->CallObjectMethod(throwable, methodId);
+    env->ExceptionDescribe();
+    jclass objClazz = env->FindClass("java/lang/Throwable");
+
+    jclass stringwriter_class = env->FindClass("java/io/StringWriter");
+    jmethodID strwriter_ctor = env->GetMethodID(stringwriter_class, "<init>", "()V");
+    jobject str_writer = env->NewObject(stringwriter_class, strwriter_ctor);
+
+    jclass printer_class = env->FindClass("java/io/PrintWriter");
+    jmethodID printwriter_ctor = env->GetMethodID(printer_class, "<init>", "(Ljava/io/Writer;)V");
+    jobject printer = env->NewObject(printer_class, printwriter_ctor, str_writer);
+    jmethodID print_stack_trace = env->GetMethodID(objClazz, "printStackTrace", "(Ljava/io/PrintWriter;)V");
+    env->CallVoidMethod(throwable, print_stack_trace, printer);
+
+    jmethodID methodId = env->GetMethodID(stringwriter_class, "toString", "()Ljava/lang/String;");
+    jstring result = (jstring)env->CallObjectMethod(str_writer, methodId);
     const char* string = env->GetStringUTFChars(result, NULL);
-    Logging::info("Exception from java: %s", string);
+    Logging::error("Exception from java: %s", string);
     env->ReleaseStringUTFChars(result, string);
   }
 }
