@@ -874,7 +874,6 @@ int CloudHandler::write_row_helper(uchar* buf)
     }
     case MYSQL_TYPE_VARCHAR:
     case MYSQL_TYPE_VAR_STRING:
-    case MYSQL_TYPE_STRING:
     {
       char string_value_buff[field->field_length];
       String string_value(string_value_buff, sizeof(string_value_buff),
