@@ -12,12 +12,8 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
 import java.io.IOException;
-import java.text.ParseException;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
-
-import static java.lang.String.format;
 
 public class SamplingMapper extends Mapper<LongWritable, Text, ImmutableBytesWritable, Put> {
     private Random random;

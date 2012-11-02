@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.LinkedList;
 import java.util.List;
 
 class BulkLoaderMapper
