@@ -876,10 +876,13 @@ int CloudHandler::write_row_helper(uchar* buf)
     case MYSQL_TYPE_VAR_STRING:
     case MYSQL_TYPE_STRING:
     {
-      String buff; // These *do not* need to have a buffer backing them. Look at sql_string.h:164
-      field->val_str(&buff);
-      actualFieldSize = buff.length();
-      byte_val = (uchar*)buff.ptr(); // Remove the unnecessary data copying.
+      char string_value_buff[field->field_length];
+      String string_value(string_value_buff, sizeof(string_value_buff),
+          field->charset());
+      field->val_str(&string_value);
+      actualFieldSize = string_value.length();
+      byte_val = (uchar*) my_malloc(actualFieldSize, MYF(MY_WME));
+      memcpy(byte_val, string_value.ptr(), actualFieldSize);
       break;
     }
     case MYSQL_TYPE_NULL:
