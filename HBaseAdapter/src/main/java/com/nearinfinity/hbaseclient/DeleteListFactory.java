@@ -3,10 +3,7 @@ package com.nearinfinity.hbaseclient;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Result;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class DeleteListFactory {
     public static List<Delete> createDeleteRowList(UUID uuid, TableInfo info, Result result, byte[] dataRowKey, final List<List<String>> indexedKeys) {
@@ -14,7 +11,8 @@ public class DeleteListFactory {
         deleteList.add(new Delete(dataRowKey));
 
         Map<String, byte[]> values = ResultParser.parseDataRow(result, info);
-        for (String columnName : info.getColumnNames()) {
+        Set<String> columnNames = info.getColumnNames();
+        for (String columnName : columnNames) {
             ColumnMetadata metadata = info.getColumnMetadata(columnName);
             if (!values.containsKey(columnName)) {
                 values.put(columnName, new byte[metadata.getMaxLength()]);
