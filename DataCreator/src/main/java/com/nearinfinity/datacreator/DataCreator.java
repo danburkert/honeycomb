@@ -14,9 +14,6 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
-import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
-
-
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -128,7 +125,6 @@ public class DataCreator {
 
         job.setMapOutputKeyClass(Text.class);
         job.setMapOutputValueClass(Text.class);
-        TableMapReduceUtil.addDependencyJars(job);
 
         if (!job.waitForCompletion(true)) {
             System.out.println("Error in running the job!");
