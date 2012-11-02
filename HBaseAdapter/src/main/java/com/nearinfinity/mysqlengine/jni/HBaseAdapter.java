@@ -178,7 +178,7 @@ public class HBaseAdapter {
             UUID uuid = ResultParser.parseUUID(result);
 
             deleted = client.deleteRow(tableName, uuid);
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error("deleteRow-> Exception:", e);
             throw new HBaseAdapterException("deleteRow", e);
         }
