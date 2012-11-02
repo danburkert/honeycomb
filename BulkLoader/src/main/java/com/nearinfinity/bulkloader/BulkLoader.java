@@ -2,7 +2,6 @@ package com.nearinfinity.bulkloader;
 
 import au.com.bytecode.opencsv.CSVReader;
 import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.gson.JsonSyntaxException;
 import com.nearinfinity.hbaseclient.ColumnMetadata;
