@@ -2,7 +2,6 @@ package com.nearinfinity.bulkloader;
 
 import au.com.bytecode.opencsv.CSVReader;
 import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.gson.JsonSyntaxException;
 import com.nearinfinity.hbaseclient.ColumnMetadata;
@@ -127,7 +126,9 @@ public class BulkLoader extends Configured implements Tool {
         Configuration argConf = getConf();
         Configuration conf = updateConf(argConf, params, args);
 
-        LoadStrategy loadStrategy = new LoadStrategy(conf);
+        LoadStrategy loadStrategy;
+        loadStrategy = new HFilesLoadStrategy(conf);
+        //loadStrategy = new PutsLoadStrategy(conf);
         loadStrategy.load();
 
         return 0;
@@ -202,7 +203,7 @@ public class BulkLoader extends Configured implements Tool {
         LOG.info(format("*** Expected number hfiles created: {0} per reducer/{1} total. ***", hfilesExpected, hfilesExpected * 3));
 
         conf.setLong("hfiles_expected", hfilesExpected);
-        long sampleSize = Math.round(dataLength * 0.30);
+        long sampleSize = Math.round(dataLength * 0.20);
         double samplePercent = sampleSize / (float) dataLength;
         conf.setIfUnset("sample_size", Long.toString(sampleSize));
         conf.set("sample_percent", Double.toString(samplePercent));
@@ -218,7 +219,7 @@ public class BulkLoader extends Configured implements Tool {
 
         long expectedHFiles = expandedSize / hfileSize;
         long hfilesPerPartition = expectedHFiles / 3;
-        return 10 * Math.max(hfilesPerPartition, 1);
+        return Math.max(hfilesPerPartition, 1);
     }
 
     private static Map<String, String> readConfigOptions() throws FileNotFoundException {

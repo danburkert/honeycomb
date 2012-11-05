@@ -18,6 +18,7 @@ import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -192,12 +193,12 @@ public class HBaseClient {
         Get tableIdGet = new Get(RowKeyFactory.ROOT);
         Result result = table.get(tableIdGet);
         if (result.isEmpty()) {
-            throw new TableNotFoundException("SQL table " + tableName + " was not found.");
+            throw new TableNotFoundException(format("SQL table \"%s\" was not found.", tableName));
         }
 
         byte[] sqlTableBytes = result.getValue(Constants.NIC, tableName.getBytes());
         if (sqlTableBytes == null) {
-            throw new TableNotFoundException("SQL table " + tableName + " was not found.");
+            throw new TableNotFoundException(format("SQL table \"%s\" was not found.", tableName));
         }
 
         long tableId = ByteBuffer.wrap(sqlTableBytes).getLong();
