@@ -80,9 +80,9 @@ public class SamplingReducer extends TableReducer<ImmutableBytesWritable, Put, W
         byte[][] split;
         try {
             if (Bytes.compareTo(first, second) < 0) {
-                split = Bytes.split(first, second, true, 1);
+                split = Bytes.split(first, second, 1);
             } else {
-                split = Bytes.split(second, first, true, 1);
+                split = Bytes.split(second, first, 1);
             }
         } catch (IllegalArgumentException e) {
             LOG.warn(String.format("Could not find split between %s and %s", Bytes.toStringBinary(first), Bytes.toStringBinary(second)));
