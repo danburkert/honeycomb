@@ -45,6 +45,7 @@ public class SamplingReducer extends TableReducer<ImmutableBytesWritable, Put, W
         for (byte[] split : splits) {
             Put put = new Put(split).add(DUMMY_FAMILY, "spacer".getBytes(), new byte[0]);
             context.write(null, put);
+            context.progress();
         }
     }
 
@@ -53,12 +54,9 @@ public class SamplingReducer extends TableReducer<ImmutableBytesWritable, Put, W
         LOG.info(format("Adding %d extra splits to the split list.", neededSplits));
         List<byte[]> additionalSplits;
         additionalSplits = new LinkedList<byte[]>();
-        while (splits.size() < hfilesExpected) {
-            addSplits(splits.iterator(), additionalSplits, neededSplits);
-            splits.addAll(additionalSplits);
-            additionalSplits.clear();
-        }
 
+        addSplits(splits.iterator(), additionalSplits, neededSplits);
+        splits.addAll(additionalSplits);
         LOG.info(format("Total splits %d", splits.size()));
     }
 

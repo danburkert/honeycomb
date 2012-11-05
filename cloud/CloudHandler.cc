@@ -556,8 +556,8 @@ int CloudHandler::info(uint flag)
   jlong row_count = this->env->CallStaticLongMethod(adapter_class,
       get_count_method, table_name);
   stats.records = row_count;
-  if (stats.records < 2)
-    stats.records = 2;
+  if (stats.records < 100)
+    stats.records = 100;
   stats.deleted = 0;
   stats.max_data_file_length = this->max_supported_record_length();
   stats.data_file_length = stats.records * this->table->s->reclength;
@@ -862,7 +862,7 @@ int CloudHandler::write_row_helper(uchar* buf)
     case MYSQL_TYPE_TINY_BLOB:
     case MYSQL_TYPE_MEDIUM_BLOB:
     case MYSQL_TYPE_LONG_BLOB:
-    {
+    /*{
       String buff;
       field->val_str(&buff);
       actualFieldSize = buff.length();
@@ -871,15 +871,17 @@ int CloudHandler::write_row_helper(uchar* buf)
       jobject blob_object = this->env->NewObject(blob_class, blob_constructor, byte_buffer, field_name);
       java_list_insert(blob_list, blob_object, this->env);
       continue;
-    }
+    }*/
     case MYSQL_TYPE_VARCHAR:
     case MYSQL_TYPE_VAR_STRING:
-    case MYSQL_TYPE_STRING:
     {
-      String buff; // These *do not* need to have a buffer backing them. Look at sql_string.h:164
-      field->val_str(&buff);
-      actualFieldSize = buff.length();
-      byte_val = (uchar*)buff.ptr(); // Remove the unnecessary data copying.
+      char string_value_buff[field->field_length];
+      String string_value(string_value_buff, sizeof(string_value_buff),
+          field->charset());
+      field->val_str(&string_value);
+      actualFieldSize = string_value.length();
+      byte_val = (uchar*) my_malloc(actualFieldSize, MYF(MY_WME));
+      memcpy(byte_val, string_value.ptr(), actualFieldSize);
       break;
     }
     case MYSQL_TYPE_NULL:
