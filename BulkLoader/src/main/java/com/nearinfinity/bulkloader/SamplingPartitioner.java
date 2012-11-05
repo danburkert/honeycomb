@@ -20,16 +20,17 @@ public class SamplingPartitioner extends Partitioner<ImmutableBytesWritable, Put
     public int getPartition(ImmutableBytesWritable immutableBytesWritable, Put put, int numPartitions) {
         byte[] row = immutableBytesWritable.get();
         byte rowKey = row[0];
+        int partitions = 0;
         switch (rowKey) {
-            case 3:
-                return 0;
             case 4:
-                return (1 + (int) Bytes.toLong(row, 9, 8)) % numPartitions;
+                partitions = 1 + (int) Bytes.toLong(row, 9, 8);
+                break;
             case 5:
-                return (1 + columnCount + (int) Bytes.toLong(row, 9, 8)) % numPartitions;
+                partitions = 1 + columnCount + (int) Bytes.toLong(row, 9, 8);
+                break;
         }
 
-        return 0;
+        return Math.abs(partitions % numPartitions);
     }
 
     public static void setColumnCount(Configuration conf, int columnCount) {

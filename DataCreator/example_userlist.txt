@@ -1,1 +1,4 @@
 1 BobJoe
+2 Haskell
+3 Curry
+4 Lisp
