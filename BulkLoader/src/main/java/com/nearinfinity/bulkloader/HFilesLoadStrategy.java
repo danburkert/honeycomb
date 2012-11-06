@@ -130,6 +130,7 @@ public class HFilesLoadStrategy implements LoadStrategy {
         job.setNumReduceTasks(2 * columnCount + 1);
         TableMapReduceUtil.initTableReducerJob(hb_table, SamplingReducer.class, job, SamplingPartitioner.class);
         printQuorum(job);
+        LOG.info(String.format("Strategy Class: %s", HFilesLoadStrategy.class.getName()));
         job.waitForCompletion(true);
         deletePath(outputDir);
     }
@@ -150,6 +151,7 @@ public class HFilesLoadStrategy implements LoadStrategy {
         HFileOutputFormat.configureIncrementalLoad(job, table);
 
         printQuorum(job);
+        LOG.info(String.format("Strategy Class: %s", HFilesLoadStrategy.class.getName()));
         if (!job.waitForCompletion(true)) {
             LOG.fatal("*** Bulk load map reduce job failed during run. Not loading data into HBase. ***");
             System.exit(1);

@@ -1,5 +1,7 @@
 package com.nearinfinity.bulkloader;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.client.Put;
@@ -13,6 +15,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import java.io.IOException;
 
 public class PutsLoadStrategy implements LoadStrategy {
+    private static final Log LOG = LogFactory.getLog(PutsLoadStrategy.class);
     private final Configuration conf;
     private Path inputDir;
     private Path outputDir;
@@ -47,6 +50,7 @@ public class PutsLoadStrategy implements LoadStrategy {
 
         TableMapReduceUtil.initTableReducerJob(hb_table, SmallLoaderReducer.class, job, SamplingPartitioner.class);
 
+        LOG.info(String.format("Strategy Class: %s", PutsLoadStrategy.class.getName()));
         if (!job.waitForCompletion(true)) {
             System.exit(-1);
         }

@@ -23,9 +23,12 @@ public class SamplingPartitioner extends Partitioner<ImmutableBytesWritable, Put
         int partitions = 0;
         switch (rowKey) {
             case 4:
-                partitions = 1 + (int) Bytes.toLong(row, 9, 8);
+                partitions = (int) (Bytes.toLong(row, 9, 16) % numPartitions);
                 break;
             case 5:
+                partitions = 1 + (int) Bytes.toLong(row, 9, 8);
+                break;
+            case 6:
                 partitions = 1 + columnCount + (int) Bytes.toLong(row, 9, 8);
                 break;
         }
