@@ -162,6 +162,7 @@ public class BulkLoader extends Configured implements Tool {
         setupTableInfo(conf);
     }
 
+    // Looks up columns in HBase and makes sure they exist
     private static int setupColumns(Configuration conf, String[] args, String sqlTable) throws IOException {
         TableInfo info = getTableInfo(conf);
         Set<String> columnNames = info.getColumnNames();
@@ -187,6 +188,7 @@ public class BulkLoader extends Configured implements Tool {
         return columnCount;
     }
 
+    // Calculates sampling data
     private static void updateDataInfo(Configuration conf, String inputPath) throws IOException {
         FileSystem fileSystem = FileSystem.get(conf);
         ContentSummary summary = fileSystem.getContentSummary(new Path(inputPath));
