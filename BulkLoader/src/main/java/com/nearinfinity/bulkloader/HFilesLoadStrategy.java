@@ -2,13 +2,12 @@ package com.nearinfinity.bulkloader;
 
 import com.google.common.collect.Lists;
 import com.nearinfinity.hbaseclient.HBaseClient;
+import com.nearinfinity.hbaseclient.Index;
+import com.nearinfinity.hbaseclient.TableInfo;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.FileUtil;
-import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.*;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.io.hfile.CacheConfig;
@@ -17,12 +16,15 @@ import org.apache.hadoop.hbase.mapreduce.HFileOutputFormat;
 import org.apache.hadoop.hbase.mapreduce.LoadIncrementalHFiles;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -149,10 +151,11 @@ public class HFilesLoadStrategy implements LoadStrategy {
 
         printQuorum(job);
         if (!job.waitForCompletion(true)) {
-            LOG.error("*** Bulk load job failed during run. Not loading data into HBase. ***");
-            System.exit(-1);
+            LOG.fatal("*** Bulk load map reduce job failed during run. Not loading data into HBase. ***");
+            System.exit(1);
         }
 
+        LOG.info("Bulk load job completed.");
         return job;
     }
 
@@ -173,22 +176,25 @@ public class HFilesLoadStrategy implements LoadStrategy {
         }
 
         table.delete(deleteList);
+        LOG.info("Successfully deleted dummy data.");
     }
 
     private void createSplits(HBaseAdmin admin) throws IOException {
         ResultScanner splitScanner = table.getScanner("dummy".getBytes());
-        List<byte[]> splitPoints = Lists.newLinkedList();
-        List<byte[]> retrySplits = new LinkedList<byte[]>();
+        List<byte[]> splitPoints = Lists.newArrayList();
+        List<byte[]> retrySplits = Lists.newArrayList();
+        LOG.info("Retrieving the split points from HBase. (This may take a while.)");
         for (Result result : splitScanner) {
             splitPoints.add(result.getRow());
         }
 
         int size = splitPoints.size();
+        int maxSize = Math.min(conf.getInt("max.splits", size), size);
         LOG.info(format("***Total splits %d ***", size));
-        int i = 0;
-        for (byte[] result : splitPoints) {
+        for (int i = 0; i < maxSize; i++) {
+            byte[] result = splitPoints.get(i);
             try {
-                LOG.info(format("Attempting split %d of %d", i++, size));
+                LOG.info(format("Attempting split %d of %d", i, size));
                 admin.split(hb_table.getBytes(), result);
             } catch (Exception e) {
                 retrySplits.add(result);

@@ -33,8 +33,8 @@ public class SamplingMapper extends Mapper<LongWritable, Text, ImmutableBytesWri
         Configuration conf = context.getConfiguration();
 
         samplePercent = Double.parseDouble(conf.get("sample_percent"));
-        tableInfo = BulkLoader.extractTableInfo(conf);
         columnNames = conf.get("my_columns").split(",");
+        tableInfo = BulkLoader.extractTableInfo(conf);
         indexColumns = Index.indexForTable(tableInfo.tableMetadata());
     }
 
