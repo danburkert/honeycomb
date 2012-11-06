@@ -127,8 +127,8 @@ public class BulkLoader extends Configured implements Tool {
         Configuration conf = updateConf(argConf, params, args);
 
         LoadStrategy loadStrategy;
-        loadStrategy = new HFilesLoadStrategy(conf);
-        //loadStrategy = new PutsLoadStrategy(conf);
+        // loadStrategy = new HFilesLoadStrategy(conf);
+        loadStrategy = new PutsLoadStrategy(conf);
         loadStrategy.load();
 
         return 0;
@@ -171,7 +171,7 @@ public class BulkLoader extends Configured implements Tool {
         for (int x = 2; x < args.length; x++) {
             String arg = args[x];
             if (!columnNames.contains(arg)) {
-                LOG.error(format("Column {0} is not part of table {1}", arg, sqlTable));
+                LOG.fatal(format("Column {0} is not part of table {1}", arg, sqlTable));
                 failEarly = true;
                 continue;
             }
@@ -206,7 +206,7 @@ public class BulkLoader extends Configured implements Tool {
         LOG.info(format("*** Expected number hfiles created: {0} per reducer/{1} total. ***", hfilesExpected, hfilesExpected * 3));
 
         conf.setLong("hfiles_expected", hfilesExpected);
-        long sampleSize = Math.round(dataLength * 0.20);
+        long sampleSize = Math.round(dataLength * 0.10);
         double samplePercent = sampleSize / (float) dataLength;
         conf.setIfUnset("sample_size", Long.toString(sampleSize));
         conf.set("sample_percent", Double.toString(samplePercent));
