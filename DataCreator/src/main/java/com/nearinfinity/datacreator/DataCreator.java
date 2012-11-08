@@ -63,11 +63,23 @@ public class DataCreator {
         private String createData(DataType dataType) {
             String ret = null;
             switch (dataType) {
-                case NAME:
-                    ret = faker.name();
+                case FIRST_NAME:
+                    ret = faker.firstName();
+                    break;
+                case LAST_NAME:
+                    ret = faker.lastName();
                     break;
                 case ADDRESS:
                     ret = faker.streetAddress(false);
+                    break;
+                case STATE:
+                    ret = faker.stateAbbr();
+                    break;
+                case COUNTRY:
+                    ret = faker.country();
+                    break;
+                case ZIP:
+                    ret = faker.zipCode();
                     break;
                 case PHONE:
                     ret = faker.phoneNumber();
@@ -75,8 +87,8 @@ public class DataCreator {
                 case LONG:
                     ret = Long.toString(random.nextLong());
                     break;
-                case DOUBLE:
-                    ret = Double.toString(random.nextDouble());
+                case SALARY:
+                    ret = Long.toString(Math.round(random.nextDouble() * 100000));
                     break;
                 case FK:
                     ret = Integer.toString(random.nextInt(10));
