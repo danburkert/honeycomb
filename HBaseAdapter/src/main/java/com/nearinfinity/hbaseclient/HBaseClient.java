@@ -89,7 +89,9 @@ public class HBaseClient {
         }
     }
 
-    private void createTable(String tableName, List<Put> puts, TableMultipartKeys multipartKeys) throws IOException {
+    private void createTable(String tableName, List<Put> puts,
+                             TableMultipartKeys multipartKeys)
+            throws IOException {
         long tableId = table.incrementColumnValue(RowKeyFactory.ROOT, Constants.NIC, new byte[0], 1);
         tableCache.put(tableName, new TableInfo(tableName, tableId));
 
@@ -145,7 +147,9 @@ public class HBaseClient {
         }
     }
 
-    public void createTableFull(String tableName, Map<String, ColumnMetadata> columns, TableMultipartKeys multipartKeys) throws IOException {
+    public void createTableFull(String tableName, Map<String,
+            ColumnMetadata> columns, TableMultipartKeys multipartKeys)
+            throws IOException {
         //Batch put list
         List<Put> putList = new LinkedList<Put>();
 
