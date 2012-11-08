@@ -1,4 +1,4 @@
-package com.nearinfinity.MedianRegionSplitPolicy;
+package com.nearinfinity.HBaseTableCreator;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
