@@ -2,9 +2,13 @@ package com.nearinfinity.datacreator;
 
 public enum DataType {
     ADDRESS,
+    STATE,
+    COUNTRY,
+    ZIP,
     PHONE,
-    NAME,
+    LAST_NAME,
+    FIRST_NAME,
     LONG,
-    DOUBLE,
+    SALARY,
     FK
 }
