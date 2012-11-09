@@ -23,7 +23,7 @@ public class MedianSplitUtil {
      * @return
      */
     static List<Pair<byte[], Long>> sampleRegion(HRegion region) {
-        LOG.info("sampling region " + region.getRegionNameAsString());
+        LOG.info("Sampling region " + region.getRegionNameAsString());
 
         List<Pair<byte[], Long>> samples = new ArrayList<Pair<byte[], Long>>();
         for (Store store : region.getStores().values()) {
@@ -56,7 +56,7 @@ public class MedianSplitUtil {
      */
     static byte[] combineSamples(List<Pair<byte[], Long>> samples) {
 
-        LOG.info("combining " + samples.size() + " samples.");
+        LOG.info("Combining " + samples.size() + " samples");
 
         long total_weight = 0;
         int max_sample_len = 0;

@@ -2,12 +2,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.nearinfinity.MedianSplitPolicy</groupId>
+    <groupId>com.nearinfinity.MedianSplit</groupId>
     <artifactId>MedianSplitPolicy</artifactId>
     <version>0.1</version>
     <packaging>jar</packaging>
 
-    <name>MedianRegionSplitPolicy</name>
+    <name>MedianRegionSplit</name>
     <url>http://maven.apache.org</url>
 
     <properties>
