@@ -15,10 +15,10 @@ import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
+import org.apache.log4j.NDC;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.text.MessageFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -185,6 +185,7 @@ public class HBaseClient {
             return tableCache.get(tableName);
         }
 
+        String htableName = format("HTable used \"%s\"", Bytes.toString(table.getTableName()));
         if (table == null) {
             throw new IllegalStateException(format("Table %s was null. Cannot get table information from null table.", tableName));
         }
@@ -193,12 +194,12 @@ public class HBaseClient {
         Get tableIdGet = new Get(RowKeyFactory.ROOT);
         Result result = table.get(tableIdGet);
         if (result.isEmpty()) {
-            throw new TableNotFoundException(format("SQL table \"%s\" was not found.", tableName));
+            throw new TableNotFoundException(format("SQL table \"%s\" was not found. %s", tableName, htableName));
         }
 
         byte[] sqlTableBytes = result.getValue(Constants.NIC, tableName.getBytes());
         if (sqlTableBytes == null) {
-            throw new TableNotFoundException(format("SQL table \"%s\" was not found.", tableName));
+            throw new TableNotFoundException(format("SQL table \"%s\" was not found. %s", tableName, htableName));
         }
 
         long tableId = ByteBuffer.wrap(sqlTableBytes).getLong();
