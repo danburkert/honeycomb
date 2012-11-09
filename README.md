@@ -15,6 +15,16 @@ Honeycomb
 ```
 
 
+Supported Hadoop & HBase versions
+---------------------------------
+
+* Cloudera:
+      * CDH 4.1.1
+
+* Apache:
+      * Hadoop 1.0.4
+      * HBase 0.94.2
+      * Hive 0.9.0
 
 Building MySQL and Storage Engine Plugin
 ----------------------------------------
