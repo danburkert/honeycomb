@@ -10,8 +10,10 @@ import java.io.IOException;
 public class TableCreator
 {
     public static void main( String[] args ) throws IOException, InterruptedException {
-        HTableDescriptor td = new HTableDescriptor("sql");
-        td.addFamily(new HColumnDescriptor(new HColumnDescriptor("nic")));
+        String table_name = "t1";
+        String family_name = "f1";
+        HTableDescriptor td = new HTableDescriptor(table_name);
+        td.addFamily(new HColumnDescriptor(new HColumnDescriptor(family_name)));
         td.setValue("SPLIT_POLICY", "MedianRegionSplitPolicyTest");
         td.setValue(HTableDescriptor.SPLIT_POLICY, MedianRegionSplitPolicy.class.getName());
 
@@ -19,6 +21,6 @@ public class TableCreator
         configuration.set("hbase.zookeeper.quorum", "localhost");
         HBaseAdmin admin = new HBaseAdmin(configuration);
         admin.createTable(td);
-        admin.flush("sql");
+        admin.flush("t1");
     }
 }
