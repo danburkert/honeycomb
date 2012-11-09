@@ -19,7 +19,7 @@ Supported Hadoop & HBase versions
 ---------------------------------
 
 * Cloudera:
-      * CDH 4.1.2
+      * CDH 4.1.1
 
 * Apache:
       * Hadoop 1.0.4
