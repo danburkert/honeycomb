@@ -1,5 +1,6 @@
 package com.nearinfinity.bulkloader;
 
+import com.nearinfinity.hbaseclient.HBaseClient;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -54,6 +55,10 @@ public class PutsLoadStrategy implements LoadStrategy {
         if (!job.waitForCompletion(true)) {
             System.exit(-1);
         }
+
+        long count = job.getCounters().findCounter(BulkLoader.Counters.ROWS).getValue();
+        HBaseClient client = new HBaseClient(hb_table, conf.get("zk_quorum"));
+        client.incrementRowCount(conf.get("sql_table_name"), count);
 
         return job;
     }
