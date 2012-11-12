@@ -13,7 +13,7 @@ restart-mysql.sh
 *.swp
 *.reject
 /.project
-/mysql-5.5.25a/.cproject
-/mysql-5.5.25a/.project
-/mysql-5.5.25a/.settings/org.eclipse.cdt.codan.core.prefs
+/mysql-*/.cproject
+/mysql-*/.project
+/mysql-*/.settings/org.eclipse.cdt.codan.core.prefs
 /BulkLoader/input.csv
