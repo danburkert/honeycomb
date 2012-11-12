@@ -43,14 +43,14 @@ To keep CMake build files out of the git repository:
     make
     cd ../
 
-The built plugin will be at `cloud/ha_cloud.so`.
+The built plugin will be at `<mysql-cloud-engine filepath>/build/cloud/ha_cloud.so`.
 
 To compile the HBaseAdapter Jar:
 
     cd HBaseAdapter
     mvn package assembly:single
 
-The compiled JAR will be at `HBaseAdapter/target/mysqlengine-0.1-jar-with-dependencies.jar`.
+The compiled JAR will be at `<mysql-cloud-engine filepath>/build/HBaseAdapter/target/mysqlengine-0.1-jar-with-dependencies.jar`.
 
 
 Install Storage Engine Plugin
@@ -67,7 +67,7 @@ terminal:
 Create a symlink between ha_cloud.so and the compiled JAR and the plugins directory of your
 MySQL install:
 
-    ln -s <mysql-cloud-engine filepath>/cloud/ha_cloud.so $MYSQL_HOME/lib/plugin/
+    ln -s <mysql-cloud-engine filepath>/build/stoarage/cloud/ha_cloud.so $MYSQL_HOME/lib/plugin/
     ln -s <mysql-cloud-engine filepath>/HBaseAdapter/target/mysqlengine-0.1-jar-with-dependencies.jar $MYSQL_HOME/lib/plugin
 
 Symlink adapter.conf to /etc/mysql:
