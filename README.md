@@ -84,4 +84,4 @@ Test Storage Engine Plugin
 
 Make sure HBase and MySQL are running and the cloud engine is installed, then:
 
-    ./bin/run-tests.sh
+    <mysql-cloud-engine filepath>/bin/run-tests.sh
