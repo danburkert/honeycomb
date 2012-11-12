@@ -67,7 +67,7 @@ terminal:
 Create a symlink between ha_cloud.so and the compiled JAR and the plugins directory of your
 MySQL install:
 
-    ln -s <mysql-cloud-engine filepath>/build/storage/cloud/ha_cloud.so $MYSQL_HOME/lib/plugin/
+    ln -s <mysql-cloud-engine filepath>/cloud/ha_cloud.so $MYSQL_HOME/lib/plugin/
     ln -s <mysql-cloud-engine filepath>/HBaseAdapter/target/mysqlengine-0.1-jar-with-dependencies.jar $MYSQL_HOME/lib/plugin
 
 Symlink adapter.conf to /etc/mysql:
@@ -77,7 +77,7 @@ Symlink adapter.conf to /etc/mysql:
 
 Install cloud plugin tests:
 
-    ln -s <mysql-cloud-engine filepath>/mysql-5.5.25a/storage/cloud/cloud-test $MYSQL_HOME/mysql-test/suite/
+    ln -s <mysql-cloud-engine filepath>/cloud/cloud-test $MYSQL_HOME/mysql-test/suite/
 
 Test Storage Engine Plugin
 --------------------------
