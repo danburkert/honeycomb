@@ -154,7 +154,7 @@ static char* create_default_classpath()
   FILE* jar = fopen(jar_path, "r");
   if(jar == NULL)
   {
-    Logging::error("No jar classpath specified and the default jar path %s cannot be opened. Either place \"classpath.conf\" in /etc/mysql/ or create %s. Place the java classpath in classpath.conf.", class_path, class_path);
+//Logging::error("No jar classpath specified and the default jar path %s cannot be opened. Either place \"classpath.conf\" in /etc/mysql/ or create %s. Place the java classpath in classpath.conf.", class_path, class_path);
   }
   else
   {
@@ -162,7 +162,7 @@ static char* create_default_classpath()
     delete[] jar_path;
   }
 
-  char* class_path = new char[prefix_len + strlen(home) + strlen(suffix)];
+  char* class_path = new char[prefix_length + strlen(home) + strlen(suffix)];
   sprintf(jar_path, "%s%s%s", prefix, home, suffix);
 
   return class_path;
