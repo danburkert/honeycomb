@@ -39,11 +39,11 @@ To keep CMake build files out of the git repository:
 
     mkdir build
     cd build
-    cmake ../mysql-5.5.25a
+    cmake -DWITH_DEBUG=1 ../mysql-5.5.28
     make
     cd ../
 
-The built plugin will be at `mysql-5.5.25a/storage/cloud/ha_cloud.so`.
+The built plugin will be at `cloud/ha_cloud.so`.
 
 To compile the HBaseAdapter Jar:
 
