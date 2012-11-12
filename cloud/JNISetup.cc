@@ -149,9 +149,9 @@ static char* create_default_classpath()
 {
   char* home = getenv("MYSQL_HOME");
   const char* suffix = "/lib/plugin/mysqlengine-0.1-jar-with-dependencies.jar";
-  char* class_path = new char[prefix_length + strlen(home) + strlen(suffix)];
-  sprintf(class_path, "%s%s%s", prefix, home, suffix);
-  FILE* jar = fopen(class_path, "r");
+  char* jar_path = new char[strlen(home) + strlen(suffix)];
+  sprintf(jar_path, "%s%s", home, suffix);
+  FILE* jar = fopen(jar_path, "r");
   if(jar == NULL)
   {
     Logging::error("No jar classpath specified and the default jar path %s cannot be opened. Either place \"classpath.conf\" in /etc/mysql/ or create %s. Place the java classpath in classpath.conf.", class_path, class_path);
@@ -159,7 +159,11 @@ static char* create_default_classpath()
   else
   {
     fclose(jar);
+    delete[] jar_path;
   }
+
+  char* class_path = new char[prefix_len + strlen(home) + strlen(suffix)];
+  sprintf(jar_path, "%s%s%s", prefix, home, suffix);
 
   return class_path;
 }
