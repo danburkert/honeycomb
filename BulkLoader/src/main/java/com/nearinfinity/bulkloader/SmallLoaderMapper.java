@@ -35,19 +35,23 @@ public class SmallLoaderMapper extends Mapper<LongWritable, Text, ImmutableBytes
     @Override
     public void map(LongWritable offset, Text line, Context context) {
         try {
+            LOG.info("Puts creating");
             List<Put> puts = BulkLoader.createPuts(line, tableInfo, columnNames, indexColumns);
+            LOG.info("Puts created");
+            LOG.info("Puts writing");
             for (Put put : puts) {
                 context.write(new ImmutableBytesWritable(put.getRow()), put);
             }
+            LOG.info("Puts wrote");
 
             context.getCounter(BulkLoader.Counters.ROWS).increment(1);
         } catch (Exception e) {
+            LOG.info("Error:", e);
             Writer traceWriter = new StringWriter();
             PrintWriter printWriter = new PrintWriter(traceWriter);
             e.printStackTrace(printWriter);
             context.setStatus(e.getMessage() + ". See logs for details. Stack Trace: " + traceWriter.toString());
             context.getCounter(BulkLoader.Counters.FAILED_ROWS).increment(1);
-            LOG.error("Error:", e);
         }
     }
 }
