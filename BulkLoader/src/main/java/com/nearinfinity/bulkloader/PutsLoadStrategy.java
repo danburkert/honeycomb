@@ -49,7 +49,7 @@ public class PutsLoadStrategy implements LoadStrategy {
 
         FileOutputFormat.setOutputPath(job, outputDir);
 
-        TableMapReduceUtil.initTableReducerJob(hb_table, SmallLoaderReducer.class, job, PutPartitioner.class);
+        TableMapReduceUtil.initTableReducerJob(hb_table, SmallLoaderReducer.class, job);
 
         LOG.info(String.format("Strategy Class: %s", PutsLoadStrategy.class.getName()));
         if (!job.waitForCompletion(true)) {
