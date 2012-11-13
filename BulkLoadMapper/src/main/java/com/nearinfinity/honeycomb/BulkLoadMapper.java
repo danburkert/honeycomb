@@ -38,10 +38,30 @@ public class BulkLoadMapper
         csvParser = new CSVParser();
         sqlColumns = conf.getStrings("honeycomb.sql.columns");
 
+
         // Setup HBaseClient
         String zkQuorum = conf.get("zk.quorum");
         String sqlTable = conf.get("honeycomb.sql.table");
         String hbTable = conf.get("honeycomb.hb.table");
+
+        // Check that necessary configuration variables are set
+        if(zkQuorum == null) {
+            LOG.error("zk.quorum not set.  Job will fail.");
+            throw new IOException("zk.quorum not set");
+        }
+        if(sqlTable == null) {
+            LOG.error("honeycomb.sql.table not set.  Job will fail.");
+            throw new IOException("honeycomb.sql.table not set");
+        }
+        if(sqlColumns == null) {
+            LOG.error("honeycomb.sql.columns not set.  Job will fail.");
+            throw new IOException("honeycomb.sql.columns not set");
+        }
+        if(hbTable == null) {
+            LOG.error("honeycomb.hb.table not set.  Job will fail.");
+            throw new IOException("honeycomb.hb.table not set");
+        }
+
         HBaseClient client = new HBaseClient(hbTable, zkQuorum);
 
         tableInfo = client.getTableInfo(sqlTable);
