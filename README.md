@@ -39,18 +39,18 @@ To keep CMake build files out of the git repository:
 
     mkdir build
     cd build
-    cmake ../mysql-5.5.25a
+    cmake -DWITH_DEBUG=1 ../mysql-5.5.28
     make
     cd ../
 
-The built plugin will be at `mysql-5.5.25a/storage/cloud/ha_cloud.so`.
+The built plugin will be at `<mysql-cloud-engine filepath>/build/cloud/ha_cloud.so`.
 
 To compile the HBaseAdapter Jar:
 
     cd HBaseAdapter
     mvn package assembly:single
 
-The compiled JAR will be at `HBaseAdapter/target/mysqlengine-0.1-jar-with-dependencies.jar`.
+The compiled JAR will be at `<mysql-cloud-engine filepath>/build/HBaseAdapter/target/mysqlengine-0.1-jar-with-dependencies.jar`.
 
 
 Install Storage Engine Plugin
@@ -67,7 +67,7 @@ terminal:
 Create a symlink between ha_cloud.so and the compiled JAR and the plugins directory of your
 MySQL install:
 
-    ln -s <mysql-cloud-engine filepath>/build/storage/cloud/ha_cloud.so $MYSQL_HOME/lib/plugin/
+    ln -s <mysql-cloud-engine filepath>/build/stoarage/cloud/ha_cloud.so $MYSQL_HOME/lib/plugin/
     ln -s <mysql-cloud-engine filepath>/HBaseAdapter/target/mysqlengine-0.1-jar-with-dependencies.jar $MYSQL_HOME/lib/plugin
 
 Symlink adapter.conf to /etc/mysql:
@@ -77,11 +77,11 @@ Symlink adapter.conf to /etc/mysql:
 
 Install cloud plugin tests:
 
-    ln -s <mysql-cloud-engine filepath>/mysql-5.5.25a/storage/cloud/cloud-test $MYSQL_HOME/mysql-test/suite/
+    ln -s <mysql-cloud-engine filepath>/cloud/cloud-test $MYSQL_HOME/mysql-test/suite/
 
 Test Storage Engine Plugin
 --------------------------
 
 Make sure HBase and MySQL are running and the cloud engine is installed, then:
 
-    ./bin/run-tests.sh
+    <mysql-cloud-engine filepath>/bin/run-tests.sh
