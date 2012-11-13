@@ -1,4 +1,4 @@
-package com.nearinfinity.bulkloader;
+package com.nearinfinity.honeycomb;
 
 import com.nearinfinity.hbaseclient.ColumnMetadata;
 import com.nearinfinity.hbaseclient.ColumnType;
@@ -101,9 +101,9 @@ public class ValueParserTest {
         m.setType(ColumnType.DATE);
         String[] formats = {
                 "1989-05-13"
-              , "1989.05.13"
-              , "1989/05/13"
-              , "19890513"
+                , "1989.05.13"
+                , "1989/05/13"
+                , "19890513"
         };
 
         for (String format : formats) {
@@ -119,7 +119,7 @@ public class ValueParserTest {
         m.setType(ColumnType.TIME);
         String[] formats = {
                 "07:32:15"
-              , "073215"
+                , "073215"
         };
 
         for (String format : formats) {
@@ -135,9 +135,9 @@ public class ValueParserTest {
         m.setType(ColumnType.DATETIME);
         String[] formats = {
                 "1989-05-13 07:32:15"
-              , "1989.05.13 07:32:15"
-              , "1989/05/13 07:32:15"
-              , "19890513 073215"
+                , "1989.05.13 07:32:15"
+                , "1989/05/13 07:32:15"
+                , "19890513 073215"
         };
 
         for (String format : formats) {

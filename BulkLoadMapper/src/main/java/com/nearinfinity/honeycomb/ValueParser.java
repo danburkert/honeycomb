@@ -1,8 +1,8 @@
-package com.nearinfinity.bulkloader;
+package com.nearinfinity.honeycomb;
 
 import com.nearinfinity.hbaseclient.ColumnMetadata;
 import com.nearinfinity.hbaseclient.ColumnType;
-import org.apache.commons.lang3.time.DateUtils;
+import org.apache.commons.lang.time.DateUtils;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -18,21 +18,27 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class ValueParser {
     public static byte[] parse(String val, ColumnMetadata meta) throws ParseException {
         checkNotNull(val, "Should not be parsing null. Something went terribly wrong.");
+        ColumnType type = meta.getType();
 
-        byte[] ret;
-        ColumnType t = meta.getType();
-        if (val.length() == 0 && t != ColumnType.STRING && t != ColumnType.BINARY) {
-            return null;
+        if (val.length() == 0 && type != ColumnType.STRING
+                && type != ColumnType.BINARY) {
+            if(meta.isNullable()) {
+                return null;
+            } else {
+                throw new IllegalArgumentException("Attempt to parse invalid field value: " + val);
+            }
         }
 
-        switch (t) {
+        byte[] ret;
+
+        switch (type) {
             case LONG:
                 ret = ByteBuffer.allocate(8).putLong(Long.parseLong(val)).array();
                 break;
             case ULONG:
                 BigInteger n = new BigInteger(val);
                 if (n.compareTo(BigInteger.ZERO) == -1) {
-                    throw new IllegalArgumentException("negative value provided for unsigned column.  value: " + val);
+                    throw new IllegalArgumentException("negative value provided for unsigned column. value: " + val);
                 }
                 ret = ByteBuffer.allocate(8).putLong(n.longValue()).array();
                 break;
@@ -71,7 +77,9 @@ public class ValueParser {
         return ret;
     }
 
-    private static byte[] extractDate(String val, String dateFormat, String... parseFormats) throws ParseException {
+    private static byte[] extractDate(String val, String dateFormat,
+                                      String... parseFormats)
+            throws ParseException {
         Date d = DateUtils.parseDateStrictly(val, parseFormats);
         SimpleDateFormat format = new SimpleDateFormat(dateFormat);
         return format.format(d).getBytes();
@@ -94,8 +102,11 @@ public class ValueParser {
         // Bit twiddling is fun
         byte[] buff = new byte[left_bytes_len + right_bytes_len];
 
-        System.arraycopy(left_bytes, 0, buff, left_bytes_len - left_bytes.length, left_bytes.length);
-        System.arraycopy(right_bytes, 0, buff, right_bytes_len - right_bytes.length + left_bytes_len, right_bytes.length);
+        System.arraycopy(left_bytes, 0, buff,
+                left_bytes_len - left_bytes.length, left_bytes.length);
+        System.arraycopy(right_bytes, 0, buff,
+                right_bytes_len - right_bytes.length + left_bytes_len,
+                right_bytes.length);
 
         buff[0] ^= -128; // Flip first bit, 0x80
         if (is_negative) { // Flip all bits
