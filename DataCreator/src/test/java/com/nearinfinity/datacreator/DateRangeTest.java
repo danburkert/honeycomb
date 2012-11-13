@@ -1,6 +1,5 @@
-package com.nearinfinity.datacreator.test;
+package com.nearinfinity.datacreator;
 
-import com.nearinfinity.datacreator.DiasporaDataMapper;
 import org.junit.Test;
 
 import java.util.Date;

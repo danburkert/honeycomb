@@ -1,6 +1,5 @@
 package com.nearinfinity.hbaseclient;
 
-import com.nearinfinity.hbaseclient.Util;
 import org.junit.Assert;
 import org.junit.Test;
 
