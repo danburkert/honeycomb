@@ -157,7 +157,7 @@ public class BulkLoader extends Configured implements Tool {
         conf.setIfUnset("input_path", inputPath);
         int columnCount = setupColumns(conf, args, sqlTable);
 
-        SamplingPartitioner.setColumnCount(conf, columnCount);
+        PutPartitioner.setColumnCount(conf, columnCount);
         updateDataInfo(conf, inputPath);
         setupTableInfo(conf);
     }

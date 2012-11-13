@@ -8,7 +8,9 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.mapreduce.Partitioner;
 
-public class SamplingPartitioner extends Partitioner<ImmutableBytesWritable, Put> implements Configurable {
+import java.util.Random;
+
+public class PutPartitioner extends Partitioner<ImmutableBytesWritable, Put> implements Configurable {
 
     public static final String COLUMN_COUNT = "mapreduce.samplepartitioner.columncount";
 
@@ -16,24 +18,11 @@ public class SamplingPartitioner extends Partitioner<ImmutableBytesWritable, Put
 
     private Configuration conf;
 
+    private Random random;
+
     @Override
     public int getPartition(ImmutableBytesWritable immutableBytesWritable, Put put, int numPartitions) {
-        byte[] row = immutableBytesWritable.get();
-        byte rowKey = row[0];
-        int partitions = 0;
-        switch (rowKey) {
-            case 4:
-                partitions = (int) (Bytes.toLong(row, 9, 16) % numPartitions);
-                break;
-            case 5:
-                partitions = 1 + (int) Bytes.toLong(row, 9, 8);
-                break;
-            case 6:
-                partitions = 1 + columnCount + (int) Bytes.toLong(row, 9, 8);
-                break;
-        }
-
-        return Math.abs(partitions % numPartitions);
+        return this.random.nextInt(numPartitions);
     }
 
     public static void setColumnCount(Configuration conf, int columnCount) {
@@ -44,6 +33,7 @@ public class SamplingPartitioner extends Partitioner<ImmutableBytesWritable, Put
     public void setConf(Configuration conf) {
         this.conf = conf;
         this.columnCount = conf.getInt(COLUMN_COUNT, 3);
+        this.random = new Random();
     }
 
     @Override
