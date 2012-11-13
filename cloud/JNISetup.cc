@@ -163,7 +163,7 @@ static char* create_default_classpath()
   }
 
   char* class_path = new char[prefix_length + strlen(home) + strlen(suffix)];
-  sprintf(jar_path, "%s%s%s", prefix, home, suffix);
+  sprintf(class_path, "%s%s%s", prefix, home, suffix);
 
   return class_path;
 }
