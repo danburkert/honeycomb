@@ -37,7 +37,7 @@ public class PutsLoadStrategy implements LoadStrategy {
     private Job createBulkLoadJob() throws Exception {
         Job job = new Job(conf, "Import with puts from file " + inputDir.toString() + " into table " + hb_table);
 
-        int columnCount = conf.getInt(SamplingPartitioner.COLUMN_COUNT, 3);
+        int columnCount = conf.getInt(PutPartitioner.COLUMN_COUNT, 3);
         job.setJarByClass(BulkLoader.class);
         FileInputFormat.setInputPaths(job, inputDir);
         job.setInputFormatClass(TextInputFormat.class);
@@ -49,7 +49,7 @@ public class PutsLoadStrategy implements LoadStrategy {
 
         FileOutputFormat.setOutputPath(job, outputDir);
 
-        TableMapReduceUtil.initTableReducerJob(hb_table, SmallLoaderReducer.class, job, SamplingPartitioner.class);
+        TableMapReduceUtil.initTableReducerJob(hb_table, SmallLoaderReducer.class, job, PutPartitioner.class);
 
         LOG.info(String.format("Strategy Class: %s", PutsLoadStrategy.class.getName()));
         if (!job.waitForCompletion(true)) {

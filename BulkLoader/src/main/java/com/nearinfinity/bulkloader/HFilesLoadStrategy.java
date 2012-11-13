@@ -2,8 +2,6 @@ package com.nearinfinity.bulkloader;
 
 import com.google.common.collect.Lists;
 import com.nearinfinity.hbaseclient.HBaseClient;
-import com.nearinfinity.hbaseclient.Index;
-import com.nearinfinity.hbaseclient.TableInfo;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -16,15 +14,12 @@ import org.apache.hadoop.hbase.mapreduce.HFileOutputFormat;
 import org.apache.hadoop.hbase.mapreduce.LoadIncrementalHFiles;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -115,7 +110,7 @@ public class HFilesLoadStrategy implements LoadStrategy {
     private void createSamplingJob() throws IOException, ClassNotFoundException, InterruptedException {
         LOG.info("Setting up the sampling job");
 
-        int columnCount = conf.getInt(SamplingPartitioner.COLUMN_COUNT, 3);
+        int columnCount = conf.getInt(PutPartitioner.COLUMN_COUNT, 3);
         Job job = new Job(conf, "Sample data in " + inputDir.toString());
         job.setJarByClass(SamplingMapper.class);
 
@@ -128,7 +123,7 @@ public class HFilesLoadStrategy implements LoadStrategy {
         job.setMapOutputValueClass(Put.class);
         FileOutputFormat.setOutputPath(job, outputDir);
         job.setNumReduceTasks(2 * columnCount + 1);
-        TableMapReduceUtil.initTableReducerJob(hb_table, SamplingReducer.class, job, SamplingPartitioner.class);
+        TableMapReduceUtil.initTableReducerJob(hb_table, SamplingReducer.class, job, PutPartitioner.class);
         printQuorum(job);
         LOG.info(String.format("Strategy Class: %s", HFilesLoadStrategy.class.getName()));
         job.waitForCompletion(true);
