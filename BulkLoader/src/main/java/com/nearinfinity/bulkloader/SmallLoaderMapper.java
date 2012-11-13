@@ -2,6 +2,8 @@ package com.nearinfinity.bulkloader;
 
 import com.nearinfinity.hbaseclient.Index;
 import com.nearinfinity.hbaseclient.TableInfo;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
@@ -16,6 +18,7 @@ import java.io.Writer;
 import java.util.List;
 
 public class SmallLoaderMapper extends Mapper<LongWritable, Text, ImmutableBytesWritable, Put> {
+    private static final Log LOG = LogFactory.getLog(SmallLoaderMapper.class);
     private TableInfo tableInfo = null;
     private String[] columnNames = null;
     private List<List<String>> indexColumns;
@@ -44,6 +47,7 @@ public class SmallLoaderMapper extends Mapper<LongWritable, Text, ImmutableBytes
             e.printStackTrace(printWriter);
             context.setStatus(e.getMessage() + ". See logs for details. Stack Trace: " + traceWriter.toString());
             context.getCounter(BulkLoader.Counters.FAILED_ROWS).increment(1);
+            LOG.error("Error:", e);
         }
     }
 }
