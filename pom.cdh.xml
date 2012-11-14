@@ -17,7 +17,6 @@
     <modules>
         <module>HBaseAdapter</module>
         <module>DataCreator</module>
-        <module>HBaseTableCreator</module>
         <module>BulkLoadMapper</module>
         <module>MedianSplit</module>
     </modules>
@@ -30,6 +29,9 @@
                 <configuration>
                     <source>1.6</source>
                     <target>1.6</target>
+                    <excludes>
+                      <exclude>**/MedianSplitPolicy.java</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
             <plugin>
