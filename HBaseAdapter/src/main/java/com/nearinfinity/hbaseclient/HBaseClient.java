@@ -15,7 +15,6 @@ import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
-import org.apache.log4j.NDC;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

@@ -6,12 +6,8 @@ import com.nearinfinity.hbaseclient.ResultParser;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.log4j.Logger;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
