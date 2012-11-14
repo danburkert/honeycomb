@@ -180,9 +180,12 @@ static char* create_default_classpath()
 
 static char* find_java_classpath()
 {
-  char* class_path = getenv("CLASSPATH");
-  if(class_path != NULL)
+  char* env_path = getenv("CLASSPATH");
+  char* class_path;
+  if(env_path != NULL)
   {
+    class_path = new char[strlen(env_path) + 1];
+    strcpy(class_path, env_path);
     Logging::info("$CLASSPATH=%s", class_path);
     return class_path;
   }
