@@ -130,11 +130,16 @@ static char* read_classpath_conf_file(FILE* config)
   fseek(config, 0, SEEK_END);
   long size = ftell(config);
   rewind(config);
-  int class_path_length = prefix_length + size;
+  long class_path_length = prefix_length + size;
+  if (class_path_length < size)
+  {
+    Logging::error("The class path is too long. Aborting execution.");
+    abort();
+  }
+
   char* class_path = new char[class_path_length];
   strncpy(class_path, prefix, prefix_length);
   fread(class_path + prefix_length, sizeof(char), size, config);
-  fclose(config);
 
   char* newline = strpbrk(class_path, "\n\r");
   if(newline != NULL)
@@ -170,12 +175,19 @@ static char* create_default_classpath()
 
 static char* find_java_classpath()
 {
-  char* class_path;
+  char* class_path = getenv("CLASSPATH");
+  if(class_path != NULL)
+  {
+    Logging::info("$CLASSPATH=%s", class_path);
+    return class_path;
+  }
+
   FILE* config = fopen("/etc/mysql/classpath.conf", "r");
   if(config != NULL)
   {
 	Logging::info("Reading the path to HBaseAdapter jar out of /etc/mysql/classpath.conf");
     class_path = read_classpath_conf_file(config);
+    fclose(config);
   }
   else
   {
@@ -185,6 +197,28 @@ static char* find_java_classpath()
 
   Logging::info("Full class path: %s", class_path);
   return class_path;
+}
+
+static void print_java_classpath(JNIEnv* env)
+{
+  Logging::info("Java classpath:");
+  jclass classloader_class = env->FindClass("java/lang/ClassLoader");
+  jclass url_loader_class = env->FindClass("java/net/URLClassLoader");
+  jclass url_class = env->FindClass("java/net/URL");
+  jmethodID get_class_method = env->GetStaticMethodID(classloader_class, "getSystemClassLoader", "()Ljava/lang/ClassLoader;");
+  jobject class_loader = env->CallStaticObjectMethod(classloader_class, get_class_method);
+  jmethodID get_urls_method = env->GetMethodID(url_loader_class, "getURLs", "()[Ljava/net/URL;");
+  jmethodID get_file_method = env->GetMethodID(url_class, "getFile", "()Ljava/lang/String;");
+  jobjectArray urls = (jobjectArray)env->CallObjectMethod(class_loader, get_urls_method);
+  jsize length = env->GetArrayLength(urls);
+  for(jsize i = 0; i < length; i++)
+  {
+    jobject url = env->GetObjectArrayElement(urls, i);
+    jstring file = (jstring)env->CallObjectMethod(url, get_file_method);
+    const char* string = env->GetStringUTFChars(file, NULL);
+    Logging::info("%s", string);
+    env->ReleaseStringUTFChars(file, string);
+  }
 }
 
 void create_or_find_jvm(JavaVM** jvm)
@@ -213,10 +247,13 @@ void create_or_find_jvm(JavaVM** jvm)
     {
       Logging::error("*** Failed to create JVM. Error result = %d ***", result);
 	  destruct(options, option_count);
-	  return;
+	  abort();
     }
 
+    assert(jvm != NULL);
+    assert(env != NULL);
     destruct(options, option_count);
+    print_java_classpath(env);
     test_jvm(false, *jvm, env);
     initialize_adapter(false, *jvm, env);
     (*jvm)->DetachCurrentThread();

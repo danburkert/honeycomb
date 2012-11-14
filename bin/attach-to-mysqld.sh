@@ -1,2 +1,3 @@
-mysql=$(ps ax | grep "/bin/mysqld " | head -n 1 | awk '{ print $1 }')
+mysql=$(ps ax | grep "[m]ysqld " | awk '{ print $1 }')
+echo "Attaching to pid $mysql"
 sudo gdb --pid $mysql
