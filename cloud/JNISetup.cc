@@ -79,6 +79,11 @@ static JavaVMOption* initialize_options(char* class_path, int* opt_count)
 
 static void destruct(JavaVMOption* options, int option_count)
 {
+  if(options == NULL)
+  {
+    return;
+  }
+
   JavaVMOption* option = options;
   for(int i = 0 ; i < option_count ; i++)
   {
