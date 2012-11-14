@@ -97,7 +97,7 @@ jobject java_find_flag_by_name(const char *name, JNIEnv* env)
   return env->GetStaticObjectField(read_class, field_id);
 }
 
-void print_java_exception(JNIEnv* env)
+bool print_java_exception(JNIEnv* env)
 {
   if(env->ExceptionCheck() == JNI_TRUE)
   {
@@ -121,7 +121,10 @@ void print_java_exception(JNIEnv* env)
     Logging::error("Exception from java: %s", string);
     my_error(ER_MASTER, MYF(0), string);
     env->ReleaseStringUTFChars(result, string);
+    return true;
   }
+
+  return false;
 }
 
 jclass find_jni_class(const char* class_name, JNIEnv* env)
