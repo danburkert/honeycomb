@@ -444,8 +444,7 @@ jobject CloudHandler::create_multipart_keys(TABLE* table_arg)
     KEY_PART_INFO *key_part_end = key_part + pos->key_parts;
     char* name = index_name(key_part, key_part_end, pos->key_parts);
     this->env->CallVoidMethod(java_keys, add_key_method, string_to_java_string(name));
-    delete[] name;
-    name = NULL;
+    ARRAY_DELETE(name);
   }
 
   return java_keys;
@@ -969,8 +968,7 @@ int CloudHandler::prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_o
     KEY_PART_INFO *key_part_end = key_part + pos->key_parts;
     char* name = index_name(key_part, key_part_end, pos->key_parts);
     this->env->CallStaticVoidMethod(adapter, add_index_method, this->table_name(), string_to_java_string(name));
-    delete[] name;
-    name = NULL;
+    ARRAY_DELETE(name);
   }
 
   return 0;
@@ -995,7 +993,7 @@ int CloudHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, h
       int length = this->java_array_length(duplicate_value);
       char *value_key = this->char_array_from_java_bytes(duplicate_value);
       this->store_field_value(field_being_indexed, value_key, length);
-      delete[] value_key;
+      ARRAY_DELETE(value_key);
       this->failed_key_index = this->get_failed_key_index(key_part->field->field_name);
       detach_thread();
       return error;
@@ -1075,7 +1073,7 @@ int CloudHandler::index_init(uint idx, bool sorted)
   jstring java_column_names = this->string_to_java_string(column_names);
 
   this->curr_scan_id = this->env->CallStaticLongMethod(adapter_class, start_scan_method, table_name, java_column_names);
-  delete[] column_names;
+  ARRAY_DELETE(column_names);
 
   DBUG_RETURN(0);
 }
@@ -1191,7 +1189,7 @@ int CloudHandler::index_read_map(uchar * buf, const uchar * key, key_part_map ke
 
   for (int x = 0; x < index; x++)
   {
-    delete[] key_copies[x];
+    ARRAY_DELETE(key_copies[x]);
   }
 
   if (read_index_row(index_row, buf) == HA_ERR_END_OF_FILE)
