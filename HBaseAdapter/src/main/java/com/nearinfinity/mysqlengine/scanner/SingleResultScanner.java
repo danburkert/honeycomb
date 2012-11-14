@@ -7,7 +7,6 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.TreeMap;
 
 public class SingleResultScanner implements HBaseResultScanner {
     private ResultScanner scanner;
