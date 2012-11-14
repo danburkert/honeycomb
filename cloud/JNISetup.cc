@@ -27,9 +27,10 @@ static int line_length(FILE* option_config)
   return end_pos - start_pos;
 }
 
-static int option_count(FILE* option_config)
+static uint option_count(FILE* option_config)
 {
-  int ch, count = 0;
+  int ch; 
+  uint count = 0;
   do
   {
     ch = fgetc(option_config);
@@ -45,7 +46,7 @@ static int option_count(FILE* option_config)
   return count;
 }
 
-static JavaVMOption* initialize_options(char* class_path, int* opt_count)
+static JavaVMOption* initialize_options(char* class_path, uint* opt_count)
 {
   JavaVMOption* options, *option;
   FILE* option_config = fopen("/etc/mysql/jvm-options.conf", "r");
@@ -111,6 +112,10 @@ static void initialize_adapter(bool attach_thread, JavaVM* jvm, JNIEnv* env)
     attachArgs.name = NULL;
     attachArgs.group = NULL;
     jint ok = jvm->AttachCurrentThread((void**)&env, &attachArgs);
+    if (ok != 0)
+    {
+      abort_with_fatal_error("Attach to current thread failed while trying to initialize the HBaseAdapter.");
+    }
   }
 
   jclass adapter_class = find_jni_class("HBaseAdapter", env);
@@ -127,39 +132,69 @@ static void initialize_adapter(bool attach_thread, JavaVM* jvm, JNIEnv* env)
   }
 }
 
+static long file_size(FILE* file)
+{
+  fseek(file, 0, SEEK_END);
+  long size = ftell(file);
+  rewind(file);
+
+  return size;
+}
+
 static char* read_classpath_conf_file(FILE* config)
 {
-  fseek(config, 0, SEEK_END);
-  long size = ftell(config);
-  rewind(config);
-  long class_path_length = prefix_length + size;
+  char* class_path = NULL, *newline = NULL;
+  long class_path_length = 0;
+  size_t read_bytes = 0;
+  long size = file_size(config);
+  if(size <= 0)
+  {
+    goto error;
+  }
+
+  class_path_length = prefix_length + size;
   if (class_path_length < size || class_path_length < 0) // In case the path length wraps around below zero.
   {
     abort_with_fatal_error("The class path is too long.");
   }
 
-  char* class_path = new char[class_path_length];
+  class_path = new char[class_path_length];
   strncpy(class_path, prefix, prefix_length);
-  fread(class_path + prefix_length, sizeof(char), size, config);
+  read_bytes = fread(class_path + prefix_length, sizeof(char), size, config);
+  if(read_bytes == 0)
+  {
+    goto error;
+  }
 
-  char* newline = strpbrk(class_path, "\n\r");
+  newline = strpbrk(class_path, "\n\r");
   if(newline != NULL)
   {
     *newline = '\0';
   }
 
   return class_path;
+error:
+  if(class_path)
+  {
+    delete[] class_path;
+  }
+
+  return NULL;
 }
 
 static char* find_java_classpath()
 {
-  char* class_path;
+  char* class_path = NULL;
   FILE* config = fopen("/etc/mysql/classpath.conf", "r");
   if(config != NULL)
   {
 	Logging::info("Reading the path to HBaseAdapter jar out of /etc/mysql/classpath.conf");
     class_path = read_classpath_conf_file(config);
     fclose(config);
+    if (class_path == NULL)
+    {
+      abort_with_fatal_error("A class path was not found in /etc/mysql/classpath.conf");
+    }
   }
   else
   {
@@ -207,7 +242,7 @@ void create_or_find_jvm(JavaVM** jvm)
   {
     char* class_path = find_java_classpath();
     JavaVMInitArgs vm_args;
-    int option_count;
+    uint option_count;
     JavaVMOption* options = initialize_options(class_path, &option_count);
     vm_args.options = options;
     vm_args.nOptions = option_count;
