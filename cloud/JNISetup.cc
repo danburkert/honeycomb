@@ -14,23 +14,27 @@ static int line_length(FILE* option_config)
 {
   int ch;
   fpos_t start;
-  long int start_pos = ftell(option_config);
-  fgetpos(option_config, &start);
+  long int start_pos = ftell(option_config), end_pos = 0;
+  if(start_pos < 0) { goto error; }
+  if(fgetpos(option_config, &start) != 0) { goto error; }
   do
   {
     ch = fgetc(option_config);
   }
   while(ch != '\n' && ch != EOF);
-  long int end_pos = ftell(option_config);
-  fsetpos(option_config, &start);
+  end_pos = ftell(option_config);
+  if(end_pos < 0) { goto error; }
+  if(fsetpos(option_config, &start) != 0) { goto error; }
 
   return end_pos - start_pos;
+error:
+  return -1;
 }
 
-static uint option_count(FILE* option_config)
+static int option_count(FILE* option_config)
 {
   int ch; 
-  uint count = 0;
+  int count = 0;
   do
   {
     ch = fgetc(option_config);
@@ -41,9 +45,12 @@ static uint option_count(FILE* option_config)
 
   }
   while(ch != EOF);
-  rewind(option_config);
+  if (ferror(option_config)) { goto error; }
+  if (fseek(option_config, 0, SEEK_SET) != 0) { goto error; }
 
   return count;
+error:
+  return -1;
 }
 
 static JavaVMOption* initialize_options(char* class_path, uint* opt_count)
@@ -53,7 +60,14 @@ static JavaVMOption* initialize_options(char* class_path, uint* opt_count)
   *opt_count = 1;    
   if (option_config != NULL)
   {
-    *opt_count += option_count(option_config);
+    int count = option_count(option_config);
+    if(count < 0) 
+    {
+      Logging::warn("Could not successfully count the options in /etc/mysql/jvm-options.conf");
+      goto error; 
+    }
+
+    *opt_count += count;
     options = new JavaVMOption[*opt_count];
 	option = options;
     option->optionString = class_path;
@@ -62,6 +76,12 @@ static JavaVMOption* initialize_options(char* class_path, uint* opt_count)
     while(!feof(option_config))
     {
       int line_len = line_length(option_config);
+      if (line_len < 0)
+      {
+        Logging::warn("Line length returned less than 0. Read only %d of %d lines. Not reading the rest of /etc/mysql/jvm-options.conf", index, *opt_count);
+        goto error;
+      }
+
       if (line_len == 0 || index >= *opt_count)
       {
         break;
@@ -72,14 +92,18 @@ static JavaVMOption* initialize_options(char* class_path, uint* opt_count)
       fgetc(option_config); // Skip the newline
 	  option++;
     }
-
-    fclose(option_config);
   }
   else
   {
 	Logging::info("No jvm-options.conf found. Using classpath as the only jvm option.");
     options = new JavaVMOption[*opt_count];
     options->optionString = class_path;
+  }
+
+error:
+  if (option_config)
+  {
+    fclose(option_config);
   }
 
   return options;
