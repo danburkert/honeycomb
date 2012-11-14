@@ -129,8 +129,8 @@ bool print_java_exception(JNIEnv* env)
 
 jclass find_jni_class(const char* class_name, JNIEnv* env)
 {
-  char buffer[1024];
   const char* path = JNI_CLASSPATH;
+  char buffer[strlen(path) + strlen(class_name) + 1];
   sprintf(buffer, "%s%s", path, class_name);
   return env->FindClass(buffer);
 }

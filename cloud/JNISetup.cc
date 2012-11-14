@@ -119,11 +119,11 @@ static void destruct(JavaVMOption* options, int option_count)
   JavaVMOption* option = options;
   for(int i = 0 ; i < option_count ; i++)
   {
-    delete[] option->optionString;		
+    ARRAY_DELETE(option->optionString);
 	option++;
   }
 
-  delete[] options;
+  ARRAY_DELETE(options);
 }
 
 static void initialize_adapter(bool attach_thread, JavaVM* jvm, JNIEnv* env)
@@ -200,7 +200,7 @@ static char* read_classpath_conf_file(FILE* config)
 error:
   if(class_path)
   {
-    delete[] class_path;
+    ARRAY_DELETE(class_path);
   }
 
   return NULL;
