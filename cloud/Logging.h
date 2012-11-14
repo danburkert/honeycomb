@@ -11,5 +11,6 @@ namespace Logging
   void info(const char* format, ...);
   void warn(const char* format, ...);
   void error(const char* format, ...);
+  void fatal(const char* format, ...);
 }
 #endif

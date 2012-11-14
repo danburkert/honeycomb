@@ -3,6 +3,13 @@
 static const char* prefix = "-Djava.class.path=";
 static const int prefix_length = strlen(prefix);
 
+static void abort_with_fatal_error(const char* message)
+{
+    Logging::fatal(message);
+    perror(message);
+    abort();
+}
+
 static int line_length(FILE* option_config)
 {
   int ch;
@@ -107,27 +114,17 @@ static void initialize_adapter(bool attach_thread, JavaVM* jvm, JNIEnv* env)
   }
 
   jclass adapter_class = find_jni_class("HBaseAdapter", env);
-  jmethodID initialize_method = env->GetStaticMethodID(adapter_class, "initialize", "()V");
-  env->CallStaticVoidMethod(adapter_class, initialize_method);
-  print_java_exception(env);
-}
-
-static void test_jvm(bool attach_thread, JavaVM* jvm, JNIEnv* env)
-{
-#ifndef DBUG_OFF
-  if(attach_thread)
+  if (adapter_class == NULL)
   {
-    JavaVMAttachArgs attachArgs;
-    attachArgs.version = JNI_VERSION_1_6;
-    attachArgs.name = NULL;
-    attachArgs.group = NULL;
-    jint ok = jvm->AttachCurrentThread((void**)&env, &attachArgs);
+    abort_with_fatal_error("The HBaseAdapter class could not be found. Make sure classpath.conf has the correct jar path.");
   }
 
-  jclass adapter_class = find_jni_class("HBaseAdapter", env);
-  Logging::info("Adapter class %p", adapter_class);
-  print_java_exception(env);
-#endif
+  jmethodID initialize_method = env->GetStaticMethodID(adapter_class, "initialize", "()V");
+  env->CallStaticVoidMethod(adapter_class, initialize_method);
+  if (print_java_exception(env))
+  {
+    abort_with_fatal_error("Initialize failed with an error. Check HBaseAdapter.log and cloud.log for more information.");
+  }
 }
 
 static char* read_classpath_conf_file(FILE* config)
@@ -136,10 +133,9 @@ static char* read_classpath_conf_file(FILE* config)
   long size = ftell(config);
   rewind(config);
   long class_path_length = prefix_length + size;
-  if (class_path_length < size)
+  if (class_path_length < size || class_path_length < 0) // In case the path length wraps around below zero.
   {
-    Logging::error("The class path is too long. Aborting execution.");
-    abort();
+    abort_with_fatal_error("The class path is too long.");
   }
 
   char* class_path = new char[class_path_length];
@@ -155,41 +151,9 @@ static char* read_classpath_conf_file(FILE* config)
   return class_path;
 }
 
-static char* create_default_classpath()
-{
-  char* home = getenv("MYSQL_HOME");
-  const char* suffix = "/lib/plugin/mysqlengine-0.1-jar-with-dependencies.jar";
-  char* jar_path = new char[strlen(home) + strlen(suffix)];
-  sprintf(jar_path, "%s%s", home, suffix);
-  FILE* jar = fopen(jar_path, "r");
-  if(jar == NULL)
-  {
-    Logging::error("No jar classpath specified and the default jar path %s cannot be opened. Either place \"classpath.conf\" in /etc/mysql/ or create %s. Place the java classpath in classpath.conf.", jar_path, jar_path);
-  }
-  else
-  {
-    fclose(jar);
-    delete[] jar_path;
-  }
-
-  char* class_path = new char[prefix_length + strlen(home) + strlen(suffix)];
-  sprintf(class_path, "%s%s%s", prefix, home, suffix);
-
-  return class_path;
-}
-
 static char* find_java_classpath()
 {
-  char* env_path = getenv("CLASSPATH");
   char* class_path;
-  if(env_path != NULL)
-  {
-    class_path = new char[strlen(env_path) + 1];
-    strcpy(class_path, env_path);
-    Logging::info("$CLASSPATH=%s", class_path);
-    return class_path;
-  }
-
   FILE* config = fopen("/etc/mysql/classpath.conf", "r");
   if(config != NULL)
   {
@@ -199,8 +163,7 @@ static char* find_java_classpath()
   }
   else
   {
-	Logging::info("Trying to construct the default path to the HBaseAdapter jar");
-    class_path = create_default_classpath();
+    abort_with_fatal_error("Could not open \"classpath.conf\". /etc/mysql/classpath.conf must be readable.");
   }
 
   Logging::info("Full class path: %s", class_path);
@@ -239,7 +202,6 @@ void create_or_find_jvm(JavaVM** jvm)
   {
     *jvm = created_vms;
     initialize_adapter(true, *jvm, env);
-    test_jvm(true, *jvm, env);
   }
   else
   {
@@ -253,16 +215,16 @@ void create_or_find_jvm(JavaVM** jvm)
     jint result = JNI_CreateJavaVM(jvm, (void**)&env, &vm_args);
     if (result != 0)
     {
-      Logging::error("*** Failed to create JVM. Error result = %d ***", result);
-	  destruct(options, option_count);
-	  abort();
+      abort_with_fatal_error("*** Failed to create JVM. Check the Java classpath. ***");
     }
 
-    assert(jvm != NULL);
-    assert(env != NULL);
+    if (env == NULL)
+    {
+      abort_with_fatal_error("Environment was not created correctly.");
+    }
+
     destruct(options, option_count);
     print_java_classpath(env);
-    test_jvm(false, *jvm, env);
     initialize_adapter(false, *jvm, env);
     (*jvm)->DetachCurrentThread();
   }
