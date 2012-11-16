@@ -93,14 +93,14 @@ public class HBaseAdapter {
     }
 
     public static boolean createTable(String tableName, Map<String, ColumnMetadata> columns, TableMultipartKeys multipartKeys) throws HBaseAdapterException {
-        logger.info("creatingTable-> tableName:" + tableName);
-        if(client == null) {
-            logger.info("createTable -> client is null!");
-        }
-
         try {
+            logger.info("creatingTable-> tableName:" + tableName);
+            if (client == null) {
+                logger.info("createTable -> client is null!");
+            }
+
             client.createTableFull(tableName, columns, multipartKeys);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             logger.error("createTable-> Exception:", e);
             throw new HBaseAdapterException("createTable", e);
         }
