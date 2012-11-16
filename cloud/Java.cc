@@ -119,7 +119,6 @@ bool print_java_exception(JNIEnv* env)
     jstring result = (jstring)env->CallObjectMethod(str_writer, methodId);
     const char* string = env->GetStringUTFChars(result, NULL);
     Logging::error("Exception from java: %s", string);
-    my_error(ER_MASTER, MYF(0), string);
     env->ReleaseStringUTFChars(result, string);
     return true;
   }
