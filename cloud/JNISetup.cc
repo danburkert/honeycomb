@@ -1,4 +1,6 @@
 #include "JNISetup.h"
+#include <signal.h>
+#include <pthread.h>
 
 static const char* prefix = "-Djava.class.path=";
 static const int prefix_length = strlen(prefix);
@@ -251,6 +253,18 @@ static void print_java_classpath(JNIEnv* env)
   }
 }
 
+#ifdef __APPLE__
+extern bool volatile abort_loop;
+extern pthread_handler_t kill_server_thread(void *arg __attribute__((unused)));
+static void handler(int sig)
+{
+  abort_loop = true;
+  pthread_t tmp;
+  if (mysql_thread_create(0, &tmp, &connection_attrib, kill_server_thread, (void*) &sig))
+	  sql_print_error("Can't create thread to kill server");
+}
+#endif
+
 void create_or_find_jvm(JavaVM** jvm)
 {
   JavaVM* created_vms;
@@ -286,5 +300,8 @@ void create_or_find_jvm(JavaVM** jvm)
     print_java_classpath(env);
     initialize_adapter(false, *jvm, env);
     (*jvm)->DetachCurrentThread();
+#ifdef __APPLE__
+    signal(SIGTERM, handler);
+#endif
   }
 }
