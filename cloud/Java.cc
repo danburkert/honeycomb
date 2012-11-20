@@ -131,5 +131,11 @@ jclass find_jni_class(const char* class_name, JNIEnv* env)
   const char* path = JNI_CLASSPATH;
   char buffer[strlen(path) + strlen(class_name) + 1];
   sprintf(buffer, "%s%s", path, class_name);
-  return env->FindClass(buffer);
+  jclass clazz = env->FindClass(buffer);
+  if (clazz == NULL)
+  {
+    Logging::fatal("Class %s was not found.", class_name);
+  }
+
+  return clazz;
 }

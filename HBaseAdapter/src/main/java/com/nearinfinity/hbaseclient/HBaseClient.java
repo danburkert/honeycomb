@@ -6,7 +6,6 @@ import com.google.common.collect.Maps;
 import com.nearinfinity.hbaseclient.strategy.PrefixScanStrategy;
 import com.nearinfinity.hbaseclient.strategy.ScanStrategy;
 import com.nearinfinity.hbaseclient.strategy.ScanStrategyInfo;
-import com.nearinfinity.mysqlengine.jni.Blob;
 import com.nearinfinity.mysqlengine.scanner.HBaseResultScanner;
 import com.nearinfinity.mysqlengine.scanner.SingleResultScanner;
 import org.apache.hadoop.conf.Configuration;
@@ -161,15 +160,10 @@ public class HBaseClient {
         this.table.flushCommits();
     }
 
-    public void writeRow(String tableName, Map<String, byte[]> values, List<Blob> blobs) throws IOException {
+    public void writeRow(String tableName, Map<String, byte[]> values) throws IOException {
         TableInfo info = getTableInfo(tableName);
         List<List<String>> multipartIndex = Index.indexForTable(info.tableMetadata());
         List<Put> putList = PutListFactory.createDataInsertPutList(values, info, multipartIndex);
-        Put dataRow = putList.get(0);
-        for (Blob blob : blobs) {
-            writeBlob(tableName, blob.getColumnName(), blob.getData(), dataRow);
-        }
-
         this.table.put(putList);
     }
 
@@ -626,35 +620,6 @@ public class HBaseClient {
         }
 
         table.flushCommits();
-    }
-
-    private void writeBlob(String tableName, String columnName, ByteBuffer blob, Put blobPut) throws IOException {
-        // This is a nasty hack to reduce the memory used by blobs when writing to HBase.
-        TableInfo info = getTableInfo(tableName);
-        int vlength = blob.capacity();
-        long columnId = info.columnNameToIdMap().get(columnName);
-        byte[] rowKey = blobPut.getRow();
-        byte[] qualifier = Bytes.toBytes(columnId);
-        int qlength = qualifier.length;
-        int flength = Constants.NIC.length;
-        org.apache.hadoop.hbase.KeyValue keyValue = new org.apache.hadoop.hbase.KeyValue(
-                rowKey,
-                0,
-                rowKey.length,
-                Constants.NIC,
-                0,
-                flength,
-                qualifier,
-                0,
-                qlength,
-                HConstants.LATEST_TIMESTAMP,
-                org.apache.hadoop.hbase.KeyValue.Type.Put,
-                new byte[0],
-                0,
-                vlength);
-        byte[] buffer = keyValue.getBuffer();
-        blob.get(buffer, buffer.length - vlength, vlength);
-        blobPut.add(keyValue);
     }
 
     private interface IndexFunction<F1, F2, T> {

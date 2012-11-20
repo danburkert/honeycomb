@@ -159,9 +159,9 @@ public class HBaseAdapter {
         }
     }
 
-    public static boolean writeRow(String tableName, Map<String, byte[]> values, List<Blob> blobs) throws HBaseAdapterException {
+    public static boolean writeRow(String tableName, Map<String, byte[]> values) throws HBaseAdapterException {
         try {
-            client.writeRow(tableName, values, blobs);
+            client.writeRow(tableName, values);
         } catch (Exception e) {
             logger.error("writeRow-> Exception:", e);
             throw new HBaseAdapterException("writeRow", e);
