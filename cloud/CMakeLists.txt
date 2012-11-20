@@ -16,7 +16,7 @@ else()
   LINK_DIRECTORIES("${JAVA_HOME}/jre/lib/amd64")
   LINK_DIRECTORIES("${JAVA_HOME}/jre/lib/amd64/server")
   LINK_DIRECTORIES("${JAVA_HOME}/jre/lib/amd64/xawt")
-  SET(LIBS jawt jvm)
+  SET(LIBS jawt jvm jsig)
 endif()
 
 SET(cloud_PLUGIN_DYNAMIC "ha_cloud")
