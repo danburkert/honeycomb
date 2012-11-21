@@ -29,58 +29,42 @@ Supported Hadoop & HBase versions
 Building MySQL and Storage Engine Plugin
 ----------------------------------------
 
-To build the custom storage engine, MySQL must be built as well (only
-once, though).  MySQL should be made in the build/ directory so that it
-will be excluded from the repository (gitignore is set up for build/).
-Run the following commands from the root of the repository:
+First step, add the following line to your .bashrc/.zshrc and restart your terminal:
+    
+    export HONEYCOMB_HOME=<path to git repository> # Very important scripts key off this.
+    export MYSQL_HOME=<path to mysql installation>
+
+Second step, run the following:
+
+    cd $HONEYCOMB_HOME/bin
+    ./build.sh
+
+At this point, the MySQL plugin, MySQL and HBaseAdapter jar are built. MySQL will be installed into $MYSQL_HOME and should be running.
+The HBaseAdapter jar will be installed into /usr/local/lib/honeycomb along with all the dependency jars. 
+/etc/mysql/classpath.conf will be updated with the correct java path information from HBaseAdapter. /etc/mysql/adapter.conf will have the 
+settings for running the HBaseAdapter on localhost.
+
+To build and install the plugin alone:
+
+    cd $HONEYCOMB_HOME/bin
+    ./plugin-build-install.sh
+
+To build and install HBaseAdapter alone:
+
+    cd $HONEYCOMB_HOME/bin
+    ./mvn-build-install.sh
+
+The compiled JAR will be at `$HONEYCOMB_HOME/build/HBaseAdapter/target/mysqlengine-0.1-jar-with-dependencies.jar`.
 
 
-To keep CMake build files out of the git repository:
-
-    mkdir build
-    cd build
-    cmake -DWITH_DEBUG=1 ../mysql-5.5.28
-    make
-    cd ../
-
-The built plugin will be at `<mysql-cloud-engine filepath>/build/cloud/ha_cloud.so`.
-
-To compile the HBaseAdapter Jar:
-
-    cd HBaseAdapter
-    mvn package assembly:single
-
-The compiled JAR will be at `<mysql-cloud-engine filepath>/build/HBaseAdapter/target/mysqlengine-0.1-jar-with-dependencies.jar`.
-
-
-Install Storage Engine Plugin
+Testing the Storage Engine Plugin
 -----------------------------
-
-Create a shell variable called MYSQL_HOME which points to your local mysql
-install directory.  For example, if MySQL is installed from the repository
-source (after running `make install` and symlinking /usr/local/mysql-<version>/
-to /usr/local/mysql/), add the following line to your .bashrc and restart your
-terminal:
-
-    export MYSQL_HOME=/usr/local/mysql/
-
-Create a symlink between ha_cloud.so and the compiled JAR and the plugins directory of your
-MySQL install:
-
-    ln -s <mysql-cloud-engine filepath>/build/stoarage/cloud/ha_cloud.so $MYSQL_HOME/lib/plugin/
-    ln -s <mysql-cloud-engine filepath>/HBaseAdapter/target/mysqlengine-0.1-jar-with-dependencies.jar $MYSQL_HOME/lib/plugin
-
-Symlink adapter.conf to /etc/mysql:
-
-    mkdir /etc/mysql/
-    ln -s <mysql-cloud-engine filepath>/HBaseAdapter/adapter.conf /etc/mysql/
 
 Install cloud plugin tests:
 
-    ln -s <mysql-cloud-engine filepath>/cloud/cloud-test $MYSQL_HOME/mysql-test/suite/
+    ln -s $HONEYCOMB_HOME/cloud/cloud-test $MYSQL_HOME/mysql-test/suite/
 
-Test Storage Engine Plugin
---------------------------
+Note: The path to the test suite *must* be executable. An alternative is to place $HONEYCOMB_HOME/cloud/cloud-test in /tmp
 
 Make sure HBase and MySQL are running and the cloud engine is installed, then:
 
