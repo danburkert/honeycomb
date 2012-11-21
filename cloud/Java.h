@@ -19,5 +19,6 @@ jobject java_find_flag_by_name(const char *name, JNIEnv* env);
 jclass find_jni_class(const char* class_name, JNIEnv* env);
 bool print_java_exception(JNIEnv* jni_env);
 jobject create_java_boolean(jboolean boolean, JNIEnv* env);
+jmethodID find_static_method(jclass clazz, const char* name, const char* signature, JNIEnv* env);
 
 #endif
