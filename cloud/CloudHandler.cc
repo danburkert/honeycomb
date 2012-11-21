@@ -94,13 +94,11 @@ int CloudHandler::delete_all_rows()
 
   jstring tableName = this->table_name();
   jclass adapter_class = this->adapter();
-  jmethodID delete_rows_method = this->env->GetStaticMethodID(adapter_class,
-      "deleteAllRows", "(Ljava/lang/String;)I");
+  jmethodID delete_rows_method = find_static_method(adapter_class, "deleteAllRows", "(Ljava/lang/String;)I",this->env);
 
   int count = this->env->CallStaticIntMethod(adapter_class, delete_rows_method,
       tableName);
-  jmethodID set_count_method = this->env->GetStaticMethodID(adapter_class,
-      "setRowCount", "(Ljava/lang/String;J)V");
+  jmethodID set_count_method = find_static_method(adapter_class, "setRowCount", "(Ljava/lang/String;J)V",this->env);
   jstring table_name = this->table_name();
   this->env->CallStaticVoidMethod(adapter_class, set_count_method, table_name,
       (jlong) 0);
@@ -135,8 +133,7 @@ int CloudHandler::delete_table(const char *path)
       extract_table_name_from_path(path));
 
   jclass adapter_class = this->adapter();
-  jmethodID drop_table_method = this->env->GetStaticMethodID(adapter_class,
-      "dropTable", "(Ljava/lang/String;)Z");
+  jmethodID drop_table_method = find_static_method(adapter_class, "dropTable", "(Ljava/lang/String;)Z",this->env);
 
   this->env->CallStaticBooleanMethod(adapter_class, drop_table_method,
       table_name);
@@ -151,8 +148,7 @@ int CloudHandler::delete_row_helper()
   DBUG_ENTER("CloudHandler::delete_row_helper");
 
   jclass adapter_class = this->adapter();
-  jmethodID delete_row_method = this->env->GetStaticMethodID(adapter_class,
-      "deleteRow", "(J)Z");
+  jmethodID delete_row_method = find_static_method(adapter_class, "deleteRow", "(J)Z",this->env);
   jlong java_scan_id = curr_scan_id;
 
   this->env->CallStaticBooleanMethod(adapter_class, delete_row_method,
@@ -168,8 +164,7 @@ int CloudHandler::rnd_init(bool scan)
   attach_thread();
 
   jclass adapter_class = this->adapter();
-  jmethodID start_scan_method = this->env->GetStaticMethodID(adapter_class,
-      "startScan", "(Ljava/lang/String;Z)J");
+  jmethodID start_scan_method = find_static_method(adapter_class, "startScan", "(Ljava/lang/String;Z)J",this->env);
   jstring table_name = this->table_name();
 
   jboolean java_scan_boolean = scan ? JNI_TRUE : JNI_FALSE;
@@ -195,8 +190,7 @@ int CloudHandler::rnd_next(uchar *buf)
   jlong java_scan_id = curr_scan_id;
 
   jclass adapter_class = this->adapter();
-  jmethodID next_row_method = this->env->GetStaticMethodID(adapter_class,
-      "nextRow", "(J)Lcom/nearinfinity/mysqlengine/jni/Row;");
+  jmethodID next_row_method = find_static_method(adapter_class, "nextRow", "(J)Lcom/nearinfinity/mysqlengine/jni/Row;",this->env);
   jobject row = this->env->CallStaticObjectMethod(adapter_class,
       next_row_method, java_scan_id);
 
@@ -340,8 +334,7 @@ int CloudHandler::rnd_pos(uchar *buf, uchar *pos)
   MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, FALSE);
 
   jclass adapter_class = this->adapter();
-  jmethodID get_row_method = this->env->GetStaticMethodID(adapter_class,
-      "getRow", "(J[B)Lcom/nearinfinity/mysqlengine/jni/Row;");
+  jmethodID get_row_method = find_static_method(adapter_class, "getRow", "(J[B)Lcom/nearinfinity/mysqlengine/jni/Row;",this->env);
   jlong java_scan_id = curr_scan_id;
   jbyteArray uuid = convert_value_to_java_bytes(pos, 16);
   jobject row = this->env->CallStaticObjectMethod(adapter_class, get_row_method,
@@ -391,8 +384,7 @@ int CloudHandler::end_bulk_insert()
 
   this->flush_writes();
   jclass adapter_class = this->adapter();
-  jmethodID update_count_method = this->env->GetStaticMethodID(adapter_class,
-      "incrementRowCount", "(Ljava/lang/String;J)V");
+  jmethodID update_count_method = find_static_method(adapter_class, "incrementRowCount", "(Ljava/lang/String;J)V",this->env);
   jstring table_name = this->table_name();
   this->env->CallStaticVoidMethod(adapter_class, update_count_method,
       table_name, (jlong) this->rows_written);
@@ -493,8 +485,7 @@ int CloudHandler::create(const char *path, TABLE *table_arg, HA_CREATE_INFO *cre
     java_map_insert(columnMap, string_to_java_string((*field)->field_name), java_metadata_obj, this->env);
   }
 
-  jmethodID create_table_method = this->env->GetStaticMethodID(adapter_class,
-      "createTable", "(Ljava/lang/String;Ljava/util/Map;Lcom/nearinfinity/hbaseclient/TableMultipartKeys;)Z");
+  jmethodID create_table_method = find_static_method(adapter_class, "createTable", "(Ljava/lang/String;Ljava/util/Map;Lcom/nearinfinity/hbaseclient/TableMultipartKeys;)Z",this->env);
   this->env->CallStaticBooleanMethod(adapter_class, create_table_method,
       string_to_java_string(table_name), columnMap, java_keys);
   print_java_exception(this->env);
@@ -549,8 +540,7 @@ int CloudHandler::info(uint flag)
   DBUG_ENTER("CloudHandler::info");
   attach_thread();
   jclass adapter_class = this->adapter();
-  jmethodID get_count_method = this->env->GetStaticMethodID(adapter_class,
-      "getRowCount", "(Ljava/lang/String;)J");
+  jmethodID get_count_method = find_static_method(adapter_class, "getRowCount", "(Ljava/lang/String;)J",this->env);
   jstring table_name = this->table_name();
   jlong row_count = this->env->CallStaticLongMethod(adapter_class,
       get_count_method, table_name);
@@ -648,8 +638,7 @@ int CloudHandler::rename_table(const char *from, const char *to)
   attach_thread();
 
   jclass adapter_class = this->adapter();
-  jmethodID rename_table_method = this->env->GetStaticMethodID(adapter_class,
-      "renameTable", "(Ljava/lang/String;Ljava/lang/String;)V");
+  jmethodID rename_table_method = find_static_method(adapter_class, "renameTable", "(Ljava/lang/String;Ljava/lang/String;)V",this->env);
   jstring current_table_name = string_to_java_string(
       extract_table_name_from_path(from));
   jstring new_table_name = string_to_java_string(
@@ -731,7 +720,7 @@ void CloudHandler::get_auto_increment(ulonglong offset, ulonglong increment,
 {
   DBUG_ENTER("CloudHandler::get_auto_increment");
   jclass adapter_class = this->adapter();
-  jmethodID get_auto_increment_method = this->env->GetStaticMethodID(adapter_class, "getNextAutoincrementValue", "(Ljava/lang/String;Ljava/lang/String;)J");
+  jmethodID get_auto_increment_method = find_static_method(adapter_class, "getNextAutoincrementValue", "(Ljava/lang/String;Ljava/lang/String;)J",this->env);
   jlong increment_value = (jlong) this->env->CallStaticObjectMethod(adapter_class, get_auto_increment_method, this->table_name(), string_to_java_string(table->next_number_field->field_name));
   *first_value = (ulonglong)increment_value;
   *nb_reserved_values = ULONGLONG_MAX;
@@ -762,12 +751,12 @@ int CloudHandler::write_row_helper(uchar* buf)
   DBUG_ENTER("CloudHandler::write_row_helper");
 
   jclass adapter_class = this->adapter();
-  jmethodID write_row_method = this->env->GetStaticMethodID(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;)Z");
+  jmethodID write_row_method = find_static_method(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;)Z", env);
+
   jstring table_name = this->table_name();
 
   jobject java_row_map = create_java_map(this->env);
   jobject unique_values_map = create_java_map(this->env);
-  // Boilerplate stuff every engine has to do on writes
 
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
     table->timestamp_field->set_time();
@@ -906,7 +895,7 @@ int CloudHandler::write_row_helper(uchar* buf)
 bool CloudHandler::row_has_duplicate_values(jobject value_map)
 {
     jclass adapter_class = this->adapter();
-    jmethodID has_duplicates_method = this->env->GetStaticMethodID(adapter_class, "findDuplicateKey", "(Ljava/lang/String;Ljava/util/Map;)Ljava/lang/String;");
+    jmethodID has_duplicates_method = find_static_method(adapter_class, "findDuplicateKey", "(Ljava/lang/String;Ljava/util/Map;)Ljava/lang/String;", this->env);
     jstring duplicate_column = (jstring) this->env->CallStaticObjectMethod(adapter_class, has_duplicates_method, this->table_name(), value_map);
 
     bool error = duplicate_column != NULL;
@@ -946,7 +935,7 @@ int CloudHandler::prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_o
   attach_thread();
 
   jclass adapter = this->adapter();
-  jmethodID add_index_method = this->env->GetStaticMethodID(adapter, "dropIndex", "(Ljava/lang/String;Ljava/lang/String;)V");
+  jmethodID add_index_method = find_static_method(adapter, "dropIndex", "(Ljava/lang/String;Ljava/lang/String;)V",this->env);
 
   for (uint key = 0; key < keys; key++)
   {
@@ -987,7 +976,7 @@ int CloudHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, h
     }
 
     jclass adapter = this->adapter();
-    jmethodID add_index_method = this->env->GetStaticMethodID(adapter, "addIndex", "(Ljava/lang/String;Ljava/lang/String;)V");
+    jmethodID add_index_method = find_static_method(adapter, "addIndex", "(Ljava/lang/String;Ljava/lang/String;)V",this->env);
     this->env->CallStaticVoidMethod(adapter, add_index_method, this->table_name(), string_to_java_string(index_columns));
   }
 
@@ -1000,7 +989,7 @@ jbyteArray CloudHandler::find_duplicate_column_values(char* columns)
   attach_thread();
 
   jclass adapter = this->adapter();
-  jmethodID column_has_duplicates_method = this->env->GetStaticMethodID(adapter, "findDuplicateValue", "(Ljava/lang/String;Ljava/lang/String;)[B");
+  jmethodID column_has_duplicates_method = find_static_method(adapter, "findDuplicateValue", "(Ljava/lang/String;Ljava/lang/String;)[B",this->env);
   jbyteArray duplicate_value = (jbyteArray) this->env->CallStaticObjectMethod(adapter, column_has_duplicates_method, this->table_name(), string_to_java_string(columns));
 
   detach_thread();
@@ -1054,8 +1043,7 @@ int CloudHandler::index_init(uint idx, bool sorted)
   attach_thread();
 
   jclass adapter_class = this->adapter();
-  jmethodID start_scan_method = this->env->GetStaticMethodID(adapter_class,
-      "startIndexScan", "(Ljava/lang/String;Ljava/lang/String;)J");
+  jmethodID start_scan_method = find_static_method(adapter_class, "startIndexScan", "(Ljava/lang/String;Ljava/lang/String;)J",this->env);
   jstring table_name = this->table_name();
   jstring java_column_names = this->string_to_java_string(column_names);
 
@@ -1096,7 +1084,7 @@ jobject CloudHandler::create_key_value_list(int index, uint* key_sizes, uchar** 
 bool CloudHandler::is_field_nullable(const char* table_name, const char* field_name)
 {
   jclass adapter_class = this->adapter();
-  jmethodID is_nullable_method = this->env->GetStaticMethodID(adapter_class, "isNullable", "(Ljava/lang/String;Ljava/lang/String;)Z");
+  jmethodID is_nullable_method = find_static_method(adapter_class, "isNullable", "(Ljava/lang/String;Ljava/lang/String;)Z",this->env);
   return (bool)this->env->CallStaticBooleanMethod(adapter_class, is_nullable_method, string_to_java_string(table_name), string_to_java_string(field_name));
 }
 
@@ -1104,7 +1092,7 @@ int CloudHandler::index_read_map(uchar * buf, const uchar * key, key_part_map ke
 {
   DBUG_ENTER("CloudHandler::index_read_map");
   jclass adapter_class = this->adapter();
-  jmethodID index_read_method = this->env->GetStaticMethodID(adapter_class, "indexRead", "(JLjava/util/List;Lcom/nearinfinity/mysqlengine/jni/IndexReadType;)Lcom/nearinfinity/mysqlengine/jni/IndexRow;");
+  jmethodID index_read_method = find_static_method(adapter_class, "indexRead", "(JLjava/util/List;Lcom/nearinfinity/mysqlengine/jni/IndexReadType;)Lcom/nearinfinity/mysqlengine/jni/IndexRow;",this->env);
   KEY *key_info = table->s->key_info + this->active_index;
   KEY_PART_INFO *key_part = key_info->key_part;
   KEY_PART_INFO *end_key_part = key_part + key_info->key_parts;
@@ -1241,8 +1229,7 @@ ha_rows CloudHandler::estimate_rows_upper_bound()
   attach_thread();
 
   jclass adapter_class = this->adapter();
-  jmethodID get_count_method = this->env->GetStaticMethodID(adapter_class,
-      "getRowCount", "(Ljava/lang/String;)J");
+  jmethodID get_count_method = find_static_method(adapter_class, "getRowCount", "(Ljava/lang/String;)J",this->env);
   jstring table_name = this->table_name();
   jlong row_count = this->env->CallStaticLongMethod(adapter_class,
       get_count_method, table_name);
@@ -1309,8 +1296,7 @@ int CloudHandler::index_last(uchar *buf)
 jobject CloudHandler::get_next_index_row()
 {
   jclass adapter_class = this->adapter();
-  jmethodID index_next_method = this->env->GetStaticMethodID(adapter_class,
-      "nextIndexRow", "(J)Lcom/nearinfinity/mysqlengine/jni/IndexRow;");
+  jmethodID index_next_method = find_static_method(adapter_class, "nextIndexRow", "(J)Lcom/nearinfinity/mysqlengine/jni/IndexRow;",this->env);
   jlong java_scan_id = this->curr_scan_id;
   return this->env->CallStaticObjectMethod(adapter_class, index_next_method,
       java_scan_id);
@@ -1319,7 +1305,7 @@ jobject CloudHandler::get_next_index_row()
 jobject CloudHandler::get_index_row(const char* indexType)
 {
   jclass adapter_class = this->adapter();
-  jmethodID index_read_method = this->env->GetStaticMethodID(adapter_class, "indexRead", "(JLjava/util/List;Lcom/nearinfinity/mysqlengine/jni/IndexReadType;)Lcom/nearinfinity/mysqlengine/jni/IndexRow;");
+  jmethodID index_read_method = find_static_method(adapter_class, "indexRead", "(JLjava/util/List;Lcom/nearinfinity/mysqlengine/jni/IndexReadType;)Lcom/nearinfinity/mysqlengine/jni/IndexRow;",this->env);
   jlong java_scan_id = this->curr_scan_id;
   jclass read_class = find_jni_class("IndexReadType", this->env);
   jfieldID field_id = this->env->GetStaticFieldID(read_class, indexType,
@@ -1354,16 +1340,14 @@ int CloudHandler::read_index_row(jobject index_row, uchar* buf)
 void CloudHandler::flush_writes()
 {
   jclass adapter_class = this->adapter();
-  jmethodID end_write_method = this->env->GetStaticMethodID(adapter_class,
-      "flushWrites", "()V");
+  jmethodID end_write_method = find_static_method(adapter_class, "flushWrites", "()V",this->env);
   this->env->CallStaticVoidMethod(adapter_class, end_write_method);
 }
 
 void CloudHandler::end_scan()
 {
   jclass adapter_class = this->adapter();
-  jmethodID end_scan_method = this->env->GetStaticMethodID(adapter_class,
-      "endScan", "(J)V");
+  jmethodID end_scan_method = find_static_method(adapter_class, "endScan", "(J)V",this->env);
   jlong java_scan_id = curr_scan_id;
 
   this->env->CallStaticVoidMethod(adapter_class, end_scan_method, java_scan_id);

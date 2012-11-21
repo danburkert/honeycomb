@@ -31,13 +31,27 @@ namespace Logging
     }
 
     pthread_mutex_init(&log_lock, NULL);
-    log_file = fopen(path, "w");
+    bool new_file = true;
+    FILE* test = fopen(path, "r");
+    if (test != NULL)
+    {
+      new_file = false;
+      fclose(test);
+    }
+
+    log_file = fopen(path, "a");
     if (log_file == NULL)
     {
       fprintf(stderr, "Log file %s could not be opened.", path);
+      log_file = stderr;
     }
     else
     {
+      if (!new_file)
+      {
+        fprintf(log_file, "\n\n\n\n\n");
+      }
+
       fprintf(log_file, "INFO %s - Log opened\n", time_string());
     }
   }
