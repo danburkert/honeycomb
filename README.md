@@ -31,7 +31,7 @@ Building MySQL and Storage Engine Plugin
 
 First step, add the following line to your .bashrc/.zshrc and restart your terminal:
     
-    export HONEYCOMB_HOME=<path to git repository> # Very important scripts key off this.
+    export HONEYCOMB_HOME=<path to git repository> # Very important, scripts key off this.
     export MYSQL_HOME=<path to mysql installation>
 
 Second step, run the following:
@@ -42,7 +42,7 @@ Second step, run the following:
 At this point, the MySQL plugin, MySQL and HBaseAdapter jar are built. MySQL will be installed into $MYSQL_HOME and should be running.
 The HBaseAdapter jar will be installed into /usr/local/lib/honeycomb along with all the dependency jars. 
 /etc/mysql/classpath.conf will be updated with the correct java path information from HBaseAdapter. /etc/mysql/adapter.conf will have the 
-settings for running the HBaseAdapter on localhost.
+settings for running the HBaseAdapter on localhost. The honeycomb plugin has been installed in MySQL.
 
 To build and install the plugin alone:
 
@@ -64,7 +64,7 @@ Install cloud plugin tests:
 
     ln -s $HONEYCOMB_HOME/cloud/cloud-test $MYSQL_HOME/mysql-test/suite/
 
-Note: The path to the test suite *must* be executable. An alternative is to place $HONEYCOMB_HOME/cloud/cloud-test in /tmp
+Note: The path to the test suite *must* be executable. An alternative is to place `$HONEYCOMB_HOME/cloud/cloud-test in /tmp`
 
 Make sure HBase and MySQL are running and the cloud engine is installed, then:
 
