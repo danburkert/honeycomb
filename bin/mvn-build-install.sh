@@ -32,3 +32,15 @@ chmod a+x $honeycomb_lib/*.jar
 echo "Setting up the classpath.conf file with the complete classpath."
 create_classpath=$($HONEYCOMB_HOME/bin/create-classpath.rb $honeycomb_lib)
 echo $create_classpath | sudo tee /etc/mysql/classpath.conf > /dev/null
+
+adapter_conf=/etc/mysql/adapter.conf
+if [ ! -e $adapter_conf ]
+then
+  echo "Creating the adapter.conf from the repository."
+  sudo cp $HONEYCOMB_HOME/HBaseAdapter/adapter.conf $adapter_conf
+
+  _zk_quorum=localhost
+  read -p "Setup Zookeeper Quorum [$_zk_quorum]:" zk_quorum
+  zk_quorum=${zk_quorum:-$_zk_quorum}
+  sudo perl -pi -w -e "s/^zk_quorum (\w)$/zk_quorum $zk_quorum/g;" $adapter_conf
+fi
