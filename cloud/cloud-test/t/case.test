@@ -1,7 +1,9 @@
+--source enginetype.inc
 DROP TABLE IF EXISTS lowercase;
 DROP TABLE IF EXISTS uppercase;
 
-CREATE TABLE lowercase (lower int, UPPER int) engine=cloud;
+eval CREATE TABLE lowercase (lower int, UPPER int)
+  ENGINE=$engine_type;
 INSERT INTO lowercase VALUES (1, 2);
 INSERT INTO lOwErCaSe VALUES (3, 4);
 INSERT INTO LoWeRcAsE VALUES (5, 6);
@@ -12,7 +14,8 @@ SELECT LoWeR, uPpEr FROM lOweRCAse ORDER BY LoWer;
 SELECT LOWER, upper FROM lowercase ORDER BY LOWER;
 SELECT LOWER, upper FROM LOWERCASE ORDER BY loWeR;
 
-CREATE TABLE UPPERCASE (lower int, UPPER int) engine=cloud;
+eval CREATE TABLE UPPERCASE (lower int, UPPER int)
+  ENGINE=$engine_type;
 INSERT INTO uPpErCaSe VALUES (1, 2);
 INSERT INTO UpPeRcAsE VALUES (3, 4);
 INSERT INTO uppercase VALUES (5, 6);
@@ -30,13 +33,13 @@ DELETE FROM lOWErCasE WHERE LoWeR > 3 AND upper = 6;
 SELECT * FROM LOWERCASE ORDER BY LoWeR;
 
 --error 1050
-CREATE TABLE LOWERCASE (lower int, UPPER int) engine=cloud;
+eval CREATE TABLE LOWERCASE (lower int, UPPER int) engine=$engine_type;
 --error 1050
-CREATE TABLE uppercase (lower int, UPPER int) engine=cloud;
+eval CREATE TABLE uppercase (lower int, UPPER int) engine=$engine_type;
 --error 1050
-CREATE TABLE lOwERCAse (lower int, UPPER int) engine=cloud;
+eval CREATE TABLE lOwERCAse (lower int, UPPER int) engine=$engine_type;
 --error 1050
-CREATE TABLE UPpeRcASe (lower int, UPPER int) engine=cloud;
+eval CREATE TABLE UPpeRcASe (lower int, UPPER int) engine=$engine_type;
 
 DROP TABLE IF EXISTS lowercase;
 DROP TABLE IF EXISTS uppercase;

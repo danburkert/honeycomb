@@ -1,3 +1,4 @@
+--source enginetype.inc
 ### Table creation should fail if encoding or collation is wrong on string types
 
 let $type=CHAR;
