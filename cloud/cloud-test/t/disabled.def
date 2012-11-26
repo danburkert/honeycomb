@@ -21,3 +21,4 @@ joins :
 group_by :
 case :
 autoincrement :
+primary_key :
