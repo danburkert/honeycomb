@@ -1,6 +1,6 @@
 #include "Java.h"
+#include "Macros.h"
 
-#define JNI_CLASSPATH "com/nearinfinity/mysqlengine/jni/"
 #define MAP_CLASS "java/util/TreeMap"
 #define LIST_CLASS "java/util/LinkedList"
 
@@ -59,7 +59,7 @@ jboolean java_map_is_empty(jobject java_map, JNIEnv* env)
 
 jobject find_flag_to_java(enum ha_rkey_function find_flag, JNIEnv* env)
 {
-  const char* index_type_path = "Lcom/nearinfinity/mysqlengine/jni/IndexReadType;";
+  const char* index_type_path = "L" MYSQLENGINE "IndexReadType;";
   jclass read_class = find_jni_class("IndexReadType", env);
   jfieldID field_id;
   if (find_flag == HA_READ_KEY_EXACT)
@@ -93,7 +93,7 @@ jobject find_flag_to_java(enum ha_rkey_function find_flag, JNIEnv* env)
 jobject java_find_flag_by_name(const char *name, JNIEnv* env)
 {
   jclass read_class = find_jni_class("IndexReadType", env);
-  jfieldID field_id = env->GetStaticFieldID(read_class, name, "Lcom/nearinfinity/mysqlengine/jni/IndexReadType;");
+  jfieldID field_id = env->GetStaticFieldID(read_class, name, "L" MYSQLENGINE "IndexReadType;");
   return env->GetStaticObjectField(read_class, field_id);
 }
 
@@ -128,7 +128,7 @@ bool print_java_exception(JNIEnv* env)
 
 jclass find_jni_class(const char* class_name, JNIEnv* env)
 {
-  const char* path = JNI_CLASSPATH;
+  const char* path = MYSQLENGINE;
   char buffer[strlen(path) + strlen(class_name) + 1];
   sprintf(buffer, "%s%s", path, class_name);
   jclass clazz = env->FindClass(buffer);
