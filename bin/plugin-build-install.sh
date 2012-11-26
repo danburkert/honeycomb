@@ -51,7 +51,7 @@ then
   popd
 fi
 
-link=$MYSQL_HOME/lib/plugin/ha_cloud.so 
+link=$MYSQL_HOME/lib/plugin/ha_cloud.so
 target=$HONEYCOMB_HOME/build/storage/cloud/ha_cloud.so
 if [ ! -h $link ]
 then

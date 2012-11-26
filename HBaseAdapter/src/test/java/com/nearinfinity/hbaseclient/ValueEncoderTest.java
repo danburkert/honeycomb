@@ -1,5 +1,9 @@
 package com.nearinfinity.hbaseclient;
 
+import com.nearinfinity.honeycomb.hbaseclient.ColumnMetadata;
+import com.nearinfinity.honeycomb.hbaseclient.ColumnType;
+import com.nearinfinity.honeycomb.hbaseclient.TableInfo;
+import com.nearinfinity.honeycomb.hbaseclient.ValueEncoder;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;

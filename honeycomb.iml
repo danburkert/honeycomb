@@ -5,14 +5,6 @@
     <output-test url="file://$MODULE_DIR$/target/test-classes" />
     <exclude-output />
     <content url="file://$MODULE_DIR$">
-      <excludeFolder url="file://$MODULE_DIR$/.idea" />
-      <excludeFolder url="file://$MODULE_DIR$/BulkLoader" />
-      <excludeFolder url="file://$MODULE_DIR$/HiveSerDe" />
-      <excludeFolder url="file://$MODULE_DIR$/bin" />
-      <excludeFolder url="file://$MODULE_DIR$/build" />
-      <excludeFolder url="file://$MODULE_DIR$/cloud" />
-      <excludeFolder url="file://$MODULE_DIR$/mysql-5.5.25a" />
-      <excludeFolder url="file://$MODULE_DIR$/mysql-5.5.28" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />
