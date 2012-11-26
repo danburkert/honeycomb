@@ -19,6 +19,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static com.nearinfinity.mysqlengine.jni.Util.readParameters;
 import static java.text.MessageFormat.format;
 
 public class HBaseAdapter {
@@ -31,6 +32,8 @@ public class HBaseAdapter {
     private static final long DEFAULT_WRITE_BUFFER_SIZE = 5 * 1024 * 1024;
     private static boolean isInitialized = false;
 
+    private static final String CONFIG_PATH = "/etc/mysql/adapter.conf";
+
     public static void initialize() throws IOException {
         if (isInitialized) {
             return;
@@ -39,16 +42,18 @@ public class HBaseAdapter {
         logger.info("Static Initializer-> Begin");
 
         //Read config options from adapter.conf
-        File source = new File("/etc/mysql/adapter.conf");
+        File source = new File(CONFIG_PATH);
         if (!(source.exists() && source.canRead() && source.isFile())) {
-            throw new FileNotFoundException("/etc/mysql/adapter.conf doesn't exist or cannot be read.");
+            throw new FileNotFoundException(
+                    CONFIG_PATH + " doesn't exist or cannot be read.");
         }
 
         Map<String, String> params = readParameters(source);
         logger.info(format("Read in {0} parameters.", params.size()));
 
         try {
-            client = new HBaseClient(params.get("hbase_table_name"), params.get("zk_quorum"));
+            client = new HBaseClient(params.get("hbase_table_name"),
+            params.get("zk_quorum"));
         } catch (ZooKeeperConnectionException e) {
             logger.fatal("Could not connect to zookeeper. ", e);
             throw e;
@@ -64,7 +69,9 @@ public class HBaseAdapter {
             int cacheSize = Integer.parseInt(params.get("table_scan_cache_rows"));
             client.setCacheSize(cacheSize);
         } catch (NumberFormatException e) {
-            logger.info(format("Static Initializer-> Number of rows to cache was not provided or invalid - using default of {0}", DEFAULT_NUM_CACHED_ROWS));
+            logger.info(format("Number of rows to cache" +
+                    "was not provided or invalid - using default of {0}",
+                    DEFAULT_NUM_CACHED_ROWS));
             client.setCacheSize(DEFAULT_NUM_CACHED_ROWS);
         }
 
@@ -72,27 +79,22 @@ public class HBaseAdapter {
             long writeBufferSize = Long.parseLong(params.get("write_buffer_size"));
             client.setWriteBufferSize(writeBufferSize);
         } catch (NumberFormatException e) {
-            logger.info(format("Static Initializer-> Write buffer size was not provided or invalid - using default of {0}", DEFAULT_WRITE_BUFFER_SIZE));
+            logger.info(format("Write buffer size was" +
+                    " not provided or invalid - using default of {0}",
+                    DEFAULT_WRITE_BUFFER_SIZE));
             client.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
         }
 
-        boolean flushChangesImmediately = Boolean.parseBoolean(params.get("flush_changes_immediately"));
+        boolean flushChangesImmediately = Boolean.parseBoolean(
+                params.get("flush_changes_immediately"));
         client.setAutoFlushTables(flushChangesImmediately);
         isInitialized = true;
         logger.info("Static Initializer-> End");
     }
 
-    private static Map<String, String> readParameters(File source) throws FileNotFoundException {
-        Scanner confFile = new Scanner(source);
-        Map<String, String> params = new HashMap<String, String>();
-        while (confFile.hasNextLine()) {
-            Scanner line = new Scanner(confFile.nextLine());
-            params.put(line.next(), line.next());
-        }
-        return params;
-    }
-
-    public static boolean createTable(String tableName, Map<String, ColumnMetadata> columns, TableMultipartKeys multipartKeys) throws HBaseAdapterException {
+    public static boolean createTable(String tableName,
+    Map<String, ColumnMetadata> columns, TableMultipartKeys multipartKeys)
+    throws HBaseAdapterException {
         try {
             logger.info("creatingTable-> tableName:" + tableName);
             if (client == null) {
@@ -108,12 +110,15 @@ public class HBaseAdapter {
         return true;
     }
 
-    public static long startScan(String tableName, boolean isFullTableScan) throws HBaseAdapterException {
+    public static long startScan(String tableName, boolean isFullTableScan)
+    throws HBaseAdapterException {
         long scanId = connectionCounter.incrementAndGet();
-        logger.info("startScan-> tableName: " + tableName + ", scanId: " + scanId + ", isFullTableScan: " + isFullTableScan);
+        logger.info("startScan-> tableName: " + tableName + ", scanId: " +
+        scanId + ", isFullTableScan: " + isFullTableScan);
         try {
             ScanStrategy strategy = new FullTableScanStrategy(tableName);
-            SingleResultScanner dataScanner = new SingleResultScanner(client.getScanner(strategy));
+            SingleResultScanner dataScanner = new SingleResultScanner(
+                    client.getScanner(strategy));
             clientPool.put(scanId, new Connection(tableName, dataScanner));
         } catch (Throwable e) {
             logger.error("startScan-> Exception:", e);
@@ -159,7 +164,8 @@ public class HBaseAdapter {
         }
     }
 
-    public static boolean writeRow(String tableName, Map<String, byte[]> values) throws HBaseAdapterException {
+    public static boolean writeRow(String tableName, Map<String, byte[]> values)
+    throws HBaseAdapterException {
         try {
             client.writeRow(tableName, values);
         } catch (Exception e) {
@@ -253,8 +259,10 @@ public class HBaseAdapter {
         return row;
     }
 
-    public static long startIndexScan(String tableName, String columnName) throws HBaseAdapterException {
-        logger.info("startIndexScan-> tableName " + tableName + ", columnNames: " + columnName);
+    public static long startIndexScan(String tableName, String columnName)
+    throws HBaseAdapterException {
+        logger.info("startIndexScan-> tableName " + tableName +
+        ", columnNames: " + columnName);
 
         long scanId;
         try {
@@ -268,7 +276,8 @@ public class HBaseAdapter {
         return scanId;
     }
 
-    public static String findDuplicateKey(String tableName, Map<String, byte[]> values) throws HBaseAdapterException {
+    public static String findDuplicateKey(String tableName, Map<String, byte[]> values)
+    throws HBaseAdapterException {
         String result = null;
 
         try {
@@ -281,7 +290,8 @@ public class HBaseAdapter {
         return result;
     }
 
-    public static byte[] findDuplicateValue(String tableName, String columnName) throws HBaseAdapterException {
+    public static byte[] findDuplicateValue(String tableName, String columnName)
+    throws HBaseAdapterException {
         byte[] duplicate;
 
         try {
@@ -294,7 +304,8 @@ public class HBaseAdapter {
         return duplicate;
     }
 
-    public static long getNextAutoincrementValue(String tableName, String columnName) throws HBaseAdapterException {
+    public static long getNextAutoincrementValue(String tableName, String columnName)
+    throws HBaseAdapterException {
         long autoIncrementValue = 0;
         try {
             autoIncrementValue = client.getNextAutoincrementValue(tableName, columnName);
@@ -306,14 +317,17 @@ public class HBaseAdapter {
         return autoIncrementValue;
     }
 
-    public static IndexRow indexRead(long scanId, List<KeyValue> keyValues, IndexReadType readType) throws HBaseAdapterException {
+    public static IndexRow indexRead(long scanId, List<KeyValue> keyValues,
+                                     IndexReadType readType)
+    throws HBaseAdapterException {
         IndexRow indexRow = new IndexRow();
         try {
             Connection conn = getConnectionForId(scanId);
             String tableName = conn.getTableName();
             List<String> columnName = conn.getColumnName();
             if (keyValues == null) {
-                if (readType != IndexReadType.INDEX_FIRST && readType != IndexReadType.INDEX_LAST) {
+                if (readType != IndexReadType.INDEX_FIRST
+                    && readType != IndexReadType.INDEX_LAST) {
                     throw new IllegalArgumentException("keyValues can't be null unless first/last index read");
                 }
 
