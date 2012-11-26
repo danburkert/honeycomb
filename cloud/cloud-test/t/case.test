@@ -1,0 +1,42 @@
+DROP TABLE IF EXISTS lowercase;
+DROP TABLE IF EXISTS uppercase;
+
+CREATE TABLE lowercase (lower int, UPPER int) engine=cloud;
+INSERT INTO lowercase VALUES (1, 2);
+INSERT INTO lOwErCaSe VALUES (3, 4);
+INSERT INTO LoWeRcAsE VALUES (5, 6);
+INSERT INTO LOWERCASE VALUES (7, 8);
+
+SELECT lower, UPPER FROM lowercase ORDER BY lower;
+SELECT LoWeR, uPpEr FROM lOweRCAse ORDER BY LoWer;
+SELECT LOWER, upper FROM lowercase ORDER BY LOWER;
+SELECT LOWER, upper FROM LOWERCASE ORDER BY loWeR;
+
+CREATE TABLE UPPERCASE (lower int, UPPER int) engine=cloud;
+INSERT INTO uPpErCaSe VALUES (1, 2);
+INSERT INTO UpPeRcAsE VALUES (3, 4);
+INSERT INTO uppercase VALUES (5, 6);
+INSERT INTO uPPeRcASe VALUES (7, 8);
+
+SELECT lower, UPPER FROM UPPERCASE ORDER BY lower;
+SELECT LoWeR, uPpEr FROM uppercase ORDER BY LOWER;
+SELECT LOWER, upper FROM uPpErCaSe ORDER BY lowEr;
+SELECT LOWER, upper FROM UpPeRcAsE ORDER BY lower;
+
+DELETE FROM LOWERCASE WHERE lower < 3 AND upper = 2;
+DELETE FROM lowercase WHERE LOWER = 3 AND upper = 4;
+DELETE FROM lOWErCasE WHERE LoWeR > 3 AND upper = 6;
+
+SELECT * FROM LOWERCASE ORDER BY LoWeR;
+
+--error 1050
+CREATE TABLE LOWERCASE (lower int, UPPER int) engine=cloud;
+--error 1050
+CREATE TABLE uppercase (lower int, UPPER int) engine=cloud;
+--error 1050
+CREATE TABLE lOwERCAse (lower int, UPPER int) engine=cloud;
+--error 1050
+CREATE TABLE UPpeRcASe (lower int, UPPER int) engine=cloud;
+
+DROP TABLE IF EXISTS lowercase;
+DROP TABLE IF EXISTS uppercase;
