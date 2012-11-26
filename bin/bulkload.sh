@@ -20,7 +20,7 @@ input_folder=${input_folder:-$_input_folder}
 
 hbase org.apache.hadoop.hbase.mapreduce.ImportTsv \
 -D importtsv.columns=a,HBASE_ROW_KEY \
--D importtsv.mapper.class=com.nearinfinity.honeycomb.BulkLoadMapper \
+-D importtsv.mapper.class=com.nearinfinity.mysqlengine.BulkLoadMapper \
 -D zk.quorum=$zk_quorum \
 -D honeycomb.sql.table=$honeycomb_sql_table \
 -D honeycomb.sql.columns=$honeycomb_sql_columns \
