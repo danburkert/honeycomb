@@ -26,8 +26,8 @@ private:
 
   jobject create_metadata_enum_object(const char *name)
   {
-    jclass metadata_class = this->env->FindClass("com/nearinfinity/hbaseclient/ColumnMetadata");
-    jfieldID enum_field = this->env->GetStaticFieldID(metadata_class, name, "Lcom/nearinfinity/hbaseclient/ColumnMetadata;");
+    jclass metadata_class = this->env->FindClass(HBASECLIENT "ColumnMetadata");
+    jfieldID enum_field = this->env->GetStaticFieldID(metadata_class, name, "L" HBASECLIENT "ColumnMetadata;");
     jobject enum_object = this->env->GetStaticObjectField(metadata_class, enum_field);
 
     return enum_object;
@@ -35,8 +35,8 @@ private:
 
   jobject create_column_type_enum_object(const char *name)
   {
-    jclass column_type_class = this->env->FindClass("com/nearinfinity/hbaseclient/ColumnType");
-    jfieldID enum_field = this->env->GetStaticFieldID(column_type_class, name, "Lcom/nearinfinity/hbaseclient/ColumnType;");
+    jclass column_type_class = this->env->FindClass(HBASECLIENT "ColumnType");
+    jfieldID enum_field = this->env->GetStaticFieldID(column_type_class, name, "L" HBASECLIENT "ColumnType;");
     jobject enum_object = this->env->GetStaticObjectField(column_type_class, enum_field);
 
     return enum_object;
@@ -44,8 +44,8 @@ private:
 
   jbyteArray type_enum_to_byte_array(const char *name)
   {
-    jclass metadata_class = this->env->FindClass("com/nearinfinity/hbaseclient/ColumnType");
-    jfieldID enum_field = this->env->GetStaticFieldID(metadata_class, name, "Lcom/nearinfinity/hbaseclient/ColumnType;");
+    jclass metadata_class = this->env->FindClass(HBASECLIENT "ColumnType");
+    jfieldID enum_field = this->env->GetStaticFieldID(metadata_class, name, "L" HBASECLIENT "ColumnType;");
     jobject enum_object = this->env->GetStaticObjectField(metadata_class, enum_field);
     jmethodID get_value_method = this->env->GetMethodID(metadata_class, "getValue", "()[B");
 
@@ -77,7 +77,7 @@ public:
 
   jobject get_field_metadata(Field *field, TABLE *table_arg)
   {
-    jclass metadata_class = this->env->FindClass("com/nearinfinity/hbaseclient/ColumnMetadata");
+    jclass metadata_class = this->env->FindClass(HBASECLIENT "ColumnMetadata");
 
     jmethodID metadata_constructor = this->env->GetMethodID(metadata_class, "<init>", "()V");
 
@@ -86,7 +86,7 @@ public:
     jmethodID set_scale_method = this->env->GetMethodID(metadata_class, "setScale", "(I)V");
     jmethodID set_nullable_method = this->env->GetMethodID(metadata_class, "setNullable", "(Z)V");
     jmethodID set_primary_key_method = this->env->GetMethodID(metadata_class, "setPrimaryKey", "(Z)V");
-    jmethodID set_type_method = this->env->GetMethodID(metadata_class, "setType", "(Lcom/nearinfinity/hbaseclient/ColumnType;)V");
+    jmethodID set_type_method = this->env->GetMethodID(metadata_class, "setType", "(L" HBASECLIENT "ColumnType;)V");
     jmethodID set_autoincrement_method = this->env->GetMethodID(metadata_class, "setAutoincrement", "(Z)V");
 
     jobject metadata_object = this->env->NewObject(metadata_class, metadata_constructor);

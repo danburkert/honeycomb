@@ -190,7 +190,7 @@ int CloudHandler::rnd_next(uchar *buf)
   jlong java_scan_id = curr_scan_id;
 
   jclass adapter_class = this->adapter();
-  jmethodID next_row_method = find_static_method(adapter_class, "nextRow", "(J)Lcom/nearinfinity/mysqlengine/jni/Row;",this->env);
+  jmethodID next_row_method = find_static_method(adapter_class, "nextRow", "(J)L" MYSQLENGINE "Row;",this->env);
   jobject row = this->env->CallStaticObjectMethod(adapter_class,
       next_row_method, java_scan_id);
 
@@ -334,7 +334,7 @@ int CloudHandler::rnd_pos(uchar *buf, uchar *pos)
   MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, FALSE);
 
   jclass adapter_class = this->adapter();
-  jmethodID get_row_method = find_static_method(adapter_class, "getRow", "(J[B)Lcom/nearinfinity/mysqlengine/jni/Row;",this->env);
+  jmethodID get_row_method = find_static_method(adapter_class, "getRow", "(J[B)L" MYSQLENGINE "Row;",this->env);
   jlong java_scan_id = curr_scan_id;
   jbyteArray uuid = convert_value_to_java_bytes(pos, 16);
   jobject row = this->env->CallStaticObjectMethod(adapter_class, get_row_method,
@@ -424,7 +424,7 @@ char* CloudHandler::index_name(KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_
 jobject CloudHandler::create_multipart_keys(TABLE* table_arg)
 {
   uint keys = table_arg->s->keys;
-  jclass multipart_keys_class = this->env->FindClass("com/nearinfinity/hbaseclient/TableMultipartKeys");
+  jclass multipart_keys_class = this->env->FindClass(HBASECLIENT "TableMultipartKeys");
   jmethodID constructor = this->env->GetMethodID(multipart_keys_class, "<init>", "()V");
   jmethodID add_key_method = this->env->GetMethodID(multipart_keys_class, "addMultipartKey", "(Ljava/lang/String;)V");
   jobject java_keys = this->env->NewObject(multipart_keys_class, constructor);
@@ -485,7 +485,7 @@ int CloudHandler::create(const char *path, TABLE *table_arg, HA_CREATE_INFO *cre
     java_map_insert(columnMap, string_to_java_string((*field)->field_name), java_metadata_obj, this->env);
   }
 
-  jmethodID create_table_method = find_static_method(adapter_class, "createTable", "(Ljava/lang/String;Ljava/util/Map;Lcom/nearinfinity/hbaseclient/TableMultipartKeys;)Z",this->env);
+  jmethodID create_table_method = find_static_method(adapter_class, "createTable", "(Ljava/lang/String;Ljava/util/Map;L" HBASECLIENT "TableMultipartKeys;)Z",this->env);
   this->env->CallStaticBooleanMethod(adapter_class, create_table_method,
       string_to_java_string(table_name), columnMap, java_keys);
   print_java_exception(this->env);
@@ -1067,7 +1067,7 @@ int CloudHandler::index_end()
 jobject CloudHandler::create_key_value_list(int index, uint* key_sizes, uchar** key_copies, const char** key_names, jboolean* key_null_bits, jboolean* key_is_null)
 {
   jobject key_values = create_java_list(this->env);
-  jclass key_value_class = this->env->FindClass("com/nearinfinity/hbaseclient/KeyValue");
+  jclass key_value_class = this->env->FindClass(HBASECLIENT "KeyValue");
   jmethodID key_value_ctor = this->env->GetMethodID(key_value_class, "<init>", "(Ljava/lang/String;[BZZ)V");
   for(int x = 0; x < index; x++)
   {
@@ -1092,7 +1092,7 @@ int CloudHandler::index_read_map(uchar * buf, const uchar * key, key_part_map ke
 {
   DBUG_ENTER("CloudHandler::index_read_map");
   jclass adapter_class = this->adapter();
-  jmethodID index_read_method = find_static_method(adapter_class, "indexRead", "(JLjava/util/List;Lcom/nearinfinity/mysqlengine/jni/IndexReadType;)Lcom/nearinfinity/mysqlengine/jni/IndexRow;",this->env);
+  jmethodID index_read_method = find_static_method(adapter_class, "indexRead", "(JLjava/util/List;L" MYSQLENGINE "IndexReadType;)L" MYSQLENGINE "IndexRow;",this->env);
   KEY *key_info = table->s->key_info + this->active_index;
   KEY_PART_INFO *key_part = key_info->key_part;
   KEY_PART_INFO *end_key_part = key_part + key_info->key_parts;
@@ -1296,7 +1296,7 @@ int CloudHandler::index_last(uchar *buf)
 jobject CloudHandler::get_next_index_row()
 {
   jclass adapter_class = this->adapter();
-  jmethodID index_next_method = find_static_method(adapter_class, "nextIndexRow", "(J)Lcom/nearinfinity/mysqlengine/jni/IndexRow;",this->env);
+  jmethodID index_next_method = find_static_method(adapter_class, "nextIndexRow", "(J)L" MYSQLENGINE "IndexRow;",this->env);
   jlong java_scan_id = this->curr_scan_id;
   return this->env->CallStaticObjectMethod(adapter_class, index_next_method,
       java_scan_id);
@@ -1305,11 +1305,11 @@ jobject CloudHandler::get_next_index_row()
 jobject CloudHandler::get_index_row(const char* indexType)
 {
   jclass adapter_class = this->adapter();
-  jmethodID index_read_method = find_static_method(adapter_class, "indexRead", "(JLjava/util/List;Lcom/nearinfinity/mysqlengine/jni/IndexReadType;)Lcom/nearinfinity/mysqlengine/jni/IndexRow;",this->env);
+  jmethodID index_read_method = find_static_method(adapter_class, "indexRead", "(JLjava/util/List;L" MYSQLENGINE "IndexReadType;)L" MYSQLENGINE "IndexRow;",this->env);
   jlong java_scan_id = this->curr_scan_id;
   jclass read_class = find_jni_class("IndexReadType", this->env);
   jfieldID field_id = this->env->GetStaticFieldID(read_class, indexType,
-      "Lcom/nearinfinity/mysqlengine/jni/IndexReadType;");
+      "L" MYSQLENGINE "IndexReadType;");
   jobject java_find_flag = this->env->GetStaticObjectField(read_class,
       field_id);
   return this->env->CallStaticObjectMethod(adapter_class, index_read_method,
