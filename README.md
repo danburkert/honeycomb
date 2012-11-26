@@ -43,6 +43,8 @@ MySQL will be installed into $MYSQL_HOME and should be running.
 The MySQL plugin, MySQL and HBaseAdapter jar are built. 
 A link is created from $HONEYCOMB_HOME/build/storage/cloud/ha_cloud.so to $MYSQL_HOME/lib/plugin/ha_cloud.so.
 The honeycomb plugin has been installed in MySQL.
+
+
 The HBaseAdapter jar will be copied into /usr/local/lib/honeycomb along with all of its dependencies. 
 /etc/mysql/classpath.conf will be updated with the correct java path to /usr/local/lib/honeycomb/*.jar. 
 By default, the /etc/mysql/adapter.conf will be setup to have zookeeper as the localhost.
