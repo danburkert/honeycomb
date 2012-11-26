@@ -30,7 +30,8 @@ time      \
 year      \
 joins     \
 group_by  \
-case
+case      \
+autoincrement
 
 # Change engine to cloud in results (appears in table creation statements)
 cd $MYSQL_HOME/mysql-test/suite/cloud-test/r/

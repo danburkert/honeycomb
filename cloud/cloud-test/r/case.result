@@ -4,7 +4,8 @@ Note	1051	Unknown table 'lowercase'
 DROP TABLE IF EXISTS uppercase;
 Warnings:
 Note	1051	Unknown table 'uppercase'
-CREATE TABLE lowercase (lower int, UPPER int) engine=cloud;
+CREATE TABLE lowercase (lower int, UPPER int)
+ENGINE=cloud;
 INSERT INTO lowercase VALUES (1, 2);
 INSERT INTO lOwErCaSe VALUES (3, 4);
 INSERT INTO LoWeRcAsE VALUES (5, 6);
@@ -33,7 +34,8 @@ LOWER	upper
 3	4
 5	6
 7	8
-CREATE TABLE UPPERCASE (lower int, UPPER int) engine=cloud;
+CREATE TABLE UPPERCASE (lower int, UPPER int)
+ENGINE=cloud;
 INSERT INTO uPpErCaSe VALUES (1, 2);
 INSERT INTO UpPeRcAsE VALUES (3, 4);
 INSERT INTO uppercase VALUES (5, 6);
