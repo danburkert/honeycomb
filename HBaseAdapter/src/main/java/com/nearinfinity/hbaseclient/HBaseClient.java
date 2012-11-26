@@ -32,8 +32,8 @@ public class HBaseClient {
     private static final Logger logger = Logger.getLogger(HBaseClient.class);
 
     public HBaseClient(String tableName, String zkQuorum) throws IOException {
-        logger.info("HBaseClient: Constructing with HBase table name: " + tableName);
-        logger.info("HBaseClient: Constructing with ZK Quorum: " + zkQuorum);
+        logger.info("Constructing with HBase table name: " + tableName);
+        logger.info("Constructing with ZK Quorum: " + zkQuorum);
 
         Configuration configuration = HBaseConfiguration.create();
         configuration.set("hbase.zookeeper.quorum", zkQuorum);
