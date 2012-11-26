@@ -1,7 +1,7 @@
 package com.nearinfinity.honeycomb;
 
-import com.nearinfinity.hbaseclient.ColumnMetadata;
-import com.nearinfinity.hbaseclient.ColumnType;
+import com.nearinfinity.honeycomb.hbaseclient.ColumnMetadata;
+import com.nearinfinity.honeycomb.hbaseclient.ColumnType;
 import org.apache.commons.lang.time.DateUtils;
 
 import java.math.BigDecimal;

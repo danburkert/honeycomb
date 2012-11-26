@@ -6,4 +6,6 @@
 
 #define ARRAY_DELETE(arr) do { delete[] arr; arr = NULL; } while(0)
 
+#define HBASECLIENT "com/nearinfinity/honeycomb/hbaseclient/"
+#define MYSQLENGINE "com/nearinfinity/honeycomb/mysqlengine/"
 #endif

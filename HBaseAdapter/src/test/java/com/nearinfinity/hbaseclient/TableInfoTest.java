@@ -1,5 +1,8 @@
 package com.nearinfinity.hbaseclient;
 
+import com.nearinfinity.honeycomb.hbaseclient.ColumnMetadata;
+import com.nearinfinity.honeycomb.hbaseclient.ColumnType;
+import com.nearinfinity.honeycomb.hbaseclient.TableInfo;
 import org.junit.Assert;
 import org.junit.Test;
 
