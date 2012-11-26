@@ -22,3 +22,4 @@ group_by :
 case :
 autoincrement :
 primary_key :
+foreign_key :
