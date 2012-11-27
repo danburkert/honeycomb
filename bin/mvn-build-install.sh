@@ -13,21 +13,10 @@ else
   honeycomb_lib=/usr/local/lib/honeycomb
 fi
 
-if [ ! -d $honeycomb_lib ]
-then
-  echo "Creating $honeycomb_lib directory"
-  mkdir -p $honeycomb_lib
-fi
-
 cd $HONEYCOMB_HOME/HBaseAdapter
 echo "Running: mvn package install"
 mvn package install
-echo "Moving jars into $honeycomb_lib"
-cp -R target/lib $honeycomb_lib
-cp target/mysqlengine-0.1.jar $honeycomb_lib
-
-echo "Making $honeycomb_lib jars executable"
-chmod a+x $honeycomb_lib/*.jar
+./install-honeycomb-jars.sh "`pwd`" $honeycomb_lib
 
 echo "Setting up the classpath.conf file with the complete classpath."
 create_classpath=$($HONEYCOMB_HOME/bin/create-classpath.rb $honeycomb_lib $honeycomb_lib/lib)
