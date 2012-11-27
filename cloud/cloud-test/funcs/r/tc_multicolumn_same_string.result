@@ -6,14 +6,14 @@ m2
 SHOW CREATE TABLE m2;
 Table	Create Table
 m2	CREATE TABLE `m2` (
-  `c1` char(1) DEFAULT NULL,
-  `c2` char(5) NOT NULL,
-  `c3` char(255) DEFAULT NULL,
-  `c4` char(4) NOT NULL,
-  `c5` char(30) NOT NULL,
+  `c1` char(1) COLLATE utf8_bin DEFAULT NULL,
+  `c2` char(5) COLLATE utf8_bin NOT NULL,
+  `c3` char(255) COLLATE utf8_bin DEFAULT NULL,
+  `c4` char(4) COLLATE utf8_bin NOT NULL,
+  `c5` char(30) COLLATE utf8_bin NOT NULL,
   PRIMARY KEY (`c4`),
   UNIQUE KEY `c5` (`c5`)
-) ENGINE=ENGINE DEFAULT CHARSET=latin1
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 DROP TABLE m2;
 SHOW TABLES;
 Tables_in_test
@@ -24,14 +24,14 @@ m2
 SHOW CREATE TABLE m2;
 Table	Create Table
 m2	CREATE TABLE `m2` (
-  `c1` varchar(1) DEFAULT NULL,
-  `c2` varchar(5) NOT NULL,
-  `c3` varchar(255) DEFAULT NULL,
-  `c4` varchar(4) NOT NULL,
-  `c5` varchar(30) NOT NULL,
+  `c1` varchar(1) COLLATE utf8_bin DEFAULT NULL,
+  `c2` varchar(5) COLLATE utf8_bin NOT NULL,
+  `c3` varchar(255) COLLATE utf8_bin DEFAULT NULL,
+  `c4` varchar(4) COLLATE utf8_bin NOT NULL,
+  `c5` varchar(30) COLLATE utf8_bin NOT NULL,
   PRIMARY KEY (`c4`),
   UNIQUE KEY `c5` (`c5`)
-) ENGINE=ENGINE DEFAULT CHARSET=latin1
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 DROP TABLE m2;
 SHOW TABLES;
 Tables_in_test
@@ -49,7 +49,7 @@ m2	CREATE TABLE `m2` (
   `c5` binary(30) NOT NULL,
   PRIMARY KEY (`c4`),
   UNIQUE KEY `c5` (`c5`)
-) ENGINE=ENGINE DEFAULT CHARSET=latin1
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 DROP TABLE m2;
 SHOW TABLES;
 Tables_in_test
@@ -67,7 +67,7 @@ m2	CREATE TABLE `m2` (
   `c5` varbinary(30) NOT NULL,
   PRIMARY KEY (`c4`),
   UNIQUE KEY `c5` (`c5`)
-) ENGINE=ENGINE DEFAULT CHARSET=latin1
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 DROP TABLE m2;
 SHOW TABLES;
 Tables_in_test
