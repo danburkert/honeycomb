@@ -1,5 +1,3 @@
---source enginetype.inc
-
 let $temporal_type = TIME;
 let $val1  = '01:02:03';
 let $val2  = '01:02:04';
