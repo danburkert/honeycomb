@@ -254,7 +254,7 @@ static void print_java_classpath(JNIEnv* env)
 }
 
 extern bool volatile abort_loop;
-extern pthread_handler_t kill_server_thread(void *arg __attribute__((unused)));
+extern pthread_handler_t kill_server_thread(void *arg);
 static void handler(int sig)
 {
   abort_loop = true;
