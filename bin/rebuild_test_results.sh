@@ -30,7 +30,6 @@ time          \
 year          \
 joins         \
 group_by      \
-case          \
 autoincrement \
 primary_key
 
