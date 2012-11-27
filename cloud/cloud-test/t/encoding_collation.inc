@@ -6,6 +6,6 @@ DROP TABLE IF EXISTS t1;
 ### Create table
 eval CREATE TABLE t1(c1 $type)
   DEFAULT CHARACTER SET $encoding COLLATE $collation
-  ENGINE=cloud;
+  ENGINE=$engine_type;
 
 DROP TABLE t1;

@@ -6,10 +6,10 @@ let $numeric_type=FLOAT;
 # it just disallows negatives.
 
 let $signed_min   = -3.402823466E+38;
-let $signed_mid   = -1.2345+20;
+let $signed_mid   = -1.2345e+20;
 let $signed_max   =  3.402823466E+38;
 let $unsigned_min =  0;
-let $unsigned_mid =  1.234567+20;
+let $unsigned_mid =  1.234567e+20;
 let $unsigned_max =  3.402823466E+38;
 
 let $epsilon = 1000.00;
