@@ -6,7 +6,7 @@ rm $MYSQL_HOME/mysql-test/suite/cloud-test/r/*
 
 # Record baseline results with InnoDB
 cd $MYSQL_HOME/mysql-test
-./mtr --suite=cloud-test                   \
+./mtr --suite=cloud-test/default           \
   --mysqld=--default-storage-engine=InnoDB \
   --mysqld=--character-set-server=utf8     \
   --mysqld=--collation-server=utf8_bin     \
