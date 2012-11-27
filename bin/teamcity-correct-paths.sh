@@ -6,7 +6,8 @@ fi
 
 dest=mysql-5.5.28/storage/cloud
 if [ -d cloud ]; then
-  if [ -h $dest ]; then
+  if [ -e $dest ]; then
+    echo "Removing $dest"
     rm $dest
   fi
 
