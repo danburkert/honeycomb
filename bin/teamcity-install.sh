@@ -19,6 +19,9 @@ then
   rm -rf $honeycomb_lib/*
 fi
 
+echo "Copying $BUILD_DIR into $HONEYCOMB_HOME"
+cp -R $BUILD_DIR $HONEYCOMB_HOME
+
 echo "Copying ha_cloud.so, mysqlengine.jar and cloud-test to $honeycomb_lib"
 cp -R $HONEYCOMB_HOME/mysql-5.5.28/storage/cloud/cloud-test $honeycomb_lib
 cp $HONEYCOMB_HOME/build/storage/cloud/ha_cloud.so $honeycomb_lib
