@@ -4,8 +4,7 @@ DROP TABLE IF EXISTS t1;
 --enable_warnings
 
 ### Create table
-eval CREATE TABLE t1(c1 $numeric_type $sign_flag $null_flag)
-  ENGINE=$engine_type;
+eval CREATE TABLE t1(c1 $numeric_type $sign_flag $null_flag);
 
 ### Insert Values
 
@@ -56,8 +55,8 @@ SELECT * FROM t1 ORDER BY c1;
 ### Cleanup
 DROP TABLE t1;
 
-eval CREATE TABLE t1(c1 $numeric_type $sign_flag $null_flag, c2 $numeric_type $sign_flag $null_flag $multi_index_flag)
-    engine = $engine_type;
+eval CREATE TABLE t1(c1 $numeric_type $sign_flag $null_flag,
+  c2 $numeric_type $sign_flag $null_flag $multi_index_flag);
 eval INSERT INTO t1 VALUES
   ($min_val, $min_val),
   (0, 0),

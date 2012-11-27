@@ -1,49 +1,39 @@
+#!/bin/sh
+: ${MYSQL_HOME?"Need to set MYSQL_HOME environmental variable."}
+
 # Clear out old results
-cd $MYSQL_HOME/mysql-test/suite/cloud-test/r/
-rm *
+rm $MYSQL_HOME/mysql-test/suite/cloud-test/r/*
 
-# Change engine to InnoDB to record baseline results
-cd $MYSQL_HOME/mysql-test/suite/cloud-test/t/
-sed -i.cloud s/cloud/InnoDB/ enginetype.inc
-rm enginetype.inc.cloud
-
-# Run tests and record results
+# Record baseline results with InnoDB
 cd $MYSQL_HOME/mysql-test
-./mtr --suite=cloud-test --extern socket=/tmp/mysql.sock --record \
-tinyint       \
-smallint      \
-mediumint     \
-int           \
+./mtr --suite=cloud-test                   \
+  --mysqld=--default-storage-engine=InnoDB \
+  --mysqld=--character-set-server=utf8     \
+  --mysqld=--collation-server=utf8_bin     \
+  --record                                 \
+autoincrement \
 bigint        \
-decimal       \
-float         \
-double        \
-char          \
-varchar       \
 binary        \
-varbinary     \
-enum          \
+char          \
 date          \
 datetime      \
-timestamp     \
-time          \
-year          \
-joins         \
+decimal       \
+double        \
+enum          \
+float         \
 group_by      \
-case          \
-autoincrement \
-primary_key
-
-# Change engine to cloud in results (appears in table creation statements)
-cd $MYSQL_HOME/mysql-test/suite/cloud-test/r/
-sed -i.InnoDB 's/InnoDB/cloud/g' *.result
-rm *.result.InnoDB
-
-# Change engine to cloud for subsequent test runs
-cd $MYSQL_HOME/mysql-test/suite/cloud-test/t/
-sed -i.InnoDB s/InnoDB/cloud/ enginetype.inc
-rm enginetype.inc.InnoDB
+int           \
+joins         \
+mediumint     \
+primary_key   \
+smallint      \
+time          \
+timestamp     \
+tinyint       \
+varbinary     \
+varchar       \
+year
 
 # Move test results that are manually built
-cd $MYSQL_HOME/mysql-test/suite/cloud-test/
-cp t/manual_results/* r/
+cp $MYSQL_HOME/mysql-test/suite/cloud-test/t/manual_results/* \
+   $MYSQL_HOME/mysql-test/suite/cloud-test/r/
