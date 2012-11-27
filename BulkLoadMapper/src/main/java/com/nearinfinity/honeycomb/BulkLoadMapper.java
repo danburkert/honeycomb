@@ -1,7 +1,6 @@
 package com.nearinfinity.honeycomb;
 
 import au.com.bytecode.opencsv.CSVParser;
-import com.nearinfinity.hbaseclient.*;
 import com.nearinfinity.honeycomb.hbaseclient.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
