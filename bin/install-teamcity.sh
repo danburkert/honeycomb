@@ -9,7 +9,7 @@ function test_link
   [ -L $path ] || { echo "Link $path is missing. Can't continue installing."; exit 1; }
 }
 
-[ -d $honeycomb_lib && -w $honeycomb_lib ] || { echo "$honeycomb_lib is required, and has to be writable."; exit 1; }
+[ -d $honeycomb_lib ] && [ -w $honeycomb_lib ] || { echo "$honeycomb_lib is required, and has to be writable."; exit 1; }
 test_link $plugin_path
 test_link $tests_path
 
