@@ -1,10 +1,10 @@
 --disable_warnings
 DROP TABLE IF EXISTS `Person`;
 --enable_warnings
-eval CREATE TABLE `Person` (
-  `Name` varchar(50) COLLATE utf8_bin DEFAULT NULL,
-  `Address` varchar(50) COLLATE utf8_bin DEFAULT NULL,
-  `Phone` varchar(50) COLLATE utf8_bin DEFAULT NULL,
+CREATE TABLE `Person` (
+  `Name` varchar(50) DEFAULT NULL,
+  `Address` varchar(50) DEFAULT NULL,
+  `Phone` varchar(50) DEFAULT NULL,
   `Salary` double DEFAULT NULL,
   `Department_Id` int(11) DEFAULT NULL,
   KEY `Name` (`Name`),
@@ -12,7 +12,7 @@ eval CREATE TABLE `Person` (
   KEY `Phone` (`Phone`),
   KEY `Salary` (`Salary`),
   KEY `Department_Id` (`Department_Id`)
-) ENGINE=$engine_type DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+);
 
 INSERT INTO `Person` VALUES
 ('Ms. Riley Kautzer','042 Sipes Club','994-262-7273 x14182',0.8370113712457038,3),

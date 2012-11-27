@@ -4,8 +4,7 @@ DROP TABLE IF EXISTS t1;
 --enable_warnings
 
 ### Create table
-eval CREATE TABLE t1(c1 $temporal_type $null_flag $index_flag)
-  ENGINE=$engine_type;
+eval CREATE TABLE t1(c1 $temporal_type $null_flag $index_flag);
 
 ### Insert Values
 
@@ -58,8 +57,7 @@ SELECT * FROM t1 ORDER BY c1;
 ### Cleanup
 DROP TABLE t1;
 
-eval CREATE TABLE t1(c1 $temporal_type $null_flag, c2 $temporal_type $null_flag $multi_index_flag)
-  ENGINE=$engine_type;
+eval CREATE TABLE t1(c1 $temporal_type $null_flag, c2 $temporal_type $null_flag $multi_index_flag);
 eval INSERT INTO t1 VALUES
   ($comp_val, $val1),
   ($comp_val, $val2),
