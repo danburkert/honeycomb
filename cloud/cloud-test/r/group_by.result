@@ -1,8 +1,8 @@
 DROP TABLE IF EXISTS `Person`;
 CREATE TABLE `Person` (
-`Name` varchar(50) COLLATE utf8_bin DEFAULT NULL,
-`Address` varchar(50) COLLATE utf8_bin DEFAULT NULL,
-`Phone` varchar(50) COLLATE utf8_bin DEFAULT NULL,
+`Name` varchar(50) DEFAULT NULL,
+`Address` varchar(50) DEFAULT NULL,
+`Phone` varchar(50) DEFAULT NULL,
 `Salary` double DEFAULT NULL,
 `Department_Id` int(11) DEFAULT NULL,
 KEY `Name` (`Name`),
@@ -10,7 +10,7 @@ KEY `Address` (`Address`),
 KEY `Phone` (`Phone`),
 KEY `Salary` (`Salary`),
 KEY `Department_Id` (`Department_Id`)
-) ENGINE=cloud DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+);
 INSERT INTO `Person` VALUES
 ('Ms. Riley Kautzer','042 Sipes Club','994-262-7273 x14182',0.8370113712457038,3),
 ('Laurianne Aufderhar PhD','3938 Kaylie Brooks','(539)726-8978 x62352',0.6849694380631943,7),
@@ -165,10 +165,10 @@ INSERT INTO `Person` VALUES
 DROP TABLE IF EXISTS `Department`;
 CREATE TABLE `Department` (
 `Id` int(11) DEFAULT NULL,
-`Name` varchar(50) COLLATE utf8_bin DEFAULT NULL,
+`Name` varchar(50) DEFAULT NULL,
 KEY `Id` (`Id`),
 KEY `Name` (`Name`)
-) ENGINE=cloud DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+);
 INSERT INTO `Department` VALUES (2,'Quality Control'),(7,'Manufacturing'),(6,'Shipping'),(8,'Maintenance'),(4,'Operations'),(0,'Research & Development'),(3,'Human Resources'),(1,'Legal'),(5,'Business Development'),(9,'Accounting');
 SELECT COUNT(*) as count
 FROM Person

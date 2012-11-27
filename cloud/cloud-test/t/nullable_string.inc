@@ -5,8 +5,7 @@ DROP TABLE IF EXISTS t1;
 
 ### Create table
 eval CREATE TABLE t1(c1 $string_type $null_flag $index_flag)
-  DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
-  ENGINE=$engine_type;
+  DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;
 
 ### Insert Values
 
@@ -59,9 +58,7 @@ SELECT * FROM t1 ORDER BY c1;
 ### Cleanup
 DROP TABLE t1;
 
-eval CREATE TABLE t1(c1 $string_type $null_flag, c2 $string_type $null_flag $multi_index_flag)
-  DEFAULT CHARACTER SET utf8 COLLATE utf8_bin
-  ENGINE=$engine_type;
+eval CREATE TABLE t1(c1 $string_type $null_flag, c2 $string_type $null_flag $multi_index_flag);
 eval INSERT INTO t1 VALUES
   ($comp_val, $val1),
   ($comp_val, $val2),
