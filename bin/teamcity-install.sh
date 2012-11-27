@@ -25,10 +25,8 @@ cp -R $BUILD_DIR $HONEYCOMB_HOME
 echo "Copying ha_cloud.so, mysqlengine.jar and cloud-test to $honeycomb_lib"
 cp -R $HONEYCOMB_HOME/mysql-5.5.28/storage/cloud/cloud-test $honeycomb_lib
 cp $HONEYCOMB_HOME/build/storage/cloud/ha_cloud.so $honeycomb_lib
-cp -R $HONEYCOMB_HOME/HBaseAdapter/target/lib $honeycomb_lib
-cp $HONEYCOMB_HOME/HBaseAdapter/target/mysqlengine-0.1.jar $honeycomb_lib
-chmod a+x $honeycomb_lib/lib/*.jar
-chmod a+x $honeycomb_lib/*.jar
+./install-honeycomb-jars.sh $HONEYCOMB_HOME/HBaseAdapter $honeycomb_lib
+
 create_classpath=$($HONEYCOMB_HOME/bin/create-classpath.rb $honeycomb_lib $honeycomb_lib/lib)
 echo $create_classpath > /home/teamcity/classpath.conf
 echo "Running mysql-restart.sh"
