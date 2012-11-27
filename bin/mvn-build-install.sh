@@ -16,7 +16,7 @@ fi
 cd $HONEYCOMB_HOME/HBaseAdapter
 echo "Running: mvn package install"
 mvn package install
-./install-honeycomb-jars.sh "`pwd`" $honeycomb_lib
+$HONEYCOMB_HOME/bin/install-honeycomb-jars.sh "`pwd`" $honeycomb_lib
 
 echo "Setting up the classpath.conf file with the complete classpath."
 create_classpath=$($HONEYCOMB_HOME/bin/create-classpath.rb $honeycomb_lib $honeycomb_lib/lib)
