@@ -7,9 +7,9 @@ t2
 SHOW CREATE TABLE t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `c1` char(50) DEFAULT NULL,
+  `c1` char(50) COLLATE utf8_bin DEFAULT NULL,
   KEY `i1` (`c1`)
-) ENGINE=ENGINE DEFAULT CHARSET=latin1
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 DROP TABLE t2;
 SHOW TABLES;
 Tables_in_test
@@ -21,9 +21,9 @@ t2
 SHOW CREATE TABLE t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `c1` varchar(50) DEFAULT NULL,
+  `c1` varchar(50) COLLATE utf8_bin DEFAULT NULL,
   KEY `i1` (`c1`)
-) ENGINE=ENGINE DEFAULT CHARSET=latin1
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 DROP TABLE t2;
 SHOW TABLES;
 Tables_in_test
@@ -37,7 +37,7 @@ Table	Create Table
 t2	CREATE TABLE `t2` (
   `c1` binary(50) DEFAULT NULL,
   KEY `i1` (`c1`)
-) ENGINE=ENGINE DEFAULT CHARSET=latin1
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 DROP TABLE t2;
 SHOW TABLES;
 Tables_in_test
@@ -51,7 +51,7 @@ Table	Create Table
 t2	CREATE TABLE `t2` (
   `c1` varbinary(50) DEFAULT NULL,
   KEY `i1` (`c1`)
-) ENGINE=ENGINE DEFAULT CHARSET=latin1
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 DROP TABLE t2;
 SHOW TABLES;
 Tables_in_test
@@ -63,9 +63,9 @@ t2
 SHOW CREATE TABLE t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `c1` char(50) NOT NULL,
+  `c1` char(50) COLLATE utf8_bin NOT NULL,
   KEY `i1` (`c1`)
-) ENGINE=ENGINE DEFAULT CHARSET=latin1
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 DROP TABLE t2;
 SHOW TABLES;
 Tables_in_test
@@ -77,9 +77,9 @@ t2
 SHOW CREATE TABLE t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `c1` varchar(50) NOT NULL,
+  `c1` varchar(50) COLLATE utf8_bin NOT NULL,
   KEY `i1` (`c1`)
-) ENGINE=ENGINE DEFAULT CHARSET=latin1
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 DROP TABLE t2;
 SHOW TABLES;
 Tables_in_test
@@ -93,7 +93,7 @@ Table	Create Table
 t2	CREATE TABLE `t2` (
   `c1` binary(50) NOT NULL,
   KEY `i1` (`c1`)
-) ENGINE=ENGINE DEFAULT CHARSET=latin1
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 DROP TABLE t2;
 SHOW TABLES;
 Tables_in_test
@@ -107,7 +107,7 @@ Table	Create Table
 t2	CREATE TABLE `t2` (
   `c1` varbinary(50) NOT NULL,
   KEY `i1` (`c1`)
-) ENGINE=ENGINE DEFAULT CHARSET=latin1
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 DROP TABLE t2;
 SHOW TABLES;
 Tables_in_test

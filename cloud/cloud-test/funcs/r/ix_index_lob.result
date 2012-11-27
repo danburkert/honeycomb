@@ -9,7 +9,7 @@ Table	Create Table
 t4	CREATE TABLE `t4` (
   `c1` tinyblob,
   KEY `i1` (`c1`(100))
-) ENGINE=ENGINE DEFAULT CHARSET=latin1
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 DROP TABLE t4;
 SHOW TABLES;
 Tables_in_test
@@ -23,7 +23,7 @@ Table	Create Table
 t4	CREATE TABLE `t4` (
   `c1` blob,
   KEY `i1` (`c1`(100))
-) ENGINE=ENGINE DEFAULT CHARSET=latin1
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 DROP TABLE t4;
 SHOW TABLES;
 Tables_in_test
@@ -37,7 +37,7 @@ Table	Create Table
 t4	CREATE TABLE `t4` (
   `c1` mediumblob,
   KEY `i1` (`c1`(100))
-) ENGINE=ENGINE DEFAULT CHARSET=latin1
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 DROP TABLE t4;
 SHOW TABLES;
 Tables_in_test
@@ -51,7 +51,7 @@ Table	Create Table
 t4	CREATE TABLE `t4` (
   `c1` longblob,
   KEY `i1` (`c1`(100))
-) ENGINE=ENGINE DEFAULT CHARSET=latin1
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 DROP TABLE t4;
 SHOW TABLES;
 Tables_in_test
@@ -63,9 +63,9 @@ t4
 SHOW CREATE TABLE t4;
 Table	Create Table
 t4	CREATE TABLE `t4` (
-  `c1` tinytext,
+  `c1` tinytext COLLATE utf8_bin,
   KEY `i1` (`c1`(100))
-) ENGINE=ENGINE DEFAULT CHARSET=latin1
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 DROP TABLE t4;
 SHOW TABLES;
 Tables_in_test
@@ -77,9 +77,9 @@ t4
 SHOW CREATE TABLE t4;
 Table	Create Table
 t4	CREATE TABLE `t4` (
-  `c1` text,
+  `c1` text COLLATE utf8_bin,
   KEY `i1` (`c1`(100))
-) ENGINE=ENGINE DEFAULT CHARSET=latin1
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 DROP TABLE t4;
 SHOW TABLES;
 Tables_in_test
@@ -91,9 +91,9 @@ t4
 SHOW CREATE TABLE t4;
 Table	Create Table
 t4	CREATE TABLE `t4` (
-  `c1` mediumtext,
+  `c1` mediumtext COLLATE utf8_bin,
   KEY `i1` (`c1`(100))
-) ENGINE=ENGINE DEFAULT CHARSET=latin1
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 DROP TABLE t4;
 SHOW TABLES;
 Tables_in_test
@@ -105,9 +105,9 @@ t4
 SHOW CREATE TABLE t4;
 Table	Create Table
 t4	CREATE TABLE `t4` (
-  `c1` longtext,
+  `c1` longtext COLLATE utf8_bin,
   KEY `i1` (`c1`(100))
-) ENGINE=ENGINE DEFAULT CHARSET=latin1
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 DROP TABLE t4;
 SHOW TABLES;
 Tables_in_test
@@ -121,7 +121,7 @@ Table	Create Table
 t4	CREATE TABLE `t4` (
   `c1` tinyblob NOT NULL,
   KEY `i1` (`c1`(100))
-) ENGINE=ENGINE DEFAULT CHARSET=latin1
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 DROP TABLE t4;
 SHOW TABLES;
 Tables_in_test
@@ -135,7 +135,7 @@ Table	Create Table
 t4	CREATE TABLE `t4` (
   `c1` blob NOT NULL,
   KEY `i1` (`c1`(100))
-) ENGINE=ENGINE DEFAULT CHARSET=latin1
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 DROP TABLE t4;
 SHOW TABLES;
 Tables_in_test
@@ -149,7 +149,7 @@ Table	Create Table
 t4	CREATE TABLE `t4` (
   `c1` mediumblob NOT NULL,
   KEY `i1` (`c1`(100))
-) ENGINE=ENGINE DEFAULT CHARSET=latin1
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 DROP TABLE t4;
 SHOW TABLES;
 Tables_in_test
@@ -163,7 +163,7 @@ Table	Create Table
 t4	CREATE TABLE `t4` (
   `c1` longblob NOT NULL,
   KEY `i1` (`c1`(100))
-) ENGINE=ENGINE DEFAULT CHARSET=latin1
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 DROP TABLE t4;
 SHOW TABLES;
 Tables_in_test
@@ -175,9 +175,9 @@ t4
 SHOW CREATE TABLE t4;
 Table	Create Table
 t4	CREATE TABLE `t4` (
-  `c1` tinytext NOT NULL,
+  `c1` tinytext COLLATE utf8_bin NOT NULL,
   KEY `i1` (`c1`(100))
-) ENGINE=ENGINE DEFAULT CHARSET=latin1
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 DROP TABLE t4;
 SHOW TABLES;
 Tables_in_test
@@ -189,9 +189,9 @@ t4
 SHOW CREATE TABLE t4;
 Table	Create Table
 t4	CREATE TABLE `t4` (
-  `c1` text NOT NULL,
+  `c1` text COLLATE utf8_bin NOT NULL,
   KEY `i1` (`c1`(100))
-) ENGINE=ENGINE DEFAULT CHARSET=latin1
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 DROP TABLE t4;
 SHOW TABLES;
 Tables_in_test
@@ -203,9 +203,9 @@ t4
 SHOW CREATE TABLE t4;
 Table	Create Table
 t4	CREATE TABLE `t4` (
-  `c1` mediumtext NOT NULL,
+  `c1` mediumtext COLLATE utf8_bin NOT NULL,
   KEY `i1` (`c1`(100))
-) ENGINE=ENGINE DEFAULT CHARSET=latin1
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 DROP TABLE t4;
 SHOW TABLES;
 Tables_in_test
@@ -217,9 +217,9 @@ t4
 SHOW CREATE TABLE t4;
 Table	Create Table
 t4	CREATE TABLE `t4` (
-  `c1` longtext NOT NULL,
+  `c1` longtext COLLATE utf8_bin NOT NULL,
   KEY `i1` (`c1`(100))
-) ENGINE=ENGINE DEFAULT CHARSET=latin1
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 DROP TABLE t4;
 SHOW TABLES;
 Tables_in_test

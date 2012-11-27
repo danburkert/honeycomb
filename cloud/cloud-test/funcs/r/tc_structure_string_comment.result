@@ -6,8 +6,8 @@ t1
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` char(10) DEFAULT NULL
-) ENGINE=ENGINE DEFAULT CHARSET=latin1 COMMENT='This table has a CHAR column'
+  `c1` char(10) COLLATE utf8_bin DEFAULT NULL
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='This table has a CHAR column'
 DROP TABLE t1;
 SHOW TABLES;
 Tables_in_test
@@ -18,8 +18,8 @@ t1
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` varchar(10) DEFAULT NULL
-) ENGINE=ENGINE DEFAULT CHARSET=latin1 COMMENT='This table has a VARCHAR column'
+  `c1` varchar(10) COLLATE utf8_bin DEFAULT NULL
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='This table has a VARCHAR column'
 DROP TABLE t1;
 SHOW TABLES;
 Tables_in_test
@@ -31,7 +31,7 @@ SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `c1` binary(10) DEFAULT NULL
-) ENGINE=ENGINE DEFAULT CHARSET=latin1 COMMENT='This table has a BINARY column'
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='This table has a BINARY column'
 DROP TABLE t1;
 SHOW TABLES;
 Tables_in_test
@@ -43,7 +43,7 @@ SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `c1` varbinary(10) DEFAULT NULL
-) ENGINE=ENGINE DEFAULT CHARSET=latin1 COMMENT='This table has a VARBINARY column'
+) ENGINE=ENGINE DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='This table has a VARBINARY column'
 DROP TABLE t1;
 SHOW TABLES;
 Tables_in_test
