@@ -44,3 +44,4 @@ then
   zk_quorum=${zk_quorum:-$_zk_quorum}
   sudo perl -pi -w -e "s/^zk_quorum (\w)$/zk_quorum $zk_quorum/g;" $adapter_conf
 fi
+echo "*** Don't forget to restart MySQL. The JVM doesn't autoreload the jar from the disk. ***"
