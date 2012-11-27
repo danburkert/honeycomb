@@ -20,8 +20,8 @@ then
 fi
 
 echo "Copying ha_cloud.so, mysqlengine.jar and cloud-test to $honeycomb_lib"
-cp -R cloud/cloud-test $honeycomb_lib
-cp build/storage/cloud/ha_cloud.so $honeycomb_lib
-cp HBaseAdapter/target/lib/*.jar $honeycomb_lib
-cp HBaseAdapter/target/mysqlengine-0.1.jar $honeycomb_lib
+cp -R $HONEYCOMB_HOME/cloud/cloud-test $honeycomb_lib
+cp $HONEYCOMB_HOME/build/storage/cloud/ha_cloud.so $honeycomb_lib
+cp $HONEYCOMB_HOME/HBaseAdapter/target/lib/*.jar $honeycomb_lib
+cp $HONEYCOMB_HOME/HBaseAdapter/target/mysqlengine-0.1.jar $honeycomb_lib
 chmod a+x $honeycomb_lib/*.jar
