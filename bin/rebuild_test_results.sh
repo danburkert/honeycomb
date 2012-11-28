@@ -24,6 +24,7 @@ float         \
 group_by      \
 int           \
 joins         \
+join_del_upd  \
 mediumint     \
 primary_key   \
 smallint      \
