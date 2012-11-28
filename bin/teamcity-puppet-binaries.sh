@@ -2,10 +2,10 @@
 
 bundle=`pwd`/honeycomb.tar.gz
 honeycomb_lib=/usr/local/lib/honeycomb
-askpass=./sshaskpass.sh
+askpass=sshaskpass.sh
+command -v $askpass >/dev/null 2>&1 || { echo >&2 "$askpass is required to run $0."; exit 1; }
 
 [ -d $honeycomb_lib ] || { echo "$honeycomb_lib must exist to use this script."; exit 1; }
-[ -e $askpass ] || { echo "$askpass is required for this script to run. Current directory `pwd` and contents `ls -m`"; exit 1; }
 
 pushd $honeycomb_lib
 echo "Creating the tar for honeycomb"
