@@ -254,7 +254,7 @@ static void print_java_classpath(JNIEnv* env)
 }
 
 extern bool volatile abort_loop;
-#ifdef __APPLE__
+#if defined(__APPLE__)
 extern pthread_handler_t kill_server_thread(void *arg __attribute__((unused)));
 static void handler(int sig)
 {
@@ -264,13 +264,11 @@ static void handler(int sig)
 	  sql_print_error("Can't create thread to kill server");
 }
 #elif defined(__linux__) 
-extern void kill_mysql(void)
+extern void kill_mysql(void);
 static void handler(int sig)
 {
   abort_loop = true;
-  pthread_t tmp;
-  if (mysql_thread_create(0, &tmp, &connection_attrib, kill_server_thread, (void*) &sig))
-	  sql_print_error("Can't create thread to kill server");
+  kill_mysql();
 }
 #endif
 
