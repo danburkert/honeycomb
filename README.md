@@ -78,3 +78,10 @@ How to prevent a certain test from running:
     cd $MYSQL_HOME/mysql-test/cloud-test/t
     vi disabled.def
     Add text after the ":" for the test you want disabled. (The chosen text is unimportant.)
+
+How to connect to TeamCity:
+
+    cd $HONEYCOMB_HOME/bin
+    ./teamcity-tunnel.sh <nic-hadoop-admin username>
+
+Go to localhost:8111 to see the CI server.
