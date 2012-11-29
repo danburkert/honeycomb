@@ -209,6 +209,7 @@ int CloudHandler::rnd_next(uchar *buf)
 
   this->store_uuid_ref(row, get_uuid_method);
   java_to_sql(buf, row_map);
+  this->table->status = 0;
 
   MYSQL_READ_ROW_DONE(rc);
 
@@ -352,6 +353,7 @@ int CloudHandler::rnd_pos(uchar *buf, uchar *pos)
   }
 
   java_to_sql(buf, row_map);
+  this->table->status = 0;
 
   MYSQL_READ_ROW_DONE(rc);
   DBUG_RETURN(rc);
@@ -1334,6 +1336,7 @@ int CloudHandler::read_index_row(jobject index_row, uchar* buf)
 
   this->java_to_sql(buf, rowMap);
 
+  this->table->status = 0;
   return 0;
 }
 
