@@ -55,6 +55,9 @@ int CloudHandler::update_row(const uchar *old_data, uchar *new_data)
   delete_row_helper();
   write_row_helper(new_data);
 
+  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
+    table->timestamp_field->set_time();
+
   this->flush_writes();
   DBUG_RETURN(0);
 }
@@ -203,6 +206,7 @@ int CloudHandler::rnd_next(uchar *buf)
 
   if (row_map == NULL)
   {
+    this->table->status = STATUS_NOT_FOUND;
     DBUG_RETURN(HA_ERR_END_OF_FILE);
   }
 
@@ -348,6 +352,7 @@ int CloudHandler::rnd_pos(uchar *buf, uchar *pos)
 
   if (row_map == NULL)
   {
+    this->table->status = STATUS_NOT_FOUND;
     DBUG_RETURN(HA_ERR_END_OF_FILE);
   }
 
@@ -546,8 +551,8 @@ int CloudHandler::info(uint flag)
   jlong row_count = this->env->CallStaticLongMethod(adapter_class,
       get_count_method, table_name);
   stats.records = row_count;
-  //if (stats.records < 100)
-    //stats.records = 100;
+  if (stats.records < 2 && !(flag & HA_STATUS_TIME))
+    stats.records = 2;
   stats.deleted = 0;
   stats.max_data_file_length = this->max_supported_record_length();
   stats.data_file_length = stats.records * this->table->s->reclength;
@@ -1328,6 +1333,7 @@ int CloudHandler::read_index_row(jobject index_row, uchar* buf)
   jobject rowMap = this->env->CallObjectMethod(index_row, get_rowmap_method);
   if (rowMap == NULL)
   {
+    this->table->status = STATUS_NOT_FOUND;
     return HA_ERR_END_OF_FILE;
   }
 
