@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if [ -e pom.apache.xml ]; then
-  mv -f pom.apache.xml pom.xml
+  mv -f pom.cdh.xml pom.xml
 fi
 
 dest=mysql-5.5.28/storage/cloud
