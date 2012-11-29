@@ -13,3 +13,5 @@ popd
 puppet=localadmin@nic-hadoop-puppet
 echo "Sending the tar off to puppet"
 scp $bundle $puppet:/opt/packages
+echo "Extracting the tar on puppet"
+ssh $puppet "cd /opt/packages; tar xzf honeycomb.tar.gz"
