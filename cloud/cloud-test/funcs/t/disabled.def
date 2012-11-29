@@ -127,29 +127,27 @@ se_join_left : PASSING
 se_join_left_outer : PASSING
 se_join_natural_left : PASSING
 se_join_natural_left_outer : PASSING
-se_join_natural_right :
-se_join_natural_right_outer :
-se_join_right :
+se_join_natural_right : PASSING
+se_join_natural_right_outer : PASSING
+se_join_right : PASSING
 se_join_right_outer :
 se_join_straight :
 se_string_distinct :
 
 
 ### COUNT:
-de_number_range :
+de_number_range : foo
 de_string_range : PASSING
 fu_aggregate_count_number : PASSING
 general_not_null : PASSING
 in_number_boundary_error : PASSING
-in_number_decimal_boundary_error :
+in_number_decimal_boundary_error : foo
 in_string_boundary_error : PASSING
-ps_number_length :
-
-### REPLACE
-re_number_range : REPLACE
-re_number_range_set : REPLACE
-re_string_range : REPLACE
-re_string_range_set : REPLACE
+ps_number_length : foo
+re_number_range : foo
+re_number_range_set : foo
+re_string_range : foo
+re_string_range_set : foo
 
 ai_init_alter_table : foo
 ai_init_create_table : foo
