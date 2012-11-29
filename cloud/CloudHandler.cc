@@ -92,14 +92,13 @@ int CloudHandler::delete_all_rows()
 
   attach_thread();
 
-  jstring tableName = this->table_name();
+  jstring table_name = this->table_name();
   jclass adapter_class = this->adapter();
   jmethodID delete_rows_method = find_static_method(adapter_class, "deleteAllRows", "(Ljava/lang/String;)I",this->env);
 
   int count = this->env->CallStaticIntMethod(adapter_class, delete_rows_method,
-      tableName);
+      table_name);
   jmethodID set_count_method = find_static_method(adapter_class, "setRowCount", "(Ljava/lang/String;J)V",this->env);
-  jstring table_name = this->table_name();
   this->env->CallStaticVoidMethod(adapter_class, set_count_method, table_name,
       (jlong) 0);
   this->flush_writes();
@@ -547,8 +546,8 @@ int CloudHandler::info(uint flag)
   jlong row_count = this->env->CallStaticLongMethod(adapter_class,
       get_count_method, table_name);
   stats.records = row_count;
-  if (stats.records < 100)
-    stats.records = 100;
+  //if (stats.records < 100)
+    //stats.records = 100;
   stats.deleted = 0;
   stats.max_data_file_length = this->max_supported_record_length();
   stats.data_file_length = stats.records * this->table->s->reclength;
@@ -1128,7 +1127,7 @@ int CloudHandler::index_read_map(uchar * buf, const uchar * key, key_part_map ke
     key_names[index] = field->field_name;
     uint store_length = key_part->store_length;
     uint offset = store_length;
-    if (this->is_field_nullable(table->s->table_name.str, field->field_name))  
+    if (this->is_field_nullable(table->s->table_name.str, field->field_name))
     {
       if(key_iter[0] == 1)
       {

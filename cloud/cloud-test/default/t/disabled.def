@@ -18,6 +18,7 @@ timestamp :
 year :
 encoding_collation :
 joins :
+join_del_upd :
 group_by :
 autoincrement :
 primary_key :
