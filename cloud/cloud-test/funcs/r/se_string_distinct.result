@@ -55,21 +55,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -78,158 +78,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 CHAR(1) NULL, c2 CHAR(1) NULL, c3 INT NULL);
@@ -288,21 +288,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -311,158 +311,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 CHAR(1) NULL, c2 CHAR(1) NULL, c3 INT NULL);
@@ -521,21 +521,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -544,158 +544,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 CHAR(1) NULL, c2 CHAR(1) NULL, c3 INT NULL);
@@ -754,21 +754,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -777,158 +777,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 CHAR(1) NULL, c2 CHAR(1) NULL, c3 INT NULL);
@@ -987,21 +987,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -1010,158 +1010,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 CHAR(1) NULL, c2 CHAR(1) NULL, c3 INT NULL);
@@ -1220,21 +1220,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -1243,158 +1243,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 CHAR(1) NULL, c2 CHAR(1) NULL, c3 INT NULL);
@@ -1453,21 +1453,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -1476,158 +1476,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 VARCHAR(1) NULL, c2 VARCHAR(1) NULL, c3 INT NULL);
@@ -1686,21 +1686,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -1709,158 +1709,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 VARCHAR(1) NULL, c2 VARCHAR(1) NULL, c3 INT NULL);
@@ -1919,21 +1919,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -1942,158 +1942,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 VARCHAR(1) NULL, c2 VARCHAR(1) NULL, c3 INT NULL);
@@ -2152,21 +2152,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -2175,158 +2175,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 VARCHAR(1) NULL, c2 VARCHAR(1) NULL, c3 INT NULL);
@@ -2385,21 +2385,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -2408,158 +2408,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 VARCHAR(1) NULL, c2 VARCHAR(1) NULL, c3 INT NULL);
@@ -2618,21 +2618,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -2641,158 +2641,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 VARCHAR(1) NULL, c2 VARCHAR(1) NULL, c3 INT NULL);
@@ -2851,21 +2851,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -2874,158 +2874,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 VARCHAR(1) NULL, c2 VARCHAR(1) NULL, c3 INT NULL);
@@ -3084,21 +3084,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -3107,158 +3107,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 BINARY(1) NULL, c2 BINARY(1) NULL, c3 INT NULL);
@@ -3317,21 +3317,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -3340,158 +3340,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 BINARY(1) NULL, c2 BINARY(1) NULL, c3 INT NULL);
@@ -3550,21 +3550,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -3573,158 +3573,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 BINARY(1) NULL, c2 BINARY(1) NULL, c3 INT NULL);
@@ -3783,21 +3783,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -3806,158 +3806,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 BINARY(1) NULL, c2 BINARY(1) NULL, c3 INT NULL);
@@ -4016,21 +4016,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -4039,158 +4039,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 BINARY(1) NULL, c2 BINARY(1) NULL, c3 INT NULL);
@@ -4249,21 +4249,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -4272,158 +4272,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 BINARY(1) NULL, c2 BINARY(1) NULL, c3 INT NULL);
@@ -4482,21 +4482,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -4505,158 +4505,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 BINARY(1) NULL, c2 BINARY(1) NULL, c3 INT NULL);
@@ -4715,21 +4715,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -4738,158 +4738,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 VARBINARY(1) NULL, c2 VARBINARY(1) NULL, c3 INT NULL);
@@ -4948,21 +4948,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -4971,158 +4971,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 VARBINARY(1) NULL, c2 VARBINARY(1) NULL, c3 INT NULL);
@@ -5181,21 +5181,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -5204,158 +5204,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 VARBINARY(1) NULL, c2 VARBINARY(1) NULL, c3 INT NULL);
@@ -5414,21 +5414,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -5437,158 +5437,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 VARBINARY(1) NULL, c2 VARBINARY(1) NULL, c3 INT NULL);
@@ -5647,21 +5647,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -5670,158 +5670,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 VARBINARY(1) NULL, c2 VARBINARY(1) NULL, c3 INT NULL);
@@ -5880,21 +5880,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -5903,158 +5903,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 VARBINARY(1) NULL, c2 VARBINARY(1) NULL, c3 INT NULL);
@@ -6113,21 +6113,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -6136,158 +6136,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 VARBINARY(1) NULL, c2 VARBINARY(1) NULL, c3 INT NULL);
@@ -6346,21 +6346,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -6369,158 +6369,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 BLOB(1) NULL, c2 BLOB(1) NULL, c3 INT NULL);
@@ -6579,21 +6579,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -6602,158 +6602,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 BLOB(1) NULL, c2 BLOB(1) NULL, c3 INT NULL);
@@ -6812,21 +6812,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -6835,158 +6835,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 BLOB(1) NULL, c2 BLOB(1) NULL, c3 INT NULL);
@@ -7045,21 +7045,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -7068,158 +7068,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 BLOB(1) NULL, c2 BLOB(1) NULL, c3 INT NULL);
@@ -7278,21 +7278,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -7301,158 +7301,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 BLOB(1) NULL, c2 BLOB(1) NULL, c3 INT NULL);
@@ -7511,21 +7511,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -7534,158 +7534,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 BLOB(1) NULL, c2 BLOB(1) NULL, c3 INT NULL);
@@ -7744,21 +7744,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -7767,158 +7767,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 BLOB(1) NULL, c2 BLOB(1) NULL, c3 INT NULL);
@@ -7977,21 +7977,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -8000,158 +8000,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 TEXT(1) NULL, c2 TEXT(1) NULL, c3 INT NULL);
@@ -8210,21 +8210,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -8233,158 +8233,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 TEXT(1) NULL, c2 TEXT(1) NULL, c3 INT NULL);
@@ -8443,21 +8443,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -8466,158 +8466,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 TEXT(1) NULL, c2 TEXT(1) NULL, c3 INT NULL);
@@ -8676,21 +8676,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -8699,158 +8699,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 TEXT(1) NULL, c2 TEXT(1) NULL, c3 INT NULL);
@@ -8909,21 +8909,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -8932,158 +8932,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 TEXT(1) NULL, c2 TEXT(1) NULL, c3 INT NULL);
@@ -9142,21 +9142,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -9165,158 +9165,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 TEXT(1) NULL, c2 TEXT(1) NULL, c3 INT NULL);
@@ -9375,21 +9375,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -9398,158 +9398,158 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;
 CREATE TABLE t1(c1 TEXT(1) NULL, c2 TEXT(1) NULL, c3 INT NULL);
@@ -9608,21 +9608,21 @@ INSERT INTO t1 (c1,c2,c3) VALUES ('c','a',5), ('c','c',7), ('c','c',8), ('c','d'
 INSERT INTO t1 (c1,c2,c3) VALUES ('a','b',8), ('a','b',2), ('b','b',3), ('a','c',4), ('a','d',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('b','b',1), ('b','a',8), ('b','c',6), ('b','e',4), ('b','z',5);
 INSERT INTO t1 (c1,c2,c3) VALUES ('c','b',5), ('c','c',7), ('c','c',8), ('c','d',9), ('c','f',5);
-SELECT DISTINCT c1 FROM t1;
+SELECT DISTINCT c1 FROM t1 ORDER BY c1;
 c1
 a
 b
 c
-SELECT DISTINCT c2 FROM t1;
+SELECT DISTINCT c2 FROM t1 ORDER BY c2;
 c2
 a
 b
 c
 d
 e
-z
 f
-SELECT DISTINCT c3 FROM t1;
+z
+SELECT DISTINCT c3 FROM t1 ORDER BY c3;
 c3
 1
 2
@@ -9631,157 +9631,157 @@ c3
 5
 6
 7
-9
 8
-SELECT DISTINCT c1,c3 FROM t1;
+9
+SELECT DISTINCT c1,c3 FROM t1 ORDER BY c1,c3;
 c1	c3
 a	1
 a	2
 a	3
 a	4
 a	5
+a	6
+a	7
+a	8
+a	9
 b	1
-b	6
+b	2
+b	3
 b	4
 b	5
-c	5
-c	7
-c	1
-c	9
-b	3
-c	3
-b	2
-c	2
-a	7
+b	6
 b	7
-a	6
-c	6
-c	4
-a	9
-b	9
-a	8
 b	8
+b	9
+c	1
+c	2
+c	3
+c	4
+c	5
+c	6
+c	7
 c	8
-SELECT DISTINCT c1,c2,c3 FROM t1;
+c	9
+SELECT DISTINCT c1,c2,c3 FROM t1 ORDER BY c1,c2,c3;
 c1	c2	c3
 a	a	1
 a	a	2
+a	a	3
+a	a	4
+a	a	5
+a	a	6
+a	a	7
+a	a	8
+a	a	9
+a	b	1
+a	b	2
 a	b	3
+a	b	4
+a	b	5
+a	b	6
+a	b	7
+a	b	8
+a	b	9
 a	c	4
 a	d	5
 b	a	1
+b	a	2
+b	a	3
+b	a	4
+b	a	5
+b	a	6
+b	a	7
+b	a	8
+b	a	9
+b	b	1
+b	b	3
 b	c	6
 b	e	4
 b	z	5
 c	a	5
-c	c	7
+c	b	5
 c	c	1
+c	c	2
+c	c	3
+c	c	4
+c	c	5
+c	c	6
+c	c	7
+c	c	8
+c	c	9
 c	d	9
 c	f	5
-a	b	1
-a	b	2
-b	b	3
-b	b	1
-c	b	5
-a	a	3
-b	a	3
-c	c	3
-b	a	2
-c	c	2
-a	a	7
-b	a	7
-a	b	7
-a	a	6
-b	a	6
-c	c	6
-a	b	6
-a	a	4
-b	a	4
-c	c	4
-a	b	4
-a	a	5
-b	a	5
-c	c	5
-a	b	5
-a	a	9
-b	a	9
-c	c	9
-a	b	9
-a	a	8
-b	a	8
-c	c	8
-a	b	8
-SELECT DISTINCT c3,c2,c1 FROM t1;
+SELECT DISTINCT c3,c2,c1 FROM t1 ORDER BY c3,c2,c1;
 c3	c2	c1
 1	a	a
-2	a	a
-3	b	a
-4	c	a
-5	d	a
 1	a	b
-6	c	b
-4	e	b
-5	z	b
-5	a	c
-7	c	c
-1	c	c
-9	d	c
-5	f	c
 1	b	a
-2	b	a
-3	b	b
 1	b	b
-5	b	c
+1	c	c
+2	a	a
+2	a	b
+2	b	a
+2	c	c
 3	a	a
 3	a	b
+3	b	a
+3	b	b
 3	c	c
-2	a	b
-2	c	c
+4	a	a
+4	a	b
+4	b	a
+4	c	a
+4	c	c
+4	e	b
+5	a	a
+5	a	b
+5	a	c
+5	b	a
+5	b	c
+5	c	c
+5	d	a
+5	f	c
+5	z	b
+6	a	a
+6	a	b
+6	b	a
+6	c	b
+6	c	c
 7	a	a
 7	a	b
 7	b	a
-6	a	a
-6	a	b
-6	c	c
-6	b	a
-4	a	a
-4	a	b
-4	c	c
-4	b	a
-5	a	a
-5	a	b
-5	c	c
-5	b	a
-9	a	a
-9	a	b
-9	c	c
-9	b	a
+7	c	c
 8	a	a
 8	a	b
-8	c	c
 8	b	a
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2';
+8	c	c
+9	a	a
+9	a	b
+9	b	a
+9	c	c
+9	d	c
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
-SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1;
 c1
-SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c2 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c2;
 c2
-SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3;
 c3
-SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c3;
 c1	c3
-SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c1,c2,c3 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c1,c2,c3;
 c1	c2	c3
-SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2';
+SELECT DISTINCT c3,c2,c1 FROM t1 WHERE t1.c1='#C2' AND t1.c2='#C2' ORDER BY c3,c2,c1;
 c3	c2	c1
 DROP TABLE t1;

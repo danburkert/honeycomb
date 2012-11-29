@@ -101,6 +101,56 @@ rpl_row_until : Test Timesout
 
 ### HONEYCOMB DISABLED:
 
+### ORDER BY:
+date_function : PASSING
+in_calendar_pk_constraint_error : PASSING
+in_calendar_pk_constraint_ignore : PASSING
+in_enum_null : PASSING
+in_number_length : PASSING
+in_number_null : PASSING
+in_number_pk_constraint_error : PASSING
+in_number_pk_constraint_ignore : PASSING
+in_number_unique_constraint_error : PASSING
+in_number_unique_constraint_ignore : PASSING
+in_string_not_null : PASSING
+in_string_null : PASSING
+in_string_pk_constraint_error : PASSING
+in_string_pk_constraint_ignore : PASSING
+in_string_unique_constraint_error : PASSING
+in_string_unique_constraint_ignore : PASSING
+ps_string_not_null : PASSING
+ps_string_null : PASSING
+se_join_cross : PASSING
+se_join_default : foo
+se_join_inner : PASSING
+se_join_left : PASSING
+se_join_left_outer : PASSING
+se_join_natural_left : PASSING
+se_join_natural_left_outer : PASSING
+se_join_natural_right :
+se_join_natural_right_outer :
+se_join_right :
+se_join_right_outer :
+se_join_straight :
+se_string_distinct :
+
+
+### COUNT:
+de_number_range :
+de_string_range : PASSING
+fu_aggregate_count_number : PASSING
+general_not_null : PASSING
+in_number_boundary_error : PASSING
+in_number_decimal_boundary_error :
+in_string_boundary_error : PASSING
+ps_number_length :
+
+### REPLACE
+re_number_range : REPLACE
+re_number_range_set : REPLACE
+re_string_range : REPLACE
+re_string_range_set : REPLACE
+
 ai_init_alter_table : foo
 ai_init_create_table : foo
 ai_init_insert : foo
@@ -121,7 +171,6 @@ crash_manyindexes_number : foo
 crash_manyindexes_string : foo
 crash_manytables_number : foo
 crash_manytables_string : foo
-date_function : foo
 datetime_function : foo
 db_alter_character_set : foo
 db_alter_character_set_collate : foo
@@ -143,28 +192,21 @@ de_multi_db_table : foo
 de_multi_db_table_using : foo
 de_multi_table : foo
 de_multi_table_using : foo
-de_number_range : COUNT
 de_quick : foo
-de_string_range : PASSING
 de_truncate : foo
 de_truncate_autoinc : foo
 fu_aggregate_avg_number : foo
-fu_aggregate_count_number : PASSING
 fu_aggregate_max_number : foo
 fu_aggregate_max_subquery : foo
 fu_aggregate_min_number : foo
 fu_aggregate_sum_number : foo
 general_no_data : foo
-general_not_null : PASSING
 general_null : foo
 in_calendar_2_unique_constraints_duplicate_update : foo
 in_calendar_pk_constraint_duplicate_update : foo
-in_calendar_pk_constraint_error : foo
-in_calendar_pk_constraint_ignore : foo
 in_calendar_unique_constraint_duplicate_update : foo
 in_calendar_unique_constraint_error : foo
 in_calendar_unique_constraint_ignore : foo
-in_enum_null : foo
 in_enum_null_boundary_error : foo
 in_enum_null_large_error : foo
 in_insert_select : foo
@@ -190,30 +232,15 @@ in_multicolumn_string_unique_constraint_duplicate_update : foo
 in_multicolumn_string_unique_constraint_error : foo
 in_multicolumn_string_unique_constraint_ignore : foo
 in_number_2_unique_constraints_duplicate_update : foo
-in_number_boundary_error : PASSING
-in_number_decimal_boundary_error : COUNT
-in_number_length : foo
-in_number_null : foo
 in_number_pk_constraint_duplicate_update : foo
-in_number_pk_constraint_error : foo
-in_number_pk_constraint_ignore : foo
 in_number_unique_constraint_duplicate_update : foo
-in_number_unique_constraint_error : foo
-in_number_unique_constraint_ignore : foo
 in_set_null : foo
 in_set_null_boundary_error : foo
 in_set_null_large : foo
 in_string_2_unique_constraints_duplicate_update : foo
-in_string_boundary_error : PASSING
-in_string_not_null : foo
-in_string_null : foo
 in_string_pk_constraint_duplicate_update : foo
-in_string_pk_constraint_error : foo
-in_string_pk_constraint_ignore : foo
 in_string_set_enum_fail : foo
 in_string_unique_constraint_duplicate_update : foo
-in_string_unique_constraint_error : foo
-in_string_unique_constraint_ignore : foo
 ix_drop : foo
 ix_drop_error : foo
 ix_index_decimals : foo
@@ -246,15 +273,8 @@ ld_unique_error2 : foo
 ld_unique_error2_local : foo
 ld_unique_error3 : foo
 ld_unique_error3_local : foo
-ps_number_length : COUNT
 ps_number_null : foo
-ps_string_not_null : foo
-ps_string_null : foo
-re_number_range : COUNT
-re_number_range_set : COUNT
 re_number_select : foo
-re_string_range : COUNT
-re_string_range_set : COUNT
 rpl000010 : foo
 rpl000011 : foo
 rpl000013 : foo
@@ -341,20 +361,7 @@ rpl_trunc_temp : foo
 rpl_user_variables : foo
 rpl_variables : foo
 rpl_view : foo
-se_join_cross : foo
-se_join_default : foo
-se_join_inner : foo
-se_join_left : foo
-se_join_left_outer : foo
-se_join_natural_left : foo
-se_join_natural_left_outer : foo
-se_join_natural_right : foo
-se_join_natural_right_outer : foo
-se_join_right : foo
-se_join_right_outer : foo
-se_join_straight : foo
 se_rowid : foo
-se_string_distinct : foo
 se_string_from : foo
 se_string_groupby : foo
 se_string_having : foo
