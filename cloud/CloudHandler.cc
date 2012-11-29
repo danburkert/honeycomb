@@ -542,35 +542,67 @@ ha_rows CloudHandler::records_in_range(uint inx, key_range *min_key,
 int CloudHandler::info(uint flag)
 {
   // TODO: Update this function to take into account the flag being passed in, like the other engines
+  ha_rows		rec_per_key;
 
   DBUG_ENTER("CloudHandler::info");
-  attach_thread();
-  jclass adapter_class = this->adapter();
-  jmethodID get_count_method = find_static_method(adapter_class, "getRowCount", "(Ljava/lang/String;)J",this->env);
-  jstring table_name = this->table_name();
-  jlong row_count = this->env->CallStaticLongMethod(adapter_class,
-      get_count_method, table_name);
-  stats.records = row_count;
-  if (stats.records < 2 && !(flag & HA_STATUS_TIME))
-    stats.records = 2;
-  stats.deleted = 0;
-  stats.max_data_file_length = this->max_supported_record_length();
-  stats.data_file_length = stats.records * this->table->s->reclength;
-  stats.index_file_length = this->max_supported_key_length();
-  stats.mean_rec_length = 1337;
-  stats.delete_length = stats.deleted * stats.mean_rec_length;
-  stats.check_time = time(NULL);
-
-  // Update index cardinality - see ::analyze() function for more explanation
-
-  for (int i = 0; i < this->table->s->keys; i++)
+  if (flag & HA_STATUS_VARIABLE) 
   {
-    for (int j = 0; j < table->key_info[i].key_parts; j++)
+    attach_thread();
+    jclass adapter_class = this->adapter();
+    jmethodID get_count_method = find_static_method(adapter_class, "getRowCount", "(Ljava/lang/String;)J",this->env);
+    jstring table_name = this->table_name();
+    jlong row_count = this->env->CallStaticLongMethod(adapter_class,
+        get_count_method, table_name);
+    if (row_count < 0)
+      row_count = 0;
+    if (row_count == 0 && !(flag & HA_STATUS_TIME))
+      row_count++;
+
+	THD*	thd = ha_thd();
+    if (thd_sql_command(thd) == SQLCOM_TRUNCATE) 
     {
-      this->table->key_info[i].rec_per_key[j] = 1;
+      row_count = 1;
     }
+
+    stats.records = row_count;
+    stats.deleted = 0;
+    stats.max_data_file_length = this->max_supported_record_length();
+    stats.data_file_length = stats.records * this->table->s->reclength;
+    stats.index_file_length = this->max_supported_key_length();
+    stats.delete_length = stats.deleted * stats.mean_rec_length;
+    stats.check_time = 0;
+
+    if (stats.records == 0) {
+      stats.mean_rec_length = 0;
+    } else {
+      stats.mean_rec_length = (ulong) (stats.data_file_length / stats.records);
+    }
+
+    detach_thread();
   }
 
+  if (flag & HA_STATUS_CONST)
+  {
+    // Update index cardinality - see ::analyze() function for more explanation
+    /* Since MySQL seems to favor table scans
+       too much over index searches, we pretend
+       index selectivity is 2 times better than
+       our estimate: */
+
+    for (int i = 0; i < this->table->s->keys; i++)
+    {
+      for (int j = 0; j < table->key_info[i].key_parts; j++)
+      {
+        rec_per_key = stats.records / 2;
+
+        if (rec_per_key == 0) {
+          rec_per_key = 1;
+        }
+
+        table->key_info[i].rec_per_key[j] = rec_per_key >= ~(ulong) 0 ? ~(ulong) 0 : (ulong) rec_per_key;
+      }
+    }
+  }
   // MySQL needs us to tell it the index of the key which caused the last operation to fail
   // Should be saved in this->failed_key_index for now
   // Later, when we implement transactions, we should use this opportunity to grab the info from the trx itself.
@@ -580,7 +612,6 @@ int CloudHandler::info(uint flag)
     this->failed_key_index = -1;
   }
 
-  detach_thread();
 
   DBUG_RETURN(0);
 }
@@ -1241,8 +1272,12 @@ ha_rows CloudHandler::estimate_rows_upper_bound()
       get_count_method, table_name);
 
   detach_thread();
+  if (row_count < 2)
+  {
+    DBUG_RETURN((ha_rows)10); // Stupid MySQL and its filesort. This must be large enough to filesort when there are less than 2 records.
+  }
 
-  DBUG_RETURN(row_count);
+  DBUG_RETURN((ha_rows)2*row_count + 1);
 }
 
 int CloudHandler::index_prev(uchar *buf)
