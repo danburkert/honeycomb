@@ -162,6 +162,7 @@ class CloudHandler : public handler
       this->ref = new uchar[this->ref_length];
       this->initialize_adapter();
       this->rows_written = 0;
+      this->failed_key_index = 0;
     }
 
     ~CloudHandler()
