@@ -19,14 +19,6 @@
             <artifactId>mysqlengine</artifactId>
             <version>0.1</version>
         </dependency>
-    </dependencies>
-
-    <parent>
-        <groupId>com.nearinfinity.honeycomb</groupId>
-        <artifactId>honeycomb</artifactId>
-        <version>0.1</version>
-    </parent>
-    <dependencies>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-client</artifactId>
@@ -46,5 +38,11 @@
             <scope>provided</scope>
         </dependency>
     </dependencies>
+
+    <parent>
+        <groupId>com.nearinfinity.honeycomb</groupId>
+        <artifactId>honeycomb</artifactId>
+        <version>0.1</version>
+    </parent>
 
 </project>
