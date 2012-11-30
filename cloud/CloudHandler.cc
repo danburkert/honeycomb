@@ -955,11 +955,15 @@ int CloudHandler::get_failed_key_index(const char *key_name)
     return 0;
   }
 
-  for(int i = 0; i < this->table->s->keys; i++)
+  for (uint key = 0; key < this->table->s->keys; key++)
   {
-    if (strcmp(table->key_info[i].key_part->field->field_name, key_name) == 0)
+    KEY *pos = table->key_info + key;
+    KEY_PART_INFO *key_part = pos->key_part;
+    KEY_PART_INFO *key_part_end = key_part + pos->key_parts;
+    char* name = index_name(key_part, key_part_end, pos->key_parts);
+    if (strcmp(name, key_name) == 0)
     {
-      return i;
+      return key;
     }
   }
 
