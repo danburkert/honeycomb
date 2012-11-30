@@ -20,6 +20,6 @@ encoding_collation :
 joins :
 join_del_upd :
 group_by :
-autoincrement :
+autoincrement : Autoincrement fails
 primary_key :
 foreign_key :
