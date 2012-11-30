@@ -431,7 +431,7 @@ public class HBaseClient {
         HBaseResultScanner scanner = new SingleResultScanner(getScanner(strategy));
 
         if (scanner.next(null) != null) {
-            return Joiner.on(", ").join(scanInfo.columnNames());
+            return Joiner.on(",").join(scanInfo.columnNames());
         }
 
         return null;
