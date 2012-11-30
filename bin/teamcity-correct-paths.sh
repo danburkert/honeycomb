@@ -13,3 +13,6 @@ if [ -d cloud ]; then
 
   mv -f cloud $dest
 fi
+
+echo "Running git clean"
+git clean -f
