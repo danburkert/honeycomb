@@ -26,28 +26,16 @@ if [ ! -d $MYSQL_HOME ]
 then
   echo "Installing and setting up mysql."
   sudo make install
-  platform=$(uname)
-  if [[ "$platform" == "Darwin" ]]; then
-    echo "Creating mysql Mac User"
-    sudo dscl . -create /Groups/mysql
-    sudo dscl . -create /Groups/mysql gid 296
-    sudo dscl . -create /Users/mysql
-    sudo dscl . -create /Users/mysql UserShell /usr/bin/false
-    sudo dscl . -create /Users/mysql NFSHomeDirectory /var/empty
-    sudo dscl . -append /Groups/mysql GroupMembership mysql
-  elif [[ "$platform" == "Linux" ]]; then
-    echo "Creating mysql Linux User"
-    sudo groupadd mysql
-    sudo useradd -r -g mysql mysql
-  fi
+  current_user=`whoami`
+  current_group=`groups | awk '{ print $1 }'`
 
-  sudo chown -R mysql $MYSQL_HOME/data
-  sudo chgrp -R mysql $MYSQL_HOME/data
+  echo "Changing the owner of $MYSQL_HOME to $current_user:$current_group"
+  sudo chown -R $current_user:$current_group $MYSQL_HOME
   echo "Creating grant tables"
   pushd $MYSQL_HOME
-  sudo scripts/mysql_install_db --user=mysql
+  scripts/mysql_install_db --user=$current_user
   echo "Starting up MySQL"
-  sudo support-files/mysql.server start
+  support-files/mysql.server start
   popd
 fi
 
@@ -57,9 +45,9 @@ if [ ! -h $link ]
 then
   if [ -e $link ]; then
     echo "Changing file to symbolic link"
-    sudo rm $link
+    rm $link
   fi
 
   echo "Creating a symbolic link from $link to $target"
-  sudo ln -s $target $link
+  ln -s $target $link
 fi
