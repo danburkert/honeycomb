@@ -121,7 +121,8 @@ in_string_unique_constraint_ignore : PASSING
 ps_string_not_null : PASSING
 ps_string_null : PASSING
 se_join_cross : PASSING
-se_join_default : foo
+se_join_default : PASSING
+
 se_join_inner : PASSING
 se_join_left : PASSING
 se_join_left_outer : PASSING
@@ -130,58 +131,83 @@ se_join_natural_left_outer : PASSING
 se_join_natural_right : PASSING
 se_join_natural_right_outer : PASSING
 se_join_right : PASSING
-se_join_right_outer :
-se_join_straight :
-se_string_distinct :
-
+se_join_right_outer : PASSING
+se_join_straight : PASSING
+se_string_distinct : PASSING
 
 ### COUNT:
-de_number_range : foo
+de_number_range : PASSING
 de_string_range : PASSING
 fu_aggregate_count_number : PASSING
 general_not_null : PASSING
 in_number_boundary_error : PASSING
-in_number_decimal_boundary_error : foo
+in_number_decimal_boundary_error : PASSING
 in_string_boundary_error : PASSING
-ps_number_length : foo
-re_number_range : foo
-re_number_range_set : foo
-re_string_range : foo
-re_string_range_set : foo
+ps_number_length : PASSING
+re_number_range : PASS
+re_number_range_set : PASS
+re_string_range : PASS
+re_string_range_set : PASS
 
-ai_init_alter_table : foo
-ai_init_create_table : foo
-ai_init_insert : foo
-ai_init_insert_id : foo
-ai_overflow_error : foo
-ai_reset_by_truncate : foo
-ai_sql_auto_is_null : foo
-an_calendar : foo
-an_number : foo
-an_string : foo
-comment_column : foo
-comment_column2 : foo
-comment_index : foo
-comment_table : foo
-crash_manycolumns_number : foo
-crash_manycolumns_string : foo
-crash_manyindexes_number : foo
-crash_manyindexes_string : foo
-crash_manytables_number : foo
-crash_manytables_string : foo
-datetime_function : foo
-db_alter_character_set : foo
-db_alter_character_set_collate : foo
-db_alter_collate_ascii : foo
-db_alter_collate_utf8 : foo
-db_create_character_set : foo
-db_create_character_set_collate : foo
-db_create_drop : foo
-db_create_error : foo
-db_create_error_reserved : foo
-db_create_if_not_exists : foo
-db_drop_error : foo
-db_use_error : foo
+### CRASH:
+in_multicolumn_calendar_pk_constraint_duplicate_update : CRASH
+in_multicolumn_calendar_pk_constraint_error : CRASH
+in_multicolumn_calendar_pk_constraint_ignore : CRASH
+in_multicolumn_calendar_unique_constraint_duplicate_update : CRASH
+in_multicolumn_calendar_unique_constraint_error : CRASH
+in_multicolumn_calendar_unique_constraint_ignore : PASSING
+in_multicolumn_number_pk_constraint_duplicate_update : CRASH
+in_multicolumn_number_pk_constraint_error : CRASH
+in_multicolumn_number_pk_constraint_ignore : CRASH
+in_multicolumn_number_unique_constraint_duplicate_update : CRASH
+in_multicolumn_number_unique_constraint_error : CRASH
+in_multicolumn_number_unique_constraint_ignore : CRASH
+in_multicolumn_string_pk_constraint_duplicate_update : CRASH
+in_multicolumn_string_pk_constraint_error : CRASH
+in_multicolumn_string_pk_constraint_ignore : CRASH
+in_multicolumn_string_unique_constraint_duplicate_update : CRASH
+in_multicolumn_string_unique_constraint_error :
+in_multicolumn_string_unique_constraint_ignore : PASSING
+
+ai_init_alter_table : AUTOINCR
+ai_init_create_table : AUTOINCR
+ai_init_insert_id : AUTOINCR
+ai_reset_by_truncate : AUTOINCR
+
+crash_manyindexes_number : KEYPARTS
+crash_manyindexes_string : KEYPARTS
+
+
+ai_init_insert : PASSING
+ai_overflow_error : PASSING
+ai_sql_auto_is_null : PASSING
+an_calendar : PASSING
+an_number : PASSING
+an_string : PASSING
+comment_column : PASSING
+comment_column2 : PASSING
+comment_index : PASSING
+comment_table : PASSING
+crash_manycolumns_number : PASSING
+crash_manycolumns_string :
+crash_manytables_number : PASSING
+crash_manytables_string : PASSING
+datetime_function : PASSING
+db_alter_character_set : PASSING
+db_alter_character_set_collate : PASSING
+db_alter_collate_ascii : PASSING
+db_alter_collate_utf8 : PASSING
+db_create_character_set : PASSING
+db_create_character_set_collate : PASSING
+db_create_drop : PASSING
+db_create_error : PASSING
+db_create_error_reserved : PASSING
+db_create_if_not_exists : PASSING
+db_drop_error : PASSING
+db_use_error : PASSING
+
+
+
 de_autoinc : foo
 de_calendar_range : foo
 de_ignore : foo
@@ -211,24 +237,6 @@ in_insert_select : foo
 in_insert_select_autoinc : foo
 in_insert_select_unique_violation : foo
 in_lob_boundary_error : foo
-in_multicolumn_calendar_pk_constraint_duplicate_update : foo
-in_multicolumn_calendar_pk_constraint_error : foo
-in_multicolumn_calendar_pk_constraint_ignore : foo
-in_multicolumn_calendar_unique_constraint_duplicate_update : foo
-in_multicolumn_calendar_unique_constraint_error : foo
-in_multicolumn_calendar_unique_constraint_ignore : foo
-in_multicolumn_number_pk_constraint_duplicate_update : foo
-in_multicolumn_number_pk_constraint_error : foo
-in_multicolumn_number_pk_constraint_ignore : foo
-in_multicolumn_number_unique_constraint_duplicate_update : foo
-in_multicolumn_number_unique_constraint_error : foo
-in_multicolumn_number_unique_constraint_ignore : foo
-in_multicolumn_string_pk_constraint_duplicate_update : foo
-in_multicolumn_string_pk_constraint_error : foo
-in_multicolumn_string_pk_constraint_ignore : foo
-in_multicolumn_string_unique_constraint_duplicate_update : foo
-in_multicolumn_string_unique_constraint_error : foo
-in_multicolumn_string_unique_constraint_ignore : foo
 in_number_2_unique_constraints_duplicate_update : foo
 in_number_pk_constraint_duplicate_update : foo
 in_number_unique_constraint_duplicate_update : foo
