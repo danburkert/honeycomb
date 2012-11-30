@@ -400,8 +400,7 @@ int CloudHandler::end_bulk_insert()
   DBUG_RETURN(0);
 }
 
-template<typename T>
-char* CloudHandler::index_name(T* table, uint key)
+char* CloudHandler::index_name(TABLE* table, uint key)
 {
     KEY *pos = table->key_info + key;
     KEY_PART_INFO *key_part = pos->key_part;
@@ -1077,7 +1076,10 @@ int CloudHandler::index_init(uint idx, bool sorted)
 
   this->active_index = idx;
 
-  const char* column_names = this->index_name(table->s, idx);
+  KEY *pos = table->s->key_info + idx;
+  KEY_PART_INFO *key_part = pos->key_part;
+  KEY_PART_INFO *key_part_end = key_part + pos->key_parts;
+  const char* column_names = this->index_name(key_part, key_part_end, pos->key_parts);
   Field *field = table->field[idx];
   attach_thread();
 
