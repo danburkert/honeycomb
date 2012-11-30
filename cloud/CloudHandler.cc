@@ -400,6 +400,15 @@ int CloudHandler::end_bulk_insert()
   DBUG_RETURN(0);
 }
 
+template<typename T>
+char* CloudHandler::index_name(T* table, uint key)
+{
+    KEY *pos = table->key_info + key;
+    KEY_PART_INFO *key_part = pos->key_part;
+    KEY_PART_INFO *key_part_end = key_part + pos->key_parts;
+    return this->index_name(key_part, key_part_end, pos->key_parts);
+}
+
 char* CloudHandler::index_name(KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts)
 {
     size_t size = 0;
@@ -437,10 +446,7 @@ jobject CloudHandler::create_multipart_keys(TABLE* table_arg)
 
   for (uint key = 0; key < keys; key++)
   {
-    KEY *pos = table_arg->key_info + key;
-    KEY_PART_INFO *key_part = pos->key_part;
-    KEY_PART_INFO *key_part_end = key_part + pos->key_parts;
-    char* name = index_name(key_part, key_part_end, pos->key_parts);
+    char* name = index_name(table_arg, key);
     this->env->CallVoidMethod(java_keys, add_key_method, string_to_java_string(name));
     ARRAY_DELETE(name);
   }
@@ -957,10 +963,7 @@ int CloudHandler::get_failed_key_index(const char *key_name)
 
   for (uint key = 0; key < this->table->s->keys; key++)
   {
-    KEY *pos = table->key_info + key;
-    KEY_PART_INFO *key_part = pos->key_part;
-    KEY_PART_INFO *key_part_end = key_part + pos->key_parts;
-    char* name = index_name(key_part, key_part_end, pos->key_parts);
+    char* name = index_name(table, key);
     if (strcmp(name, key_name) == 0)
     {
       return key;
@@ -980,10 +983,7 @@ int CloudHandler::prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_o
 
   for (uint key = 0; key < keys; key++)
   {
-    KEY *pos = table_arg->key_info + key;
-    KEY_PART_INFO *key_part = pos->key_part;
-    KEY_PART_INFO *key_part_end = key_part + pos->key_parts;
-    char* name = index_name(key_part, key_part_end, pos->key_parts);
+    char* name = index_name(table_arg, key);
     this->env->CallStaticVoidMethod(adapter, add_index_method, this->table_name(), string_to_java_string(name));
     ARRAY_DELETE(name);
   }
@@ -999,8 +999,9 @@ int CloudHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, h
     KEY* pos = key_info + key;
     KEY_PART_INFO *key_part = pos->key_part;
     KEY_PART_INFO *end_key_part = key_part + key_info->key_parts;
-    Field *field_being_indexed = key_info->key_part->field;
     char* index_columns = this->index_name(key_part, end_key_part, key_info->key_parts);
+
+    Field *field_being_indexed = key_info->key_part->field;
     jbyteArray duplicate_value = this->find_duplicate_column_values(index_columns);
 
     int error = duplicate_value != NULL ? HA_ERR_FOUND_DUPP_KEY : 0;
@@ -1076,10 +1077,7 @@ int CloudHandler::index_init(uint idx, bool sorted)
 
   this->active_index = idx;
 
-  KEY *pos = this->table->s->key_info + idx;
-  KEY_PART_INFO *key_part = pos->key_part;
-  KEY_PART_INFO *key_part_end = key_part + pos->key_parts;
-  const char* column_names = this->index_name(key_part, key_part_end, pos->key_parts);
+  const char* column_names = this->index_name(table->s, idx);
   Field *field = table->field[idx];
   attach_thread();
 
