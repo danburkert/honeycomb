@@ -1,5 +1,7 @@
 #include "Java.h"
 #include "Macros.h"
+#include "Logging.h"
+#include <string.h>
 
 #define MAP_CLASS "java/util/TreeMap"
 #define LIST_CLASS "java/util/LinkedList"
@@ -154,3 +156,31 @@ jmethodID find_static_method(jclass clazz, const char* name, const char* signatu
 
   return write_row_method;
 }
+
+jbyteArray convert_value_to_java_bytes(uchar* value, uint32 length, JNIEnv* env)
+{
+  jbyteArray byteArray = env->NewByteArray(length);
+  jbyte *java_bytes = env->GetByteArrayElements(byteArray, 0);
+
+  memcpy(java_bytes, value, length);
+
+  env->SetByteArrayRegion(byteArray, 0, length, java_bytes);
+  env->ReleaseByteArrayElements(byteArray, java_bytes, 0);
+
+  return byteArray;
+}
+
+char *char_array_from_java_bytes(jbyteArray java_bytes, JNIEnv* env)
+{
+  int length = (int) env->GetArrayLength(java_bytes);
+  jbyte *jbytes = env->GetByteArrayElements(java_bytes, JNI_FALSE);
+
+  char* ret = new char[length];
+
+  memcpy(ret, jbytes, length);
+
+  env->ReleaseByteArrayElements(java_bytes, jbytes, 0);
+
+  return ret;
+}
+
