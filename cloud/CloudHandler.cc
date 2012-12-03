@@ -52,8 +52,8 @@ int CloudHandler::update_row(const uchar *old_data, uchar *new_data)
   ha_statistic_increment(&SSV::ha_update_count);
 
   // TODO: The next two lines should really be some kind of transaction.
-  delete_row_helper();
-  write_row_helper(new_data);
+  delete_row(old_data);
+  write_row(new_data);
 
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
     table->timestamp_field->set_time();
@@ -66,7 +66,9 @@ int CloudHandler::delete_row(const uchar *buf)
 {
   DBUG_ENTER("CloudHandler::delete_row");
   ha_statistic_increment(&SSV::ha_delete_count);
-  delete_row_helper();
+  jclass adapter_class = this->adapter();
+  jmethodID delete_row_method = find_static_method(adapter_class, "deleteRow", "(J)Z",this->env);
+  this->env->CallStaticBooleanMethod(adapter_class, delete_row_method, this->curr_scan_id);
   DBUG_RETURN(0);
 }
 
@@ -146,20 +148,6 @@ int CloudHandler::delete_table(const char *path)
   DBUG_RETURN(0);
 }
 
-int CloudHandler::delete_row_helper()
-{
-  DBUG_ENTER("CloudHandler::delete_row_helper");
-
-  jclass adapter_class = this->adapter();
-  jmethodID delete_row_method = find_static_method(adapter_class, "deleteRow", "(J)Z",this->env);
-  jlong java_scan_id = curr_scan_id;
-
-  this->env->CallStaticBooleanMethod(adapter_class, delete_row_method,
-      java_scan_id);
-
-  DBUG_RETURN(0);
-}
-
 int CloudHandler::rnd_init(bool scan)
 {
   DBUG_ENTER("CloudHandler::rnd_init");
@@ -190,12 +178,10 @@ int CloudHandler::rnd_next(uchar *buf)
   MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, TRUE);
 
   memset(buf, 0, table->s->null_bytes);
-  jlong java_scan_id = curr_scan_id;
-
   jclass adapter_class = this->adapter();
   jmethodID next_row_method = find_static_method(adapter_class, "nextRow", "(J)L" MYSQLENGINE "Row;",this->env);
   jobject row = this->env->CallStaticObjectMethod(adapter_class,
-      next_row_method, java_scan_id);
+      next_row_method, this->curr_scan_id);
 
   jclass row_class = find_jni_class("Row", this->env);
   jmethodID get_row_map_method = this->env->GetMethodID(row_class, "getRowMap",
@@ -340,10 +326,9 @@ int CloudHandler::rnd_pos(uchar *buf, uchar *pos)
 
   jclass adapter_class = this->adapter();
   jmethodID get_row_method = find_static_method(adapter_class, "getRow", "(J[B)L" MYSQLENGINE "Row;",this->env);
-  jlong java_scan_id = curr_scan_id;
-  jbyteArray uuid = convert_value_to_java_bytes(pos, 16);
+  jbyteArray uuid = convert_value_to_java_bytes(pos, 16, this->env);
   jobject row = this->env->CallStaticObjectMethod(adapter_class, get_row_method,
-      java_scan_id, uuid);
+      this->curr_scan_id, uuid);
 
   jclass row_class = find_jni_class("Row", this->env);
   jmethodID get_row_map_method = this->env->GetMethodID(row_class, "getRowMap",
@@ -463,10 +448,10 @@ int CloudHandler::create(const char *path, TABLE *table_arg, HA_CREATE_INFO *cre
   jclass adapter_class = this->adapter();
   if (adapter_class == NULL)
   {
+    my_error(ER_CREATE_FILEGROUP_FAILED, MYF(0), "Could not find adapter class HBaseAdapter");
     print_java_exception(this->env);
-    ERROR(("Could not find adapter class HBaseAdapter"));
     detach_thread();
-    DBUG_RETURN(1);
+    DBUG_RETURN(HA_ERR_INTERNAL_ERROR);
   }
 
   char* table_name = extract_table_name_from_path(path);
@@ -502,8 +487,6 @@ int CloudHandler::create(const char *path, TABLE *table_arg, HA_CREATE_INFO *cre
   jmethodID create_table_method = find_static_method(adapter_class, "createTable", "(Ljava/lang/String;Ljava/util/Map;L" HBASECLIENT "TableMultipartKeys;)Z",this->env);
   this->env->CallStaticBooleanMethod(adapter_class, create_table_method, jtable_name, columnMap, java_keys);
   print_java_exception(this->env);
-
-  detach_thread();
 
   DBUG_RETURN(0);
 }
@@ -781,20 +764,6 @@ int CloudHandler::write_row(uchar *buf)
 
   ha_statistic_increment(&SSV::ha_write_count);
 
-  int ret = write_row_helper(buf);
-  this->rows_written++;
-
-  DBUG_RETURN(ret);
-}
-
-/* Set up the JNI Environment, and then persist the row to HBase.
- * This helper turns the row information into a jobject to be sent to the HBaseAdapter.
- * It also checks for duplicate values for columns that have unique indexes.
- */
-int CloudHandler::write_row_helper(uchar* buf)
-{
-  DBUG_ENTER("CloudHandler::write_row_helper");
-
   jclass adapter_class = this->adapter();
   jmethodID write_row_method = find_static_method(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;)Z", env);
 
@@ -915,7 +884,7 @@ int CloudHandler::write_row_helper(uchar* buf)
       break;
     }
 
-    jbyteArray java_bytes = convert_value_to_java_bytes(byte_val, actualFieldSize);
+    jbyteArray java_bytes = convert_value_to_java_bytes(byte_val, actualFieldSize, this->env);
     java_map_insert(java_row_map, field_name, java_bytes, this->env);
 
     // Remember this field for later if we find that it has a unique index, need to check it
@@ -933,6 +902,7 @@ int CloudHandler::write_row_helper(uchar* buf)
   }
 
   this->env->CallStaticBooleanMethod(adapter_class, write_row_method, table_name, java_row_map);
+  this->rows_written++;
 
   DBUG_RETURN(0);
 }
@@ -1010,8 +980,8 @@ int CloudHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, h
 
     if (error == HA_ERR_FOUND_DUPP_KEY)
     {
-      int length = this->java_array_length(duplicate_value);
-      char *value_key = this->char_array_from_java_bytes(duplicate_value);
+      int length = (int)this->env->GetArrayLength(duplicate_value);
+      char *value_key = char_array_from_java_bytes(duplicate_value, this->env);
       this->store_field_value(field_being_indexed, value_key, length);
       ARRAY_DELETE(value_key);
       this->failed_key_index = this->get_failed_key_index(key_part->field->field_name);
@@ -1137,6 +1107,11 @@ int CloudHandler::index_read_map(uchar * buf, const uchar * key, key_part_map ke
   DBUG_ENTER("CloudHandler::index_read_map");
   jclass adapter_class = this->adapter();
   jmethodID index_read_method = find_static_method(adapter_class, "indexRead", "(JLjava/util/List;L" MYSQLENGINE "IndexReadType;)L" MYSQLENGINE "IndexRow;",this->env);
+  if (find_flag == HA_READ_PREFIX_LAST_OR_PREV)
+  {
+    find_flag = HA_READ_KEY_OR_PREV;
+  }
+
   KEY *key_info = table->s->key_info + this->active_index;
   KEY_PART_INFO *key_part = key_info->key_part;
   KEY_PART_INFO *end_key_part = key_part + key_info->key_parts;
@@ -1146,11 +1121,6 @@ int CloudHandler::index_read_map(uchar * buf, const uchar * key, key_part_map ke
   {
     counter >>= 1;
     key_count++;
-  }
-
-  if (find_flag == HA_READ_PREFIX_LAST_OR_PREV)
-  {
-    find_flag = HA_READ_KEY_OR_PREV;
   }
 
   uchar* key_copies[key_count];
@@ -1202,27 +1172,19 @@ int CloudHandler::index_read_map(uchar * buf, const uchar * key, key_part_map ke
   }
 
   jobject key_values = create_key_value_list(index, key_sizes, key_copies, key_names, key_null_bits, key_is_null);
-
-  jobject java_find_flag = find_flag_to_java(find_flag, this->env);
-  jobject index_row = this->env->CallStaticObjectMethod(adapter_class, index_read_method, this->curr_scan_id, key_values, java_find_flag);
-
   for (int x = 0; x < index; x++)
   {
     ARRAY_DELETE(key_copies[x]);
   }
 
-  if (read_index_row(index_row, buf) == HA_ERR_END_OF_FILE)
-  {
-    DBUG_RETURN(HA_ERR_END_OF_FILE);
-  }
-
-  DBUG_RETURN(0);
+  jobject java_find_flag = find_flag_to_java(find_flag, this->env);
+  jobject index_row = this->env->CallStaticObjectMethod(adapter_class, index_read_method, this->curr_scan_id, key_values, java_find_flag);
+  DBUG_RETURN(read_index_row(index_row, buf));
 }
 
 void CloudHandler::store_uuid_ref(jobject index_row, jmethodID get_uuid_method)
 {
-  jbyteArray uuid = (jbyteArray) this->env->CallObjectMethod(index_row,
-      get_uuid_method);
+  jbyteArray uuid = (jbyteArray) this->env->CallObjectMethod(index_row, get_uuid_method);
   uchar* pos = (uchar*) this->env->GetByteArrayElements(uuid, JNI_FALSE);
   memcpy(this->ref, pos, 16);
   this->env->ReleaseByteArrayElements(uuid, (jbyte*) pos, 0);
@@ -1259,12 +1221,9 @@ ha_rows CloudHandler::estimate_rows_upper_bound()
       get_count_method, table_name);
 
   detach_thread();
-  if (row_count < 2)
-  {
-    DBUG_RETURN((ha_rows)10); // Stupid MySQL and its filesort. This must be large enough to filesort when there are less than 2 records.
-  }
 
-  DBUG_RETURN((ha_rows)2*row_count + 1);
+  // Stupid MySQL and its filesort. This must be large enough to filesort when there are less than 2 records.
+  DBUG_RETURN(row_count < 2 ? 10 : 2*row_count + 1);
 }
 
 int CloudHandler::index_next(uchar *buf)
@@ -1310,8 +1269,8 @@ int CloudHandler::get_next_index_row(uchar* buf)
 {
   jclass adapter_class = this->adapter();
   jmethodID index_next_method = find_static_method(adapter_class, "nextIndexRow", "(J)L" MYSQLENGINE "IndexRow;",this->env);
-  jlong java_scan_id = this->curr_scan_id;
-  jobject index_row = this->env->CallStaticObjectMethod(adapter_class, index_next_method, java_scan_id);
+  jobject index_row = this->env->CallStaticObjectMethod(adapter_class, index_next_method, this->curr_scan_id);
+
   return read_index_row(index_row, buf); 
 }
 
@@ -1319,13 +1278,10 @@ int CloudHandler::get_index_row(const char* indexType, uchar* buf)
 {
   jclass adapter_class = this->adapter();
   jmethodID index_read_method = find_static_method(adapter_class, "indexRead", "(JLjava/util/List;L" MYSQLENGINE "IndexReadType;)L" MYSQLENGINE "IndexRow;",this->env);
-  jlong java_scan_id = this->curr_scan_id;
   jclass read_class = find_jni_class("IndexReadType", this->env);
-  jfieldID field_id = this->env->GetStaticFieldID(read_class, indexType,
-      "L" MYSQLENGINE "IndexReadType;");
-  jobject java_find_flag = this->env->GetStaticObjectField(read_class,
-      field_id);
-  jobject index_row = this->env->CallStaticObjectMethod(adapter_class, index_read_method, java_scan_id, NULL, java_find_flag);
+  jfieldID field_id = this->env->GetStaticFieldID(read_class, indexType, "L" MYSQLENGINE "IndexReadType;");
+  jobject java_find_flag = this->env->GetStaticObjectField(read_class, field_id);
+  jobject index_row = this->env->CallStaticObjectMethod(adapter_class, index_read_method, this->curr_scan_id, NULL, java_find_flag);
   return read_index_row(index_row, buf); 
 }
 
@@ -1363,9 +1319,7 @@ void CloudHandler::end_scan()
 {
   jclass adapter_class = this->adapter();
   jmethodID end_scan_method = find_static_method(adapter_class, "endScan", "(J)V",this->env);
-  jlong java_scan_id = curr_scan_id;
-
-  this->env->CallStaticVoidMethod(adapter_class, end_scan_method, java_scan_id);
+  this->env->CallStaticVoidMethod(adapter_class, end_scan_method, this->curr_scan_id);
 }
 
 void CloudHandler::reset_index_scan_counter()
@@ -1413,47 +1367,4 @@ jstring CloudHandler::table_name()
   char namespaced_table[strlen(database_name) + strlen(table_name) + 2];
   sprintf(namespaced_table, "%s.%s", database_name, table_name);
   return string_to_java_string(namespaced_table);
-}
-
-jbyteArray CloudHandler::convert_value_to_java_bytes(uchar* value,
-    uint32 length)
-{
-  jbyteArray byteArray = this->env->NewByteArray(length);
-  jbyte *java_bytes = this->env->GetByteArrayElements(byteArray, 0);
-
-  memcpy(java_bytes, value, length);
-
-  this->env->SetByteArrayRegion(byteArray, 0, length, java_bytes);
-  this->env->ReleaseByteArrayElements(byteArray, java_bytes, 0);
-
-  return byteArray;
-}
-
-char *CloudHandler::char_array_from_java_bytes(jbyteArray java_bytes)
-{
-  attach_thread();
-
-  int length = (int) this->env->GetArrayLength(java_bytes);
-  jbyte *jbytes = this->env->GetByteArrayElements(java_bytes, JNI_FALSE);
-
-  char* ret = new char[length];
-
-  memcpy(ret, jbytes, length);
-
-  this->env->ReleaseByteArrayElements(java_bytes, jbytes, 0);
-
-  detach_thread();
-
-  return ret;
-}
-
-int CloudHandler::java_array_length(jarray array)
-{
-  attach_thread();
-
-  int length = (int) this->env->GetArrayLength(array);
-
-  detach_thread();
-
-  return length;
 }
