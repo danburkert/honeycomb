@@ -1228,26 +1228,6 @@ void CloudHandler::store_uuid_ref(jobject index_row, jmethodID get_uuid_method)
   this->env->ReleaseByteArrayElements(uuid, (jbyte*) pos, 0);
 }
 
-int CloudHandler::index_next(uchar *buf)
-{
-  int rc = 0;
-
-  DBUG_ENTER("CloudHandler::index_next");
-
-  MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, TRUE);
-
-  jobject index_row = get_next_index_row();
-
-  if (read_index_row(index_row, buf) == HA_ERR_END_OF_FILE)
-  {
-    DBUG_RETURN(HA_ERR_END_OF_FILE);
-  }
-
-  MYSQL_READ_ROW_DONE(rc);
-
-  DBUG_RETURN(rc);
-}
-
 int CloudHandler::analyze(THD* thd, HA_CHECK_OPT* check_opt)
 {
   DBUG_ENTER("CloudHandler::analyze");
@@ -1287,70 +1267,55 @@ ha_rows CloudHandler::estimate_rows_upper_bound()
   DBUG_RETURN((ha_rows)2*row_count + 1);
 }
 
+int CloudHandler::index_next(uchar *buf)
+{
+  DBUG_ENTER("CloudHandler::index_next");
+  DBUG_RETURN(this->retrieve_value_from_index(buf));
+}
+
 int CloudHandler::index_prev(uchar *buf)
 {
-  int rc = 0;
-  my_bitmap_map *orig_bitmap;
-
   DBUG_ENTER("CloudHandler::index_prev");
+  DBUG_RETURN(this->retrieve_value_from_index(buf));
+}
 
-  orig_bitmap = dbug_tmp_use_all_columns(table, table->write_set);
+int CloudHandler::retrieve_value_from_index(uchar* buf)
+{
+  int rc = 0;
 
   MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, TRUE);
+  my_bitmap_map * orig_bitmap = dbug_tmp_use_all_columns(table, table->read_set);
 
-  jobject index_row = get_next_index_row();
+  rc = get_next_index_row(buf);
 
-  if (read_index_row(index_row, buf) == HA_ERR_END_OF_FILE)
-  {
-    dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
-    DBUG_RETURN(HA_ERR_END_OF_FILE);
-  }
-
-  dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
-
+  dbug_tmp_restore_column_map(table->read_set, orig_bitmap);
   MYSQL_READ_ROW_DONE(rc);
 
-  DBUG_RETURN(rc);
+  return rc;
 }
 
 int CloudHandler::index_first(uchar *buf)
 {
   DBUG_ENTER("CloudHandler::index_first");
-
-  jobject index_row = get_index_row("INDEX_FIRST");
-
-  if (read_index_row(index_row, buf) == HA_ERR_END_OF_FILE)
-  {
-    DBUG_RETURN(HA_ERR_END_OF_FILE);
-  }
-
-  DBUG_RETURN(0);
+  DBUG_RETURN(get_index_row("INDEX_FIRST", buf));
 }
 
 int CloudHandler::index_last(uchar *buf)
 {
   DBUG_ENTER("CloudHandler::index_last");
-
-  jobject index_row = get_index_row("INDEX_LAST");
-
-  if (read_index_row(index_row, buf) == HA_ERR_END_OF_FILE)
-  {
-    DBUG_RETURN(HA_ERR_END_OF_FILE);
-  }
-
-  DBUG_RETURN(0);
+  DBUG_RETURN(get_index_row("INDEX_LAST", buf));
 }
 
-jobject CloudHandler::get_next_index_row()
+int CloudHandler::get_next_index_row(uchar* buf)
 {
   jclass adapter_class = this->adapter();
   jmethodID index_next_method = find_static_method(adapter_class, "nextIndexRow", "(J)L" MYSQLENGINE "IndexRow;",this->env);
   jlong java_scan_id = this->curr_scan_id;
-  return this->env->CallStaticObjectMethod(adapter_class, index_next_method,
-      java_scan_id);
+  jobject index_row = this->env->CallStaticObjectMethod(adapter_class, index_next_method, java_scan_id);
+  return read_index_row(index_row, buf); 
 }
 
-jobject CloudHandler::get_index_row(const char* indexType)
+int CloudHandler::get_index_row(const char* indexType, uchar* buf)
 {
   jclass adapter_class = this->adapter();
   jmethodID index_read_method = find_static_method(adapter_class, "indexRead", "(JLjava/util/List;L" MYSQLENGINE "IndexReadType;)L" MYSQLENGINE "IndexRow;",this->env);
@@ -1360,8 +1325,8 @@ jobject CloudHandler::get_index_row(const char* indexType)
       "L" MYSQLENGINE "IndexReadType;");
   jobject java_find_flag = this->env->GetStaticObjectField(read_class,
       field_id);
-  return this->env->CallStaticObjectMethod(adapter_class, index_read_method,
-      java_scan_id, NULL, java_find_flag);
+  jobject index_row = this->env->CallStaticObjectMethod(adapter_class, index_read_method, java_scan_id, NULL, java_find_flag);
+  return read_index_row(index_row, buf); 
 }
 
 int CloudHandler::read_index_row(jobject index_row, uchar* buf)
