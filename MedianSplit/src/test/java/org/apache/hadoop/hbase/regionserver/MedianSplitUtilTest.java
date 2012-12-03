@@ -2,6 +2,7 @@ package org.apache.hadoop.hbase.regionserver;
 
 import junit.framework.TestCase;
 import org.apache.hadoop.hbase.util.Pair;
+import org.apache.log4j.BasicConfigurator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,6 +11,7 @@ import java.util.List;
 public class MedianSplitUtilTest extends TestCase {
 
     public void testCombineSamples() {
+        BasicConfigurator.configure();
         List<Pair<byte[], Long>> samples = new ArrayList<Pair<byte[], Long>>();
         byte[] combined;
         byte[] expected;

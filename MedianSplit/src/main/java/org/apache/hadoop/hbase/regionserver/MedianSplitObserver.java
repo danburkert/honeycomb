@@ -39,4 +39,8 @@ public class MedianSplitObserver extends BaseRegionObserver {
         // And bypass the triggering split
         e.bypass();
     }
+
+    public void main(String[] args) {
+        System.out.println("MedianSplitObserver.main");
+    }
 }

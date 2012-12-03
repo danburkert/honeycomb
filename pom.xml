@@ -1,1 +1,109 @@
-pom.apache.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.nearinfinity.honeycomb</groupId>
+    <artifactId>honeycomb</artifactId>
+    <version>0.1</version>
+    <name>Honeycomb Parent Project</name>
+    <packaging>pom</packaging>
+
+    <properties>
+      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <profiles>
+      <profile>
+        <id>apache</id>
+        <activation>
+          <activeByDefault>true</activeByDefault>
+        </activation>
+        <properties>
+            <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+            <hadoop.artifactId>hadoop-core</hadoop.artifactId>
+            <hadoop.version>1.0.4</hadoop.version>
+            <hbase.version>0.94.1</hbase.version>
+            <compiler.exclude>''</compiler.exclude>
+        </properties>
+        <!--<modules>-->
+          <!--<module>HBaseTableCreator</module>-->
+        <!--</modules>-->
+      </profile>
+      <profile>
+        <id>cdh</id>
+        <activation>
+          <activeByDefault>false</activeByDefault>
+        </activation>
+        <properties>
+          <hadoop.artifactId>hadoop-client</hadoop.artifactId>
+          <hadoop.version>2.0.0-cdh4.1.2</hadoop.version>
+          <hbase.version>0.92.1-cdh4.1.2</hbase.version>
+          <compiler.exclude>**/MedianSplitPolicy.java</compiler.exclude>
+        </properties>
+        <repositories>
+          <repository>
+            <id>cloudera-releases</id>
+            <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+            <releases>
+              <enabled>true</enabled>
+            </releases>
+            <snapshots>
+              <enabled>false</enabled>
+            </snapshots>
+          </repository>
+        </repositories>
+      </profile>
+    </profiles>
+
+
+    <modules>
+        <module>HBaseAdapter</module>
+        <module>DataCreator</module>
+        <module>BulkLoadMapper</module>
+        <module>MedianSplit</module>
+    </modules>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                    <excludes>
+                      <exclude>**/MedianSplitPolicy.java</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
