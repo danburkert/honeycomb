@@ -1,7 +1,7 @@
 #!/bin/sh
 
 honeycomb_lib=/usr/local/lib/honeycomb
-plugin_path=/usr/lib64/mysql/plugin/ha_cloud.so 
+plugin_path=/usr/lib64/mysql/plugin/ha_cloud.so
 tests_path=/usr/share/mysql-test/suite/cloud-test
 function test_link
 {
@@ -25,7 +25,7 @@ cp -R $BUILD_DIR $HONEYCOMB_HOME
 echo "Copying ha_cloud.so, mysqlengine.jar and cloud-test to $honeycomb_lib"
 cp -R $HONEYCOMB_HOME/mysql-5.5.28/storage/cloud/cloud-test $honeycomb_lib
 cp $HONEYCOMB_HOME/build/storage/cloud/ha_cloud.so $honeycomb_lib
-function copy_jar 
+function copy_jar
 {
   cp $HONEYCOMB_HOME/$1/target/*with-dependencies.jar $honeycomb_lib
 }
