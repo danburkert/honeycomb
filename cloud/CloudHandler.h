@@ -64,8 +64,8 @@ class CloudHandler : public handler
     void store_uuid_ref(jobject index_row, jmethodID get_uuid_method);
     void bytes_to_long(const uchar* buff, unsigned int buff_length, bool is_signed, uchar* long_buff);
     int read_index_row(jobject index_row, uchar* buf);
-    jobject get_index_row(const char* indexType);
-    jobject get_next_index_row();
+    int get_index_row(const char* indexType, uchar* buf);
+    int get_next_index_row(uchar* buf);
     void flush_writes();
     void end_scan();
     void reset_index_scan_counter();
@@ -83,6 +83,7 @@ class CloudHandler : public handler
     char* index_name(TABLE* table, uint key);
     jobject create_key_value_list(int index, uint* key_sizes, uchar** key_copies, const char** key_names, jboolean* key_null_bits, jboolean* key_is_null);
     bool is_field_nullable(jstring table_name, const char* field_name);
+    int retrieve_value_from_index(uchar* buf);
 
     bool is_integral_field(int field_type)
     {

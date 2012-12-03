@@ -106,9 +106,10 @@ void make_big_endian(uchar *begin, uint length)
 char *extract_table_name_from_path(const char *path)
 {
   char* namespaced_table = new char[strlen(path) - 1];
-  char* ptr = strchr(path, '/') + 1;
+  char* ptr = (char*)strchr(path, '/');
+  ptr++;
   sprintf(namespaced_table, "%s", ptr);
-  char* slash = strchr(namespaced_table, '/');
+  char* slash = (char*)strchr(namespaced_table, '/');
   *slash = '.';
   return namespaced_table;
 }
