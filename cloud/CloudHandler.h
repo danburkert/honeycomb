@@ -46,11 +46,7 @@ class CloudHandler : public handler
     jstring table_name();
     const char* java_to_string(jstring str);
     jstring string_to_java_string(const char *string);
-    jbyteArray convert_value_to_java_bytes(uchar* value, uint32 length);
     void java_to_sql(uchar *buf, jobject row_map);
-    int delete_row_helper();
-    int write_row_helper(uchar* buf);
-    int bulk_write_row_helper();
     jobject sql_to_java();
     int delete_all_rows();
     bool start_bulk_delete();
@@ -75,9 +71,7 @@ class CloudHandler : public handler
     jbyteArray find_duplicate_column_values(char* columns);
     bool row_has_duplicate_values(jobject value_map);
     int get_failed_key_index(const char *key_name);
-    char *char_array_from_java_bytes(jbyteArray java_bytes);
     void store_field_value(Field *field, char *key, int length);
-    int java_array_length(jarray array);
     jobject create_multipart_keys(TABLE* table_arg);
     char* index_name(KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts);
     char* index_name(TABLE* table, uint key);
