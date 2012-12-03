@@ -82,7 +82,7 @@ class CloudHandler : public handler
     char* index_name(KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts);
     char* index_name(TABLE* table, uint key);
     jobject create_key_value_list(int index, uint* key_sizes, uchar** key_copies, const char** key_names, jboolean* key_null_bits, jboolean* key_is_null);
-    bool is_field_nullable(const char* table_name, const char* field_name);
+    bool is_field_nullable(jstring table_name, const char* field_name);
 
     bool is_integral_field(int field_type)
     {

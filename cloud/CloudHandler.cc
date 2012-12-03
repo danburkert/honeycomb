@@ -131,8 +131,9 @@ int CloudHandler::delete_table(const char *path)
 
   attach_thread();
 
-  jstring table_name = string_to_java_string(
-      extract_table_name_from_path(path));
+  char* table = extract_table_name_from_path(path);
+  jstring table_name = string_to_java_string(table);
+  ARRAY_DELETE(table);
 
   jclass adapter_class = this->adapter();
   jmethodID drop_table_method = find_static_method(adapter_class, "dropTable", "(Ljava/lang/String;)Z",this->env);
@@ -468,7 +469,9 @@ int CloudHandler::create(const char *path, TABLE *table_arg, HA_CREATE_INFO *cre
     DBUG_RETURN(1);
   }
 
-  const char* table_name = extract_table_name_from_path(path);
+  char* table_name = extract_table_name_from_path(path);
+  jstring jtable_name = string_to_java_string(table_name);
+  ARRAY_DELETE(table_name);
 
   jobject columnMap = create_java_map(this->env);
   FieldMetadata metadata(this->env);
@@ -497,8 +500,7 @@ int CloudHandler::create(const char *path, TABLE *table_arg, HA_CREATE_INFO *cre
   }
 
   jmethodID create_table_method = find_static_method(adapter_class, "createTable", "(Ljava/lang/String;Ljava/util/Map;L" HBASECLIENT "TableMultipartKeys;)Z",this->env);
-  this->env->CallStaticBooleanMethod(adapter_class, create_table_method,
-      string_to_java_string(table_name), columnMap, java_keys);
+  this->env->CallStaticBooleanMethod(adapter_class, create_table_method, jtable_name, columnMap, java_keys);
   print_java_exception(this->env);
 
   detach_thread();
@@ -681,12 +683,13 @@ int CloudHandler::rename_table(const char *from, const char *to)
 
   jclass adapter_class = this->adapter();
   jmethodID rename_table_method = find_static_method(adapter_class, "renameTable", "(Ljava/lang/String;Ljava/lang/String;)V",this->env);
-  jstring current_table_name = string_to_java_string(
-      extract_table_name_from_path(from));
-  jstring new_table_name = string_to_java_string(
-      extract_table_name_from_path(to));
-  this->env->CallStaticVoidMethod(adapter_class, rename_table_method,
-      current_table_name, new_table_name);
+  char* from_str = extract_table_name_from_path(from);
+  char* to_str = extract_table_name_from_path(to);
+  jstring current_table_name = string_to_java_string(from_str);
+  jstring new_table_name = string_to_java_string(to_str);
+  ARRAY_DELETE(from_str);
+  ARRAY_DELETE(to_str);
+  this->env->CallStaticVoidMethod(adapter_class, rename_table_method, current_table_name, new_table_name);
 
   detach_thread();
 
@@ -1122,11 +1125,11 @@ jobject CloudHandler::create_key_value_list(int index, uint* key_sizes, uchar** 
   return key_values;
 }
 
-bool CloudHandler::is_field_nullable(const char* table_name, const char* field_name)
+bool CloudHandler::is_field_nullable(jstring table_name, const char* field_name)
 {
   jclass adapter_class = this->adapter();
   jmethodID is_nullable_method = find_static_method(adapter_class, "isNullable", "(Ljava/lang/String;Ljava/lang/String;)Z",this->env);
-  return (bool)this->env->CallStaticBooleanMethod(adapter_class, is_nullable_method, string_to_java_string(table_name), string_to_java_string(field_name));
+  return (bool)this->env->CallStaticBooleanMethod(adapter_class, is_nullable_method, table_name, string_to_java_string(field_name));
 }
 
 int CloudHandler::index_read_map(uchar * buf, const uchar * key, key_part_map keypart_map, enum ha_rkey_function find_flag)
@@ -1167,7 +1170,7 @@ int CloudHandler::index_read_map(uchar * buf, const uchar * key, key_part_map ke
     key_names[index] = field->field_name;
     uint store_length = key_part->store_length;
     uint offset = store_length;
-    if (this->is_field_nullable(table->s->table_name.str, field->field_name))
+    if (this->is_field_nullable(this->table_name(), field->field_name))
     {
       if(key_iter[0] == 1)
       {
@@ -1440,7 +1443,11 @@ void CloudHandler::attach_thread()
 
 jstring CloudHandler::table_name()
 {
-  return string_to_java_string(this->table->s->table_name.str);
+  char* database_name = this->table->s->db.str;
+  char* table_name = this->table->s->table_name.str;
+  char namespaced_table[strlen(database_name) + strlen(table_name) + 2];
+  sprintf(namespaced_table, "%s.%s", database_name, table_name);
+  return string_to_java_string(namespaced_table);
 }
 
 jbyteArray CloudHandler::convert_value_to_java_bytes(uchar* value,
