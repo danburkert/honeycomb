@@ -1,5 +1,7 @@
 #include "Java.h"
 #include "Macros.h"
+#include "Logging.h"
+#include <string.h>
 
 #define MAP_CLASS "java/util/TreeMap"
 #define LIST_CLASS "java/util/LinkedList"
