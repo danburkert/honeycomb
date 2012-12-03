@@ -5,20 +5,20 @@
 #pragma Interface               /* gcc class implementation */
 #endif
 
+#include "CloudShare.h"
+#include "Macros.h"
+#include "FieldMetadata.h"
+#include "Logging.h"
+#include "Java.h"
+#include "Util.h"
+
 #include "my_global.h"          /* ulonglong */
 #include "thr_lock.h"           /* THR_LOCK, THR_LOCK_DATA */
 #include "handler.h"            /* handler */
 #include "my_base.h"            /* ha_rows */
 #include <jni.h>
 #include <string.h>
-#include <limits.h>
-
-#include "CloudShare.h"
-#include "Macros.h"
-#include "FieldMetadata.h"
-#include "Util.h"
-#include "Logging.h"
-#include "Java.h"
+#include "probes_mysql.h"
 
 static __thread int thread_ref_count=0;
 
@@ -46,11 +46,7 @@ class CloudHandler : public handler
     jstring table_name();
     const char* java_to_string(jstring str);
     jstring string_to_java_string(const char *string);
-    jbyteArray convert_value_to_java_bytes(uchar* value, uint32 length);
     void java_to_sql(uchar *buf, jobject row_map);
-    int delete_row_helper();
-    int write_row_helper(uchar* buf);
-    int bulk_write_row_helper();
     jobject sql_to_java();
     int delete_all_rows();
     bool start_bulk_delete();
@@ -64,8 +60,8 @@ class CloudHandler : public handler
     void store_uuid_ref(jobject index_row, jmethodID get_uuid_method);
     void bytes_to_long(const uchar* buff, unsigned int buff_length, bool is_signed, uchar* long_buff);
     int read_index_row(jobject index_row, uchar* buf);
-    jobject get_index_row(const char* indexType);
-    jobject get_next_index_row();
+    int get_index_row(const char* indexType, uchar* buf);
+    int get_next_index_row(uchar* buf);
     void flush_writes();
     void end_scan();
     void reset_index_scan_counter();
@@ -75,14 +71,13 @@ class CloudHandler : public handler
     jbyteArray find_duplicate_column_values(char* columns);
     bool row_has_duplicate_values(jobject value_map);
     int get_failed_key_index(const char *key_name);
-    char *char_array_from_java_bytes(jbyteArray java_bytes);
     void store_field_value(Field *field, char *key, int length);
-    int java_array_length(jarray array);
     jobject create_multipart_keys(TABLE* table_arg);
     char* index_name(KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts);
     char* index_name(TABLE* table, uint key);
     jobject create_key_value_list(int index, uint* key_sizes, uchar** key_copies, const char** key_names, jboolean* key_null_bits, jboolean* key_is_null);
     bool is_field_nullable(jstring table_name, const char* field_name);
+    int retrieve_value_from_index(uchar* buf);
 
     bool is_integral_field(int field_type)
     {

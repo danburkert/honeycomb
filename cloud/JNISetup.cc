@@ -1,6 +1,14 @@
 #include "JNISetup.h"
 #include <signal.h>
 #include <pthread.h>
+#include <stdlib.h>
+#include <string.h>
+#include "Logging.h"
+#include "my_global.h"
+
+#include "Macros.h"
+#include "Util.h"
+#include "Java.h"
 
 static const char* prefix = "-Djava.class.path=";
 static const int prefix_length = strlen(prefix);
