@@ -5,20 +5,20 @@
 #pragma Interface               /* gcc class implementation */
 #endif
 
+#include "CloudShare.h"
+#include "Macros.h"
+#include "FieldMetadata.h"
+#include "Logging.h"
+#include "Java.h"
+#include "Util.h"
+
 #include "my_global.h"          /* ulonglong */
 #include "thr_lock.h"           /* THR_LOCK, THR_LOCK_DATA */
 #include "handler.h"            /* handler */
 #include "my_base.h"            /* ha_rows */
 #include <jni.h>
 #include <string.h>
-#include <limits.h>
-
-#include "CloudShare.h"
-#include "Macros.h"
-#include "FieldMetadata.h"
-#include "Util.h"
-#include "Logging.h"
-#include "Java.h"
+#include "probes_mysql.h"
 
 static __thread int thread_ref_count=0;
 

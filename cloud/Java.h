@@ -2,9 +2,8 @@
 #define JAVA_H
 
 #include <jni.h>
-#include "sql_class.h"
-
-#include "Logging.h"
+#include "my_global.h"
+#include "my_base.h"
 
 jobject create_java_map(JNIEnv* env);
 jobject java_map_insert(jobject java_map, jobject key, jobject value, JNIEnv* env);
