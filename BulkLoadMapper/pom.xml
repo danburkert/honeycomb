@@ -8,11 +8,19 @@
     <artifactId>BulkLoadMapper</artifactId>
     <version>1.0</version>
 
+    <parent>
+        <groupId>com.nearinfinity.honeycomb</groupId>
+        <artifactId>honeycomb</artifactId>
+        <version>0.1</version>
+    </parent>
+
     <profiles>
         <profile>
             <id>cdh</id>
             <activation>
-                <activeByDefault>false</activeByDefault>
+                <property>
+                    <name>cdh</name>
+                </property>
             </activation>
             <build>
                 <plugins>
@@ -86,11 +94,5 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
-    <parent>
-        <groupId>com.nearinfinity.honeycomb</groupId>
-        <artifactId>honeycomb</artifactId>
-        <version>0.1</version>
-    </parent>
 
 </project>

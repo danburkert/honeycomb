@@ -21,7 +21,9 @@
         <profile>
             <id>cdh</id>
             <activation>
-                <activeByDefault>false</activeByDefault>
+                <property>
+                    <name>cdh</name>
+                </property>
             </activation>
             <build>
                 <plugins>
