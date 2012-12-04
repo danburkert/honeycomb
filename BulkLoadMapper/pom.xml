@@ -49,7 +49,6 @@
             <groupId>com.nearinfinity</groupId>
             <artifactId>mysqlengine</artifactId>
             <version>0.1</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
