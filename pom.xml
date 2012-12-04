@@ -29,7 +29,7 @@
                 <compiler.exclude>''</compiler.exclude>
             </properties>
             <!--<modules>-->
-                <!--<module>HBaseTableCreator</module>-->
+            <!--<module>HBaseTableCreator</module>-->
             <!--</modules>-->
 
             <build>
