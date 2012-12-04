@@ -3,20 +3,20 @@ package com.nearinfinity.honeycomb.mysqlengine;
 import java.util.Arrays;
 import java.util.List;
 
-public class Connection {
+public class ActiveScan {
     private String tableName;
     private String columnName;
     private HBaseResultScanner scanner;
 
-    public Connection(String tableName, HBaseResultScanner scanner) {
+    public ActiveScan(String tableName, HBaseResultScanner scanner) {
         this(tableName, null, scanner);
     }
 
-    public Connection(String tableName, String columnName) {
+    public ActiveScan(String tableName, String columnName) {
         this(tableName, columnName, null);
     }
 
-    public Connection(String tableName, String columnName, HBaseResultScanner scanner) {
+    public ActiveScan(String tableName, String columnName, HBaseResultScanner scanner) {
         this.tableName = tableName;
         this.columnName = columnName;
         this.scanner = scanner;
