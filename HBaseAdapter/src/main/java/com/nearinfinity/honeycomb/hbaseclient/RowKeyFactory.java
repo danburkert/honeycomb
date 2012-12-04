@@ -1,7 +1,12 @@
 package com.nearinfinity.honeycomb.hbaseclient;
 
+import com.google.common.base.Preconditions;
+
 import java.nio.ByteBuffer;
 import java.util.UUID;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 public class RowKeyFactory {
     public static final byte[] ROOT = ByteBuffer.allocate(7)
@@ -9,14 +14,17 @@ public class RowKeyFactory {
             .put("TABLES".getBytes())
             .array();
 
-    public static byte[] buildColumnsKey(long tableId) {
+    public static byte[] buildColumnsKey(final long tableId) {
+        checkState(tableId >= 0);
         return ByteBuffer.allocate(9)
                 .put(RowType.COLUMNS.getValue())
                 .putLong(tableId)
                 .array();
     }
 
-    public static byte[] buildColumnInfoKey(long tableId, long columnId) {
+    public static byte[] buildColumnInfoKey(final long tableId, final long columnId) {
+        checkState(tableId >= 0);
+        checkState(columnId >= 0);
         return ByteBuffer.allocate(17)
                 .put(RowType.COLUMN_INFO.getValue())
                 .putLong(tableId)
@@ -24,7 +32,9 @@ public class RowKeyFactory {
                 .array();
     }
 
-    public static byte[] buildDataKey(long tableId, UUID uuid) {
+    public static byte[] buildDataKey(final long tableId, final UUID uuid) {
+        checkState(tableId >= 0);
+        checkNotNull(uuid);
         return ByteBuffer.allocate(25)
                 .put(RowType.DATA.getValue())
                 .putLong(tableId)
@@ -33,7 +43,10 @@ public class RowKeyFactory {
                 .array();
     }
 
-    public static byte[] buildValueIndexPrefix(long tableId, byte[] columnId, byte[] value) {
+    public static byte[] buildValueIndexPrefix(final long tableId, final byte[] columnId, final byte[] value) {
+        checkState(tableId >= 0);
+        checkNotNull(columnId);
+        checkNotNull(value);
         return ByteBuffer.allocate(9 + value.length + columnId.length)
                 .put(RowType.PRIMARY_INDEX.getValue())
                 .putLong(tableId)
@@ -42,14 +55,19 @@ public class RowKeyFactory {
                 .array();
     }
 
-    public static byte[] buildTableInfoKey(long tableId) {
+    public static byte[] buildTableInfoKey(final long tableId) {
+        checkState(tableId >= 0);
         return ByteBuffer.allocate(9)
                 .put(RowType.TABLE_INFO.getValue())
                 .putLong(tableId)
                 .array();
     }
 
-    public static byte[] buildIndexRowKey(long tableId, byte[] columnIds, byte[] values, UUID uuid) {
+    public static byte[] buildIndexRowKey(final long tableId, final byte[] columnIds, final byte[] values, final UUID uuid) {
+        checkState(tableId >= 0);
+        checkNotNull(columnIds);
+        checkNotNull(values);
+        checkNotNull(uuid);
         return ByteBuffer.allocate(25 + columnIds.length + values.length)
                 .put(RowType.PRIMARY_INDEX.getValue())
                 .putLong(tableId)
@@ -60,7 +78,11 @@ public class RowKeyFactory {
                 .array();
     }
 
-    public static byte[] buildReverseIndexRowKey(long tableId, byte[] columnIds, byte[] values, UUID uuid) {
+    public static byte[] buildReverseIndexRowKey(final long tableId, final byte[] columnIds, final byte[] values, final UUID uuid) {
+        checkState(tableId >= 0);
+        checkNotNull(columnIds);
+        checkNotNull(values);
+        checkNotNull(uuid);
         return ByteBuffer.allocate(25 + columnIds.length + values.length)
                 .put(RowType.REVERSE_INDEX.getValue())
                 .putLong(tableId)

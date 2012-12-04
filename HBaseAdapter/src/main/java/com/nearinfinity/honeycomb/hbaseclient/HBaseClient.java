@@ -19,7 +19,11 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static java.lang.String.format;
 
 public class HBaseClient {
@@ -27,11 +31,15 @@ public class HBaseClient {
 
     private HBaseAdmin admin;
 
-    private final static ConcurrentHashMap<String, TableInfo> tableCache = new ConcurrentHashMap<String, TableInfo>();
+    private static final ConcurrentHashMap<String, TableInfo> tableCache = new ConcurrentHashMap<String, TableInfo>();
 
     private static final Logger logger = Logger.getLogger(HBaseClient.class);
 
+    private static final ReadWriteLock cacheLock = new ReentrantReadWriteLock();
+
     public HBaseClient(String tableName, String zkQuorum) throws IOException {
+        checkNotNull(tableName);
+        checkNotNull(zkQuorum);
         logger.info("Constructing with HBase table name: " + tableName);
         logger.info("Constructing with ZK Quorum: " + zkQuorum);
 
@@ -102,20 +110,18 @@ public class HBaseClient {
         puts.add(put);
     }
 
-    private void updateTableCacheIndex(String tableName, final byte[] bytes) {
-        tableCache.get(tableName).setTableMetadata(new HashMap<String, byte[]>() {{
+    private void updateTableCacheIndex(String tableName, final byte[] bytes) throws IOException {
+        getTableInfo(tableName).setTableMetadata(new HashMap<String, byte[]>() {{
             put(Constants.INDEXES_STRING, bytes);
         }});
     }
 
     private void addColumns(String tableName, Map<String, ColumnMetadata> columns, List<Put> puts) throws IOException {
-        //Get table id from cache
-        long tableId = tableCache.get(tableName).getId();
+        TableInfo tableInfo = getTableInfo(tableName);
+        long tableId = tableInfo.getId();
 
-        //Build the column row key
         byte[] columnBytes = ByteBuffer.allocate(9).put(RowType.COLUMNS.getValue()).putLong(tableId).array();
 
-        //Allocate ids and compute start id
         long numColumns = columns.size();
         long lastColumnId = table.incrementColumnValue(columnBytes, Constants.NIC, new byte[0], numColumns);
         long startColumn = lastColumnId - numColumns;
@@ -141,14 +147,13 @@ public class HBaseClient {
             puts.add(columnInfoPut);
 
             //Add to cache
-            tableCache.get(tableName).addColumn(columnName, columnId, columns.get(columnName));
+            tableInfo.addColumn(columnName, columnId, columns.get(columnName));
         }
     }
 
     public void createTableFull(String tableName, Map<String,
             ColumnMetadata> columns, TableMultipartKeys multipartKeys)
             throws IOException {
-        //Batch put list
         List<Put> putList = new LinkedList<Put>();
 
         createTable(tableName, putList, multipartKeys);
@@ -178,28 +183,46 @@ public class HBaseClient {
     }
 
     public TableInfo getTableInfo(String tableName) throws IOException {
-        if (tableCache.containsKey(tableName)) {
-            return tableCache.get(tableName);
+        checkNotNull(tableName);
+        cacheLock.readLock().lock();
+        try {
+            TableInfo tableInfo = tableCache.get(tableName);
+            if (tableInfo != null) {
+                return tableInfo;
+            }
+        } finally {
+            cacheLock.readLock().unlock();
         }
 
-        String htableName = format("HTable used \"%s\"", Bytes.toString(table.getTableName()));
+        cacheLock.writeLock().lock();
+        try {
+            return refreshTableCache(tableName);
+        } finally {
+            cacheLock.writeLock().unlock();
+        }
+    }
+
+    private TableInfo refreshTableCache(String tableName) throws IOException {
         if (table == null) {
             throw new IllegalStateException(format("Table %s was null. Cannot get table information from null table.", tableName));
         }
 
-        //Get the table id from HBase
+        String htableName = format("HTable used \"%s\"", Bytes.toString(table.getTableName()));
         Get tableIdGet = new Get(RowKeyFactory.ROOT);
         Result result = table.get(tableIdGet);
+        String tableNotFoundMessage = format("SQL table \"%s\" was not found. %s", tableName, htableName);
         if (result.isEmpty()) {
-            throw new TableNotFoundException(format("SQL table \"%s\" was not found. %s", tableName, htableName));
+            throw new TableNotFoundException(tableNotFoundMessage);
         }
 
         byte[] sqlTableBytes = result.getValue(Constants.NIC, tableName.getBytes());
         if (sqlTableBytes == null) {
-            throw new TableNotFoundException(format("SQL table \"%s\" was not found. %s", tableName, htableName));
+            throw new TableNotFoundException(tableNotFoundMessage);
         }
 
         long tableId = ByteBuffer.wrap(sqlTableBytes).getLong();
+
+        checkState(tableId >= 0, "Table id %d retrieved from HBase was not valid.", tableId);
 
         TableInfo info = new TableInfo(tableName, tableId);
 
@@ -207,13 +230,14 @@ public class HBaseClient {
 
         Get columnsGet = new Get(rowKey);
         Result columnsResult = table.get(columnsGet);
-
+        checkNotNull(columnsResult);
         if (columnsResult.isEmpty()) {
             throw new IllegalStateException("Column result from the get was empty for row key " + Bytes.toStringBinary(rowKey));
         }
+
         Map<byte[], byte[]> columns = columnsResult.getFamilyMap(Constants.NIC);
         if (columns == null) {
-            throw new NullPointerException("columns was null after getting family map.");
+            throw new NullPointerException("Columns were null after getting family map.");
         }
 
         for (byte[] qualifier : columns.keySet()) {
@@ -237,9 +261,11 @@ public class HBaseClient {
     }
 
     public void renameTable(String from, String to) throws IOException {
+        checkNotNull(from);
+        checkNotNull(to);
         logger.info("Renaming table " + from + " to " + to);
 
-        TableInfo info = tableCache.get(from);
+        TableInfo info = getTableInfo(from);
 
         byte[] rowKey = RowKeyFactory.ROOT;
 
@@ -257,8 +283,13 @@ public class HBaseClient {
 
         info.setName(to);
 
-        tableCache.remove(from);
-        tableCache.put(to, info);
+        cacheLock.writeLock().lock();
+        try {
+            tableCache.remove(from);
+            tableCache.put(to, info);
+        } finally {
+            cacheLock.writeLock().unlock();
+        }
 
         logger.info("Rename complete!");
     }
@@ -559,7 +590,7 @@ public class HBaseClient {
                 try {
                     table.put(puts);
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    e.printStackTrace();    // TODO: Bad way to handle an exception.
                 }
 
                 return null;
