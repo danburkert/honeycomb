@@ -3,6 +3,7 @@ package com.nearinfinity.honeycomb.mysqlengine;
 import com.google.common.collect.Iterables;
 import com.nearinfinity.honeycomb.hbaseclient.*;
 import com.nearinfinity.honeycomb.hbaseclient.strategy.*;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -22,8 +23,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import static java.text.MessageFormat.format;
 
 public class HBaseAdapter {
-    private static AtomicLong connectionCounter;
-    private static Map<Long, Connection> clientPool;
+    private static AtomicLong activeScanCounter;
+    private static Map<Long, ActiveScan> activeScanLookup;
     private static HBaseClient client;
     private static final Logger logger = Logger.getLogger(HBaseAdapter.class);
 
@@ -33,26 +34,33 @@ public class HBaseAdapter {
 
     private static final String CONFIG_PATH = "/etc/mysql/adapter.conf";
 
+    private static final Object initializationLock = new Object();
+
     public static void initialize() throws IOException {
+        // Working with static variables requires locking to ensure consistency.
+        synchronized (initializationLock) {
+            doInitialization();
+        }
+    }
+
+    private static void doInitialization() throws IOException {
         if (isInitialized) {
             return;
         }
 
         logger.info("Begin");
 
-        //Read config options from adapter.conf
-        File source = new File(CONFIG_PATH);
-        if (!(source.exists() && source.canRead() && source.isFile())) {
-            throw new FileNotFoundException(
-                    CONFIG_PATH + " doesn't exist or cannot be read.");
+        File configFile = new File(CONFIG_PATH);
+        if (!(configFile.exists() && configFile.canRead() && configFile.isFile())) {
+            throw new FileNotFoundException(CONFIG_PATH + " doesn't exist or cannot be read.");
         }
 
-        Map<String, String> params = Util.readParameters(source);
+        Configuration params = Util.readConfiguration(configFile);
         logger.info(format("Read in {0} parameters.", params.size()));
 
         try {
             client = new HBaseClient(params.get("hbase_table_name"),
-            params.get("zk_quorum"));
+                    params.get("zk_quorum"));
         } catch (ZooKeeperConnectionException e) {
             logger.fatal("Could not connect to zookeeper. ", e);
             throw e;
@@ -61,39 +69,19 @@ public class HBaseAdapter {
             throw e;
         }
         logger.info("HBaseClient successfully created.");
-        connectionCounter = new AtomicLong(0L);
-        clientPool = new ConcurrentHashMap<Long, Connection>();
+        activeScanCounter = new AtomicLong(0L);
+        activeScanLookup = new ConcurrentHashMap<Long, ActiveScan>();
 
-        try {
-            int cacheSize = Integer.parseInt(params.get("table_scan_cache_rows"));
-            client.setCacheSize(cacheSize);
-        } catch (NumberFormatException e) {
-            logger.info(format("Number of rows to cache" +
-                    "was not provided or invalid - using default of {0}",
-                    DEFAULT_NUM_CACHED_ROWS));
-            client.setCacheSize(DEFAULT_NUM_CACHED_ROWS);
-        }
-
-        try {
-            long writeBufferSize = Long.parseLong(params.get("write_buffer_size"));
-            client.setWriteBufferSize(writeBufferSize);
-        } catch (NumberFormatException e) {
-            logger.info(format("Write buffer size was" +
-                    " not provided or invalid - using default of {0}",
-                    DEFAULT_WRITE_BUFFER_SIZE));
-            client.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
-        }
-
-        boolean flushChangesImmediately = Boolean.parseBoolean(
-                params.get("flush_changes_immediately"));
-        client.setAutoFlushTables(flushChangesImmediately);
+        client.setCacheSize(params.getInt("table_scan_cache_rows", DEFAULT_NUM_CACHED_ROWS));
+        client.setWriteBufferSize(params.getLong("write_buffer_size", DEFAULT_WRITE_BUFFER_SIZE));
+        client.setAutoFlushTables(params.getBoolean("flush_changes_immediately", false));
         isInitialized = true;
         logger.info("End");
     }
 
     public static boolean createTable(String tableName,
-    Map<String, ColumnMetadata> columns, TableMultipartKeys multipartKeys)
-    throws HBaseAdapterException {
+                                      Map<String, ColumnMetadata> columns, TableMultipartKeys multipartKeys)
+            throws HBaseAdapterException {
         try {
             logger.info("tableName:" + tableName);
             if (client == null) {
@@ -101,37 +89,33 @@ public class HBaseAdapter {
             }
 
             client.createTableFull(tableName, columns, multipartKeys);
+
+            return true;
         } catch (Throwable e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("createTable", e);
         }
-
-        return true;
     }
 
     public static long startScan(String tableName, boolean isFullTableScan)
-    throws HBaseAdapterException {
-        long scanId = connectionCounter.incrementAndGet();
-        logger.info("tableName: " + tableName + ", scanId: " +
-        scanId + ", isFullTableScan: " + isFullTableScan);
+            throws HBaseAdapterException {
         try {
+            long scanId = activeScanCounter.incrementAndGet();
+            logger.info(String.format("tableName: %s, scanId: %s, isFullTableScan: %s", tableName, scanId, isFullTableScan));
             ScanStrategy strategy = new FullTableScanStrategy(tableName);
-            SingleResultScanner dataScanner = new SingleResultScanner(
-                    client.getScanner(strategy));
-            clientPool.put(scanId, new Connection(tableName, dataScanner));
+            SingleResultScanner dataScanner = new SingleResultScanner(client.getScanner(strategy));
+            activeScanLookup.put(scanId, new ActiveScan(tableName, dataScanner));
+            return scanId;
         } catch (Throwable e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("startScan", e);
         }
-
-        return scanId;
     }
 
     public static Row nextRow(long scanId) throws HBaseAdapterException {
-        Row row = new Row();
-
         try {
-            Connection conn = getConnectionForId(scanId);
+            Row row = new Row();
+            ActiveScan conn = getActiveScanForId(scanId);
             HBaseResultScanner scanner = conn.getScanner();
             Result result = scanner.next(null);
 
@@ -139,24 +123,23 @@ public class HBaseAdapter {
                 return null;
             }
 
-            //Set values and UUID
             TableInfo info = client.getTableInfo(conn.getTableName());
             Map<String, byte[]> values = ResultParser.parseDataRow(result, info);
             UUID uuid = ResultParser.parseUUID(result);
             row.parse(values, uuid);
+            return row;
         } catch (Throwable e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("nextRow", e);
         }
-
-        return row;
     }
 
     public static void endScan(long scanId) throws HBaseAdapterException {
         logger.info("scanId: " + scanId);
         try {
-            Connection conn = getConnectionForId(scanId);
+            ActiveScan conn = getActiveScanForId(scanId);
             conn.close();
+            activeScanLookup.remove(scanId);
         } catch (Throwable e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("endScan", e);
@@ -164,7 +147,7 @@ public class HBaseAdapter {
     }
 
     public static boolean writeRow(String tableName, Map<String, byte[]> values)
-    throws HBaseAdapterException {
+            throws HBaseAdapterException {
         try {
             client.writeRow(tableName, values);
         } catch (Exception e) {
@@ -181,59 +164,47 @@ public class HBaseAdapter {
 
     public static boolean deleteRow(long scanId) throws HBaseAdapterException {
         logger.info("scanId: " + scanId);
-
-        boolean deleted;
         try {
-            Connection conn = getConnectionForId(scanId);
-            HBaseResultScanner scanner = conn.getScanner();
+            ActiveScan activeScan = getActiveScanForId(scanId);
+            HBaseResultScanner scanner = activeScan.getScanner();
             Result result = scanner.getLastResult();
-            String tableName = conn.getTableName();
+            String tableName = activeScan.getTableName();
             UUID uuid = ResultParser.parseUUID(result);
 
-            deleted = client.deleteRow(tableName, uuid);
+            return client.deleteRow(tableName, uuid);
         } catch (Throwable e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("deleteRow", e);
         }
-
-        return deleted;
     }
 
     public static int deleteAllRows(String tableName) throws HBaseAdapterException {
         logger.info("tableName: " + tableName);
 
-        int deleted;
         try {
-            deleted = client.deleteAllRows(tableName);
+            return client.deleteAllRows(tableName);
         } catch (Throwable e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("deleteAllRows", e);
         }
-
-        return deleted;
     }
 
     public static boolean dropTable(String tableName) throws HBaseAdapterException {
         logger.info("tableName: " + tableName);
-
-        boolean deleted;
         try {
-            deleted = client.dropTable(tableName);
+            return client.dropTable(tableName);
         } catch (Throwable e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("dropTable", e);
         }
-
-        return deleted;
     }
 
     public static Row getRow(long scanId, byte[] uuid) throws HBaseAdapterException {
-        logger.info("scanId: " + scanId + "," + Bytes.toString(uuid));
-
-        Row row = new Row();
+        logger.info(String.format("scanId: %d,%s", scanId, Bytes.toString(uuid)));
         try {
-            Connection conn = getConnectionForId(scanId);
-            String tableName = conn.getTableName();
+            Row row = new Row();
+            ActiveScan activeScan = getActiveScanForId(scanId);
+            String tableName = activeScan.getTableName();
             ByteBuffer buffer = ByteBuffer.wrap(uuid);
             UUID rowUuid = new UUID(buffer.getLong(), buffer.getLong());
 
@@ -244,89 +215,74 @@ public class HBaseAdapter {
                 throw new HBaseAdapterException("getRow", new Exception());
             }
 
-            conn.getScanner().setLastResult(result);
+            activeScan.getScanner().setLastResult(result);
 
-            TableInfo info = client.getTableInfo(conn.getTableName());
+            TableInfo info = client.getTableInfo(activeScan.getTableName());
             Map<String, byte[]> values = ResultParser.parseDataRow(result, info);
             row.setUUID(rowUuid);
             row.setRowMap(values);
+            return row;
         } catch (Throwable e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("getRow", e);
         }
 
-        return row;
     }
 
     public static long startIndexScan(String tableName, String columnName)
-    throws HBaseAdapterException {
-        logger.info("tableName " + tableName +
-        ", columnNames: " + columnName);
-
-        long scanId;
+            throws HBaseAdapterException {
+        logger.info(String.format("tableName %s, columnNames: %s", tableName, columnName));
         try {
-            scanId = connectionCounter.incrementAndGet();
-            clientPool.put(scanId, new Connection(tableName, columnName));
+            long scanId = activeScanCounter.incrementAndGet();
+            activeScanLookup.put(scanId, new ActiveScan(tableName, columnName));
+            return scanId;
         } catch (Throwable e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("startIndexScan", e);
         }
-
-        return scanId;
     }
 
     public static String findDuplicateKey(String tableName, Map<String, byte[]> values)
-    throws HBaseAdapterException {
-        String result = null;
-
+            throws HBaseAdapterException {
         try {
-            result = client.findDuplicateKey(tableName, values);
+            return client.findDuplicateKey(tableName, values);
         } catch (Throwable e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("hasDuplicateValues", e);
         }
-
-        return result;
     }
 
     public static byte[] findDuplicateValue(String tableName, String columnName)
-    throws HBaseAdapterException {
-        byte[] duplicate;
-
+            throws HBaseAdapterException {
         try {
-            duplicate = client.findDuplicateValue(tableName, columnName);
+            return client.findDuplicateValue(tableName, columnName);
         } catch (Throwable e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("columnContainsDuplicates", e);
         }
-
-        return duplicate;
     }
 
     public static long getNextAutoincrementValue(String tableName, String columnName)
-    throws HBaseAdapterException {
-        long autoIncrementValue = 0;
+            throws HBaseAdapterException {
         try {
-            autoIncrementValue = client.getNextAutoincrementValue(tableName, columnName);
+            return client.getNextAutoincrementValue(tableName, columnName);
         } catch (Exception e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("columnContainsDuplicates", e);
         }
-
-        return autoIncrementValue;
     }
 
     public static IndexRow indexRead(long scanId, List<KeyValue> keyValues,
                                      IndexReadType readType)
-    throws HBaseAdapterException {
-        IndexRow indexRow = new IndexRow();
+            throws HBaseAdapterException {
         try {
-            Connection conn = getConnectionForId(scanId);
-            String tableName = conn.getTableName();
-            List<String> columnName = conn.getColumnName();
+            IndexRow indexRow = new IndexRow();
+            ActiveScan activeScan = getActiveScanForId(scanId);
+            String tableName = activeScan.getTableName();
+            List<String> columnName = activeScan.getColumnName();
             if (keyValues == null) {
                 if (readType != IndexReadType.INDEX_FIRST
-                    && readType != IndexReadType.INDEX_LAST) {
+                        && readType != IndexReadType.INDEX_LAST) {
                     throw new IllegalArgumentException("keyValues can't be null unless first/last index read");
                 }
 
@@ -382,7 +338,7 @@ public class HBaseAdapter {
 
             scanner.setColumnName(Iterables.getLast(scanInfo.keyValueColumns()));
 
-            conn.setScanner(scanner);
+            activeScan.setScanner(scanner);
             Result result = scanner.next(valueToSkip);
 
             if (result == null) {
@@ -390,19 +346,17 @@ public class HBaseAdapter {
             }
 
             indexRow.parseResult(result);
+            return indexRow;
         } catch (Throwable e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("indexRead", e);
         }
-
-        return indexRow;
     }
 
     public static IndexRow nextIndexRow(long scanId) throws HBaseAdapterException {
-        IndexRow indexRow = new IndexRow();
-
         try {
-            Connection conn = getConnectionForId(scanId);
+            IndexRow indexRow = new IndexRow();
+            ActiveScan conn = getActiveScanForId(scanId);
             HBaseResultScanner scanner = conn.getScanner();
             Result result = scanner.next(null);
             if (result == null) {
@@ -410,16 +364,15 @@ public class HBaseAdapter {
             }
 
             indexRow.parseResult(result);
+            return indexRow;
         } catch (Throwable e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("nextIndexRow", e);
         }
-
-        return indexRow;
     }
 
-    private static Connection getConnectionForId(long scanId) throws HBaseAdapterException {
-        Connection conn = clientPool.get(scanId);
+    private static ActiveScan getActiveScanForId(long scanId) throws HBaseAdapterException {
+        ActiveScan conn = activeScanLookup.get(scanId);
         if (conn == null) {
             throw new HBaseAdapterException("No connection for scanId: " + scanId, null);
         }
@@ -463,15 +416,12 @@ public class HBaseAdapter {
     }
 
     public static boolean isNullable(String tableName, String columnName) throws HBaseAdapterException {
-        boolean result = false;
         try {
-            result = client.isNullable(tableName, columnName);
+            return client.isNullable(tableName, columnName);
         } catch (Exception e) {
             logger.error("Exception: ", e);
             throw new HBaseAdapterException("isNullable", e);
         }
-
-        return result;
     }
 
     public static void addIndex(String tableName, String columnsToIndex) throws HBaseAdapterException {
