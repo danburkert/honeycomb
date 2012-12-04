@@ -18,7 +18,7 @@
         <profile>
             <id>apache</id>
             <activation>
-                <activeByDefault>true</activeByDefault>
+                <activeByDefault>false</activeByDefault>
             </activation>
             <properties>
                 <project.build.sourceEncoding>UTF-8
@@ -31,9 +31,27 @@
             <!--<modules>-->
             <!--<module>HBaseTableCreator</module>-->
             <!--</modules>-->
-
             <build>
                 <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <source>1.6</source>
+                            <target>1.6</target>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <configuration>
+                            <archive>
+                                <manifest>
+                                    <addClasspath>true</addClasspath>
+                                </manifest>
+                            </archive>
+                        </configuration>
+                    </plugin>
                     <plugin>
                         <artifactId>maven-dependency-plugin</artifactId>
                         <executions>
@@ -53,7 +71,6 @@
                 </plugins>
             </build>
         </profile>
-
         <profile>
             <id>cdh</id>
             <activation>
@@ -61,9 +78,8 @@
             </activation>
             <properties>
                 <hadoop.artifactId>hadoop-client</hadoop.artifactId>
-                <hadoop.version>2.0.0-cdh4.1.2</hadoop.version>
+                <hadoop.version>2.0.0-mr1-cdh4.1.2</hadoop.version>
                 <hbase.version>0.92.1-cdh4.1.2</hbase.version>
-                <compiler.exclude>**/MedianSplitPolicy.java</compiler.exclude>
             </properties>
             <repositories>
                 <repository>
@@ -82,39 +98,10 @@
         </profile>
     </profiles>
 
-
     <modules>
         <module>HBaseAdapter</module>
         <module>DataCreator</module>
         <module>BulkLoadMapper</module>
         <module>MedianSplit</module>
     </modules>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
-                    <excludes>
-                        <exclude>${compiler.exclude}</exclude>
-                    </excludes>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <addClasspath>true</addClasspath>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-
 </project>
