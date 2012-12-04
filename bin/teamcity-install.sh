@@ -27,7 +27,7 @@ cp -R $HONEYCOMB_HOME/mysql-5.5.28/storage/cloud/cloud-test $honeycomb_lib
 cp $HONEYCOMB_HOME/build/storage/cloud/ha_cloud.so $honeycomb_lib
 function copy_jar
 {
-  cp $HONEYCOMB_HOME/$1/target/*with-dependencies.jar $honeycomb_lib
+  cp $HONEYCOMB_HOME/$1/target/*.jar $honeycomb_lib
 }
 
 copy_jar HBaseAdapter
