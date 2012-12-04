@@ -22,7 +22,7 @@ public class ValueParser {
 
         if (val.length() == 0 && type != ColumnType.STRING
                 && type != ColumnType.BINARY) {
-            if(meta.isNullable()) {
+            if (meta.isNullable()) {
                 return null;
             } else {
                 throw new IllegalArgumentException("Attempt to parse invalid field value: " + val);
