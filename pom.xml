@@ -11,50 +11,75 @@
     <packaging>pom</packaging>
 
     <properties>
-      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <profiles>
-      <profile>
-        <id>apache</id>
-        <activation>
-          <activeByDefault>true</activeByDefault>
-        </activation>
-        <properties>
-            <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-            <hadoop.artifactId>hadoop-core</hadoop.artifactId>
-            <hadoop.version>1.0.4</hadoop.version>
-            <hbase.version>0.94.1</hbase.version>
-            <compiler.exclude>''</compiler.exclude>
-        </properties>
-        <!--<modules>-->
-          <!--<module>HBaseTableCreator</module>-->
-        <!--</modules>-->
-      </profile>
-      <profile>
-        <id>cdh</id>
-        <activation>
-          <activeByDefault>false</activeByDefault>
-        </activation>
-        <properties>
-          <hadoop.artifactId>hadoop-client</hadoop.artifactId>
-          <hadoop.version>2.0.0-cdh4.1.2</hadoop.version>
-          <hbase.version>0.92.1-cdh4.1.2</hbase.version>
-          <compiler.exclude>**/MedianSplitPolicy.java</compiler.exclude>
-        </properties>
-        <repositories>
-          <repository>
-            <id>cloudera-releases</id>
-            <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
-            <releases>
-              <enabled>true</enabled>
-            </releases>
-            <snapshots>
-              <enabled>false</enabled>
-            </snapshots>
-          </repository>
-        </repositories>
-      </profile>
+        <profile>
+            <id>apache</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <project.build.sourceEncoding>UTF-8
+                </project.build.sourceEncoding>
+                <hadoop.artifactId>hadoop-core</hadoop.artifactId>
+                <hadoop.version>1.0.4</hadoop.version>
+                <hbase.version>0.94.1</hbase.version>
+                <compiler.exclude>''</compiler.exclude>
+            </properties>
+            <!--<modules>-->
+                <!--<module>HBaseTableCreator</module>-->
+            <!--</modules>-->
+
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <phase>install</phase>
+                                <goals>
+                                    <goal>copy-dependencies</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>
+                                        ${project.build.directory}/lib
+                                    </outputDirectory>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>cdh</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <hadoop.artifactId>hadoop-client</hadoop.artifactId>
+                <hadoop.version>2.0.0-cdh4.1.2</hadoop.version>
+                <hbase.version>0.92.1-cdh4.1.2</hbase.version>
+                <compiler.exclude>**/MedianSplitPolicy.java</compiler.exclude>
+            </properties>
+            <repositories>
+                <repository>
+                    <id>cloudera-releases</id>
+                    <url>
+                        https://repository.cloudera.com/artifactory/cloudera-repos/
+                    </url>
+                    <releases>
+                        <enabled>true</enabled>
+                    </releases>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                </repository>
+            </repositories>
+        </profile>
     </profiles>
 
 
@@ -74,7 +99,7 @@
                     <source>1.6</source>
                     <target>1.6</target>
                     <excludes>
-                      <exclude>**/MedianSplitPolicy.java</exclude>
+                        <exclude>${compiler.exclude}</exclude>
                     </excludes>
                 </configuration>
             </plugin>
@@ -88,20 +113,6 @@
                         </manifest>
                     </archive>
                 </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>install</phase>
-                        <goals>
-                            <goal>copy-dependencies</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}/lib</outputDirectory>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
