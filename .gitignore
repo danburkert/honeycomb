@@ -17,3 +17,4 @@ restart-mysql.sh
 /mysql-*/.project
 /mysql-*/.settings/org.eclipse.cdt.codan.core.prefs
 /BulkLoader/input.csv
+*.iml
