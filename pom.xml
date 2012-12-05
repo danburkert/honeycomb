@@ -32,7 +32,6 @@
             <!--</modules>-->
             <build>
                 <plugins>
-
                     <plugin>
                         <artifactId>maven-dependency-plugin</artifactId>
                         <executions>
