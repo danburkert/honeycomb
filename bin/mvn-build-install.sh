@@ -15,7 +15,7 @@ fi
 
 cd $HONEYCOMB_HOME/HBaseAdapter
 echo "Running: mvn package install"
-mvn package install -P apache
+mvn package install -Dapache
 $HONEYCOMB_HOME/bin/install-honeycomb-jars.sh "`pwd`" $honeycomb_lib
 
 echo "Setting up the classpath.conf file with the complete classpath."
