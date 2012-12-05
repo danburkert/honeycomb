@@ -31,6 +31,12 @@ void extract_mysql_old_date(int32 tmp, MYSQL_TIME *time)
 void extract_mysql_time(long tmp, MYSQL_TIME *time)
 {
   bzero((void*) time, sizeof(*time));
+  if (tmp < 0)
+  {
+    time->neg = true;
+    tmp = -tmp;
+  }
+
   time->hour = (uint) (tmp / 10000);
   time->minute = (uint) (tmp / 100 % 100);
   time->second = (uint) (tmp % 100);
@@ -215,7 +221,7 @@ uchar* create_key_copy(Field* index_field, const uchar* key, uint* key_len, THD*
             extract_mysql_timestamp((long) uint4korr(key), &mysql_time, thd);
             break;
           case MYSQL_TYPE_TIME:
-            extract_mysql_time((long) uint3korr(key), &mysql_time);
+            extract_mysql_time((long) sint3korr(key), &mysql_time);
             break;
           case MYSQL_TYPE_DATETIME:
             extract_mysql_datetime((ulonglong) uint8korr(key), &mysql_time);
