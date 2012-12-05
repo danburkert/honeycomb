@@ -2,7 +2,7 @@
 : ${MYSQL_HOME?"Need to set MYSQL_HOME environmental variable."}
 
 # Clear out old results
-rm $MYSQL_HOME/mysql-test/suite/cloud-test/r/*
+rm $MYSQL_HOME/mysql-test/suite/cloud-test/funcs/r/*
 
 # Record baseline results with InnoDB
 cd $MYSQL_HOME/mysql-test
