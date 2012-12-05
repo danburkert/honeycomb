@@ -1,3 +1,19 @@
 insert_calendar : Bug#52283 Innodb reports extra warnings when SELECT/WHERE is performed using invalid value
 update_delete_calendar : Bug#52824 + Bug#52283(in case of Innodb)
-
+delete_decimal : PASSING
+delete_time : foo
+delete_year : foo
+disable : foo
+insert_calendar : foo
+insert_decimal : PASSING
+insert_number : AUTOINCREMENT
+insert_time : UNIQUE INDICES
+insert_year :
+strings_charsets_update_delete : foo
+strings_update_delete : foo
+type_bit_iuds : foo
+update_decimal : foo
+update_delete_calendar : foo
+update_delete_number : foo
+update_time : foo
+update_year : foo
