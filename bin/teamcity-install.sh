@@ -35,4 +35,4 @@ copy_jar BulkLoadMapper
 create_classpath=$($HONEYCOMB_HOME/bin/create-classpath.rb $honeycomb_lib)
 echo $create_classpath > /home/teamcity/classpath.conf
 echo "Running mysql-restart.sh"
-sudo $SETUID/mysql-restart.sh
+$SETUID/mysql-restart.sh
