@@ -215,7 +215,7 @@ int CloudHandler::info(uint flag)
   ha_rows		rec_per_key;
 
   DBUG_ENTER("CloudHandler::info");
-  if (flag & HA_STATUS_VARIABLE) 
+  if (flag & HA_STATUS_VARIABLE)
   {
     attach_thread();
     jclass adapter_class = this->adapter();
@@ -229,7 +229,7 @@ int CloudHandler::info(uint flag)
       row_count++;
 
 	THD*	thd = ha_thd();
-    if (thd_sql_command(thd) == SQLCOM_TRUNCATE) 
+    if (thd_sql_command(thd) == SQLCOM_TRUNCATE)
     {
       row_count = 1;
     }
@@ -282,6 +282,14 @@ int CloudHandler::info(uint flag)
     this->failed_key_index = -1;
   }
 
+  if ((flag & HA_STATUS_AUTO) && table->found_next_number_field) {
+    attach_thread();
+    jclass adapter_class = this->adapter();
+    jmethodID get_autoincrement_value_method = find_static_method(adapter_class, "getAutoincrementValue", "(Ljava/lang/String;Ljava/lang/String;)J",this->env);
+    jlong autoincrement_value = (jlong) this->env->CallStaticObjectMethod(adapter_class, get_autoincrement_value_method, this->table_name(), string_to_java_string(table->found_next_number_field->field_name));
+    stats.auto_increment_value = (ulonglong) autoincrement_value;
+    detach_thread();
+  }
 
   DBUG_RETURN(0);
 }
