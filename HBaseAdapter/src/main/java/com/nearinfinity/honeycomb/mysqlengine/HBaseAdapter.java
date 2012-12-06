@@ -114,8 +114,7 @@ public class HBaseAdapter {
                 logger.info("client is null!");
 
             returnValue = client.getAutoincrementValue(tableName, fieldName);
-        }
-        catch (Throwable e) {
+        } catch (Throwable e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("alterTableAutoincrementValue", e);
         }
@@ -142,8 +141,7 @@ public class HBaseAdapter {
                 logger.info("client is null!");
 
             returnValue = client.alterAutoincrementValue(tableName, fieldName, autoincrementValue, isTruncate);
-        }
-        catch (Throwable e) {
+        } catch (Throwable e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("alterTableAutoincrementValue", e);
         }
@@ -191,6 +189,10 @@ public class HBaseAdapter {
     public static void endScan(long scanId) throws HBaseAdapterException {
         logger.info("scanId: " + scanId);
         try {
+            if (!activeScanLookup.containsKey(scanId)) {
+                return;
+            }
+
             ActiveScan conn = getActiveScanForId(scanId);
             conn.close();
             activeScanLookup.remove(scanId);
