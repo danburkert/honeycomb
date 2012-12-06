@@ -30,7 +30,6 @@ int CloudHandler::index_end()
 
   this->end_scan();
   this->detach_thread();
-  this->reset_index_scan_counter();
 
   DBUG_RETURN(0);
 }
@@ -232,7 +231,6 @@ int CloudHandler::rnd_end()
 
   this->end_scan();
   this->detach_thread();
-  this->reset_scan_counter();
 
   DBUG_RETURN(0);
 }
@@ -324,19 +322,16 @@ int CloudHandler::rnd_next(uchar *buf)
 
 void CloudHandler::end_scan()
 {
-  jclass adapter_class = this->adapter();
-  jmethodID end_scan_method = find_static_method(adapter_class, "endScan", "(J)V",this->env);
-  this->env->CallStaticVoidMethod(adapter_class, end_scan_method, this->curr_scan_id);
+  if(scan_ids_count == scan_ids_length)
+  {
+    long long* old = scan_ids;
+    scan_ids_length *= 2;
+    scan_ids = new long long[scan_ids_length];
+    memset(scan_ids, 0, scan_ids_length);
+    memcpy(scan_ids, old, (scan_ids_count - 1) * sizeof(long long));
+    ARRAY_DELETE(old);
+  }
+
+  scan_ids[scan_ids_count++] = this->curr_scan_id;
 }
 
-void CloudHandler::reset_index_scan_counter()
-{
-  this->curr_scan_id = -1;
-  this->active_index = -1;
-}
-
-void CloudHandler::reset_scan_counter()
-{
-  this->curr_scan_id = -1;
-  this->performing_scan = false;
-}
