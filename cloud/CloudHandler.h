@@ -32,6 +32,7 @@ class CloudHandler : public handler
     bool performing_scan;
     CloudShare *get_share(const char *table_name, TABLE *table);
     uint32 max_row_length();
+    bool ref_allocated;
 
     long long curr_scan_id;
     ulonglong rows_written;
@@ -159,7 +160,6 @@ class CloudHandler : public handler
 
   public:
     CloudHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm);
-    ~CloudHandler();
 
     const char *table_type() const
     {

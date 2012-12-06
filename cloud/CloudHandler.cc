@@ -14,18 +14,9 @@ CloudHandler::CloudHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex
 : handler(hton, table_arg), jvm(jvm), cloud_mutex(mutex), cloud_open_tables(open_tables), hbase_adapter(NULL)
 {
   this->ref_length = 16;
-  this->ref = new uchar[this->ref_length];
   this->initialize_adapter();
   this->rows_written = 0;
   this->failed_key_index = 0;
-}
-
-CloudHandler::~CloudHandler()
-{
-  if(this->ref != NULL){
-    delete[] this->ref;
-    this->ref = NULL;
-  }
 }
 
 int CloudHandler::open(const char *path, int mode, uint test_if_locked)
@@ -533,7 +524,7 @@ void CloudHandler::store_uuid_ref(jobject index_row, jmethodID get_uuid_method)
 {
   jbyteArray uuid = (jbyteArray) this->env->CallObjectMethod(index_row, get_uuid_method);
   uchar* pos = (uchar*) this->env->GetByteArrayElements(uuid, JNI_FALSE);
-  memcpy(this->ref, pos, 16);
+  memcpy(this->ref, pos, this->ref_length);
   this->env->ReleaseByteArrayElements(uuid, (jbyte*) pos, 0);
 }
 
