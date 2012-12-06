@@ -73,6 +73,7 @@ class CloudHandler : public handler
     int get_failed_key_index(const char *key_name);
     void store_field_value(Field *field, char *key, int length);
     jobject create_multipart_keys(TABLE* table_arg);
+    jobject create_multipart_key(KEY* key, KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts);
     char* index_name(KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts);
     char* index_name(TABLE* table, uint key);
     jobject create_key_value_list(int index, uint* key_sizes, uchar** key_copies, const char** key_names, jboolean* key_null_bits, jboolean* key_is_null);
@@ -157,20 +158,8 @@ class CloudHandler : public handler
     }
 
   public:
-    CloudHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm)
-      : handler(hton, table_arg), jvm(jvm), cloud_mutex(mutex), cloud_open_tables(open_tables), hbase_adapter(NULL)
-    {
-      this->ref_length = 16;
-      this->ref = new uchar[this->ref_length];
-      this->initialize_adapter();
-      this->rows_written = 0;
-      this->failed_key_index = 0;
-    }
-
-    ~CloudHandler()
-    {
-      delete[] this->ref;
-    }
+    CloudHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm);
+    ~CloudHandler();
 
     const char *table_type() const
     {
