@@ -10,6 +10,15 @@ const char **CloudHandler::bas_ext() const
 
   return cloud_exts;
 }
+CloudHandler::CloudHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm)
+: handler(hton, table_arg), jvm(jvm), cloud_mutex(mutex), cloud_open_tables(open_tables), hbase_adapter(NULL)
+{
+  this->ref_length = 16;
+  this->ref = new uchar[this->ref_length];
+  this->initialize_adapter();
+  this->rows_written = 0;
+  this->failed_key_index = 0;
+}
 
 CloudHandler::~CloudHandler()
 {
