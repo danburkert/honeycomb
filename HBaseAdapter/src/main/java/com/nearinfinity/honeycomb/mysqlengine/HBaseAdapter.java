@@ -97,6 +97,60 @@ public class HBaseAdapter {
         }
     }
 
+    /**
+     * Method called when a "show create table tableName" statement is executed.
+     *
+     * @param tableName
+     * @param fieldName
+     * @return
+     * @throws HBaseAdapterException
+     */
+    public static long getAutoincrementValue(String tableName, String fieldName) throws HBaseAdapterException {
+        long returnValue = -1;
+
+        try {
+            logger.info(format("tableName: {0}, fieldName: {1}", tableName, fieldName));
+            if (client == null)
+                logger.info("client is null!");
+
+            returnValue = client.getAutoincrementValue(tableName, fieldName);
+        }
+        catch (Throwable e) {
+            logger.error("Exception:", e);
+            throw new HBaseAdapterException("alterTableAutoincrementValue", e);
+        }
+
+        return returnValue;
+    }
+
+    /**
+     * Method called when a "alter table tableName auto_increment=autoIncrementValue" statement is executed.
+     *
+     * @param tableName
+     * @param fieldName
+     * @param autoincrementValue
+     * @param isTruncate
+     * @return
+     * @throws HBaseAdapterException
+     */
+    public static boolean alterAutoincrementValue(String tableName, String fieldName, long autoincrementValue, boolean isTruncate) throws HBaseAdapterException {
+        boolean returnValue = false;
+
+        try {
+            logger.info(format("tableName: {0}, fieldName: {1}, autoIncrementValue: {2}, isTruncate: {3}", tableName, fieldName, autoincrementValue, isTruncate));
+            if (client == null)
+                logger.info("client is null!");
+
+            returnValue = client.alterAutoincrementValue(tableName, fieldName, autoincrementValue, isTruncate);
+        }
+        catch (Throwable e) {
+            logger.error("Exception:", e);
+            throw new HBaseAdapterException("alterTableAutoincrementValue", e);
+        }
+
+        return returnValue;
+    }
+
     public static long startScan(String tableName, boolean isFullTableScan)
             throws HBaseAdapterException {
         try {

@@ -14,6 +14,7 @@ public class ColumnMetadata implements Writable {
     private boolean isPrimaryKey;
     private int maxLength;
     private boolean isAutoincrement;
+    private long autoincrementValue;
 
     public ColumnMetadata() {
         this.type = ColumnType.NONE;
@@ -22,6 +23,7 @@ public class ColumnMetadata implements Writable {
         this.maxLength = 0;
         this.isNullable = false;
         this.isPrimaryKey = false;
+        this.autoincrementValue = 0;
     }
 
     public ColumnMetadata(byte[] jsonBytes) {
@@ -90,6 +92,14 @@ public class ColumnMetadata implements Writable {
         this.isAutoincrement = autoincrement;
     }
 
+    public long getAutoincrementValue() {
+        return autoincrementValue;
+    }
+
+    public void setAutoincrementValue(long autoincrementValue) {
+        this.autoincrementValue = autoincrementValue;
+    }
+
     public byte[] toJson() throws IOException {
         return new Gson().toJson(this).getBytes();
     }
@@ -112,6 +122,7 @@ public class ColumnMetadata implements Writable {
         this.isNullable = other.isNullable();
         this.isPrimaryKey = other.isPrimaryKey();
         this.isAutoincrement = other.isAutoincrement();
+        this.autoincrementValue = other.getAutoincrementValue();
     }
 
     @Override
@@ -127,6 +138,7 @@ public class ColumnMetadata implements Writable {
         if (precision != metadata.precision) return false;
         if (scale != metadata.scale) return false;
         if (type != metadata.type) return false;
+        if (autoincrementValue != metadata.autoincrementValue) return false;
 
         return true;
     }
@@ -139,6 +151,7 @@ public class ColumnMetadata implements Writable {
         result = 31 * result + (isNullable ? 1 : 0);
         result = 31 * result + (isPrimaryKey ? 1 : 0);
         result = 31 * result + maxLength;
+        result = 31 * result + (int) autoincrementValue;
         return result;
     }
 }
