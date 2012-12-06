@@ -36,6 +36,15 @@ public class TableInfo {
         return this.name;
     }
 
+    public String getTableName() {
+        int databaseIndex = this.name.indexOf(".");
+        if (databaseIndex == -1) {
+            throw new IllegalStateException("All tables should have a database.");
+        }
+
+        return this.name.substring(databaseIndex + 1);
+    }
+
     public void setName(String name) {
         this.name = name;
     }

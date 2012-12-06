@@ -184,3 +184,20 @@ char *char_array_from_java_bytes(jbyteArray java_bytes, JNIEnv* env)
   return ret;
 }
 
+jclass multipart_key_class(JNIEnv* env)
+{
+  return env->FindClass(HBASECLIENT "TableMultipartKeys");
+}
+
+jobject new_multipart_key(JNIEnv* env)
+{
+  jclass multipart_keys_class = multipart_key_class(env);
+  jmethodID constructor = env->GetMethodID(multipart_keys_class, "<init>", "()V");
+  return env->NewObject(multipart_keys_class, constructor);
+}
+
+jmethodID add_multipart_key_method(JNIEnv* env)
+{
+  jclass multipart_keys_class = multipart_key_class(env);
+  return env->GetMethodID(multipart_keys_class, "addMultipartKey", "(Ljava/lang/String;Z)V");
+}

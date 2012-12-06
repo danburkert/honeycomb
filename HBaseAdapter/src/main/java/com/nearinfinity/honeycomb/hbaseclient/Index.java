@@ -63,9 +63,17 @@ public class Index {
     }
 
     public static List<List<String>> indexForTable(final Map<String, byte[]> tableMetadata) {
+        return extractTableMetadata(tableMetadata, Constants.INDEXES);
+    }
+
+    public static List<List<String>> uniqueKeysForTable(final Map<String, byte[]> tableMetadata) {
+        return extractTableMetadata(tableMetadata, Constants.UNIQUES);
+    }
+
+    private static List<List<String>> extractTableMetadata(Map<String, byte[]> tableMetadata, byte[] key) {
         byte[] jsonBytes = null;
         for (Map.Entry<String, byte[]> entry : tableMetadata.entrySet()) {
-            if (Arrays.equals(entry.getKey().getBytes(), Constants.INDEXES)) {
+            if (Arrays.equals(entry.getKey().getBytes(), key)) {
                 jsonBytes = entry.getValue();
             }
         }
