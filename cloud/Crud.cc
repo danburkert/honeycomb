@@ -244,12 +244,19 @@ int CloudHandler::write_row(uchar *buf)
     case MYSQL_TYPE_TINY_BLOB:
     case MYSQL_TYPE_MEDIUM_BLOB:
     case MYSQL_TYPE_LONG_BLOB:
+    {
+      String string_value;
+      field->val_str(&string_value);
+      actualFieldSize = string_value.length();
+      byte_val = (uchar*) my_malloc(actualFieldSize, MYF(MY_WME));
+      memcpy(byte_val, string_value.ptr(), actualFieldSize);
+      break;
+    }
     case MYSQL_TYPE_VARCHAR:
     case MYSQL_TYPE_VAR_STRING:
     {
       char string_value_buff[field->field_length];
-      String string_value(string_value_buff, sizeof(string_value_buff),
-          field->charset());
+      String string_value(string_value_buff, sizeof(string_value_buff),&my_charset_bin);
       field->val_str(&string_value);
       actualFieldSize = string_value.length();
       byte_val = (uchar*) my_malloc(actualFieldSize, MYF(MY_WME));
