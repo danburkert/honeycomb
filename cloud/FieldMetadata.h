@@ -75,7 +75,7 @@ public:
   {
   }
 
-  jobject get_field_metadata(Field *field, TABLE *table_arg)
+  jobject get_field_metadata(Field *field, TABLE *table_arg, ulonglong auto_increment_value)
   {
     jclass metadata_class = this->env->FindClass(HBASECLIENT "ColumnMetadata");
 
@@ -88,7 +88,7 @@ public:
     jmethodID set_primary_key_method = this->env->GetMethodID(metadata_class, "setPrimaryKey", "(Z)V");
     jmethodID set_type_method = this->env->GetMethodID(metadata_class, "setType", "(L" HBASECLIENT "ColumnType;)V");
     jmethodID set_autoincrement_method = this->env->GetMethodID(metadata_class, "setAutoincrement", "(Z)V");
-    jmethodID set_isunique_method = this->env->GetMethodID(metadata_class, "setUnique", "(Z)V");
+    jmethodID set_autoincrement_value_method = this->env->GetMethodID(metadata_class, "setAutoincrementValue", "(J)V");
 
     jobject metadata_object = this->env->NewObject(metadata_class, metadata_constructor);
 
@@ -184,9 +184,10 @@ public:
       this->env->CallVoidMethod(metadata_object, set_nullable_method, JNI_TRUE);
     }
 
-    if(table_arg->found_next_number_field != NULL && field == table_arg->found_next_number_field) 
+    if(table_arg->found_next_number_field != NULL && field == table_arg->found_next_number_field)
     {
       this->env->CallVoidMethod(metadata_object, set_autoincrement_method, JNI_TRUE);
+      this->env->CallVoidMethod(metadata_object, set_autoincrement_value_method, auto_increment_value == 0 ? 1 : auto_increment_value);
     }
 
     // 64 is obviously some key flag indicating no primary key, but I have no idea where it's defined. Will fix later. - ABC

@@ -1,8 +1,7 @@
 DROP TABLE IF EXISTS t1;
 
 CREATE TABLE t1 (c1 INT NOT NULL AUTO_INCREMENT, c2 INT, PRIMARY KEY(c1));
-INSERT INTO t1 (c2) VALUES (1), (1), (2), (3), (5), (8), (13), (21), (34),
-                      (55), (89), (144), (233), (377);
+INSERT INTO t1 (c2) VALUES (1), (1), (2), (3), (5), (8), (13), (21), (34), (55), (89), (144), (233), (377);
 
 SELECT * FROM t1 ORDER BY c1;
 DELETE FROM t1 WHERE c2 < 15;
@@ -10,6 +9,59 @@ DELETE FROM t1 WHERE c2 < 15;
 INSERT INTO t1 (c2) VALUES (610);
 INSERT INTO t1 VALUES (99, 987);
 INSERT INTO t1 (c2) VALUES (1597);
+SELECT * FROM t1 ORDER BY c1;
+
+DROP TABLE IF EXISTS t1;
+
+# This tests the case where the auto_increment value is manipulated directly to be less than the current value
+# This should have no effect on the auto_increment value
+
+DROP TABLE IF EXISTS t1;
+
+CREATE TABLE t1 (c1 INT NOT NULL AUTO_INCREMENT, c2 INT, PRIMARY KEY(c1));
+INSERT INTO t1 (c2) VALUES (1), (1), (2), (3), (5), (8), (13), (21), (34), (55), (89), (144), (233), (377);
+
+SELECT * FROM t1 ORDER BY c1;
+DELETE FROM t1 WHERE c2 < 15;
+
+INSERT INTO t1 VALUES (5, 987);
+INSERT INTO t1 (c2) VALUES (1597);
+
+SELECT * FROM t1 ORDER BY c1;
+
+DROP TABLE IF EXISTS t1;
+
+# This tests the case where the auto_increment value is manipulated directly to be less than the current value
+# This should have no effect on the auto_increment value
+
+DROP TABLE IF EXISTS t1;
+
+CREATE TABLE t1 (c1 INT NOT NULL AUTO_INCREMENT, c2 INT, PRIMARY KEY(c1));
+INSERT INTO t1 (c2) VALUES (1), (1), (2), (3), (5), (8), (13), (21), (34), (55), (89), (144), (233), (377);
+
+SELECT * FROM t1 ORDER BY c1;
+DELETE FROM t1 WHERE c2 < 15;
+
+set insert_id=5;
+INSERT INTO t1 (c2) VALUES (100), (101), (102);
+INSERT INTO t1 (c2) VALUES (200);
+
+SELECT * FROM t1 ORDER BY c1;
+
+DROP TABLE IF EXISTS t1;
+
+# Thought this was a weird enough test case it was worth documenting
+
+DROP TABLE IF EXISTS t1;
+
+CREATE TABLE t1 (c1 INT NOT NULL AUTO_INCREMENT, c2 INT, PRIMARY KEY(c1));
+INSERT INTO t1 (c2) VALUES (101), (102), (103);
+
+SELECT * FROM t1 ORDER BY c1;
+
+set insert_id=0;
+INSERT INTO t1 (c2) VALUES (100);
+
 SELECT * FROM t1 ORDER BY c1;
 
 DROP TABLE IF EXISTS t1;

@@ -119,4 +119,8 @@ public class TableInfo {
         tableMetadata.clear();
         tableMetadata.putAll(metadata);
     }
+
+    public void setColumnMetadata(String columnName, ColumnMetadata columnMetadata) {
+        metadataMap.put(columnName, columnMetadata);
+    }
 }

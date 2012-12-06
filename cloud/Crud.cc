@@ -5,7 +5,7 @@ void CloudHandler::start_bulk_insert(ha_rows rows)
   DBUG_ENTER("CloudHandler::start_bulk_insert");
 
   attach_thread();
-  Logging::info("%d rows to be inserted.", rows);
+  //Logging::info("%d rows to be inserted.", rows);
 
   DBUG_VOID_RETURN;
 }
@@ -97,7 +97,7 @@ int CloudHandler::create(const char *path, TABLE *table_arg, HA_CREATE_INFO *cre
       break;
     }
 
-    jobject java_metadata_obj = metadata.get_field_metadata(*field, table_arg);
+    jobject java_metadata_obj = metadata.get_field_metadata(*field, table_arg, create_info->auto_increment_value);
     java_map_insert(columnMap, string_to_java_string((*field)->field_name), java_metadata_obj, this->env);
   }
 
@@ -142,6 +142,7 @@ int CloudHandler::write_row(uchar *buf)
   jmethodID write_row_method = find_static_method(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;)Z", env);
 
   jstring table_name = this->table_name();
+  jlong new_autoincrement_value = -1;
 
   jobject java_row_map = create_java_map(this->env);
   jobject unique_values_map = create_java_map(this->env);
@@ -187,6 +188,10 @@ int CloudHandler::write_row(uchar *buf)
     case MYSQL_TYPE_ENUM:
     {
       long long integral_value = field->val_int();
+
+      if (table->found_next_number_field == field)
+        new_autoincrement_value = (jlong) integral_value;
+
       if (is_little_endian())
       {
         integral_value = __builtin_bswap64(integral_value);
@@ -201,6 +206,10 @@ int CloudHandler::write_row(uchar *buf)
     {
       double fp_value = field->val_real();
       long long* fp_ptr = (long long*) &fp_value;
+
+      if (table->found_next_number_field == field)
+        new_autoincrement_value = (jlong) fp_value;
+
       if (is_little_endian())
       {
         *fp_ptr = __builtin_bswap64(*fp_ptr);
@@ -277,6 +286,9 @@ int CloudHandler::write_row(uchar *buf)
 
   this->env->CallStaticBooleanMethod(adapter_class, write_row_method, table_name, java_row_map);
   this->rows_written++;
+
+  if (new_autoincrement_value >= 0)
+    update_cloud_autoincrement_value(new_autoincrement_value + 1, JNI_FALSE);
 
   DBUG_RETURN(0);
 }
@@ -413,8 +425,15 @@ int CloudHandler::delete_all_rows()
 int CloudHandler::truncate()
 {
   DBUG_ENTER("CloudHandler::truncate");
+  attach_thread();
 
-  DBUG_RETURN(delete_all_rows());
+  int returnValue = delete_all_rows();
+
+  if (returnValue == 0)
+    update_cloud_autoincrement_value((jlong) 1, JNI_TRUE);
+
+  detach_thread();
+  DBUG_RETURN(returnValue);
 }
 
 void CloudHandler::drop_table(const char *path)
@@ -443,4 +462,24 @@ int CloudHandler::delete_table(const char *path)
   detach_thread();
 
   DBUG_RETURN(0);
+}
+
+void CloudHandler::update_create_info(HA_CREATE_INFO* create_info)
+{
+  DBUG_ENTER("CloudHandler::update_create_info");
+  attach_thread();
+
+  //show create table
+  if (!(create_info->used_fields & HA_CREATE_USED_AUTO)) {
+    CloudHandler::info(HA_STATUS_AUTO);
+    create_info->auto_increment_value = stats.auto_increment_value;
+  }
+  //alter table
+  else if (create_info->used_fields == 1) {
+    update_cloud_autoincrement_value((jlong) create_info->auto_increment_value, JNI_FALSE);
+  }
+
+  detach_thread();
+
+  DBUG_VOID_RETURN;
 }
