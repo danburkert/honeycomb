@@ -1,7 +1,7 @@
 package com.nearinfinity.honeycomb.hbaseclient;
 
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.nearinfinity.honeycomb.hbaseclient.strategy.PrefixScanStrategy;
 import com.nearinfinity.honeycomb.hbaseclient.strategy.ScanStrategy;
@@ -9,7 +9,10 @@ import com.nearinfinity.honeycomb.hbaseclient.strategy.ScanStrategyInfo;
 import com.nearinfinity.honeycomb.mysqlengine.HBaseResultScanner;
 import com.nearinfinity.honeycomb.mysqlengine.SingleResultScanner;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.*;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -104,16 +107,19 @@ public class HBaseClient {
         puts.add(new Put(RowKeyFactory.ROOT).add(Constants.NIC, tableName.getBytes(), Bytes.toBytes(tableId)));
         Put put = new Put(RowKeyFactory.buildTableInfoKey(tableId));
         put.add(Constants.NIC, Constants.ROW_COUNT, Bytes.toBytes(0l));
-        final byte[] bytes = multipartKeys.toJson();
-        updateTableCacheIndex(tableName, bytes);
-        put.add(Constants.NIC, Constants.INDEXES, bytes);
+        final byte[] indexBytes = multipartKeys.toJson();
+        final byte[] uniqueKeyBytes = multipartKeys.uniqueKeysToJson();
+        updateTableCacheIndex(tableName, new HashMap<String, byte[]>() {{
+            put(Constants.INDEXES_STRING, indexBytes);
+            put(Constants.UNIQUE_STRING, uniqueKeyBytes);
+        }});
+        put.add(Constants.NIC, Constants.INDEXES, indexBytes);
+        put.add(Constants.NIC, Constants.UNIQUES, uniqueKeyBytes);
         puts.add(put);
     }
 
-    private void updateTableCacheIndex(String tableName, final byte[] bytes) throws IOException {
-        getTableInfo(tableName).setTableMetadata(new HashMap<String, byte[]>() {{
-            put(Constants.INDEXES_STRING, bytes);
-        }});
+    private void updateTableCacheIndex(String tableName, Map<String, byte[]> map) throws IOException {
+        getTableInfo(tableName).setTableMetadata(map);
     }
 
     private void addColumns(String tableName, Map<String, ColumnMetadata> columns, List<Put> puts) throws IOException {
@@ -170,6 +176,13 @@ public class HBaseClient {
         List<List<String>> multipartIndex = Index.indexForTable(info.tableMetadata());
         List<Put> putList = PutListFactory.createDataInsertPutList(values, info, multipartIndex);
         this.table.put(putList);
+
+        // Very special case for alter table with data in it. MySQL creates a temp table in the form #sql-XXXX_X
+        // and starts to put data in it. When a unique index is on the new table duplicates appear because the data is
+        // not flushed to HBase.
+        if (info.getTableName().startsWith("#sql-")) {
+            this.table.flushCommits();
+        }
     }
 
     public Result getDataRow(UUID uuid, String tableName) throws IOException {
@@ -455,7 +468,30 @@ public class HBaseClient {
                 : "Changes to tables will be written to HBase when the write buffer has become full");
     }
 
-    public String findDuplicateKey(String tableName, Map<String, byte[]> values) throws IOException {
+    public String findDuplicateKey(final String tableName, final Map<String, byte[]> values) throws IOException {
+        TableInfo info = getTableInfo(tableName);
+        List<List<String>> uniqueKeys = Index.uniqueKeysForTable(info.tableMetadata());
+        for (List<String> uniqueKey : uniqueKeys) {
+            ImmutableMap.Builder<String, byte[]> builder = new ImmutableMap.Builder<String, byte[]>();
+            for (String key : uniqueKey) {
+                builder.put(key, values.get(key));
+            }
+
+            ImmutableMap<String, byte[]> subKeyMap = builder.build();
+            if (subKeyMap.size() == 0) {
+                continue;
+            }
+
+            String duplicateFound = doFindDuplicateKey(tableName, subKeyMap);
+            if (duplicateFound != null) {
+                return duplicateFound;
+            }
+        }
+
+        return null;
+    }
+
+    private String doFindDuplicateKey(String tableName, Map<String, byte[]> values) throws IOException {
         ScanStrategyInfo scanInfo = new ScanStrategyInfo(tableName, values.keySet(), valueMapToKeyValues(tableName, values));
         PrefixScanStrategy strategy = new PrefixScanStrategy(scanInfo);
 
@@ -572,12 +608,21 @@ public class HBaseClient {
         return keyValues;
     }
 
-    public void addIndex(String tableName, String columnString) throws IOException {
-        final List<String> columnsToIndex = Arrays.asList(columnString.split(","));
+    public void addIndex(String tableName, TableMultipartKeys columnString) throws IOException {
+        final List<String> columnsToIndex = columnString.indexKeys().get(0);
+        final List<List<String>> uniqueColumns = columnString.uniqueKeys();
         final TableInfo info = getTableInfo(tableName);
-        updateIndexEntryToMetadata(info, new Function<List<List<String>>, Void>() {
+        updateIndexEntryToMetadata(info, new IndexFunction<List<List<String>>, Boolean, Void>() {
             @Override
-            public Void apply(List<List<String>> index) {
+            public Void apply(List<List<String>> index, Boolean isIndex) {
+                if (!isIndex) {
+                    if (uniqueColumns.size() > 0) {
+                        index.add(uniqueColumns.get(0));
+                    }
+
+                    return null;
+                }
+
                 index.add(columnsToIndex);
                 return null;
             }
@@ -601,9 +646,9 @@ public class HBaseClient {
     public void dropIndex(String tableName, String indexToDrop) throws IOException {
         final List<String> indexColumns = Arrays.asList(indexToDrop.split(","));
         final TableInfo info = getTableInfo(tableName);
-        updateIndexEntryToMetadata(info, new Function<List<List<String>>, Void>() {
+        updateIndexEntryToMetadata(info, new IndexFunction<List<List<String>>, Boolean, Void>() {
             @Override
-            public Void apply(List<List<String>> index) {
+            public Void apply(List<List<String>> index, Boolean isIndex) {
                 index.remove(indexColumns);
                 return null;
             }
@@ -623,16 +668,26 @@ public class HBaseClient {
         });
     }
 
-    private void updateIndexEntryToMetadata(TableInfo info, Function<List<List<String>>, Void> updateFunc) throws IOException {
+    private void updateIndexEntryToMetadata(TableInfo info, IndexFunction<List<List<String>>, Boolean, Void> updateFunc) throws IOException {
         final String tableName = info.getName();
         final long tableId = info.getId();
-        List<List<String>> index = Index.indexForTable(info.tableMetadata());
-        updateFunc.apply(index);
-        final byte[] bytes = TableMultipartKeys.indexJson(index);
-        updateTableCacheIndex(tableName, bytes);
-
         Put indexUpdate = new Put(RowKeyFactory.buildTableInfoKey(tableId));
+        HashMap<String, byte[]> map = new HashMap<String, byte[]>();
+
+        List<List<String>> index = Index.indexForTable(info.tableMetadata());
+        updateFunc.apply(index, true);
+        final byte[] bytes = TableMultipartKeys.indexJson(index);
         indexUpdate.add(Constants.NIC, Constants.INDEXES, bytes);
+        map.put(Constants.INDEXES_STRING, bytes);
+
+        List<List<String>> uniqueKeys = Index.uniqueKeysForTable(info.tableMetadata());
+        updateFunc.apply(uniqueKeys, false);
+        final byte[] uniqueKeyBytes = TableMultipartKeys.indexJson(uniqueKeys);
+        indexUpdate.add(Constants.NIC, Constants.UNIQUES, uniqueKeyBytes);
+        map.put(Constants.UNIQUE_STRING, uniqueKeyBytes);
+
+        updateTableCacheIndex(tableName, map);
+
         this.table.put(indexUpdate);
         this.table.flushCommits();
     }

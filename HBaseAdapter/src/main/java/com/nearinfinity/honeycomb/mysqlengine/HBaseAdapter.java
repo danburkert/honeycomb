@@ -424,7 +424,7 @@ public class HBaseAdapter {
         }
     }
 
-    public static void addIndex(String tableName, String columnsToIndex) throws HBaseAdapterException {
+    public static void addIndex(String tableName, TableMultipartKeys columnsToIndex) throws HBaseAdapterException {
         try {
             client.addIndex(tableName, columnsToIndex);
         } catch (Exception e) {

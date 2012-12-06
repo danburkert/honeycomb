@@ -73,6 +73,7 @@ class CloudHandler : public handler
     int get_failed_key_index(const char *key_name);
     void store_field_value(Field *field, char *key, int length);
     jobject create_multipart_keys(TABLE* table_arg);
+    jobject create_multipart_key(KEY* key, KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts);
     char* index_name(KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts);
     char* index_name(TABLE* table, uint key);
     jobject create_key_value_list(int index, uint* key_sizes, uchar** key_copies, const char** key_names, jboolean* key_null_bits, jboolean* key_is_null);
@@ -160,11 +161,8 @@ class CloudHandler : public handler
       this->rows_written = 0;
       this->failed_key_index = 0;
     }
-
-    ~CloudHandler()
-    {
-      delete[] this->ref;
-    }
+    
+    ~CloudHandler();
 
     const char *table_type() const
     {

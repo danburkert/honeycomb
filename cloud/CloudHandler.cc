@@ -11,6 +11,14 @@ const char **CloudHandler::bas_ext() const
   return cloud_exts;
 }
 
+CloudHandler::~CloudHandler()
+{
+  if(this->ref != NULL){
+    delete[] this->ref;
+    this->ref = NULL;
+  }
+}
+
 int CloudHandler::open(const char *path, int mode, uint test_if_locked)
 {
   DBUG_ENTER("CloudHandler::open");
@@ -450,24 +458,6 @@ int CloudHandler::get_failed_key_index(const char *key_name)
   }
 
   return -1;
-}
-
-int CloudHandler::prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys)
-{
-  uint keys = num_of_keys;
-  attach_thread();
-
-  jclass adapter = this->adapter();
-  jmethodID add_index_method = find_static_method(adapter, "dropIndex", "(Ljava/lang/String;Ljava/lang/String;)V",this->env);
-
-  for (uint key = 0; key < keys; key++)
-  {
-    char* name = index_name(table_arg, key);
-    this->env->CallStaticVoidMethod(adapter, add_index_method, this->table_name(), string_to_java_string(name));
-    ARRAY_DELETE(name);
-  }
-
-  return 0;
 }
 
 jbyteArray CloudHandler::find_duplicate_column_values(char* columns)

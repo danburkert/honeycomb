@@ -88,6 +88,7 @@ public:
     jmethodID set_primary_key_method = this->env->GetMethodID(metadata_class, "setPrimaryKey", "(Z)V");
     jmethodID set_type_method = this->env->GetMethodID(metadata_class, "setType", "(L" HBASECLIENT "ColumnType;)V");
     jmethodID set_autoincrement_method = this->env->GetMethodID(metadata_class, "setAutoincrement", "(Z)V");
+    jmethodID set_isunique_method = this->env->GetMethodID(metadata_class, "setUnique", "(Z)V");
 
     jobject metadata_object = this->env->NewObject(metadata_class, metadata_constructor);
 
