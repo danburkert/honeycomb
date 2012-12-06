@@ -171,6 +171,69 @@ public class HBaseClient {
         this.table.flushCommits();
     }
 
+    /**
+     * Returns the autoincrementValue for the tableName and fieldName specified.
+     *
+     * @param tableName
+     * @param fieldName
+     * @return
+     * @throws IOException
+     */
+    public long getAutoincrementValue(String tableName, String fieldName) throws IOException {
+        TableInfo tableInfo = getTableInfo(tableName);
+        ColumnMetadata columnMetadata = tableInfo.getColumnMetadata(fieldName);
+
+        logger.info("isAutoincrement:" +  columnMetadata.isAutoincrement() +", autoincrementValue:" + columnMetadata.getAutoincrementValue());
+
+        if (columnMetadata.isAutoincrement() == false)
+            return -1L;
+        else
+            return columnMetadata.getAutoincrementValue();
+    }
+
+    /**
+     *
+     * @param tableName
+     * @param fieldName
+     * @param autoincrementValue
+     * @param isTruncate
+     * @return
+     * @throws IOException
+     */
+    public boolean alterAutoincrementValue(String tableName, String fieldName, long autoincrementValue, boolean isTruncate) throws IOException {
+        TableInfo info = getTableInfo(tableName);
+        long columnId = info.getColumnIdByName(fieldName);
+        long tableId = info.getId();
+        byte[] columnInfoBytes = RowKeyFactory.buildColumnInfoKey(tableId, columnId);
+
+        Get get = new Get(columnInfoBytes);
+        Result result = table.get(get);
+
+        long currentValue = Bytes.toLong(result.getValue(Constants.NIC, new byte[0]));
+        ColumnMetadata metadata = new ColumnMetadata(result.getValue(Constants.NIC, Constants.METADATA));
+
+        //only set the new autoincrement value if it is greater than the current autoincrement value or if the autoincrement value is being reset in a truncate command
+        if (autoincrementValue > currentValue || isTruncate) {
+            metadata.setAutoincrement(true);
+            metadata.setAutoincrementValue(autoincrementValue);
+        }
+        else {
+            logger.info(format("The new auto_increment value of %d is less than the current count of %d, so this command will be ignored.", autoincrementValue, currentValue));
+            return false;
+        }
+
+        Put columnInfoPut = new Put(columnInfoBytes);
+        columnInfoPut.add(Constants.NIC, Constants.METADATA, metadata.toJson());
+        columnInfoPut.add(Constants.NIC, new byte[0], Bytes.toBytes(autoincrementValue));
+
+        table.put(columnInfoPut);
+        table.flushCommits();
+
+        tableCache.get(tableName).setColumnMetadata(fieldName, metadata);
+
+        return true;
+    }
+
     public void writeRow(String tableName, Map<String, byte[]> values) throws IOException {
         TableInfo info = getTableInfo(tableName);
         List<List<String>> multipartIndex = Index.indexForTable(info.tableMetadata());
@@ -572,12 +635,18 @@ public class HBaseClient {
         return table.getScanner(scan);
     }
 
+    /**
+     *
+     * @param tableName
+     * @param columnName
+     * @return
+     * @throws IOException
+     */
     public long getNextAutoincrementValue(String tableName, String columnName) throws IOException {
-        TableInfo info = getTableInfo(tableName);
-        long columnId = info.getColumnIdByName(columnName);
-        long tableId = info.getId();
-        byte[] columnInfoBytes = RowKeyFactory.buildColumnInfoKey(tableId, columnId);
-        return table.incrementColumnValue(columnInfoBytes, Constants.NIC, new byte[0], 1);
+        long nextAutoincrementValue = getTableInfo(tableName).getColumnMetadata(columnName).getAutoincrementValue();
+        alterAutoincrementValue(tableName, columnName, nextAutoincrementValue + 1, false);
+
+        return nextAutoincrementValue;
     }
 
     public void setupKeyValues(String tableName, List<String> columnName, List<KeyValue> keyValues, byte fill) throws IOException {

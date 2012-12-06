@@ -151,6 +151,12 @@ class CloudHandler : public handler
     int index_first(uchar *buf);
     int index_last(uchar *buf);
 
+    void update_cloud_autoincrement_value(jlong new_autoincrement_value, jboolean is_truncate) {
+      jmethodID get_alter_autoincrement_value_method = find_static_method(this->adapter(), "alterAutoincrementValue", "(Ljava/lang/String;Ljava/lang/String;JZ)Z",this->env);
+      if (this->env->CallStaticBooleanMethod(this->adapter(), get_alter_autoincrement_value_method, this->table_name(), string_to_java_string(table->found_next_number_field->field_name), new_autoincrement_value, is_truncate))
+        stats.auto_increment_value = (ulonglong) new_autoincrement_value;
+    }
+
   public:
     CloudHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm)
       : handler(hton, table_arg), jvm(jvm), cloud_mutex(mutex), cloud_open_tables(open_tables), hbase_adapter(NULL)
@@ -218,10 +224,10 @@ class CloudHandler : public handler
     {
       return UINT_MAX;
     }
-  
-    uint max_supported_key_parts() const 
+
+    uint max_supported_key_parts() const
     {
-      return 4; 
+      return 4;
     }
 
     virtual double scan_time()
@@ -255,6 +261,7 @@ class CloudHandler : public handler
     int external_lock(THD *thd, int lock_type);                   ///< required
     int create(const char *name, TABLE *form, HA_CREATE_INFO *create_info); ///< required
     THR_LOCK_DATA **store_lock(THD *thd, THR_LOCK_DATA **to, enum thr_lock_type lock_type);     ///< required
+    void update_create_info(HA_CREATE_INFO* create_info);
     int extra(enum ha_extra_function operation);
     int update_row(const uchar *old_data, uchar *new_data);
     int write_row(uchar *buf);
