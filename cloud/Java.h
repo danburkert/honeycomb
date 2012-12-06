@@ -21,5 +21,7 @@ jobject create_java_boolean(jboolean boolean, JNIEnv* env);
 jmethodID find_static_method(jclass clazz, const char* name, const char* signature, JNIEnv* env);
 jbyteArray convert_value_to_java_bytes(uchar* value, uint32 length, JNIEnv* env);
 char *char_array_from_java_bytes(jbyteArray java_bytes, JNIEnv* env);
+jobject new_multipart_key(JNIEnv* env);
+jmethodID add_multipart_key_method(JNIEnv* env);
 
 #endif

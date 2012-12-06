@@ -27,6 +27,10 @@ public final class Constants {
 
     public static final String INDEXES_STRING = "Indexes";
 
+    public static final String UNIQUE_STRING = "UniqueConstraints";
+
+    public static final byte[] UNIQUES = UNIQUE_STRING.getBytes();
+
     public static final byte[] INDEXES = INDEXES_STRING.getBytes();
 
     public static final int KEY_PART_COUNT = 4;

@@ -29,17 +29,29 @@ int CloudHandler::end_bulk_insert()
 jobject CloudHandler::create_multipart_keys(TABLE* table_arg)
 {
   uint keys = table_arg->s->keys;
-  jclass multipart_keys_class = this->env->FindClass(HBASECLIENT "TableMultipartKeys");
-  jmethodID constructor = this->env->GetMethodID(multipart_keys_class, "<init>", "()V");
-  jmethodID add_key_method = this->env->GetMethodID(multipart_keys_class, "addMultipartKey", "(Ljava/lang/String;)V");
-  jobject java_keys = this->env->NewObject(multipart_keys_class, constructor);
+  jmethodID add_key_method = add_multipart_key_method(this->env);
+  jobject java_keys = new_multipart_key(this->env);
 
   for (uint key = 0; key < keys; key++)
   {
     char* name = index_name(table_arg, key);
-    this->env->CallVoidMethod(java_keys, add_key_method, string_to_java_string(name));
+    jboolean is_unique = (table_arg->key_info + key)->flags & HA_NOSAME ? JNI_TRUE : JNI_FALSE;
+    this->env->CallVoidMethod(java_keys, add_key_method, string_to_java_string(name), is_unique);
     ARRAY_DELETE(name);
   }
+
+  return java_keys;
+}
+
+jobject CloudHandler::create_multipart_key(KEY* key, KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts)
+{
+  jmethodID add_key_method = add_multipart_key_method(this->env);
+  jobject java_keys = new_multipart_key(this->env);
+
+  char* name = index_name(key_part, key_part_end, key_parts);
+  jboolean is_unique = key->flags & HA_NOSAME ? JNI_TRUE : JNI_FALSE;
+  this->env->CallVoidMethod(java_keys, add_key_method, string_to_java_string(name), is_unique);
+  ARRAY_DELETE(name);
 
   return java_keys;
 }
@@ -280,29 +292,51 @@ int CloudHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, h
     char* index_columns = this->index_name(key_part, end_key_part, key_info->key_parts);
 
     Field *field_being_indexed = key_info->key_part->field;
-    jbyteArray duplicate_value = this->find_duplicate_column_values(index_columns);
-
-    int error = duplicate_value != NULL ? HA_ERR_FOUND_DUPP_KEY : 0;
-
-    if (error == HA_ERR_FOUND_DUPP_KEY)
+    if (pos->flags & HA_NOSAME)
     {
-      int length = (int)this->env->GetArrayLength(duplicate_value);
-      char *value_key = char_array_from_java_bytes(duplicate_value, this->env);
-      this->store_field_value(field_being_indexed, value_key, length);
-      ARRAY_DELETE(value_key);
-      this->failed_key_index = this->get_failed_key_index(key_part->field->field_name);
-      detach_thread();
-      return error;
+      jbyteArray duplicate_value = this->find_duplicate_column_values(index_columns);
+
+      int error = duplicate_value != NULL ? HA_ERR_FOUND_DUPP_KEY : 0;
+
+      if (error == HA_ERR_FOUND_DUPP_KEY)
+      {
+        int length = (int)this->env->GetArrayLength(duplicate_value);
+        char *value_key = char_array_from_java_bytes(duplicate_value, this->env);
+        this->store_field_value(field_being_indexed, value_key, length);
+        ARRAY_DELETE(value_key);
+        this->failed_key_index = this->get_failed_key_index(key_part->field->field_name);
+        detach_thread();
+        return error;
+      }
     }
 
     jclass adapter = this->adapter();
-    jmethodID add_index_method = find_static_method(adapter, "addIndex", "(Ljava/lang/String;Ljava/lang/String;)V",this->env);
-    this->env->CallStaticVoidMethod(adapter, add_index_method, this->table_name(), string_to_java_string(index_columns));
+    jobject java_keys = this->create_multipart_key(pos, key_part, end_key_part, key_info->key_parts);
+    jmethodID add_index_method = find_static_method(adapter, "addIndex", "(Ljava/lang/String;L" HBASECLIENT "TableMultipartKeys;)V",this->env);
+    this->env->CallStaticVoidMethod(adapter, add_index_method, this->table_name(), java_keys);
   }
 
   detach_thread();
   return 0;
 }
+
+int CloudHandler::prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys)
+{
+  attach_thread();
+
+  jclass adapter = this->adapter();
+  jmethodID add_index_method = find_static_method(adapter, "dropIndex", "(Ljava/lang/String;Ljava/lang/String;)V",this->env);
+
+  for (uint key = 0; key < num_of_keys; key++)
+  {
+    char* name = index_name(table_arg, key_num[key]);
+    this->env->CallStaticVoidMethod(adapter, add_index_method, this->table_name(), string_to_java_string(name));
+    ARRAY_DELETE(name);
+  }
+
+  return 0;
+}
+
 
 /*
  This will be called in a table scan right before the previous ::rnd_next()
