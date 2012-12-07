@@ -78,27 +78,35 @@ int CloudHandler::create(const char *path, TABLE *table_arg, HA_CREATE_INFO *cre
   jobject columnMap = create_java_map(this->env);
   FieldMetadata metadata(this->env);
 
-  for (Field **field = table_arg->field; *field; field++)
+  for (Field **field_ptr = table_arg->field; *field_ptr; field_ptr++)
   {
-    switch ((*field)->real_type())
+    Field* field = *field_ptr;
+    switch (field->real_type())
     {
-    case MYSQL_TYPE_STRING:
-    case MYSQL_TYPE_VARCHAR:
-    case MYSQL_TYPE_BLOB:
-      if (strncmp((*field)->charset()->name, "utf8_bin", 8) != 0
-          && (*field)->binary() == false)
-      {
-        my_error(ER_CREATE_FILEGROUP_FAILED, MYF(0), "table. Required: character set utf8 collate utf8_bin");
-        detach_thread();
-        DBUG_RETURN(HA_WRONG_CREATE_OPTION);
-      }
-      break;
-    default:
-      break;
+      case MYSQL_TYPE_YEAR:
+        if (field->field_length == 2)
+        {
+          my_error(ER_CREATE_FILEGROUP_FAILED, MYF(0), "table. YEAR(2) is not supported.");
+          detach_thread();
+          DBUG_RETURN(HA_WRONG_CREATE_OPTION);
+        }
+        break;
+      case MYSQL_TYPE_STRING:
+      case MYSQL_TYPE_VARCHAR:
+      case MYSQL_TYPE_BLOB:
+        if (strncmp(field->charset()->name, "utf8_bin", 8) != 0 && field->binary() == false)
+        {
+          my_error(ER_CREATE_FILEGROUP_FAILED, MYF(0), "table. Required: character set utf8 collate utf8_bin");
+          detach_thread();
+          DBUG_RETURN(HA_WRONG_CREATE_OPTION);
+        }
+        break;
+      default:
+        break;
     }
 
-    jobject java_metadata_obj = metadata.get_field_metadata(*field, table_arg, create_info->auto_increment_value);
-    java_map_insert(columnMap, string_to_java_string((*field)->field_name), java_metadata_obj, this->env);
+    jobject java_metadata_obj = metadata.get_field_metadata(field, table_arg, create_info->auto_increment_value);
+    java_map_insert(columnMap, string_to_java_string(field->field_name), java_metadata_obj, this->env);
   }
 
   jmethodID create_table_method = find_static_method(adapter_class, "createTable", "(Ljava/lang/String;Ljava/util/Map;L" HBASECLIENT "TableMultipartKeys;)Z",this->env);
