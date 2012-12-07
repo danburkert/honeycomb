@@ -17,6 +17,23 @@ CloudHandler::CloudHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex
   this->initialize_adapter();
   this->rows_written = 0;
   this->failed_key_index = 0;
+  this->scan_ids_length = 32;
+  this->scan_ids_count = 0;
+  this->scan_ids = new long long[this->scan_ids_length];
+  memset(scan_ids, 0, scan_ids_length);
+}
+
+CloudHandler::~CloudHandler()
+{
+  attach_thread();
+  jclass adapter_class = this->adapter();
+  jmethodID end_scan_method = find_static_method(adapter_class, "endScan", "(J)V",this->env);
+  for (int i = 0; i < this->scan_ids_count; i++)
+  {
+    this->env->CallStaticVoidMethod(adapter_class, end_scan_method, scan_ids[i]);
+  }
+  ARRAY_DELETE(this->scan_ids);
+  detach_thread();
 }
 
 int CloudHandler::open(const char *path, int mode, uint test_if_locked)
