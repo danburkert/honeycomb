@@ -56,10 +56,54 @@ jobject CloudHandler::create_multipart_key(KEY* key, KEY_PART_INFO* key_part, KE
   return java_keys;
 }
 
+#define YEAR2_NOT_SUPPORTED 0
+#define ODD_TYPES_NOT_SUPPORTED 1
+#define UTF_REQUIRED 2
+const char* table_creation_errors[] = {
+  "table. YEAR(2) is not supported.",
+  "table. Bit, set and geometry are not supported.",
+  "table. Required: character set utf8 collate utf8_bin"
+};
+
+bool CloudHandler::is_allowed_column(Field* field, int* error_number)
+{
+  bool allowed = true;
+  switch (field->real_type())
+  {
+    case MYSQL_TYPE_YEAR:
+      if (field->field_length == 2)
+      {
+        *error_number = YEAR2_NOT_SUPPORTED;
+        allowed = false;
+      }
+      break;
+    case MYSQL_TYPE_BIT:
+    case MYSQL_TYPE_SET:
+    case MYSQL_TYPE_GEOMETRY:
+      *error_number = ODD_TYPES_NOT_SUPPORTED;
+      allowed = false;
+      break;
+    case MYSQL_TYPE_STRING:
+    case MYSQL_TYPE_VARCHAR:
+    case MYSQL_TYPE_BLOB:
+      if (strncmp(field->charset()->name, "utf8_bin", 8) != 0 && field->binary() == false)
+      {
+        *error_number = UTF_REQUIRED;
+        allowed = false;
+      }
+      break;
+    default:
+      break;
+  }
+
+  return allowed;
+}
+
 int CloudHandler::create(const char *path, TABLE *table_arg, HA_CREATE_INFO *create_info)
 {
   DBUG_ENTER("CloudHandler::create");
   attach_thread();
+  char* error_message;
 
   jobject java_keys = this->create_multipart_keys(table_arg);
   jclass adapter_class = this->adapter();
@@ -81,30 +125,14 @@ int CloudHandler::create(const char *path, TABLE *table_arg, HA_CREATE_INFO *cre
   for (Field **field_ptr = table_arg->field; *field_ptr; field_ptr++)
   {
     Field* field = *field_ptr;
-    switch (field->real_type())
+    int error_number;
+    if(!is_allowed_column(field, &error_number))
     {
-      case MYSQL_TYPE_YEAR:
-        if (field->field_length == 2)
-        {
-          my_error(ER_CREATE_FILEGROUP_FAILED, MYF(0), "table. YEAR(2) is not supported.");
-          detach_thread();
-          DBUG_RETURN(HA_WRONG_CREATE_OPTION);
-        }
-        break;
-      case MYSQL_TYPE_STRING:
-      case MYSQL_TYPE_VARCHAR:
-      case MYSQL_TYPE_BLOB:
-        if (strncmp(field->charset()->name, "utf8_bin", 8) != 0 && field->binary() == false)
-        {
-          my_error(ER_CREATE_FILEGROUP_FAILED, MYF(0), "table. Required: character set utf8 collate utf8_bin");
-          detach_thread();
-          DBUG_RETURN(HA_WRONG_CREATE_OPTION);
-        }
-        break;
-      default:
-        break;
+      my_error(ER_CREATE_FILEGROUP_FAILED, MYF(0), table_creation_errors[error_number]);
+      detach_thread();
+      DBUG_RETURN(HA_WRONG_CREATE_OPTION);
     }
-
+   
     jobject java_metadata_obj = metadata.get_field_metadata(field, table_arg, create_info->auto_increment_value);
     java_map_insert(columnMap, string_to_java_string(field->field_name), java_metadata_obj, this->env);
   }
@@ -112,6 +140,7 @@ int CloudHandler::create(const char *path, TABLE *table_arg, HA_CREATE_INFO *cre
   jmethodID create_table_method = find_static_method(adapter_class, "createTable", "(Ljava/lang/String;Ljava/util/Map;L" HBASECLIENT "TableMultipartKeys;)Z",this->env);
   this->env->CallStaticBooleanMethod(adapter_class, create_table_method, jtable_name, columnMap, java_keys);
   print_java_exception(this->env);
+  detach_thread();
 
   DBUG_RETURN(0);
 }
