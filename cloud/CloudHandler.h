@@ -153,11 +153,7 @@ class CloudHandler : public handler
     int index_first(uchar *buf);
     int index_last(uchar *buf);
 
-    void update_cloud_autoincrement_value(jlong new_autoincrement_value, jboolean is_truncate) {
-      jmethodID get_alter_autoincrement_value_method = find_static_method(this->adapter(), "alterAutoincrementValue", "(Ljava/lang/String;Ljava/lang/String;JZ)Z",this->env);
-      if (this->env->CallStaticBooleanMethod(this->adapter(), get_alter_autoincrement_value_method, this->table_name(), string_to_java_string(table->found_next_number_field->field_name), new_autoincrement_value, is_truncate))
-        stats.auto_increment_value = (ulonglong) new_autoincrement_value;
-    }
+    void update_cloud_autoincrement_value(jlong new_autoincrement_value, jboolean is_truncate); 
 
   public:
     CloudHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm);
