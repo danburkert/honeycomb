@@ -28,6 +28,3 @@ let $type=VARBINARY(10);
 
 let $type=BLOB;
 --source encoding_collation_options.inc
-
-let $type=BIT;
---source encoding_collation_options.inc

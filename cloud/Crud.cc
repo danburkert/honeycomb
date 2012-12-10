@@ -328,11 +328,6 @@ int CloudHandler::write_row(uchar* buf, char* updated_fields)
 
   dbug_tmp_restore_column_map(table->read_set, old_map);
 
-  if (this->row_has_duplicate_values(unique_values_map))
-  {
-    DBUG_RETURN(HA_ERR_FOUND_DUPP_KEY);
-  }
-
   if (updated_fields)
   {
     jmethodID update_row_method = find_static_method(adapter_class, "updateRow", "(JLjava/lang/String;Ljava/lang/String;Ljava/util/Map;)V", env);
@@ -341,6 +336,11 @@ int CloudHandler::write_row(uchar* buf, char* updated_fields)
   }
   else
   {
+    if (this->row_has_duplicate_values(unique_values_map))
+    {
+      DBUG_RETURN(HA_ERR_FOUND_DUPP_KEY);
+    }
+
     this->env->CallStaticBooleanMethod(adapter_class, write_row_method, table_name, java_row_map);
     this->rows_written++;
   }
@@ -543,13 +543,24 @@ int CloudHandler::truncate()
   DBUG_ENTER("CloudHandler::truncate");
   attach_thread();
 
+  update_cloud_autoincrement_value((jlong) 1, JNI_TRUE);
   int returnValue = delete_all_rows();
-
-  if (returnValue == 0)
-    update_cloud_autoincrement_value((jlong) 1, JNI_TRUE);
 
   detach_thread();
   DBUG_RETURN(returnValue);
+}
+
+void CloudHandler::update_cloud_autoincrement_value(jlong new_autoincrement_value, jboolean is_truncate) {
+  if(table->found_next_number_field == NULL)
+  {
+    return;
+  }
+
+  jclass adapter_class = this->adapter();
+  jmethodID get_alter_autoincrement_value_method = find_static_method(adapter_class, "alterAutoincrementValue", "(Ljava/lang/String;Ljava/lang/String;JZ)Z",this->env);
+  jstring field_name = string_to_java_string(table->found_next_number_field->field_name);
+  if (this->env->CallStaticBooleanMethod(adapter_class, get_alter_autoincrement_value_method, this->table_name(), field_name, new_autoincrement_value, is_truncate))
+    stats.auto_increment_value = (ulonglong) new_autoincrement_value;
 }
 
 void CloudHandler::drop_table(const char *path)
