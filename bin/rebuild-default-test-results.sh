@@ -11,6 +11,7 @@ cd $MYSQL_HOME/mysql-test
   --mysqld=--character-set-server=utf8     \
   --mysqld=--collation-server=utf8_bin     \
   --record                                 \
+issues        \
 autoincrement \
 bigint        \
 binary        \
@@ -23,8 +24,8 @@ enum          \
 float         \
 group_by      \
 int           \
-joins         \
 join_del_upd  \
+joins         \
 mediumint     \
 primary_key   \
 smallint      \
@@ -33,8 +34,8 @@ timestamp     \
 tinyint       \
 varbinary     \
 varchar       \
-year
+year          \
 
 # Move test results that are manually built
-cp $MYSQL_HOME/mysql-test/suite/cloud-test/t/manual_results/* \
-   $MYSQL_HOME/mysql-test/suite/cloud-test/r/
+cp $MYSQL_HOME/mysql-test/suite/cloud-test/default/t/manual_results/* \
+   $MYSQL_HOME/mysql-test/suite/cloud-test/default/r/
