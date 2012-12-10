@@ -168,7 +168,10 @@ int CloudHandler::rename_table(const char *from, const char *to)
 
 int CloudHandler::write_row(uchar *buf)
 {
-  return write_row(buf, NULL);
+  attach_thread();
+  int rc = write_row(buf, NULL);
+  detach_thread();
+  return rc;
 }
 
 int CloudHandler::write_row(uchar* buf, char* updated_fields)
@@ -328,8 +331,18 @@ int CloudHandler::write_row(uchar* buf, char* updated_fields)
 
   dbug_tmp_restore_column_map(table->read_set, old_map);
 
+  THD* thd = ha_thd();
+  int command = thd_sql_command(thd);
   if (updated_fields)
   {
+    if(command == SQLCOM_UPDATE)
+    {
+      if (this->row_has_duplicate_values(unique_values_map))
+      {
+        DBUG_RETURN(HA_ERR_FOUND_DUPP_KEY);
+      }
+    }
+
     jmethodID update_row_method = find_static_method(adapter_class, "updateRow", "(JLjava/lang/String;Ljava/lang/String;Ljava/util/Map;)V", env);
     jstring fields_changed = string_to_java_string(updated_fields);
     this->env->CallStaticBooleanMethod(adapter_class, update_row_method, this->curr_scan_id, fields_changed, table_name, java_row_map);
@@ -427,8 +440,10 @@ int CloudHandler::update_row(const uchar *old_row, uchar *new_row)
   }
   Logging::info("Updated fields %s", updated_fieldnames);
 
+  attach_thread();
   write_row(new_row, updated_fieldnames);
   this->flush_writes();
+  detach_thread();
 
   DBUG_RETURN(0);
 }
