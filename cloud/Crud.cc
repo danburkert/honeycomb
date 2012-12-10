@@ -104,6 +104,12 @@ int CloudHandler::create(const char *path, TABLE *table_arg, HA_CREATE_INFO *cre
   DBUG_ENTER("CloudHandler::create");
   attach_thread();
   char* error_message;
+  if(table_arg->part_info != NULL)
+  {
+    my_error(ER_CREATE_FILEGROUP_FAILED, MYF(0), "table. Partitions are not supported.");
+    detach_thread();
+    DBUG_RETURN(HA_WRONG_CREATE_OPTION);
+  }
 
   jobject java_keys = this->create_multipart_keys(table_arg);
   jclass adapter_class = this->adapter();
