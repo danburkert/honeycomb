@@ -6,6 +6,7 @@ import com.google.common.collect.Maps;
 import com.nearinfinity.honeycomb.hbaseclient.strategy.PrefixScanStrategy;
 import com.nearinfinity.honeycomb.hbaseclient.strategy.ScanStrategy;
 import com.nearinfinity.honeycomb.hbaseclient.strategy.ScanStrategyInfo;
+import com.nearinfinity.honeycomb.mysqlengine.ActiveScan;
 import com.nearinfinity.honeycomb.mysqlengine.HBaseResultScanner;
 import com.nearinfinity.honeycomb.mysqlengine.SingleResultScanner;
 import org.apache.hadoop.conf.Configuration;
@@ -183,7 +184,7 @@ public class HBaseClient {
         TableInfo tableInfo = getTableInfo(tableName);
         ColumnMetadata columnMetadata = tableInfo.getColumnMetadata(fieldName);
 
-        logger.info("isAutoincrement:" +  columnMetadata.isAutoincrement() +", autoincrementValue:" + columnMetadata.getAutoincrementValue());
+        logger.info("isAutoincrement:" + columnMetadata.isAutoincrement() + ", autoincrementValue:" + columnMetadata.getAutoincrementValue());
 
         if (columnMetadata.isAutoincrement() == false)
             return -1L;
@@ -192,7 +193,6 @@ public class HBaseClient {
     }
 
     /**
-     *
      * @param tableName
      * @param fieldName
      * @param autoincrementValue
@@ -216,8 +216,7 @@ public class HBaseClient {
         if (autoincrementValue > currentValue || isTruncate) {
             metadata.setAutoincrement(true);
             metadata.setAutoincrementValue(autoincrementValue);
-        }
-        else {
+        } else {
             logger.info(format("The new auto_increment value of %d is less than the current count of %d, so this command will be ignored.", autoincrementValue, currentValue));
             return false;
         }
@@ -378,24 +377,41 @@ public class HBaseClient {
         return new ColumnMetadata(jsonBytes);
     }
 
+    public void updateRow(UUID uuid, String changedFieldsString, String tableName, Map<String, byte[]> newValues) throws IOException {
+        String[] changedFields = changedFieldsString.split(",");
+        Map<String, byte[]> oldRow = retrieveRowAndDelete(tableName, uuid);
+
+        for (String changedField : changedFields) {
+            oldRow.put(changedField, newValues.get(changedField)); // Hack around MySQL setting field->is_null when actually not.
+        }
+        writeRow(tableName, oldRow);
+    }
+
     public boolean deleteRow(String tableName, UUID uuid) throws IOException {
         if (uuid == null) {
             return false;
         }
 
+        retrieveRowAndDelete(tableName, uuid);
+
+        return true;
+    }
+
+    private Map<String, byte[]> retrieveRowAndDelete(String tableName, UUID uuid) throws IOException {
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
 
         byte[] dataRowKey = RowKeyFactory.buildDataKey(tableId, uuid);
         Get get = new Get(dataRowKey);
         Result result = table.get(get);
+        Map<String, byte[]> oldRow = ResultParser.parseDataRow(result, info);
 
         List<Delete> deleteList = DeleteListFactory.createDeleteRowList(uuid, info, result, dataRowKey, Index.indexForTable(info.tableMetadata()));
 
         table.delete(deleteList);
         incrementRowCount(tableName, -1);
 
-        return true;
+        return oldRow;
     }
 
     public boolean dropTable(String tableName) throws IOException {
@@ -635,13 +651,6 @@ public class HBaseClient {
         return table.getScanner(scan);
     }
 
-    /**
-     *
-     * @param tableName
-     * @param columnName
-     * @return
-     * @throws IOException
-     */
     public long getNextAutoincrementValue(String tableName, String columnName) throws IOException {
         long nextAutoincrementValue = getTableInfo(tableName).getColumnMetadata(columnName).getAutoincrementValue();
         alterAutoincrementValue(tableName, columnName, nextAutoincrementValue + 1, false);
