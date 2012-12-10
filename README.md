@@ -59,6 +59,10 @@ To build and install HBaseAdapter alone:
     cd $HONEYCOMB_HOME/bin
     ./mvn-build-install.sh
 
+Note: MySQL can get into very strange states.
+    
+* Extremely large stack allocations (due to uninitialized variables) can make gdb attach to the MySQL process very slowly. To fix this restart your machine.
+
 
 Testing the Storage Engine Plugin
 -----------------------------
