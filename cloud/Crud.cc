@@ -132,7 +132,7 @@ int CloudHandler::create(const char *path, TABLE *table_arg, HA_CREATE_INFO *cre
       detach_thread();
       DBUG_RETURN(HA_WRONG_CREATE_OPTION);
     }
-   
+
     jobject java_metadata_obj = metadata.get_field_metadata(field, table_arg, create_info->auto_increment_value);
     java_map_insert(columnMap, string_to_java_string(field->field_name), java_metadata_obj, this->env);
   }
@@ -358,24 +358,24 @@ int CloudHandler::update_row(const uchar *old_row, uchar *new_row)
 {
   DBUG_ENTER("CloudHandler::update_row");
   typedef unsigned long int ulint;
-  Field*		field;
-  uint		n_fields = table->s->fields;
-  ulint		o_len;
-  ulint		n_len;
-  ulint		col_pack_len;
-  const uchar*	o_ptr;
-  const uchar*	n_ptr;
-  ulint		col_type;
-  uint		i;
+  Field* field;
+  uint n_fields = table->s->fields;
+  ulint o_len;
+  ulint n_len;
+  ulint col_pack_len;
+  const uchar* o_ptr;
+  const uchar* n_ptr;
+  ulint col_type;
+  uint i;
   const ulint null_field = 0xFFFFFFFF;
   int index = 0;
 
   ha_statistic_increment(&SSV::ha_update_count);
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
     table->timestamp_field->set_time();
-  
+
   char* updated_fields[n_fields];
-  for (i = 0; i < n_fields; i++) 
+  for (i = 0; i < n_fields; i++)
   {
     field = table->field[i];
 
@@ -387,20 +387,23 @@ int CloudHandler::update_row(const uchar *old_row, uchar *new_row)
     o_len = col_pack_len;
     n_len = col_pack_len;
 
-    if (field->null_ptr) 
+    if (field->null_ptr)
     {
       if (field->is_null_in_record(old_row))
       {
         o_len = null_field;
       }
 
-      if (field->is_null_in_record(new_row)) 
+      if (field->is_null_in_record(new_row))
       {
         n_len = null_field;
       }
     }
 
-    if (o_len != n_len || (o_len != null_field && 0 != memcmp(o_ptr, n_ptr, o_len))) 
+    // If field lengths are different
+    // OR if original field is not NULL
+    //    AND new and original fields are different
+    if (o_len != n_len || (o_len != null_field && 0 != memcmp(o_ptr, n_ptr, o_len)))
     {
       updated_fields [index++] = (char*)field->field_name;
     }
@@ -418,10 +421,11 @@ int CloudHandler::update_row(const uchar *old_row, uchar *new_row)
   {
     strcat(updated_fieldnames, updated_fields[x]);
     if (x + 1 != index)
+    {
       strcat(updated_fieldnames, ",");
+    }
   }
   Logging::info("Updated fields %s", updated_fieldnames);
-  
 
   write_row(new_row, updated_fieldnames);
   this->flush_writes();

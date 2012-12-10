@@ -51,11 +51,14 @@ jobject CloudHandler::create_key_value_list(int index, uint* key_sizes, uchar** 
   return key_values;
 }
 
-int CloudHandler::index_read_map(uchar * buf, const uchar * key, key_part_map keypart_map, enum ha_rkey_function find_flag)
+int CloudHandler::index_read_map(uchar * buf, const uchar * key,
+    key_part_map keypart_map, enum ha_rkey_function find_flag)
 {
   DBUG_ENTER("CloudHandler::index_read_map");
   jclass adapter_class = this->adapter();
-  jmethodID index_read_method = find_static_method(adapter_class, "indexRead", "(JLjava/util/List;L" MYSQLENGINE "IndexReadType;)L" MYSQLENGINE "IndexRow;",this->env);
+  jmethodID index_read_method = find_static_method(adapter_class,
+      "indexRead", "(JLjava/util/List;L" MYSQLENGINE "IndexReadType;)L" MYSQLENGINE "IndexRow;",
+    this->env);
   if (find_flag == HA_READ_PREFIX_LAST_OR_PREV)
   {
     find_flag = HA_READ_KEY_OR_PREV;

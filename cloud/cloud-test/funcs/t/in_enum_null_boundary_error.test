@@ -10,5 +10,6 @@ INSERT INTO t7(c1) VALUES('a');
 INSERT INTO t7(c1) VALUES('abcdefghijabcdefghijabcdefghijabcdefghijabcdefghij');
 --error 1265
 INSERT INTO t7(c1) VALUES('abcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghij');
+--sorted_result
 SELECT * FROM t7;
 DROP TABLE t7;
