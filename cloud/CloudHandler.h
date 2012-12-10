@@ -154,6 +154,7 @@ class CloudHandler : public handler
     int index_last(uchar *buf);
 
     void update_cloud_autoincrement_value(jlong new_autoincrement_value, jboolean is_truncate); 
+    void release_auto_increment();
 
   public:
     CloudHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm);

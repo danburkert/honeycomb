@@ -33,6 +33,15 @@ CloudHandler::~CloudHandler()
     this->env->CallStaticVoidMethod(adapter_class, end_scan_method, scan_ids[i]);
   }
   ARRAY_DELETE(this->scan_ids);
+  this->flush_writes();
+  detach_thread();
+}
+
+void CloudHandler::release_auto_increment() 
+{ 
+  attach_thread();
+  // Stored functions call this last. Hack to get around MySQL not calling start/end bulk insert on insert in a stored function.
+  this->flush_writes(); 
   detach_thread();
 }
 
