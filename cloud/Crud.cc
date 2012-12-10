@@ -441,11 +441,11 @@ int CloudHandler::update_row(const uchar *old_row, uchar *new_row)
   Logging::info("Updated fields %s", updated_fieldnames);
 
   attach_thread();
-  write_row(new_row, updated_fieldnames);
+  int rc = write_row(new_row, updated_fieldnames);
   this->flush_writes();
   detach_thread();
 
-  DBUG_RETURN(0);
+  DBUG_RETURN(rc);
 }
 
 int CloudHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add)
