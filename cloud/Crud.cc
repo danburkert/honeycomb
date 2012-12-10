@@ -444,7 +444,6 @@ int CloudHandler::update_row(const uchar *old_row, uchar *new_row)
       strcat(updated_fieldnames, ",");
     }
   }
-  Logging::info("Updated fields %s", updated_fieldnames);
 
   attach_thread();
   int rc = write_row(new_row, updated_fieldnames);
