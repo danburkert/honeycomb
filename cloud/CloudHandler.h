@@ -80,6 +80,7 @@ class CloudHandler : public handler
     bool is_field_nullable(jstring table_name, const char* field_name);
     bool is_allowed_column(Field* field, int* error_number);
     int retrieve_value_from_index(uchar* buf);
+    int write_row(uchar* buf, char* updated_fields);
 
     bool is_integral_field(int field_type)
     {

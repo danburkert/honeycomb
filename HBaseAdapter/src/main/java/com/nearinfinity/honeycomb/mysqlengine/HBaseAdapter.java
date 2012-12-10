@@ -214,6 +214,20 @@ public class HBaseAdapter {
         return true;
     }
 
+    public static void updateRow(long scanId, String changedFields, String tableName, Map<String, byte[]> values)
+            throws HBaseAdapterException {
+        try {
+            ActiveScan activeScan = getActiveScanForId(scanId);
+            HBaseResultScanner scanner = activeScan.getScanner();
+            Result result = scanner.getLastResult();
+            UUID uuid = ResultParser.parseUUID(result);
+            client.updateRow(uuid, changedFields, tableName, values);
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+            throw new HBaseAdapterException("writeRow", e);
+        }
+    }
+
     public static void flushWrites() {
         client.flushWrites();
     }

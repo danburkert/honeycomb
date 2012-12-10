@@ -168,8 +168,12 @@ int CloudHandler::rename_table(const char *from, const char *to)
 
 int CloudHandler::write_row(uchar *buf)
 {
-  DBUG_ENTER("CloudHandler::write_row");
+  return write_row(buf, NULL);
+}
 
+int CloudHandler::write_row(uchar* buf, char* updated_fields)
+{
+  DBUG_ENTER("CloudHandler::write_row");
   if (share->crashed)
     DBUG_RETURN(HA_ERR_CRASHED_ON_USAGE);
 
@@ -203,6 +207,7 @@ int CloudHandler::write_row(uchar *buf)
   for (Field **field_ptr = table->field; *field_ptr; field_ptr++)
   {
     Field * field = *field_ptr;
+    uint offset = field_ptr - table->field;
     jstring field_name = string_to_java_string(field->field_name);
 
     const bool is_null = field->is_null();
@@ -328,11 +333,98 @@ int CloudHandler::write_row(uchar *buf)
     DBUG_RETURN(HA_ERR_FOUND_DUPP_KEY);
   }
 
-  this->env->CallStaticBooleanMethod(adapter_class, write_row_method, table_name, java_row_map);
-  this->rows_written++;
+  if (updated_fields)
+  {
+    jmethodID update_row_method = find_static_method(adapter_class, "updateRow", "(JLjava/lang/String;Ljava/lang/String;Ljava/util/Map;)V", env);
+    jstring fields_changed = string_to_java_string(updated_fields);
+    this->env->CallStaticBooleanMethod(adapter_class, update_row_method, this->curr_scan_id, fields_changed, table_name, java_row_map);
+  }
+  else
+  {
+    this->env->CallStaticBooleanMethod(adapter_class, write_row_method, table_name, java_row_map);
+    this->rows_written++;
+  }
 
   if (new_autoincrement_value >= 0)
     update_cloud_autoincrement_value(new_autoincrement_value + 1, JNI_FALSE);
+  DBUG_RETURN(0);
+}
+
+/*
+ This will be called in a table scan right before the previous ::rnd_next()
+ call.
+ */
+int CloudHandler::update_row(const uchar *old_row, uchar *new_row)
+{
+  DBUG_ENTER("CloudHandler::update_row");
+  typedef unsigned long int ulint;
+  Field*		field;
+  uint		n_fields = table->s->fields;
+  ulint		o_len;
+  ulint		n_len;
+  ulint		col_pack_len;
+  const uchar*	o_ptr;
+  const uchar*	n_ptr;
+  ulint		col_type;
+  uint		i;
+  const ulint null_field = 0xFFFFFFFF;
+  int index = 0;
+
+  ha_statistic_increment(&SSV::ha_update_count);
+  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
+    table->timestamp_field->set_time();
+  
+  char* updated_fields[n_fields];
+  for (i = 0; i < n_fields; i++) 
+  {
+    field = table->field[i];
+
+    o_ptr = (const uchar*) old_row + field->offset(table->record[0]);
+    n_ptr = (const uchar*) new_row + field->offset(table->record[0]);
+
+    col_pack_len = field->pack_length();
+
+    o_len = col_pack_len;
+    n_len = col_pack_len;
+
+    if (field->null_ptr) 
+    {
+      if (field->is_null_in_record(old_row))
+      {
+        o_len = null_field;
+      }
+
+      if (field->is_null_in_record(new_row)) 
+      {
+        n_len = null_field;
+      }
+    }
+
+    if (o_len != n_len || (o_len != null_field && 0 != memcmp(o_ptr, n_ptr, o_len))) 
+    {
+      updated_fields [index++] = (char*)field->field_name;
+    }
+  }
+
+  int fieldname_length = 0;
+  for(int x = 0 ; x < index; x++)
+  {
+    fieldname_length += strlen(updated_fields[x]) + 1;
+  }
+
+  char updated_fieldnames[fieldname_length];
+  memset(updated_fieldnames, 0, fieldname_length);
+  for(int x = 0; x < index; x++)
+  {
+    strcat(updated_fieldnames, updated_fields[x]);
+    if (x + 1 != index)
+      strcat(updated_fieldnames, ",");
+  }
+  Logging::info("Updated fields %s", updated_fieldnames);
+  
+
+  write_row(new_row, updated_fieldnames);
+  this->flush_writes();
 
   DBUG_RETURN(0);
 }
@@ -394,26 +486,6 @@ int CloudHandler::prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_o
 }
 
 
-/*
- This will be called in a table scan right before the previous ::rnd_next()
- call.
- */
-int CloudHandler::update_row(const uchar *old_data, uchar *new_data)
-{
-  DBUG_ENTER("CloudHandler::update_row");
-
-  ha_statistic_increment(&SSV::ha_update_count);
-
-  // TODO: The next two lines should really be some kind of transaction.
-  delete_row(old_data);
-  write_row(new_data);
-
-  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
-    table->timestamp_field->set_time();
-
-  this->flush_writes();
-  DBUG_RETURN(0);
-}
 
 int CloudHandler::delete_row(const uchar *buf)
 {
