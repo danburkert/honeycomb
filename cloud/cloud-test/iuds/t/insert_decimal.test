@@ -350,6 +350,7 @@ INSERT INTO t1 VALUES('99999.99999','-99999.99999','99999.99999',3);
 INSERT INTO t2 VALUES('-9999999999','-9999999999','9999999999',4);
 
 # Test insert outside max value, would be clipped to closest endpoint
+--sorted_result
 SELECT * FROM t1;
 --error ER_DUP_ENTRY
 INSERT INTO t1 VALUES('100000.000002','-100000.000002','100000.000002',5);
@@ -622,14 +623,18 @@ INSERT INTO t5 VALUES('1e+22','-1e+22','1e+22',1),('1e-22','-1e-22','1e-22',2);
 --sorted_result
 SELECT * FROM t5;
 --enable_result_log
+--disable_warnings
 ALTER TABLE t5 CHANGE c1 c1 FLOAT(24,0) SIGNED NOT NULL, CHANGE c2 c2 FLOAT(24,0) UNSIGNED NULL;
+--enable_warnings
 INSERT INTO t5 VALUES('-1e+23','1e+23','1e+23',3),('-1e-23','1e-23','1e-23',4);
 #Output is platform dependent
 --disable_result_log
 --sorted_result
 SELECT * FROM t5;
 --enable_result_log
+--disable_warnings
 ALTER TABLE t5 CHANGE c1 c1 FLOAT(53,0) UNSIGNED, CHANGE c2 c2 FLOAT(53,0) SIGNED;
+--enable_warnings
 INSERT INTO t5 VALUES('1e+52','-1e+52','1e+52',5),('1e-52','-1e-52','1e-52',6);
 INSERT INTO t5 VALUES('1e+53','-1e+53','1e+53',7),('1e-53','-1e-53','1e-53',8);
 
@@ -668,6 +673,7 @@ INSERT INTO t1 VALUES('99999.99999','-99999.99999','99999.99999',3);
 INSERT INTO t2 VALUES('-9999999999','-9999999999','9999999999',4);
 
 # Test insert outside max value, would be clipped to closest endpoint
+--sorted_result
 SELECT * FROM t1;
 --error ER_DUP_ENTRY
 INSERT INTO t1 VALUES('100000.000002','-100000.000002','100000.000002',5);
@@ -939,14 +945,18 @@ CREATE TABLE t5(c1 DOUBLE(23,0) UNSIGNED NOT NULL, c2 DOUBLE(23,0) SIGNED NULL, 
 INSERT INTO t5 VALUES('1e+22','-1e+22','1e+22',1),('1e-22','-1e-22','1e-22',2);
 --sorted_result
 SELECT * FROM t5;
+--disable_warnings
 ALTER TABLE t5 CHANGE c1 c1 DOUBLE(24,0) SIGNED NOT NULL, CHANGE c2 c2 DOUBLE(24,0) UNSIGNED NULL;
+--enable_warnings
 INSERT INTO t5 VALUES('-1e+23','1e+23','1e+23',3),('-1e-23','1e-23','1e-23',4);
 #Output is platform dependent
 --disable_result_log
 --sorted_result
 SELECT * FROM t5;
 --enable_result_log
+--disable_warnings
 ALTER TABLE t5 CHANGE c1 c1 DOUBLE(53,0) UNSIGNED, CHANGE c2 c2 DOUBLE(53,0) SIGNED;
+--enable_warnings
 INSERT INTO t5 VALUES('1e+52','-1e+52','1e+52',5),('1e-52','-1e-52','1e-52',6);
 INSERT INTO t5 VALUES('1e+53','-1e+53','1e+53',7),('1e-53','-1e-53','1e-53',8);
 #Output is platform dependent
