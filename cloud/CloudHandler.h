@@ -81,6 +81,7 @@ class CloudHandler : public handler
     bool is_allowed_column(Field* field, int* error_number);
     int retrieve_value_from_index(uchar* buf);
     int write_row(uchar* buf, char* updated_fields);
+    void collect_changed_fields(String* updated_fields, const uchar* old_row, uchar* new_row);
 
     bool is_integral_field(int field_type)
     {

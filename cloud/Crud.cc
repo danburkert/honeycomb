@@ -103,7 +103,6 @@ int CloudHandler::create(const char *path, TABLE *table_arg, HA_CREATE_INFO *cre
 {
   DBUG_ENTER("CloudHandler::create");
   attach_thread();
-  char* error_message;
   if(table_arg->part_info != NULL)
   {
     my_error(ER_CREATE_FILEGROUP_FAILED, MYF(0), "table. Partitions are not supported.");
@@ -216,7 +215,6 @@ int CloudHandler::write_row(uchar* buf, char* updated_fields)
   for (Field **field_ptr = table->field; *field_ptr; field_ptr++)
   {
     Field * field = *field_ptr;
-    uint offset = field_ptr - table->field;
     jstring field_name = string_to_java_string(field->field_name);
 
     const bool is_null = field->is_null();
@@ -337,10 +335,10 @@ int CloudHandler::write_row(uchar* buf, char* updated_fields)
 
   dbug_tmp_restore_column_map(table->read_set, old_map);
 
-  THD* thd = ha_thd();
-  int command = thd_sql_command(thd);
   if (updated_fields)
   {
+    THD* thd = ha_thd();
+    int command = thd_sql_command(thd);
     if(command == SQLCOM_UPDATE)
     {
       if (this->row_has_duplicate_values(unique_values_map))
@@ -376,81 +374,62 @@ int CloudHandler::write_row(uchar* buf, char* updated_fields)
 int CloudHandler::update_row(const uchar *old_row, uchar *new_row)
 {
   DBUG_ENTER("CloudHandler::update_row");
-  typedef unsigned long int ulint;
-  Field* field;
-  uint n_fields = table->s->fields;
-  ulint o_len;
-  ulint n_len;
-  ulint col_pack_len;
-  const uchar* o_ptr;
-  const uchar* n_ptr;
-  ulint col_type;
-  uint i;
-  const ulint null_field = 0xFFFFFFFF;
-  int index = 0;
 
   ha_statistic_increment(&SSV::ha_update_count);
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
     table->timestamp_field->set_time();
 
-  char* updated_fields[n_fields];
-  for (i = 0; i < n_fields; i++)
+  String updated_fieldnames;
+  this->collect_changed_fields(&updated_fieldnames, old_row, new_row);
+  attach_thread();
+  int rc = write_row(new_row, updated_fieldnames.c_ptr());
+  this->flush_writes();
+  detach_thread();
+
+  DBUG_RETURN(rc);
+}
+
+void CloudHandler::collect_changed_fields(String* updated_fields, const uchar* old_row, uchar* new_row)
+{
+  typedef unsigned long int ulint;
+  uint n_fields = table->s->fields;
+  const ulint null_field = 0xFFFFFFFF;
+  for (int i = 0; i < n_fields; i++)
   {
-    field = table->field[i];
+    Field* field = table->field[i];
 
-    o_ptr = (const uchar*) old_row + field->offset(table->record[0]);
-    n_ptr = (const uchar*) new_row + field->offset(table->record[0]);
+    const uchar* old_field = (const uchar*) old_row + field->offset(table->record[0]);
+    const uchar* new_field = (const uchar*) new_row + field->offset(table->record[0]);
 
-    col_pack_len = field->pack_length();
+    int col_pack_len = field->pack_length();
 
-    o_len = col_pack_len;
-    n_len = col_pack_len;
+    ulint old_field_length = col_pack_len;
+    ulint new_field_length = col_pack_len;
 
     if (field->null_ptr)
     {
       if (field->is_null_in_record(old_row))
       {
-        o_len = null_field;
+        old_field_length = null_field;
       }
 
       if (field->is_null_in_record(new_row))
       {
-        n_len = null_field;
+        new_field_length = null_field;
       }
     }
 
     // If field lengths are different
-    // OR if original field is not NULL
-    //    AND new and original fields are different
-    if (o_len != n_len || (o_len != null_field && 0 != memcmp(o_ptr, n_ptr, o_len)))
+    // OR if original field is not NULL AND new and original fields are different
+    bool field_lengths_are_different = old_field_length != new_field_length;
+    bool original_not_null_and_field_has_changed = old_field_length != null_field && 0 != memcmp(old_field, new_field, old_field_length);
+    if (field_lengths_are_different || original_not_null_and_field_has_changed)
     {
-      updated_fields [index++] = (char*)field->field_name;
+      updated_fields->append(field->field_name, strlen(field->field_name));
+      updated_fields->append(",", 1);
     }
   }
-
-  int fieldname_length = 0;
-  for(int x = 0 ; x < index; x++)
-  {
-    fieldname_length += strlen(updated_fields[x]) + 1;
-  }
-
-  char updated_fieldnames[fieldname_length];
-  memset(updated_fieldnames, 0, fieldname_length);
-  for(int x = 0; x < index; x++)
-  {
-    strcat(updated_fieldnames, updated_fields[x]);
-    if (x + 1 != index)
-    {
-      strcat(updated_fieldnames, ",");
-    }
-  }
-
-  attach_thread();
-  int rc = write_row(new_row, updated_fieldnames);
-  this->flush_writes();
-  detach_thread();
-
-  DBUG_RETURN(rc);
+  updated_fields->chop();
 }
 
 int CloudHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add)
@@ -509,8 +488,6 @@ int CloudHandler::prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_o
   return 0;
 }
 
-
-
 int CloudHandler::delete_row(const uchar *buf)
 {
   DBUG_ENTER("CloudHandler::delete_row");
@@ -534,7 +511,6 @@ int CloudHandler::end_bulk_delete()
 {
   DBUG_ENTER("CloudHandler::end_bulk_delete");
 
-  jclass adapter_class = this->adapter();
   detach_thread();
 
   DBUG_RETURN(0);
@@ -550,8 +526,7 @@ int CloudHandler::delete_all_rows()
   jclass adapter_class = this->adapter();
   jmethodID delete_rows_method = find_static_method(adapter_class, "deleteAllRows", "(Ljava/lang/String;)I",this->env);
 
-  int count = this->env->CallStaticIntMethod(adapter_class, delete_rows_method,
-      table_name);
+  this->env->CallStaticIntMethod(adapter_class, delete_rows_method, table_name);
   jmethodID set_count_method = find_static_method(adapter_class, "setRowCount", "(Ljava/lang/String;J)V",this->env);
   this->env->CallStaticVoidMethod(adapter_class, set_count_method, table_name,
       (jlong) 0);
