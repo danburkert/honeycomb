@@ -379,10 +379,17 @@ int CloudHandler::update_row(const uchar *old_row, uchar *new_row)
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
     table->timestamp_field->set_time();
 
+  int rc = 0;
   String updated_fieldnames;
   this->collect_changed_fields(&updated_fieldnames, old_row, new_row);
+  if(updated_fieldnames.length() == 0)
+  {
+    // No fields have actually changed. Don't write a new row.
+    DBUG_RETURN(rc);
+  }
+
   attach_thread();
-  int rc = write_row(new_row, updated_fieldnames.c_ptr());
+  rc = write_row(new_row, updated_fieldnames.c_ptr());
   this->flush_writes();
   detach_thread();
 
@@ -394,6 +401,7 @@ void CloudHandler::collect_changed_fields(String* updated_fields, const uchar* o
   typedef unsigned long int ulint;
   uint n_fields = table->s->fields;
   const ulint null_field = 0xFFFFFFFF;
+  bool any_changes = false;
   for (int i = 0; i < n_fields; i++)
   {
     Field* field = table->field[i];
@@ -427,9 +435,13 @@ void CloudHandler::collect_changed_fields(String* updated_fields, const uchar* o
     {
       updated_fields->append(field->field_name, strlen(field->field_name));
       updated_fields->append(",", 1);
+      any_changes = true;
     }
   }
-  updated_fields->chop();
+  if(any_changes)
+  {
+    updated_fields->chop();
+  }
 }
 
 int CloudHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add)
