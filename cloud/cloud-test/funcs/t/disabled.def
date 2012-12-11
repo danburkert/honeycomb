@@ -19,7 +19,6 @@ rpl_000015 : Result Difference Due To Change In .inc file
 rpl_LD_INFILE : Result Difference Due To Change In .inc file
 rpl_alter : Result Difference Due To Change In .inc file
 rpl_alter_db : Result Difference Due To Change In .inc file
-rpl_alter_db : Result Difference Due To Change In .inc file
 rpl_bit : Result Difference Due To Change In .inc file
 rpl_bit_npk : Result Difference Due To Change In .inc file
 rpl_change_master : Result Difference Due To Change In .inc file
@@ -27,7 +26,6 @@ rpl_do_grant : Result Difference Due To Change In .inc file
 rpl_drop : Result Difference Due To Change In .inc file
 rpl_drop_db : Result Difference Due To Change In .inc file
 rpl_flushlog_loop : Result Difference Due To Change In .inc file
-rpl_get_lock : Result Difference Due To Change In .inc file
 rpl_get_lock : Result Difference Due To Change In .inc file
 rpl_insert : Result Difference Due To Change In .inc file
 rpl_insert_select : Result Difference Due To Change In .inc file
@@ -98,32 +96,6 @@ rpl_sp : Result Difference Due To Change In .inc file
 rpl_rbr_to_sbr : Result Difference Due To Change In .inc file
 rpl_row_until : Test Timesout
 
-### ON DUPLICATE KEY UPDATE
-in_calendar_2_unique_constraints_duplicate_update : DUP KEY UPD
-in_calendar_pk_constraint_duplicate_update : DUP KEY UPD
-in_calendar_unique_constraint_duplicate_update : DUP KEY UPD
-in_multicolumn_calendar_pk_constraint_duplicate_update : DUP KEY UPD
-in_multicolumn_calendar_unique_constraint_duplicate_update : DUP KEY UPD
-in_multicolumn_number_pk_constraint_duplicate_update : DUP KEY UPD
-in_multicolumn_number_unique_constraint_duplicate_update : DUP KEY UPD
-in_multicolumn_string_pk_constraint_duplicate_update : DUP KEY UPD
-in_multicolumn_string_unique_constraint_duplicate_update : DUP KEY UPD
-in_number_2_unique_constraints_duplicate_update : DUP KEY UPD
-in_number_pk_constraint_duplicate_update : DUP KEY UPD
-in_number_unique_constraint_duplicate_update : DUP KEY UPD
-in_string_2_unique_constraints_duplicate_update : DUP KEY UPD
-in_string_pk_constraint_duplicate_update : DUP KEY UPD
-in_string_unique_constraint_duplicate_update : DUP KEY UPD
-
-### TOO MANY KEY PARTS IN INDEX
-crash_manyindexes_number : KEYPARTS
-crash_manyindexes_string : KEYPARTS
-
-### UNKNOWN
-in_insert_select_unique_violation : CRASHING
-
-in_lob_boundary_error : CRASH
-
 ### LOAD DATA LOCAL INFILE
 ld_unique_error1 : CRASHING
 ld_unique_error1_local : REPLACE INTO
@@ -132,46 +104,8 @@ ld_unique_error2_local : REPLACE INTO
 ld_unique_error3 : CRASHING
 ld_unique_error3_local : REPLACE INTO
 
-### TRUNCATE (Probably related to LOAD DATA LOCAL INFILE crashes)
-de_truncate : CRASH
-in_insert_select : CRASH
-ld_all_number_string_calendar_types : CRASH
-ld_bit : CRASH
-ld_enum_set : CRASH
-ld_less_columns : CRASH
-ld_more_columns_truncated : CRASH
-ld_null : CRASH
-ld_quote : CRASH
-ld_simple : CRASH
-ld_starting : CRASH
-se_string_from : CRASH
-se_string_groupby : CRASH
-se_string_having : CRASH
-se_string_limit : CRASH
-se_string_orderby : CRASH
-se_string_union : CRASH
-se_string_where : CRASH
-se_string_where_and : CRASH
-se_string_where_or : CRASH
-
-### SET
-in_set_null : SET
-in_set_null_boundary_error : SET
-in_set_null_large : SET
-
-### INDEXED BLOB
-ix_index_lob : INDEXED BLOB
-
-### STORED FUNCTION
-sf_alter : STORED FUNCTION
-sf_cursor : STORED FUNCTION
-
-### STORED PROCEDURE
-sp_alter : STORED PROCEDURE
-sp_cursor : STORED PROCEDURE
-
 ### TRIGGER
-tr_delete : TRIGGER CRASH
+tr_delete : TRIGGER
 tr_delete_new_error : TRIGGER
 tr_insert : TRIGGER
 tr_insert_after_error : TRIGGER
@@ -180,22 +114,33 @@ tr_insert_after_error : TRIGGER
 ta_add_column_middle : TIMEOUT
 tc_multicolumn_different : TIMEOUT
 tr_all_type_triggers : TIMEOUT
+se_join_default : TIMEOUT
+se_join_cross : TIMEOUT
+fu_aggregate_min_number : TIMEOUT
+fu_aggregate_sum_number : TIMEOUT
+ld_all_number_string_calendar_types : TIMEOUT
+re_number_range_set : TIMEOUT
+in_number_unique_constraint_error : TIMEOUT
 
+### NOT SUPPORTED
+crash_manyindexes_number : KEYPARTS
+crash_manyindexes_string : KEYPARTS
+in_set_null : SET
+in_set_null_boundary_error : SET
+in_set_null_large : SET
+ix_index_lob : INDEXED BLOB
+ld_bit : BIT
+ld_enum_set : SET
 ta_orderby : ALTER ORDER BY
-
-
-up_calendar_range : foo
-
-### PARTITION
 tc_partition_analyze : PARTITION
 tc_partition_change_from_range_to_hash_key : PARTITION
 tc_partition_check : PARTITION
-tc_partition_hash : PASSING
-tc_partition_hash_date_function : PASSING
-tc_partition_key : PASSING
-tc_partition_linear_key : PASSING
-tc_partition_list_directory : PASSING
-tc_partition_list_error : PASSING
+tc_partition_hash : PARTITION
+tc_partition_hash_date_function : PARTITION
+tc_partition_key : PARTITION
+tc_partition_linear_key : PARTITION
+tc_partition_list_directory : PARTITION
+tc_partition_list_error : PARTITION
 tc_partition_optimize : PARTITION
 tc_partition_rebuild : PARTITION
 tc_partition_remove : PARTITION
@@ -205,14 +150,61 @@ tc_partition_reorg_merge : PARTITION
 tc_partition_repair : PARTITION
 tc_partition_sub1 : PARTITION
 tc_partition_sub2 : PARTITION
-tc_partition_value : PASSING
-tc_partition_value_error : PASSING
-tc_partition_value_specific : PASSING
+tc_partition_value : PARTITION
+tc_partition_value_error : PARTITION
+tc_partition_value_specific : PARTITION
+tc_temporary_column : TEMPORARY
+tc_temporary_column_length : TEMPORARY
+in_string_set_enum_fail : SET
 
-### ENGINE STRING IN OUTPUT
-tc_temporary_column : ENGINE
-tc_temporary_column_length : ENGINE
-
+### PASSING
+sp_alter : PASSING
+sp_cursor : PASSING
+sf_alter : PASSING
+sf_cursor : PASSING
+re_number_select : PASSING
+in_multicolumn_string_pk_constraint_ignore : PASSING
+in_multicolumn_string_unique_constraint_ignore : PASSING
+in_string_unique_constraint_duplicate_update : PASSING
+in_calendar_2_unique_constraints_duplicate_update : PASSING
+in_calendar_pk_constraint_duplicate_update : PASSING
+in_calendar_unique_constraint_duplicate_update : PASSING
+in_multicolumn_calendar_pk_constraint_duplicate_update : PASSING
+in_multicolumn_calendar_unique_constraint_duplicate_update : PASSING
+in_multicolumn_number_pk_constraint_duplicate_update : PASSING
+in_multicolumn_number_unique_constraint_duplicate_update : PASSING
+in_multicolumn_string_pk_constraint_duplicate_update : PASSING
+in_multicolumn_string_unique_constraint_duplicate_update : PASSING
+in_number_2_unique_constraints_duplicate_update : PASSING
+in_number_pk_constraint_duplicate_update : PASSING
+in_number_unique_constraint_duplicate_update : PASSING
+in_string_2_unique_constraints_duplicate_update : PASSING
+in_string_pk_constraint_duplicate_update : PASSING
+ix_index_non_string : PASSING
+ix_unique_non_string : PASSING
+re_number_range : PASSING
+re_string_range : PASSING
+re_string_range_set : PASSING
+in_lob_boundary_error : PASSING
+in_insert_select_unique_violation : PASSING
+up_calendar_range : PASSING
+de_truncate : PASSING
+in_insert_select : PASSING
+ld_less_columns : PASSING
+ld_more_columns_truncated : PASSING
+ld_null : PASSING
+ld_quote : PASSING
+ld_simple : PASSING
+ld_starting : PASSING
+se_string_from : PASSING
+se_string_groupby : PASSING
+se_string_having : PASSING
+se_string_limit : PASSING
+se_string_orderby : PASSING
+se_string_union : PASSING
+se_string_where : PASSING
+se_string_where_and : PASSING
+se_string_where_or : PASSING
 date_function : PASSING
 in_calendar_pk_constraint_error : PASSING
 in_calendar_pk_constraint_ignore : PASSING
@@ -221,7 +213,6 @@ in_number_length : PASSING
 in_number_null : PASSING
 in_number_pk_constraint_error : PASSING
 in_number_pk_constraint_ignore : PASSING
-in_number_unique_constraint_error : PASSING
 in_number_unique_constraint_ignore : PASSING
 in_string_not_null : PASSING
 in_string_null : PASSING
@@ -231,8 +222,6 @@ in_string_unique_constraint_error : PASSING
 in_string_unique_constraint_ignore : PASSING
 ps_string_not_null : PASSING
 ps_string_null : PASSING
-se_join_cross : PASSING
-se_join_default : PASSING
 se_join_inner : PASSING
 se_join_left : PASSING
 se_join_left_outer : PASSING
@@ -252,22 +241,16 @@ in_number_boundary_error : PASSING
 in_number_decimal_boundary_error : PASSING
 in_string_boundary_error : PASSING
 ps_number_length : PASSING
-re_number_range : PASSING
-re_number_range_set : PASSING
-re_string_range : PASSING
-re_string_range_set : PASSING
 in_multicolumn_calendar_pk_constraint_error : PASSING
 in_multicolumn_calendar_pk_constraint_ignore : PASSING
 in_multicolumn_calendar_unique_constraint_error : PASSING
 in_multicolumn_string_pk_constraint_error : PASSING
-in_multicolumn_string_pk_constraint_ignore : PASSING
 in_multicolumn_number_unique_constraint_ignore : PASSING
 in_multicolumn_number_unique_constraint_error : PASSING
 in_multicolumn_number_pk_constraint_ignore : PASSING
 in_multicolumn_number_pk_constraint_error : PASSING
 in_multicolumn_calendar_unique_constraint_ignore : PASSING
 in_multicolumn_string_unique_constraint_error : PASSING
-in_multicolumn_string_unique_constraint_ignore : PASSING
 ai_init_alter_table : PASSING
 ai_init_create_table : PASSING
 ai_init_insert_id : PASSING
@@ -283,7 +266,6 @@ comment_column2 : PASSING
 comment_index : PASSING
 comment_table : PASSING
 crash_manycolumns_number : PASSING
-crash_manycolumns_string :
 crash_manytables_number : PASSING
 crash_manytables_string : PASSING
 datetime_function : PASSING
@@ -312,8 +294,6 @@ de_truncate_autoinc : PASSING
 fu_aggregate_avg_number : PASSING
 fu_aggregate_max_number : PASSING
 fu_aggregate_max_subquery : PASSING
-fu_aggregate_min_number : PASSING
-fu_aggregate_sum_number : PASSING
 general_no_data : PASSING
 general_null : PASSING
 in_calendar_unique_constraint_error : PASSING
@@ -321,15 +301,12 @@ in_calendar_unique_constraint_ignore : PASSING
 in_enum_null_boundary_error : PASSING
 in_enum_null_large_error : PASSING
 in_insert_select_autoinc : PASSING
-in_string_set_enum_fail : PASSING
 ix_drop : PASSING
 ix_drop_error : PASSING
 ix_index_decimals : PASSING
-ix_index_non_string : PASSING
 ix_index_string : PASSING
 ix_index_string_length : PASSING
 ix_unique_decimals : PASSING
-ix_unique_non_string : PASSING
 ix_unique_string : PASSING
 ix_using_order : PASSING
 jp_comment_column : PASSING
@@ -337,7 +314,6 @@ jp_comment_index : PASSING
 jp_comment_older_compatibility1 : PASSING
 jp_comment_table : PASSING
 ps_number_null : PASSING
-re_number_select : PASSING
 se_rowid : PASSING
 sf_simple1 : PASSING
 sp_simple1 : PASSING
