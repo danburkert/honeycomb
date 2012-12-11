@@ -2,18 +2,15 @@ package com.nearinfinity.honeycomb.hbaseclient;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.nearinfinity.honeycomb.hbaseclient.strategy.PrefixScanStrategy;
 import com.nearinfinity.honeycomb.hbaseclient.strategy.ScanStrategy;
 import com.nearinfinity.honeycomb.hbaseclient.strategy.ScanStrategyInfo;
-import com.nearinfinity.honeycomb.mysqlengine.ActiveScan;
 import com.nearinfinity.honeycomb.mysqlengine.HBaseResultScanner;
 import com.nearinfinity.honeycomb.mysqlengine.SingleResultScanner;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -136,11 +133,9 @@ public class HBaseClient {
         for (String columnName : columns.keySet()) {
             long columnId = ++startColumn;
 
-            //Add column
             Put columnPut = new Put(columnBytes).add(Constants.NIC, columnName.getBytes(), Bytes.toBytes(columnId));
             puts.add(columnPut);
 
-            // Add column metadata
             byte[] columnInfoBytes = RowKeyFactory.buildColumnInfoKey(tableId, columnId);
             Put columnInfoPut = new Put(columnInfoBytes);
 
@@ -153,7 +148,6 @@ public class HBaseClient {
 
             puts.add(columnInfoPut);
 
-            //Add to cache
             tableInfo.addColumn(columnName, columnId, columns.get(columnName));
         }
     }
@@ -172,14 +166,6 @@ public class HBaseClient {
         this.table.flushCommits();
     }
 
-    /**
-     * Returns the autoincrementValue for the tableName and fieldName specified.
-     *
-     * @param tableName
-     * @param fieldName
-     * @return
-     * @throws IOException
-     */
     public long getAutoincrementValue(String tableName, String fieldName) throws IOException {
         TableInfo tableInfo = getTableInfo(tableName);
         ColumnMetadata columnMetadata = tableInfo.getColumnMetadata(fieldName);
@@ -192,14 +178,6 @@ public class HBaseClient {
             return columnMetadata.getAutoincrementValue();
     }
 
-    /**
-     * @param tableName
-     * @param fieldName
-     * @param autoincrementValue
-     * @param isTruncate
-     * @return
-     * @throws IOException
-     */
     public boolean alterAutoincrementValue(String tableName, String fieldName, long autoincrementValue, boolean isTruncate) throws IOException {
         TableInfo info = getTableInfo(tableName);
         long columnId = info.getColumnIdByName(fieldName);
@@ -212,7 +190,8 @@ public class HBaseClient {
         long currentValue = Bytes.toLong(result.getValue(Constants.NIC, new byte[0]));
         ColumnMetadata metadata = new ColumnMetadata(result.getValue(Constants.NIC, Constants.METADATA));
 
-        //only set the new autoincrement value if it is greater than the current autoincrement value or if the autoincrement value is being reset in a truncate command
+        // only set the new autoincrement value if it is greater than the
+        // current autoincrement value or if the autoincrement value is being reset in a truncate command
         if (autoincrementValue > currentValue || isTruncate) {
             metadata.setAutoincrement(true);
             metadata.setAutoincrementValue(autoincrementValue);
@@ -271,68 +250,10 @@ public class HBaseClient {
 
         cacheLock.writeLock().lock();
         try {
-            return refreshTableCache(tableName);
+            return TableCache.refreshCache(tableName, table, tableCache);
         } finally {
             cacheLock.writeLock().unlock();
         }
-    }
-
-    private TableInfo refreshTableCache(String tableName) throws IOException {
-        if (table == null) {
-            throw new IllegalStateException(format("Table %s was null. Cannot get table information from null table.", tableName));
-        }
-
-        String htableName = format("HTable used \"%s\"", Bytes.toString(table.getTableName()));
-        Get tableIdGet = new Get(RowKeyFactory.ROOT);
-        Result result = table.get(tableIdGet);
-        String tableNotFoundMessage = format("SQL table \"%s\" was not found. %s", tableName, htableName);
-        if (result.isEmpty()) {
-            throw new TableNotFoundException(tableNotFoundMessage);
-        }
-
-        byte[] sqlTableBytes = result.getValue(Constants.NIC, tableName.getBytes());
-        if (sqlTableBytes == null) {
-            throw new TableNotFoundException(tableNotFoundMessage);
-        }
-
-        long tableId = ByteBuffer.wrap(sqlTableBytes).getLong();
-
-        checkState(tableId >= 0, "Table id %d retrieved from HBase was not valid.", tableId);
-
-        TableInfo info = new TableInfo(tableName, tableId);
-
-        byte[] rowKey = RowKeyFactory.buildColumnsKey(tableId);
-
-        Get columnsGet = new Get(rowKey);
-        Result columnsResult = table.get(columnsGet);
-        checkNotNull(columnsResult);
-        if (columnsResult.isEmpty()) {
-            throw new IllegalStateException("Column result from the get was empty for row key " + Bytes.toStringBinary(rowKey));
-        }
-
-        Map<byte[], byte[]> columns = columnsResult.getFamilyMap(Constants.NIC);
-        if (columns == null) {
-            throw new NullPointerException("Columns were null after getting family map.");
-        }
-
-        for (byte[] qualifier : columns.keySet()) {
-            String columnName = new String(qualifier);
-            long columnId = ByteBuffer.wrap(columns.get(qualifier)).getLong();
-            info.addColumn(columnName, columnId, getMetadataForColumn(tableId, columnId));
-        }
-
-        rowKey = RowKeyFactory.buildTableInfoKey(tableId);
-        Result tableMetadata = table.get(new Get(rowKey));
-        NavigableMap<byte[], byte[]> familyMap = tableMetadata.getFamilyMap(Constants.NIC);
-        Map<String, byte[]> stringFamily = Maps.newHashMap();
-        for (Map.Entry<byte[], byte[]> entry : familyMap.entrySet()) {
-            stringFamily.put(new String(entry.getKey()), entry.getValue());
-        }
-        info.setTableMetadata(stringFamily);
-
-        tableCache.put(tableName, info);
-
-        return info;
     }
 
     public void renameTable(String from, String to) throws IOException {
@@ -367,14 +288,6 @@ public class HBaseClient {
         }
 
         logger.info("Rename complete!");
-    }
-
-    public ColumnMetadata getMetadataForColumn(long tableId, long columnId) throws IOException {
-        Get metadataGet = new Get(RowKeyFactory.buildColumnInfoKey(tableId, columnId));
-        Result result = table.get(metadataGet);
-
-        byte[] jsonBytes = result.getValue(Constants.NIC, Constants.METADATA);
-        return new ColumnMetadata(jsonBytes);
     }
 
     public void updateRow(UUID uuid, String changedFieldsString, String tableName, Map<String, byte[]> newValues) throws IOException {
@@ -418,7 +331,7 @@ public class HBaseClient {
         logger.info("Preparing to drop table " + tableName);
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
-        deleteRows(info);
+        deleteAllRowsInTable(info);
 
         deleteColumnInfoRows(info);
         deleteColumns(tableId);
@@ -430,17 +343,17 @@ public class HBaseClient {
         return true;
     }
 
-    public int deleteAllRows(String tableName) throws IOException {
+    public int deleteAllRowsInTable(String tableName) throws IOException {
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
 
         logger.info("Deleting all rows from table " + tableName + " with tableId " + tableId);
 
-        deleteRows(info);
+        deleteAllRowsInTable(info);
         return 0;
     }
 
-    private void deleteRows(TableInfo info) throws IOException {
+    private void deleteAllRowsInTable(TableInfo info) throws IOException {
         long tableId = info.getId();
         byte[] prefix = ByteBuffer.allocate(9).put(RowType.DATA.getValue()).putLong(tableId).array();
         Scan scan = ScanFactory.buildScan();
