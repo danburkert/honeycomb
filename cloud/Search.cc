@@ -67,12 +67,19 @@ int CloudHandler::index_read_map(uchar * buf, const uchar * key,
   KEY *key_info = table->s->key_info + this->active_index;
   KEY_PART_INFO *key_part = key_info->key_part;
   KEY_PART_INFO *end_key_part = key_part + key_info->key_parts;
-  key_part_map counter = keypart_map;
   int key_count = 0;
-  while(counter)
+  if (keypart_map == HA_WHOLE_KEY)
   {
-    counter >>= 1;
-    key_count++;
+    key_count = key_info->key_parts;
+  }
+  else
+  {
+    key_part_map counter = keypart_map;
+    while(counter)
+    {
+      counter >>= 1;
+      key_count++;
+    }
   }
 
   uchar* key_copies[key_count];
