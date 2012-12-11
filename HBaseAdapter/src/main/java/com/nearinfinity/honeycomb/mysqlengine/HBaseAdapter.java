@@ -252,10 +252,10 @@ public class HBaseAdapter {
         logger.info("tableName: " + tableName);
 
         try {
-            return client.deleteAllRows(tableName);
+            return client.deleteAllRowsInTable(tableName);
         } catch (Throwable e) {
             logger.error("Exception:", e);
-            throw new HBaseAdapterException("deleteAllRows", e);
+            throw new HBaseAdapterException("deleteAllRowsInTable", e);
         }
     }
 
