@@ -418,9 +418,8 @@ public class HBaseClient {
         logger.info("Preparing to drop table " + tableName);
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
+        deleteRows(info);
 
-        deleteIndexRows(tableId);
-        deleteDataRows(tableId);
         deleteColumnInfoRows(info);
         deleteColumns(tableId);
         deleteTableInfoRows(tableId);
@@ -432,13 +431,31 @@ public class HBaseClient {
     }
 
     public int deleteAllRows(String tableName) throws IOException {
-        long tableId = getTableInfo(tableName).getId();
+        TableInfo info = getTableInfo(tableName);
+        long tableId = info.getId();
 
         logger.info("Deleting all rows from table " + tableName + " with tableId " + tableId);
 
-        deleteIndexRows(tableId);
+        deleteRows(info);
+        return 0;
+    }
 
-        return deleteDataRows(tableId);
+    private void deleteRows(TableInfo info) throws IOException {
+        long tableId = info.getId();
+        byte[] prefix = ByteBuffer.allocate(9).put(RowType.DATA.getValue()).putLong(tableId).array();
+        Scan scan = ScanFactory.buildScan();
+        PrefixFilter filter = new PrefixFilter(prefix);
+        scan.setFilter(filter);
+
+        ResultScanner scanner = table.getScanner(scan);
+        List<List<String>> indexedKeys = Index.indexForTable(info.tableMetadata());
+        List<Delete> deleteList = new LinkedList<Delete>();
+        for (Result result : scanner) {
+            UUID uuid = ResultParser.parseUUID(result);
+            byte[] rowKey = result.getRow();
+            deleteList.addAll(DeleteListFactory.createDeleteRowList(uuid, info, result, rowKey, indexedKeys));
+        }
+        table.delete(deleteList);
     }
 
     private int deleteTableInfoRows(long tableId) throws IOException {
@@ -446,30 +463,10 @@ public class HBaseClient {
         return deleteRowsWithPrefix(prefix);
     }
 
-    private int deleteDataRows(long tableId) throws IOException {
-        logger.info("Deleting all data rows");
-        byte[] prefix = ByteBuffer.allocate(9).put(RowType.DATA.getValue()).putLong(tableId).array();
-        return deleteRowsWithPrefix(prefix);
-    }
-
     private int deleteColumns(long tableId) throws IOException {
         logger.info("Deleting all columns");
         byte[] prefix = ByteBuffer.allocate(9).put(RowType.COLUMNS.getValue()).putLong(tableId).array();
         return deleteRowsWithPrefix(prefix);
-    }
-
-    private int deleteIndexRows(long tableId) throws IOException {
-        logger.info("Deleting all index rows");
-
-        int affectedRows = 0;
-
-        byte[] valuePrefix = ByteBuffer.allocate(9).put(RowType.PRIMARY_INDEX.getValue()).putLong(tableId).array();
-        byte[] reversePrefix = ByteBuffer.allocate(9).put(RowType.REVERSE_INDEX.getValue()).putLong(tableId).array();
-
-        affectedRows += deleteRowsWithPrefix(valuePrefix);
-        affectedRows += deleteRowsWithPrefix(reversePrefix);
-
-        return affectedRows;
     }
 
     private int deleteColumnInfoRows(TableInfo info) throws IOException {

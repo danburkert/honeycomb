@@ -10,7 +10,6 @@ int CloudHandler::index_init(uint idx, bool sorted)
   KEY_PART_INFO *key_part = pos->key_part;
   KEY_PART_INFO *key_part_end = key_part + pos->key_parts;
   const char* column_names = this->index_name(key_part, key_part_end, pos->key_parts);
-  Field *field = table->field[idx];
   attach_thread();
 
   jclass adapter_class = this->adapter();
@@ -58,7 +57,7 @@ int CloudHandler::index_read_map(uchar * buf, const uchar * key,
   jclass adapter_class = this->adapter();
   jmethodID index_read_method = find_static_method(adapter_class,
       "indexRead", "(JLjava/util/List;L" MYSQLENGINE "IndexReadType;)L" MYSQLENGINE "IndexRow;",
-    this->env);
+      this->env);
   if (find_flag == HA_READ_PREFIX_LAST_OR_PREV)
   {
     find_flag = HA_READ_KEY_OR_PREV;
@@ -360,19 +359,20 @@ jbyteArray CloudHandler::find_duplicate_column_values(char* columns)
 
 bool CloudHandler::row_has_duplicate_values(jobject value_map)
 {
-    jclass adapter_class = this->adapter();
-    jmethodID has_duplicates_method = find_static_method(adapter_class, "findDuplicateKey", "(Ljava/lang/String;Ljava/util/Map;)Ljava/lang/String;", this->env);
-    jstring duplicate_column = (jstring) this->env->CallStaticObjectMethod(adapter_class, has_duplicates_method, this->table_name(), value_map);
+  this->flush_writes(); // Flush before checking for duplicates to make sure the changes are in HBase.
+  jclass adapter_class = this->adapter();
+  jmethodID has_duplicates_method = find_static_method(adapter_class, "findDuplicateKey", "(Ljava/lang/String;Ljava/util/Map;)Ljava/lang/String;", this->env);
+  jstring duplicate_column = (jstring) this->env->CallStaticObjectMethod(adapter_class, has_duplicates_method, this->table_name(), value_map);
 
-    bool error = duplicate_column != NULL;
+  bool error = duplicate_column != NULL;
 
-    if (error)
-    {
-      const char *key_name = this->java_to_string(duplicate_column);
-      this->failed_key_index = this->get_failed_key_index(key_name);
+  if (error)
+  {
+    const char *key_name = this->java_to_string(duplicate_column);
+    this->failed_key_index = this->get_failed_key_index(key_name);
 
-      this->env->ReleaseStringUTFChars(duplicate_column, key_name);
-    }
+    this->env->ReleaseStringUTFChars(duplicate_column, key_name);
+  }
 
-    return error;
+  return error;
 }
