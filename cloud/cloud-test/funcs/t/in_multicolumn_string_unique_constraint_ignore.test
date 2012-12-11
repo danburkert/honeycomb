@@ -41,7 +41,7 @@ INSERT IGNORE INTO t1 (c1,c2,c3) VALUES('abc','abc','abc');
 INSERT IGNORE INTO t1 (c1,c2,c3) VALUES('abc','abc','def');
 INSERT IGNORE INTO t1 (c1,c2,c3) VALUES('abc','def','def');
 --sorted_result
-SELECT * FROM t1;
+SELECT * FROM t1 ORDER BY c1;
 DROP TABLE t1;
 CREATE TABLE t1(c1 VARBINARY(10) NULL, c2 VARBINARY(10) NULL, c3 VARBINARY(10) NULL, UNIQUE(c1,c2,c3));
 INSERT INTO t1 (c1,c2,c3) VALUES('abc','abc','abc');
