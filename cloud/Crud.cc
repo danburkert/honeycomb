@@ -503,10 +503,12 @@ int CloudHandler::prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_o
 int CloudHandler::delete_row(const uchar *buf)
 {
   DBUG_ENTER("CloudHandler::delete_row");
+  attach_thread();
   ha_statistic_increment(&SSV::ha_delete_count);
   jclass adapter_class = this->adapter();
   jmethodID delete_row_method = find_static_method(adapter_class, "deleteRow", "(J)Z",this->env);
   this->env->CallStaticBooleanMethod(adapter_class, delete_row_method, this->curr_scan_id);
+  detach_thread();
   DBUG_RETURN(0);
 }
 
