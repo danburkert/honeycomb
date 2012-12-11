@@ -456,25 +456,6 @@ void CloudHandler::get_auto_increment(ulonglong offset, ulonglong increment,
   DBUG_VOID_RETURN;
 }
 
-bool CloudHandler::row_has_duplicate_values(jobject value_map)
-{
-    jclass adapter_class = this->adapter();
-    jmethodID has_duplicates_method = find_static_method(adapter_class, "findDuplicateKey", "(Ljava/lang/String;Ljava/util/Map;)Ljava/lang/String;", this->env);
-    jstring duplicate_column = (jstring) this->env->CallStaticObjectMethod(adapter_class, has_duplicates_method, this->table_name(), value_map);
-
-    bool error = duplicate_column != NULL;
-
-    if (error)
-    {
-      const char *key_name = this->java_to_string(duplicate_column);
-      this->failed_key_index = this->get_failed_key_index(key_name);
-
-      this->env->ReleaseStringUTFChars(duplicate_column, key_name);
-    }
-
-    return error;
-}
-
 int CloudHandler::get_failed_key_index(const char *key_name)
 {
   if (this->table->s->keys == 0)
@@ -492,19 +473,6 @@ int CloudHandler::get_failed_key_index(const char *key_name)
   }
 
   return -1;
-}
-
-jbyteArray CloudHandler::find_duplicate_column_values(char* columns)
-{
-  attach_thread();
-
-  jclass adapter = this->adapter();
-  jmethodID column_has_duplicates_method = find_static_method(adapter, "findDuplicateValue", "(Ljava/lang/String;Ljava/lang/String;)[B",this->env);
-  jbyteArray duplicate_value = (jbyteArray) this->env->CallStaticObjectMethod(adapter, column_has_duplicates_method, this->table_name(), string_to_java_string(columns));
-
-  detach_thread();
-
-  return duplicate_value;
 }
 
 bool CloudHandler::field_has_unique_index(Field *field)
