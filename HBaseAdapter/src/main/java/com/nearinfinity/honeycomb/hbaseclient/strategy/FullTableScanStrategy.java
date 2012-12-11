@@ -18,7 +18,6 @@ public class FullTableScanStrategy implements ScanStrategy {
     public Scan getScan(TableInfo info) {
         long tableId = info.getId();
 
-        //Build row keys
         byte[] startRow = RowKeyFactory.buildDataKey(tableId, Constants.ZERO_UUID);
         byte[] endRow = RowKeyFactory.buildDataKey(tableId + 1, Constants.ZERO_UUID);
 

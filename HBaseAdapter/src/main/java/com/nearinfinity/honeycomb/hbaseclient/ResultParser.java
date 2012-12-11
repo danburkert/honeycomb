@@ -32,7 +32,6 @@ public class ResultParser {
             return columns;
         }
 
-        //Loop through columns, add to returned map
         for (byte[] qualifier : returnedColumns.keySet()) {
             long columnId = ByteBuffer.wrap(qualifier).getLong();
             String columnName = info.getColumnNameById(columnId);
