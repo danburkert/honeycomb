@@ -33,21 +33,15 @@ int CloudHandler::index_end()
   DBUG_RETURN(0);
 }
 
-jobject CloudHandler::create_key_value_list(int index, uint* key_sizes, uchar** key_copies, const char** key_names, jboolean* key_null_bits, jboolean* key_is_null)
+void CloudHandler::create_key_value_list(jobject key_values, uint key_sizes, uchar* key_copy, const char* key_names, jboolean key_null_bits, jboolean key_is_null)
 {
-  jobject key_values = create_java_list(this->env);
   jclass key_value_class = this->env->FindClass(HBASECLIENT "KeyValue");
   jmethodID key_value_ctor = this->env->GetMethodID(key_value_class, "<init>", "(Ljava/lang/String;[BZZ)V");
-  for(int x = 0; x < index; x++)
-  {
-    jbyteArray java_key = this->env->NewByteArray(key_sizes[x]);
-    this->env->SetByteArrayRegion(java_key, 0, key_sizes[x], (jbyte*) key_copies[x]);
-    jstring key_name = string_to_java_string(key_names[x]);
-    jobject key_value = this->env->NewObject(key_value_class, key_value_ctor, key_name, java_key, key_null_bits[x], key_is_null[x]);
-    java_list_insert(key_values, key_value, this->env);
-  }
-
-  return key_values;
+  jbyteArray java_key = this->env->NewByteArray(key_sizes);
+  this->env->SetByteArrayRegion(java_key, 0, key_sizes, (jbyte*)key_copy);
+  jstring key_name = string_to_java_string(key_names);
+  jobject key_value = this->env->NewObject(key_value_class, key_value_ctor, key_name, java_key, key_null_bits, key_is_null);
+  java_list_insert(key_values, key_value, this->env);
 }
 
 int CloudHandler::index_read_map(uchar * buf, const uchar * key,
@@ -81,21 +75,14 @@ int CloudHandler::index_read_map(uchar * buf, const uchar * key,
     }
   }
 
-  uchar* key_copies[key_count];
-  uint key_sizes[key_count];
-  jboolean key_null_bits[key_count];
-  jboolean key_is_null[key_count];
-  const char* key_names[key_count];
-  memset(key_null_bits, JNI_FALSE, key_count);
-  memset(key_is_null, JNI_FALSE, key_count);
-  memset(key_copies, 0, key_count);
+  jboolean key_null_bits, key_is_null;
   uchar* key_iter = (uchar*)key;
+  jobject key_values = create_java_list(this->env);
   int index = 0;
 
   while (key_part < end_key_part && keypart_map)
   {
     Field* field = key_part->field;
-    key_names[index] = field->field_name;
     uint store_length = key_part->store_length;
     uint offset = store_length;
     if (this->is_field_nullable(this->table_name(), field->field_name))
@@ -104,35 +91,28 @@ int CloudHandler::index_read_map(uchar * buf, const uchar * key,
       {
         if(index == (key_count - 1) && find_flag == HA_READ_AFTER_KEY)
         {
-          key_is_null[index] = JNI_FALSE;
           DBUG_RETURN(index_first(buf));
         }
         else
         {
-          key_is_null[index] = JNI_TRUE;
+          key_is_null = JNI_TRUE;
         }
       }
 
       // If the index is nullable, then the first byte is the null flag.  Ignore it.
       key_iter++;
       offset--;
-      key_null_bits[index] = JNI_TRUE;
+      key_null_bits = JNI_TRUE;
       store_length--;
     }
 
     uchar* key_copy = create_key_copy(field, key_iter, &store_length, table->in_use);
-    key_sizes[index] = store_length;
-    key_copies[index] = key_copy;
     keypart_map >>= 1;
     key_part++;
-    key_iter += offset;
     index++;
-  }
-
-  jobject key_values = create_key_value_list(index, key_sizes, key_copies, key_names, key_null_bits, key_is_null);
-  for (int x = 0; x < index; x++)
-  {
-    ARRAY_DELETE(key_copies[x]);
+    key_iter += offset;
+    create_key_value_list(key_values, store_length, key_copy, field->field_name, key_null_bits, key_is_null);
+    ARRAY_DELETE(key_copy);
   }
 
   jobject java_find_flag = find_flag_to_java(find_flag, this->env);
