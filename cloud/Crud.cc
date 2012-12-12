@@ -363,8 +363,11 @@ int CloudHandler::write_row(uchar* buf, char* updated_fields)
     this->rows_written++;
   }
 
-  if (new_autoincrement_value >= 0)
+  if (new_autoincrement_value >= 0 && new_autoincrement_value < LLONG_MAX)
     update_cloud_autoincrement_value(new_autoincrement_value + 1, JNI_FALSE);
+  else if (new_autoincrement_value >= 0)
+    update_cloud_autoincrement_value(new_autoincrement_value, JNI_FALSE);
+
   DBUG_RETURN(0);
 }
 
