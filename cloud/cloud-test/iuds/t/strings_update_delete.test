@@ -1,5 +1,5 @@
 --disable_warnings
-DROP TABLE IF EXISTS t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12,t13,t14,t15,t16,t17,t18;
+DROP TABLE IF EXISTS t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12,t13,t14,t15,t18;
 --enable_warnings
 
 ######## Running UPDATE tests ########
@@ -112,21 +112,6 @@ SELECT REVERSE(c1),REVERSE(c2),REVERSE(c3),REVERSE(c4) FROM t12;
 DELETE FROM t12 WHERE C1 LIKE "%update%";
 --sorted_result
 SELECT HEX(c1),HEX(c2),HEX(c3),HEX(c4) FROM t12;     
-# Test for SET datatype
-CREATE TABLE t16 (c1 SET('a', 'b', 'c', 'd', 'e'));
-eval INSERT INTO t16 VALUES (('d,a,d,d'));
---sorted_result
-SELECT c1 FROM t16;
-eval INSERT INTO t16 (c1) VALUES ('a,b,d'),('d,A ,b');
---sorted_result
-SELECT c1 FROM t16; 
-#--warning WARN_DATA_TRUNCATED
-eval INSERT INTO t16 (c1) VALUES ('f,a,b'); 
-SHOW WARNINGS;
---sorted_result
-SELECT c1 FROM t16;   
-#--warning ER_DUPLICATED_VALUE_IN_TYPE
-CREATE TABLE t17 (c1 SET('a','b','a','b'));
 SHOW WARNINGS;
 # Tests for ENUM datatype
 # Invalid ENUM value insert behavior
@@ -141,5 +126,5 @@ eval SET sql_mode= 'STRICT_ALL_TABLES';
 eval INSERT INTO t18 VALUES('SIZE','SMALL2'); 
 --sorted_result
 SELECT * FROM t18 WHERE c2=0;
- DROP TABLE t17,t18;
-DROP TABLE IF EXISTS t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12,t13,t14,t15,t16,t17,t18;
+ DROP TABLE t18;
+DROP TABLE IF EXISTS t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12,t13,t14,t15,t17,t18;

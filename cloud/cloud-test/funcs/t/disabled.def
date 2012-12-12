@@ -106,21 +106,14 @@ ld_unique_error3_local : REPLACE INTO
 
 ### TRIGGER
 tr_delete : TRIGGER
-tr_delete_new_error : TRIGGER
+tr_delete_new_error : PASSING
 tr_insert : TRIGGER
 tr_insert_after_error : TRIGGER
+tr_all_type_triggers : TRIGGER
 
 ### TIMEOUT
-ta_add_column_middle : TIMEOUT
 tc_multicolumn_different : TIMEOUT
-tr_all_type_triggers : TIMEOUT
-se_join_default : TIMEOUT
-se_join_cross : TIMEOUT
-fu_aggregate_min_number : TIMEOUT
-fu_aggregate_sum_number : TIMEOUT
-ld_all_number_string_calendar_types : TIMEOUT
-re_number_range_set : TIMEOUT
-in_number_unique_constraint_error : TIMEOUT
+
 
 ### NOT SUPPORTED
 crash_manyindexes_number : KEYPARTS
@@ -158,6 +151,14 @@ tc_temporary_column_length : TEMPORARY
 in_string_set_enum_fail : SET
 
 ### PASSING
+ta_add_column_middle : PASSING
+se_join_default : PASSING
+se_join_cross : PASSING
+fu_aggregate_min_number : PASSING
+fu_aggregate_sum_number : PASSING
+ld_all_number_string_calendar_types : PASSING
+re_number_range_set : PASSING
+in_number_unique_constraint_error : PASSING
 sp_alter : PASSING
 sp_cursor : PASSING
 sf_alter : PASSING
