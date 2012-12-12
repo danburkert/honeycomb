@@ -235,6 +235,7 @@ int CloudHandler::write_row(uchar* buf, char* updated_fields)
     case MYSQL_TYPE_INT24:
     case MYSQL_TYPE_YEAR:
     case MYSQL_TYPE_ENUM:
+    case MYSQL_TYPE_TIME: // Time is a special case for sorting
     {
       long long integral_value = field->val_int();
 
@@ -276,7 +277,6 @@ int CloudHandler::write_row(uchar* buf, char* updated_fields)
       break;
     case MYSQL_TYPE_DATE:
     case MYSQL_TYPE_NEWDATE:
-    case MYSQL_TYPE_TIME:
     case MYSQL_TYPE_DATETIME:
     case MYSQL_TYPE_TIMESTAMP:
     {
