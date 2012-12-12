@@ -107,7 +107,8 @@ public class ValueEncoder {
 
         byte[] encodedValue;
         switch (columnType) {
-            case LONG: {
+            case LONG:
+            case TIME: {
                 long longValue = ByteBuffer.wrap(value).getLong();
                 encodedValue = encodeLong(longValue);
             }
