@@ -465,8 +465,10 @@ int CloudHandler::get_failed_key_index(const char *key_name)
 
   for (uint key = 0; key < this->table->s->keys; key++)
   {
-    char* name = index_name(table, key);
-    if (strcmp(name, key_name) == 0)
+    char* name = index_name(table, key); 
+    bool are_equal = strcmp(name, key_name) == 0;
+    ARRAY_DELETE(name);
+    if (are_equal)
     {
       return key;
     }

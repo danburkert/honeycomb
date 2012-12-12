@@ -76,7 +76,7 @@ class CloudHandler : public handler
     jobject create_multipart_key(KEY* key, KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts);
     char* index_name(KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts);
     char* index_name(TABLE* table, uint key);
-    jobject create_key_value_list(int index, uint* key_sizes, uchar** key_copies, const char** key_names, jboolean* key_null_bits, jboolean* key_is_null);
+    void create_key_value_list(jobject key_values, uint key_sizes, uchar* key_copy, const char* key_names, jboolean key_null_bits, jboolean key_is_null);
     bool is_field_nullable(jstring table_name, const char* field_name);
     bool is_allowed_column(Field* field, int* error_number);
     int retrieve_value_from_index(uchar* buf);
