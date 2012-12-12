@@ -1,11 +1,6 @@
 --disable_warnings
 DROP TABLE IF EXISTS m3;
 --enable_warnings
-CREATE TABLE m3(c1 BIT NULL, c2 CHAR(25) NOT NULL, c3 TINYINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 CHAR(25) NOT NULL, c3 TINYINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -97,11 +92,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 CHAR(25) NOT NULL, c3 TINYINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 CHAR(25) NOT NULL, c3 SMALLINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -201,11 +191,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 CHAR(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 CHAR(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -297,11 +282,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 CHAR(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 CHAR(25) NOT NULL, c3 INT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -401,11 +381,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 CHAR(25) NOT NULL, c3 INTEGER(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 CHAR(25) NOT NULL, c3 INTEGER(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -497,11 +472,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 CHAR(25) NOT NULL, c3 INTEGER(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 CHAR(25) NOT NULL, c3 BIGINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -601,11 +571,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARCHAR(25) NOT NULL, c3 TINYINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 VARCHAR(25) NOT NULL, c3 TINYINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -697,11 +662,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 VARCHAR(25) NOT NULL, c3 TINYINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARCHAR(25) NOT NULL, c3 SMALLINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -801,11 +761,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARCHAR(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 VARCHAR(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -897,11 +852,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 VARCHAR(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARCHAR(25) NOT NULL, c3 INT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -1001,11 +951,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARCHAR(25) NOT NULL, c3 INTEGER(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 VARCHAR(25) NOT NULL, c3 INTEGER(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -1097,11 +1042,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 VARCHAR(25) NOT NULL, c3 INTEGER(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARCHAR(25) NOT NULL, c3 BIGINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -1201,11 +1141,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 BINARY(25) NOT NULL, c3 TINYINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 BINARY(25) NOT NULL, c3 TINYINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -1297,11 +1232,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 BINARY(25) NOT NULL, c3 TINYINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 BINARY(25) NOT NULL, c3 SMALLINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -1401,11 +1331,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 BINARY(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 BINARY(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -1497,11 +1422,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 BINARY(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 BINARY(25) NOT NULL, c3 INT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -1601,11 +1521,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 BINARY(25) NOT NULL, c3 INTEGER(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 BINARY(25) NOT NULL, c3 INTEGER(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -1697,11 +1612,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 BINARY(25) NOT NULL, c3 INTEGER(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 BINARY(25) NOT NULL, c3 BIGINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -1801,11 +1711,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARBINARY(25) NOT NULL, c3 TINYINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 VARBINARY(25) NOT NULL, c3 TINYINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -1897,11 +1802,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 VARBINARY(25) NOT NULL, c3 TINYINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARBINARY(25) NOT NULL, c3 SMALLINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -2001,11 +1901,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARBINARY(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 VARBINARY(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -2097,11 +1992,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 VARBINARY(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARBINARY(25) NOT NULL, c3 INT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -2201,11 +2091,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARBINARY(25) NOT NULL, c3 INTEGER(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 VARBINARY(25) NOT NULL, c3 INTEGER(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -2297,11 +2182,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 VARBINARY(25) NOT NULL, c3 INTEGER(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARBINARY(25) NOT NULL, c3 BIGINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DECIMAL(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -2401,11 +2281,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 CHAR(25) NOT NULL, c3 TINYINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 CHAR(25) NOT NULL, c3 TINYINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -2497,11 +2372,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 CHAR(25) NOT NULL, c3 TINYINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 CHAR(25) NOT NULL, c3 SMALLINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -2601,11 +2471,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 CHAR(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 CHAR(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -2697,11 +2562,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 CHAR(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 CHAR(25) NOT NULL, c3 INT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -2801,11 +2661,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 CHAR(25) NOT NULL, c3 INTEGER(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 CHAR(25) NOT NULL, c3 INTEGER(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -2897,11 +2752,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 CHAR(25) NOT NULL, c3 INTEGER(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 CHAR(25) NOT NULL, c3 BIGINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -3001,11 +2851,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARCHAR(25) NOT NULL, c3 TINYINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 VARCHAR(25) NOT NULL, c3 TINYINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -3097,11 +2942,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 VARCHAR(25) NOT NULL, c3 TINYINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARCHAR(25) NOT NULL, c3 SMALLINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -3201,11 +3041,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARCHAR(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 VARCHAR(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -3297,11 +3132,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 VARCHAR(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARCHAR(25) NOT NULL, c3 INT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -3401,11 +3231,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARCHAR(25) NOT NULL, c3 INTEGER(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 VARCHAR(25) NOT NULL, c3 INTEGER(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -3497,11 +3322,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 VARCHAR(25) NOT NULL, c3 INTEGER(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARCHAR(25) NOT NULL, c3 BIGINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -3601,11 +3421,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 BINARY(25) NOT NULL, c3 TINYINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 BINARY(25) NOT NULL, c3 TINYINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -3697,11 +3512,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 BINARY(25) NOT NULL, c3 TINYINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 BINARY(25) NOT NULL, c3 SMALLINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -3801,11 +3611,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 BINARY(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 BINARY(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -3897,11 +3702,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 BINARY(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 BINARY(25) NOT NULL, c3 INT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -4001,11 +3801,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 BINARY(25) NOT NULL, c3 INTEGER(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 BINARY(25) NOT NULL, c3 INTEGER(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -4097,11 +3892,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 BINARY(25) NOT NULL, c3 INTEGER(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 BINARY(25) NOT NULL, c3 BIGINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -4201,11 +3991,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARBINARY(25) NOT NULL, c3 TINYINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 VARBINARY(25) NOT NULL, c3 TINYINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -4297,11 +4082,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 VARBINARY(25) NOT NULL, c3 TINYINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARBINARY(25) NOT NULL, c3 SMALLINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -4401,11 +4181,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARBINARY(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 VARBINARY(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -4497,11 +4272,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 VARBINARY(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARBINARY(25) NOT NULL, c3 INT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -4601,11 +4371,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARBINARY(25) NOT NULL, c3 INTEGER(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 VARBINARY(25) NOT NULL, c3 INTEGER(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -4697,11 +4462,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 VARBINARY(25) NOT NULL, c3 INTEGER(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARBINARY(25) NOT NULL, c3 BIGINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 DEC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -4801,11 +4561,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 CHAR(25) NOT NULL, c3 TINYINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 CHAR(25) NOT NULL, c3 TINYINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -4897,11 +4652,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 CHAR(25) NOT NULL, c3 TINYINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 CHAR(25) NOT NULL, c3 SMALLINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -5001,11 +4751,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 CHAR(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 CHAR(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -5097,11 +4842,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 CHAR(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 CHAR(25) NOT NULL, c3 INT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -5201,11 +4941,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 CHAR(25) NOT NULL, c3 INTEGER(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 CHAR(25) NOT NULL, c3 INTEGER(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -5297,11 +5032,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 CHAR(25) NOT NULL, c3 INTEGER(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 CHAR(25) NOT NULL, c3 BIGINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -5401,11 +5131,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARCHAR(25) NOT NULL, c3 TINYINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 VARCHAR(25) NOT NULL, c3 TINYINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -5497,11 +5222,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 VARCHAR(25) NOT NULL, c3 TINYINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARCHAR(25) NOT NULL, c3 SMALLINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -5601,11 +5321,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARCHAR(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 VARCHAR(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -5697,11 +5412,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 VARCHAR(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARCHAR(25) NOT NULL, c3 INT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -5801,11 +5511,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARCHAR(25) NOT NULL, c3 INTEGER(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 VARCHAR(25) NOT NULL, c3 INTEGER(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -5897,11 +5602,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 VARCHAR(25) NOT NULL, c3 INTEGER(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARCHAR(25) NOT NULL, c3 BIGINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -6001,11 +5701,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 BINARY(25) NOT NULL, c3 TINYINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 BINARY(25) NOT NULL, c3 TINYINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -6097,11 +5792,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 BINARY(25) NOT NULL, c3 TINYINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 BINARY(25) NOT NULL, c3 SMALLINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -6201,11 +5891,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 BINARY(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 BINARY(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -6297,11 +5982,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 BINARY(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 BINARY(25) NOT NULL, c3 INT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -6401,11 +6081,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 BINARY(25) NOT NULL, c3 INTEGER(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 BINARY(25) NOT NULL, c3 INTEGER(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -6497,11 +6172,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 BINARY(25) NOT NULL, c3 INTEGER(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 BINARY(25) NOT NULL, c3 BIGINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -6601,11 +6271,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARBINARY(25) NOT NULL, c3 TINYINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 VARBINARY(25) NOT NULL, c3 TINYINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -6697,11 +6362,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 VARBINARY(25) NOT NULL, c3 TINYINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARBINARY(25) NOT NULL, c3 SMALLINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -6801,11 +6461,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARBINARY(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 VARBINARY(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -6897,11 +6552,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 VARBINARY(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARBINARY(25) NOT NULL, c3 INT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -7001,11 +6651,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARBINARY(25) NOT NULL, c3 INTEGER(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 VARBINARY(25) NOT NULL, c3 INTEGER(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -7097,11 +6742,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 VARBINARY(25) NOT NULL, c3 INTEGER(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARBINARY(25) NOT NULL, c3 BIGINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 FIXED(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -7201,11 +6841,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 CHAR(25) NOT NULL, c3 TINYINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 CHAR(25) NOT NULL, c3 TINYINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -7297,11 +6932,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 CHAR(25) NOT NULL, c3 TINYINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 CHAR(25) NOT NULL, c3 SMALLINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -7401,11 +7031,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 CHAR(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 CHAR(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -7497,11 +7122,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 CHAR(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 CHAR(25) NOT NULL, c3 INT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -7601,11 +7221,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 CHAR(25) NOT NULL, c3 INTEGER(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 CHAR(25) NOT NULL, c3 INTEGER(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -7697,11 +7312,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 CHAR(25) NOT NULL, c3 INTEGER(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 CHAR(25) NOT NULL, c3 BIGINT(4) NULL, c4 CHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -7801,11 +7411,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARCHAR(25) NOT NULL, c3 TINYINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 VARCHAR(25) NOT NULL, c3 TINYINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -7897,11 +7502,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 VARCHAR(25) NOT NULL, c3 TINYINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARCHAR(25) NOT NULL, c3 SMALLINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -8001,11 +7601,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARCHAR(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 VARCHAR(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -8097,11 +7692,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 VARCHAR(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARCHAR(25) NOT NULL, c3 INT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -8201,11 +7791,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARCHAR(25) NOT NULL, c3 INTEGER(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 VARCHAR(25) NOT NULL, c3 INTEGER(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -8297,11 +7882,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 VARCHAR(25) NOT NULL, c3 INTEGER(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARCHAR(25) NOT NULL, c3 BIGINT(4) NULL, c4 VARCHAR(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -8401,11 +7981,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 BINARY(25) NOT NULL, c3 TINYINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 BINARY(25) NOT NULL, c3 TINYINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -8497,11 +8072,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 BINARY(25) NOT NULL, c3 TINYINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 BINARY(25) NOT NULL, c3 SMALLINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -8601,11 +8171,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 BINARY(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 BINARY(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -8697,11 +8262,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 BINARY(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 BINARY(25) NOT NULL, c3 INT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -8801,11 +8361,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 BINARY(25) NOT NULL, c3 INTEGER(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 BINARY(25) NOT NULL, c3 INTEGER(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -8897,11 +8452,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 BINARY(25) NOT NULL, c3 INTEGER(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 BINARY(25) NOT NULL, c3 BIGINT(4) NULL, c4 BINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -9001,11 +8551,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARBINARY(25) NOT NULL, c3 TINYINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 VARBINARY(25) NOT NULL, c3 TINYINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -9097,11 +8642,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 VARBINARY(25) NOT NULL, c3 TINYINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARBINARY(25) NOT NULL, c3 SMALLINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -9201,11 +8741,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARBINARY(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 VARBINARY(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -9297,11 +8832,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 VARBINARY(25) NOT NULL, c3 MEDIUMINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARBINARY(25) NOT NULL, c3 INT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
@@ -9401,11 +8931,6 @@ SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARBINARY(25) NOT NULL, c3 INTEGER(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 TINYINT NULL, c2 VARBINARY(25) NOT NULL, c3 INTEGER(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 TINYINT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
@@ -9497,11 +9022,6 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
 SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
 CREATE TABLE m3(c1 YEAR NULL, c2 VARBINARY(25) NOT NULL, c3 INTEGER(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 YEAR NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE m3; DROP TABLE m3; SHOW TABLES;
-CREATE TABLE m3(c1 BIT NULL, c2 VARBINARY(25) NOT NULL, c3 BIGINT(4) NULL, c4 VARBINARY(15) NOT NULL PRIMARY KEY, c5 BIT NOT NULL UNIQUE KEY,c6 NUMERIC(10,8) NOT NULL DEFAULT 3.141592);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
 --replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
