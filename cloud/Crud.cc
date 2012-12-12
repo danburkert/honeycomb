@@ -324,6 +324,7 @@ int CloudHandler::write_row(uchar* buf, char* updated_fields)
     }
 
     jbyteArray java_bytes = convert_value_to_java_bytes(byte_val, actualFieldSize, this->env);
+    MY_FREE(byte_val);
     java_map_insert(java_row_map, field_name, java_bytes, this->env);
 
     // Remember this field for later if we find that it has a unique index, need to check it
@@ -467,6 +468,7 @@ int CloudHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, h
         char *value_key = char_array_from_java_bytes(duplicate_value, this->env);
         this->store_field_value(field_being_indexed, value_key, length);
         ARRAY_DELETE(value_key);
+        ARRAY_DELETE(index_columns);
         this->failed_key_index = this->get_failed_key_index(key_part->field->field_name);
         detach_thread();
         return error;
@@ -477,6 +479,7 @@ int CloudHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, h
     jobject java_keys = this->create_multipart_key(pos, key_part, end_key_part, key_info->key_parts);
     jmethodID add_index_method = find_static_method(adapter, "addIndex", "(Ljava/lang/String;L" HBASECLIENT "TableMultipartKeys;)V",this->env);
     this->env->CallStaticVoidMethod(adapter, add_index_method, this->table_name(), java_keys);
+    ARRAY_DELETE(index_columns);
   }
 
   detach_thread();
