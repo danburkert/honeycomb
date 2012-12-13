@@ -74,12 +74,24 @@ void CloudHandler::store_field_value(Field *field, char *val, int val_length)
   {
     if (is_integral_field(type))
     {
-      long long long_value = *(long long*) val;
-      if (is_little_endian())
+      if(type == MYSQL_TYPE_LONGLONG)
       {
-        long_value = __builtin_bswap64(long_value);
+        memcpy(field->ptr, val, sizeof(ulonglong));
+        if (is_little_endian())
+        {
+          reverse_bytes(field->ptr, val_length);
+        }
       }
-      field->store(long_value, false);
+      else
+      {
+        long long long_value = *(long long*) val;
+        if (is_little_endian())
+        {
+          long_value = __builtin_bswap64(long_value);
+        }
+
+        field->store(long_value, false);
+      }
     }
     else if (is_byte_field(type))
     {
