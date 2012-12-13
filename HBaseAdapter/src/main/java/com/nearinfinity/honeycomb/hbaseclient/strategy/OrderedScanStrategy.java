@@ -39,7 +39,7 @@ public class OrderedScanStrategy implements ScanStrategy {
         }
 
         byte[] startKey = RowKeyFactory.buildIndexRowKey(tableId, columnIds, paddedValue, Constants.ZERO_UUID);
-        byte[] endKey = RowKeyFactory.buildIndexRowKey(tableId, nextColumnIds, paddedValue, Constants.ZERO_UUID);
+        byte[] endKey = RowKeyFactory.buildIndexRowKey(tableId, nextColumnIds, new byte[paddedValue.length], Constants.ZERO_UUID);
 
         return ScanFactory.buildScan(startKey, endKey);
     }
