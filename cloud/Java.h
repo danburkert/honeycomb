@@ -12,6 +12,7 @@ jboolean java_map_is_empty(jobject java_map, JNIEnv* env);
 
 jobject create_java_list(JNIEnv* env);
 jobject java_list_insert(jobject java_list, jobject value, JNIEnv* env);
+jlong java_list_size(jobject java_list, JNIEnv* env);
 
 jobject find_flag_to_java(enum ha_rkey_function find_flag, JNIEnv* env);
 jobject java_find_flag_by_name(const char *name, JNIEnv* env);

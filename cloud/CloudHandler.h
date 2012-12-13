@@ -69,7 +69,7 @@ class CloudHandler : public handler
     bool check_for_renamed_column(const TABLE*  table, const char* col_name);
     bool field_has_unique_index(Field *field);
     jbyteArray find_duplicate_column_values(char* columns);
-    bool row_has_duplicate_values(jobject value_map);
+    bool row_has_duplicate_values(jobject value_map, jobject changedColumns);
     int get_failed_key_index(const char *key_name);
     void store_field_value(Field *field, char *key, int length);
     jobject create_multipart_keys(TABLE* table_arg);
@@ -80,8 +80,8 @@ class CloudHandler : public handler
     bool is_field_nullable(jstring table_name, const char* field_name);
     bool is_allowed_column(Field* field, int* error_number);
     int retrieve_value_from_index(uchar* buf);
-    int write_row(uchar* buf, char* updated_fields);
-    void collect_changed_fields(String* updated_fields, const uchar* old_row, uchar* new_row);
+    int write_row(uchar* buf, jobject updated_fields);
+    void collect_changed_fields(jobject updated_fields, const uchar* old_row, uchar* new_row);
 
     bool is_integral_field(int field_type)
     {

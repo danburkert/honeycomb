@@ -290,8 +290,7 @@ public class HBaseClient {
         logger.info("Rename complete!");
     }
 
-    public void updateRow(UUID uuid, String changedFieldsString, String tableName, Map<String, byte[]> newValues) throws IOException {
-        String[] changedFields = changedFieldsString.split(",");
+    public void updateRow(UUID uuid, List<String> changedFields, String tableName, Map<String, byte[]> newValues) throws IOException {
         Map<String, byte[]> oldRow = retrieveRowAndDelete(tableName, uuid);
 
         for (String changedField : changedFields) {
@@ -457,16 +456,25 @@ public class HBaseClient {
                 : "Changes to tables will be written to HBase when the write buffer has become full");
     }
 
+    private <K, V> Map<K, V> selectKeys(Map<K, V> map, Iterable<K> keys) {
+        ImmutableMap.Builder<K, V> builder = new ImmutableMap.Builder<K, V>();
+        for (K key : keys) {
+            builder.put(key, map.get(key));
+        }
+
+        return builder.build();
+    }
+
+    public String findDuplicateKeyOnUpdate(final String tableName, final Map<String, byte[]> values, List<String> changedColumns) throws IOException {
+        Map<String, byte[]> subMap = selectKeys(values, changedColumns);
+        return findDuplicateKey(tableName, subMap);
+    }
+
     public String findDuplicateKey(final String tableName, final Map<String, byte[]> values) throws IOException {
         TableInfo info = getTableInfo(tableName);
-        List<List<String>> uniqueKeys = Index.uniqueKeysForTable(info.tableMetadata());
-        for (List<String> uniqueKey : uniqueKeys) {
-            ImmutableMap.Builder<String, byte[]> builder = new ImmutableMap.Builder<String, byte[]>();
-            for (String key : uniqueKey) {
-                builder.put(key, values.get(key));
-            }
-
-            ImmutableMap<String, byte[]> subKeyMap = builder.build();
+        List<List<String>> allUniqueKeys = Index.uniqueKeysForTable(info.tableMetadata());
+        for (List<String> uniqueKeySet : allUniqueKeys) {
+            Map<String, byte[]> subKeyMap = selectKeys(values, uniqueKeySet);
             if (subKeyMap.size() == 0) {
                 continue;
             }
