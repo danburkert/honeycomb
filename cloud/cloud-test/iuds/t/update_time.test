@@ -119,19 +119,19 @@ UPDATE t2 SET c2='1111' WHERE c1 IN ('100:04:04',005454,'2:2:2',111111);
 SELECT c2 FROM t2;
 
 #Update outside range would be clipped to closest endpoints
-UPDATE t4 SET c2='-838:59:60' WHERE c1='100:04:04';
+UPDATE t4 SET c2='-838:59:60' WHERE c1='100:04:04' ORDER BY c1, c2;
 --sorted_result
 SELECT c2 FROM t4;
-UPDATE t4 SET c2='838:59:60' WHERE c1='100:04:04';
+UPDATE t4 SET c2='838:59:60' WHERE c1='100:04:04' ORDER BY c1, c2;
 --sorted_result
 SELECT c2 FROM t4;
-UPDATE t4 SET c2='00:00:00' WHERE c1='100:04:04';
+UPDATE t4 SET c2='00:00:00' WHERE c1='100:04:04' ORDER BY c1, c2;
 --sorted_result
 SELECT c2 FROM t4;
-UPDATE t4 SET c2='11:11:60' WHERE c1='100:04:04';
+UPDATE t4 SET c2='11:11:60' WHERE c1='100:04:04' ORDER BY c1, c2;
 --sorted_result
 SELECT c2 FROM t4;
-UPDATE t4 SET c2='11:60:11' WHERE c1='100:04:04';
+UPDATE t4 SET c2='11:60:11' WHERE c1='100:04:04' ORDER BY c1, c2;
 --sorted_result
 SELECT c2 FROM t4;
 

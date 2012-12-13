@@ -106,8 +106,8 @@ ld_unique_error3_local : REPLACE INTO
 
 ### TRIGGER
 tr_delete : TRIGGER
-tr_delete_new_error : PASSING
-tr_insert : TRIGGER
+tr_delete_new_error : TRIGGER
+tr_insert : ISS 68
 tr_insert_after_error : TRIGGER
 tr_all_type_triggers : TRIGGER
 
@@ -150,268 +150,268 @@ tc_temporary_column : TEMPORARY
 tc_temporary_column_length : TEMPORARY
 in_string_set_enum_fail : SET
 
-### PASSING
-ta_add_column_middle : PASSING
-se_join_default : PASSING
-se_join_cross : PASSING
-fu_aggregate_min_number : PASSING
-fu_aggregate_sum_number : PASSING
-ld_all_number_string_calendar_types : PASSING
-re_number_range_set : PASSING
-in_number_unique_constraint_error : PASSING
-sp_alter : PASSING
-sp_cursor : PASSING
-sf_alter : PASSING
-sf_cursor : PASSING
-re_number_select : PASSING
-in_multicolumn_string_pk_constraint_ignore : PASSING
-in_multicolumn_string_unique_constraint_ignore : PASSING
-in_string_unique_constraint_duplicate_update : PASSING
-in_calendar_2_unique_constraints_duplicate_update : PASSING
-in_calendar_pk_constraint_duplicate_update : PASSING
-in_calendar_unique_constraint_duplicate_update : PASSING
-in_multicolumn_calendar_pk_constraint_duplicate_update : PASSING
-in_multicolumn_calendar_unique_constraint_duplicate_update : PASSING
-in_multicolumn_number_pk_constraint_duplicate_update : PASSING
-in_multicolumn_number_unique_constraint_duplicate_update : PASSING
-in_multicolumn_string_pk_constraint_duplicate_update : PASSING
-in_multicolumn_string_unique_constraint_duplicate_update : PASSING
-in_number_2_unique_constraints_duplicate_update : PASSING
-in_number_pk_constraint_duplicate_update : PASSING
-in_number_unique_constraint_duplicate_update : PASSING
-in_string_2_unique_constraints_duplicate_update : PASSING
-in_string_pk_constraint_duplicate_update : PASSING
-ix_index_non_string : PASSING
-ix_unique_non_string : PASSING
-re_number_range : PASSING
-re_string_range : PASSING
-re_string_range_set : PASSING
-in_lob_boundary_error : PASSING
-in_insert_select_unique_violation : PASSING
-up_calendar_range : PASSING
-de_truncate : PASSING
-in_insert_select : PASSING
-ld_less_columns : PASSING
-ld_more_columns_truncated : PASSING
-ld_null : PASSING
-ld_quote : PASSING
-ld_simple : PASSING
-ld_starting : PASSING
-se_string_from : PASSING
-se_string_groupby : PASSING
-se_string_having : PASSING
-se_string_limit : PASSING
-se_string_orderby : PASSING
-se_string_union : PASSING
-se_string_where : PASSING
-se_string_where_and : PASSING
-se_string_where_or : PASSING
-date_function : PASSING
-in_calendar_pk_constraint_error : PASSING
-in_calendar_pk_constraint_ignore : PASSING
-in_enum_null : PASSING
-in_number_length : PASSING
-in_number_null : PASSING
-in_number_pk_constraint_error : PASSING
-in_number_pk_constraint_ignore : PASSING
-in_number_unique_constraint_ignore : PASSING
-in_string_not_null : PASSING
-in_string_null : PASSING
-in_string_pk_constraint_error : PASSING
-in_string_pk_constraint_ignore : PASSING
-in_string_unique_constraint_error : PASSING
-in_string_unique_constraint_ignore : PASSING
-ps_string_not_null : PASSING
-ps_string_null : PASSING
-se_join_inner : PASSING
-se_join_left : PASSING
-se_join_left_outer : PASSING
-se_join_natural_left : PASSING
-se_join_natural_left_outer : PASSING
-se_join_natural_right : PASSING
-se_join_natural_right_outer : PASSING
-se_join_right : PASSING
-se_join_right_outer : PASSING
-se_join_straight : PASSING
-se_string_distinct : PASSING
-de_number_range : PASSING
-de_string_range : PASSING
-fu_aggregate_count_number : PASSING
-general_not_null : PASSING
-in_number_boundary_error : PASSING
-in_number_decimal_boundary_error : PASSING
-in_string_boundary_error : PASSING
-ps_number_length : PASSING
-in_multicolumn_calendar_pk_constraint_error : PASSING
-in_multicolumn_calendar_pk_constraint_ignore : PASSING
-in_multicolumn_calendar_unique_constraint_error : PASSING
-in_multicolumn_string_pk_constraint_error : PASSING
-in_multicolumn_number_unique_constraint_ignore : PASSING
-in_multicolumn_number_unique_constraint_error : PASSING
-in_multicolumn_number_pk_constraint_ignore : PASSING
-in_multicolumn_number_pk_constraint_error : PASSING
-in_multicolumn_calendar_unique_constraint_ignore : PASSING
-in_multicolumn_string_unique_constraint_error : PASSING
-ai_init_alter_table : PASSING
-ai_init_create_table : PASSING
-ai_init_insert_id : PASSING
-ai_reset_by_truncate : PASSING
-ai_init_insert : PASSING
-ai_overflow_error : PASSING
-ai_sql_auto_is_null : PASSING
-an_calendar : PASSING
-an_number : PASSING
-an_string : PASSING
-comment_column : PASSING
-comment_column2 : PASSING
-comment_index : PASSING
-comment_table : PASSING
-crash_manycolumns_number : PASSING
-crash_manytables_number : PASSING
-crash_manytables_string : PASSING
-datetime_function : PASSING
-db_alter_character_set : PASSING
-db_alter_character_set_collate : PASSING
-db_alter_collate_ascii : PASSING
-db_alter_collate_utf8 : PASSING
-db_create_character_set : PASSING
-db_create_character_set_collate : PASSING
-db_create_drop : PASSING
-db_create_error : PASSING
-db_create_error_reserved : PASSING
-db_create_if_not_exists : PASSING
-db_drop_error : PASSING
-db_use_error : PASSING
-de_multi_db_table : PASSING
-de_multi_db_table_using : PASSING
-de_multi_table : PASSING
-de_multi_table_using : PASSING
-de_autoinc : PASSING
-de_calendar_range : PASSING
-de_ignore : PASSING
-de_limit : PASSING
-de_quick : PASSING
-de_truncate_autoinc : PASSING
-fu_aggregate_avg_number : PASSING
-fu_aggregate_max_number : PASSING
-fu_aggregate_max_subquery : PASSING
-general_no_data : PASSING
-general_null : PASSING
-in_calendar_unique_constraint_error : PASSING
-in_calendar_unique_constraint_ignore : PASSING
-in_enum_null_boundary_error : PASSING
-in_enum_null_large_error : PASSING
-in_insert_select_autoinc : PASSING
-ix_drop : PASSING
-ix_drop_error : PASSING
-ix_index_decimals : PASSING
-ix_index_string : PASSING
-ix_index_string_length : PASSING
-ix_unique_decimals : PASSING
-ix_unique_string : PASSING
-ix_using_order : PASSING
-jp_comment_column : PASSING
-jp_comment_index : PASSING
-jp_comment_older_compatibility1 : PASSING
-jp_comment_table : PASSING
-ps_number_null : PASSING
-se_rowid : PASSING
-sf_simple1 : PASSING
-sp_simple1 : PASSING
-sq_all : PASSING
-sq_any : PASSING
-sq_corr : PASSING
-sq_error : PASSING
-sq_exists : PASSING
-sq_from : PASSING
-sq_in : PASSING
-sq_row : PASSING
-sq_scalar : PASSING
-sq_some : PASSING
-ta_2part_column_to_pk : PASSING
-ta_2part_diff_string_to_pk : PASSING
-ta_2part_diff_to_pk : PASSING
-ta_2part_string_to_pk : PASSING
-ta_3part_column_to_pk : PASSING
-ta_3part_string_to_pk : PASSING
-ta_add_column : PASSING
-ta_add_column2 : PASSING
-ta_add_column_first : PASSING
-ta_add_column_first2 : PASSING
-ta_add_column_middle2 : PASSING
-ta_add_string : PASSING
-ta_add_string2 : PASSING
-ta_add_string_first : PASSING
-ta_add_string_first2 : PASSING
-ta_add_string_middle : PASSING
-ta_add_string_middle2 : PASSING
-ta_add_string_unique_index : PASSING
-ta_add_unique_index : PASSING
-ta_column_from_unsigned : PASSING
-ta_column_from_zerofill : PASSING
-ta_column_to_index : PASSING
-ta_column_to_not_null : PASSING
-ta_column_to_null : PASSING
-ta_column_to_pk : PASSING
-ta_column_to_unsigned : PASSING
-ta_column_to_zerofill : PASSING
-ta_drop_column : PASSING
-ta_drop_index : PASSING
-ta_drop_pk_autoincrement : PASSING
-ta_drop_pk_number : PASSING
-ta_drop_pk_string : PASSING
-ta_drop_string_index : PASSING
-ta_rename : PASSING
-ta_set_drop_default : PASSING
-ta_string_drop_column : PASSING
-ta_string_to_index : PASSING
-ta_string_to_not_null : PASSING
-ta_string_to_null : PASSING
-ta_string_to_pk : PASSING
-tc_column_autoincrement : PASSING
-tc_column_comment : PASSING
-tc_column_comment_string : PASSING
-tc_column_default_decimal : PASSING
-tc_column_default_number : PASSING
-tc_column_default_string : PASSING
-tc_column_enum : PASSING
-tc_column_enum_long : PASSING
-tc_column_key : PASSING
-tc_column_key_length : PASSING
-tc_column_length : PASSING
-tc_column_length_decimals : PASSING
-tc_column_length_zero : PASSING
-tc_column_not_null : PASSING
-tc_column_null : PASSING
-tc_column_primary_key_number : PASSING
-tc_column_primary_key_string : PASSING
-tc_column_serial : PASSING
-tc_column_set : PASSING
-tc_column_set_long : PASSING
-tc_column_unique_key : PASSING
-tc_column_unique_key_string : PASSING
-tc_column_unsigned : PASSING
-tc_column_zerofill : PASSING
-tc_drop_table : PASSING
-tc_multicolumn_same : PASSING
-tc_multicolumn_same_string : PASSING
-tc_rename : PASSING
-tc_rename_across_database : PASSING
-tc_rename_error : PASSING
-tc_structure_comment : PASSING
-tc_structure_create_like : PASSING
-tc_structure_create_like_string : PASSING
-tc_structure_create_select : PASSING
-tc_structure_create_select_string : PASSING
-tc_structure_string_comment : PASSING
-time_function : PASSING
-tr_insert_old_error : PASSING
-tr_update : PASSING
-tr_update_after_error : PASSING
-up_ignore : PASSING
-up_limit : PASSING
-up_multi_db_table : PASSING
-up_multi_table : PASSING
-up_nullcheck : PASSING
-up_number_range : PASSING
-up_string_range : PASSING
+###
+ta_add_column_middle :
+se_join_default :
+se_join_cross :
+fu_aggregate_min_number :
+fu_aggregate_sum_number :
+ld_all_number_string_calendar_types :
+re_number_range_set :
+in_number_unique_constraint_error :
+sp_alter :
+sp_cursor :
+sf_alter :
+sf_cursor :
+re_number_select :
+in_multicolumn_string_pk_constraint_ignore :
+in_multicolumn_string_unique_constraint_ignore :
+in_string_unique_constraint_duplicate_update :
+in_calendar_2_unique_constraints_duplicate_update :
+in_calendar_pk_constraint_duplicate_update :
+in_calendar_unique_constraint_duplicate_update :
+in_multicolumn_calendar_pk_constraint_duplicate_update :
+in_multicolumn_calendar_unique_constraint_duplicate_update :
+in_multicolumn_number_pk_constraint_duplicate_update :
+in_multicolumn_number_unique_constraint_duplicate_update :
+in_multicolumn_string_pk_constraint_duplicate_update :
+in_multicolumn_string_unique_constraint_duplicate_update :
+in_number_2_unique_constraints_duplicate_update :
+in_number_pk_constraint_duplicate_update :
+in_number_unique_constraint_duplicate_update :
+in_string_2_unique_constraints_duplicate_update :
+in_string_pk_constraint_duplicate_update :
+ix_index_non_string :
+ix_unique_non_string :
+re_number_range :
+re_string_range :
+re_string_range_set :
+in_lob_boundary_error :
+in_insert_select_unique_violation :
+up_calendar_range :
+de_truncate :
+in_insert_select :
+ld_less_columns :
+ld_more_columns_truncated :
+ld_null :
+ld_quote :
+ld_simple :
+ld_starting :
+se_string_from :
+se_string_groupby :
+se_string_having :
+se_string_limit :
+se_string_orderby :
+se_string_union :
+se_string_where :
+se_string_where_and :
+se_string_where_or :
+date_function :
+in_calendar_pk_constraint_error :
+in_calendar_pk_constraint_ignore :
+in_enum_null :
+in_number_length :
+in_number_null :
+in_number_pk_constraint_error :
+in_number_pk_constraint_ignore :
+in_number_unique_constraint_ignore :
+in_string_not_null :
+in_string_null :
+in_string_pk_constraint_error :
+in_string_pk_constraint_ignore :
+in_string_unique_constraint_error :
+in_string_unique_constraint_ignore :
+ps_string_not_null :
+ps_string_null :
+se_join_inner :
+se_join_left :
+se_join_left_outer :
+se_join_natural_left :
+se_join_natural_left_outer :
+se_join_natural_right :
+se_join_natural_right_outer :
+se_join_right :
+se_join_right_outer :
+se_join_straight :
+se_string_distinct :
+de_number_range :
+de_string_range :
+fu_aggregate_count_number :
+general_not_null :
+in_number_boundary_error :
+in_number_decimal_boundary_error :
+in_string_boundary_error :
+ps_number_length :
+in_multicolumn_calendar_pk_constraint_error :
+in_multicolumn_calendar_pk_constraint_ignore :
+in_multicolumn_calendar_unique_constraint_error :
+in_multicolumn_string_pk_constraint_error :
+in_multicolumn_number_unique_constraint_ignore :
+in_multicolumn_number_unique_constraint_error :
+in_multicolumn_number_pk_constraint_ignore :
+in_multicolumn_number_pk_constraint_error :
+in_multicolumn_calendar_unique_constraint_ignore :
+in_multicolumn_string_unique_constraint_error :
+ai_init_alter_table :
+ai_init_create_table :
+ai_init_insert_id :
+ai_reset_by_truncate :
+ai_init_insert :
+ai_overflow_error :
+ai_sql_auto_is_null :
+an_calendar :
+an_number :
+an_string :
+comment_column :
+comment_column2 :
+comment_index :
+comment_table :
+crash_manycolumns_number :
+crash_manytables_number :
+crash_manytables_string :
+datetime_function :
+db_alter_character_set :
+db_alter_character_set_collate :
+db_alter_collate_ascii :
+db_alter_collate_utf8 :
+db_create_character_set :
+db_create_character_set_collate :
+db_create_drop :
+db_create_error :
+db_create_error_reserved :
+db_create_if_not_exists :
+db_drop_error :
+db_use_error :
+de_multi_db_table :
+de_multi_db_table_using :
+de_multi_table :
+de_multi_table_using :
+de_autoinc :
+de_calendar_range :
+de_ignore :
+de_limit :
+de_quick :
+de_truncate_autoinc :
+fu_aggregate_avg_number :
+fu_aggregate_max_number :
+fu_aggregate_max_subquery :
+general_no_data :
+general_null :
+in_calendar_unique_constraint_error :
+in_calendar_unique_constraint_ignore :
+in_enum_null_boundary_error :
+in_enum_null_large_error :
+in_insert_select_autoinc :
+ix_drop :
+ix_drop_error :
+ix_index_decimals :
+ix_index_string :
+ix_index_string_length :
+ix_unique_decimals :
+ix_unique_string :
+ix_using_order :
+jp_comment_column :
+jp_comment_index :
+jp_comment_older_compatibility1 :
+jp_comment_table :
+ps_number_null :
+se_rowid :
+sf_simple1 :
+sp_simple1 :
+sq_all :
+sq_any :
+sq_corr :
+sq_error :
+sq_exists :
+sq_from :
+sq_in :
+sq_row :
+sq_scalar :
+sq_some :
+ta_2part_column_to_pk :
+ta_2part_diff_string_to_pk :
+ta_2part_diff_to_pk :
+ta_2part_string_to_pk :
+ta_3part_column_to_pk :
+ta_3part_string_to_pk :
+ta_add_column :
+ta_add_column2 :
+ta_add_column_first :
+ta_add_column_first2 :
+ta_add_column_middle2 :
+ta_add_string :
+ta_add_string2 :
+ta_add_string_first :
+ta_add_string_first2 :
+ta_add_string_middle :
+ta_add_string_middle2 :
+ta_add_string_unique_index :
+ta_add_unique_index :
+ta_column_from_unsigned :
+ta_column_from_zerofill :
+ta_column_to_index :
+ta_column_to_not_null :
+ta_column_to_null :
+ta_column_to_pk :
+ta_column_to_unsigned :
+ta_column_to_zerofill :
+ta_drop_column :
+ta_drop_index :
+ta_drop_pk_autoincrement :
+ta_drop_pk_number :
+ta_drop_pk_string :
+ta_drop_string_index :
+ta_rename :
+ta_set_drop_default :
+ta_string_drop_column :
+ta_string_to_index :
+ta_string_to_not_null :
+ta_string_to_null :
+ta_string_to_pk :
+tc_column_autoincrement :
+tc_column_comment :
+tc_column_comment_string :
+tc_column_default_decimal :
+tc_column_default_number :
+tc_column_default_string :
+tc_column_enum :
+tc_column_enum_long :
+tc_column_key :
+tc_column_key_length :
+tc_column_length :
+tc_column_length_decimals :
+tc_column_length_zero :
+tc_column_not_null :
+tc_column_null :
+tc_column_primary_key_number :
+tc_column_primary_key_string :
+tc_column_serial :
+tc_column_set :
+tc_column_set_long :
+tc_column_unique_key :
+tc_column_unique_key_string :
+tc_column_unsigned :
+tc_column_zerofill :
+tc_drop_table :
+tc_multicolumn_same :
+tc_multicolumn_same_string :
+tc_rename :
+tc_rename_across_database :
+tc_rename_error :
+tc_structure_comment :
+tc_structure_create_like :
+tc_structure_create_like_string :
+tc_structure_create_select :
+tc_structure_create_select_string :
+tc_structure_string_comment :
+time_function :
+tr_insert_old_error :
+tr_update :
+tr_update_after_error :
+up_ignore :
+up_limit :
+up_multi_db_table :
+up_multi_table :
+up_nullcheck :
+up_number_range :
+up_string_range :
