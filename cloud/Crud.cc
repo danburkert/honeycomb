@@ -407,6 +407,7 @@ bool CloudHandler::row_has_duplicate_values(jobject value_map, jobject changedCo
 int CloudHandler::update_row(const uchar *old_row, uchar *new_row)
 {
   DBUG_ENTER("CloudHandler::update_row");
+  attach_thread();
 
   ha_statistic_increment(&SSV::ha_update_count);
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
@@ -422,7 +423,6 @@ int CloudHandler::update_row(const uchar *old_row, uchar *new_row)
     DBUG_RETURN(rc);
   }
 
-  attach_thread();
   rc = write_row(new_row, updated_fieldnames);
   this->flush_writes();
   detach_thread();
