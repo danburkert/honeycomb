@@ -21,6 +21,14 @@ jobject java_list_insert(jobject java_list, jobject value, JNIEnv* env)
   return env->CallObjectMethod(java_list, add_method, value);
 }
 
+jlong java_list_size(jobject java_list, JNIEnv* env)
+{
+  jclass list_class = env->FindClass(LIST_CLASS);
+  jmethodID size_method = env->GetMethodID(list_class, "size", "()I");
+
+  return env->CallLongMethod(java_list, size_method);
+}
+
 jobject create_java_boolean(jboolean boolean, JNIEnv* env)
 {
   jclass bool_class = env->FindClass("java/lang/Boolean");

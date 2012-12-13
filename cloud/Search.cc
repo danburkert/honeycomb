@@ -361,22 +361,3 @@ jbyteArray CloudHandler::find_duplicate_column_values(char* columns)
   return duplicate_value;
 }
 
-bool CloudHandler::row_has_duplicate_values(jobject value_map)
-{
-  this->flush_writes(); // Flush before checking for duplicates to make sure the changes are in HBase.
-  jclass adapter_class = this->adapter();
-  jmethodID has_duplicates_method = find_static_method(adapter_class, "findDuplicateKey", "(Ljava/lang/String;Ljava/util/Map;)Ljava/lang/String;", this->env);
-  jstring duplicate_column = (jstring) this->env->CallStaticObjectMethod(adapter_class, has_duplicates_method, this->table_name(), value_map);
-
-  bool error = duplicate_column != NULL;
-
-  if (error)
-  {
-    const char *key_name = this->java_to_string(duplicate_column);
-    this->failed_key_index = this->get_failed_key_index(key_name);
-
-    this->env->ReleaseStringUTFChars(duplicate_column, key_name);
-  }
-
-  return error;
-}
