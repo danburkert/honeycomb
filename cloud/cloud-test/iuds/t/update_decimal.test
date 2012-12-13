@@ -41,7 +41,7 @@ UPDATE t1 SET c1='10001.00001' WHERE c2 > 100 ORDER BY c2 LIMIT 1;
 SELECT c1,c2 FROM t1;
 
 # Update with arithmetic operations 
-UPDATE t1 SET c1=c2+c3 WHERE c3 < 10000;
+UPDATE t1 SET c1=c2+c3 WHERE c3 < 10000 ORDER BY c1, c2, c3, c4;
 --sorted_result
 SELECT * FROM t1;
 UPDATE t1 SET c2=c2+100 WHERE c1 >=100 ORDER BY c1 LIMIT 4;
@@ -49,39 +49,43 @@ UPDATE t1 SET c2=c2+100 WHERE c1 >=100 ORDER BY c1 LIMIT 4;
 SELECT * FROM t1;
 
 # Update with NULL ( NULL to number & number to NULL)
-UPDATE t1 SET c2=NULL WHERE c4=4;
+UPDATE t1 SET c2=NULL WHERE c4=4 ORDER BY c1, c2, c3, c4;
 --sorted_result
 SELECT * FROM t1;
-UPDATE t1 SET c2=1.0e+5 WHERE c2=NULL;
+UPDATE t1 SET c2=1.0e+5 WHERE c2=NULL ORDER BY c1, c2, c3, c4;
 --sorted_result
 SELECT * FROM t1;
 
 # Update negative value to unsigned column
-UPDATE t1 SET c1=-1.0e+2 WHERE c4=2;
+UPDATE t1 SET c1=-1.0e+2 WHERE c4=2 ORDER BY c1, c2, c3, c4;
 SHOW WARNINGS;
 --sorted_result
 SELECT * FROM t1;
-UPDATE t1 SET c1=1.0e+20 WHERE c4=2;
+UPDATE t1 SET c1=1.0e+20 WHERE c4=2 ORDER BY c1, c2, c3, c4;
 SHOW WARNINGS;
 --sorted_result
 SELECT * FROM t1;
 
 # Update range values
-UPDATE t1 SET c1=0.9999999999e+5 WHERE c3=1 AND c4=7;
+UPDATE t1 SET c1=0.9999999999e+5 WHERE c3=1 AND c4=7 ORDER BY c1, c2, c3, c4;
 --sorted_result
 SELECT * FROM t1;
-UPDATE t1 SET c1=1.2e+2,c2=c4+c2 WHERE c3=9999999999 OR c2=1.0e-5;
+UPDATE t1 SET c1=1.2e+2,c2=c4+c2 WHERE c3=9999999999 OR c2=1.0e-5 ORDER BY c1, c2, c3, c4;
 --sorted_result
 SELECT * FROM t1 WHERE c1=1.2e+2;
-UPDATE t1 SET c3=1234567890 WHERE c4 IN (4,5,6);
+UPDATE t1 SET c3=1234567890 WHERE c4 IN (4,5,6) ORDER BY c1, c2, c3, c4;
 --sorted_result
 SELECT * FROM t1;
 
 # Update outside range would be clipped to closest endpoints
-UPDATE t1 SET c1=99999.999999 WHERE c4=7;
+--disable_warnings
+UPDATE t1 SET c1=99999.999999 WHERE c4=7 ORDER BY c1, c2, c3, c4;
+--enable_warnings
 --sorted_result
 SELECT c1,c4 FROM t1;
-UPDATE t1 SET c2=-9999.0099 WHERE c4=5;
+--disable_warnings
+UPDATE t1 SET c2=-9999.0099 WHERE c4=5 ORDER BY c1, c2, c3, c4;
+--enable_warnings
 --sorted_result
 SELECT c2,c4 FROM t1;
 
@@ -89,8 +93,8 @@ SELECT c2,c4 FROM t1;
 SELECT c1 FROM t1 WHERE c1>1000;
 SET SQL_MODE=STRICT_ALL_TABLES;
 --error ER_BAD_NULL_ERROR
-UPDATE t1 SET c1=NULL WHERE c1>1000;
-UPDATE IGNORE t1 SET c1=NULL WHERE c1>1000;
+UPDATE t1 SET c1=NULL WHERE c1>1000 ORDER BY c1, c2, c3, c4;
+UPDATE IGNORE t1 SET c1=NULL WHERE c1>1000 ORDER BY c1, c2, c3, c4;
 --sorted_result
 SELECT c1 from t1 WHERE c1>1000;
 SET SQL_MODE=DEFAULT;
@@ -118,7 +122,9 @@ SELECT * FROM t2;
 SELECT * FROM t3;
 --sorted_result
 SELECT * FROM t4;
-UPDATE t1,t2,t3,t4 SET t2.c1=t2.c1+t3.c1, t3.c2=t3.c2-t2.c1, t4.c1=t1.c1*t1.c3 WHERE t1.c2 >'1111111111' AND t4.c2 < '8888888888' ;
+--disable_warnings
+UPDATE t1,t2,t3,t4 SET t2.c1=t2.c1+t3.c1, t3.c2=t3.c2-t2.c1, t4.c1=t1.c1*t1.c3 WHERE t1.c2 >'1111111111' AND t4.c2 < '8888888888';
+--enable_warnings
 --sorted_result
 SELECT * FROM t1;
 --sorted_result
@@ -134,7 +140,7 @@ INSERT INTO t3 VALUES ('44444.44444','4444444444',4),('55555.55555','5555555555'
 
 # Update using Const
 # EXPLAIN SELECT * FROM t2 WHERE t2.c1='22222.22222' AND t2.c3=2;
-UPDATE t2 SET t2.c1='44444.44444', t2.c3=4 WHERE t2.c1='22222.22222' AND t2.c3=2;
+UPDATE t2 SET t2.c1='44444.44444', t2.c3=4 WHERE t2.c1='22222.22222' AND t2.c3=2 ORDER BY c1, c2, c3;
 --sorted_result
 SELECT * FROM t2;
 
@@ -144,7 +150,7 @@ update t2 set t2.c1='99999.99999' where c1 BETWEEN '11111' AND '44444';
 --sorted_result
 SELECT * FROM t2;
 # EXPLAIN SELECT * FROM t2 WHERE c1 IN ('44444.44444','99999.99999');
-UPDATE t2 SET c1=c1-1,c2=c2-1 WHERE c1 IN ('44444.44444','99999.99999');
+UPDATE t2 SET c1=c1-1,c2=c2-1 WHERE c1 IN ('44444.44444','99999.99999') ORDER BY c1, c2, c3;
 --sorted_result
 SELECT * FROM t2;
 
@@ -158,16 +164,16 @@ INSERT INTO t3 VALUES ('11111.11111','4444444444',1),('55555.55555','5555555555'
 UPDATE t2,t3 SET t3.c1='22222.22222' WHERE t2.c1=t3.c1 AND t2.c3=t3.c3;
 
 #Updating with invalid values
-UPDATE t1 SET c3='asdf' WHERE c1='11111.11111';
+UPDATE t1 SET c3='asdf' WHERE c1='11111.11111' ORDER BY c1, c2, c3, c4;
 --sorted_result
 SELECT c3 FROM t1;
-UPDATE t1 SET c2="1 e 1" WHERE c4=2;
+UPDATE t1 SET c2="1 e 1" WHERE c4=2 ORDER BY c1, c2, c3, c4;
 --sorted_result
 SELECT c2 FROM t1;
 
 #Duplicate keys
 --error ER_DUP_ENTRY
-UPDATE t4 SET c1=88888.88888,c3=8 WHERE c3=7;
+UPDATE t4 SET c1=88888.88888,c3=8 WHERE c3=7 ORDER BY c1, c2, c3;
 
 --sorted_result
 SELECT * FROM t1;
@@ -221,7 +227,7 @@ UPDATE t1 SET c1='10001.00001' WHERE c2 > 100 ORDER BY c2 LIMIT 1;
 SELECT c1,c2 FROM t1;
 
 # Update with arithmetic operations 
-UPDATE t1 SET c1=c2+c3 WHERE c3 < 10000;
+UPDATE t1 SET c1=c2+c3 WHERE c3 < 10000 ORDER BY c1, c2, c3, c4;
 --sorted_result
 SELECT * FROM t1;
 UPDATE t1 SET c2=c2+100 WHERE c1 >=100 ORDER BY c1 LIMIT 4;
@@ -229,39 +235,45 @@ UPDATE t1 SET c2=c2+100 WHERE c1 >=100 ORDER BY c1 LIMIT 4;
 SELECT * FROM t1;
 
 # Update with NULL ( NULL to number & number to NULL)
-UPDATE t1 SET c2=NULL WHERE c4=4;
+UPDATE t1 SET c2=NULL WHERE c4=4 ORDER BY c1, c2, c3, c4;
 --sorted_result
 SELECT * FROM t1;
-UPDATE t1 SET c2=1.0e+5 WHERE c2=NULL;
+UPDATE t1 SET c2=1.0e+5 WHERE c2=NULL ORDER BY c1, c2, c3, c4;
 --sorted_result
 SELECT * FROM t1;
 
 # Update negative value to unsigned column
-UPDATE t1 SET c1=-1.0e+2 WHERE c4=2;
+UPDATE t1 SET c1=-1.0e+2 WHERE c4=2 ORDER BY c1, c2, c3, c4;
 SHOW WARNINGS;
 --sorted_result
 SELECT * FROM t1;
-UPDATE t1 SET c1=1.0e+20 WHERE c4=2;
+UPDATE t1 SET c1=1.0e+20 WHERE c4=2 ORDER BY c1, c2, c3, c4;
 SHOW WARNINGS;
 --sorted_result
 SELECT * FROM t1;
 
 # Update range values
-UPDATE t1 SET c1=0.9999999999e+5 WHERE c3=1 AND c4=7;
+UPDATE t1 SET c1=0.9999999999e+5 WHERE c3=1 AND c4=7 ORDER BY c1, c2, c3, c4;
 --sorted_result
 SELECT * FROM t1;
-UPDATE t1 SET c1=1.2e+2,c2=c4+c2 WHERE c3=9999999999 OR c2=1.0e-5;
+UPDATE t1 SET c1=1.2e+2,c2=c4+c2 WHERE c3=9999999999 OR c2=1.0e-5 ORDER BY c1, c2, c3, c4;
 --sorted_result
 SELECT * FROM t1 WHERE c1=1.2e+2;
-UPDATE t1 SET c3=1234567890 WHERE c4 IN (4,5,6);
+--disable_warnings
+UPDATE t1 SET c3=1234567890 WHERE c4 IN (4,5,6) ORDER BY c1, c2, c3, c4;
+--enable_warnings
 --sorted_result
 SELECT * FROM t1;
 
 # Update outside range would be clipped to closest endpoints
-UPDATE t1 SET c1=99999.999999 WHERE c4=7;
+--disable_warnings
+UPDATE t1 SET c1=99999.999999 WHERE c4=7 ORDER BY c1, c2, c3, c4;
+--enable_warnings
 --sorted_result
 SELECT c1,c4 FROM t1;
-UPDATE t1 SET c2=-9999.0099 WHERE c4=5;
+--disable_warnings
+UPDATE t1 SET c2=-9999.0099 WHERE c4=5 ORDER BY c1, c2, c3, c4;
+--enable_warnings
 --sorted_result
 SELECT c2,c4 FROM t1;
 
@@ -269,8 +281,10 @@ SELECT c2,c4 FROM t1;
 SELECT c1 FROM t1 WHERE c1>1000;
 SET SQL_MODE=STRICT_ALL_TABLES;
 --error ER_BAD_NULL_ERROR
-UPDATE t1 SET c1=NULL WHERE c1>1000;
-UPDATE IGNORE t1 SET c1=NULL WHERE c1>1000;
+UPDATE t1 SET c1=NULL WHERE c1>1000 ORDER BY c1, c2, c3, c4;
+--disable_warnings
+UPDATE IGNORE t1 SET c1=NULL WHERE c1>1000 ORDER BY c1, c2, c3, c4;
+--enable_warnings
 --sorted_result
 SELECT c1 from t1 WHERE c1>1000;
 SET SQL_MODE=DEFAULT;
@@ -301,7 +315,9 @@ SELECT * FROM t3;
 --replace_result 88888.89063 88888.89062
 --sorted_result
 SELECT * FROM t4;
+--disable_warnings
 UPDATE t1,t2,t3,t4 SET t2.c1=t2.c1+t3.c1, t3.c2=t3.c2-t2.c1, t4.c1=t1.c1*t1.c3 WHERE t1.c2 >'1111111111' AND t4.c2 < '8888888888' ;
+--enable_warnings
 --replace_result 88888.89063 88888.89062
 --sorted_result
 SELECT * FROM t1;
@@ -347,7 +363,7 @@ UPDATE t2,t3 SET t3.c1='22222.22222' WHERE t2.c1=t3.c1 AND t2.c3=t3.c3;
 UPDATE t1 SET c3='asdf' WHERE c1='11111.11111';
 --sorted_result
 SELECT c3 FROM t1;
-UPDATE t1 SET c2="1 e 1" WHERE c4=2;
+UPDATE t1 SET c2="1 e 1" WHERE c4=2 ORDER BY c1, c2, c3, c4;
 --replace_result 88888.89063 88888.89062
 --sorted_result
 SELECT c2 FROM t1;
@@ -410,7 +426,7 @@ UPDATE t1 SET c1='10001.00001' WHERE c2 > 100 ORDER BY c2 LIMIT 1;
 SELECT c1,c2 FROM t1;
 
 # Update with arithmetic operations 
-UPDATE t1 SET c1=c2+c3 WHERE c3 < 10000;
+UPDATE t1 SET c1=c2+c3 WHERE c3 < 10000 ORDER BY c1, c2, c3, c4;
 --sorted_result
 SELECT * FROM t1;
 UPDATE t1 SET c2=c2+100 WHERE c1 >=100 ORDER BY c1 LIMIT 4;
@@ -418,39 +434,43 @@ UPDATE t1 SET c2=c2+100 WHERE c1 >=100 ORDER BY c1 LIMIT 4;
 SELECT * FROM t1;
 
 # Update with NULL ( NULL to number & number to NULL)
-UPDATE t1 SET c2=NULL WHERE c4=4;
+UPDATE t1 SET c2=NULL WHERE c4=4 ORDER BY c1, c2, c3, c4;
 --sorted_result
 SELECT * FROM t1;
-UPDATE t1 SET c2=1.0e+5 WHERE c2=NULL;
+UPDATE t1 SET c2=1.0e+5 WHERE c2=NULL ORDER BY c1, c2, c3, c4;
 --sorted_result
 SELECT * FROM t1;
 
 # Update negative value to unsigned column
-UPDATE t1 SET c1=-1.0e+2 WHERE c4=2;
+UPDATE t1 SET c1=-1.0e+2 WHERE c4=2 ORDER BY c1, c2, c3, c4;
 SHOW WARNINGS;
 --sorted_result
 SELECT * FROM t1;
-UPDATE t1 SET c1=1.0e+20 WHERE c4=2;
+UPDATE t1 SET c1=1.0e+20 WHERE c4=2 ORDER BY c1, c2, c3, c4;
 SHOW WARNINGS;
 --sorted_result
 SELECT * FROM t1;
 
 # Update range values
-UPDATE t1 SET c1=0.9999999999e+5 WHERE c3=1 AND c4=7;
+UPDATE t1 SET c1=0.9999999999e+5 WHERE c3=1 AND c4=7 ORDER BY c1, c2, c3, c4;
 --sorted_result
 SELECT * FROM t1;
-UPDATE t1 SET c1=1.2e+2,c2=c4+c2 WHERE c3=9999999999 OR c2=1.0e-5;
+UPDATE t1 SET c1=1.2e+2,c2=c4+c2 WHERE c3=9999999999 OR c2=1.0e-5 ORDER BY c1, c2, c3, c4;
 --sorted_result
 SELECT * FROM t1 WHERE c1=1.2e+2;
-UPDATE t1 SET c3=1234567890 WHERE c4 IN (4,5,6);
+UPDATE t1 SET c3=1234567890 WHERE c4 IN (4,5,6) ORDER BY c1, c2, c3, c4;
 --sorted_result
 SELECT * FROM t1;
 
 # Update outside range would be clipped to closest endpoints
-UPDATE t1 SET c1=99999.999999 WHERE c4=7;
+--disable_warnings
+UPDATE t1 SET c1=99999.999999 WHERE c4=7 ORDER BY c1, c2, c3, c4;
+--enable_warnings
 --sorted_result
 SELECT c1,c4 FROM t1;
-UPDATE t1 SET c2=-9999.0099 WHERE c4=5;
+--disable_warnings
+UPDATE t1 SET c2=-9999.0099 WHERE c4=5 ORDER BY c1, c2, c3, c4;
+--enable_warnings
 --sorted_result
 SELECT c2,c4 FROM t1;
 
@@ -458,8 +478,8 @@ SELECT c2,c4 FROM t1;
 SELECT c1 FROM t1 WHERE c1>1000;
 SET SQL_MODE=STRICT_ALL_TABLES;
 --error ER_BAD_NULL_ERROR
-UPDATE t1 SET c1=NULL WHERE c1>1000;
-UPDATE IGNORE t1 SET c1=NULL WHERE c1>1000;
+UPDATE t1 SET c1=NULL WHERE c1>1000 ORDER BY c1, c2, c3, c4;
+UPDATE IGNORE t1 SET c1=NULL WHERE c1>1000 ORDER BY c1, c2, c3, c4;
 --sorted_result
 SELECT c1 from t1 WHERE c1>1000;
 SET SQL_MODE=DEFAULT;
@@ -487,7 +507,9 @@ SELECT * FROM t2;
 SELECT * FROM t3;
 --sorted_result
 SELECT * FROM t4;
-UPDATE t1,t2,t3,t4 SET t2.c1=t2.c1+t3.c1, t3.c2=t3.c2-t2.c1, t4.c1=t1.c1*t1.c3 WHERE t1.c2 >'1111111111' AND t4.c2 < '8888888888' ;
+--disable_warnings
+UPDATE t1,t2,t3,t4 SET t2.c1=t2.c1+t3.c1, t3.c2=t3.c2-t2.c1, t4.c1=t1.c1*t1.c3 WHERE t1.c2 >'1111111111' AND t4.c2 < '8888888888';
+--enable_warnings
 --sorted_result
 SELECT * FROM t1;
 --sorted_result
@@ -530,7 +552,7 @@ UPDATE t2,t3 SET t3.c1='22222.22222' WHERE t2.c1=t3.c1 AND t2.c3=t3.c3;
 UPDATE t1 SET c3='asdf' WHERE c1='11111.11111';
 --sorted_result
 SELECT c3 FROM t1;
-UPDATE t1 SET c2="1 e 1" WHERE c4=2;
+UPDATE t1 SET c2="1 e 1" WHERE c4=2 ORDER BY c1, c2, c3, c4;
 --sorted_result
 SELECT c2 FROM t1;
 
