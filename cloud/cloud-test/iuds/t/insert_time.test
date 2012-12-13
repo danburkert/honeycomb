@@ -1053,6 +1053,7 @@ SELECT * FROM t4 WHERE c2='07:23:55' /* Returns 1 row with values for other colu
 # Test 'INSERT INTO SELECT FROM'
 CREATE TABLE t5(c1 TIME NOT NULL, c2 TIME NULL, c3 DATE, INDEX idx(c1,c2));
 INSERT INTO t5 SELECT * FROM t4;
+--sorted_result
 SELECT * FROM t5;
 TRUNCATE TABLE t5;
 INSERT INTO t5 SELECT * FROM t4 WHERE c1 >='12colon34colon56';
