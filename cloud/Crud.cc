@@ -179,7 +179,7 @@ int CloudHandler::write_row(uchar *buf)
   return rc;
 }
 
-int CloudHandler::write_row(uchar* buf, char* updated_fields)
+int CloudHandler::write_row(uchar* buf, jobject updated_fields)
 {
   DBUG_ENTER("CloudHandler::write_row");
   if (share->crashed)
@@ -235,6 +235,7 @@ int CloudHandler::write_row(uchar* buf, char* updated_fields)
     case MYSQL_TYPE_INT24:
     case MYSQL_TYPE_YEAR:
     case MYSQL_TYPE_ENUM:
+    case MYSQL_TYPE_TIME: // Time is a special case for sorting
     {
       long long integral_value = field->val_int();
 
@@ -276,7 +277,6 @@ int CloudHandler::write_row(uchar* buf, char* updated_fields)
       break;
     case MYSQL_TYPE_DATE:
     case MYSQL_TYPE_NEWDATE:
-    case MYSQL_TYPE_TIME:
     case MYSQL_TYPE_DATETIME:
     case MYSQL_TYPE_TIMESTAMP:
     {
@@ -342,19 +342,18 @@ int CloudHandler::write_row(uchar* buf, char* updated_fields)
     int command = thd_sql_command(thd);
     if(command == SQLCOM_UPDATE)
     {
-      if (this->row_has_duplicate_values(unique_values_map))
+      if (this->row_has_duplicate_values(unique_values_map, updated_fields))
       {
         DBUG_RETURN(HA_ERR_FOUND_DUPP_KEY);
       }
     }
 
-    jmethodID update_row_method = find_static_method(adapter_class, "updateRow", "(JLjava/lang/String;Ljava/lang/String;Ljava/util/Map;)V", env);
-    jstring fields_changed = string_to_java_string(updated_fields);
-    this->env->CallStaticBooleanMethod(adapter_class, update_row_method, this->curr_scan_id, fields_changed, table_name, java_row_map);
+    jmethodID update_row_method = find_static_method(adapter_class, "updateRow", "(JLjava/util/List;Ljava/lang/String;Ljava/util/Map;)V", env);
+    this->env->CallStaticBooleanMethod(adapter_class, update_row_method, this->curr_scan_id, updated_fields, table_name, java_row_map);
   }
   else
   {
-    if (this->row_has_duplicate_values(unique_values_map))
+    if (this->row_has_duplicate_values(unique_values_map, updated_fields))
     {
       DBUG_RETURN(HA_ERR_FOUND_DUPP_KEY);
     }
@@ -371,6 +370,36 @@ int CloudHandler::write_row(uchar* buf, char* updated_fields)
   DBUG_RETURN(0);
 }
 
+bool CloudHandler::row_has_duplicate_values(jobject value_map, jobject changedColumns)
+{
+  this->flush_writes(); // Flush before checking for duplicates to make sure the changes are in HBase.
+  jclass adapter_class = this->adapter();
+  jmethodID has_duplicates_method;
+  jstring duplicate_column;
+  if(changedColumns == NULL)
+  {
+    has_duplicates_method = find_static_method(adapter_class, "findDuplicateKey", "(Ljava/lang/String;Ljava/util/Map;)Ljava/lang/String;", this->env);
+    duplicate_column = (jstring) this->env->CallStaticObjectMethod(adapter_class, has_duplicates_method, this->table_name(), value_map);
+  }
+  else
+  {
+    has_duplicates_method = find_static_method(adapter_class, "findDuplicateKey", "(Ljava/lang/String;Ljava/util/Map;Ljava/util/List;)Ljava/lang/String;", this->env);
+    duplicate_column = (jstring) this->env->CallStaticObjectMethod(adapter_class, has_duplicates_method, this->table_name(), value_map, changedColumns);
+  }
+
+  bool error = duplicate_column != NULL;
+
+  if (error)
+  {
+    const char *key_name = this->java_to_string(duplicate_column);
+    this->failed_key_index = this->get_failed_key_index(key_name);
+
+    this->env->ReleaseStringUTFChars(duplicate_column, key_name);
+  }
+
+  return error;
+}
+
 /*
  This will be called in a table scan right before the previous ::rnd_next()
  call.
@@ -384,28 +413,28 @@ int CloudHandler::update_row(const uchar *old_row, uchar *new_row)
     table->timestamp_field->set_time();
 
   int rc = 0;
-  String updated_fieldnames;
-  this->collect_changed_fields(&updated_fieldnames, old_row, new_row);
-  if(updated_fieldnames.length() == 0)
+  jobject updated_fieldnames = create_java_list(this->env);
+  this->collect_changed_fields(updated_fieldnames, old_row, new_row);
+  jlong size = java_list_size(updated_fieldnames, this->env);
+  if(size == 0)
   {
     // No fields have actually changed. Don't write a new row.
     DBUG_RETURN(rc);
   }
 
   attach_thread();
-  rc = write_row(new_row, updated_fieldnames.c_ptr());
+  rc = write_row(new_row, updated_fieldnames);
   this->flush_writes();
   detach_thread();
 
   DBUG_RETURN(rc);
 }
 
-void CloudHandler::collect_changed_fields(String* updated_fields, const uchar* old_row, uchar* new_row)
+void CloudHandler::collect_changed_fields(jobject updated_fields, const uchar* old_row, uchar* new_row)
 {
   typedef unsigned long int ulint;
   uint n_fields = table->s->fields;
   const ulint null_field = 0xFFFFFFFF;
-  bool any_changes = false;
   for (int i = 0; i < n_fields; i++)
   {
     Field* field = table->field[i];
@@ -437,14 +466,8 @@ void CloudHandler::collect_changed_fields(String* updated_fields, const uchar* o
     bool original_not_null_and_field_has_changed = old_field_length != null_field && 0 != memcmp(old_field, new_field, old_field_length);
     if (field_lengths_are_different || original_not_null_and_field_has_changed)
     {
-      updated_fields->append(field->field_name, strlen(field->field_name));
-      updated_fields->append(",", 1);
-      any_changes = true;
+      java_list_insert(updated_fields, string_to_java_string(field->field_name), this->env);
     }
-  }
-  if(any_changes)
-  {
-    updated_fields->chop();
   }
 }
 

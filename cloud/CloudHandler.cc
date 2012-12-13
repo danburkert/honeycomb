@@ -89,10 +89,12 @@ void CloudHandler::store_field_value(Field *field, char *val, int val_length)
     {
       if (type == MYSQL_TYPE_TIME)
       {
-        MYSQL_TIME mysql_time;
-        int warning;
-        str_to_time(val, val_length, &mysql_time, &warning);
-        field->store_time(&mysql_time, mysql_time.time_type);
+        long long long_value = *(long long*) val;
+        if (is_little_endian())
+        {
+          long_value = __builtin_bswap64(long_value);
+        }
+        field->store(long_value, false);
       }
       else
       {

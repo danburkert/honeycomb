@@ -148,6 +148,7 @@ uchar* create_key_copy(Field* index_field, const uchar* key, uint* key_len, THD*
     case MYSQL_TYPE_LONG:
     case MYSQL_TYPE_LONGLONG:
     case MYSQL_TYPE_ENUM:
+    case MYSQL_TYPE_TIME:
       {
         key_copy = new uchar[sizeof(long long)];
         const bool is_signed = !is_unsigned_field(index_field);
@@ -199,7 +200,6 @@ uchar* create_key_copy(Field* index_field, const uchar* key, uint* key_len, THD*
       }
     case MYSQL_TYPE_DATE:
     case MYSQL_TYPE_DATETIME:
-    case MYSQL_TYPE_TIME:
     case MYSQL_TYPE_TIMESTAMP:
     case MYSQL_TYPE_NEWDATE:
       {
@@ -219,9 +219,6 @@ uchar* create_key_copy(Field* index_field, const uchar* key, uint* key_len, THD*
             break;
           case MYSQL_TYPE_TIMESTAMP:
             extract_mysql_timestamp((long) uint4korr(key), &mysql_time, thd);
-            break;
-          case MYSQL_TYPE_TIME:
-            extract_mysql_time((long) sint3korr(key), &mysql_time);
             break;
           case MYSQL_TYPE_DATETIME:
             extract_mysql_datetime((ulonglong) uint8korr(key), &mysql_time);

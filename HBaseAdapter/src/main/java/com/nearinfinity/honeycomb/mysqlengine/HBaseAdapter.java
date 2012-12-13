@@ -214,7 +214,7 @@ public class HBaseAdapter {
         return true;
     }
 
-    public static void updateRow(long scanId, String changedFields, String tableName, Map<String, byte[]> values)
+    public static void updateRow(long scanId, List<String> changedFields, String tableName, Map<String, byte[]> values)
             throws HBaseAdapterException {
         try {
             ActiveScan activeScan = getActiveScanForId(scanId);
@@ -316,6 +316,16 @@ public class HBaseAdapter {
             throws HBaseAdapterException {
         try {
             return client.findDuplicateKey(tableName, values);
+        } catch (Throwable e) {
+            logger.error("Exception:", e);
+            throw new HBaseAdapterException("hasDuplicateValues", e);
+        }
+    }
+
+    public static String findDuplicateKey(String tableName, Map<String, byte[]> values, List<String> changedColumns)
+            throws HBaseAdapterException {
+        try {
+            return client.findDuplicateKeyOnUpdate(tableName, values, changedColumns);
         } catch (Throwable e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("hasDuplicateValues", e);
