@@ -13,9 +13,8 @@ public class DeleteListFactory {
         Map<String, byte[]> values = ResultParser.parseDataRow(result, info);
         Set<String> columnNames = info.getColumnNames();
         for (String columnName : columnNames) {
-            ColumnMetadata metadata = info.getColumnMetadata(columnName);
             if (!values.containsKey(columnName)) {
-                values.put(columnName, new byte[metadata.getMaxLength()]);
+                values.put(columnName, null);
             }
         }
 
