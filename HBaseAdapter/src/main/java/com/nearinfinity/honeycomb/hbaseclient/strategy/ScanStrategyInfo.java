@@ -6,10 +6,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.nearinfinity.honeycomb.hbaseclient.KeyValue;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public final class ScanStrategyInfo {
     private final String tableName;
@@ -25,12 +22,10 @@ public final class ScanStrategyInfo {
         this.tableName = tableName;
         this.columnNames = columnNames;
         this.keyValues = keyValues;
-        ImmutableMap.Builder<String, byte[]> builder = ImmutableMap.builder();
+        keyValueMap = new HashMap<String, byte[]>();
         for (KeyValue keyValue : keyValues) {
-            builder.put(keyValue.key(), keyValue.value());
+            keyValueMap.put(keyValue.key(), keyValue.value());
         }
-
-        keyValueMap = builder.build();
     }
 
     public final String tableName() {

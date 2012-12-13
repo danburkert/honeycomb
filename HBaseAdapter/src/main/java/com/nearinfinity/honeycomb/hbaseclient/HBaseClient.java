@@ -296,6 +296,14 @@ public class HBaseClient {
         for (String changedField : changedFields) {
             oldRow.put(changedField, newValues.get(changedField)); // Hack around MySQL setting field->is_null when actually not.
         }
+
+        TableInfo info = getTableInfo(tableName);
+        Set<String> columnNames = info.getColumnNames();
+        for (String columnName : columnNames) {
+            if (!oldRow.containsKey(columnName)) {
+                oldRow.put(columnName, null); // Nulls need to be transferred otherwise writeRow loses them.
+            }
+        }
         writeRow(tableName, oldRow);
     }
 
@@ -457,15 +465,22 @@ public class HBaseClient {
     }
 
     private <K, V> Map<K, V> selectKeys(Map<K, V> map, Iterable<K> keys) {
-        ImmutableMap.Builder<K, V> builder = new ImmutableMap.Builder<K, V>();
+        Map<K, V> subset = new HashMap<K, V>();
         for (K key : keys) {
-            builder.put(key, map.get(key));
+            V value = map.get(key);
+            if (map.containsKey(key) && value != null) {
+                subset.put(key, value);
+            }
         }
 
-        return builder.build();
+        return subset;
     }
 
     public String findDuplicateKeyOnUpdate(final String tableName, final Map<String, byte[]> values, List<String> changedColumns) throws IOException {
+        if (values.isEmpty()) {
+            return null;
+        }
+
         Map<String, byte[]> subMap = selectKeys(values, changedColumns);
         return findDuplicateKey(tableName, subMap);
     }
