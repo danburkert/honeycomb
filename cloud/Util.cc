@@ -160,8 +160,16 @@ uchar* create_key_copy(Field* index_field, const uchar* key, uint* key_len, THD*
     case MYSQL_TYPE_YEAR:
       {
         key_copy = new uchar[sizeof(long long)];
-        // It comes to us as one byte, need to cast it to int and add 1900
-        uint32_t int_val = (uint32_t) key[0] + 1900;
+        uint32_t int_val; 
+        if(key[0] == 0)
+        {
+          int_val = 0;
+        }
+        else
+        {
+          // It comes to us as one byte, need to cast it to int and add 1900
+          int_val = (uint32_t) key[0] + 1900;
+        }
 
         bytes_to_long((uchar *) &int_val, sizeof(uint32_t), false, key_copy);
         *key_len = sizeof(long long);
