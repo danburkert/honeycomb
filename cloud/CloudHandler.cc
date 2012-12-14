@@ -87,7 +87,7 @@ void CloudHandler::store_field_value(Field *field, char *val, int val_length)
         long long long_value = *(long long*) val;
         if (is_little_endian())
         {
-          long_value = __builtin_bswap64(long_value);
+          long_value = bswap64(long_value);
         }
 
         field->store(long_value, false);
@@ -104,7 +104,7 @@ void CloudHandler::store_field_value(Field *field, char *val, int val_length)
         long long long_value = *(long long*) val;
         if (is_little_endian())
         {
-          long_value = __builtin_bswap64(long_value);
+          long_value = bswap64(long_value);
         }
         field->store(long_value, false);
       }
@@ -132,7 +132,7 @@ void CloudHandler::store_field_value(Field *field, char *val, int val_length)
       if (is_little_endian())
       {
         long long* long_ptr = (long long*) val;
-        longlong swapped_long = __builtin_bswap64(*long_ptr);
+        longlong swapped_long = bswap64(*long_ptr);
         double_value = *(double*) &swapped_long;
       } else
       {

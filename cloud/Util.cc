@@ -1,5 +1,10 @@
 #include "Util.h"
 
+uint64_t bswap64(uint64_t x)
+{
+	return __builtin_bswap64(x);
+}
+
 bool is_unsigned_field(Field *field)
 {
   ha_base_keytype keyType = field->key_type();
