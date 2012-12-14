@@ -244,7 +244,7 @@ int CloudHandler::write_row(uchar* buf, jobject updated_fields)
 
       if (is_little_endian())
       {
-        integral_value = __builtin_bswap64(integral_value);
+        integral_value = bswap64(integral_value);
       }
       actualFieldSize = sizeof integral_value;
       byte_val = (uchar*) my_malloc(actualFieldSize, MYF(MY_WME));
@@ -262,7 +262,7 @@ int CloudHandler::write_row(uchar* buf, jobject updated_fields)
 
       if (is_little_endian())
       {
-        *fp_ptr = __builtin_bswap64(*fp_ptr);
+        *fp_ptr = bswap64(*fp_ptr);
       }
       actualFieldSize = sizeof fp_value;
       byte_val = (uchar*) my_malloc(actualFieldSize, MYF(MY_WME));
