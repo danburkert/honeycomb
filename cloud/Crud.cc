@@ -1,31 +1,5 @@
 #include "CloudHandler.h"
 
-void CloudHandler::start_bulk_insert(ha_rows rows)
-{
-  DBUG_ENTER("CloudHandler::start_bulk_insert");
-
-  attach_thread();
-  //Logging::info("%d rows to be inserted.", rows);
-
-  DBUG_VOID_RETURN;
-}
-
-int CloudHandler::end_bulk_insert()
-{
-  DBUG_ENTER("CloudHandler::end_bulk_insert");
-
-  this->flush_writes();
-  jclass adapter_class = this->adapter();
-  jmethodID update_count_method = find_static_method(adapter_class, "incrementRowCount", "(Ljava/lang/String;J)V",this->env);
-  jstring table_name = this->table_name();
-  this->env->CallStaticVoidMethod(adapter_class, update_count_method,
-      table_name, (jlong) this->rows_written);
-  this->rows_written = 0;
-
-  detach_thread();
-  DBUG_RETURN(0);
-}
-
 jobject CloudHandler::create_multipart_keys(TABLE* table_arg)
 {
   uint keys = table_arg->s->keys;
@@ -173,9 +147,7 @@ int CloudHandler::rename_table(const char *from, const char *to)
 
 int CloudHandler::write_row(uchar *buf)
 {
-  attach_thread();
   int rc = write_row(buf, NULL);
-  detach_thread();
   return rc;
 }
 
@@ -407,7 +379,6 @@ bool CloudHandler::row_has_duplicate_values(jobject value_map, jobject changedCo
 int CloudHandler::update_row(const uchar *old_row, uchar *new_row)
 {
   DBUG_ENTER("CloudHandler::update_row");
-  attach_thread();
 
   ha_statistic_increment(&SSV::ha_update_count);
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
@@ -425,7 +396,6 @@ int CloudHandler::update_row(const uchar *old_row, uchar *new_row)
 
   rc = write_row(new_row, updated_fieldnames);
   this->flush_writes();
-  detach_thread();
 
   DBUG_RETURN(rc);
 }
@@ -473,7 +443,6 @@ void CloudHandler::collect_changed_fields(jobject updated_fields, const uchar* o
 
 int CloudHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add)
 {
-  attach_thread();
   for(uint key = 0; key < num_of_keys; key++)
   {
     KEY* pos = key_info + key;
@@ -508,14 +477,21 @@ int CloudHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, h
     ARRAY_DELETE(index_columns);
   }
 
-  detach_thread();
   return 0;
 }
 
+jbyteArray CloudHandler::find_duplicate_column_values(char* columns)
+{
+  jclass adapter = this->adapter();
+  jmethodID column_has_duplicates_method = find_static_method(adapter, "findDuplicateValue", "(Ljava/lang/String;Ljava/lang/String;)[B",this->env);
+  jbyteArray duplicate_value = (jbyteArray) this->env->CallStaticObjectMethod(adapter, column_has_duplicates_method, this->table_name(), string_to_java_string(columns));
+
+  return duplicate_value;
+}
+
+
 int CloudHandler::prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys)
 {
-  attach_thread();
-
   jclass adapter = this->adapter();
   jmethodID add_index_method = find_static_method(adapter, "dropIndex", "(Ljava/lang/String;Ljava/lang/String;)V",this->env);
 
@@ -532,38 +508,16 @@ int CloudHandler::prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_o
 int CloudHandler::delete_row(const uchar *buf)
 {
   DBUG_ENTER("CloudHandler::delete_row");
-  attach_thread();
   ha_statistic_increment(&SSV::ha_delete_count);
   jclass adapter_class = this->adapter();
   jmethodID delete_row_method = find_static_method(adapter_class, "deleteRow", "(J)Z",this->env);
   this->env->CallStaticBooleanMethod(adapter_class, delete_row_method, this->curr_scan_id);
-  detach_thread();
-  DBUG_RETURN(0);
-}
-
-bool CloudHandler::start_bulk_delete()
-{
-  DBUG_ENTER("CloudHandler::start_bulk_delete");
-
-  attach_thread();
-
-  DBUG_RETURN(true);
-}
-
-int CloudHandler::end_bulk_delete()
-{
-  DBUG_ENTER("CloudHandler::end_bulk_delete");
-
-  detach_thread();
-
   DBUG_RETURN(0);
 }
 
 int CloudHandler::delete_all_rows()
 {
   DBUG_ENTER("CloudHandler::delete_all_rows");
-
-  attach_thread();
 
   jstring table_name = this->table_name();
   jclass adapter_class = this->adapter();
@@ -575,20 +529,16 @@ int CloudHandler::delete_all_rows()
       (jlong) 0);
   this->flush_writes();
 
-  detach_thread();
-
   DBUG_RETURN(0);
 }
 
 int CloudHandler::truncate()
 {
   DBUG_ENTER("CloudHandler::truncate");
-  attach_thread();
 
   update_cloud_autoincrement_value((jlong) 1, JNI_TRUE);
   int returnValue = delete_all_rows();
 
-  detach_thread();
   DBUG_RETURN(returnValue);
 }
 

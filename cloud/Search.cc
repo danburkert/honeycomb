@@ -10,7 +10,6 @@ int CloudHandler::index_init(uint idx, bool sorted)
   KEY_PART_INFO *key_part = pos->key_part;
   KEY_PART_INFO *key_part_end = key_part + pos->key_parts;
   const char* column_names = this->index_name(key_part, key_part_end, pos->key_parts);
-  attach_thread();
 
   jclass adapter_class = this->adapter();
   jmethodID start_scan_method = find_static_method(adapter_class, "startIndexScan", "(Ljava/lang/String;Ljava/lang/String;)J",this->env);
@@ -28,7 +27,6 @@ int CloudHandler::index_end()
   DBUG_ENTER("CloudHandler::index_end");
 
   this->end_scan();
-  this->detach_thread();
 
   DBUG_RETURN(0);
 }
@@ -243,7 +241,6 @@ int CloudHandler::rnd_end()
   DBUG_ENTER("CloudHandler::rnd_end");
 
   this->end_scan();
-  this->detach_thread();
 
   DBUG_RETURN(0);
 }
@@ -278,8 +275,6 @@ int CloudHandler::retrieve_value_from_index(uchar* buf)
 int CloudHandler::rnd_init(bool scan)
 {
   DBUG_ENTER("CloudHandler::rnd_init");
-
-  attach_thread();
 
   jclass adapter_class = this->adapter();
   jmethodID start_scan_method = find_static_method(adapter_class, "startScan", "(Ljava/lang/String;Z)J",this->env);
@@ -347,17 +342,3 @@ void CloudHandler::end_scan()
 
   scan_ids[scan_ids_count++] = this->curr_scan_id;
 }
-
-jbyteArray CloudHandler::find_duplicate_column_values(char* columns)
-{
-  attach_thread();
-
-  jclass adapter = this->adapter();
-  jmethodID column_has_duplicates_method = find_static_method(adapter, "findDuplicateValue", "(Ljava/lang/String;Ljava/lang/String;)[B",this->env);
-  jbyteArray duplicate_value = (jbyteArray) this->env->CallStaticObjectMethod(adapter, column_has_duplicates_method, this->table_name(), string_to_java_string(columns));
-
-  detach_thread();
-
-  return duplicate_value;
-}
-
