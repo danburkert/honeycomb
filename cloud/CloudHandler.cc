@@ -20,6 +20,7 @@ CloudHandler::CloudHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex
   this->scan_ids_length = 32;
   this->scan_ids_count = 0;
   this->scan_ids = new long long[this->scan_ids_length];
+  this->curr_write_id = -1;
   memset(scan_ids, 0, scan_ids_length);
 }
 
@@ -184,6 +185,10 @@ int CloudHandler::external_lock(THD *thd, int lock_type)
   if (lock_type == F_WRLCK || lock_type == F_RDLCK)
   {
     attach_thread();
+    jclass adapter_class = this->adapter();
+    jmethodID start_write_method = find_static_method(adapter_class, "startWrite", "()J",this->env);
+    jlong write_id = this->env->CallStaticLongMethod(adapter_class, start_write_method);
+    this->curr_write_id = write_id;
   }
 
   if (lock_type == F_UNLCK)
@@ -193,6 +198,9 @@ int CloudHandler::external_lock(THD *thd, int lock_type)
     jstring table_name = this->table_name();
     this->env->CallStaticVoidMethod(adapter_class, update_count_method, table_name, (jlong) this->rows_written);
     this->rows_written = 0;
+    jmethodID end_write_method = find_static_method(adapter_class, "endWrite", "(J)V",this->env);
+    this->env->CallStaticVoidMethod(adapter_class, end_write_method, (jlong)this->curr_write_id);
+    this->curr_write_id = -1;
     detach_thread();
   }
 
@@ -592,8 +600,8 @@ ha_rows CloudHandler::estimate_rows_upper_bound()
 void CloudHandler::flush_writes()
 {
   jclass adapter_class = this->adapter();
-  jmethodID end_write_method = find_static_method(adapter_class, "flushWrites", "()V",this->env);
-  this->env->CallStaticVoidMethod(adapter_class, end_write_method);
+  jmethodID end_write_method = find_static_method(adapter_class, "flushWrites", "(J)V",this->env);
+  this->env->CallStaticVoidMethod(adapter_class, end_write_method, (jlong)this->curr_write_id);
 }
 
 void CloudHandler::detach_thread()

@@ -160,7 +160,7 @@ int CloudHandler::write_row(uchar* buf, jobject updated_fields)
   ha_statistic_increment(&SSV::ha_write_count);
 
   jclass adapter_class = this->adapter();
-  jmethodID write_row_method = find_static_method(adapter_class, "writeRow", "(Ljava/lang/String;Ljava/util/Map;)Z", env);
+  jmethodID write_row_method = find_static_method(adapter_class, "writeRow", "(JLjava/lang/String;Ljava/util/Map;)Z", env);
 
   jstring table_name = this->table_name();
   jlong new_autoincrement_value = -1;
@@ -320,8 +320,8 @@ int CloudHandler::write_row(uchar* buf, jobject updated_fields)
       }
     }
 
-    jmethodID update_row_method = find_static_method(adapter_class, "updateRow", "(JLjava/util/List;Ljava/lang/String;Ljava/util/Map;)V", env);
-    this->env->CallStaticBooleanMethod(adapter_class, update_row_method, this->curr_scan_id, updated_fields, table_name, java_row_map);
+    jmethodID update_row_method = find_static_method(adapter_class, "updateRow", "(JJLjava/util/List;Ljava/lang/String;Ljava/util/Map;)V", env);
+    this->env->CallStaticBooleanMethod(adapter_class, update_row_method, this->curr_write_id, this->curr_scan_id, updated_fields, table_name, java_row_map);
   }
   else
   {
@@ -330,7 +330,7 @@ int CloudHandler::write_row(uchar* buf, jobject updated_fields)
       DBUG_RETURN(HA_ERR_FOUND_DUPP_KEY);
     }
 
-    this->env->CallStaticBooleanMethod(adapter_class, write_row_method, table_name, java_row_map);
+    this->env->CallStaticBooleanMethod(adapter_class, write_row_method, this->curr_write_id, table_name, java_row_map);
     this->rows_written++;
   }
 

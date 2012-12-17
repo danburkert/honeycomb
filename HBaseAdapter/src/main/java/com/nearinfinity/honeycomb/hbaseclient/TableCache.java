@@ -4,6 +4,7 @@ import com.google.common.collect.Maps;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -12,13 +13,57 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.lang.String.format;
 
 public class TableCache {
-    public static TableInfo refreshCache(String tableName, HTable table, ConcurrentHashMap<String, TableInfo> tableCache) throws IOException {
+    private static final ConcurrentHashMap<String, TableInfo> tableCache = new ConcurrentHashMap<String, TableInfo>();
+
+    private static final ReadWriteLock cacheLock = new ReentrantReadWriteLock();
+
+    public static TableInfo getTableInfo(String tableName, HTableInterface table) throws IOException {
+        checkNotNull(tableName);
+        cacheLock.readLock().lock();
+        try {
+            TableInfo tableInfo = tableCache.get(tableName);
+            if (tableInfo != null) {
+                return tableInfo;
+            }
+        } finally {
+            cacheLock.readLock().unlock();
+        }
+
+        cacheLock.writeLock().lock();
+        try {
+            return TableCache.refreshCache(tableName, table, tableCache);
+        } finally {
+            cacheLock.writeLock().unlock();
+        }
+    }
+
+    public static void put(String tableName, TableInfo info) {
+        tableCache.put(tableName, info);
+    }
+
+    public static TableInfo get(String tableName) {
+        return tableCache.get(tableName);
+    }
+
+    public static void swap(String from, String to, TableInfo info) {
+        cacheLock.writeLock().lock();
+        try {
+            tableCache.remove(from);
+            tableCache.put(to, info);
+        } finally {
+            cacheLock.writeLock().unlock();
+        }
+    }
+
+    public static TableInfo refreshCache(String tableName, HTableInterface table, ConcurrentHashMap<String, TableInfo> tableCache) throws IOException {
         if (table == null) {
             throw new IllegalStateException(format("Table %s was null. Cannot get table information from null table.", tableName));
         }
@@ -76,7 +121,7 @@ public class TableCache {
         return info;
     }
 
-    private static ColumnMetadata getMetadataForColumn(long tableId, long columnId, HTable table) throws IOException {
+    private static ColumnMetadata getMetadataForColumn(long tableId, long columnId, HTableInterface table) throws IOException {
         Get metadataGet = new Get(RowKeyFactory.buildColumnInfoKey(tableId, columnId));
         Result result = table.get(metadataGet);
 
