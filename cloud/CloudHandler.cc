@@ -181,6 +181,21 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
 int CloudHandler::external_lock(THD *thd, int lock_type)
 {
   DBUG_ENTER("CloudHandler::external_lock");
+  if (lock_type == F_WRLCK || lock_type == F_RDLCK)
+  {
+    attach_thread();
+  }
+
+  if (lock_type == F_UNLCK)
+  {
+    jclass adapter_class = this->adapter();
+    jmethodID update_count_method = find_static_method(adapter_class, "incrementRowCount", "(Ljava/lang/String;J)V",this->env);
+    jstring table_name = this->table_name();
+    this->env->CallStaticVoidMethod(adapter_class, update_count_method, table_name, (jlong) this->rows_written);
+    this->rows_written = 0;
+    detach_thread();
+  }
+
   DBUG_RETURN(0);
 }
 
