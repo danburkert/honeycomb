@@ -35,7 +35,7 @@ class CloudHandler : public handler
     long long* scan_ids;
     int scan_ids_count, scan_ids_length;
 
-    long long curr_scan_id;
+    long long curr_scan_id, curr_write_id;
     ulonglong rows_written;
 
     uint failed_key_index;
