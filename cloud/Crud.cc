@@ -443,7 +443,6 @@ void CloudHandler::collect_changed_fields(jobject updated_fields, const uchar* o
 
 int CloudHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add)
 {
-  attach_thread();
   for(uint key = 0; key < num_of_keys; key++)
   {
     KEY* pos = key_info + key;
@@ -478,14 +477,21 @@ int CloudHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, h
     ARRAY_DELETE(index_columns);
   }
 
-  detach_thread();
   return 0;
 }
 
+jbyteArray CloudHandler::find_duplicate_column_values(char* columns)
+{
+  jclass adapter = this->adapter();
+  jmethodID column_has_duplicates_method = find_static_method(adapter, "findDuplicateValue", "(Ljava/lang/String;Ljava/lang/String;)[B",this->env);
+  jbyteArray duplicate_value = (jbyteArray) this->env->CallStaticObjectMethod(adapter, column_has_duplicates_method, this->table_name(), string_to_java_string(columns));
+
+  return duplicate_value;
+}
+
+
 int CloudHandler::prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys)
 {
-  attach_thread();
-
   jclass adapter = this->adapter();
   jmethodID add_index_method = find_static_method(adapter, "dropIndex", "(Ljava/lang/String;Ljava/lang/String;)V",this->env);
 
@@ -529,12 +535,10 @@ int CloudHandler::delete_all_rows()
 int CloudHandler::truncate()
 {
   DBUG_ENTER("CloudHandler::truncate");
-  attach_thread();
 
   update_cloud_autoincrement_value((jlong) 1, JNI_TRUE);
   int returnValue = delete_all_rows();
 
-  detach_thread();
   DBUG_RETURN(returnValue);
 }
 
