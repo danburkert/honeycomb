@@ -105,11 +105,8 @@ ld_unique_error3 : CRASHING
 ld_unique_error3_local : REPLACE INTO
 
 ### TRIGGER
-tr_delete : TRIGGER
-tr_delete_new_error : TRIGGER
-tr_insert : ISS 68
-tr_insert_after_error : TRIGGER
-tr_all_type_triggers : TRIGGER
+tr_delete : ISS 71
+tr_all_type_triggers : ISS 71
 
 ### TIMEOUT
 tc_multicolumn_different : TIMEOUT
@@ -151,6 +148,9 @@ tc_temporary_column_length : TEMPORARY
 in_string_set_enum_fail : SET
 
 ###
+tr_delete_new_error :
+tr_insert :
+tr_insert_after_error :
 ta_add_column_middle :
 se_join_default :
 se_join_cross :
