@@ -236,7 +236,7 @@ SELECT c2 FROM t1;
 SELECT c2 FROM t1 ORDER BY c2 DESC;
 
 ## Forward index scan, non-covering ##
-SELECT * FROM t1 ORDER BY c2 LIMIT 2;
+SELECT * FROM t1 ORDER BY c2, c1, c3 LIMIT 2;
 
 ## Backward index scan, non-covering ##
 SELECT * FROM t1 ORDER BY c2 DESC LIMIT 2;
@@ -310,7 +310,7 @@ SELECT c2 FROM t1;
 SELECT c2 FROM t1 ORDER BY c2 DESC;
 
 ## Forward index scan, non-covering ##
-SELECT * FROM t1 ORDER BY c2 LIMIT 2;
+SELECT * FROM t1 ORDER BY c2, c1, c3 LIMIT 2;
 
 ## Backward index scan, non-covering ##
 SELECT * FROM t1 ORDER BY c2 DESC LIMIT 2;
@@ -1057,6 +1057,7 @@ INSERT INTO t5 SELECT * FROM t4;
 SELECT * FROM t5;
 TRUNCATE TABLE t5;
 INSERT INTO t5 SELECT * FROM t4 WHERE c1 >='12colon34colon56';
+--sorted_result
 SELECT * FROM t5;
 TRUNCATE TABLE t5;
 DROP TABLE t5;
