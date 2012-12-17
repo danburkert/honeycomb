@@ -502,38 +502,16 @@ int CloudHandler::prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_o
 int CloudHandler::delete_row(const uchar *buf)
 {
   DBUG_ENTER("CloudHandler::delete_row");
-  attach_thread();
   ha_statistic_increment(&SSV::ha_delete_count);
   jclass adapter_class = this->adapter();
   jmethodID delete_row_method = find_static_method(adapter_class, "deleteRow", "(J)Z",this->env);
   this->env->CallStaticBooleanMethod(adapter_class, delete_row_method, this->curr_scan_id);
-  detach_thread();
-  DBUG_RETURN(0);
-}
-
-bool CloudHandler::start_bulk_delete()
-{
-  DBUG_ENTER("CloudHandler::start_bulk_delete");
-
-  attach_thread();
-
-  DBUG_RETURN(true);
-}
-
-int CloudHandler::end_bulk_delete()
-{
-  DBUG_ENTER("CloudHandler::end_bulk_delete");
-
-  detach_thread();
-
   DBUG_RETURN(0);
 }
 
 int CloudHandler::delete_all_rows()
 {
   DBUG_ENTER("CloudHandler::delete_all_rows");
-
-  attach_thread();
 
   jstring table_name = this->table_name();
   jclass adapter_class = this->adapter();
@@ -544,8 +522,6 @@ int CloudHandler::delete_all_rows()
   this->env->CallStaticVoidMethod(adapter_class, set_count_method, table_name,
       (jlong) 0);
   this->flush_writes();
-
-  detach_thread();
 
   DBUG_RETURN(0);
 }
