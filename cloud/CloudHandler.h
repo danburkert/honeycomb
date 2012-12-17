@@ -259,8 +259,6 @@ class CloudHandler : public handler
     int delete_row(const uchar *buf);
     int free_share(CloudShare *share);
     int rnd_end();
-    void start_bulk_insert(ha_rows rows);
-    int end_bulk_insert();
     ha_rows records_in_range(uint inx, key_range *min_key, key_range *max_key);
     int analyze(THD* thd, HA_CHECK_OPT* check_opt);
     ha_rows estimate_rows_upper_bound();

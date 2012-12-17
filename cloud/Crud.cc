@@ -1,31 +1,5 @@
 #include "CloudHandler.h"
 
-void CloudHandler::start_bulk_insert(ha_rows rows)
-{
-  DBUG_ENTER("CloudHandler::start_bulk_insert");
-
-  attach_thread();
-  //Logging::info("%d rows to be inserted.", rows);
-
-  DBUG_VOID_RETURN;
-}
-
-int CloudHandler::end_bulk_insert()
-{
-  DBUG_ENTER("CloudHandler::end_bulk_insert");
-
-  this->flush_writes();
-  jclass adapter_class = this->adapter();
-  jmethodID update_count_method = find_static_method(adapter_class, "incrementRowCount", "(Ljava/lang/String;J)V",this->env);
-  jstring table_name = this->table_name();
-  this->env->CallStaticVoidMethod(adapter_class, update_count_method,
-      table_name, (jlong) this->rows_written);
-  this->rows_written = 0;
-
-  detach_thread();
-  DBUG_RETURN(0);
-}
-
 jobject CloudHandler::create_multipart_keys(TABLE* table_arg)
 {
   uint keys = table_arg->s->keys;
@@ -173,9 +147,7 @@ int CloudHandler::rename_table(const char *from, const char *to)
 
 int CloudHandler::write_row(uchar *buf)
 {
-  attach_thread();
   int rc = write_row(buf, NULL);
-  detach_thread();
   return rc;
 }
 
@@ -407,7 +379,6 @@ bool CloudHandler::row_has_duplicate_values(jobject value_map, jobject changedCo
 int CloudHandler::update_row(const uchar *old_row, uchar *new_row)
 {
   DBUG_ENTER("CloudHandler::update_row");
-  attach_thread();
 
   ha_statistic_increment(&SSV::ha_update_count);
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
@@ -425,7 +396,6 @@ int CloudHandler::update_row(const uchar *old_row, uchar *new_row)
 
   rc = write_row(new_row, updated_fieldnames);
   this->flush_writes();
-  detach_thread();
 
   DBUG_RETURN(rc);
 }
