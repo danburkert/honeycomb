@@ -51,8 +51,6 @@ class CloudHandler : public handler
     void java_to_sql(uchar *buf, jobject row_map);
     jobject sql_to_java();
     int delete_all_rows();
-    bool start_bulk_delete();
-    int end_bulk_delete();
     int delete_table(const char *name);
     void drop_table(const char *name);
     int truncate();
