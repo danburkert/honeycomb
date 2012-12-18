@@ -33,4 +33,9 @@ public enum ColumnType {
 
         return ColumnType.NONE;
     }
+
+    @Override
+    public String toString() {
+        return new String(value);
+    }
 }

@@ -1,6 +1,7 @@
 package com.nearinfinity.honeycomb;
 
 import au.com.bytecode.opencsv.CSVParser;
+import com.google.common.base.Joiner;
 import com.nearinfinity.honeycomb.hbaseclient.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -41,10 +42,16 @@ public class BulkLoadMapper
         Configuration conf = context.getConfiguration();
 
         char separator = conf.get("importtsv.separator", " ").charAt(0);
-        LOG.info(format("Separator = %X", (int) separator));
+        if (LOG.isDebugEnabled()) {
+            LOG.debug(format("importtsv.separator = %X", (int) separator));
+            LOG.debug("Hadoop configuration:");
+            for (Map.Entry<String, String> entry : conf) {
+                LOG.debug(format("%s -> %s", entry.getKey(), entry.getValue()));
+            }
+        }
+
         csvParser = new CSVParser(separator);
         sqlColumns = conf.getStrings("honeycomb.sql.columns");
-
 
         // Setup
         String zkQuorum = conf.get("zk.quorum");
@@ -81,6 +88,18 @@ public class BulkLoadMapper
             checkNotNull(metadata, format("Column %s is missing metadata.", sqlColumn));
             columnMetadata.put(sqlColumn, metadata);
         }
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug(tableInfo);
+            LOG.debug("SQL Columns: " + Joiner.on(",").join(sqlColumns));
+            for (List<String> indexColumn : indexColumns) {
+                LOG.debug(Joiner.on(",").join(indexColumn));
+            }
+
+            for (Map.Entry<String, ColumnMetadata> entry : columnMetadata.entrySet()) {
+                LOG.debug(entry);
+            }
+        }
     }
 
     @Override
@@ -88,7 +107,6 @@ public class BulkLoadMapper
             throws InterruptedException {
         try {
             String[] fields = csvParser.parseLine(line.toString());
-
             if (sqlColumns.length != fields.length) {
                 throw new IllegalArgumentException(
                         format("Line contains wrong number of columns: %s. Expected: %d Was: %d", line.toString(), sqlColumns.length, fields.length));
@@ -99,8 +117,7 @@ public class BulkLoadMapper
 
             for (int i = 0; i < fields.length; i++) {
                 String sqlColumn = sqlColumns[i];
-                byte[] value = ValueParser.parse(fields[i],
-                        columnMetadata.get(sqlColumns[i]));
+                byte[] value = ValueParser.parse(fields[i], columnMetadata.get(sqlColumns[i]));
                 if (value == null) {
                     break;
                 } // null field
