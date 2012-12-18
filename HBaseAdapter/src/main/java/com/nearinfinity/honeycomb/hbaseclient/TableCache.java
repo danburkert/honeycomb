@@ -39,6 +39,11 @@ public class TableCache {
 
         cacheLock.writeLock().lock();
         try {
+            TableInfo tableInfo = tableCache.get(tableName); // Did the table cache get updated before entering the write lock?
+            if (tableInfo != null) {
+                return tableInfo;
+            }
+
             return TableCache.refreshCache(tableName, table, tableCache);
         } finally {
             cacheLock.writeLock().unlock();
@@ -110,6 +115,10 @@ public class TableCache {
         rowKey = RowKeyFactory.buildTableInfoKey(tableId);
         Result tableMetadata = table.get(new Get(rowKey));
         NavigableMap<byte[], byte[]> familyMap = tableMetadata.getFamilyMap(Constants.NIC);
+        if (familyMap.isEmpty()) {
+            throw new IllegalStateException(format("SQL Table \"%s\" is missing metadata.", tableName));
+        }
+
         Map<String, byte[]> stringFamily = Maps.newHashMap();
         for (Map.Entry<byte[], byte[]> entry : familyMap.entrySet()) {
             stringFamily.put(new String(entry.getKey()), entry.getValue());
