@@ -5,6 +5,7 @@ import com.nearinfinity.honeycomb.hbaseclient.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.io.LongWritable;
@@ -40,32 +41,32 @@ public class BulkLoadMapper
         sqlColumns = conf.getStrings("honeycomb.sql.columns");
 
 
-        // Setup HBaseClient
+        // Setup
         String zkQuorum = conf.get("zk.quorum");
         String sqlTable = conf.get("honeycomb.sql.table");
         String hbTable = conf.get("honeycomb.hb.table");
 
         // Check that necessary configuration variables are set
-        if(zkQuorum == null) {
+        if (zkQuorum == null) {
             LOG.error("zk.quorum not set.  Job will fail.");
             throw new IOException("zk.quorum not set");
         }
-        if(sqlTable == null) {
+        if (sqlTable == null) {
             LOG.error("honeycomb.sql.table not set.  Job will fail.");
             throw new IOException("honeycomb.sql.table not set");
         }
-        if(sqlColumns == null) {
+        if (sqlColumns == null) {
             LOG.error("honeycomb.sql.columns not set.  Job will fail.");
             throw new IOException("honeycomb.sql.columns not set");
         }
-        if(hbTable == null) {
+        if (hbTable == null) {
             LOG.error("honeycomb.hb.table not set.  Job will fail.");
             throw new IOException("honeycomb.hb.table not set");
         }
 
-        HBaseClient client = new HBaseClient(hbTable, zkQuorum);
+        HTable table = new HTable(conf, hbTable);
 
-        tableInfo = client.getTableInfo(sqlTable);
+        tableInfo = TableCache.getTableInfo(sqlTable, table);
         indexColumns = Index.indexForTable(tableInfo.tableMetadata());
 
         // Setup column metadata map: column_name -> column_meta
@@ -94,7 +95,9 @@ public class BulkLoadMapper
                 String sqlColumn = sqlColumns[i];
                 byte[] value = ValueParser.parse(fields[i],
                         columnMetadata.get(sqlColumns[i]));
-               if(value == null) { break; } // null field
+                if (value == null) {
+                    break;
+                } // null field
                 valueMap.put(sqlColumn, value);
             }
 
@@ -120,5 +123,6 @@ public class BulkLoadMapper
         }
     }
 
-    private class ColumnMismatchException extends Throwable {}
+    private class ColumnMismatchException extends Throwable {
+    }
 }
