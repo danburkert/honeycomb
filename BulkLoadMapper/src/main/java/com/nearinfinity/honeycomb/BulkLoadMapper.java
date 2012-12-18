@@ -13,10 +13,14 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 
 public class BulkLoadMapper
         extends Mapper<LongWritable, Text, ImmutableBytesWritable, Put> {
@@ -37,6 +41,7 @@ public class BulkLoadMapper
         Configuration conf = context.getConfiguration();
 
         char separator = conf.get("importtsv.separator", " ").charAt(0);
+        LOG.info(format("Separator = %X", (int) separator));
         csvParser = new CSVParser(separator);
         sqlColumns = conf.getStrings("honeycomb.sql.columns");
 
@@ -72,7 +77,9 @@ public class BulkLoadMapper
         // Setup column metadata map: column_name -> column_meta
         columnMetadata = new TreeMap<String, ColumnMetadata>();
         for (String sqlColumn : sqlColumns) {
-            columnMetadata.put(sqlColumn, tableInfo.getColumnMetadata(sqlColumn));
+            ColumnMetadata metadata = tableInfo.getColumnMetadata(sqlColumn);
+            checkNotNull(metadata, format("Column %s is missing metadata.", sqlColumn));
+            columnMetadata.put(sqlColumn, metadata);
         }
     }
 
@@ -84,8 +91,7 @@ public class BulkLoadMapper
 
             if (sqlColumns.length != fields.length) {
                 throw new IllegalArgumentException(
-                        "Line contains wrong number of columns: "
-                                + line.toString());
+                        format("Line contains wrong number of columns: %s. Expected: %d Was: %d", line.toString(), sqlColumns.length, fields.length));
             }
 
             // Create value map to pass to put list creator
