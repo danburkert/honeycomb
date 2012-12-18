@@ -36,7 +36,7 @@ public class BulkLoadMapper
             throws IOException, InterruptedException {
         Configuration conf = context.getConfiguration();
 
-        char separator = conf.get("importtsv.separator", ",").charAt(0);
+        char separator = conf.get("importtsv.separator", " ").charAt(0);
         csvParser = new CSVParser(separator);
         sqlColumns = conf.getStrings("honeycomb.sql.columns");
 
