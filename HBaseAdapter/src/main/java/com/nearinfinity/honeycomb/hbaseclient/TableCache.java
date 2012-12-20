@@ -7,6 +7,7 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -24,6 +25,7 @@ public class TableCache {
     private static final ConcurrentHashMap<String, TableInfo> tableCache = new ConcurrentHashMap<String, TableInfo>();
 
     private static final ReadWriteLock cacheLock = new ReentrantReadWriteLock();
+    private static final Logger logger = Logger.getLogger(TableCache.class);
 
     public static TableInfo getTableInfo(String tableName, HTableInterface table) throws IOException {
         checkNotNull(tableName);
@@ -44,6 +46,7 @@ public class TableCache {
                 return tableInfo;
             }
 
+            logger.info(String.format("Table cache miss for %s. Going out to HBase.", tableName));
             return TableCache.refreshCache(tableName, table, tableCache);
         } finally {
             cacheLock.writeLock().unlock();
@@ -87,8 +90,9 @@ public class TableCache {
         }
 
         long tableId = ByteBuffer.wrap(sqlTableBytes).getLong();
-
-        checkState(tableId >= 0, "Table id %d retrieved from HBase was not valid.", tableId);
+        if (tableId < 0) {
+            throw new IllegalStateException(format("Table id %d retrieved from HBase was not valid.", tableId));
+        }
 
         TableInfo info = new TableInfo(tableName, tableId);
 
@@ -96,9 +100,8 @@ public class TableCache {
 
         Get columnsGet = new Get(rowKey);
         Result columnsResult = table.get(columnsGet);
-        checkNotNull(columnsResult);
-        if (columnsResult.isEmpty()) {
-            throw new IllegalStateException("Column result from the get was empty for row key " + Bytes.toStringBinary(rowKey));
+        if (columnsResult == null || columnsResult.isEmpty()) {
+            throw new IllegalStateException("Column result from the get was null/empty for row key " + Bytes.toStringBinary(rowKey));
         }
 
         Map<byte[], byte[]> columns = columnsResult.getFamilyMap(Constants.NIC);
