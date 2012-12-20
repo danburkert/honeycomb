@@ -393,7 +393,9 @@ int CloudHandler::update_row(const uchar *old_row, uchar *new_row)
     DBUG_RETURN(rc);
   }
 
+  my_bitmap_map *old_map = dbug_tmp_use_all_columns(table, table->read_set);
   rc = write_row(new_row, updated_fieldnames);
+  dbug_tmp_restore_column_map(table->read_set, old_map);
   this->flush_writes();
 
   DBUG_RETURN(rc);
