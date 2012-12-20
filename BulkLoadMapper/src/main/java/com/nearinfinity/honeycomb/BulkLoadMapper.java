@@ -46,7 +46,7 @@ public class BulkLoadMapper
             LOG.debug(format("importtsv.separator = %X", (int) separator));
             LOG.debug("Hadoop configuration:");
             for (Map.Entry<String, String> entry : conf) {
-                LOG.debug(format("%s -> %s", entry.getKey(), entry.getValue()));
+                LOG.debug(entry);
             }
         }
 
