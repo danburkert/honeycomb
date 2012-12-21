@@ -226,7 +226,7 @@ class CloudHandler : public handler
 
     virtual double read_time(uint, uint, ha_rows rows)
     {
-      return (double) rows /  20.0+1;
+      return (double) rows *  20.0+1;
     }
 
     virtual int final_add_index(handler_add_index *add, bool commit)
