@@ -80,21 +80,7 @@ public class BulkLoadMapper
         tableInfo = TableCache.getTableInfo(sqlTable, table);
         indexColumns = Index.indexForTable(tableInfo.tableMetadata());
 
-        Set<String> expectedColumns = tableInfo.getColumnNames();
-        List<String> invalidColumns = Lists.newLinkedList();
-        for (String column : sqlColumns) {
-            if (!expectedColumns.contains(column)) {
-                LOG.error("Found non-existent column " + column);
-                invalidColumns.add(column);
-            }
-        }
-        if (invalidColumns.size() > 0) {
-            String expectedColumnString = Joiner.on(",").join(expectedColumns);
-            String invalidColumnString = Joiner.on(",").join(invalidColumns);
-            String message = String.format("In table %s following columns (%s) are not valid columns. Expected columns (%s)",
-                    sqlTable, invalidColumnString, expectedColumnString);
-            throw new IllegalStateException(message);
-        }
+        checkSqlColumnsMatch(sqlTable);
 
         columnMetadata = new TreeMap<String, ColumnMetadata>();
         for (String sqlColumn : sqlColumns) {
@@ -113,6 +99,24 @@ public class BulkLoadMapper
             for (Map.Entry<String, ColumnMetadata> entry : columnMetadata.entrySet()) {
                 LOG.debug(entry);
             }
+        }
+    }
+
+    private void checkSqlColumnsMatch(String sqlTable) {
+        Set<String> expectedColumns = tableInfo.getColumnNames();
+        List<String> invalidColumns = Lists.newLinkedList();
+        for (String column : sqlColumns) {
+            if (!expectedColumns.contains(column)) {
+                LOG.error("Found non-existent column " + column);
+                invalidColumns.add(column);
+            }
+        }
+        if (invalidColumns.size() > 0) {
+            String expectedColumnString = Joiner.on(",").join(expectedColumns);
+            String invalidColumnString = Joiner.on(",").join(invalidColumns);
+            String message = String.format("In table %s following columns (%s) are not valid columns. Expected columns (%s)",
+                    sqlTable, invalidColumnString, expectedColumnString);
+            throw new IllegalStateException(message);
         }
     }
 
