@@ -26,7 +26,7 @@ public class ValueParser {
             if (meta.isNullable()) {
                 return null;
             } else {
-                throw new IllegalArgumentException("Attempt to parse invalid field value: " + val);
+                throw new IllegalArgumentException("Expected a value for a non null SQL column, but no value was given.");
             }
         }
 
