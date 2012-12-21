@@ -39,8 +39,7 @@ module Enumerable
 
   def percentile(p)
     n = self.length
-    percent = ((p / 100.0) * n + (1/2.0)).floor
-    percent = [percent, n-1].min
+    percent = [((p / 100.0) * n + (1/2.0)), n-1].min.floor
     percent 
   end
 
