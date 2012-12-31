@@ -153,7 +153,6 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
   for (int i = 0; i < table->s->fields; i++)
   {
     Field *field = table->field[i];
-    field->set_notnull(); // for some reason the field was inited as null during rnd_pos
     const char* key = field->field_name;
     jstring java_key = string_to_java_string(key);
     jbyteArray java_val = java_map_get(row_map, java_key, this->env);
@@ -168,6 +167,7 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
     my_ptrdiff_t offset = (my_ptrdiff_t) (buf - this->table->record[0]);
     field->move_field_offset(offset);
 
+    field->set_notnull(); // for some reason the field was inited as null during rnd_pos
     this->store_field_value(field, val, val_length);
 
     field->move_field_offset(-offset);

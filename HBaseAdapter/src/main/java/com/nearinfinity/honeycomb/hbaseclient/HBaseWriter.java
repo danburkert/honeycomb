@@ -1,5 +1,6 @@
 package com.nearinfinity.honeycomb.hbaseclient;
 
+import com.google.common.base.Joiner;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -28,6 +29,10 @@ public class HBaseWriter implements Closeable {
     }
 
     public void writeRow(String tableName, Map<String, byte[]> values) throws IOException {
+        if (logger.isDebugEnabled()) {
+            logger.debug(format("Writing row for %s: %s", tableName, new String(Util.serializeMap(values))));
+        }
+
         TableInfo info = TableCache.getTableInfo(tableName, table);
         List<List<String>> multipartIndex = Index.indexForTable(info.tableMetadata());
         List<Put> putList = PutListFactory.createDataInsertPutList(values, info, multipartIndex);
@@ -42,6 +47,10 @@ public class HBaseWriter implements Closeable {
     }
 
     public void updateRow(UUID uuid, List<String> changedFields, String tableName, Map<String, byte[]> newValues) throws IOException {
+        if (logger.isDebugEnabled()) {
+            logger.debug(format("Updating fields %s on %s", Joiner.on(",").join(changedFields), tableName));
+        }
+
         Map<String, byte[]> oldRow = retrieveRowAndDelete(tableName, uuid);
 
         for (String changedField : changedFields) {
@@ -52,16 +61,20 @@ public class HBaseWriter implements Closeable {
         Set<String> columnNames = info.getColumnNames();
         for (String columnName : columnNames) {
             if (!oldRow.containsKey(columnName)) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug(format("On update %s was set to null.", columnName));
+                }
                 oldRow.put(columnName, null); // Nulls need to be transferred otherwise writeRow loses them.
             }
         }
+
         writeRow(tableName, oldRow);
     }
 
     public void renameTable(String from, String to) throws IOException {
         checkNotNull(from);
         checkNotNull(to);
-        logger.info("Renaming table " + from + " to " + to);
+        logger.debug(String.format("Renaming table %s to %s", from, to));
 
         TableInfo info = getTableInfo(from);
 
@@ -83,7 +96,7 @@ public class HBaseWriter implements Closeable {
 
         TableCache.swap(from, to, info);
 
-        logger.info("Rename complete!");
+        logger.debug("Rename complete!");
     }
 
     public boolean deleteRow(String tableName, UUID uuid) throws IOException {
@@ -91,6 +104,7 @@ public class HBaseWriter implements Closeable {
             return false;
         }
 
+        logger.debug("Removing row in " + tableName);
         retrieveRowAndDelete(tableName, uuid);
 
         return true;
@@ -104,7 +118,7 @@ public class HBaseWriter implements Closeable {
     }
 
     public boolean dropTable(String tableName) throws IOException {
-        logger.info("Preparing to drop table " + tableName);
+        logger.debug("Preparing to drop table " + tableName);
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
         deleteAllRowsInTable(info);
@@ -114,7 +128,7 @@ public class HBaseWriter implements Closeable {
         deleteTableInfoRows(tableId);
         deleteTableFromRoot(tableName);
 
-        logger.info("Table " + tableName + " is no more!");
+        logger.debug("Table " + tableName + " is no more!");
 
         return true;
     }
@@ -123,7 +137,7 @@ public class HBaseWriter implements Closeable {
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
 
-        logger.info("Deleting all rows from table " + tableName + " with tableId " + tableId);
+        logger.debug(String.format("Deleting all rows from table %s with tableId %d", tableName, tableId));
 
         deleteAllRowsInTable(info);
         return 0;
@@ -159,13 +173,13 @@ public class HBaseWriter implements Closeable {
     }
 
     private int deleteColumns(long tableId) throws IOException {
-        logger.info("Deleting all columns");
+        logger.debug("Deleting all columns");
         byte[] prefix = ByteBuffer.allocate(9).put(RowType.COLUMNS.getValue()).putLong(tableId).array();
         return deleteRowsWithPrefix(prefix);
     }
 
     private int deleteColumnInfoRows(TableInfo info) throws IOException {
-        logger.info("Deleting all column metadata rows");
+        logger.debug("Deleting all column metadata rows");
 
         long tableId = info.getId();
         int affectedRows = 0;
@@ -314,6 +328,10 @@ public class HBaseWriter implements Closeable {
         Get get = new Get(dataRowKey);
         Result result = table.get(get);
         Map<String, byte[]> oldRow = ResultParser.parseDataRow(result, info);
+        if (logger.isDebugEnabled()) {
+            logger.debug(format("Deleting row in table %s / Table ID %d", tableName, tableId));
+            logger.debug(format("Old row %s", new String(Util.serializeMap(oldRow))));
+        }
 
         List<Delete> deleteList = DeleteListFactory.createDeleteRowList(uuid, info, result, dataRowKey, Index.indexForTable(info.tableMetadata()));
 
@@ -397,7 +415,7 @@ public class HBaseWriter implements Closeable {
             metadata.setAutoincrement(true);
             metadata.setAutoincrementValue(autoincrementValue);
         } else {
-            logger.info(format("The new auto_increment value of %d is less than the current count of %d, so this command will be ignored.", autoincrementValue, currentValue));
+            logger.debug(format("The new auto_increment value of %d is less than the current count of %d, so this command will be ignored.", autoincrementValue, currentValue));
             return false;
         }
 

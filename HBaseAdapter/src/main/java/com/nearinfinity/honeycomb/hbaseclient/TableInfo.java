@@ -123,4 +123,9 @@ public class TableInfo {
     public void setColumnMetadata(String columnName, ColumnMetadata columnMetadata) {
         metadataMap.put(columnName, columnMetadata);
     }
+
+    @Override
+    public String toString() {
+        return "TableInfo: " + this.write();
+    }
 }
