@@ -19,9 +19,9 @@ else()
   SET(LIBS jawt jvm jsig)
 endif()
 
-SET(cloud_PLUGIN_DYNAMIC "ha_cloud")
-SET(cloud_SOURCES CloudHandler.cc Search.cc Crud.cc ha_cloud.cc Util.cc JNISetup.cc Logging.cc Java.cc)
+SET(HONEYCOMB_PLUGIN_DYNAMIC "ha_honeycomb")
+SET(HONEYCOMB_SOURCES HoneycombHandler.cc Search.cc Crud.cc ha_honeycomb.cc Util.cc JNISetup.cc Logging.cc Java.cc)
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-error -g")
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-error -g")
-MYSQL_ADD_PLUGIN(cloud ${cloud_SOURCES} STORAGE_ENGINE MODULE_ONLY
+MYSQL_ADD_PLUGIN(honeycomb ${HONEYCOMB_SOURCES} STORAGE_ENGINE MODULE_ONLY
   LINK_LIBRARIES  ${LIBS})

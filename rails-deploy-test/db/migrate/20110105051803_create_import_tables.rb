@@ -6,7 +6,7 @@ class CreateImportTables < ActiveRecord::Migration
     end
 
     add_column(:aspects, :user_mongo_id, :string)
-    create_table :mongo_aspects, :options => "engine=cloud" do |t|
+    create_table :mongo_aspects, :options => "engine=Honeycomb" do |t|
       t.string :mongo_id
       t.string :name
       t.string :user_mongo_id
@@ -14,7 +14,7 @@ class CreateImportTables < ActiveRecord::Migration
     end
     add_index :mongo_aspects, :user_mongo_id
 
-    create_table :mongo_aspect_memberships, :options => "engine=cloud" do |t|
+    create_table :mongo_aspect_memberships, :options => "engine=Honeycomb" do |t|
       t.string :aspect_mongo_id
       t.string :contact_mongo_id
       t.timestamps
@@ -22,7 +22,7 @@ class CreateImportTables < ActiveRecord::Migration
     add_index :mongo_aspect_memberships, :aspect_mongo_id
     add_index :mongo_aspect_memberships, :contact_mongo_id
 
-    create_table :mongo_comments, :options => "engine=cloud" do |t|
+    create_table :mongo_comments, :options => "engine=Honeycomb" do |t|
       t.text :text
       t.string :mongo_id
       t.string :post_mongo_id
@@ -36,7 +36,7 @@ class CreateImportTables < ActiveRecord::Migration
     add_index :mongo_comments, :guid, :unique => true
     add_index :mongo_comments, :post_mongo_id
 
-    create_table :mongo_contacts, :options => "engine=cloud" do |t|
+    create_table :mongo_contacts, :options => "engine=Honeycomb" do |t|
       t.string :mongo_id
       t.string :user_mongo_id
       t.string :person_mongo_id
@@ -46,7 +46,7 @@ class CreateImportTables < ActiveRecord::Migration
     add_index :mongo_contacts, [:user_mongo_id, :pending]
     add_index :mongo_contacts, [:person_mongo_id, :pending]
 
-    create_table :mongo_people, :options => "engine=cloud" do |t|
+    create_table :mongo_people, :options => "engine=Honeycomb" do |t|
       t.string :mongo_id
       t.string :guid
       t.text :url
@@ -59,7 +59,7 @@ class CreateImportTables < ActiveRecord::Migration
     add_index :mongo_people, :owner_mongo_id, :unique => true
     add_index :mongo_people, :diaspora_handle, :unique => true
 
-    create_table :mongo_posts, :options => "engine=cloud" do |t|
+    create_table :mongo_posts, :options => "engine=Honeycomb" do |t|
       t.string :person_mongo_id
       t.boolean :public, :default => false
       t.string :diaspora_handle
@@ -84,7 +84,7 @@ class CreateImportTables < ActiveRecord::Migration
     add_index :mongo_posts, :person_mongo_id
     add_index :mongo_posts, :guid
 
-    create_table :mongo_invitations, :options => "engine=cloud" do |t|
+    create_table :mongo_invitations, :options => "engine=Honeycomb" do |t|
       t.string :mongo_id
       t.text :message
       t.string :sender_mongo_id
@@ -93,7 +93,7 @@ class CreateImportTables < ActiveRecord::Migration
       t.timestamps
     end
     add_index :mongo_invitations, :sender_mongo_id
-    create_table :mongo_notifications, :options => "engine=cloud" do |t|
+    create_table :mongo_notifications, :options => "engine=Honeycomb" do |t|
       t.string :mongo_id
       t.string :target_type, :limit => 127
       t.string :target_mongo_id, :limit => 127
@@ -104,7 +104,7 @@ class CreateImportTables < ActiveRecord::Migration
       t.timestamps
     end
     add_index :mongo_notifications, [:target_type, :target_mongo_id]
-    create_table :mongo_post_visibilities, :options => "engine=cloud" do |t|
+    create_table :mongo_post_visibilities, :options => "engine=Honeycomb" do |t|
       t.string :aspect_mongo_id
       t.string :post_mongo_id
       t.timestamps
@@ -112,7 +112,7 @@ class CreateImportTables < ActiveRecord::Migration
     add_index :mongo_post_visibilities, :aspect_mongo_id
     add_index :mongo_post_visibilities, :post_mongo_id
 
-    create_table :mongo_profiles, :options => "engine=cloud" do |t|
+    create_table :mongo_profiles, :options => "engine=Honeycomb" do |t|
       t.string :diaspora_handle
       t.string :first_name, :limit => 127
       t.string :last_name, :limit => 127
@@ -132,7 +132,7 @@ class CreateImportTables < ActiveRecord::Migration
     add_index :mongo_profiles, :person_mongo_id, :unique => true
 
 
-    create_table :mongo_requests, :options => "engine=cloud" do |t|
+    create_table :mongo_requests, :options => "engine=Honeycomb" do |t|
       t.string :mongo_id
       t.string :sender_mongo_id, :limit => 127
       t.string :recipient_mongo_id, :limit => 127
@@ -144,7 +144,7 @@ class CreateImportTables < ActiveRecord::Migration
     add_index :mongo_requests, [:sender_mongo_id, :recipient_mongo_id], :unique => true
 
     add_column(:services, :user_mongo_id, :string)
-    create_table :mongo_services, :options => "engine=cloud" do |t|
+    create_table :mongo_services, :options => "engine=Honeycomb" do |t|
       t.string :mongo_id
       t.string :type
       t.string :user_mongo_id
@@ -157,7 +157,7 @@ class CreateImportTables < ActiveRecord::Migration
     end
     add_index :mongo_services, :user_mongo_id
 
-    create_table :mongo_users, :options => "engine=cloud" do |t|
+    create_table :mongo_users, :options => "engine=Honeycomb" do |t|
       t.string :username
       t.text :serialized_private_key
       t.integer :invites

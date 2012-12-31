@@ -7,7 +7,7 @@ honeycomb_lib=/usr/local/lib/honeycomb
 
 pushd $honeycomb_lib
 echo "Creating the tar for honeycomb in $bundle"
-tar -czf $bundle --exclude='cloud-test' .
+tar -czf $bundle --exclude='honeycomb-test' .
 popd
 
 puppet=localadmin@nic-hadoop-puppet

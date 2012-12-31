@@ -1,6 +1,6 @@
 class CreateInvitationCodes < ActiveRecord::Migration
   def self.up
-    create_table :invitation_codes, :options => "engine=cloud" do |t|
+    create_table :invitation_codes, :options => "engine=Honeycomb" do |t|
       t.string :token
       t.integer :user_id
       t.integer :count

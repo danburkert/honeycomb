@@ -1,6 +1,6 @@
 class CreateMentions < ActiveRecord::Migration
   def self.up
-    create_table :mentions, :options => "engine=cloud" do |t|
+    create_table :mentions, :options => "engine=Honeycomb" do |t|
       t.integer :post_id, :null => false
       t.integer :person_id, :null => false
     end

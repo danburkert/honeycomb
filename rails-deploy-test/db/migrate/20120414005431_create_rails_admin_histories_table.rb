@@ -1,6 +1,6 @@
 class CreateRailsAdminHistoriesTable < ActiveRecord::Migration
    def self.up
-     create_table :rails_admin_histories, :options => "engine=cloud" do |t|
+     create_table :rails_admin_histories, :options => "engine=Honeycomb" do |t|
        t.text :message # title, name, or object_id
        t.string :username
        t.integer :item

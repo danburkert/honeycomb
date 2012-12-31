@@ -1,6 +1,6 @@
 class CreateTagFollowings < ActiveRecord::Migration
   def self.up
-    create_table :tag_followings, :options => "engine=cloud" do |t|
+    create_table :tag_followings, :options => "engine=Honeycomb" do |t|
       t.integer :tag_id, :null => false
       t.integer :user_id, :null => false
 

@@ -1,6 +1,6 @@
 class CreateBlocks < ActiveRecord::Migration
   def self.up
-    create_table :blocks, :options => "engine=cloud" do |t|
+    create_table :blocks, :options => "engine=Honeycomb" do |t|
       t.integer :user_id
       t.integer :person_id
     end

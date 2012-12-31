@@ -1,7 +1,7 @@
 #ifndef LOGGING_H
 #define LOGGING_H
 
-#define DEFAULT_LOG_PATH "/tmp/cloud.log"
+#define DEFAULT_LOG_PATH "/tmp/honeycomb.log"
 
 namespace Logging
 {

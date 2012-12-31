@@ -2,16 +2,16 @@
 #pragma implementation        // gcc: Class implementation
 #endif
 
-#include "CloudHandler.h"
+#include "HoneycombHandler.h"
 
-const char **CloudHandler::bas_ext() const
+const char **HoneycombHandler::bas_ext() const
 {
-  static const char *cloud_exts[] = { NullS };
+  static const char *honeycomb_exts[] = { NullS };
 
-  return cloud_exts;
+  return honeycomb_exts;
 }
-CloudHandler::CloudHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm)
-: handler(hton, table_arg), jvm(jvm), cloud_mutex(mutex), cloud_open_tables(open_tables), hbase_adapter(NULL)
+HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm)
+: handler(hton, table_arg), jvm(jvm), honeycomb_mutex(mutex), honeycomb_open_tables(open_tables), hbase_adapter(NULL)
 {
   this->ref_length = 16;
   this->initialize_adapter();
@@ -24,7 +24,7 @@ CloudHandler::CloudHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex
   memset(scan_ids, 0, scan_ids_length);
 }
 
-CloudHandler::~CloudHandler()
+HoneycombHandler::~HoneycombHandler()
 {
   attach_thread();
   jclass adapter_class = this->adapter();
@@ -38,17 +38,17 @@ CloudHandler::~CloudHandler()
   detach_thread();
 }
 
-void CloudHandler::release_auto_increment() 
-{ 
+void HoneycombHandler::release_auto_increment()
+{
   attach_thread();
   // Stored functions call this last. Hack to get around MySQL not calling start/end bulk insert on insert in a stored function.
-  this->flush_writes(); 
+  this->flush_writes();
   detach_thread();
 }
 
-int CloudHandler::open(const char *path, int mode, uint test_if_locked)
+int HoneycombHandler::open(const char *path, int mode, uint test_if_locked)
 {
-  DBUG_ENTER("CloudHandler::open");
+  DBUG_ENTER("HoneycombHandler::open");
 
   if (!(share = get_share(path, table)))
   {
@@ -60,14 +60,14 @@ int CloudHandler::open(const char *path, int mode, uint test_if_locked)
   DBUG_RETURN(0);
 }
 
-int CloudHandler::close(void)
+int HoneycombHandler::close(void)
 {
-  DBUG_ENTER("CloudHandler::close");
+  DBUG_ENTER("HoneycombHandler::close");
 
   DBUG_RETURN(free_share(share));
 }
 
-void CloudHandler::store_field_value(Field *field, char *val, int val_length)
+void HoneycombHandler::store_field_value(Field *field, char *val, int val_length)
 {
   int type = field->real_type();
 
@@ -144,7 +144,7 @@ void CloudHandler::store_field_value(Field *field, char *val, int val_length)
   }
 }
 
-void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
+void HoneycombHandler::java_to_sql(uchar* buf, jobject row_map)
 {
   jboolean is_copy = JNI_FALSE;
   my_bitmap_map *orig_bitmap;
@@ -179,9 +179,9 @@ void CloudHandler::java_to_sql(uchar* buf, jobject row_map)
   return;
 }
 
-int CloudHandler::external_lock(THD *thd, int lock_type)
+int HoneycombHandler::external_lock(THD *thd, int lock_type)
 {
-  DBUG_ENTER("CloudHandler::external_lock");
+  DBUG_ENTER("HoneycombHandler::external_lock");
   if (lock_type == F_WRLCK || lock_type == F_RDLCK)
   {
     attach_thread();
@@ -207,7 +207,7 @@ int CloudHandler::external_lock(THD *thd, int lock_type)
   DBUG_RETURN(0);
 }
 
-char* CloudHandler::index_name(TABLE* table, uint key)
+char* HoneycombHandler::index_name(TABLE* table, uint key)
 {
     KEY *pos = table->key_info + key;
     KEY_PART_INFO *key_part = pos->key_part;
@@ -215,7 +215,7 @@ char* CloudHandler::index_name(TABLE* table, uint key)
     return this->index_name(key_part, key_part_end, pos->key_parts);
 }
 
-char* CloudHandler::index_name(KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts)
+char* HoneycombHandler::index_name(KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts)
 {
     size_t size = 0;
 
@@ -242,7 +242,7 @@ char* CloudHandler::index_name(KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_
     return name;
 }
 
-THR_LOCK_DATA **CloudHandler::store_lock(THD *thd, THR_LOCK_DATA **to,
+THR_LOCK_DATA **HoneycombHandler::store_lock(THD *thd, THR_LOCK_DATA **to,
     enum thr_lock_type lock_type)
 {
   if (lock_type != TL_IGNORE && lock.type == TL_UNLOCK)
@@ -254,24 +254,24 @@ THR_LOCK_DATA **CloudHandler::store_lock(THD *thd, THR_LOCK_DATA **to,
 /*
  Free lock controls.
  */
-int CloudHandler::free_share(CloudShare *share)
+int HoneycombHandler::free_share(HoneycombShare *share)
 {
-  DBUG_ENTER("CloudHandler::free_share");
-  mysql_mutex_lock(cloud_mutex);
+  DBUG_ENTER("HoneycombHandler::free_share");
+  mysql_mutex_lock(honeycomb_mutex);
   int result_code = 0;
   if (!--share->use_count)
   {
-    my_hash_delete(cloud_open_tables, (uchar*) share);
+    my_hash_delete(honeycomb_open_tables, (uchar*) share);
     thr_lock_delete(&share->lock);
     my_free(share);
   }
 
-  mysql_mutex_unlock(cloud_mutex);
+  mysql_mutex_unlock(honeycomb_mutex);
 
   DBUG_RETURN(result_code);
 }
 
-ha_rows CloudHandler::records_in_range(uint inx, key_range *min_key,
+ha_rows HoneycombHandler::records_in_range(uint inx, key_range *min_key,
     key_range *max_key)
 {
   return stats.records;
@@ -280,12 +280,12 @@ ha_rows CloudHandler::records_in_range(uint inx, key_range *min_key,
 // MySQL calls this function all over the place whenever it needs you to update some crucial piece of info.
 // It expects you to use this to set information about your indexes and error codes, as well as general info about your engine.
 // The bit flags (defined in my_base.h) passed in will vary depending on what it wants you to update during this call. - ABC
-int CloudHandler::info(uint flag)
+int HoneycombHandler::info(uint flag)
 {
   // TODO: Update this function to take into account the flag being passed in, like the other engines
   ha_rows		rec_per_key;
 
-  DBUG_ENTER("CloudHandler::info");
+  DBUG_ENTER("HoneycombHandler::info");
   if (flag & HA_STATUS_VARIABLE)
   {
     attach_thread();
@@ -365,26 +365,26 @@ int CloudHandler::info(uint flag)
   DBUG_RETURN(0);
 }
 
-CloudShare *CloudHandler::get_share(const char *table_name, TABLE *table)
+HoneycombShare *HoneycombHandler::get_share(const char *table_name, TABLE *table)
 {
-  CloudShare *share;
+  HoneycombShare *share;
   char *tmp_path_name;
   uint path_length;
 
-  mysql_mutex_lock(cloud_mutex);
+  mysql_mutex_lock(honeycomb_mutex);
   path_length = (uint) strlen(table_name);
 
   /*
    If share is not present in the hash, create a new share and
    initialize its members.
    */
-  if (!(share = (CloudShare*) my_hash_search(cloud_open_tables,
+  if (!(share = (HoneycombShare*) my_hash_search(honeycomb_open_tables,
       (uchar*) table_name, path_length)))
   {
     if (!my_multi_malloc(MYF(MY_WME | MY_ZEROFILL), &share, sizeof(*share),
         &tmp_path_name, path_length + 1, NullS))
     {
-      mysql_mutex_unlock(cloud_mutex);
+      mysql_mutex_unlock(honeycomb_mutex);
       return NULL;
     }
   }
@@ -395,29 +395,29 @@ CloudShare *CloudHandler::get_share(const char *table_name, TABLE *table)
   share->crashed = FALSE;
   share->rows_recorded = 0;
 
-  if (my_hash_insert(cloud_open_tables, (uchar*) share))
+  if (my_hash_insert(honeycomb_open_tables, (uchar*) share))
     goto error;
   thr_lock_init(&share->lock);
 
   share->use_count++;
-  mysql_mutex_unlock(cloud_mutex);
+  mysql_mutex_unlock(honeycomb_mutex);
 
   return share;
 
   error:
-  mysql_mutex_unlock(cloud_mutex);
+  mysql_mutex_unlock(honeycomb_mutex);
   my_free(share);
 
   return NULL;
 }
 
-int CloudHandler::extra(enum ha_extra_function operation)
+int HoneycombHandler::extra(enum ha_extra_function operation)
 {
-  DBUG_ENTER("CloudHandler::extra");
+  DBUG_ENTER("HoneycombHandler::extra");
   DBUG_RETURN(0);
 }
 
-bool CloudHandler::check_if_incompatible_data(HA_CREATE_INFO *create_info,
+bool HoneycombHandler::check_if_incompatible_data(HA_CREATE_INFO *create_info,
     uint table_changes)
 {
   if (table_changes != IS_EQUAL_YES)
@@ -449,7 +449,7 @@ bool CloudHandler::check_if_incompatible_data(HA_CREATE_INFO *create_info,
   return (COMPATIBLE_DATA_YES);
 }
 
-bool CloudHandler::check_for_renamed_column(const TABLE* table,
+bool HoneycombHandler::check_for_renamed_column(const TABLE* table,
     const char* col_name)
 {
   uint k;
@@ -479,12 +479,12 @@ bool CloudHandler::check_for_renamed_column(const TABLE* table,
   return (false);
 }
 
-void CloudHandler::get_auto_increment(ulonglong offset, ulonglong increment,
+void HoneycombHandler::get_auto_increment(ulonglong offset, ulonglong increment,
                                  ulonglong nb_desired_values,
                                  ulonglong *first_value,
                                  ulonglong *nb_reserved_values)
 {
-  DBUG_ENTER("CloudHandler::get_auto_increment");
+  DBUG_ENTER("HoneycombHandler::get_auto_increment");
   jclass adapter_class = this->adapter();
   jmethodID get_auto_increment_method = find_static_method(adapter_class, "getNextAutoincrementValue", "(Ljava/lang/String;Ljava/lang/String;)J",this->env);
   jlong increment_value = (jlong) this->env->CallStaticObjectMethod(adapter_class, get_auto_increment_method, this->table_name(), string_to_java_string(table->next_number_field->field_name));
@@ -493,7 +493,7 @@ void CloudHandler::get_auto_increment(ulonglong offset, ulonglong increment,
   DBUG_VOID_RETURN;
 }
 
-int CloudHandler::get_failed_key_index(const char *key_name)
+int HoneycombHandler::get_failed_key_index(const char *key_name)
 {
   if (this->table->s->keys == 0)
   {
@@ -502,7 +502,7 @@ int CloudHandler::get_failed_key_index(const char *key_name)
 
   for (uint key = 0; key < this->table->s->keys; key++)
   {
-    char* name = index_name(table, key); 
+    char* name = index_name(table, key);
     bool are_equal = strcmp(name, key_name) == 0;
     ARRAY_DELETE(name);
     if (are_equal)
@@ -514,7 +514,7 @@ int CloudHandler::get_failed_key_index(const char *key_name)
   return -1;
 }
 
-bool CloudHandler::field_has_unique_index(Field *field)
+bool HoneycombHandler::field_has_unique_index(Field *field)
 {
   for (int i = 0; i < table->s->keys; i++)
   {
@@ -536,24 +536,24 @@ bool CloudHandler::field_has_unique_index(Field *field)
   return false;
 }
 
-jstring CloudHandler::string_to_java_string(const char *string)
+jstring HoneycombHandler::string_to_java_string(const char *string)
 {
   return this->env->NewStringUTF(string);
 }
 
-const char *CloudHandler::java_to_string(jstring string)
+const char *HoneycombHandler::java_to_string(jstring string)
 {
   return this->env->GetStringUTFChars(string, JNI_FALSE);
 }
 
-bool CloudHandler::is_field_nullable(jstring table_name, const char* field_name)
+bool HoneycombHandler::is_field_nullable(jstring table_name, const char* field_name)
 {
   jclass adapter_class = this->adapter();
   jmethodID is_nullable_method = find_static_method(adapter_class, "isNullable", "(Ljava/lang/String;Ljava/lang/String;)Z",this->env);
   return (bool)this->env->CallStaticBooleanMethod(adapter_class, is_nullable_method, table_name, string_to_java_string(field_name));
 }
 
-void CloudHandler::store_uuid_ref(jobject index_row, jmethodID get_uuid_method)
+void HoneycombHandler::store_uuid_ref(jobject index_row, jmethodID get_uuid_method)
 {
   jbyteArray uuid = (jbyteArray) this->env->CallObjectMethod(index_row, get_uuid_method);
   uchar* pos = (uchar*) this->env->GetByteArrayElements(uuid, JNI_FALSE);
@@ -561,9 +561,9 @@ void CloudHandler::store_uuid_ref(jobject index_row, jmethodID get_uuid_method)
   this->env->ReleaseByteArrayElements(uuid, (jbyte*) pos, 0);
 }
 
-int CloudHandler::analyze(THD* thd, HA_CHECK_OPT* check_opt)
+int HoneycombHandler::analyze(THD* thd, HA_CHECK_OPT* check_opt)
 {
-  DBUG_ENTER("CloudHandler::analyze");
+  DBUG_ENTER("HoneycombHandler::analyze");
 
   // For each key, just tell MySQL that there is only one value per keypart.
   // This is, in effect, like telling MySQL that all our indexes are unique, and should essentially always be used for lookups.
@@ -580,9 +580,9 @@ int CloudHandler::analyze(THD* thd, HA_CHECK_OPT* check_opt)
   DBUG_RETURN(0);
 }
 
-ha_rows CloudHandler::estimate_rows_upper_bound()
+ha_rows HoneycombHandler::estimate_rows_upper_bound()
 {
-  DBUG_ENTER("CloudHandler::estimate_rows_upper_bound");
+  DBUG_ENTER("HoneycombHandler::estimate_rows_upper_bound");
   attach_thread();
 
   jclass adapter_class = this->adapter();
@@ -597,14 +597,14 @@ ha_rows CloudHandler::estimate_rows_upper_bound()
   DBUG_RETURN(row_count < 2 ? 10 : 2*row_count + 1);
 }
 
-void CloudHandler::flush_writes()
+void HoneycombHandler::flush_writes()
 {
   jclass adapter_class = this->adapter();
   jmethodID end_write_method = find_static_method(adapter_class, "flushWrites", "(J)V",this->env);
   this->env->CallStaticVoidMethod(adapter_class, end_write_method, (jlong)this->curr_write_id);
 }
 
-void CloudHandler::detach_thread()
+void HoneycombHandler::detach_thread()
 {
   thread_ref_count--;
 
@@ -615,7 +615,7 @@ void CloudHandler::detach_thread()
   }
 }
 
-void CloudHandler::attach_thread()
+void HoneycombHandler::attach_thread()
 {
   thread_ref_count++;
   JavaVMAttachArgs attachArgs;
@@ -630,7 +630,7 @@ void CloudHandler::attach_thread()
   }
 }
 
-jstring CloudHandler::table_name()
+jstring HoneycombHandler::table_name()
 {
   char* database_name = this->table->s->db.str;
   char* table_name = this->table->s->table_name.str;

@@ -1,6 +1,6 @@
 class CreatePods < ActiveRecord::Migration
   def self.up
-    create_table :pods, :options => "engine=cloud" do |t|
+    create_table :pods, :options => "engine=Honeycomb" do |t|
       t.string :host
       t.boolean :ssl
 

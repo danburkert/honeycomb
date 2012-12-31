@@ -2,7 +2,7 @@
 
 uint64_t bswap64(uint64_t x)
 {
-	return __builtin_bswap64(x);
+  return __builtin_bswap64(x);
 }
 
 bool is_unsigned_field(Field *field)

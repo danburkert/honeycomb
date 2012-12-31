@@ -1,11 +1,11 @@
-#ifndef CLOUD_HANDLER_H
-#define CLOUD_HANDLER_H
+#ifndef HONEYCOMB_HANDLER_H
+#define HONEYCOMB_HANDLER_H
 
 #ifdef USE_PRAGMA_INTERFACE
 #pragma Interface               /* gcc class implementation */
 #endif
 
-#include "CloudShare.h"
+#include "HoneycombShare.h"
 #include "Macros.h"
 #include "FieldMetadata.h"
 #include "Logging.h"
@@ -22,15 +22,15 @@
 
 static __thread int thread_ref_count=0;
 
-class CloudHandler : public handler
+class HoneycombHandler : public handler
 {
   private:
-    THR_LOCK_DATA lock;      	///< MySQL lockCloudShare;
-    CloudShare *share;    		///< Sharedclass lock info
-    mysql_mutex_t* cloud_mutex;
-    HASH* cloud_open_tables;
+    THR_LOCK_DATA lock;     ///< MySQL lockHoneycombShare;
+    HoneycombShare *share;  ///< Sharedclass lock info
+    mysql_mutex_t* honeycomb_mutex;
+    HASH* honeycomb_open_tables;
     bool performing_scan;
-    CloudShare *get_share(const char *table_name, TABLE *table);
+    HoneycombShare *get_share(const char *table_name, TABLE *table);
     uint32 max_row_length();
     long long* scan_ids;
     int scan_ids_count, scan_ids_length;
@@ -152,16 +152,16 @@ class CloudHandler : public handler
     int index_first(uchar *buf);
     int index_last(uchar *buf);
 
-    void update_cloud_autoincrement_value(jlong new_autoincrement_value, jboolean is_truncate); 
+    void update_honeycomb_autoincrement_value(jlong new_autoincrement_value, jboolean is_truncate); 
     void release_auto_increment();
 
   public:
-    CloudHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm);
-    ~CloudHandler();
+    HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm);
+    ~HoneycombHandler();
 
     const char *table_type() const
     {
-      return "cloud";
+      return "honeycomb";
     }
 
     const char *index_type(uint inx)
@@ -255,7 +255,7 @@ class CloudHandler : public handler
     int update_row(const uchar *old_data, uchar *new_data);
     int write_row(uchar *buf);
     int delete_row(const uchar *buf);
-    int free_share(CloudShare *share);
+    int free_share(HoneycombShare *share);
     int rnd_end();
     ha_rows records_in_range(uint inx, key_range *min_key, key_range *max_key);
     int analyze(THD* thd, HA_CHECK_OPT* check_opt);

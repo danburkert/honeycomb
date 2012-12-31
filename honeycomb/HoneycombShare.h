@@ -1,10 +1,10 @@
-#ifndef CLOUD_SHARE_H
-#define CLOUD_SHARE_H
+#ifndef HONEYCOMB_SHARE_H
+#define HONEYCOMB_SHARE_H
 
 #include "my_global.h"
 #include "thr_lock.h"           /* THR_LOCK, THR_LOCK_DATA */
 #include "my_base.h"
-typedef struct st_cloud_share {
+typedef struct st_honeycomb_share {
   char *table_name;
   uint table_name_length;
   char *table_alias;
@@ -16,6 +16,6 @@ typedef struct st_cloud_share {
   THR_LOCK lock;
   bool crashed;             /* Meta file is crashed */
   ha_rows rows_recorded;    /* Number of rows in tables */
-} CloudShare;
+} HoneycombShare;
 
 #endif

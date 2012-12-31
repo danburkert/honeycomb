@@ -1,6 +1,6 @@
-#include "CloudHandler.h"
+#include "HoneycombHandler.h"
 
-jobject CloudHandler::create_multipart_keys(TABLE* table_arg)
+jobject HoneycombHandler::create_multipart_keys(TABLE* table_arg)
 {
   uint keys = table_arg->s->keys;
   jmethodID add_key_method = add_multipart_key_method(this->env);
@@ -17,7 +17,7 @@ jobject CloudHandler::create_multipart_keys(TABLE* table_arg)
   return java_keys;
 }
 
-jobject CloudHandler::create_multipart_key(KEY* key, KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts)
+jobject HoneycombHandler::create_multipart_key(KEY* key, KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts)
 {
   jmethodID add_key_method = add_multipart_key_method(this->env);
   jobject java_keys = new_multipart_key(this->env);
@@ -39,7 +39,7 @@ const char* table_creation_errors[] = {
   "table. Required: character set utf8 collate utf8_bin"
 };
 
-bool CloudHandler::is_allowed_column(Field* field, int* error_number)
+bool HoneycombHandler::is_allowed_column(Field* field, int* error_number)
 {
   bool allowed = true;
   switch (field->real_type())
@@ -73,9 +73,9 @@ bool CloudHandler::is_allowed_column(Field* field, int* error_number)
   return allowed;
 }
 
-int CloudHandler::create(const char *path, TABLE *table_arg, HA_CREATE_INFO *create_info)
+int HoneycombHandler::create(const char *path, TABLE *table_arg, HA_CREATE_INFO *create_info)
 {
-  DBUG_ENTER("CloudHandler::create");
+  DBUG_ENTER("HoneycombHandler::create");
   attach_thread();
   if(table_arg->part_info != NULL)
   {
@@ -124,9 +124,9 @@ int CloudHandler::create(const char *path, TABLE *table_arg, HA_CREATE_INFO *cre
   DBUG_RETURN(0);
 }
 
-int CloudHandler::rename_table(const char *from, const char *to)
+int HoneycombHandler::rename_table(const char *from, const char *to)
 {
-  DBUG_ENTER("CloudHandler::rename_table");
+  DBUG_ENTER("HoneycombHandler::rename_table");
 
   attach_thread();
 
@@ -145,16 +145,16 @@ int CloudHandler::rename_table(const char *from, const char *to)
   DBUG_RETURN(0);
 }
 
-int CloudHandler::write_row(uchar *buf)
+int HoneycombHandler::write_row(uchar *buf)
 {
-  DBUG_ENTER("CloudHandler::write_row");
+  DBUG_ENTER("HoneycombHandler::write_row");
   my_bitmap_map *old_map = dbug_tmp_use_all_columns(table, table->read_set);
   int rc = write_row(buf, NULL);
   dbug_tmp_restore_column_map(table->read_set, old_map);
   DBUG_RETURN(rc);
 }
 
-int CloudHandler::write_row(uchar* buf, jobject updated_fields)
+int HoneycombHandler::write_row(uchar* buf, jobject updated_fields)
 {
   if (share->crashed)
     return HA_ERR_CRASHED_ON_USAGE;
@@ -334,14 +334,14 @@ int CloudHandler::write_row(uchar* buf, jobject updated_fields)
   }
 
   if (new_autoincrement_value >= 0 && new_autoincrement_value < LLONG_MAX)
-    update_cloud_autoincrement_value(new_autoincrement_value + 1, JNI_FALSE);
+    update_honeycomb_autoincrement_value(new_autoincrement_value + 1, JNI_FALSE);
   else if (new_autoincrement_value >= 0)
-    update_cloud_autoincrement_value(new_autoincrement_value, JNI_FALSE);
+    update_honeycomb_autoincrement_value(new_autoincrement_value, JNI_FALSE);
 
   return 0;
 }
 
-bool CloudHandler::row_has_duplicate_values(jobject value_map, jobject changedColumns)
+bool HoneycombHandler::row_has_duplicate_values(jobject value_map, jobject changedColumns)
 {
   this->flush_writes(); // Flush before checking for duplicates to make sure the changes are in HBase.
   jclass adapter_class = this->adapter();
@@ -375,9 +375,9 @@ bool CloudHandler::row_has_duplicate_values(jobject value_map, jobject changedCo
  This will be called in a table scan right before the previous ::rnd_next()
  call.
  */
-int CloudHandler::update_row(const uchar *old_row, uchar *new_row)
+int HoneycombHandler::update_row(const uchar *old_row, uchar *new_row)
 {
-  DBUG_ENTER("CloudHandler::update_row");
+  DBUG_ENTER("HoneycombHandler::update_row");
 
   ha_statistic_increment(&SSV::ha_update_count);
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
@@ -401,7 +401,7 @@ int CloudHandler::update_row(const uchar *old_row, uchar *new_row)
   DBUG_RETURN(rc);
 }
 
-void CloudHandler::collect_changed_fields(jobject updated_fields, const uchar* old_row, uchar* new_row)
+void HoneycombHandler::collect_changed_fields(jobject updated_fields, const uchar* old_row, uchar* new_row)
 {
   typedef unsigned long int ulint;
   uint n_fields = table->s->fields;
@@ -442,7 +442,7 @@ void CloudHandler::collect_changed_fields(jobject updated_fields, const uchar* o
   }
 }
 
-int CloudHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add)
+int HoneycombHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add)
 {
   for(uint key = 0; key < num_of_keys; key++)
   {
@@ -481,7 +481,7 @@ int CloudHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, h
   return 0;
 }
 
-jbyteArray CloudHandler::find_duplicate_column_values(char* columns)
+jbyteArray HoneycombHandler::find_duplicate_column_values(char* columns)
 {
   jclass adapter = this->adapter();
   jmethodID column_has_duplicates_method = find_static_method(adapter, "findDuplicateValue", "(Ljava/lang/String;Ljava/lang/String;)[B",this->env);
@@ -491,7 +491,7 @@ jbyteArray CloudHandler::find_duplicate_column_values(char* columns)
 }
 
 
-int CloudHandler::prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys)
+int HoneycombHandler::prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys)
 {
   jclass adapter = this->adapter();
   jmethodID add_index_method = find_static_method(adapter, "dropIndex", "(Ljava/lang/String;Ljava/lang/String;)V",this->env);
@@ -506,9 +506,9 @@ int CloudHandler::prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_o
   return 0;
 }
 
-int CloudHandler::delete_row(const uchar *buf)
+int HoneycombHandler::delete_row(const uchar *buf)
 {
-  DBUG_ENTER("CloudHandler::delete_row");
+  DBUG_ENTER("HoneycombHandler::delete_row");
   ha_statistic_increment(&SSV::ha_delete_count);
   jclass adapter_class = this->adapter();
   jmethodID delete_row_method = find_static_method(adapter_class, "deleteRow", "(J)Z",this->env);
@@ -516,9 +516,9 @@ int CloudHandler::delete_row(const uchar *buf)
   DBUG_RETURN(0);
 }
 
-int CloudHandler::delete_all_rows()
+int HoneycombHandler::delete_all_rows()
 {
-  DBUG_ENTER("CloudHandler::delete_all_rows");
+  DBUG_ENTER("HoneycombHandler::delete_all_rows");
 
   jstring table_name = this->table_name();
   jclass adapter_class = this->adapter();
@@ -533,17 +533,17 @@ int CloudHandler::delete_all_rows()
   DBUG_RETURN(0);
 }
 
-int CloudHandler::truncate()
+int HoneycombHandler::truncate()
 {
-  DBUG_ENTER("CloudHandler::truncate");
+  DBUG_ENTER("HoneycombHandler::truncate");
 
-  update_cloud_autoincrement_value((jlong) 1, JNI_TRUE);
+  update_honeycomb_autoincrement_value((jlong) 1, JNI_TRUE);
   int returnValue = delete_all_rows();
 
   DBUG_RETURN(returnValue);
 }
 
-void CloudHandler::update_cloud_autoincrement_value(jlong new_autoincrement_value, jboolean is_truncate) {
+void HoneycombHandler::update_honeycomb_autoincrement_value(jlong new_autoincrement_value, jboolean is_truncate) {
   if(table->found_next_number_field == NULL)
   {
     return;
@@ -556,16 +556,16 @@ void CloudHandler::update_cloud_autoincrement_value(jlong new_autoincrement_valu
     stats.auto_increment_value = (ulonglong) new_autoincrement_value;
 }
 
-void CloudHandler::drop_table(const char *path)
+void HoneycombHandler::drop_table(const char *path)
 {
   close();
 
   delete_table(path);
 }
 
-int CloudHandler::delete_table(const char *path)
+int HoneycombHandler::delete_table(const char *path)
 {
-  DBUG_ENTER("CloudHandler::delete_table");
+  DBUG_ENTER("HoneycombHandler::delete_table");
 
   attach_thread();
 
@@ -584,19 +584,19 @@ int CloudHandler::delete_table(const char *path)
   DBUG_RETURN(0);
 }
 
-void CloudHandler::update_create_info(HA_CREATE_INFO* create_info)
+void HoneycombHandler::update_create_info(HA_CREATE_INFO* create_info)
 {
-  DBUG_ENTER("CloudHandler::update_create_info");
+  DBUG_ENTER("HoneycombHandler::update_create_info");
   attach_thread();
 
   //show create table
   if (!(create_info->used_fields & HA_CREATE_USED_AUTO)) {
-    CloudHandler::info(HA_STATUS_AUTO);
+    HoneycombHandler::info(HA_STATUS_AUTO);
     create_info->auto_increment_value = stats.auto_increment_value;
   }
   //alter table
   else if (create_info->used_fields == 1) {
-    update_cloud_autoincrement_value((jlong) create_info->auto_increment_value, JNI_FALSE);
+    update_honeycomb_autoincrement_value((jlong) create_info->auto_increment_value, JNI_FALSE);
   }
 
   detach_thread();

@@ -1,6 +1,6 @@
 class CreateUserPreferences < ActiveRecord::Migration
   def self.up
-    create_table :user_preferences, :options => "engine=cloud" do |t|
+    create_table :user_preferences, :options => "engine=Honeycomb" do |t|
       t.string :email_type
       t.integer :user_id
 

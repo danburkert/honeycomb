@@ -1,13 +1,13 @@
 class CreateSchema < ActiveRecord::Migration
   def self.up
-    create_table :aspects, :options => "engine=cloud" do |t|
+    create_table :aspects, :options => "engine=Honeycomb" do |t|
       t.string :name
       t.integer :user_id
       t.timestamps
     end
     add_index :aspects, :user_id
 
-    create_table :aspect_memberships, :options => "engine=cloud" do |t|
+    create_table :aspect_memberships, :options => "engine=Honeycomb" do |t|
       t.integer :aspect_id
       t.integer :contact_id
       t.timestamps
@@ -16,7 +16,7 @@ class CreateSchema < ActiveRecord::Migration
     add_index :aspect_memberships, [:aspect_id, :contact_id], :unique => true
     add_index :aspect_memberships, :contact_id
 
-    create_table :comments, :options => "engine=cloud" do |t|
+    create_table :comments, :options => "engine=Honeycomb" do |t|
       t.text :text
       t.integer :post_id
       t.integer :person_id
@@ -29,7 +29,7 @@ class CreateSchema < ActiveRecord::Migration
     add_index :comments, :guid, :unique => true
     add_index :comments, :post_id
 
-    create_table :contacts, :options => "engine=cloud" do |t|
+    create_table :contacts, :options => "engine=Honeycomb" do |t|
       t.integer :user_id
       t.integer :person_id
       t.boolean :pending, :default => true
@@ -39,7 +39,7 @@ class CreateSchema < ActiveRecord::Migration
     add_index :contacts, [:person_id, :pending]
     add_index :contacts, [:user_id, :person_id], :unique => true
 
-    create_table :invitations, :options => "engine=cloud" do |t|
+    create_table :invitations, :options => "engine=Honeycomb" do |t|
       t.text :message
       t.integer :sender_id
       t.integer :recipient_id
@@ -48,7 +48,7 @@ class CreateSchema < ActiveRecord::Migration
     end
     add_index :invitations, :sender_id
 
-    create_table :notifications, :options => "engine=cloud" do |t|
+    create_table :notifications, :options => "engine=Honeycomb" do |t|
       t.string :target_type
       t.integer :target_id
       t.integer :recipient_id
@@ -59,7 +59,7 @@ class CreateSchema < ActiveRecord::Migration
     end
     add_index :notifications, [:target_type, :target_id]
 
-    create_table :people, :options => "engine=cloud" do |t|
+    create_table :people, :options => "engine=Honeycomb" do |t|
       t.string :guid
       t.text :url
       t.string :diaspora_handle
@@ -71,7 +71,7 @@ class CreateSchema < ActiveRecord::Migration
     add_index :people, :owner_id, :unique => true
     add_index :people, :diaspora_handle, :unique => true
 
-    create_table :posts, :options => "engine=cloud" do |t|
+    create_table :posts, :options => "engine=Honeycomb" do |t|
       t.integer :person_id
       t.boolean :public, :default => false
       t.string :diaspora_handle
@@ -95,7 +95,7 @@ class CreateSchema < ActiveRecord::Migration
     add_index :posts, :person_id
     add_index :posts, :guid
 
-    create_table :post_visibilities, :options => "engine=cloud" do |t|
+    create_table :post_visibilities, :options => "engine=Honeycomb" do |t|
       t.integer :aspect_id
       t.integer :post_id
       t.timestamps
@@ -103,7 +103,7 @@ class CreateSchema < ActiveRecord::Migration
     add_index :post_visibilities, :aspect_id
     add_index :post_visibilities, :post_id
 
-    create_table :profiles, :options => "engine=cloud" do |t|
+    create_table :profiles, :options => "engine=Honeycomb" do |t|
       t.string :diaspora_handle
       t.string :first_name, :limit => 127
       t.string :last_name, :limit => 127
@@ -122,7 +122,7 @@ class CreateSchema < ActiveRecord::Migration
     add_index :profiles, [:first_name, :last_name, :searchable]
     add_index :profiles, :person_id
 
-    create_table :requests, :options => "engine=cloud" do |t|
+    create_table :requests, :options => "engine=Honeycomb" do |t|
       t.integer :sender_id
       t.integer :recipient_id
       t.integer :aspect_id
@@ -132,7 +132,7 @@ class CreateSchema < ActiveRecord::Migration
     add_index :requests, :recipient_id
     add_index :requests, [:sender_id, :recipient_id], :unique => true
 
-    create_table :services, :options => "engine=cloud" do |t|
+    create_table :services, :options => "engine=Honeycomb" do |t|
       t.string :type, :limit => 127
       t.integer :user_id
       t.string :provider
@@ -144,7 +144,7 @@ class CreateSchema < ActiveRecord::Migration
     end
     add_index :services, :user_id
 
-    create_table :users, :options => "engine=cloud" do |t|
+    create_table :users, :options => "engine=Honeycomb" do |t|
       t.string :username
       t.text :serialized_private_key
       t.integer :invites, :default => 0

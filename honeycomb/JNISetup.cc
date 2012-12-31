@@ -162,7 +162,7 @@ static void initialize_adapter(bool attach_thread, JavaVM* jvm, JNIEnv* env)
   env->CallStaticVoidMethod(adapter_class, initialize_method);
   if (print_java_exception(env))
   {
-    abort_with_fatal_error("Initialize failed with an error. Check HBaseAdapter.log and cloud.log for more information.");
+    abort_with_fatal_error("Initialize failed with an error. Check HBaseAdapter.log and honeycomb.log for more information.");
   }
 }
 

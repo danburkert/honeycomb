@@ -1,8 +1,8 @@
-#include "CloudHandler.h"
+#include "HoneycombHandler.h"
 
-int CloudHandler::index_init(uint idx, bool sorted)
+int HoneycombHandler::index_init(uint idx, bool sorted)
 {
-  DBUG_ENTER("CloudHandler::index_init");
+  DBUG_ENTER("HoneycombHandler::index_init");
 
   this->active_index = idx;
 
@@ -22,16 +22,16 @@ int CloudHandler::index_init(uint idx, bool sorted)
   DBUG_RETURN(0);
 }
 
-int CloudHandler::index_end()
+int HoneycombHandler::index_end()
 {
-  DBUG_ENTER("CloudHandler::index_end");
+  DBUG_ENTER("HoneycombHandler::index_end");
 
   this->end_scan();
 
   DBUG_RETURN(0);
 }
 
-jobject CloudHandler::create_key_value_list(int index, uint* key_sizes, uchar** key_copies, const char** key_names, jboolean* key_null_bits, jboolean* key_is_null)
+jobject HoneycombHandler::create_key_value_list(int index, uint* key_sizes, uchar** key_copies, const char** key_names, jboolean* key_null_bits, jboolean* key_is_null)
 {
   jobject key_values = create_java_list(this->env);
   jclass key_value_class = this->env->FindClass(HBASECLIENT "KeyValue");
@@ -48,10 +48,10 @@ jobject CloudHandler::create_key_value_list(int index, uint* key_sizes, uchar** 
   return key_values;
 }
 
-int CloudHandler::index_read_map(uchar * buf, const uchar * key,
+int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
     key_part_map keypart_map, enum ha_rkey_function find_flag)
 {
-  DBUG_ENTER("CloudHandler::index_read_map");
+  DBUG_ENTER("HoneycombHandler::index_read_map");
   jclass adapter_class = this->adapter();
   jmethodID index_read_method = find_static_method(adapter_class,
       "indexRead", "(JLjava/util/List;L" MYSQLENGINE "IndexReadType;)L" MYSQLENGINE "IndexRow;",
@@ -142,19 +142,19 @@ int CloudHandler::index_read_map(uchar * buf, const uchar * key,
   DBUG_RETURN(read_index_row(index_row, buf));
 }
 
-int CloudHandler::index_first(uchar *buf)
+int HoneycombHandler::index_first(uchar *buf)
 {
-  DBUG_ENTER("CloudHandler::index_first");
+  DBUG_ENTER("HoneycombHandler::index_first");
   DBUG_RETURN(get_index_row("INDEX_FIRST", buf));
 }
 
-int CloudHandler::index_last(uchar *buf)
+int HoneycombHandler::index_last(uchar *buf)
 {
-  DBUG_ENTER("CloudHandler::index_last");
+  DBUG_ENTER("HoneycombHandler::index_last");
   DBUG_RETURN(get_index_row("INDEX_LAST", buf));
 }
 
-int CloudHandler::get_next_index_row(uchar* buf)
+int HoneycombHandler::get_next_index_row(uchar* buf)
 {
   jclass adapter_class = this->adapter();
   jmethodID index_next_method = find_static_method(adapter_class, "nextIndexRow", "(J)L" MYSQLENGINE "IndexRow;",this->env);
@@ -163,7 +163,7 @@ int CloudHandler::get_next_index_row(uchar* buf)
   return read_index_row(index_row, buf); 
 }
 
-int CloudHandler::get_index_row(const char* indexType, uchar* buf)
+int HoneycombHandler::get_index_row(const char* indexType, uchar* buf)
 {
   jclass adapter_class = this->adapter();
   jmethodID index_read_method = find_static_method(adapter_class, "indexRead", "(JLjava/util/List;L" MYSQLENGINE "IndexReadType;)L" MYSQLENGINE "IndexRow;",this->env);
@@ -174,7 +174,7 @@ int CloudHandler::get_index_row(const char* indexType, uchar* buf)
   return read_index_row(index_row, buf); 
 }
 
-int CloudHandler::read_index_row(jobject index_row, uchar* buf)
+int HoneycombHandler::read_index_row(jobject index_row, uchar* buf)
 {
   jclass index_row_class = find_jni_class("IndexRow", this->env);
   jmethodID get_uuid_method = this->env->GetMethodID(index_row_class, "getUUID",
@@ -197,17 +197,17 @@ int CloudHandler::read_index_row(jobject index_row, uchar* buf)
   return 0;
 }
 
-void CloudHandler::position(const uchar *record)
+void HoneycombHandler::position(const uchar *record)
 {
-  DBUG_ENTER("CloudHandler::position");
+  DBUG_ENTER("HoneycombHandler::position");
   DBUG_VOID_RETURN;
 }
 
-int CloudHandler::rnd_pos(uchar *buf, uchar *pos)
+int HoneycombHandler::rnd_pos(uchar *buf, uchar *pos)
 {
   int rc = 0;
   ha_statistic_increment(&SSV::ha_read_rnd_count); // Boilerplate
-  DBUG_ENTER("CloudHandler::rnd_pos");
+  DBUG_ENTER("HoneycombHandler::rnd_pos");
 
   MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, FALSE);
 
@@ -236,28 +236,28 @@ int CloudHandler::rnd_pos(uchar *buf, uchar *pos)
   DBUG_RETURN(rc);
 }
 
-int CloudHandler::rnd_end()
+int HoneycombHandler::rnd_end()
 {
-  DBUG_ENTER("CloudHandler::rnd_end");
+  DBUG_ENTER("HoneycombHandler::rnd_end");
 
   this->end_scan();
 
   DBUG_RETURN(0);
 }
 
-int CloudHandler::index_next(uchar *buf)
+int HoneycombHandler::index_next(uchar *buf)
 {
-  DBUG_ENTER("CloudHandler::index_next");
+  DBUG_ENTER("HoneycombHandler::index_next");
   DBUG_RETURN(this->retrieve_value_from_index(buf));
 }
 
-int CloudHandler::index_prev(uchar *buf)
+int HoneycombHandler::index_prev(uchar *buf)
 {
-  DBUG_ENTER("CloudHandler::index_prev");
+  DBUG_ENTER("HoneycombHandler::index_prev");
   DBUG_RETURN(this->retrieve_value_from_index(buf));
 }
 
-int CloudHandler::retrieve_value_from_index(uchar* buf)
+int HoneycombHandler::retrieve_value_from_index(uchar* buf)
 {
   int rc = 0;
 
@@ -272,9 +272,9 @@ int CloudHandler::retrieve_value_from_index(uchar* buf)
   return rc;
 }
 
-int CloudHandler::rnd_init(bool scan)
+int HoneycombHandler::rnd_init(bool scan)
 {
-  DBUG_ENTER("CloudHandler::rnd_init");
+  DBUG_ENTER("HoneycombHandler::rnd_init");
 
   jclass adapter_class = this->adapter();
   jmethodID start_scan_method = find_static_method(adapter_class, "startScan",
@@ -291,12 +291,12 @@ int CloudHandler::rnd_init(bool scan)
   DBUG_RETURN(0);
 }
 
-int CloudHandler::rnd_next(uchar *buf)
+int HoneycombHandler::rnd_next(uchar *buf)
 {
   int rc = 0;
 
   ha_statistic_increment(&SSV::ha_read_rnd_next_count);
-  DBUG_ENTER("CloudHandler::rnd_next");
+  DBUG_ENTER("HoneycombHandler::rnd_next");
 
   MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, TRUE);
 
@@ -329,7 +329,7 @@ int CloudHandler::rnd_next(uchar *buf)
   DBUG_RETURN(rc);
 }
 
-void CloudHandler::end_scan()
+void HoneycombHandler::end_scan()
 {
   if(scan_ids_count == scan_ids_length)
   {

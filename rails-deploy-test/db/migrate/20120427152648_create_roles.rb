@@ -1,6 +1,6 @@
 class CreateRoles < ActiveRecord::Migration
   def change
-    create_table :roles, :options => "engine=cloud" do |t|
+    create_table :roles, :options => "engine=Honeycomb" do |t|
       t.integer :person_id
       t.string :name
 
