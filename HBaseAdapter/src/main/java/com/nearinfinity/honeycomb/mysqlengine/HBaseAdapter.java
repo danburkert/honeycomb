@@ -100,7 +100,7 @@ public class HBaseAdapter {
                                       Map<String, ColumnMetadata> columns, TableMultipartKeys multipartKeys)
             throws HBaseAdapterException {
         try {
-            logger.info("tableName:" + tableName);
+            logger.debug("Creating table " + tableName);
             HBaseWriter writer = createWriter();
             writer.createTableFull(tableName, columns, multipartKeys);
             writer.close();
@@ -118,7 +118,9 @@ public class HBaseAdapter {
         long returnValue = -1;
 
         try {
-            logger.info(format("tableName: {0}, fieldName: {1}", tableName, fieldName));
+            if (logger.isDebugEnabled()) {
+                logger.debug(format("tableName: {0}, fieldName: {1}", tableName, fieldName));
+            }
             returnValue = reader.getAutoincrementValue(tableName, fieldName);
         } catch (Throwable e) {
             logger.error("Exception:", e);
@@ -135,7 +137,9 @@ public class HBaseAdapter {
         boolean returnValue = false;
 
         try {
-            logger.info(format("tableName: {0}, fieldName: {1}, autoIncrementValue: {2}, isTruncate: {3}", tableName, fieldName, autoincrementValue, isTruncate));
+            if (logger.isDebugEnabled()) {
+                logger.debug(format("tableName: {0}, fieldName: {1}, autoIncrementValue: {2}, isTruncate: {3}", tableName, fieldName, autoincrementValue, isTruncate));
+            }
             HBaseWriter writer = createWriter();
             returnValue = writer.alterAutoincrementValue(tableName, fieldName, autoincrementValue, isTruncate);
             writer.close();
@@ -150,7 +154,9 @@ public class HBaseAdapter {
     public static long startWrite() throws HBaseAdapterException {
         try {
             long writerId = activeWriterCounter.incrementAndGet();
-            logger.info(String.format("New writer %s", writerId));
+            if (logger.isDebugEnabled()) {
+                logger.debug(format("New writer {0}", writerId));
+            }
             HBaseWriter writer = createWriter();
             activeWriterLookup.put(writerId, writer);
             return writerId;
@@ -162,6 +168,9 @@ public class HBaseAdapter {
 
     public static void endWrite(long writeId) throws HBaseAdapterException {
         try {
+            if (logger.isDebugEnabled()) {
+                logger.debug(format("End writer {0}", writeId));
+            }
             HBaseWriter writer = activeWriterLookup.get(writeId);
             if (writer != null) {
                 writer.close();
@@ -177,7 +186,6 @@ public class HBaseAdapter {
             throws HBaseAdapterException {
         try {
             long scanId = activeScanCounter.incrementAndGet();
-            logger.info(String.format("tableName: %s, scanId: %s, isFullTableScan: %s", tableName, scanId, isFullTableScan));
             ScanStrategy strategy = new FullTableScanStrategy(tableName);
             SingleResultScanner dataScanner = new SingleResultScanner(reader.getScanner(strategy));
             activeScanLookup.put(scanId, new ActiveScan(tableName, dataScanner));
@@ -211,7 +219,6 @@ public class HBaseAdapter {
     }
 
     public static void endScan(long scanId) throws HBaseAdapterException {
-        logger.info("scanId: " + scanId);
         try {
             if (!activeScanLookup.containsKey(scanId)) {
                 return;
@@ -229,6 +236,9 @@ public class HBaseAdapter {
     public static boolean writeRow(long writeId, String tableName, Map<String, byte[]> values)
             throws HBaseAdapterException {
         try {
+            if (logger.isDebugEnabled()) {
+                logger.debug("Using writer " + writeId);
+            }
             HBaseWriter writer = getHBaseWriterForId(writeId);
             writer.writeRow(tableName, values);
         } catch (Exception e) {
@@ -256,6 +266,9 @@ public class HBaseAdapter {
 
     public static void flushWrites(long writeId) {
         try {
+            if (logger.isDebugEnabled()) {
+                logger.debug(format("Flushing writer {0}", writeId));
+            }
             HBaseWriter writer = getHBaseWriterForId(writeId);
             writer.flushWrites();
         } catch (Throwable e) {
@@ -264,7 +277,6 @@ public class HBaseAdapter {
     }
 
     public static boolean deleteRow(long scanId) throws HBaseAdapterException {
-        logger.info("scanId: " + scanId);
         try {
             ActiveScan activeScan = getActiveScanForId(scanId);
             HBaseResultScanner scanner = activeScan.getScanner();
@@ -282,8 +294,6 @@ public class HBaseAdapter {
     }
 
     public static int deleteAllRows(String tableName) throws HBaseAdapterException {
-        logger.info("tableName: " + tableName);
-
         try {
             HBaseWriter writer = createWriter();
             int count = writer.deleteAllRowsInTable(tableName);
@@ -295,7 +305,6 @@ public class HBaseAdapter {
     }
 
     public static boolean dropTable(String tableName) throws HBaseAdapterException {
-        logger.info("tableName: " + tableName);
         try {
             HBaseWriter writer = createWriter();
             boolean success = writer.dropTable(tableName);

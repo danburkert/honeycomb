@@ -147,15 +147,17 @@ int CloudHandler::rename_table(const char *from, const char *to)
 
 int CloudHandler::write_row(uchar *buf)
 {
+  DBUG_ENTER("CloudHandler::write_row");
+  my_bitmap_map *old_map = dbug_tmp_use_all_columns(table, table->read_set);
   int rc = write_row(buf, NULL);
-  return rc;
+  dbug_tmp_restore_column_map(table->read_set, old_map);
+  DBUG_RETURN(rc);
 }
 
 int CloudHandler::write_row(uchar* buf, jobject updated_fields)
 {
-  DBUG_ENTER("CloudHandler::write_row");
   if (share->crashed)
-    DBUG_RETURN(HA_ERR_CRASHED_ON_USAGE);
+    return HA_ERR_CRASHED_ON_USAGE;
 
   ha_statistic_increment(&SSV::ha_write_count);
 
@@ -176,11 +178,9 @@ int CloudHandler::write_row(uchar* buf, jobject updated_fields)
     int res;
     if((res = update_auto_increment()))
     {
-      DBUG_RETURN(res);
+      return res;
     }
   }
-
-  my_bitmap_map *old_map = dbug_tmp_use_all_columns(table, table->read_set);
 
   uint actualFieldSize;
 
@@ -306,7 +306,6 @@ int CloudHandler::write_row(uchar* buf, jobject updated_fields)
     }
   }
 
-  dbug_tmp_restore_column_map(table->read_set, old_map);
 
   if (updated_fields)
   {
@@ -316,7 +315,7 @@ int CloudHandler::write_row(uchar* buf, jobject updated_fields)
     {
       if (this->row_has_duplicate_values(unique_values_map, updated_fields))
       {
-        DBUG_RETURN(HA_ERR_FOUND_DUPP_KEY);
+        return HA_ERR_FOUND_DUPP_KEY;
       }
     }
 
@@ -327,7 +326,7 @@ int CloudHandler::write_row(uchar* buf, jobject updated_fields)
   {
     if (this->row_has_duplicate_values(unique_values_map, updated_fields))
     {
-      DBUG_RETURN(HA_ERR_FOUND_DUPP_KEY);
+      return HA_ERR_FOUND_DUPP_KEY;
     }
 
     this->env->CallStaticBooleanMethod(adapter_class, write_row_method, this->curr_write_id, table_name, java_row_map);
@@ -339,7 +338,7 @@ int CloudHandler::write_row(uchar* buf, jobject updated_fields)
   else if (new_autoincrement_value >= 0)
     update_cloud_autoincrement_value(new_autoincrement_value, JNI_FALSE);
 
-  DBUG_RETURN(0);
+  return 0;
 }
 
 bool CloudHandler::row_has_duplicate_values(jobject value_map, jobject changedColumns)
@@ -394,7 +393,9 @@ int CloudHandler::update_row(const uchar *old_row, uchar *new_row)
     DBUG_RETURN(rc);
   }
 
+  my_bitmap_map *old_map = dbug_tmp_use_all_columns(table, table->read_set);
   rc = write_row(new_row, updated_fieldnames);
+  dbug_tmp_restore_column_map(table->read_set, old_map);
   this->flush_writes();
 
   DBUG_RETURN(rc);

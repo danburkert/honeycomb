@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class ValueParser {
     public static byte[] parse(String val, ColumnMetadata meta) throws ParseException {
         checkNotNull(val, "Should not be parsing null. Something went terribly wrong.");
+        checkNotNull(meta, "Column metadata is null.");
         ColumnType type = meta.getType();
 
         if (val.length() == 0 && type != ColumnType.STRING
@@ -25,7 +26,7 @@ public class ValueParser {
             if (meta.isNullable()) {
                 return null;
             } else {
-                throw new IllegalArgumentException("Attempt to parse invalid field value: " + val);
+                throw new IllegalArgumentException("Expected a value for a non null SQL column, but no value was given.");
             }
         }
 

@@ -16,8 +16,6 @@ public class IndexRow {
     private byte[] uuid;
     private TreeMap<String, byte[]> rowMap;
 
-    private static final Logger logger = Logger.getLogger(IndexRow.class);
-
     public IndexRow() {
         this.uuid = null;
     }

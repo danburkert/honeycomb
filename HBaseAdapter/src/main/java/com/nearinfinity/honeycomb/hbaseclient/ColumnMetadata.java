@@ -154,4 +154,9 @@ public class ColumnMetadata implements Writable {
         result = 31 * result + (int) autoincrementValue;
         return result;
     }
+
+    @Override
+    public String toString() {
+        return new Gson().toJson(this);
+    }
 }

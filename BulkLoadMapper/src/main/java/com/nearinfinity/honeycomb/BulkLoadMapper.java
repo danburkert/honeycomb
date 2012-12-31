@@ -1,6 +1,8 @@
 package com.nearinfinity.honeycomb;
 
 import au.com.bytecode.opencsv.CSVParser;
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
 import com.nearinfinity.honeycomb.hbaseclient.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -13,10 +15,12 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.text.ParseException;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 
 public class BulkLoadMapper
         extends Mapper<LongWritable, Text, ImmutableBytesWritable, Put> {
@@ -37,9 +41,16 @@ public class BulkLoadMapper
         Configuration conf = context.getConfiguration();
 
         char separator = conf.get("importtsv.separator", " ").charAt(0);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug(format("importtsv.separator = %X", (int) separator));
+            LOG.debug("Hadoop configuration:");
+            for (Map.Entry<String, String> entry : conf) {
+                LOG.debug(entry);
+            }
+        }
+
         csvParser = new CSVParser(separator);
         sqlColumns = conf.getStrings("honeycomb.sql.columns");
-
 
         // Setup
         String zkQuorum = conf.get("zk.quorum");
@@ -69,10 +80,43 @@ public class BulkLoadMapper
         tableInfo = TableCache.getTableInfo(sqlTable, table);
         indexColumns = Index.indexForTable(tableInfo.tableMetadata());
 
-        // Setup column metadata map: column_name -> column_meta
+        checkSqlColumnsMatch(sqlTable);
+
         columnMetadata = new TreeMap<String, ColumnMetadata>();
         for (String sqlColumn : sqlColumns) {
-            columnMetadata.put(sqlColumn, tableInfo.getColumnMetadata(sqlColumn));
+            ColumnMetadata metadata = tableInfo.getColumnMetadata(sqlColumn);
+            checkNotNull(metadata, format("Column %s is missing metadata.", sqlColumn));
+            columnMetadata.put(sqlColumn, metadata);
+        }
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug(tableInfo);
+            LOG.debug("SQL Columns: " + Joiner.on(",").join(sqlColumns));
+            for (List<String> indexColumn : indexColumns) {
+                LOG.debug(Joiner.on(",").join(indexColumn));
+            }
+
+            for (Map.Entry<String, ColumnMetadata> entry : columnMetadata.entrySet()) {
+                LOG.debug(entry);
+            }
+        }
+    }
+
+    private void checkSqlColumnsMatch(String sqlTable) {
+        Set<String> expectedColumns = tableInfo.getColumnNames();
+        List<String> invalidColumns = Lists.newLinkedList();
+        for (String column : sqlColumns) {
+            if (!expectedColumns.contains(column)) {
+                LOG.error("Found non-existent column " + column);
+                invalidColumns.add(column);
+            }
+        }
+        if (invalidColumns.size() > 0) {
+            String expectedColumnString = Joiner.on(",").join(expectedColumns);
+            String invalidColumnString = Joiner.on(",").join(invalidColumns);
+            String message = String.format("In table %s following columns (%s) are not valid columns. Expected columns (%s)",
+                    sqlTable, invalidColumnString, expectedColumnString);
+            throw new IllegalStateException(message);
         }
     }
 
@@ -81,11 +125,9 @@ public class BulkLoadMapper
             throws InterruptedException {
         try {
             String[] fields = csvParser.parseLine(line.toString());
-
             if (sqlColumns.length != fields.length) {
                 throw new IllegalArgumentException(
-                        "Line contains wrong number of columns: "
-                                + line.toString());
+                        format("Line contains wrong number of columns: %s. Expected: %d Was: %d", line.toString(), sqlColumns.length, fields.length));
             }
 
             // Create value map to pass to put list creator
@@ -93,16 +135,14 @@ public class BulkLoadMapper
 
             for (int i = 0; i < fields.length; i++) {
                 String sqlColumn = sqlColumns[i];
-                byte[] value = ValueParser.parse(fields[i],
-                        columnMetadata.get(sqlColumns[i]));
+                byte[] value = ValueParser.parse(fields[i], columnMetadata.get(sqlColumn));
                 if (value == null) {
                     break;
                 } // null field
                 valueMap.put(sqlColumn, value);
             }
 
-            List<Put> puts = PutListFactory.createDataInsertPutList(valueMap,
-                    tableInfo, indexColumns);
+            List<Put> puts = PutListFactory.createDataInsertPutList(valueMap, tableInfo, indexColumns);
 
             for (Put put : puts) {
                 context.write(new ImmutableBytesWritable(put.getRow()), put);
@@ -115,14 +155,14 @@ public class BulkLoadMapper
             LOG.error("CSVParser unable to parse line: " + line.toString(), e);
             context.getCounter(Counters.FAILED_ROWS).increment(1);
         } catch (IllegalArgumentException e) {
-            LOG.error(e.getMessage());
+            LOG.error(format("The line %s was incorrectly formatted. Error %s", line.toString(), e.getMessage()));
             context.getCounter(Counters.FAILED_ROWS).increment(1);
         } catch (ParseException e) {
-            LOG.error(e.getMessage());
+            LOG.error(format("Parsing failed on line %s with message %s", line.toString(), e.getMessage()));
+            context.getCounter(Counters.FAILED_ROWS).increment(1);
+        } catch (Exception e) {
+            LOG.error(format("The following error %s occurred during mapping for line %s", e.getMessage(), line.toString()));
             context.getCounter(Counters.FAILED_ROWS).increment(1);
         }
-    }
-
-    private class ColumnMismatchException extends Throwable {
     }
 }
