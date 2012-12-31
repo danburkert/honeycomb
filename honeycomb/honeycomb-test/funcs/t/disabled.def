@@ -105,8 +105,8 @@ ld_unique_error3 : CRASHING
 ld_unique_error3_local : REPLACE INTO
 
 ### TRIGGER
-tr_delete : ISS 71
-tr_all_type_triggers : ISS 71
+tr_delete :
+tr_all_type_triggers :
 
 ### TIMEOUT
 tc_multicolumn_different : TIMEOUT
