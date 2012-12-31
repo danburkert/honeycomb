@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-begin 
+begin
   require 'mysql'
 rescue LoadError
   require 'rubygems'
@@ -29,8 +29,8 @@ module Enumerable
   end
 
   def median
-    n = self.length 
-    if n.odd? 
+    n = self.length
+    if n.odd?
       self[(n+1)/2]
     else
       (self[n/2] + self[(n+1)/2]) / 2
@@ -40,7 +40,7 @@ module Enumerable
   def percentile(p)
     n = self.length
     percent = [((p / 100.0) * n + (1/2.0)), n-1].min.floor
-    percent 
+    percent
   end
 
   def sample_variance
@@ -52,10 +52,10 @@ module Enumerable
   def standard_deviation
     return Math.sqrt(self.sample_variance)
   end
-end 
+end
 class Stats
   def initialize
-    @data_lists = {} 
+    @data_lists = {}
   end
   def add_data(file, data)
     @data_lists[file] = data
@@ -67,7 +67,7 @@ class Stats
       stddev = data.standard_deviation
       upper = data[data.percentile(90)]
       min = data.min
-      max = data.max 
+      max = data.max
       printf "%-#{longest}s %s/%s/%s/%s/%s/%s\n" % ([file] + [median, mean, stddev, upper, min, max].map{|n| n.round(2) })
     end
   end
@@ -75,11 +75,11 @@ end
 def run_perf_scripts(db, perf_dir, longest, rounds)
   stats = Stats.new
   perf_dir.each do | file |
-    lines = File.open(file).read.gsub(/\n/, "").each_line(';') 
+    lines = File.open(file).read.gsub(/\n/, "").each_line(';')
     elapsed_list = []
     rounds.times do |i|
       elapsed = 0
-      lines.each do |line| 
+      lines.each do |line|
         start_time = Time.now
         db.query(line)
         end_time = Time.now

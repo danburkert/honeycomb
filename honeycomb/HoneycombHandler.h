@@ -161,7 +161,7 @@ class HoneycombHandler : public handler
 
     const char *table_type() const
     {
-      return "honeycomb";
+      return "Honeycomb";
     }
 
     const char *index_type(uint inx)

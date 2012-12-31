@@ -90,6 +90,7 @@ UPDATE t1 SET c2=-9999.0099 WHERE c4=5 ORDER BY c1, c2, c3, c4;
 SELECT c2,c4 FROM t1;
 
 # Update ignore on bad null error
+--sorted_result
 SELECT c1 FROM t1 WHERE c1>1000;
 SET SQL_MODE=STRICT_ALL_TABLES;
 --error ER_BAD_NULL_ERROR
@@ -278,6 +279,7 @@ UPDATE t1 SET c2=-9999.0099 WHERE c4=5 ORDER BY c1, c2, c3, c4;
 SELECT c2,c4 FROM t1;
 
 # Update ignore on bad null error
+--sorted_result
 SELECT c1 FROM t1 WHERE c1>1000;
 SET SQL_MODE=STRICT_ALL_TABLES;
 --error ER_BAD_NULL_ERROR
@@ -346,7 +348,7 @@ update t2 set t2.c1='99999.99999' where c1 BETWEEN '11111' AND '44444';
 --sorted_result
 SELECT * FROM t2;
 # EXPLAIN SELECT * FROM t2 WHERE c1 IN ('44444.44444','99999.99999');
-UPDATE t2 SET c1=c1-1,c2=c2-1 WHERE c1 IN ('44444.44444','99999.99999');
+UPDATE t2 SET c1=c1-1,c2=c2-1 WHERE c1 IN ('44444.44444','99999.99999') ORDER BY c1, c2;
 --sorted_result
 SELECT * FROM t2;
 
@@ -360,7 +362,7 @@ INSERT INTO t3 VALUES ('11111.11111','4444444444',1),('55555.55555','5555555555'
 UPDATE t2,t3 SET t3.c1='22222.22222' WHERE t2.c1=t3.c1 AND t2.c3=t3.c3;
 
 #Updating with invalid values
-UPDATE t1 SET c3='asdf' WHERE c1='11111.11111';
+UPDATE t1 SET c3='asdf' WHERE c1='11111.11111' ORDER BY c1, c2, c3;
 --sorted_result
 SELECT c3 FROM t1;
 UPDATE t1 SET c2="1 e 1" WHERE c4=2 ORDER BY c1, c2, c3, c4;
@@ -475,6 +477,7 @@ UPDATE t1 SET c2=-9999.0099 WHERE c4=5 ORDER BY c1, c2, c3, c4;
 SELECT c2,c4 FROM t1;
 
 # Update ignore on bad null error
+--sorted_result
 SELECT c1 FROM t1 WHERE c1>1000;
 SET SQL_MODE=STRICT_ALL_TABLES;
 --error ER_BAD_NULL_ERROR
@@ -549,7 +552,7 @@ INSERT INTO t3 VALUES ('11111.11111','4444444444',1),('55555.55555','5555555555'
 UPDATE t2,t3 SET t3.c1='22222.22222' WHERE t2.c1=t3.c1 AND t2.c3=t3.c3;
 
 #Updating with invalid values
-UPDATE t1 SET c3='asdf' WHERE c1='11111.11111';
+UPDATE t1 SET c3='asdf' WHERE c1='11111.11111' ORDER BY c1, c2, c3;
 --sorted_result
 SELECT c3 FROM t1;
 UPDATE t1 SET c2="1 e 1" WHERE c4=2 ORDER BY c1, c2, c3, c4;

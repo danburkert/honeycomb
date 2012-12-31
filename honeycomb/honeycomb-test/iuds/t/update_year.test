@@ -70,12 +70,12 @@ SELECT c1 FROM t4;
 #Updating 'YY' values
 --sorted_result
 SELECT c1 FROM t3 WHERE c1='05';
-UPDATE t3 SET c1=c1+c2 WHERE c1='05';
+UPDATE t3 SET c1=c1+c2 WHERE c1='05' ORDER BY c1, c2;
 --sorted_result
 SELECT c1 FROM t3;
 --sorted_result
 SELECT c1 FROM t4 WHERE c2=4;
-UPDATE t4 SET c1=c1 + 04 WHERE c2=04;
+UPDATE t4 SET c1=c1 + 04 WHERE c2=04 ORDER BY c1, c2;
 --sorted_result
 SELECT c1 FROM t4;
 --sorted_result
@@ -85,7 +85,7 @@ UPDATE t3 SET c2=c2 + 1902 WHERE c2='75' ORDER BY c1, c2;
 SELECT c2 FROM t3;
 --sorted_result
 SELECT c1 FROM t4 WHERE c1=09;
-UPDATE t4 SET c1=c1 - c2 WHERE c1='09';
+UPDATE t4 SET c1=c1 - c2 WHERE c1='09' ORDER BY c1, c2;
 --sorted_result
 SELECT c1 FROM t4;
 --sorted_result
@@ -95,7 +95,7 @@ UPDATE t3 SET c1=c1 - 01 WHERE c1='75';
 SELECT c1 FROM t3;
 --sorted_result
 SELECT c1 FROM t4 WHERE c1=98;
-UPDATE t4 SET c1=c1 / 2 WHERE c1='98';
+UPDATE t4 SET c1=c1 / 2 WHERE c1='98' ORDER BY c1, c2;
 --sorted_result
 SELECT c1 FROM t4;
 --sorted_result
@@ -120,7 +120,7 @@ SELECT c1 FROM t2;
 UPDATE t2 SET c2=2009 WHERE c1=2009 AND c2=null;
 --sorted_result
 SELECT c2 FROM t2;
-UPDATE t1 SET c2=2155 WHERE c1=1979 OR c1=2154;
+UPDATE t1 SET c2=2155 WHERE c1=1979 OR c1=2154 ORDER BY c1, c2;
 --sorted_result
 SELECT c2 FROM t1;
 UPDATE t4 SET c1=99 WHERE c2 IN (01,54,65,69,null);
@@ -128,13 +128,13 @@ UPDATE t4 SET c1=99 WHERE c2 IN (01,54,65,69,null);
 SELECT c1 FROM t4;
 
 # Update outside range would be clipped to closest endpoints
-UPDATE t1 SET c2=-1 WHERE c1=2071;
+UPDATE t1 SET c2=-1 WHERE c1=2071 ORDER BY c1, c2;
 --sorted_result
 SELECT c2 FROM t1;
-UPDATE t1 SET c2=0 WHERE c1=2003;
+UPDATE t1 SET c2=0 WHERE c1=2003 ORDER BY c1, c2;
 --sorted_result
 SELECT c2 FROM t1;
-UPDATE t1 SET c2=2156 WHERE c1=2001;
+UPDATE t1 SET c2=2156 WHERE c1=2001 ORDER BY c1, c2;
 --sorted_result
 SELECT c2 FROM t1;
 UPDATE t4 SET c2=-1 WHERE c1=71;
@@ -143,7 +143,7 @@ SELECT c2 FROM t4;
 UPDATE t4 SET c2=0 WHERE c1=70;
 --sorted_result
 SELECT c2 FROM t4;
-UPDATE t4 SET c2=100 WHERE c1=79;
+UPDATE t4 SET c2=100 WHERE c1=79 ORDER BY c1, c2;
 --sorted_result
 SELECT c2 FROM t4;
 
@@ -152,7 +152,7 @@ SELECT c2 FROM t4;
 SELECT c1 FROM t1 WHERE c2 < 1975;
 SET SQL_MODE=STRICT_ALL_TABLES;
 --error ER_BAD_NULL_ERROR
-UPDATE t1 SET c1=NULL WHERE c2 < 1975;
+UPDATE t1 SET c1=NULL WHERE c2 < 1975 ORDER BY c1, c2;
 --sorted_result
 SELECT c1 FROM t1 WHERE c2 < 1975;
 UPDATE IGNORE t1 SET c1=NULL WHERE c2 < 1975 ORDER BY c1, c2;
@@ -170,7 +170,7 @@ SELECT c1 FROM t4;
 
 #Update duplicate key
 --error ER_DUP_ENTRY
-UPDATE t1 SET c1=1971 WHERE c2=1995;
+UPDATE t1 SET c1=1971 WHERE c2=1995 ORDER BY c1, c2;
 
 #Multi table update
 #UPDATE t1,t2,t3,t4 SET t3.c1=t4.c1+t4.c2 WHERE t3.c1=61 AND t4.c2=4;
@@ -179,17 +179,17 @@ UPDATE t1 SET c1=1971 WHERE c2=1995;
 
 # Update using Const
 # EXPLAIN SELECT * FROM t1 WHERE c1=2074 AND c2=2064;
-UPDATE t1 SET t1.c1=2073 WHERE c1=2074 AND c2=2064;
+UPDATE t1 SET t1.c1=2073 WHERE c1=2074 AND c2=2064 ORDER BY c1, c2;
 --sorted_result
 SELECT * FROM t1;
 
 # Update using range
 # EXPLAIN SELECT * FROM t1 WHERE c1 BETWEEN 2000 AND 2010;
-UPDATE t1 SET t1.c2=0000 WHERE c1 BETWEEN 2000 AND 2010; 
+UPDATE t1 SET t1.c2=0000 WHERE c1 BETWEEN 2000 AND 2010 ORDER BY c1, c2;
 --sorted_result
 SELECT * FROM t1;
 # EXPLAIN SELECT * FROM t1 WHERE c1 IN (2154,2009,1979);
-UPDATE t1 SET c1=c1-1,c2=c2+1 WHERE c1 IN (2154,2009,1979);
+UPDATE t1 SET c1=c1-1,c2=c2+1 WHERE c1 IN (2154,2009,1979) ORDER BY c1, c2;
 --sorted_result
 SELECT * FROM t1;
 

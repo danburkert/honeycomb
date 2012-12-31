@@ -409,7 +409,3 @@ up_multi_table \
 up_nullcheck \
 up_number_range \
 up_string_range \
-
-# Move test results that are manually built
-#cp $MYSQL_HOME/mysql-test/suite/honeycomb-test/t/manual_results/* \
-#   $MYSQL_HOME/mysql-test/suite/honeycomb-test/r/
