@@ -1,6 +1,6 @@
 class CreateConversationsAndMessagesAndVisibilities < ActiveRecord::Migration
   def self.up
-    create_table :messages, :options => "engine=cloud" do |t|
+    create_table :messages, :options => "engine=Honeycomb" do |t|
       t.integer :conversation_id, :null => false
       t.integer :author_id, :null => false
       t.string :guid, :null => false
@@ -9,7 +9,7 @@ class CreateConversationsAndMessagesAndVisibilities < ActiveRecord::Migration
       t.timestamps
     end
 
-    create_table :conversation_visibilities, :options => "engine=cloud" do |t|
+    create_table :conversation_visibilities, :options => "engine=Honeycomb" do |t|
       t.integer :conversation_id, :null => false
       t.integer :person_id, :null => false
       t.integer :unread, :null => false, :default => 0
@@ -17,7 +17,7 @@ class CreateConversationsAndMessagesAndVisibilities < ActiveRecord::Migration
       t.timestamps
     end
 
-    create_table :conversations, :options => "engine=cloud" do |t|
+    create_table :conversations, :options => "engine=Honeycomb" do |t|
       t.string :subject
       t.string :guid, :null => false
       t.integer :author_id, :null => false

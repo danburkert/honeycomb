@@ -1,6 +1,6 @@
 class CreateAccountDeletions < ActiveRecord::Migration
   def self.up
-    create_table :account_deletions, :options => "engine=cloud" do |t|
+    create_table :account_deletions, :options => "engine=Honeycomb" do |t|
       t.string :diaspora_handle
       t.integer :person_id
     end

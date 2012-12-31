@@ -4,7 +4,7 @@ class RemovePodStatsTable < ActiveRecord::Migration
   end
 
   def self.down
-    create_table :pod_stats, :options => "engine=cloud" do |t|
+    create_table :pod_stats, :options => "engine=Honeycomb" do |t|
       t.integer :error_code
       t.integer :person_id
       t.text :error_message

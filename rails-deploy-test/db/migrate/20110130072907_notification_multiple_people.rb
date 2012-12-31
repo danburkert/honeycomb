@@ -1,6 +1,6 @@
 class NotificationMultiplePeople < ActiveRecord::Migration
   def self.up
-    create_table :notification_actors, :options => "engine=cloud" do |t|
+    create_table :notification_actors, :options => "engine=Honeycomb" do |t|
         t.integer :notification_id
       t.integer :person_id
       t.timestamps

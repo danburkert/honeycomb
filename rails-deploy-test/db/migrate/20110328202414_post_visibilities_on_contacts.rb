@@ -62,7 +62,7 @@ SQL
   end
 
   def self.up
-    create_table :aspect_visibilities, :options => "engine=cloud" do |t|
+    create_table :aspect_visibilities, :options => "engine=Honeycomb" do |t|
       t.integer :post_id, :null => false
       t.integer :aspect_id, :null => false
       t.timestamps

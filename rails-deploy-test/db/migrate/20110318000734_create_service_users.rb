@@ -1,6 +1,6 @@
 class CreateServiceUsers < ActiveRecord::Migration
   def self.up
-    create_table :service_users, :options => "engine=cloud" do |t|
+    create_table :service_users, :options => "engine=Honeycomb" do |t|
       t.string :uid, :null => false
       t.string :name, :null => false
       t.string :photo_url, :null => false

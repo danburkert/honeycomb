@@ -4,7 +4,7 @@ class AddLikes < ActiveRecord::Migration
     if result.count > 0
       execute("DELETE FROM schema_migrations WHERE version = '201110319172136'")
     else
-      create_table :likes, :options => "engine=cloud" do |t|
+      create_table :likes, :options => "engine=Honeycomb" do |t|
         t.boolean :positive, :default => true
         t.integer :post_id
         t.integer :author_id

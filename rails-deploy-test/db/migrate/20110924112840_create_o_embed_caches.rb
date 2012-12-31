@@ -1,6 +1,6 @@
 class CreateOEmbedCaches < ActiveRecord::Migration
   def self.up
-    create_table :o_embed_caches, :options => "engine=cloud" do |t|
+    create_table :o_embed_caches, :options => "engine=Honeycomb" do |t|
       t.string :url, :limit => 1024, :null => false, :unique => true
       t.text :data, :null => false
     end

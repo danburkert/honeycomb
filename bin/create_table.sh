@@ -1,7 +1,7 @@
 DROP_DB="DROP DATABASE hbase;"
 CREATE_DB="CREATE DATABASE hbase;"
 USE_DB="USE hbase;"
-CREATE_TABLE="CREATE TABLE foo (bar int) ENGINE=cloud;"
+CREATE_TABLE="CREATE TABLE foo (bar int) ENGINE=Honeycomb;"
 
 echo $DROP_DB > create_table.sql
 echo $CREATE_DB >> create_table.sql

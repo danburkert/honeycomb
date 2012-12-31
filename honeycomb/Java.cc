@@ -145,7 +145,7 @@ jclass find_jni_class(const char* class_name, JNIEnv* env)
   if (clazz == NULL)
   {
     Logging::fatal("Class %s was not found.", class_name);
-    perror("Failed to retrieve class. Check cloud.log for details.");
+    perror("Failed to retrieve class. Check honeycomb.log for details.");
     abort();
   }
 
@@ -158,7 +158,7 @@ jmethodID find_static_method(jclass clazz, const char* name, const char* signatu
   if (write_row_method == NULL)
   {
     Logging::fatal("Retrieving method %s with signature %s failed. Method was null.", name, signature);
-    perror("Failed to retrieve method. Check cloud.log for details.");
+    perror("Failed to retrieve method. Check honeycomb.log for details.");
     abort();
   }
 

@@ -2,11 +2,11 @@
 : ${MYSQL_HOME?"Need to set MYSQL_HOME environmental variable."}
 
 # Clear out old results
-rm $MYSQL_HOME/mysql-test/suite/cloud-test/funcs/r/*
+rm $MYSQL_HOME/mysql-test/suite/honeycomb-test/funcs/r/*
 
 # Record baseline results with InnoDB
 cd $MYSQL_HOME/mysql-test
-./mtr --suite=cloud-test/funcs             \
+./mtr --suite=honeycomb-test/funcs             \
   --mysqld=--default-storage-engine=InnoDB \
   --mysqld=--character-set-server=utf8     \
   --mysqld=--collation-server=utf8_bin     \
@@ -411,5 +411,5 @@ up_number_range \
 up_string_range \
 
 # Move test results that are manually built
-#cp $MYSQL_HOME/mysql-test/suite/cloud-test/t/manual_results/* \
-#   $MYSQL_HOME/mysql-test/suite/cloud-test/r/
+#cp $MYSQL_HOME/mysql-test/suite/honeycomb-test/t/manual_results/* \
+#   $MYSQL_HOME/mysql-test/suite/honeycomb-test/r/

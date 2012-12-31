@@ -1,6 +1,6 @@
 class CreateDataPoints < ActiveRecord::Migration
   def self.up
-    create_table :data_points, :options => "engine=cloud" do |t|
+    create_table :data_points, :options => "engine=Honeycomb" do |t|
       t.string :key
       t.integer :value
       t.integer :statistic_id
