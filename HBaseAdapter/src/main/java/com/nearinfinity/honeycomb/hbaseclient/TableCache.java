@@ -3,7 +3,6 @@ package com.nearinfinity.honeycomb.hbaseclient;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -63,15 +62,20 @@ public class TableCache {
         }
     }
 
-    public static TableInfo refreshCache(String tableName, HTableInterface table, ConcurrentHashMap<String, TableInfo> tableCache) throws IOException {
+    public static TableInfo refreshCache(String tableName, HTableInterface table,
+                                         ConcurrentHashMap<String, TableInfo> tableCache)
+            throws IOException {
         if (table == null) {
-            throw new IllegalStateException(format("Table %s was null. Cannot get table information from null table.", tableName));
+            throw new IllegalStateException(format("Table %s is null." +
+                    " Cannot get table information from null table.", tableName));
         }
 
-        String htableName = format("HTable used \"%s\"", Bytes.toString(table.getTableName()));
+        String htableName = format("HTable used \"%s\"",
+                Bytes.toString(table.getTableName()));
         Get tableIdGet = new Get(RowKeyFactory.ROOT);
         Result result = table.get(tableIdGet);
-        String tableNotFoundMessage = format("SQL table \"%s\" was not found. %s", tableName, htableName);
+        String tableNotFoundMessage = format("SQL table \"%s\" was not found. %s",
+                tableName, htableName);
         if (result.isEmpty()) {
             throw new TableNotFoundException(tableNotFoundMessage);
         }
