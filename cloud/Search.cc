@@ -277,7 +277,8 @@ int CloudHandler::rnd_init(bool scan)
   DBUG_ENTER("CloudHandler::rnd_init");
 
   jclass adapter_class = this->adapter();
-  jmethodID start_scan_method = find_static_method(adapter_class, "startScan", "(Ljava/lang/String;Z)J",this->env);
+  jmethodID start_scan_method = find_static_method(adapter_class, "startScan",
+      "(Ljava/lang/String;Z)J",this->env);
   jstring table_name = this->table_name();
 
   jboolean java_scan_boolean = scan ? JNI_TRUE : JNI_FALSE;

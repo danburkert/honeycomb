@@ -50,7 +50,8 @@ static void init_cloud_psi_keys()
 
 static uint cloud_alter_table_flags(uint flags)
 {
-  return HA_INPLACE_ADD_INDEX_NO_READ_WRITE |
+  return
+    HA_INPLACE_ADD_INDEX_NO_READ_WRITE |
     HA_INPLACE_DROP_INDEX_NO_READ_WRITE |
     HA_INPLACE_ADD_UNIQUE_INDEX_NO_READ_WRITE |
     HA_INPLACE_DROP_UNIQUE_INDEX_NO_READ_WRITE |
