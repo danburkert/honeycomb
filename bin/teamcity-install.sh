@@ -10,8 +10,6 @@ function test_link
 }
 
 [ -d $honeycomb_lib ] && [ -w $honeycomb_lib ] || { echo "$honeycomb_lib is required, and has to be writable."; exit 1; }
-test_link $plugin_path
-test_link $tests_path
 
 if [[ "$(find $honeycomb_lib -type d -empty)" == "" ]]
 then
@@ -26,6 +24,9 @@ function copy_jar
 {
   cp $HONEYCOMB_HOME/$1/target/*.jar $honeycomb_lib
 }
+
+test_link $plugin_path
+test_link $tests_path
 
 copy_jar HBaseAdapter
 copy_jar MedianSplit
