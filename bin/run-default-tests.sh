@@ -1,6 +1,6 @@
 #!/bin/sh
 
-: ${MYSQL_HOME?"Need to set MYSQL_HOME environmental variable."}
+: ${MYSQL_HOME?"Need to set MYSQL_HOME environmental variable."; exit 1; }
 
 cd $MYSQL_HOME/mysql-test
 rm suite/honeycomb-test/default/r/*.reject

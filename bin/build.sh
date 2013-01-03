@@ -5,3 +5,4 @@
 $HONEYCOMB_HOME/bin/mvn-build-install.sh
 $HONEYCOMB_HOME/bin/plugin-build-install.sh
 $HONEYCOMB_HOME/bin/mysql-restart.sh
+$HONEYCOMB_HOME/bin/install-tests.sh
