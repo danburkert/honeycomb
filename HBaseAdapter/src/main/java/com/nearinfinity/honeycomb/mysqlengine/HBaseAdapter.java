@@ -73,6 +73,7 @@ public class HBaseAdapter {
 
             Configuration configuration = HBaseConfiguration.create();
             configuration.set("hbase.zookeeper.quorum", zkQuorum);
+            configuration.set(Constants.HBASE_TABLE, tableName);
             SqlTableCreator.initializeSqlTable(configuration);
             tablePool = new HTablePool(configuration, poolSize, new HTableFactory(writeBuffer, autoFlush));
             HTableInterface readerTable = tablePool.getTable(tableName);
