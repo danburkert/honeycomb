@@ -1,2 +1,3 @@
 source :rubygems
 gem "mysql2", "~> 0.3.11"
+gem "better-benchmark", "~> 0.8.3"
