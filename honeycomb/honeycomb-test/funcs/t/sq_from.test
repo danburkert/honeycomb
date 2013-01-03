@@ -13,7 +13,7 @@ CREATE TABLE t2 (c1 INT, c2 VARCHAR(100));
 INSERT INTO t2 VALUES (1,'abcde');
 INSERT INTO t2 VALUES (2,'abcde');
 SELECT sb1,sb2,sb3 FROM (SELECT c1 AS sb1, c2 AS sb2, c3*2 AS sb3
-FROM t1) AS sb WHERE sb1 > 1;
+FROM t1) AS sb WHERE sb1 > 1 ORDER BY sb1, sb2, sb3;
 SELECT AVG(sum_column1) FROM (SELECT SUM(c1) AS sum_column1 FROM t1
  GROUP BY c1) AS t1;
 DROP TABLE t1;
@@ -27,7 +27,7 @@ CREATE TABLE t2 (c1 INT, c2 VARCHAR(100));
 INSERT INTO t2 VALUES (1,'abcde');
 INSERT INTO t2 VALUES (2,'abcde');
 SELECT sb1,sb2,sb3 FROM (SELECT c1 AS sb1, c2 AS sb2, c3*2 AS sb3
-FROM t1) AS sb WHERE sb1 > 1;
+FROM t1) AS sb WHERE sb1 > 1 ORDER BY sb1, sb2, sb3;
 SELECT AVG(sum_column1) FROM (SELECT SUM(c1) AS sum_column1 FROM t1
  GROUP BY c1) AS t1;
 DROP TABLE t1;
@@ -41,7 +41,7 @@ CREATE TABLE t2 (c1 INT, c2 VARCHAR(100));
 INSERT INTO t2 VALUES (1,'abcde');
 INSERT INTO t2 VALUES (2,'abcde');
 SELECT sb1,sb2,sb3 FROM (SELECT c1 AS sb1, c2 AS sb2, c3*2 AS sb3
-FROM t1) AS sb WHERE sb1 > 1;
+FROM t1) AS sb WHERE sb1 > 1 ORDER BY sb1, sb2, sb3;
 SELECT AVG(sum_column1) FROM (SELECT SUM(c1) AS sum_column1 FROM t1
  GROUP BY c1) AS t1;
 DROP TABLE t1;
@@ -55,7 +55,7 @@ CREATE TABLE t2 (c1 INT, c2 VARCHAR(100));
 INSERT INTO t2 VALUES (1,'abcde');
 INSERT INTO t2 VALUES (2,'abcde');
 SELECT sb1,sb2,sb3 FROM (SELECT c1 AS sb1, c2 AS sb2, c3*2 AS sb3
-FROM t1) AS sb WHERE sb1 > 1;
+FROM t1) AS sb WHERE sb1 > 1 ORDER BY sb1, sb2, sb3;
 SELECT AVG(sum_column1) FROM (SELECT SUM(c1) AS sum_column1 FROM t1
  GROUP BY c1) AS t1;
 DROP TABLE t1;
