@@ -230,6 +230,7 @@ struct conclusions {
   /* The following are not used yet */
   unsigned long long max_rows;
   unsigned long long min_rows;
+  stats * stats;
 };
 
 static option_string *engine_options= NULL;
@@ -2107,35 +2108,31 @@ parse_comma(const char *string, uint **range)
 void
 print_conclusions(conclusions *con)
 {
-  printf("Benchmark\n");
-  if (con->engine)
-    printf("\tRunning for engine %s\n", con->engine);
-  printf("\tAverage number of seconds to run all queries: %ld.%03ld seconds\n",
-                    con->avg_timing / 1000, con->avg_timing % 1000);
-  printf("\tMinimum number of seconds to run all queries: %ld.%03ld seconds\n",
-                    con->min_timing / 1000, con->min_timing % 1000);
-  printf("\tMaximum number of seconds to run all queries: %ld.%03ld seconds\n",
-                    con->max_timing / 1000, con->max_timing % 1000);
-  printf("\tNumber of clients running queries: %d\n", con->users);
-  printf("\tAverage number of queries per client: %llu\n", con->avg_rows); 
+  stats * ptr;
+  int x;
+  for (ptr= con->stats, x= 0; x < iterations;  ptr++, x++)
+  {
+    printf("%lu,", ptr->timing);
+  }
   printf("\n");
 }
-
 void
 print_conclusions_csv(conclusions *con)
 {
+  stats * ptr;
+  int x;
+  int cx = 0;
   char buffer[HUGE_STRING_LENGTH];
-  const char *ptr= auto_generate_sql_type ? auto_generate_sql_type : "query";
-  snprintf(buffer, HUGE_STRING_LENGTH, 
-           "%s,%s,%ld.%03ld,%ld.%03ld,%ld.%03ld,%d,%llu\n",
-           con->engine ? con->engine : "", /* Storage engine we ran against */
-           ptr, /* Load type */
-           con->avg_timing / 1000, con->avg_timing % 1000, /* Time to load */
-           con->min_timing / 1000, con->min_timing % 1000, /* Min time */
-           con->max_timing / 1000, con->max_timing % 1000, /* Max time */
-           con->users, /* Children used */
-           con->avg_rows  /* Queries run */
-          );
+
+  for (ptr= con->stats, x= 0; x < iterations; ptr++, x++)
+  {
+    puts(buffer);
+    cx = snprintf(buffer + cx,
+        HUGE_STRING_LENGTH - cx - 1,
+        "%lu,",
+        ptr->timing);
+  }
+  snprintf(buffer + cx, HUGE_STRING_LENGTH - cx - 1, "\n");
   my_write(csv_file, (uchar*) buffer, (uint)strlen(buffer), MYF(0));
 }
 
@@ -2165,6 +2162,8 @@ generate_stats(conclusions *con, option_string *eng, stats *sptr)
       con->min_timing= ptr->timing;
   }
   con->avg_timing= con->avg_timing/iterations;
+
+  con->stats = sptr;
 
   if (eng && eng->string)
     con->engine= eng->string;

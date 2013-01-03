@@ -5,7 +5,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import java.util.UUID;
 
 public final class Constants {
-    public static final byte[] SQL = "sql".getBytes();
+    public static final String HBASE_TABLE = "hbase_table_name";
 
     public static final byte[] NIC = "nic".getBytes();
 
