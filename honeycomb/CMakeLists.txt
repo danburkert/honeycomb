@@ -1,11 +1,10 @@
 if (DEFINED ENV{JAVA_HOME})
   MESSAGE( "JAVA HOME: $ENV{JAVA_HOME}" )
-  SET(JAVA_HOME $ENV{JAVA_HOME})
 else()
   MESSAGE( "******** ERROR: JAVA_HOME not defined.  If running cmake with sudo consider using the -E flag" )
 endif()
 
-INCLUDE_DIRECTORIES("${JAVA_HOME}/include")
+INCLUDE_DIRECTORIES("$ENV{JAVA_HOME}/include")
 
 if (APPLE)
   MESSAGE( "Compiling on Apple System" )
