@@ -22,7 +22,14 @@ echo "Setting up the classpath.conf file with the complete classpath."
 create_classpath=$($HONEYCOMB_HOME/bin/create-classpath.rb $honeycomb_lib $honeycomb_lib/lib)
 echo $create_classpath | sudo tee /etc/mysql/classpath.conf > /dev/null
 
-adapter_conf=/etc/mysql/adapter.conf
+conf_path=/etc/mysql
+adapter_conf=$conf_path/adapter.conf
+if [ ! -d $conf_path ]
+then
+  echo "Creating configuration path $conf_path"
+  sudo mkdir $conf_path
+fi
+
 if [ ! -e $adapter_conf ]
 then
   echo "Creating the adapter.conf from the repository."
