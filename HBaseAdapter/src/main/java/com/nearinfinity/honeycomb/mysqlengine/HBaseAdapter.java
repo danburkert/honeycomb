@@ -65,7 +65,7 @@ public class HBaseAdapter {
         logger.info(format("Read in {0} parameters.", params.size()));
 
         try {
-            String tableName = params.get("hbase_table_name"),
+            String tableName = params.get(Constants.HBASE_TABLE),
                     zkQuorum = params.get("zk_quorum");
             int poolSize = params.getInt("honeycomb.pool_size", DEFAULT_TABLE_POOL_SIZE);
             long writeBuffer = params.getLong("write_buffer_size", DEFAULT_WRITE_BUFFER_SIZE);
@@ -92,7 +92,7 @@ public class HBaseAdapter {
     }
 
     private static HBaseWriter createWriter() {
-        HTableInterface table = tablePool.getTable(Constants.SQL);
+        HTableInterface table = tablePool.getTable(params.get(Constants.HBASE_TABLE));
         return new HBaseWriter(table);
     }
 
