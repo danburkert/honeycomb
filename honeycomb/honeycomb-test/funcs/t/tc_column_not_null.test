@@ -1,11 +1,6 @@
 --disable_warnings
 DROP TABLE IF EXISTS t2;
 --enable_warnings
-CREATE TABLE t2(c1 BIT NOT NULL);
-SHOW TABLES;
-let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
---replace_result $ENGINE ENGINE " PAGE_CHECKSUM=0" ""
-SHOW CREATE TABLE t2; DROP TABLE t2; SHOW TABLES;
 CREATE TABLE t2(c1 TINYINT NOT NULL);
 SHOW TABLES;
 let $ENGINE=`select variable_value from information_schema.global_variables where variable_name='STORAGE_ENGINE'`;
