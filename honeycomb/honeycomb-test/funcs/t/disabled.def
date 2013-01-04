@@ -145,6 +145,12 @@ tc_partition_value_error : PARTITION
 tc_partition_value_specific : PARTITION
 tc_temporary_column : TEMPORARY
 tc_temporary_column_length : TEMPORARY
+db_alter_character_set : ENCODING
+db_alter_character_set_collate : ENCODING
+db_alter_collate_ascii : ENCODING
+db_alter_collate_utf8 : ENCODING
+db_create_character_set : ENCODING
+db_create_character_set_collate : ENCODING
 
 ###
 ai_init_alter_table :
@@ -166,12 +172,6 @@ crash_manytables_number :
 crash_manytables_string :
 date_function :
 datetime_function :
-db_alter_character_set :
-db_alter_character_set_collate :
-db_alter_collate_ascii :
-db_alter_collate_utf8 :
-db_create_character_set :
-db_create_character_set_collate :
 db_create_drop :
 db_create_error :
 db_create_error_reserved :
