@@ -43,8 +43,8 @@ public class BulkLoadMapper
         Configuration conf = context.getConfiguration();
 
         char separator = conf.get("importtsv.separator", " ").charAt(0);
-        LOG.info(format("importtsv.separator = %X", (int) separator));
         if (LOG.isDebugEnabled()) {
+            LOG.debug(format("importtsv.separator = %X", (int) separator));
             LOG.debug("Hadoop configuration:");
             for (Map.Entry<String, String> entry : conf) {
                 LOG.debug(entry);
