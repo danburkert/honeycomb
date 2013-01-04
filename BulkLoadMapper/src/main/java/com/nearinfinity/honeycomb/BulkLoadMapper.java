@@ -4,8 +4,6 @@ import au.com.bytecode.opencsv.CSVParser;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.nearinfinity.honeycomb.hbaseclient.*;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
@@ -13,6 +11,7 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -26,16 +25,12 @@ import static java.lang.String.format;
 
 public class BulkLoadMapper
         extends Mapper<LongWritable, Text, ImmutableBytesWritable, Put> {
-    static final Log LOG = LogFactory.getLog(BulkLoadMapper.class);
-
+    static final Logger LOG = Logger.getLogger(BulkLoadMapper.class);
     private CSVParser csvParser;
     private String[] sqlColumns;
     private Map<String, ColumnMetadata> columnMetadata;
     private List<List<String>> indexColumns;
     private TableInfo tableInfo;
-
-    public enum Counters {ROWS, FAILED_ROWS, PUTS}
-
 
     @Override
     protected void setup(Context context)
@@ -175,4 +170,6 @@ public class BulkLoadMapper
             context.getCounter(Counters.FAILED_ROWS).increment(1);
         }
     }
+
+    public enum Counters {ROWS, FAILED_ROWS, PUTS}
 }
