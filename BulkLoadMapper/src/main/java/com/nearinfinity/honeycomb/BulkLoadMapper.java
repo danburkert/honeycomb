@@ -15,9 +15,11 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
 import java.io.IOException;
-import java.text.MessageFormat;
 import java.text.ParseException;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
@@ -41,8 +43,8 @@ public class BulkLoadMapper
         Configuration conf = context.getConfiguration();
 
         char separator = conf.get("importtsv.separator", " ").charAt(0);
+        LOG.info(format("importtsv.separator = %X", (int) separator));
         if (LOG.isDebugEnabled()) {
-            LOG.debug(format("importtsv.separator = %X", (int) separator));
             LOG.debug("Hadoop configuration:");
             for (Map.Entry<String, String> entry : conf) {
                 LOG.debug(entry);
@@ -114,7 +116,8 @@ public class BulkLoadMapper
         if (invalidColumns.size() > 0) {
             String expectedColumnString = Joiner.on(",").join(expectedColumns);
             String invalidColumnString = Joiner.on(",").join(invalidColumns);
-            String message = String.format("In table %s following columns (%s) are not valid columns. Expected columns (%s)",
+            String message = String.format("In table %s following columns (%s)" +
+                    " are not valid columns. Expected columns (%s)",
                     sqlTable, invalidColumnString, expectedColumnString);
             throw new IllegalStateException(message);
         }
@@ -127,7 +130,9 @@ public class BulkLoadMapper
             String[] fields = csvParser.parseLine(line.toString());
             if (sqlColumns.length != fields.length) {
                 throw new IllegalArgumentException(
-                        format("Line contains wrong number of columns: %s. Expected: %d Was: %d", line.toString(), sqlColumns.length, fields.length));
+                        format("Line contains wrong number of columns: %s." +
+                                " Expected: %d Was: %d", line.toString(),
+                                sqlColumns.length, fields.length));
             }
 
             // Create value map to pass to put list creator
@@ -135,14 +140,16 @@ public class BulkLoadMapper
 
             for (int i = 0; i < fields.length; i++) {
                 String sqlColumn = sqlColumns[i];
-                byte[] value = ValueParser.parse(fields[i], columnMetadata.get(sqlColumn));
+                byte[] value = ValueParser.parse(fields[i],
+                        columnMetadata.get(sqlColumn));
                 if (value == null) {
                     break;
                 } // null field
                 valueMap.put(sqlColumn, value);
             }
 
-            List<Put> puts = PutListFactory.createDataInsertPutList(valueMap, tableInfo, indexColumns);
+            List<Put> puts = PutListFactory.createDataInsertPutList(valueMap,
+                    tableInfo, indexColumns);
 
             for (Put put : puts) {
                 context.write(new ImmutableBytesWritable(put.getRow()), put);
@@ -155,13 +162,16 @@ public class BulkLoadMapper
             LOG.error("CSVParser unable to parse line: " + line.toString(), e);
             context.getCounter(Counters.FAILED_ROWS).increment(1);
         } catch (IllegalArgumentException e) {
-            LOG.error(format("The line %s was incorrectly formatted. Error %s", line.toString(), e.getMessage()));
+            LOG.error(format("The line %s was incorrectly formatted. Error %s",
+                    line.toString(), e.getMessage()));
             context.getCounter(Counters.FAILED_ROWS).increment(1);
         } catch (ParseException e) {
-            LOG.error(format("Parsing failed on line %s with message %s", line.toString(), e.getMessage()));
+            LOG.error(format("Parsing failed on line %s with message %s",
+                    line.toString(), e.getMessage()));
             context.getCounter(Counters.FAILED_ROWS).increment(1);
         } catch (Exception e) {
-            LOG.error(format("The following error %s occurred during mapping for line %s", e.getMessage(), line.toString()));
+            LOG.error(format("The following error %s occurred during mapping" +
+                    " for line %s", e.getMessage(), line.toString()));
             context.getCounter(Counters.FAILED_ROWS).increment(1);
         }
     }
