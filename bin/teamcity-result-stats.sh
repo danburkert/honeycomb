@@ -6,4 +6,4 @@ output=/tmp/$test_name.$build_number.out
 ./run-$test_name.sh | tee $output
 ruby ./parse-test-output.rb $output /tmp/$test_name.csv
 rm $output
-./analyze-tests.R /tmp/$test_name.csv /tmp/$test_name.pdf
+Rscript ./analyze-tests.R /tmp/$test_name.csv /tmp/$test_name.pdf
