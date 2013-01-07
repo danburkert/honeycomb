@@ -7,6 +7,9 @@
           'inno_06', 'hc_06',
           'inno_07', 'hc_07']
 
+## Some other sweet hacks
+`chmod +x mysqlslap`
+
 ### QUERIES
 
 def countQuery(table)
