@@ -11,6 +11,8 @@ def countQuery(table)
   "SELECT COUNT(*) FROM #{table};"
 end
 
+@queries = [countQuery]
+
 ### RUN
 
 def printBench(query, concurrency, iterations)
@@ -33,9 +35,12 @@ def runBenchmarks
 end
 
 def printBenchmarks
-  @tables.each do |table|
-    puts("Table " + table + ":")
-    puts printBench(countQuery(table), 10, 3)
+  @queries.each do |query|
+    puts("### Query: " + query.call("<table>"))
+    @tables.each do |table|
+      puts("## Table: " + table)
+      puts printBench(countQuery(table), 10, 3)
+    end
   end
 end
 
