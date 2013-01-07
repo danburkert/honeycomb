@@ -19,11 +19,11 @@ end
 ### RUN
 
 def printBench(query, concurrency, iterations)
-  `./mysqlslap --delimiter=";" --create="" --query="#{query}" --concurrency=#{concurrency} --iterations=#{iterations} --no-create --no-drop --create-schema=#{@db} --host=#{@host} --only-print`
+    `./mysqlslap --delimiter=";" --create="" --query="#{query}" --concurrency=#{concurrency} --iterations=#{iterations} --no-create --no-drop --create-schema=#{@db} --host=#{@host} --only-print --user="root"`
 end
 
 def runBench(query, concurrency, iterations)
-  `./mysqlslap --delimiter=";" --create="" --query="#{query}" --concurrency=#{concurrency} --iterations=#{iterations} --no-create --no-drop --create-schema=#{@db} --host=#{@host}`
+  `./mysqlslap --delimiter=";" --create="" --query="#{query}" --concurrency=#{concurrency} --iterations=#{iterations} --no-create --no-drop --create-schema=#{@db} --host=#{@host} --user="root"`
 end
 
 def runTests
@@ -40,4 +40,4 @@ def printTests
   end
 end
 
-printTests
+runTests
