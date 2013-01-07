@@ -7,39 +7,23 @@
 
 ### QUERIES
 
-def countQuery(table)
-  "SELECT COUNT(*) FROM #{table};"
-end
+countQuery = lambda{|table| "SELECT COUNT(*) FROM #{table};"}
+addressQuery = lambda{|table| "SELECT * FROM #{table} WHERE address < '500' AND zip > '3000' AND state='VT' AND country='Mexico';"}
+firstNameQuery = lambda{|table| "SELECT * FROM #{table} WHERE first_name = 'Robert';"}
 
-@queries = [countQuery]
+@queries = [countQuery addressQuery firstNameQuery]
 
 ### RUN
-
-def printBench(query, concurrency, iterations)
-    `./mysqlslap --delimiter=";" --create="" --query="#{query}" --concurrency=#{concurrency} --iterations=#{iterations} --no-create --no-drop --create-schema=#{@db} --host=#{@host} --only-print --user="root"`
-end
-
-def runBench(query, concurrency, iterations)
-  `./mysqlslap --delimiter=";" --create="" --query="#{query}" --concurrency=#{concurrency} --iterations=#{iterations} --no-create --no-drop --create-schema=#{@db} --host=#{@host} --user="root"`
-end
-
 def analyzeBench(query, concurrency, iterations)
   `./mysqlslap --delimiter=";" --create="" --query="#{query}" --concurrency=#{concurrency} --iterations=#{iterations} --no-create --no-drop --create-schema=#{@db} --host=#{@host} --user="root" | ./analyze-slap.r`
 end
 
 def runBenchmarks
-  @tables.each do |table|
-    puts("Table " + table + ":")
-    puts analyzeBench(countQuery(table), 10, 3)
-  end
-end
-
-def printBenchmarks
   @queries.each do |query|
     puts("### Query: " + query.call("<table>"))
     @tables.each do |table|
       puts("## Table: " + table)
-      puts printBench(query.call(table), 10, 5)
+      puts analyzeBench(query.call(table), 10, 5)
     end
   end
 end
