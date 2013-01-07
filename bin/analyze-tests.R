@@ -5,12 +5,17 @@ input <- args[1]
 output <- args[2]
 rows <- read.csv(input, header=T)
 x <- c(1:nrow(rows))
-par(mfrow=c(1,1))
-t_rows <- t(rows)
 pdf(file=output)
-for(name in names(rows)) {  
-  plot(x, t_rows[name,], type="b", xlab="build", ylab=paste(name, " time"))  
-  boxplot(t_rows[name,], main=paste(name, " time"))
-  hist(t_rows[name,], main=paste(name, " histogram"), xlab="time")
+layout(matrix(c(1, 1, 2, 3), 2, 2, byrow=T))
+for(name in colnames(rows)) { 
+  values <- rows[name][,]
+  plot(x, values, type="b", xlab="build", ylab=name, main=name)
+  summary_info <- capture.output(summary(values))
+  summary_info[1] <- paste(summary_info[1], "   StdDev")
+  summary_info[2] <- paste(summary_info[2], "   ", signif(sd(values)))
+  mtext(summary_info[1], side=1, padj=6)
+  mtext(summary_info[2], side=1, padj=8)
+  boxplot(values, ylab="time")
+  hist(values, xlab="time", main="")
 }
 dev.off()
