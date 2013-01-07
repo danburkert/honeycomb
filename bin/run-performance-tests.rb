@@ -39,7 +39,7 @@ def printBenchmarks
     puts("### Query: " + query.call("<table>"))
     @tables.each do |table|
       puts("## Table: " + table)
-      puts printBench(countQuery(table), 10, 3)
+      puts printBench(query.call(table), 10, 5)
     end
   end
 end
