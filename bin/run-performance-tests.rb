@@ -5,10 +5,6 @@
 @db = 'person'
 @tables = ['inno_05', 'hc_05']
 
-## Some other sweet hacks
-`chmod +x mysqlslap`
-`chmod +x analyze-slap.r`
-
 ### QUERIES
 
 def countQuery(table)
