@@ -3,12 +3,11 @@
 ### Globals FTW
 @host = "nic-hadoop-smmc07"
 @db = 'person'
-@tables = ['inno_05', 'hc_05',
-          'inno_06', 'hc_06',
-          'inno_07', 'hc_07']
+@tables = ['inno_05', 'hc_05']
 
 ## Some other sweet hacks
 `chmod +x mysqlslap`
+`chmod +x analyze-slap.r`
 
 ### QUERIES
 
@@ -26,6 +25,10 @@ def runBench(query, concurrency, iterations)
   `./mysqlslap --delimiter=";" --create="" --query="#{query}" --concurrency=#{concurrency} --iterations=#{iterations} --no-create --no-drop --create-schema=#{@db} --host=#{@host} --user="root"`
 end
 
+def analyzeBench(query, concurrency, iterations)
+  `./mysqlslap --delimiter=";" --create="" --query="#{query}" --concurrency=#{concurrency} --iterations=#{iterations} --no-create --no-drop --create-schema=#{@db} --host=#{@host} --user="root" | ./analyze-slap.r`
+end
+
 def runTests
   @tables.each do |table|
     puts("Table " + table + ":")
@@ -36,7 +39,7 @@ end
 def printTests
   @tables.each do |table|
     puts("Table " + table + ":")
-    puts printBench(countQuery(table), 10, 3)
+    puts analyzeBench(countQuery(table), 10, 3)
   end
 end
 
