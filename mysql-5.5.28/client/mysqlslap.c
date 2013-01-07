@@ -132,7 +132,7 @@ const char *delimiter= "\n";
 
 const char *create_schema_string= "mysqlslap";
 
-static my_bool opt_preserve= TRUE, opt_no_drop= FALSE;
+static my_bool opt_preserve= TRUE, opt_no_drop= FALSE, opt_no_create= FALSE;
 static my_bool debug_info_flag= 0, debug_check_flag= 0;
 static my_bool opt_only_print= FALSE;
 static my_bool opt_compress= FALSE, tty_password= FALSE,
@@ -461,7 +461,7 @@ void concurrency_loop(MYSQL *mysql, uint current, option_string *eptr)
       drop_schema(mysql, create_schema_string);
 
     /* First we create */
-    if (create_statements)
+    if (create_statements && !opt_no_create)
       create_schema(mysql, create_schema_string, create_statements, eptr);
 
     /*
@@ -620,6 +620,8 @@ static struct my_option my_long_options[] =
     REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"iterations", 'i', "Number of times to run the tests.", &iterations,
     &iterations, 0, GET_UINT, REQUIRED_ARG, 1, 0, 0, 0, 0, 0},
+  {"no-create", OPT_SLAP_NO_CREATE, "Do not create the schema before the test.  It should already exist.",
+   &opt_no_create, &opt_no_create, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"no-drop", OPT_SLAP_NO_DROP, "Do not drop the schema after the test.",
    &opt_no_drop, &opt_no_drop, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"number-char-cols", 'x', 
