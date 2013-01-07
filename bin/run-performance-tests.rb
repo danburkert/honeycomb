@@ -1,7 +1,6 @@
 #!/usr/bin/ruby
 
 ### Globals FTW
-@build_folder = "build"
 @host = "nic-hadoop-smmc07"
 @db = 'person'
 @tables = ['inno_05', 'hc_05',
@@ -17,11 +16,11 @@ end
 ### RUN
 
 def printBench(query, concurrency, iterations)
-  `#{@build_folder}/client/mysqlslap --delimiter=";" --create="" --query="#{query}" --concurrency=#{concurrency} --iterations=#{iterations} --no-create --no-drop --create-schema=#{@db} --host=#{@host} --only-print`
+  `./mysqlslap --delimiter=";" --create="" --query="#{query}" --concurrency=#{concurrency} --iterations=#{iterations} --no-create --no-drop --create-schema=#{@db} --host=#{@host} --only-print`
 end
 
 def runBench(query, concurrency, iterations)
-  `#{@build_folder}/client/mysqlslap --delimiter=";" --create="" --query="#{query}" --concurrency=#{concurrency} --iterations=#{iterations} --no-create --no-drop --create-schema=#{@db} --host=#{@host}`
+  `./mysqlslap --delimiter=";" --create="" --query="#{query}" --concurrency=#{concurrency} --iterations=#{iterations} --no-create --no-drop --create-schema=#{@db} --host=#{@host}`
 end
 
 def runTests
