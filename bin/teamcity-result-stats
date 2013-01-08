@@ -1,0 +1,22 @@
+#!/bin/sh
+
+test_name=$1
+build_number=$2
+
+stats_path=/var/log/honeycombstats
+output_path=$stats_path/output
+output=$output_path/$test_name.$build_number.out
+csv_file=$stats_path/$test_name.csv
+pdf_file=$stats_path/$test_name.pdf
+
+chmod a+x run-*
+./run-$test_name | tee $output
+test_type=`grep "Using suites:" $output`
+if [ "$test_type" == "" ]
+then
+  ruby ./parse-perf-output.rb $output $csv_file 
+else
+  ruby ./parse-test-output.rb $output $csv_file
+fi
+
+Rscript ./analyze-tests.R $csv_file $pdf_file $build_number
