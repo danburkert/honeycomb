@@ -15,7 +15,7 @@ firstNameQuery = lambda{|table| "SELECT * FROM #{table} WHERE first_name = 'Robe
 
 ### RUN
 def analyzeBench(query, concurrency, iterations)
-  `./mysqlslap --delimiter=";" --create="" --query="#{query}" --concurrency=#{concurrency} --iterations=#{iterations} --no-create --no-drop --create-schema=#{@db} --host=#{@host} --user="root" | ./analyze-slap.r`
+  `./mysqlslap --delimiter=";" --create="" --query="#{query}" --concurrency=#{concurrency} --iterations=#{iterations} --no-create --no-drop --create-schema=#{@db} --host=#{@host} --user="root"`
 end
 
 def runBenchmarks
