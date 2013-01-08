@@ -11,7 +11,7 @@ countQuery = lambda{|table| "SELECT COUNT(*) FROM #{table};"}
 addressQuery = lambda{|table| "SELECT * FROM #{table} WHERE address < '500' AND zip > '3000' AND state='VT' AND country='Mexico';"}
 firstNameQuery = lambda{|table| "SELECT * FROM #{table} WHERE first_name = 'Robert';"}
 
-@queries = [countQuery addressQuery firstNameQuery]
+@queries = [addressQuery, firstNameQuery, countQuery ]
 
 ### RUN
 def analyzeBench(query, concurrency, iterations)
