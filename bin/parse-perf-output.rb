@@ -10,7 +10,7 @@ queries = []
 times = []
 File.open(input).each do |line|
   next if line !~ /^Query/
-  _,query,*time = line.split(",")
+  _,query,*time = line.chop().split(",")
   queries << query
   times << time
 end
