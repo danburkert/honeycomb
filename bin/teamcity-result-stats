@@ -6,7 +6,7 @@ chmod a+x run-*
 output=/tmp/$test_name.$build_number.out
 ./run-$test_name | tee $output
 test_type=`grep "Using suites:" $output`
-if [ $test_type == "" ]
+if [ "$test_type" == "" ]
 then
   ruby ./parse-perf-output.rb $output /tmp/$test_name.csv
 else
