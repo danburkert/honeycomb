@@ -11,11 +11,6 @@ pdf_file=$stats_path/$test_name.pdf
 
 chmod a+x run-*
 ./run-$test_name | tee $output
-if [[ $pipestatus[@] != 1* ]] # The pipe hides the exit code of the tests.
-then
-  exit 1
-fi
-
 test_type=`grep "Using suites:" $output`
 if [ "$test_type" == "" ]
 then
