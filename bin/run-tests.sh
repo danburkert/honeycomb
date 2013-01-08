@@ -1,3 +1,3 @@
 #!/bin/sh
 
-./run-default-tests.sh
+./run-default-tests
