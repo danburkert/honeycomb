@@ -20,10 +20,10 @@ end
 
 def runBenchmarks
   @queries.each do |query|
-    puts("### Query: " + query.call("<table>"))
     @tables.each do |table|
-      puts("## Table: " + table)
-      puts analyzeBench(query.call(table), 10, 5)
+      table_query = query.call(table)
+      printf("Query,%s,", table_query)
+      puts analyzeBench(table_query, 10, 5)
     end
   end
 end
