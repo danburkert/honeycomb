@@ -2,6 +2,7 @@
 
 test_name=$1
 build_number=$2
+chmod a+x run-*
 output=/tmp/$test_name.$build_number.out
 ./run-$test_name | tee $output
 test_type=`grep "Using suites:" $output`
