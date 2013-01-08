@@ -13,5 +13,4 @@ else
   ruby ./parse-test-output.rb $output /tmp/$test_name.csv
 fi
 
-rm $output
 Rscript ./analyze-tests.R /tmp/$test_name.csv /tmp/$test_name.pdf $build_number
