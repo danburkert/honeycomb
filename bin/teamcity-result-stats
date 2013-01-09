@@ -11,6 +11,11 @@ pdf_file=$stats_path/$test_name.pdf
 
 chmod a+x run-*
 ./run-$test_name | tee $output
+failed_tests=`grep -c "\[ fail \]" $output`
+if [ $failed_tests != 0 ]
+then
+  exit 1
+fi
 test_type=`grep "Using suites:" $output`
 if [ "$test_type" == "" ]
 then
