@@ -18,7 +18,7 @@ pdf(file=output)
 layout(matrix(c(1, 1, 2, 3), 2, 2, byrow=T))
 for(name in colnames(rows)) { 
   values <- rows[name][,]
-  plot(x, values, type="b", ylab=name, ylim=c(0, max(values)), main=sprintf("%s (build %s)", name, build_number))
+  plot(x, values, type="b", ylab=name, main=sprintf("%s (build %s)", name, build_number))
   sum_info(values)
   boxplot(values, ylab="time")
   hist(values, xlab="time", main="")
