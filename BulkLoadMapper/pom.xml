@@ -54,7 +54,7 @@
             <version>2.3</version>
         </dependency>
         <dependency>
-            <groupId>com.nearinfinity</groupId>
+            <groupId>com.nearinfinity.honeycomb</groupId>
             <artifactId>mysqlengine</artifactId>
             <version>0.1</version>
         </dependency>
