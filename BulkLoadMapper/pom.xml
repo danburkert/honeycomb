@@ -7,6 +7,8 @@
     <groupId>com.nearinfinity.honeycomb</groupId>
     <artifactId>BulkLoadMapper</artifactId>
     <version>1.0</version>
+    
+    <name>BulkLoadMapper</name>
 
     <parent>
         <groupId>com.nearinfinity.honeycomb</groupId>

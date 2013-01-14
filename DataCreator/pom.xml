@@ -7,6 +7,8 @@
     <groupId>com.nearinfinity.honeycomb</groupId>
     <artifactId>DataCreator</artifactId>
     <version>1.0</version>
+    
+    <name>DataCreator</name>
 
     <parent>
         <groupId>com.nearinfinity.honeycomb</groupId>
