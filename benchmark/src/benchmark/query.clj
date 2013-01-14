@@ -4,8 +4,8 @@
             [nearinfinity.clj-faker.phone :as p]
             [nearinfinity.clj-faker.name :as n]))
 
-(defn salary [] (rand-int 100000))
-(defn salary-range []
+(defn- salary [] (rand-int 100000))
+(defn- salary-range []
   (let [middle (salary)
         low (max 0 (- middle 100))
         high (min 99999 (+ middle 100))]
