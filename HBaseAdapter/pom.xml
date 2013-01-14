@@ -8,6 +8,8 @@
     <artifactId>mysqlengine</artifactId>
     <version>0.1</version>
 
+    <name>mysqlengine</name>
+    
     <parent>
         <groupId>com.nearinfinity.honeycomb</groupId>
         <artifactId>honeycomb</artifactId>
