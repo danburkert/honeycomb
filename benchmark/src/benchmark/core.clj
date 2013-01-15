@@ -25,7 +25,7 @@
           :warmup (recur
                     (sql/with-query-results res
                       (query table)
-                      (dorun res)
+                      ;(dorun res)
                       []))
           :stop (map #(/ (- % (first times)) 1000000000.0) times))))))
 
@@ -46,20 +46,20 @@
   [times resolution]
   (let [bin (fn [time] (int (* resolution time)))]
     (reduce (fn [acc [timestep times]] (assoc acc (/ timestep resolution)
-                                              (count times)))
+                                              (* resolution (count times))))
             {} (group-by bin times))))
 
 (defn- print-header []
   (binding [*print-readably* false]
-    (prn "Table" "Query" "Clients" "Timestep" "Count")))
+    (prn "Table" "Query" "Clients" "Timestep" "QPS")))
 
 (defn- print-results
   [results table query clients]
   (binding [*print-readably* false]
     (let [query-names (clojure.set/map-invert (ns-publics 'benchmark.query))]
-      (doseq [[timestep count] results]
+      (doseq [[timestep qps] results]
         (prn (name table) (get query-names query) clients
-             (float timestep) count)))))
+             (float timestep) (float qps))))))
 
 (defn- benchmark-suite
   "Run benchmarks against different configurations of tables, number of
