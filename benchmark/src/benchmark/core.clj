@@ -20,7 +20,7 @@
                               (let [t (. System (nanoTime))]
                                 (sql/with-query-results res
                                   (query table)
-                                  (dorun res)
+                                  ;(dorun res)
                                   t))))
           :warmup (recur
                     (sql/with-query-results res
@@ -49,6 +49,10 @@
                                               (count times)))
             {} (group-by bin times))))
 
+(defn- print-header []
+  (binding [*print-readably* false]
+    (prn "Table" "Query" "Clients" "Timestep" "Count")))
+
 (defn- print-results
   [results table query clients]
   (binding [*print-readably* false]
@@ -61,13 +65,14 @@
   "Run benchmarks against different configurations of tables, number of
    concurrent client connections, and query type.  The database, warmup
    period, benchmark period, and output are consistent across runs."
-  [db-spec tables queries clients warmup bench]
+  [db-spec tables queries clients warmup bench resolution]
+  (print-header)
   (doseq [table tables
           query queries
           clients clients]
     (-> (benchmark db-spec table query clients warmup bench)
         flatten
-        (aggregate-results 2)
+        (aggregate-results resolution)
         (print-results table query clients))))
 
 (defn -main [& args]
@@ -82,6 +87,7 @@
                                                                                           :user "root"}]
                  ["-w" "--warmup" "Warmup period in seconds." :default 10]
                  ["-b" "--bench" "Benchmark period in seconds." :default 30]
+                 ["-r" "--resolution" "Number of collection periods per second. Accepts integers, decimals, or rationals." :parse-fn read-string :default 1]
                  ["-c" "--clients" "Number of concurrent client connections.  Accepts multiple values for multiple runs." :default [5] :parse-fn read-string]
                  ["-o" "--out" "Path to file where results will be appended.  Defaults to writing output to stdout."]
                  ["-a" "--append" "Append to output file instead of overwrite." :flag true :default true]
@@ -97,7 +103,8 @@
                                            queries
                                            (:clients opts)
                                            (:warmup opts)
-                                           (:bench opts))]
+                                           (:bench opts)
+                                           (:resolution opts))]
       (if (:out opts)
         (with-open [writer (io/writer (:out opts) :append (:append opts))]
           (binding [*out* writer

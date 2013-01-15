@@ -1,7 +1,7 @@
-{:tables [:inno_05]
- :warmup 1
- :bench 5
- :clients [1 10]
+{:tables [:inno_05 :inno_06]
+ :warmup 10
+ :bench 60
+ :clients [1 5 10]
  :queries [range-salary point-name]
  :append false
- :out "out.csv"}
+ :out "bench.ssv"}
