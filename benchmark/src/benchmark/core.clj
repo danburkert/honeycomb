@@ -3,11 +3,10 @@
             [clojure.string :as s]
             [clojure.java.io :as io]
             [benchmark.query :as q]
-            [clojure.tools.cli :as cli]
-            [benchmark.analyze :as analyze])
+            [clojure.tools.cli :as cli])
   (:gen-class))
 
-(defn client
+(defn- client
   "Simulated client.  Opens a connection to db and executes stmts on a separate
    thread while phase is :bench or :warmup.  Only records while in :bench phase.
    Returns a future containing a list of query start times offset from the
@@ -30,7 +29,7 @@
                       []))
           :stop (map #(/ (- % (first times)) 1000000000.0) times))))))
 
-(defn benchmark
+(defn- benchmark
   "Run individual benchmark and return results."
   [db-spec table query clients warmup bench]
   (let [phase (atom :warmup)
@@ -43,33 +42,33 @@
       (reset! phase :stop)
       (map deref clients))))
 
-(defn benchmark-suite
-  "Run benchmarks against different configurations of tables, number of
-   concurrent client connections, and query type.  The database, warmup
-   period, benchmark period, and output are consistent across runs."
-  [db-spec tables queries clients warmup bench]
-  (let [dataset (atom analyze/empty-dataset)]
-    (dorun
-      (for [table tables
-            query queries
-            clients clients]
-        (let [result (flatten (benchmark db-spec table query clients warmup bench))]
-          (swap! dataset (analyze/add-data table query clients result 1)))))
-    (analyze/plot-dataset @dataset)))
+(defn- aggregate-results
+  [times resolution]
+  (let [bin (fn [time] (int (* resolution time)))]
+    (reduce (fn [acc [timestep times]] (assoc acc (/ timestep resolution)
+                                              (count times)))
+            {} (group-by bin times))))
 
-(defn benchmark-suite'
+(defn- print-results
+  [results table query clients]
+  (binding [*print-readably* false]
+    (let [query-names (clojure.set/map-invert (ns-publics 'benchmark.query))]
+      (doseq [[timestep count] results]
+        (prn (name table) (get query-names query) clients
+             (float timestep) count)))))
+
+(defn- benchmark-suite
   "Run benchmarks against different configurations of tables, number of
    concurrent client connections, and query type.  The database, warmup
    period, benchmark period, and output are consistent across runs."
   [db-spec tables queries clients warmup bench]
-  (let [dataset (atom analyze/empty-dataset)]
-    (dorun
-      (for [table tables
-            query queries
-            clients clients]
-        (let [result (flatten (benchmark db-spec table query clients warmup bench))]
-          (swap! dataset (analyze/add-data table query clients result 1)))))
-    dataset))
+  (doseq [table tables
+          query queries
+          clients clients]
+    (-> (benchmark db-spec table query clients warmup bench)
+        flatten
+        (aggregate-results 2)
+        (print-results table query clients))))
 
 (defn -main [& args]
   (let [[cli-opts _ banner]
@@ -92,21 +91,17 @@
                cli-opts)]
     (when (or (:help opts) (not (and (:tables opts) (:queries opts))))
       (do (println banner) #_(System/exit 0)))
-    (let [queries (map (partial get (ns-publics 'benchmark.query)) (:queries opts))]
-      (benchmark-suite' (:db opts)
-                        (:tables opts)
-                        queries
-                        (:clients opts)
-                        (:warmup opts)
-                        (:bench opts)))))
-
-(def dataset (-main "--options" "example-options.clj"))
-(identity @dataset)
-
-      ;(if (:out opts)
-        ;(with-open [writer (io/writer (:out opts) :append (:append opts))]
-          ;(binding [*out* writer
-                    ;*flush-on-newline* false]
-            ;(run-benchmarks)))
-        ;(run-benchmarks))
-      ;(shutdown-agents))))
+    (let [queries (map (partial get (ns-publics 'benchmark.query)) (:queries opts))
+          run-benchmarks #(benchmark-suite (:db opts)
+                                           (:tables opts)
+                                           queries
+                                           (:clients opts)
+                                           (:warmup opts)
+                                           (:bench opts))]
+      (if (:out opts)
+        (with-open [writer (io/writer (:out opts) :append (:append opts))]
+          (binding [*out* writer
+                    *flush-on-newline* false]
+            (run-benchmarks)))
+        (run-benchmarks))
+      (shutdown-agents))))
