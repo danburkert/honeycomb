@@ -199,7 +199,6 @@
 
     <modules>
         <module>HBaseAdapter</module>
-        <module>DataCreator</module>
         <module>BulkLoadMapper</module>
         <module>MedianSplit</module>
     </modules>
