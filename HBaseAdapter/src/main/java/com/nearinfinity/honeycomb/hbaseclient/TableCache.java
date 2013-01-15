@@ -17,12 +17,10 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 import static java.lang.String.format;
 
 public class TableCache {
     private static final ConcurrentHashMap<String, TableInfo> tableCache = new ConcurrentHashMap<String, TableInfo>();
-
     private static final ReadWriteLock cacheLock = new ReentrantReadWriteLock();
     private static final Logger logger = Logger.getLogger(TableCache.class);
 
@@ -113,9 +111,9 @@ public class TableCache {
             throw new NullPointerException("Columns were null after getting family map.");
         }
 
-        for (byte[] qualifier : columns.keySet()) {
-            String columnName = new String(qualifier);
-            long columnId = ByteBuffer.wrap(columns.get(qualifier)).getLong();
+        for (Map.Entry<byte[], byte[]> entry : columns.entrySet()) {
+            String columnName = new String(entry.getKey());
+            long columnId = ByteBuffer.wrap(entry.getValue()).getLong();
             info.addColumn(columnName, columnId, getMetadataForColumn(tableId, columnId, table));
         }
 
