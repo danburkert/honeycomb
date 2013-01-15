@@ -16,7 +16,6 @@ import static java.lang.String.format;
 
 public class HBaseWriter implements Closeable {
     private static final Logger logger = Logger.getLogger(HBaseWriter.class);
-
     private final HTableInterface table;
 
     public HBaseWriter(HTableInterface table) {
@@ -375,7 +374,9 @@ public class HBaseWriter implements Closeable {
         long lastColumnId = table.incrementColumnValue(columnBytes, Constants.NIC, new byte[0], numColumns);
         long startColumn = lastColumnId - numColumns;
 
-        for (String columnName : columns.keySet()) {
+        for (Map.Entry<String, ColumnMetadata> entry : columns.entrySet()) {
+            String columnName = entry.getKey();
+            ColumnMetadata metadata = entry.getValue();
             long columnId = ++startColumn;
 
             Put columnPut = new Put(columnBytes).add(Constants.NIC, columnName.getBytes(), Bytes.toBytes(columnId));
@@ -383,8 +384,6 @@ public class HBaseWriter implements Closeable {
 
             byte[] columnInfoBytes = RowKeyFactory.buildColumnInfoKey(tableId, columnId);
             Put columnInfoPut = new Put(columnInfoBytes);
-
-            ColumnMetadata metadata = columns.get(columnName);
 
             columnInfoPut.add(Constants.NIC, Constants.METADATA, metadata.toJson());
             if (metadata.isAutoincrement()) {

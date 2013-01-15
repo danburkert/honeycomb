@@ -3,7 +3,10 @@ package com.nearinfinity.honeycomb.hbaseclient;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 public class PutListFactory {
     public static List<Put> createDataInsertPutList(final Map<String, byte[]> values, final TableInfo info, final List<List<String>> indexedKeys) {
@@ -59,9 +62,9 @@ public class PutListFactory {
 
     private static Put createDataRows(final byte[] dataKey, final Map<String, byte[]> values, final Map<String, Long> columnNameToId) {
         final Put dataRow = new Put(dataKey);
-        for (String columnName : values.keySet()) {
-            final long columnId = columnNameToId.get(columnName);
-            final byte[] value = values.get(columnName);
+        for (Map.Entry<String, byte[]> entry : values.entrySet()) {
+            final long columnId = columnNameToId.get(entry.getKey());
+            final byte[] value = entry.getValue();
             if (value != null) {
                 dataRow.add(Constants.NIC, Bytes.toBytes(columnId), value);
             }

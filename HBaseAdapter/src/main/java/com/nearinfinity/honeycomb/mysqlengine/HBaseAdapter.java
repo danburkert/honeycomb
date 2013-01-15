@@ -6,7 +6,9 @@ import com.nearinfinity.honeycomb.hbaseclient.strategy.*;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
-import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.HTablePool;
+import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
 
@@ -28,18 +30,14 @@ public class HBaseAdapter {
     private static final Map<Long, ActiveScan> activeScanLookup = new ConcurrentHashMap<Long, ActiveScan>();
     private static final Map<Long, HBaseWriter> activeWriterLookup = new ConcurrentHashMap<Long, HBaseWriter>();
     private static final Logger logger = Logger.getLogger(HBaseAdapter.class);
-    private static HBaseReader reader;
-    private static HTablePool tablePool;
-
     private static final int DEFAULT_NUM_CACHED_ROWS = 2500;
     private static final long DEFAULT_WRITE_BUFFER_SIZE = 5 * 1024 * 1024;
     private static final int DEFAULT_TABLE_POOL_SIZE = 5;
-    private static boolean isInitialized = false;
-
     private static final String CONFIG_PATH = "/etc/mysql/adapter.conf";
-
     private static final Object initializationLock = new Object();
-
+    private static HBaseReader reader;
+    private static HTablePool tablePool;
+    private static boolean isInitialized = false;
     private static Configuration params;
 
     public static void initialize() throws IOException {
@@ -464,6 +462,8 @@ public class HBaseAdapter {
                     scanner = new SingleResultScanner(reader.getScanner(strategy));
                 }
                 break;
+                default:
+                    throw new IllegalStateException("Not a valid MySQL scan type " + readType);
             }
 
             scanner.setColumnName(Iterables.getLast(scanInfo.keyValueColumns()));

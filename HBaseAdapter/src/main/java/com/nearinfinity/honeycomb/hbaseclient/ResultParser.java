@@ -47,10 +47,10 @@ public class ResultParser {
             return columns;
         }
 
-        for (byte[] qualifier : returnedColumns.keySet()) {
-            long columnId = ByteBuffer.wrap(qualifier).getLong();
+        for (Map.Entry<byte[], byte[]> entry : returnedColumns.entrySet()) {
+            long columnId = ByteBuffer.wrap(entry.getKey()).getLong();
             String columnName = info.getColumnNameById(columnId);
-            columns.put(columnName, returnedColumns.get(qualifier));
+            columns.put(columnName, entry.getValue());
         }
 
         if (logger.isDebugEnabled()) {

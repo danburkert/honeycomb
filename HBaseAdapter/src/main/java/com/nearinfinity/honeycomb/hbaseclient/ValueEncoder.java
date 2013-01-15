@@ -14,9 +14,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class ValueEncoder {
     private static final byte BYTE_MASK = (byte) 0x000000ff;
-
     private static final byte ASC_BYTE_MASK = (byte) 0x00000000;
-
     private static final long INVERT_SIGN_MASK = 0x8000000000000000L;
 
     public static Map<String, byte[]> correctAscendingValuePadding(final TableInfo info, final Map<String, byte[]> values) {
@@ -72,10 +70,11 @@ public class ValueEncoder {
 
     private static Map<String, byte[]> convertToCorrectOrder(final TableInfo info, final Map<String, byte[]> values, final Set<String> nullSearchColumns, Function<byte[], ColumnType, Integer, byte[]> convert) {
         final ImmutableMap.Builder<String, byte[]> result = ImmutableMap.builder();
-        for (String columnName : values.keySet()) {
+        for (Map.Entry<String, byte[]> entry : values.entrySet()) {
+            String columnName = entry.getKey();
             final ColumnMetadata metadata = info.getColumnMetadata(columnName);
             final ColumnType columnType = info.getColumnTypeByName(columnName);
-            byte[] value = values.get(columnName);
+            byte[] value = entry.getValue();
             final boolean isNull = value == null || nullSearchColumns.contains(columnName);
             if (isNull) {
                 value = new byte[metadata.getMaxLength()];
