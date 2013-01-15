@@ -96,7 +96,7 @@
                (merge cli-opts (read-string (slurp (:options cli-opts))))
                cli-opts)]
     (when (or (:help opts) (not (and (:tables opts) (:queries opts))))
-      (do (println banner) #_(System/exit 0)))
+      (do (println banner) (System/exit 0)))
     (let [queries (map (partial get (ns-publics 'benchmark.query)) (:queries opts))
           run-benchmarks #(benchmark-suite (:db opts)
                                            (:tables opts)
