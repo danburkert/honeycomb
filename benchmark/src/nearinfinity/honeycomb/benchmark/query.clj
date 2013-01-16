@@ -1,4 +1,4 @@
-(ns benchmark.query
+(ns nearinfinity.honeycomb.benchmark.query
   (:require [clojureql.core :as ql]
             [nearinfinity.clj-faker.address :as a]
             [nearinfinity.clj-faker.phone :as p]
