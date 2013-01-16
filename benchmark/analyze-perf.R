@@ -1,20 +1,24 @@
 library("lattice")
 library("plyr")
 library("gplots")
-data <- read.table("bench.ssv", header=T, sep=" ")
+args <- commandArgs(trailingOnly=T)
+benchmark_file <- args[1]
+pdf_filename <- args[2]
+data <- read.table(benchmark_file, header=T, sep=" ")
 data <- data[with(data, order(Table,Query, Clients,Timestep)), ]
 data_summary <- daply(data, .(Table, Clients, Query), function(x) {
   out <- capture.output(summary(x$Count))
   info <- paste("Table:", x$Table[1], "Clients:", x$Clients[1], "Query:", x$Query[1])
   paste(info, "\n", out[1],"\n", out[2], "\n")
 })
-
-pdf(file="test.pdf")
-bwplot(Count~Table|paste("Clients:",Clients)+paste("Query:",Query), 
+pdf(file=pdf_filename)
+scale <- max(data$QPS)
+bwplot(QPS~Table|paste("Clients:",Clients)+paste("Query:",Query), 
        data=data, 
        auto.key=T,
        main="Plot (Mean/Median/Standard Deviation)",
        par.settings = list(plot.symbol = list(col = "transparent")),
+       ylab="Queries/Second",
        panel=function(x, y,...){ 
          panel.grid(v=0,h=-1) 
          panel.bwplot(x,y, ...)
@@ -23,7 +27,8 @@ bwplot(Count~Table|paste("Clients:",Clients)+paste("Query:",Query),
            with(x, 
                 {
                   txt <- paste(round(mean(y)), "/", median(y), "/", round(sd(y)))
-                  panel.text(x[1], 100 + quantile(y, probs=c(.75)), label=txt)
+                  q <- quantile(y, probs=c(.99))
+                  panel.text(x[1], q + 0.1*(scale-q),label=txt, cex=0.5)
                  })
            1
          })
@@ -32,13 +37,14 @@ cex <- 0.5
 lwd <- 2
 table_count <- length(unique(data$Table))
 client_count <- length(unique(data$Clients))
-color_seq <- seq(12, 12+table_count-1)
 panel <- function(...){ 
          panel.grid(v=-1,h=-1)
          panel.xyplot(...)
          }
+
+color_seq <- seq(12, 12+table_count-1)
 line_types <- 1:table_count
-xyplot(Count~Timestep|Query+paste("Clients:", Clients), 
+xyplot(QPS~Timestep|Query+paste("Clients:", Clients), 
        data=data, 
        type="l", 
        col=color_seq,
@@ -46,13 +52,15 @@ xyplot(Count~Timestep|Query+paste("Clients:", Clients),
        auto.key=T,
        lty=line_types,
        lwd=lwd,
+       ylab="Queries/Second",
+       xlab="Time",
        key=list(text = list(as.character(paste("Table:", unique(data$Table)))),
                 lines = list(lty=line_types, col=color_seq)),
        panel=panel)
 
 color_seq <- seq(12, 12+client_count-1)
 line_types <- 1:client_count
-xyplot(Count~Timestep|paste("Table:",Table)+Query, 
+xyplot(QPS~Timestep|paste("Table:",Table)+Query, 
        data=data, 
        type="l", 
        col=color_seq,
@@ -60,6 +68,8 @@ xyplot(Count~Timestep|paste("Table:",Table)+Query,
        auto.key=T,
        lty=1:6,
        lwd=3,
+       ylab="Queries/Second",
+       xlab="Time",
        key=list(text = list(as.character(paste("Client:", unique(data$Clients)))),
                 lines = list(lty=line_types, col=color_seq)),
        panel=panel)
