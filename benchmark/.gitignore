@@ -10,3 +10,4 @@ pom.xml
 .lein-plugins
 bench.ssv
 benchmark.ssv
+benchmark.pdf
