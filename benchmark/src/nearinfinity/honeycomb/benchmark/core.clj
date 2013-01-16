@@ -42,24 +42,34 @@
       (reset! phase :stop)
       (map deref clients))))
 
-(defn- aggregate-results
+(defn- aggregate-timesteps
+  "Bin results into timesteps.
+
+   The number of timesteps is determined by the formula:
+   # timesteps = benchmark period (in seconds) * resolution
+   The QPS of a timestep is determined by the formula:
+   QPS = # of queries started in timestep * resolution
+
+   For instance, if the resolution is 2, and 4 queries are started in a given
+   timestep, then the QPS of that timestep is 8.  If that was part of a 30
+   second benchmark, there would be 60 individual timesteps."
   [times resolution]
-  (let [bin (fn [time] (int (* resolution time)))]
-    (reduce (fn [acc [timestep times]] (assoc acc (/ timestep resolution)
+  (let [timestep (fn [time] (int (* resolution time)))]
+    (reduce (fn [acc [timestep times]] (assoc acc timestep
                                               (* resolution (count times))))
-            {} (group-by bin times))))
+            {} (group-by timestep times))))
 
 (defn- print-header []
   (binding [*print-readably* false]
     (prn "Table" "Query" "Clients" "Timestep" "QPS")))
 
 (defn- print-results
-  [results table query clients]
+  [results table query clients bench resolution]
   (binding [*print-readably* false]
     (let [query-names (clojure.set/map-invert (ns-publics 'nearinfinity.honeycomb.benchmark.query))]
-      (doseq [[timestep qps] results]
+      (dotimes [timestep (* bench resolution)]
         (prn (name table) (get query-names query) clients
-             (float timestep) (float qps))))))
+             (float (/ timestep resolution)) (float (or (get results timestep) 0)))))))
 
 (defn- benchmark-suite
   "Run benchmarks against different configurations of tables, number of
@@ -72,8 +82,8 @@
           clients clients]
     (-> (benchmark db-spec table query clients warmup bench)
         flatten
-        (aggregate-results resolution)
-        (print-results table query clients))))
+        (aggregate-timesteps resolution)
+        (print-results table query clients bench resolution))))
 
 (defn -main [& args]
   (let [[cli-opts _ banner]
