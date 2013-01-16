@@ -9,7 +9,7 @@ pdf_filename <- args[2]
 data <- read.table(benchmark_file, header=T, sep=" ")
 data <- data[with(data, order(Table,Query, Clients,Timestep)), ]
 data_summary <- daply(data, .(Table, Clients, Query), function(x) {
-  out <- capture.output(summary(x$Count))
+  out <- capture.output(summary(x$QPS))
   info <- paste("Table:", x$Table[1], "Clients:", x$Clients[1], "Query:", x$Query[1])
   paste(info, "\n", out[1],"\n", out[2], "\n")
 })
