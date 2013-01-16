@@ -11,6 +11,9 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <hadoop.artifactId>hadoop-core</hadoop.artifactId>
+        <hadoop.version>1.0.4</hadoop.version>
+        <hbase.version>0.94.1</hbase.version>
     </properties>
 
     <distributionManagement>
@@ -28,11 +31,6 @@
                     <name>apache</name>
                 </property>
             </activation>
-            <properties>
-                <hadoop.artifactId>hadoop-core</hadoop.artifactId>
-                <hadoop.version>1.0.4</hadoop.version>
-                <hbase.version>0.94.1</hbase.version>
-            </properties>
             <!--<modules> -->
             <!--<module>HBaseTableCreator</module> -->
             <!--</modules> -->
