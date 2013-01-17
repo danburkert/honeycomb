@@ -96,3 +96,8 @@
                          (> :salary low)
                          (< :salary high))))
         (ql/compile nil))))
+
+(defn count-all [table]
+  (-> (ql/table table)
+      (ql/aggregate [:count/*])
+      (ql/compile nil)))
