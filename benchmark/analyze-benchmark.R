@@ -32,7 +32,7 @@ bwplot(QPS~Table|paste("Clients:",Clients)+paste("Query:",Query),
                 {
                   txt <- paste(round(mean(y)), "/", median(y), "/", round(sd(y)))
                   multiplier <- -1 * sign(median(y) - ymiddle)
-                  offset <- multiplier * (0.07 * ymax + (quantile(y, probs=c(.99)) - median(y)))
+                  offset <- multiplier * (0.07 * ymax + 1.5 * (quantile(y, probs=c(.99)) - median(y)))
                   q <- quantile(y, probs=c(.99))
                   panel.text(x[1], q + offset, label=txt, cex=0.5)
                  })
@@ -51,7 +51,7 @@ panel <- function(...){
 color_seq <- seq(12, 12+table_count-1)
 line_types <- 1:table_count
 xyplot(QPS~Timestep|Query+paste("Clients:", Clients),
-       main= "QPS / Time by Clients",
+       main= "QPS / Time by Table",
        data=data,
        type="l",
        col=color_seq,
@@ -68,7 +68,7 @@ xyplot(QPS~Timestep|Query+paste("Clients:", Clients),
 color_seq <- seq(12, 12+client_count-1)
 line_types <- 1:client_count
 xyplot(QPS~Timestep|paste("Table:",Table)+Query,
-       main= "QPS / Time by Table",
+       main= "QPS / Time by Clients",
        data=data,
        type="l",
        col=color_seq,
