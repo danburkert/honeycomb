@@ -1,22 +1,22 @@
 package com.nearinfinity.honeycomb.mysqlengine;
 
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.UUID;
 
 public class Row {
     private Map<String, byte[]> rowMap;
-
     private byte[] uuid;
 
     public Row() {
-        this.rowMap = new TreeMap<String, byte[]>();
-        this.uuid = new byte[0];
+        this.rowMap = new HashMap<String, byte[]>();
+        this.uuid = new byte[16];
     }
 
     public Row(Map<String, byte[]> rowMap, UUID uuidObj) {
         this.rowMap = rowMap;
+        this.uuid = new byte[16];
         this.setUUID(uuidObj);
     }
 
@@ -25,18 +25,17 @@ public class Row {
     }
 
     public void setRowMap(Map<String, byte[]> rowMap) {
-        this.rowMap = new TreeMap<String, byte[]>(rowMap);
-    }
-
-    public void setUUID(UUID rowUuid) {
-        this.uuid = ByteBuffer.allocate(16)
-                .putLong(rowUuid.getMostSignificantBits())
-                .putLong(rowUuid.getLeastSignificantBits())
-                .array();
+        this.rowMap = rowMap;
     }
 
     public byte[] getUUID() {
         return this.uuid;
+    }
+
+    public void setUUID(UUID rowUuid) {
+        ByteBuffer.wrap(this.uuid)
+                .putLong(rowUuid.getMostSignificantBits())
+                .putLong(rowUuid.getLeastSignificantBits());
     }
 
     public String[] getKeys() {
