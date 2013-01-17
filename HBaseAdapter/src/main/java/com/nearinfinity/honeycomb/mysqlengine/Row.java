@@ -39,21 +39,11 @@ public class Row {
     }
 
     public String[] getKeys() {
-        String[] keyArray = new String[rowMap.size()];
-        int i = 0;
-        for (String key : rowMap.keySet()) {
-            keyArray[i++] = key;
-        }
-        return keyArray;
+        return (String[]) rowMap.keySet().toArray();
     }
 
     public byte[][] getValues() {
-        byte[][] valueArray = new byte[rowMap.size()][];
-        int i = 0;
-        for (Map.Entry<String, byte[]> entry : rowMap.entrySet()) {
-            valueArray[i++] = entry.getValue();
-        }
-        return valueArray;
+        return (byte[][]) rowMap.values().toArray();
     }
 
     public void parse(Map<String, byte[]> values, UUID uuid) {
