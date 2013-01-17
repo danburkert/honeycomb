@@ -320,6 +320,8 @@ int HoneycombHandler::rnd_next(uchar *buf)
     DBUG_RETURN(HA_ERR_END_OF_FILE);
   }
 
+  row_map = this->env->NewLocalRef(row_map);
+
   this->store_uuid_ref(row, get_uuid_method);
   java_to_sql(buf, row_map);
   this->table->status = 0;
