@@ -268,3 +268,15 @@ uchar* create_key_copy(Field* index_field, const uchar* key, uint* key_len, THD*
 
   return key_copy;
 }
+
+int count_fields(TABLE* table)
+{
+  int count = 0;
+  for (Field **field_ptr = table->field; *field_ptr; field_ptr++)
+  {
+    count++;
+  }
+
+  return count;
+}
+

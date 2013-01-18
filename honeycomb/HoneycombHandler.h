@@ -11,7 +11,7 @@
 #include "Logging.h"
 #include "Java.h"
 #include "Util.h"
-#include "ScopedJavaResource.h"
+#include "JavaFrame.h"
 
 #include "my_global.h"          /* ulonglong */
 #include "thr_lock.h"           /* THR_LOCK, THR_LOCK_DATA */
