@@ -158,6 +158,7 @@ void HoneycombHandler::java_to_sql(uchar* buf, jobject row_map)
     jbyteArray java_val = java_map_get(row_map, java_key, this->env);
     if (java_val == NULL)
     {
+      DELETE_REF(env, java_key);
       field->set_null();
       continue;
     }
@@ -172,10 +173,11 @@ void HoneycombHandler::java_to_sql(uchar* buf, jobject row_map)
 
     field->move_field_offset(-offset);
     this->env->ReleaseByteArrayElements(java_val, (jbyte*) val, 0);
+    DELETE_REF(env, java_val);
+    DELETE_REF(env, java_key);
   }
 
-  this->env->DeleteLocalRef(row_map);
-
+  DELETE_REF(env, row_map);
   dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
 
   return;

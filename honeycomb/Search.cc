@@ -18,6 +18,8 @@ int HoneycombHandler::index_init(uint idx, bool sorted)
 
   this->curr_scan_id = this->env->CallStaticLongMethod(adapter_class, start_scan_method, table_name, java_column_names);
   ARRAY_DELETE(column_names);
+  DELETE_REF(env, table_name);
+  DELETE_REF(env, java_column_names);
 
   DBUG_RETURN(0);
 }
@@ -43,6 +45,9 @@ jobject HoneycombHandler::create_key_value_list(int index, uint* key_sizes, ucha
     jstring key_name = string_to_java_string(key_names[x]);
     jobject key_value = this->env->NewObject(key_value_class, key_value_ctor, key_name, java_key, key_null_bits[x], key_is_null[x]);
     java_list_insert(key_values, key_value, this->env);
+    DELETE_REF(env, java_key);
+    DELETE_REF(env, key_name);
+    DELETE_REF(env, key_value);
   }
 
   return key_values;
@@ -139,7 +144,11 @@ int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
 
   jobject java_find_flag = find_flag_to_java(find_flag, this->env);
   jobject index_row = this->env->CallStaticObjectMethod(adapter_class, index_read_method, this->curr_scan_id, key_values, java_find_flag);
-  DBUG_RETURN(read_index_row(index_row, buf));
+  int rc = read_index_row(index_row, buf);
+  DELETE_REF(env, key_values);
+  DELETE_REF(env, java_find_flag);
+  DELETE_REF(env, index_row);
+  DBUG_RETURN(rc);
 }
 
 int HoneycombHandler::index_first(uchar *buf)
@@ -160,7 +169,9 @@ int HoneycombHandler::get_next_index_row(uchar* buf)
   jmethodID index_next_method = find_static_method(adapter_class, "nextIndexRow", "(J)L" MYSQLENGINE "IndexRow;",this->env);
   jobject index_row = this->env->CallStaticObjectMethod(adapter_class, index_next_method, this->curr_scan_id);
 
-  return read_index_row(index_row, buf); 
+  int rc = read_index_row(index_row, buf); 
+  DELETE_REF(env, index_row);
+  return rc;
 }
 
 int HoneycombHandler::get_index_row(const char* indexType, uchar* buf)
@@ -171,7 +182,10 @@ int HoneycombHandler::get_index_row(const char* indexType, uchar* buf)
   jfieldID field_id = this->env->GetStaticFieldID(read_class, indexType, "L" MYSQLENGINE "IndexReadType;");
   jobject java_find_flag = this->env->GetStaticObjectField(read_class, field_id);
   jobject index_row = this->env->CallStaticObjectMethod(adapter_class, index_read_method, this->curr_scan_id, NULL, java_find_flag);
-  return read_index_row(index_row, buf); 
+  int rc = read_index_row(index_row, buf); 
+  DELETE_REF(env, java_find_flag);
+  DELETE_REF(env, index_row);
+  return rc;
 }
 
 int HoneycombHandler::read_index_row(jobject index_row, uchar* buf)
@@ -226,13 +240,18 @@ int HoneycombHandler::rnd_pos(uchar *buf, uchar *pos)
   if (row_map == NULL)
   {
     this->table->status = STATUS_NOT_FOUND;
-    DBUG_RETURN(HA_ERR_END_OF_FILE);
+    rc = HA_ERR_END_OF_FILE;
+    goto cleanup;
   }
 
   java_to_sql(buf, row_map);
   this->table->status = 0;
 
   MYSQL_READ_ROW_DONE(rc);
+cleanup:
+  DELETE_REF(env, row);
+  DELETE_REF(env, uuid);
+
   DBUG_RETURN(rc);
 }
 
@@ -286,6 +305,7 @@ int HoneycombHandler::rnd_init(bool scan)
   this->curr_scan_id = this->env->CallStaticLongMethod(adapter_class,
       start_scan_method, table_name, java_scan_boolean);
 
+  DELETE_REF(env, table_name);
   this->performing_scan = scan;
 
   DBUG_RETURN(0);
@@ -317,16 +337,17 @@ int HoneycombHandler::rnd_next(uchar *buf)
   if (row_map == NULL)
   {
     this->table->status = STATUS_NOT_FOUND;
-    DBUG_RETURN(HA_ERR_END_OF_FILE);
+    rc = HA_ERR_END_OF_FILE;
+    goto cleanup;
   }
-
-  row_map = this->env->NewLocalRef(row_map);
 
   this->store_uuid_ref(row, get_uuid_method);
   java_to_sql(buf, row_map);
   this->table->status = 0;
 
   MYSQL_READ_ROW_DONE(rc);
+cleanup:
+  DELETE_REF(env, row);
 
   DBUG_RETURN(rc);
 }
