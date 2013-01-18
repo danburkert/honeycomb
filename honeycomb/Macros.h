@@ -6,6 +6,7 @@
 
 #define ARRAY_DELETE(arr) do { if (arr != NULL) { delete[] arr; arr = NULL; } } while(0)
 #define MY_FREE(buf) do { if (buf != NULL) { my_free(buf); buf = NULL; } } while(0)
+#define DELETE_REF(env, ref) env->DeleteLocalRef(ref)
 
 #define HBASECLIENT "com/nearinfinity/honeycomb/hbaseclient/"
 #define MYSQLENGINE "com/nearinfinity/honeycomb/mysqlengine/"
