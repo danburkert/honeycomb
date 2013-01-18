@@ -149,6 +149,7 @@ void HoneycombHandler::java_to_sql(uchar* buf, jobject row_map)
   jboolean is_copy = JNI_FALSE;
   my_bitmap_map *orig_bitmap;
   orig_bitmap = dbug_tmp_use_all_columns(table, table->write_set);
+  push_frame(table->s->fields + 1);
 
   for (int i = 0; i < table->s->fields; i++)
   {
@@ -158,7 +159,6 @@ void HoneycombHandler::java_to_sql(uchar* buf, jobject row_map)
     jbyteArray java_val = java_map_get(row_map, java_key, this->env);
     if (java_val == NULL)
     {
-      DELETE_REF(env, java_key);
       field->set_null();
       continue;
     }
@@ -173,14 +173,10 @@ void HoneycombHandler::java_to_sql(uchar* buf, jobject row_map)
 
     field->move_field_offset(-offset);
     this->env->ReleaseByteArrayElements(java_val, (jbyte*) val, 0);
-    DELETE_REF(env, java_val);
-    DELETE_REF(env, java_key);
   }
 
-  DELETE_REF(env, row_map);
+  pop_frame();
   dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
-
-  return;
 }
 
 int HoneycombHandler::external_lock(THD *thd, int lock_type)
@@ -201,6 +197,7 @@ int HoneycombHandler::external_lock(THD *thd, int lock_type)
     jmethodID update_count_method = find_static_method(adapter_class, "incrementRowCount", "(Ljava/lang/String;J)V",this->env);
     jstring table_name = this->table_name();
     this->env->CallStaticVoidMethod(adapter_class, update_count_method, table_name, (jlong) this->rows_written);
+    DELETE_REF(env, table_name);
     this->rows_written = 0;
     jmethodID end_write_method = find_static_method(adapter_class, "endWrite", "(J)V",this->env);
     this->env->CallStaticVoidMethod(adapter_class, end_write_method, (jlong)this->curr_write_id);
@@ -293,6 +290,7 @@ int HoneycombHandler::info(uint flag)
   if (flag & HA_STATUS_VARIABLE)
   {
     attach_thread();
+    push_frame();
     jclass adapter_class = this->adapter();
     jmethodID get_count_method = find_static_method(adapter_class, "getRowCount", "(Ljava/lang/String;)J",this->env);
     jstring table_name = this->table_name();
@@ -323,6 +321,7 @@ int HoneycombHandler::info(uint flag)
       stats.mean_rec_length = (ulong) (stats.data_file_length / stats.records);
     }
 
+    pop_frame();
     detach_thread();
   }
 
@@ -359,10 +358,12 @@ int HoneycombHandler::info(uint flag)
 
   if ((flag & HA_STATUS_AUTO) && table->found_next_number_field) {
     attach_thread();
+    push_frame();
     jclass adapter_class = this->adapter();
     jmethodID get_autoincrement_value_method = find_static_method(adapter_class, "getAutoincrementValue", "(Ljava/lang/String;Ljava/lang/String;)J",this->env);
     jlong autoincrement_value = (jlong) this->env->CallStaticObjectMethod(adapter_class, get_autoincrement_value_method, this->table_name(), string_to_java_string(table->found_next_number_field->field_name));
     stats.auto_increment_value = (ulonglong) autoincrement_value;
+    pop_frame();
     detach_thread();
   }
 
@@ -552,17 +553,22 @@ const char *HoneycombHandler::java_to_string(jstring string)
 
 bool HoneycombHandler::is_field_nullable(jstring table_name, const char* field_name)
 {
+  push_frame();
   jclass adapter_class = this->adapter();
   jmethodID is_nullable_method = find_static_method(adapter_class, "isNullable", "(Ljava/lang/String;Ljava/lang/String;)Z",this->env);
-  return (bool)this->env->CallStaticBooleanMethod(adapter_class, is_nullable_method, table_name, string_to_java_string(field_name));
+  bool result = (bool)this->env->CallStaticBooleanMethod(adapter_class, is_nullable_method, table_name, string_to_java_string(field_name));
+  pop_frame();
+  return result;
 }
 
 void HoneycombHandler::store_uuid_ref(jobject index_row, jmethodID get_uuid_method)
 {
+  push_frame();
   jbyteArray uuid = (jbyteArray) this->env->CallObjectMethod(index_row, get_uuid_method);
   uchar* pos = (uchar*) this->env->GetByteArrayElements(uuid, JNI_FALSE);
   memcpy(this->ref, pos, this->ref_length);
   this->env->ReleaseByteArrayElements(uuid, (jbyte*) pos, 0);
+  pop_frame();
 }
 
 int HoneycombHandler::analyze(THD* thd, HA_CHECK_OPT* check_opt)
@@ -588,6 +594,7 @@ ha_rows HoneycombHandler::estimate_rows_upper_bound()
 {
   DBUG_ENTER("HoneycombHandler::estimate_rows_upper_bound");
   attach_thread();
+  push_frame();
 
   jclass adapter_class = this->adapter();
   jmethodID get_count_method = find_static_method(adapter_class, "getRowCount", "(Ljava/lang/String;)J",this->env);
@@ -595,6 +602,7 @@ ha_rows HoneycombHandler::estimate_rows_upper_bound()
   jlong row_count = this->env->CallStaticLongMethod(adapter_class,
       get_count_method, table_name);
 
+  pop_frame();
   detach_thread();
 
   // Stupid MySQL and its filesort. This must be large enough to filesort when there are less than 2 records.
