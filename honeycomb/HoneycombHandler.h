@@ -11,6 +11,7 @@
 #include "Logging.h"
 #include "Java.h"
 #include "Util.h"
+#include "JavaFrame.h"
 
 #include "my_global.h"          /* ulonglong */
 #include "thr_lock.h"           /* THR_LOCK, THR_LOCK_DATA */
@@ -133,16 +134,6 @@ class HoneycombHandler : public handler
     jclass adapter()
     {
       return find_jni_class("HBaseAdapter", this->env);
-    }
-
-    jint push_frame(int capacity = 10)
-    {
-      return this->env->PushLocalFrame(capacity);
-    }
-
-    void pop_frame()
-    {
-      this->env->PopLocalFrame(NULL);
     }
 
     void initialize_adapter()
