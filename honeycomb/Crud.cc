@@ -10,7 +10,9 @@ jobject HoneycombHandler::create_multipart_keys(TABLE* table_arg)
   {
     char* name = index_name(table_arg, key);
     jboolean is_unique = (table_arg->key_info + key)->flags & HA_NOSAME ? JNI_TRUE : JNI_FALSE;
-    this->env->CallVoidMethod(java_keys, add_key_method, string_to_java_string(name), is_unique);
+    jstring jname = string_to_java_string(name);
+    this->env->CallVoidMethod(java_keys, add_key_method, jname, is_unique);
+    DELETE_REF(env, jname);
     ARRAY_DELETE(name);
   }
 
@@ -84,7 +86,6 @@ int HoneycombHandler::create(const char *path, TABLE *table_arg, HA_CREATE_INFO 
     DBUG_RETURN(HA_WRONG_CREATE_OPTION);
   }
 
-  jobject java_keys = this->create_multipart_keys(table_arg);
   jclass adapter_class = this->adapter();
   if (adapter_class == NULL)
   {
@@ -96,7 +97,10 @@ int HoneycombHandler::create(const char *path, TABLE *table_arg, HA_CREATE_INFO 
 
   char* table_name = extract_table_name_from_path(path);
   jstring jtable_name = string_to_java_string(table_name);
+  jobject java_keys = this->create_multipart_keys(table_arg);
   ARRAY_DELETE(table_name);
+  int rc = 0;
+  jmethodID create_table_method;
 
   jobject columnMap = create_java_map(this->env);
   FieldMetadata metadata(this->env);
@@ -108,20 +112,27 @@ int HoneycombHandler::create(const char *path, TABLE *table_arg, HA_CREATE_INFO 
     if(!is_allowed_column(field, &error_number))
     {
       my_error(ER_CREATE_FILEGROUP_FAILED, MYF(0), table_creation_errors[error_number]);
-      detach_thread();
-      DBUG_RETURN(HA_WRONG_CREATE_OPTION);
+      rc = HA_WRONG_CREATE_OPTION;
+      goto cleanup;
     }
 
     jobject java_metadata_obj = metadata.get_field_metadata(field, table_arg, create_info->auto_increment_value);
-    java_map_insert(columnMap, string_to_java_string(field->field_name), java_metadata_obj, this->env);
+    jstring jfield_name = string_to_java_string(field->field_name);
+    java_map_insert(columnMap, jfield_name, java_metadata_obj, this->env);
+    DELETE_REF(env, java_metadata_obj);
+    DELETE_REF(env, jfield_name);
   }
 
-  jmethodID create_table_method = find_static_method(adapter_class, "createTable", "(Ljava/lang/String;Ljava/util/Map;L" HBASECLIENT "TableMultipartKeys;)Z",this->env);
+  create_table_method = find_static_method(adapter_class, "createTable", "(Ljava/lang/String;Ljava/util/Map;L" HBASECLIENT "TableMultipartKeys;)Z",this->env);
   this->env->CallStaticBooleanMethod(adapter_class, create_table_method, jtable_name, columnMap, java_keys);
   print_java_exception(this->env);
+cleanup:
+  DELETE_REF(env, jtable_name);
+  DELETE_REF(env, java_keys);
+  DELETE_REF(env, columnMap);
   detach_thread();
 
-  DBUG_RETURN(0);
+  DBUG_RETURN(rc);
 }
 
 int HoneycombHandler::rename_table(const char *from, const char *to)
@@ -139,6 +150,8 @@ int HoneycombHandler::rename_table(const char *from, const char *to)
   ARRAY_DELETE(from_str);
   ARRAY_DELETE(to_str);
   this->env->CallStaticVoidMethod(adapter_class, rename_table_method, current_table_name, new_table_name);
+  DELETE_REF(env, current_table_name);
+  DELETE_REF(env, new_table_name);
 
   detach_thread();
 
@@ -169,6 +182,8 @@ int HoneycombHandler::write_row(uchar* buf, jobject updated_fields)
 
   jobject java_row_map = create_java_map(this->env);
   jobject unique_values_map = create_java_map(this->env);
+  ScopedJavaResource row_scope(env, java_row_map);
+  ScopedJavaResource unique_scope(env, unique_values_map);
 
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
     table->timestamp_field->set_time();
@@ -304,6 +319,9 @@ int HoneycombHandler::write_row(uchar* buf, jobject updated_fields)
     {
       java_map_insert(unique_values_map, field_name, java_bytes, this->env);
     }
+
+    DELETE_REF(env, field_name);
+    DELETE_REF(env, java_bytes);
   }
 
 
@@ -368,6 +386,7 @@ bool HoneycombHandler::row_has_duplicate_values(jobject value_map, jobject chang
     this->env->ReleaseStringUTFChars(duplicate_column, key_name);
   }
 
+  DELETE_REF(env, duplicate_column);
   return error;
 }
 
@@ -378,8 +397,8 @@ bool HoneycombHandler::row_has_duplicate_values(jobject value_map, jobject chang
 int HoneycombHandler::update_row(const uchar *old_row, uchar *new_row)
 {
   DBUG_ENTER("HoneycombHandler::update_row");
-
   ha_statistic_increment(&SSV::ha_update_count);
+  my_bitmap_map *old_map;
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
     table->timestamp_field->set_time();
 
@@ -390,14 +409,16 @@ int HoneycombHandler::update_row(const uchar *old_row, uchar *new_row)
   if(size == 0)
   {
     // No fields have actually changed. Don't write a new row.
-    DBUG_RETURN(rc);
+    goto cleanup;
   }
 
-  my_bitmap_map *old_map = dbug_tmp_use_all_columns(table, table->read_set);
+  old_map = dbug_tmp_use_all_columns(table, table->read_set);
   rc = write_row(new_row, updated_fieldnames);
   dbug_tmp_restore_column_map(table->read_set, old_map);
   this->flush_writes();
 
+cleanup:
+  DELETE_REF(env, updated_fieldnames);
   DBUG_RETURN(rc);
 }
 
@@ -466,6 +487,7 @@ int HoneycombHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_key
         ARRAY_DELETE(value_key);
         ARRAY_DELETE(index_columns);
         this->failed_key_index = this->get_failed_key_index(key_part->field->field_name);
+        DELETE_REF(env, duplicate_value);
         detach_thread();
         return error;
       }
@@ -474,8 +496,11 @@ int HoneycombHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_key
     jclass adapter = this->adapter();
     jobject java_keys = this->create_multipart_key(pos, key_part, end_key_part, key_info->key_parts);
     jmethodID add_index_method = find_static_method(adapter, "addIndex", "(Ljava/lang/String;L" HBASECLIENT "TableMultipartKeys;)V",this->env);
-    this->env->CallStaticVoidMethod(adapter, add_index_method, this->table_name(), java_keys);
+    jstring table_name = this->table_name();
+    this->env->CallStaticVoidMethod(adapter, add_index_method, table_name, java_keys);
     ARRAY_DELETE(index_columns);
+    DELETE_REF(env, java_keys);
+    DELETE_REF(env, table_name);
   }
 
   return 0;
@@ -496,10 +521,13 @@ int HoneycombHandler::prepare_drop_index(TABLE *table_arg, uint *key_num, uint n
   jclass adapter = this->adapter();
   jmethodID add_index_method = find_static_method(adapter, "dropIndex", "(Ljava/lang/String;Ljava/lang/String;)V",this->env);
 
+  jstring table_name = this->table_name();
   for (uint key = 0; key < num_of_keys; key++)
   {
     char* name = index_name(table_arg, key_num[key]);
-    this->env->CallStaticVoidMethod(adapter, add_index_method, this->table_name(), string_to_java_string(name));
+    jstring jname = string_to_java_string(name);
+    this->env->CallStaticVoidMethod(adapter, add_index_method, table_name, jname);
+    DELETE_REF(env, jname);
     ARRAY_DELETE(name);
   }
 
@@ -529,6 +557,7 @@ int HoneycombHandler::delete_all_rows()
   this->env->CallStaticVoidMethod(adapter_class, set_count_method, table_name,
       (jlong) 0);
   this->flush_writes();
+  DELETE_REF(env, table_name);
 
   DBUG_RETURN(0);
 }
@@ -552,8 +581,11 @@ void HoneycombHandler::update_honeycomb_autoincrement_value(jlong new_autoincrem
   jclass adapter_class = this->adapter();
   jmethodID get_alter_autoincrement_value_method = find_static_method(adapter_class, "alterAutoincrementValue", "(Ljava/lang/String;Ljava/lang/String;JZ)Z",this->env);
   jstring field_name = string_to_java_string(table->found_next_number_field->field_name);
-  if (this->env->CallStaticBooleanMethod(adapter_class, get_alter_autoincrement_value_method, this->table_name(), field_name, new_autoincrement_value, is_truncate))
+  jstring table_name =  this->table_name();
+  if (this->env->CallStaticBooleanMethod(adapter_class, get_alter_autoincrement_value_method, table_name, field_name, new_autoincrement_value, is_truncate))
     stats.auto_increment_value = (ulonglong) new_autoincrement_value;
+  DELETE_REF(env, field_name);
+  DELETE_REF(env, table_name);
 }
 
 void HoneycombHandler::drop_table(const char *path)
@@ -578,6 +610,7 @@ int HoneycombHandler::delete_table(const char *path)
 
   this->env->CallStaticBooleanMethod(adapter_class, drop_table_method,
       table_name);
+  DELETE_REF(env, table_name);
 
   detach_thread();
 
