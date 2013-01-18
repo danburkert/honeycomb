@@ -258,7 +258,11 @@ static void print_java_classpath(JNIEnv* env)
     const char* string = env->GetStringUTFChars(file, NULL);
     Logging::info("%s", string);
     env->ReleaseStringUTFChars(file, string);
+    DELETE_REF(env, file);
+    DELETE_REF(env, url);
   }
+  DELETE_REF(env, urls);
+  DELETE_REF(env, class_loader);
 }
 
 extern bool volatile abort_loop;
