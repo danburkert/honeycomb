@@ -3,6 +3,7 @@
 int HoneycombHandler::index_init(uint idx, bool sorted)
 {
   DBUG_ENTER("HoneycombHandler::index_init");
+  push_frame();
 
   this->active_index = idx;
 
@@ -18,9 +19,8 @@ int HoneycombHandler::index_init(uint idx, bool sorted)
 
   this->curr_scan_id = this->env->CallStaticLongMethod(adapter_class, start_scan_method, table_name, java_column_names);
   ARRAY_DELETE(column_names);
-  DELETE_REF(env, table_name);
-  DELETE_REF(env, java_column_names);
 
+  pop_frame();
   DBUG_RETURN(0);
 }
 
@@ -36,6 +36,7 @@ int HoneycombHandler::index_end()
 jobject HoneycombHandler::create_key_value_list(int index, uint* key_sizes, uchar** key_copies, const char** key_names, jboolean* key_null_bits, jboolean* key_is_null)
 {
   jobject key_values = create_java_list(this->env);
+  push_frame(3*index);
   jclass key_value_class = this->env->FindClass(HBASECLIENT "KeyValue");
   jmethodID key_value_ctor = this->env->GetMethodID(key_value_class, "<init>", "(Ljava/lang/String;[BZZ)V");
   for(int x = 0; x < index; x++)
@@ -45,11 +46,9 @@ jobject HoneycombHandler::create_key_value_list(int index, uint* key_sizes, ucha
     jstring key_name = string_to_java_string(key_names[x]);
     jobject key_value = this->env->NewObject(key_value_class, key_value_ctor, key_name, java_key, key_null_bits[x], key_is_null[x]);
     java_list_insert(key_values, key_value, this->env);
-    DELETE_REF(env, java_key);
-    DELETE_REF(env, key_name);
-    DELETE_REF(env, key_value);
   }
 
+  pop_frame();
   return key_values;
 }
 
@@ -136,6 +135,7 @@ int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
     index++;
   }
 
+  push_frame();
   jobject key_values = create_key_value_list(index, key_sizes, key_copies, key_names, key_null_bits, key_is_null);
   for (int x = 0; x < index; x++)
   {
@@ -145,9 +145,7 @@ int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
   jobject java_find_flag = find_flag_to_java(find_flag, this->env);
   jobject index_row = this->env->CallStaticObjectMethod(adapter_class, index_read_method, this->curr_scan_id, key_values, java_find_flag);
   int rc = read_index_row(index_row, buf);
-  DELETE_REF(env, key_values);
-  DELETE_REF(env, java_find_flag);
-  DELETE_REF(env, index_row);
+  pop_frame();
   DBUG_RETURN(rc);
 }
 
@@ -165,17 +163,19 @@ int HoneycombHandler::index_last(uchar *buf)
 
 int HoneycombHandler::get_next_index_row(uchar* buf)
 {
+  push_frame();
   jclass adapter_class = this->adapter();
   jmethodID index_next_method = find_static_method(adapter_class, "nextIndexRow", "(J)L" MYSQLENGINE "IndexRow;",this->env);
   jobject index_row = this->env->CallStaticObjectMethod(adapter_class, index_next_method, this->curr_scan_id);
 
   int rc = read_index_row(index_row, buf); 
-  DELETE_REF(env, index_row);
+  pop_frame();
   return rc;
 }
 
 int HoneycombHandler::get_index_row(const char* indexType, uchar* buf)
 {
+  push_frame();
   jclass adapter_class = this->adapter();
   jmethodID index_read_method = find_static_method(adapter_class, "indexRead", "(JLjava/util/List;L" MYSQLENGINE "IndexReadType;)L" MYSQLENGINE "IndexRow;",this->env);
   jclass read_class = find_jni_class("IndexReadType", this->env);
@@ -183,8 +183,7 @@ int HoneycombHandler::get_index_row(const char* indexType, uchar* buf)
   jobject java_find_flag = this->env->GetStaticObjectField(read_class, field_id);
   jobject index_row = this->env->CallStaticObjectMethod(adapter_class, index_read_method, this->curr_scan_id, NULL, java_find_flag);
   int rc = read_index_row(index_row, buf); 
-  DELETE_REF(env, java_find_flag);
-  DELETE_REF(env, index_row);
+  pop_frame();
   return rc;
 }
 
@@ -295,6 +294,7 @@ int HoneycombHandler::rnd_init(bool scan)
 {
   DBUG_ENTER("HoneycombHandler::rnd_init");
 
+  push_frame();
   jclass adapter_class = this->adapter();
   jmethodID start_scan_method = find_static_method(adapter_class, "startScan",
       "(Ljava/lang/String;Z)J",this->env);
@@ -305,7 +305,7 @@ int HoneycombHandler::rnd_init(bool scan)
   this->curr_scan_id = this->env->CallStaticLongMethod(adapter_class,
       start_scan_method, table_name, java_scan_boolean);
 
-  DELETE_REF(env, table_name);
+  pop_frame();
   this->performing_scan = scan;
 
   DBUG_RETURN(0);
@@ -319,6 +319,7 @@ int HoneycombHandler::rnd_next(uchar *buf)
   DBUG_ENTER("HoneycombHandler::rnd_next");
 
   MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, TRUE);
+  push_frame();
 
   memset(buf, 0, table->s->null_bytes);
   jclass adapter_class = this->adapter();
@@ -347,7 +348,7 @@ int HoneycombHandler::rnd_next(uchar *buf)
 
   MYSQL_READ_ROW_DONE(rc);
 cleanup:
-  DELETE_REF(env, row);
+  pop_frame();
 
   DBUG_RETURN(rc);
 }
