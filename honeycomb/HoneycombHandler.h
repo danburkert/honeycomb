@@ -140,7 +140,8 @@ class HoneycombHandler : public handler
     {
       attach_thread();
       jclass adapter_class = this->adapter();
-      jmethodID initialize_method = this->env->GetStaticMethodID(adapter_class, "initialize", "()V");
+      jmethodID initialize_method = this->env->GetStaticMethodID(
+          adapter_class, "initialize", "()V");
       this->env->CallStaticVoidMethod(adapter_class, initialize_method);
       detach_thread();
     }
@@ -153,11 +154,13 @@ class HoneycombHandler : public handler
     int index_first(uchar *buf);
     int index_last(uchar *buf);
 
-    void update_honeycomb_autoincrement_value(jlong new_autoincrement_value, jboolean is_truncate); 
+    void update_honeycomb_autoincrement_value(jlong new_autoincrement_value,
+        jboolean is_truncate);
     void release_auto_increment();
 
   public:
-    HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm);
+    HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg,
+        mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm);
     ~HoneycombHandler();
 
     const char *table_type() const
@@ -192,7 +195,8 @@ class HoneycombHandler : public handler
 
     ulong index_flags(uint inx, uint part, bool all_parts) const
     {
-      return HA_READ_NEXT | HA_READ_ORDER | HA_READ_RANGE | HA_READ_PREV | HA_ONLY_WHOLE_INDEX;
+      return HA_READ_NEXT | HA_READ_ORDER | HA_READ_RANGE
+        | HA_READ_PREV | HA_ONLY_WHOLE_INDEX;
     }
 
     uint max_supported_record_length() const

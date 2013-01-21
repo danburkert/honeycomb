@@ -10,8 +10,7 @@
 #include <stdlib.h>
 
 static handler *honeycomb_create_handler(handlerton *hton,
-    TABLE_SHARE *table,
-    MEM_ROOT *mem_root);
+    TABLE_SHARE *table, MEM_ROOT *mem_root);
 
 handlerton *honeycomb_hton;
 
@@ -20,7 +19,8 @@ static JNIEnv* env = NULL;
 static JavaVM* jvm = NULL;
 static HASH honeycomb_open_tables;
 
-static uchar* honeycomb_get_key(HoneycombShare *share, size_t *length, my_bool not_used __attribute__((unused)))
+static uchar* honeycomb_get_key(HoneycombShare *share, size_t *length,
+    my_bool not_used __attribute__((unused)))
 {
   *length=share->table_path_length;
   return (uchar*) share->path_to_table;
@@ -126,9 +126,11 @@ static int free_share(HoneycombShare *share)
   return 0;
 }
 
-static handler* honeycomb_create_handler(handlerton *hton, TABLE_SHARE *table, MEM_ROOT *mem_root)
+static handler* honeycomb_create_handler(handlerton *hton, TABLE_SHARE *table,
+    MEM_ROOT *mem_root)
 {
-  return new (mem_root) HoneycombHandler(hton, table, &honeycomb_mutex, &honeycomb_open_tables, jvm);
+  return new (mem_root) HoneycombHandler(hton, table, &honeycomb_mutex,
+      &honeycomb_open_tables, jvm);
 }
 
 struct st_mysql_storage_engine honeycomb_storage_engine=

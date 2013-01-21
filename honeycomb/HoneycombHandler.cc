@@ -178,7 +178,6 @@ void HoneycombHandler::java_to_sql(uchar* buf, jobject row_map)
     this->env->ReleaseByteArrayElements(java_val, (jbyte*) val, 0);
   }
 
-  
   dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
 }
 
