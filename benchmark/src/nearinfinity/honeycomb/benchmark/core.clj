@@ -7,10 +7,10 @@
   (:gen-class))
 
 (defn- client
-  "Simulated client.  Opens a connection to db and executes stmts on a separate
+  "Simulated client.  Opens a connection to db and executes queries on a separate
    thread while phase is :bench or :warmup.  Only records while in :bench phase.
    Returns a future containing a list of query start times offset from the
-   beggining of the warmup period."
+   beggining of the benchmark period."
   [db table query phase]
   (future
     (sql/with-connection db
@@ -72,9 +72,9 @@
              (float (/ timestep resolution)) (float (or (get results timestep) 0)))))))
 
 (defn- benchmark-suite
-  "Run benchmarks against different configurations of tables, number of
-   concurrent client connections, and query type.  The database, warmup
-   period, benchmark period, and output are consistent across runs."
+  "Run benchmarks against different configurations of tables, concurrent client
+   connections, and query types.  The database, warmup period, benchmark period,
+   and resolution are consistent across runs."
   [db-spec tables queries clients warmup bench resolution]
   (print-header)
   (doseq [table tables
@@ -89,17 +89,17 @@
   (let [[cli-opts _ banner]
         (cli/cli args
                  ["-h" "--help" "Show this menu" :flag true :default false]
-                 ["-t" "--tables" "Tables to run benchmarks against.  e.g. \"[:hc_05 :inno_05]\". Required." :parse-fn read-string]
-                 ["-q" "--queries" "Query types to benchmark.  eg. \"[point-name range-salary]\". Required." :parse-fn read-string]
+                 ["-t" "--tables" "Tables to benchmark, e.g. \"[:hc_05 :inno_05]\". Required." :parse-fn read-string]
+                 ["-q" "--queries" "Queries to benchmark,  eg. \"[point-name range-salary]\". Required." :parse-fn read-string]
                  ["-d" "--db" "Database connection spec." :parse-fn read-string :default {:classname "com.mysql.jdbc.Driver"
                                                                                           :subprotocol "mysql"
                                                                                           :subname "//localhost:3306/hbase"
                                                                                           :user "root"}]
                  ["-w" "--warmup" "Warmup period in seconds." :default 10]
                  ["-b" "--bench" "Benchmark period in seconds." :default 30]
-                 ["-r" "--resolution" "Number of collection periods per second. Accepts integers, decimals, or rationals." :parse-fn read-string :default 1]
-                 ["-c" "--clients" "Number of concurrent client connections.  Accepts multiple values for multiple runs." :default [5] :parse-fn read-string]
-                 ["-o" "--out" "Path to file where results will be appended.  Defaults to writing output to stdout."]
+                 ["-r" "--resolution" "Number of collection periods per second." :parse-fn read-string :default 1]
+                 ["-c" "--clients" "Number of concurrent client connections to benchmark." :default [5] :parse-fn read-string]
+                 ["-o" "--out" "Path to file where results will be written.  Defaults to writing output to stdout."]
                  ["-a" "--append" "Append to output file instead of overwrite." :flag true :default true]
                  ["--options" "Path to options file which contains an options map. File options override cli options."])
         opts (if (:options cli-opts)
