@@ -15,9 +15,9 @@ static const int prefix_length = strlen(prefix);
 
 static void abort_with_fatal_error(const char* message)
 {
-    Logging::fatal(message);
-    perror(message);
-    abort();
+  Logging::fatal(message);
+  perror(message);
+  abort();
 }
 
 static int line_length(FILE* option_config)
@@ -43,7 +43,7 @@ error:
 
 static int option_count(FILE* option_config)
 {
-  int ch; 
+  int ch;
   int count = 0;
   do
   {
@@ -67,22 +67,22 @@ static JavaVMOption* initialize_options(char* class_path, uint* opt_count)
 {
   JavaVMOption* options, *option;
   FILE* option_config = fopen("/etc/mysql/jvm-options.conf", "r");
-  *opt_count = 1;    
+  *opt_count = 1;
   if (option_config != NULL)
   {
     int count = option_count(option_config);
-    if(count < 0) 
+    if(count < 0)
     {
       Logging::warn("Could not successfully count the options in /etc/mysql/jvm-options.conf");
-      goto error; 
+      goto error;
     }
 
     *opt_count += count;
     options = new JavaVMOption[*opt_count];
-	option = options;
+    option = options;
     option->optionString = class_path;
-	option++;
-	int index = 1;
+    option++;
+    int index = 1;
     while(!feof(option_config))
     {
       int line_len = line_length(option_config);
@@ -96,16 +96,16 @@ static JavaVMOption* initialize_options(char* class_path, uint* opt_count)
       {
         break;
       }
-      
+
       option->optionString = new char[line_len];
       fgets(option->optionString, line_len, option_config);
       fgetc(option_config); // Skip the newline
-	  option++;
+      option++;
     }
   }
   else
   {
-	Logging::info("No jvm-options.conf found. Using classpath as the only jvm option.");
+    Logging::info("No jvm-options.conf found. Using classpath as the only jvm option.");
     options = new JavaVMOption[*opt_count];
     options->optionString = class_path;
   }
@@ -130,7 +130,7 @@ static void destruct(JavaVMOption* options, int option_count)
   for(int i = 0 ; i < option_count ; i++)
   {
     ARRAY_DELETE(option->optionString);
-	option++;
+    option++;
   }
 
   ARRAY_DELETE(options);
@@ -222,7 +222,7 @@ static char* find_java_classpath()
   FILE* config = fopen("/etc/mysql/classpath.conf", "r");
   if(config != NULL)
   {
-	Logging::info("Reading the path to HBaseAdapter jar out of /etc/mysql/classpath.conf");
+    Logging::info("Reading the path to HBaseAdapter jar out of /etc/mysql/classpath.conf");
     class_path = read_classpath_conf_file(config);
     fclose(config);
     if (class_path == NULL)
@@ -273,9 +273,9 @@ static void handler(int sig)
   abort_loop = true;
   pthread_t tmp;
   if (mysql_thread_create(0, &tmp, &connection_attrib, kill_server_thread, (void*) &sig))
-	  sql_print_error("Can't create thread to kill server");
+    sql_print_error("Can't create thread to kill server");
 }
-#elif defined(__linux__) 
+#elif defined(__linux__)
 extern void kill_mysql(void);
 static void handler(int sig)
 {
