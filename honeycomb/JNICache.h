@@ -1,7 +1,6 @@
 #ifndef JNICACHE_H
 #define JNICACHE_H
 
-#include "JavaFrame.h"
 #include "JNISetup.h"
 
 #define TOFIX "com/nearinfinity/honeycomb/mysqlengine/"
@@ -14,40 +13,50 @@ class JNICache
 {
   private:
     JavaVM* jvm;
+    jclass hbase_adapter_;
 
   public:
-  const jclass hbase_adapter;
+    inline jclass JNICache::hbase_adapter() const {return hbase_adapter_;};
 
-  JNICache(JavaVM* jvm) : jvm(jvm)
-  {
-    JNIEnv* env;
-    attach_thread(jvm, env);
-    JavaFrame frame(env, 1); // Number of local references created
-    jclass hbase_adapter_local = env->FindClass(TOFIX "HBaseAdapter");
-    if(hbase_adapter_local == NULL)
+    JNICache(JavaVM* jvm) : jvm(jvm)
     {
-      // handle class not found exception
+      JNIEnv* env;
+      jint attach_result = attach_thread(jvm, env);
+      if(attach_result != JNI_OK)
+      {
+        // Handle thread attach issue
+      }
+      jint frame_result = env->PushLocalFrame(1); // JavaFrame will not work, because we detach before end of scope
+      if(frame_result != JNI_OK)
+      {
+        // Handle out of memory exception
+      }
+
+      jclass hbase_adapter_local = env->FindClass(TOFIX "HBaseAdapter");
+      if(hbase_adapter_local == NULL)
+      {
+        // handle class not found exception
+      }
+      hbase_adapter_ = (jclass) env->NewGlobalRef(hbase_adapter_local);
+      if(hbase_adapter_ == NULL)
+      {
+        // handle out_of_memory exception
+      }
+      env->PopLocalFrame(NULL);
+      detach_thread(jvm);
     }
-    hbase_adapter = env->NewGlobalRef(hbase_adapter_local);
-    if(hbase_adapter == NULL)
+
+    ~JNICache()
     {
-      // handle out_of_memory exception
+      // Setup env
+      JNIEnv* env;
+      attach_thread(jvm, env);
+
+      // Delete global references
+      env->DeleteGlobalRef(hbase_adapter_);
+
+      detach_thread(jvm);
     }
-    detach_thread(jvm);
-  }
-
-  ~JNICache()
-  {
-    // Setup env
-    JNIEnv* env;
-    attach_thread(jvm, env);
-
-    // Delete global references
-    env->DeleteGlobalRef(hbase_adapter);
-
-    detach_thread(jvm);
-  }
 };
-
 
 #endif
