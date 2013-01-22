@@ -1,6 +1,7 @@
 package com.nearinfinity.honeycomb.mysqlengine;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -13,6 +14,8 @@ import java.io.File;
 import java.io.IOException;
 
 public class Util {
+    private static final Logger logger = Logger.getLogger(Util.class);
+
     public static Configuration readConfiguration(File source)
             throws IOException, ParserConfigurationException, SAXException {
         Configuration params = new Configuration(false);
@@ -20,9 +23,13 @@ public class Util {
         DocumentBuilder builder = factory.newDocumentBuilder();
         Document doc = builder.parse(source);
         NodeList options = doc.getElementsByTagName("adapteroption");
+        logger.info(String.format("Number of options %d", options.getLength()));
         for (int i = 0; i < options.getLength(); i++) {
             Element node = (Element) options.item(i);
-            params.set(node.getAttribute("name"), node.getNodeValue());
+            String name = node.getAttribute("name");
+            String nodeValue = node.getTextContent();
+            logger.info(String.format("Node %s = %s", name, nodeValue));
+            params.set(name, nodeValue);
         }
 
         return params;

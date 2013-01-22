@@ -35,7 +35,7 @@ public class HBaseAdapter {
     private static final int DEFAULT_NUM_CACHED_ROWS = 2500;
     private static final long DEFAULT_WRITE_BUFFER_SIZE = 5 * 1024 * 1024;
     private static final int DEFAULT_TABLE_POOL_SIZE = 5;
-    private static final String CONFIG_PATH = "/etc/mysql/adapter.conf";
+    private static final String CONFIG_PATH = "/etc/mysql/honeycomb.xml";
     private static final Object initializationLock = new Object();
     private static HBaseReader reader;
     private static HTablePool tablePool;
