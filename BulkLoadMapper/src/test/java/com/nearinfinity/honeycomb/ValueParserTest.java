@@ -1,9 +1,13 @@
 package com.nearinfinity.honeycomb;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
+import java.text.ParseException;
 import java.util.Arrays;
 
 import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -19,43 +23,105 @@ public class ValueParserTest {
         metadata = new ColumnMetadata();
     }
 
+    @Test(expected = NullPointerException.class)
+    public void testParseNullValue() throws ParseException {
+        ValueParser.parse(null, metadata);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testParseNullMetadata() throws ParseException {
+        ValueParser.parse("foo", null);
+    }
+
+    /**
+     * Tests a parse request with an empty value and a nullable
+     * {@link ColumnMetadata} with a {@link ColumnType} not equal to
+     * {@link ColumnType#STRING} or {@link ColumnType#BINARY}
+     *
+     * @throws ParseException
+     */
     @Test
-    public void testParseLong() throws Exception {
+    public void testParseEmptyValueNullableMetadataLongType()
+            throws ParseException {
+        metadata.setType(ColumnType.LONG);
+        metadata.setNullable(true);
+
+        assertNull(ValueParser.parse("", metadata));
+    }
+
+    /**
+     * Tests a parse request with an empty value and a non-nullable
+     * {@link ColumnMetadata} with a {@link ColumnType} not equal to
+     * {@link ColumnType#STRING} or {@link ColumnType#BINARY}
+     *
+     * @throws ParseException
+     */
+    @Test(expected = IllegalArgumentException.class)
+    public void testParseEmptyValueNonNullableMetadataLongType()
+            throws ParseException {
+        metadata.setType(ColumnType.LONG);
+        metadata.setNullable(false);
+
+        assertNull(ValueParser.parse("", metadata));
+    }
+
+    @Test
+    public void testParseLongZeroValue() throws ParseException {
         metadata.setType(ColumnType.LONG);
 
-        Assert.assertArrayEquals(Bytes.toBytes(0x00L),
-                ValueParser.parse("00", metadata));
+        assertArrayEquals(Bytes.toBytes(0x00L),
+                ValueParser.parse("0", metadata));
+    }
 
-        Assert.assertArrayEquals(Bytes.toBytes(0xFFFFFFFFFFFFFF85L),
+    @Test
+    public void testParseLongNegativeValue() throws ParseException {
+        metadata.setType(ColumnType.LONG);
+
+        assertArrayEquals(Bytes.toBytes(0xFFFFFFFFFFFFFF85L),
                 ValueParser.parse("-123", metadata));
+    }
 
-        Assert.assertArrayEquals(Bytes.toBytes(0x7BL),
+    @Test
+    public void testParseLongPositiveValue() throws ParseException {
+        metadata.setType(ColumnType.LONG);
+
+        assertArrayEquals(Bytes.toBytes(0x7BL),
                 ValueParser.parse("123", metadata));
+    }
 
-        Assert.assertArrayEquals(Bytes.toBytes(0x7FFFFFFFFFFFFFFFL),
-                ValueParser.parse("9223372036854775807", metadata));
+    @Test
+    public void testParseLongMaxValue() throws ParseException {
+        metadata.setType(ColumnType.LONG);
 
-        Assert.assertArrayEquals(Bytes.toBytes(0x8000000000000000L),
-                ValueParser.parse("-9223372036854775808", metadata));
+        assertArrayEquals(Bytes.toBytes(0x7FFFFFFFFFFFFFFFL),
+                ValueParser.parse(String.valueOf(Long.MAX_VALUE), metadata));
+    }
+
+    @Test
+    public void testParseLongMinValue() throws ParseException {
+        metadata.setType(ColumnType.LONG);
+
+        assertArrayEquals(Bytes.toBytes(0x8000000000000000L),
+                ValueParser.parse(String.valueOf(Long.MIN_VALUE), metadata));
     }
 
     @Test
     public void testParseULong() throws Exception {
         metadata.setType(ColumnType.ULONG);
 
-        Assert.assertArrayEquals(Bytes.toBytes(0x00L),
+        assertArrayEquals(Bytes.toBytes(0x00L),
                 ValueParser.parse("00", metadata));
 
-        Assert.assertArrayEquals(Bytes.toBytes(0x7BL),
+        assertArrayEquals(Bytes.toBytes(0x7BL),
                 ValueParser.parse("123", metadata));
 
-        Assert.assertArrayEquals(Bytes.toBytes(0x7FFFFFFFFFFFFFFFL),
+        assertArrayEquals(Bytes.toBytes(0x7FFFFFFFFFFFFFFFL),
                 ValueParser.parse("9223372036854775807", metadata));
 
-        Assert.assertArrayEquals(Bytes.toBytes(0x8000000000000000L),
+        assertArrayEquals(Bytes.toBytes(0x8000000000000000L),
                 ValueParser.parse("9223372036854775808", metadata));
 
-        Assert.assertArrayEquals(Bytes.toBytes(0xFFFFFFFFFFFFFFFFL),
+        assertArrayEquals(Bytes.toBytes(0xFFFFFFFFFFFFFFFFL),
                 ValueParser.parse("18446744073709551615", metadata));
     }
 
@@ -71,13 +137,13 @@ public class ValueParserTest {
         metadata.setType(ColumnType.DOUBLE);
 
         // Note: These values are all big endian, as per the JVM
-        Assert.assertArrayEquals(Bytes.toBytes(0x00L),
+        assertArrayEquals(Bytes.toBytes(0x00L),
                 ValueParser.parse("0.0", metadata));
 
-        Assert.assertArrayEquals(Bytes.toBytes(0x40283D70A3D70A3DL),
+        assertArrayEquals(Bytes.toBytes(0x40283D70A3D70A3DL),
                 ValueParser.parse("12.12", metadata));
 
-        Assert.assertArrayEquals(Bytes.toBytes(0xC0283D70A3D70A3DL),
+        assertArrayEquals(Bytes.toBytes(0xC0283D70A3D70A3DL),
                 ValueParser.parse("-12.12", metadata));
     }
 
@@ -89,7 +155,7 @@ public class ValueParserTest {
                 "19890513" };
 
         for (String format : formats) {
-            Assert.assertArrayEquals("1989-05-13".getBytes(),
+            assertArrayEquals("1989-05-13".getBytes(),
                     ValueParser.parse(format, metadata));
         }
     }
@@ -101,7 +167,7 @@ public class ValueParserTest {
         String[] formats = { "07:32:15", "073215" };
 
         for (String format : formats) {
-            Assert.assertArrayEquals("07:32:15".getBytes(),
+            assertArrayEquals("07:32:15".getBytes(),
                     ValueParser.parse(format, metadata));
         }
     }
@@ -114,7 +180,7 @@ public class ValueParserTest {
                 "1989/05/13 07:32:15", "19890513 073215" };
 
         for (String format : formats) {
-            Assert.assertArrayEquals("1989-05-13 07:32:15".getBytes(),
+            assertArrayEquals("1989-05-13 07:32:15".getBytes(),
                     ValueParser.parse(format, metadata));
         }
     }
@@ -125,58 +191,52 @@ public class ValueParserTest {
         metadata.setPrecision(5);
         metadata.setScale(2);
 
-        Assert.assertArrayEquals(
-                Arrays.copyOfRange(Bytes.toBytes(0x807B2DL), 5, 8),
+        assertArrayEquals(Arrays.copyOfRange(Bytes.toBytes(0x807B2DL), 5, 8),
                 ValueParser.parse("123.45", metadata));
-        Assert.assertArrayEquals(
-                Arrays.copyOfRange(Bytes.toBytes(0x7F84D2L), 5, 8),
+        assertArrayEquals(Arrays.copyOfRange(Bytes.toBytes(0x7F84D2L), 5, 8),
                 ValueParser.parse("-123.45", metadata));
-        Assert.assertArrayEquals(
-                Arrays.copyOfRange(Bytes.toBytes(0x800000L), 5, 8),
+        assertArrayEquals(Arrays.copyOfRange(Bytes.toBytes(0x800000L), 5, 8),
                 ValueParser.parse("000.00", metadata));
-        Assert.assertArrayEquals(
-                Arrays.copyOfRange(Bytes.toBytes(0x800000L), 5, 8),
+        assertArrayEquals(Arrays.copyOfRange(Bytes.toBytes(0x800000L), 5, 8),
                 ValueParser.parse("-000.00", metadata));
-        Assert.assertArrayEquals(
-                Arrays.copyOfRange(Bytes.toBytes(0x83E763L), 5, 8),
+        assertArrayEquals(Arrays.copyOfRange(Bytes.toBytes(0x83E763L), 5, 8),
                 ValueParser.parse("999.99", metadata));
-        Assert.assertArrayEquals(
-                Arrays.copyOfRange(Bytes.toBytes(0x7C189CL), 5, 8),
+        assertArrayEquals(Arrays.copyOfRange(Bytes.toBytes(0x7C189CL), 5, 8),
                 ValueParser.parse("-999.99", metadata));
 
         metadata.setPrecision(10);
         metadata.setScale(3);
 
-        Assert.assertArrayEquals(
+        assertArrayEquals(
                 Arrays.copyOfRange(Bytes.toBytes(0x008012D687037AL), 2, 8),
                 ValueParser.parse("1234567.890", metadata));
-        Assert.assertArrayEquals(
+        assertArrayEquals(
                 Arrays.copyOfRange(Bytes.toBytes(0x008000000501F4L), 2, 8),
                 ValueParser.parse("5.5", metadata));
     }
 
     @Test
     public void testBytesFromDigits() {
-        Assert.assertEquals(0, ValueParser.bytesFromDigits(0));
-        Assert.assertEquals(1, ValueParser.bytesFromDigits(1));
-        Assert.assertEquals(1, ValueParser.bytesFromDigits(2));
-        Assert.assertEquals(2, ValueParser.bytesFromDigits(3));
-        Assert.assertEquals(2, ValueParser.bytesFromDigits(4));
-        Assert.assertEquals(3, ValueParser.bytesFromDigits(5));
-        Assert.assertEquals(3, ValueParser.bytesFromDigits(6));
-        Assert.assertEquals(4, ValueParser.bytesFromDigits(7));
-        Assert.assertEquals(4, ValueParser.bytesFromDigits(8));
-        Assert.assertEquals(4, ValueParser.bytesFromDigits(9));
-        Assert.assertEquals(5, ValueParser.bytesFromDigits(10));
-        Assert.assertEquals(5, ValueParser.bytesFromDigits(11));
-        Assert.assertEquals(6, ValueParser.bytesFromDigits(12));
-        Assert.assertEquals(6, ValueParser.bytesFromDigits(13));
-        Assert.assertEquals(7, ValueParser.bytesFromDigits(14));
-        Assert.assertEquals(7, ValueParser.bytesFromDigits(15));
-        Assert.assertEquals(8, ValueParser.bytesFromDigits(16));
-        Assert.assertEquals(8, ValueParser.bytesFromDigits(17));
-        Assert.assertEquals(8, ValueParser.bytesFromDigits(18));
-        Assert.assertEquals(9, ValueParser.bytesFromDigits(19));
-        Assert.assertEquals(9, ValueParser.bytesFromDigits(20));
+        assertEquals(0, ValueParser.bytesFromDigits(0));
+        assertEquals(1, ValueParser.bytesFromDigits(1));
+        assertEquals(1, ValueParser.bytesFromDigits(2));
+        assertEquals(2, ValueParser.bytesFromDigits(3));
+        assertEquals(2, ValueParser.bytesFromDigits(4));
+        assertEquals(3, ValueParser.bytesFromDigits(5));
+        assertEquals(3, ValueParser.bytesFromDigits(6));
+        assertEquals(4, ValueParser.bytesFromDigits(7));
+        assertEquals(4, ValueParser.bytesFromDigits(8));
+        assertEquals(4, ValueParser.bytesFromDigits(9));
+        assertEquals(5, ValueParser.bytesFromDigits(10));
+        assertEquals(5, ValueParser.bytesFromDigits(11));
+        assertEquals(6, ValueParser.bytesFromDigits(12));
+        assertEquals(6, ValueParser.bytesFromDigits(13));
+        assertEquals(7, ValueParser.bytesFromDigits(14));
+        assertEquals(7, ValueParser.bytesFromDigits(15));
+        assertEquals(8, ValueParser.bytesFromDigits(16));
+        assertEquals(8, ValueParser.bytesFromDigits(17));
+        assertEquals(8, ValueParser.bytesFromDigits(18));
+        assertEquals(9, ValueParser.bytesFromDigits(19));
+        assertEquals(9, ValueParser.bytesFromDigits(20));
     }
 }
