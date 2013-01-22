@@ -136,33 +136,24 @@ static void destruct(JavaVMOption* options, int option_count)
   ARRAY_DELETE(options);
 }
 
-static void initialize_adapter(bool attach_thread, JavaVM* jvm, JNIEnv* env)
+static void initialize_adapter(JavaVM* jvm, JNIEnv* env)
 {
   Logging::info("Initializing HBaseAdapter");
-  if(attach_thread)
-  {
-    JavaVMAttachArgs attachArgs;
-    attachArgs.version = JNI_VERSION_1_6;
-    attachArgs.name = NULL;
-    attachArgs.group = NULL;
-    jint ok = jvm->AttachCurrentThread((void**)&env, &attachArgs);
-    if (ok != 0)
-    {
-      abort_with_fatal_error("Attach to current thread failed while trying to initialize the HBaseAdapter.");
-    }
-  }
 
   jclass adapter_class = find_jni_class("HBaseAdapter", env);
   if (adapter_class == NULL)
   {
-    abort_with_fatal_error("The HBaseAdapter class could not be found. Make sure classpath.conf has the correct jar path.");
+    abort_with_fatal_error("The HBaseAdapter class could not be found. Make"
+        "sure classpath.conf has the correct jar path.");
   }
 
-  jmethodID initialize_method = env->GetStaticMethodID(adapter_class, "initialize", "()V");
+  jmethodID initialize_method = env->GetStaticMethodID(adapter_class,
+      "initialize", "()V");
   env->CallStaticVoidMethod(adapter_class, initialize_method);
   if (print_java_exception(env))
   {
-    abort_with_fatal_error("Initialize failed with an error. Check HBaseAdapter.log and honeycomb.log for more information.");
+    abort_with_fatal_error("Initialize failed with an error. Check"
+        "HBaseAdapter.log and honeycomb.log for more information.");
   }
 }
 
@@ -284,20 +275,26 @@ static void handler(int sig)
 }
 #endif
 
-void create_or_find_jvm(JavaVM** jvm)
+/* Create an embedded JVM with the JNI Invocation Interface, calls
+ * initialize_adapter, and detaches the current thread.  This should only
+ * be called during Handlerton initialization in
+ * ha_honeycomb/honeycomb_init_func.  Aborts process if the JVM is already
+ * initialized, as this means the handlerton is being initialized multiple
+ * times in a single MySQL Server instance.
+ */
+void create_jvm(JavaVM** jvm)
 {
   JavaVM* created_vms;
-  JNIEnv* env;
   jsize vm_count;
-  jint result = JNI_GetCreatedJavaVMs(&created_vms, 1, &vm_count);
-  if (result == 0 && vm_count > 0)
+  jint result = JNI_GetCreatedJavaVMs(&created_vms, sizeof(created_vms), &vm_count);
+  if (result == 0 && vm_count > 0) // There is an existing VM
   {
-    *jvm = created_vms;
-    initialize_adapter(true, *jvm, env);
+    abort_with_fatal_error("JVM already created.  Aborting.");
   }
   else
   {
-    char* class_path = find_java_classpath();
+    JNIEnv* env;
+    char* class_path = find_java_classpath(); // Stack allocated. Cleaned up in destruct
     JavaVMInitArgs vm_args;
     uint option_count;
     JavaVMOption* options = initialize_options(class_path, &option_count);
@@ -307,17 +304,16 @@ void create_or_find_jvm(JavaVM** jvm)
     jint result = JNI_CreateJavaVM(jvm, (void**)&env, &vm_args);
     if (result != 0)
     {
-      abort_with_fatal_error("*** Failed to create JVM. Check the Java classpath. ***");
+      abort_with_fatal_error("Failed to create JVM. Check the Java classpath.");
     }
-
     if (env == NULL)
     {
-      abort_with_fatal_error("Environment was not created correctly.");
+      abort_with_fatal_error("Environment not created correctly during JVM creation.");
     }
-
     destruct(options, option_count);
     print_java_classpath(env);
-    initialize_adapter(false, *jvm, env);
+
+    initialize_adapter(*jvm, env);
     (*jvm)->DetachCurrentThread();
 #if defined(__APPLE__) || defined(__linux__)
     signal(SIGTERM, handler);

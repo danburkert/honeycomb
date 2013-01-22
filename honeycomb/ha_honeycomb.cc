@@ -15,7 +15,6 @@ static handler *honeycomb_create_handler(handlerton *hton,
 handlerton *honeycomb_hton;
 
 mysql_mutex_t honeycomb_mutex;
-static JNIEnv* env = NULL;
 static JavaVM* jvm = NULL;
 static HASH honeycomb_open_tables;
 
@@ -84,7 +83,7 @@ static int honeycomb_init_func(void *p)
   honeycomb_hton->alter_table_flags = honeycomb_alter_table_flags;
 
   Logging::setup_logging(NULL);
-  create_or_find_jvm(&jvm);
+  create_jvm(&jvm);
 
   DBUG_RETURN(0);
 }
