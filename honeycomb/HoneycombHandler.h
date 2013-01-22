@@ -12,6 +12,7 @@
 #include "Java.h"
 #include "Util.h"
 #include "JavaFrame.h"
+#include "JNISetup.h"
 
 #include "my_global.h"          /* ulonglong */
 #include "thr_lock.h"           /* THR_LOCK, THR_LOCK_DATA */
@@ -20,8 +21,6 @@
 #include <jni.h>
 #include <string.h>
 #include "probes_mysql.h"
-
-static __thread int thread_ref_count=0;
 
 class HoneycombHandler : public handler
 {
@@ -56,8 +55,6 @@ class HoneycombHandler : public handler
     void drop_table(const char *name);
     int truncate();
     bool is_key_null(const uchar *key);
-    void attach_thread();
-    void detach_thread();
     void store_uuid_ref(jobject index_row, jmethodID get_uuid_method);
     void bytes_to_long(const uchar* buff, unsigned int buff_length, bool is_signed, uchar* long_buff);
     int read_index_row(jobject index_row, uchar* buf);

@@ -15,7 +15,7 @@ HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg,
 : handler(hton, table_arg), jvm(jvm), honeycomb_mutex(mutex),
   honeycomb_open_tables(open_tables), hbase_adapter(NULL)
 {
-  attach_thread();
+  attach_thread(this->jvm, this->env);
   this->ref_length = 16;
   this->rows_written = 0;
   this->failed_key_index = 0;
@@ -37,7 +37,7 @@ HoneycombHandler::~HoneycombHandler()
   }
   ARRAY_DELETE(this->scan_ids);
   this->flush_writes();
-  detach_thread();
+  detach_thread(this->jvm);
 }
 
 void HoneycombHandler::release_auto_increment()
@@ -625,32 +625,6 @@ void HoneycombHandler::flush_writes()
       "(J)V",this->env);
   this->env->CallStaticVoidMethod(adapter_class, end_write_method,
       (jlong)this->curr_write_id);
-}
-
-void HoneycombHandler::detach_thread()
-{
-  thread_ref_count--;
-
-  if (thread_ref_count <= 0)
-  {
-    this->jvm->DetachCurrentThread();
-    this->env = NULL;
-  }
-}
-
-void HoneycombHandler::attach_thread()
-{
-  thread_ref_count++;
-  JavaVMAttachArgs attachArgs;
-  attachArgs.version = JNI_VERSION_1_6;
-  attachArgs.name = NULL;
-  attachArgs.group = NULL;
-
-  this->jvm->GetEnv((void**) &this->env, attachArgs.version);
-  if (this->env == NULL)
-  {
-    this->jvm->AttachCurrentThread((void**) &this->env, &attachArgs);
-  }
 }
 
 jstring HoneycombHandler::table_name()
