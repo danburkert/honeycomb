@@ -136,7 +136,7 @@ static void destruct(JavaVMOption* options, int option_count)
   ARRAY_DELETE(options);
 }
 
-static void initialize_adapter(JavaVM* jvm, JNIEnv* env)
+void initialize_adapter(JavaVM* jvm, JNIEnv* env)
 {
   Logging::info("Initializing HBaseAdapter");
 
@@ -275,14 +275,12 @@ static void handler(int sig)
 }
 #endif
 
-/* Create an embedded JVM with the JNI Invocation Interface, calls
- * initialize_adapter, and detaches the current thread.  This should only
- * be called during Handlerton initialization in
- * ha_honeycomb/honeycomb_init_func.  Aborts process if the JVM is already
- * initialized, as this means the handlerton is being initialized multiple
- * times in a single MySQL Server instance.
+/* Creat an embedded JVM through the JNI Invocation API and initialize
+ * HBaseAdapter in the JVM.  This should only be called once per MySQL Server
+ * instance during Handlerton initialization.  Aborts process if a JVM already
+ * exists in the process.  After return the current thread is NOT attached.
  */
-void create_jvm(JavaVM** jvm)
+void initialize_jvm(JavaVM* &jvm)
 {
   JavaVM* created_vms;
   jsize vm_count;
@@ -301,7 +299,7 @@ void create_jvm(JavaVM** jvm)
     vm_args.options = options;
     vm_args.nOptions = option_count;
     vm_args.version = JNI_VERSION_1_6;
-    jint result = JNI_CreateJavaVM(jvm, (void**)&env, &vm_args);
+    jint result = JNI_CreateJavaVM(&jvm, (void**)&env, &vm_args);
     if (result != 0)
     {
       abort_with_fatal_error("Failed to create JVM. Check the Java classpath.");
@@ -312,9 +310,8 @@ void create_jvm(JavaVM** jvm)
     }
     destruct(options, option_count);
     print_java_classpath(env);
-
-    initialize_adapter(*jvm, env);
-    (*jvm)->DetachCurrentThread();
+    initialize_adapter(jvm, env);
+    jvm->DetachCurrentThread();
 #if defined(__APPLE__) || defined(__linux__)
     signal(SIGTERM, handler);
 #endif

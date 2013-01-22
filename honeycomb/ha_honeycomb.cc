@@ -67,6 +67,7 @@ static uint honeycomb_alter_table_flags(uint flags)
 static int honeycomb_init_func(void *p)
 {
   DBUG_ENTER("ha_honeycomb::honeycomb_init_func");
+  Logging::setup_logging(NULL);
 
 #ifdef HAVE_PSI_INTERFACE
   init_honeycomb_psi_keys();
@@ -82,8 +83,7 @@ static int honeycomb_init_func(void *p)
   honeycomb_hton->flags = HTON_TEMPORARY_NOT_SUPPORTED;
   honeycomb_hton->alter_table_flags = honeycomb_alter_table_flags;
 
-  Logging::setup_logging(NULL);
-  create_jvm(&jvm);
+  initialize_jvm(jvm);
 
   DBUG_RETURN(0);
 }

@@ -2,6 +2,6 @@
 #define JNISETUP_H
 #include <jni.h>
 
-void create_jvm(JavaVM** jvm);
+void initialize_jvm(JavaVM* &jvm);
 
 #endif
