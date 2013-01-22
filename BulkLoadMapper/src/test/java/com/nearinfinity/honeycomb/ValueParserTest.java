@@ -4,6 +4,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
+import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.util.Arrays;
 
@@ -11,6 +12,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.google.common.collect.ImmutableList;
 import com.nearinfinity.honeycomb.hbaseclient.ColumnMetadata;
 import com.nearinfinity.honeycomb.hbaseclient.ColumnType;
 
@@ -112,58 +114,81 @@ public class ValueParserTest {
     }
 
     @Test
-    public void testParseULong() throws Exception {
+    public void testParseULongZeroValue() throws ParseException {
         metadata.setType(ColumnType.ULONG);
 
         assertArrayEquals(Bytes.toBytes(0x00L),
-                ValueParser.parse("00", metadata));
+                ValueParser.parse("0", metadata));
+    }
+
+    @Test
+    public void testParseULongArbitraryValue() throws ParseException {
+        metadata.setType(ColumnType.ULONG);
 
         assertArrayEquals(Bytes.toBytes(0x7BL),
                 ValueParser.parse("123", metadata));
+    }
 
-        assertArrayEquals(Bytes.toBytes(0x7FFFFFFFFFFFFFFFL),
-                ValueParser.parse("9223372036854775807", metadata));
-
-        assertArrayEquals(Bytes.toBytes(0x8000000000000000L),
-                ValueParser.parse("9223372036854775808", metadata));
+    @Test
+    public void testParseULongMaxValue() throws ParseException {
+        metadata.setType(ColumnType.ULONG);
 
         assertArrayEquals(Bytes.toBytes(0xFFFFFFFFFFFFFFFFL),
                 ValueParser.parse("18446744073709551615", metadata));
     }
 
-    @Test(expected = Exception.class)
-    public void testParseULongNegativeInput() throws Exception {
+    @Test(expected = IllegalArgumentException.class)
+    public void testParseULongNegativeInput() throws ParseException {
         metadata.setType(ColumnType.ULONG);
 
         ValueParser.parse("-123", metadata);
     }
 
     @Test
-    public void testParseDouble() throws Exception {
+    public void testParseDoubleZeroValue() throws ParseException {
         metadata.setType(ColumnType.DOUBLE);
 
         // Note: These values are all big endian, as per the JVM
         assertArrayEquals(Bytes.toBytes(0x00L),
                 ValueParser.parse("0.0", metadata));
+    }
 
+    @Test
+    public void testParseDoublePositiveValue() throws ParseException {
+        metadata.setType(ColumnType.DOUBLE);
+
+        // Note: These values are all big endian, as per the JVM
         assertArrayEquals(Bytes.toBytes(0x40283D70A3D70A3DL),
                 ValueParser.parse("12.12", metadata));
+    }
 
+    @Test
+    public void testParseDoubleNegativeValue() throws ParseException {
+        metadata.setType(ColumnType.DOUBLE);
+
+        // Note: These values are all big endian, as per the JVM
         assertArrayEquals(Bytes.toBytes(0xC0283D70A3D70A3DL),
                 ValueParser.parse("-12.12", metadata));
     }
 
     @Test
-    public void testParseDate() throws Exception {
+    public void testParseValidDateFormats() throws ParseException {
         metadata.setType(ColumnType.DATE);
 
-        String[] formats = { "1989-05-13", "1989.05.13", "1989/05/13",
-                "19890513" };
+        final ImmutableList<String> formats = ImmutableList.of("1989-05-13",
+                "1989.05.13", "1989/05/13", "19890513");
 
-        for (String format : formats) {
+        for (final String format : formats) {
             assertArrayEquals("1989-05-13".getBytes(),
                     ValueParser.parse(format, metadata));
         }
+    }
+
+    @Test(expected = ParseException.class)
+    public void testParseInvalidDateFormat() throws ParseException {
+        metadata.setType(ColumnType.DATE);
+
+        ValueParser.parse("1989_05_13", metadata);
     }
 
     @Test
@@ -244,5 +269,21 @@ public class ValueParserTest {
         assertEquals(8, ValueParser.bytesFromDigits(18));
         assertEquals(9, ValueParser.bytesFromDigits(19));
         assertEquals(9, ValueParser.bytesFromDigits(20));
+    }
+
+    @Test
+    public void testParseStringEmptyValue() throws ParseException {
+        metadata.setType(ColumnType.STRING);
+
+        assertArrayEquals("".getBytes(Charset.forName("UTF-8")),
+                ValueParser.parse("", metadata));
+    }
+
+    @Test
+    public void testParseBinaryEmptyValue() throws ParseException {
+        metadata.setType(ColumnType.BINARY);
+
+        assertArrayEquals("".getBytes(Charset.forName("UTF-8")),
+                ValueParser.parse("", metadata));
     }
 }
