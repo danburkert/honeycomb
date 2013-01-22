@@ -13,8 +13,8 @@ const char **HoneycombHandler::bas_ext() const
 HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm)
 : handler(hton, table_arg), jvm(jvm), honeycomb_mutex(mutex), honeycomb_open_tables(open_tables), hbase_adapter(NULL)
 {
+  attach_thread();
   this->ref_length = 16;
-  this->initialize_adapter();
   this->rows_written = 0;
   this->failed_key_index = 0;
   this->scan_ids_length = 32;
@@ -22,7 +22,6 @@ HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg, mys
   this->scan_ids = new long long[this->scan_ids_length];
   this->curr_write_id = -1;
   memset(scan_ids, 0, scan_ids_length);
-  attach_thread();
 }
 
 HoneycombHandler::~HoneycombHandler()
