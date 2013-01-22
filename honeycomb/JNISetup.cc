@@ -318,3 +318,38 @@ void initialize_jvm(JavaVM* &jvm)
 #endif
   }
 }
+
+
+/* Attach current thread to the JVM.  Assign current environment to env.  Keeps
+ * track of how often the current thread has attached, and will not detach
+ * until the number of calls to detach is the same as the number of calls to
+ * attach.
+ *
+ * Returns JNI_OK if successful, or a negative number on failure.
+ */
+jint attach_thread(JavaVM *jvm, JNIEnv* &env)
+{
+  thread_attach_count++;
+  return jvm->AttachCurrentThread((void**) &env, &attach_args);
+}
+
+
+/* Detach thread from JVM.  Will not detach unless the number of calls to
+ * detach is the same as the number of calls to attach.
+ *
+ * Returns JNI_OK if successful, or a negative number on failure.
+ */
+jint detach_thread(JavaVM *jvm)
+{
+  thread_attach_count--;
+
+  if(thread_attach_count <= 0)
+  {
+    thread_attach_count = 0;
+    return jvm->DetachCurrentThread();
+  }
+  else
+  {
+    return JNI_OK;
+  }
+}
