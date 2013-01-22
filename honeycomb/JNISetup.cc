@@ -10,130 +10,26 @@
 #include "Util.h"
 #include "Java.h"
 
-static const char* prefix = "-Djava.class.path=";
-static const int prefix_length = strlen(prefix);
+#include <libxml/tree.h>
+#include <libxml/parser.h>
+#include <libxml/xpath.h>
 
-static void abort_with_fatal_error(const char* message)
+static const char* config_file = "/etc/mysql/honeycomb.xml";
+
+static void abort_with_fatal_error(const char* message, ...)
 {
-    Logging::fatal(message);
-    perror(message);
+    va_list args;
+    va_start(args,message);
+    int size = strlen(message) + 512;
+    char* buffer = new char[size];
+
+    vsnprintf(buffer, size, message, args);
+    Logging::fatal(buffer);
+    perror(buffer);
+    delete[] buffer;
     abort();
-}
 
-static int line_length(FILE* option_config)
-{
-  int ch;
-  fpos_t start;
-  long int start_pos = ftell(option_config), end_pos = 0;
-  if(start_pos < 0) { goto error; }
-  if(fgetpos(option_config, &start) != 0) { goto error; }
-  do
-  {
-    ch = fgetc(option_config);
-  }
-  while(ch != '\n' && ch != EOF);
-  end_pos = ftell(option_config);
-  if(end_pos < 0) { goto error; }
-  if(fsetpos(option_config, &start) != 0) { goto error; }
-
-  return end_pos - start_pos;
-error:
-  return -1;
-}
-
-static int option_count(FILE* option_config)
-{
-  int ch; 
-  int count = 0;
-  do
-  {
-    ch = fgetc(option_config);
-    if (ch == '\n')
-    {
-      count++;
-    }
-
-  }
-  while(ch != EOF);
-  if (ferror(option_config)) { goto error; }
-  if (fseek(option_config, 0, SEEK_SET) != 0) { goto error; }
-
-  return count;
-error:
-  return -1;
-}
-
-static JavaVMOption* initialize_options(char* class_path, uint* opt_count)
-{
-  JavaVMOption* options, *option;
-  FILE* option_config = fopen("/etc/mysql/jvm-options.conf", "r");
-  *opt_count = 1;    
-  if (option_config != NULL)
-  {
-    int count = option_count(option_config);
-    if(count < 0) 
-    {
-      Logging::warn("Could not successfully count the options in /etc/mysql/jvm-options.conf");
-      goto error; 
-    }
-
-    *opt_count += count;
-    options = new JavaVMOption[*opt_count];
-	option = options;
-    option->optionString = class_path;
-	option++;
-	int index = 1;
-    while(!feof(option_config))
-    {
-      int line_len = line_length(option_config);
-      if (line_len < 0)
-      {
-        Logging::warn("Line length returned less than 0. Read only %d of %d lines. Not reading the rest of /etc/mysql/jvm-options.conf", index, *opt_count);
-        goto error;
-      }
-
-      if (line_len == 0 || index >= *opt_count)
-      {
-        break;
-      }
-      
-      option->optionString = new char[line_len];
-      fgets(option->optionString, line_len, option_config);
-      fgetc(option_config); // Skip the newline
-	  option++;
-    }
-  }
-  else
-  {
-	Logging::info("No jvm-options.conf found. Using classpath as the only jvm option.");
-    options = new JavaVMOption[*opt_count];
-    options->optionString = class_path;
-  }
-
-error:
-  if (option_config)
-  {
-    fclose(option_config);
-  }
-
-  return options;
-}
-
-static void destruct(JavaVMOption* options, int option_count)
-{
-  if(options == NULL)
-  {
-    return;
-  }
-
-  JavaVMOption* option = options;
-  for(int i = 0 ; i < option_count ; i++)
-  {
-    ARRAY_DELETE(option->optionString);
-	option++;
-  }
-
-  ARRAY_DELETE(options);
+    va_end(args);
 }
 
 static void initialize_adapter(bool attach_thread, JavaVM* jvm, JNIEnv* env)
@@ -155,7 +51,7 @@ static void initialize_adapter(bool attach_thread, JavaVM* jvm, JNIEnv* env)
   jclass adapter_class = find_jni_class("HBaseAdapter", env);
   if (adapter_class == NULL)
   {
-    abort_with_fatal_error("The HBaseAdapter class could not be found. Make sure classpath.conf has the correct jar path.");
+    abort_with_fatal_error("The HBaseAdapter class could not be found. Make sure %s has the correct jar path.", config_file);
   }
 
   jmethodID initialize_method = env->GetStaticMethodID(adapter_class, "initialize", "()V");
@@ -166,77 +62,17 @@ static void initialize_adapter(bool attach_thread, JavaVM* jvm, JNIEnv* env)
   }
 }
 
-static long file_size(FILE* file)
+static void test_config_file(const char* config_file)
 {
-  fseek(file, 0, SEEK_END);
-  long size = ftell(file);
-  rewind(file);
-
-  return size;
-}
-
-static char* read_classpath_conf_file(FILE* config)
-{
-  char* class_path = NULL, *newline = NULL;
-  long class_path_length = 0;
-  size_t read_bytes = 0;
-  long size = file_size(config);
-  if(size <= 0)
-  {
-    goto error;
-  }
-
-  class_path_length = prefix_length + size;
-  if (class_path_length < size || class_path_length < 0) // In case the path length wraps around below zero.
-  {
-    abort_with_fatal_error("The class path is too long.");
-  }
-
-  class_path = new char[class_path_length];
-  strncpy(class_path, prefix, prefix_length);
-  read_bytes = fread(class_path + prefix_length, sizeof(char), size, config);
-  if(read_bytes == 0)
-  {
-    goto error;
-  }
-
-  newline = strpbrk(class_path, "\n\r");
-  if(newline != NULL)
-  {
-    *newline = '\0';
-  }
-
-  return class_path;
-error:
-  if(class_path)
-  {
-    ARRAY_DELETE(class_path);
-  }
-
-  return NULL;
-}
-
-static char* find_java_classpath()
-{
-  char* class_path = NULL;
-  FILE* config = fopen("/etc/mysql/classpath.conf", "r");
+  FILE* config = fopen(config_file, "r");
   if(config != NULL)
   {
-	Logging::info("Reading the path to HBaseAdapter jar out of /etc/mysql/classpath.conf");
-    class_path = read_classpath_conf_file(config);
     fclose(config);
-    if (class_path == NULL)
-    {
-      abort_with_fatal_error("A class path was not found in /etc/mysql/classpath.conf");
-    }
   }
   else
   {
-    abort_with_fatal_error("Could not open \"classpath.conf\". /etc/mysql/classpath.conf must be readable.");
+    abort_with_fatal_error("Could not open \"%s\". %s must be readable.", config_file, config_file);
   }
-
-  Logging::info("Full class path: %s", class_path);
-  return class_path;
 }
 
 static void print_java_classpath(JNIEnv* env)
@@ -284,43 +120,63 @@ static void handler(int sig)
 }
 #endif
 
+JavaVMOption* read_options(const char* filename, int* count) 
+{
+  const xmlChar* xpath = (const xmlChar*)"/options/jvmoptions/jvmoption";
+  xmlInitParser();
+  xmlDocPtr doc = xmlParseFile(filename);
+  xmlXPathContextPtr xpath_ctx = xmlXPathNewContext(doc);
+  xmlXPathObjectPtr jvm_options = xmlXPathEvalExpression(xpath, xpath_ctx);
+  xmlNodeSetPtr option_nodes = jvm_options->nodesetval;
+  int option_count = option_nodes->nodeNr;
+  *count = option_count;
+  JavaVMOption* options = (JavaVMOption*)malloc(option_count * sizeof(JavaVMOption));
+  for(int i = 0; i < option_count; i++)
+  {
+    xmlNodePtr current_option = option_nodes->nodeTab[i];
+    options[i].optionString = (char*)xmlNodeListGetString(doc, current_option->xmlChildrenNode, 1);
+  }
+
+  xmlXPathFreeNodeSet(option_nodes);
+  xmlXPathFreeContext(xpath_ctx);
+  xmlFreeDoc(doc);
+  xmlCleanupParser();
+  return options;
+}
+
 void create_or_find_jvm(JavaVM** jvm)
 {
-  JavaVM* created_vms;
   JNIEnv* env;
-  jsize vm_count;
-  jint result = JNI_GetCreatedJavaVMs(&created_vms, 1, &vm_count);
-  if (result == 0 && vm_count > 0)
+  int option_count;
+
+  test_config_file(config_file);
+  JavaVMOption* options = read_options(config_file, &option_count);
+  JavaVMInitArgs vm_args;
+  vm_args.options = options;
+  vm_args.nOptions = option_count;
+  vm_args.version = JNI_VERSION_1_6;
+  jint result = JNI_CreateJavaVM(jvm, (void**)&env, &vm_args);
+  if (result != 0)
   {
-    *jvm = created_vms;
-    initialize_adapter(true, *jvm, env);
+    abort_with_fatal_error("*** Failed to create JVM. Check the Java classpath. ***");
   }
-  else
+
+  if (env == NULL)
   {
-    char* class_path = find_java_classpath();
-    JavaVMInitArgs vm_args;
-    uint option_count;
-    JavaVMOption* options = initialize_options(class_path, &option_count);
-    vm_args.options = options;
-    vm_args.nOptions = option_count;
-    vm_args.version = JNI_VERSION_1_6;
-    jint result = JNI_CreateJavaVM(jvm, (void**)&env, &vm_args);
-    if (result != 0)
-    {
-      abort_with_fatal_error("*** Failed to create JVM. Check the Java classpath. ***");
-    }
+    abort_with_fatal_error("Environment was not created correctly.");
+  }
 
-    if (env == NULL)
-    {
-      abort_with_fatal_error("Environment was not created correctly.");
-    }
-
-    destruct(options, option_count);
-    print_java_classpath(env);
-    initialize_adapter(false, *jvm, env);
-    (*jvm)->DetachCurrentThread();
+  print_java_classpath(env);
+  initialize_adapter(false, *jvm, env);
+  (*jvm)->DetachCurrentThread();
 #if defined(__APPLE__) || defined(__linux__)
-    signal(SIGTERM, handler);
+  signal(SIGTERM, handler);
 #endif
+
+  for(int i = 0; i < option_count; i++)
+  {
+    xmlFree(options[i].optionString);
   }
+
+  free(options);
 }

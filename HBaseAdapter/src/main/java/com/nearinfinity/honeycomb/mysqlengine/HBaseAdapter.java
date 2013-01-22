@@ -11,7 +11,9 @@ import org.apache.hadoop.hbase.client.HTablePool;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -59,7 +61,14 @@ public class HBaseAdapter {
             throw new FileNotFoundException(CONFIG_PATH + " doesn't exist or cannot be read.");
         }
 
+        try{
         params = Util.readConfiguration(configFile);
+        } catch (ParserConfigurationException e) {
+            logger.fatal("The xml parser was not configured properly.", e);
+        } catch (SAXException e) {
+            logger.fatal("Exception while trying to parse the config file.", e);
+        }
+
         logger.info(format("Read in {0} parameters.", params.size()));
 
         try {
