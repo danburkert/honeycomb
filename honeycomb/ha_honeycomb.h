@@ -11,5 +11,6 @@
 #include "Macros.h"
 #include "JNISetup.h"
 #include "Logging.h"
+#include "JNICache.h"
 
 #endif

@@ -7,6 +7,7 @@
 #include "ha_honeycomb.h"
 #include "probes_mysql.h"
 #include "sql_plugin.h"
+#include "JNICache.h"
 #include <stdlib.h>
 
 static handler *honeycomb_create_handler(handlerton *hton,
@@ -15,7 +16,8 @@ static handler *honeycomb_create_handler(handlerton *hton,
 handlerton *honeycomb_hton;
 
 mysql_mutex_t honeycomb_mutex;
-static JavaVM* jvm = NULL;
+static JavaVM* jvm;
+static JNICache* cache;
 static HASH honeycomb_open_tables;
 
 static uchar* honeycomb_get_key(HoneycombShare *share, size_t *length,
@@ -84,6 +86,7 @@ static int honeycomb_init_func(void *p)
   honeycomb_hton->alter_table_flags = honeycomb_alter_table_flags;
 
   initialize_jvm(jvm);
+  cache = new JNICache(jvm);
 
   DBUG_RETURN(0);
 }
@@ -97,6 +100,8 @@ static int honeycomb_done_func(void *p)
   {
     error= 1;
   }
+
+  delete cache;
 
   Logging::close_logging();
   my_hash_free(&honeycomb_open_tables);

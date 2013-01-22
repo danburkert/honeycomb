@@ -333,7 +333,6 @@ jint attach_thread(JavaVM *jvm, JNIEnv* &env)
   return jvm->AttachCurrentThread((void**) &env, &attach_args);
 }
 
-
 /* Detach thread from JVM.  Will not detach unless the number of calls to
  * detach is the same as the number of calls to attach.
  *
