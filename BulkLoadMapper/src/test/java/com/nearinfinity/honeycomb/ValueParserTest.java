@@ -14,6 +14,12 @@ import org.junit.Test;
 import com.nearinfinity.honeycomb.hbaseclient.ColumnMetadata;
 import com.nearinfinity.honeycomb.hbaseclient.ColumnType;
 
+/**
+ * Provides test cases for the {@link ValueParser} class. All test values used
+ * for column type data comes from the valid datatype ranges of the database in
+ * which the values were received from
+ *
+ */
 public class ValueParserTest {
 
     private ColumnMetadata metadata;
@@ -94,7 +100,7 @@ public class ValueParserTest {
         metadata.setType(ColumnType.LONG);
 
         assertArrayEquals(Bytes.toBytes(0x7FFFFFFFFFFFFFFFL),
-                ValueParser.parse(String.valueOf(Long.MAX_VALUE), metadata));
+                ValueParser.parse("9223372036854775807", metadata));
     }
 
     @Test
@@ -102,7 +108,7 @@ public class ValueParserTest {
         metadata.setType(ColumnType.LONG);
 
         assertArrayEquals(Bytes.toBytes(0x8000000000000000L),
-                ValueParser.parse(String.valueOf(Long.MIN_VALUE), metadata));
+                ValueParser.parse("-9223372036854775808", metadata));
     }
 
     @Test
