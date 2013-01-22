@@ -9,6 +9,7 @@
 #include "Macros.h"
 #include "Util.h"
 #include "Java.h"
+#include "JavaFrame.h"
 
 static const char* prefix = "-Djava.class.path=";
 static const int prefix_length = strlen(prefix);
@@ -139,17 +140,17 @@ static void destruct(JavaVMOption* options, int option_count)
 void initialize_adapter(JavaVM* jvm, JNIEnv* env)
 {
   Logging::info("Initializing HBaseAdapter");
+  JavaFrame frame(env);
 
-  jclass adapter_class = find_jni_class("HBaseAdapter", env);
-  if (adapter_class == NULL)
+  jclass hbase_adapter = env->FindClass(MYSQLENGINE "HBaseAdapter");
+  if (hbase_adapter == NULL)
   {
     abort_with_fatal_error("The HBaseAdapter class could not be found. Make"
         "sure classpath.conf has the correct jar path.");
   }
 
-  jmethodID initialize_method = env->GetStaticMethodID(adapter_class,
-      "initialize", "()V");
-  env->CallStaticVoidMethod(adapter_class, initialize_method);
+  jmethodID initialize = env->GetStaticMethodID(hbase_adapter, "initialize", "()V");
+  env->CallStaticVoidMethod(hbase_adapter, initialize);
   if (print_java_exception(env))
   {
     abort_with_fatal_error("Initialize failed with an error. Check"
