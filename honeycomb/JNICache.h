@@ -2,6 +2,7 @@
 #define JNICACHE_H
 
 #include "JNISetup.h"
+#include "JavaFrame.h"
 
 #define TOFIX "com/nearinfinity/honeycomb/mysqlengine/"
 
@@ -16,33 +17,37 @@ class JNICache
     jclass hbase_adapter_;
 
   public:
-    inline jclass JNICache::hbase_adapter() const {return hbase_adapter_;};
+    inline jclass hbase_adapter() const {return hbase_adapter_;};
 
     JNICache(JavaVM* jvm) : jvm(jvm)
     {
       JNIEnv* env;
       jint attach_result = attach_thread(jvm, env);
-      if(attach_result != JNI_OK)
+      if (attach_result != JNI_OK)
       {
-        // Handle thread attach issue
+        Logging::fatal("Thread could not be attached in JNICache::hbase_adapter");
+        perror("Failed to create JNICache. Check honeycomb.log for details.");
+        abort();
       }
-      jint frame_result = env->PushLocalFrame(1); // JavaFrame will not work, because we detach before end of scope
-      if(frame_result != JNI_OK)
-      {
-        // Handle out of memory exception
-      }
+      { // A new scope is needed so frame will be destructed before detaching
+        JavaFrame frame(env, 1);
 
-      jclass hbase_adapter_local = env->FindClass(TOFIX "HBaseAdapter");
-      if(hbase_adapter_local == NULL)
-      {
-        // handle class not found exception
+        jclass hbase_adapter_local = env->FindClass(TOFIX "HBaseAdapter");
+        if (hbase_adapter_local == NULL)
+        {
+          Logging::fatal("HBaseAdapter class not found.");
+          perror("Failed to create JNICache. Check honeycomb.log for details.");
+          abort();
+        }
+        hbase_adapter_ = (jclass) env->NewGlobalRef(hbase_adapter_local);
+        if (hbase_adapter_ == NULL)
+        {
+          Logging::fatal("Not enough memory to create global ref in JNICache constructor.");
+          perror("Failed to create global ref. Check honeycomb.log for details.");
+          abort();
+          // handle out_of_memory exception
+        }
       }
-      hbase_adapter_ = (jclass) env->NewGlobalRef(hbase_adapter_local);
-      if(hbase_adapter_ == NULL)
-      {
-        // handle out_of_memory exception
-      }
-      env->PopLocalFrame(NULL);
       detach_thread(jvm);
     }
 
@@ -50,7 +55,11 @@ class JNICache
     {
       // Setup env
       JNIEnv* env;
-      attach_thread(jvm, env);
+      jint attach_result = attach_thread(jvm, env);
+      if (attach_result != JNI_OK)
+      {
+        // Handle thread attach issue
+      }
 
       // Delete global references
       env->DeleteGlobalRef(hbase_adapter_);
