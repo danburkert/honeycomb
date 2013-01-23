@@ -1,0 +1,2 @@
+-A2 -s2 -n -K -p -xd -j -c -S -C --align-pointer=type --align-reference=type 
+
