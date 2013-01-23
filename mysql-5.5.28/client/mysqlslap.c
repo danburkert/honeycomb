@@ -2111,7 +2111,7 @@ void
 print_conclusions(conclusions *con)
 {
   stats * ptr;
-  int x;
+  unsigned int x;
   for (ptr= con->stats, x= 0; x < iterations;  ptr++, x++)
   {
     printf("%lu,", ptr->timing);
@@ -2122,7 +2122,7 @@ void
 print_conclusions_csv(conclusions *con)
 {
   stats * ptr;
-  int x;
+  unsigned int x;
   int cx = 0;
   char buffer[HUGE_STRING_LENGTH];
 
