@@ -1,12 +1,10 @@
 package com.nearinfinity.honeycomb.hbaseclient;
 
-import com.google.common.base.Preconditions;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import java.nio.ByteBuffer;
 import java.util.UUID;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 public class RowKeyFactory {
     public static final byte[] ROOT = ByteBuffer.allocate(7)
