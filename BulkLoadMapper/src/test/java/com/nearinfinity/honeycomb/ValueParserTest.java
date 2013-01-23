@@ -25,6 +25,8 @@ import com.nearinfinity.honeycomb.hbaseclient.ColumnType;
  */
 public class ValueParserTest {
 
+    private static final String EMPTY_STRING = "";
+    private static final String CHARSET_UTF_8 = "UTF-8";
     private ColumnMetadata metadata;
 
     @Before
@@ -55,7 +57,7 @@ public class ValueParserTest {
         metadata.setType(ColumnType.LONG);
         metadata.setNullable(true);
 
-        assertNull(ValueParser.parse("", metadata));
+        assertNull(ValueParser.parse(EMPTY_STRING, metadata));
     }
 
     /**
@@ -71,7 +73,7 @@ public class ValueParserTest {
         metadata.setType(ColumnType.LONG);
         metadata.setNullable(false);
 
-        assertNull(ValueParser.parse("", metadata));
+        assertNull(ValueParser.parse(EMPTY_STRING, metadata));
     }
 
     @Test
@@ -178,8 +180,8 @@ public class ValueParserTest {
 
         final String expectedParsedDate = "1989-05-13";
 
-        final List<String> formats = ImmutableList.of(
-                expectedParsedDate, "1989.05.13", "1989/05/13", "19890513");
+        final List<String> formats = ImmutableList.of(expectedParsedDate,
+                "1989.05.13", "1989/05/13", "19890513");
 
         for (final String format : formats) {
             assertArrayEquals(expectedParsedDate.getBytes(),
@@ -200,10 +202,10 @@ public class ValueParserTest {
 
         final String expectedParsedTime = "07:32:15";
 
-        final List<String> formats = ImmutableList.of(
-                expectedParsedTime, "073215");
+        final List<String> formats = ImmutableList.of(expectedParsedTime,
+                "073215");
 
-        for (String format : formats) {
+        for (final String format : formats) {
             assertArrayEquals(expectedParsedTime.getBytes(),
                     ValueParser.parse(format, metadata));
         }
@@ -220,13 +222,23 @@ public class ValueParserTest {
     public void testParseDateTime() throws Exception {
         metadata.setType(ColumnType.DATETIME);
 
-        String[] formats = { "1989-05-13 07:32:15", "1989.05.13 07:32:15",
-                "1989/05/13 07:32:15", "19890513 073215" };
+        final String expectedParsedDateTime = "1989-05-13 07:32:15";
 
-        for (String format : formats) {
-            assertArrayEquals("1989-05-13 07:32:15".getBytes(),
+        final List<String> formats = ImmutableList
+                .of(expectedParsedDateTime, "1989.05.13 07:32:15",
+                        "1989/05/13 07:32:15", "19890513 073215");
+
+        for (final String format : formats) {
+            assertArrayEquals(expectedParsedDateTime.getBytes(),
                     ValueParser.parse(format, metadata));
         }
+    }
+
+    @Test(expected = ParseException.class)
+    public void testParseInvalidDateTimeFormat() throws ParseException {
+        metadata.setType(ColumnType.DATETIME);
+
+        ValueParser.parse("1989_05_13_07_32_15", metadata);
     }
 
     @Test
@@ -288,15 +300,17 @@ public class ValueParserTest {
     public void testParseStringEmptyValue() throws ParseException {
         metadata.setType(ColumnType.STRING);
 
-        assertArrayEquals("".getBytes(Charset.forName("UTF-8")),
-                ValueParser.parse("", metadata));
+        assertArrayEquals(
+                EMPTY_STRING.getBytes(Charset.forName(CHARSET_UTF_8)),
+                ValueParser.parse(EMPTY_STRING, metadata));
     }
 
     @Test
     public void testParseBinaryEmptyValue() throws ParseException {
         metadata.setType(ColumnType.BINARY);
 
-        assertArrayEquals("".getBytes(Charset.forName("UTF-8")),
-                ValueParser.parse("", metadata));
+        assertArrayEquals(
+                EMPTY_STRING.getBytes(Charset.forName(CHARSET_UTF_8)),
+                ValueParser.parse(EMPTY_STRING, metadata));
     }
 }
