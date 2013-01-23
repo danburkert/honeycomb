@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 command -v mysql.server >/dev/null 2>&1 || { echo >&2 "mysql.server is required to run $0."; exit 1; }
 dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

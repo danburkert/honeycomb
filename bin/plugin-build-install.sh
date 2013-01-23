@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 : ${HONEYCOMB_HOME?"Need to set HONEYCOMB_HOME environmental variable to the top of the project."}
 : ${MYSQL_HOME?"Need to set MYSQL_HOME environmental variable to MySQL's installation directory."}
