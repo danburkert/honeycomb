@@ -1,16 +1,16 @@
 package com.nearinfinity.honeycomb.mysqlengine;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import com.nearinfinity.honeycomb.hbaseclient.ResultParser;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.log4j.Logger;
-
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
+
+import org.apache.hadoop.hbase.client.Result;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.nearinfinity.honeycomb.hbaseclient.ResultParser;
 
 public class IndexRow {
     private byte[] uuid;
