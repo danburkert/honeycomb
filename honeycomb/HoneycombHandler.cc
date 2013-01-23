@@ -11,9 +11,9 @@ const char **HoneycombHandler::bas_ext() const
 }
 
 HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg,
-    mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm)
+    mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm, JNICache* cache)
 : handler(hton, table_arg), jvm(jvm), honeycomb_mutex(mutex),
-  honeycomb_open_tables(open_tables), hbase_adapter(NULL)
+  honeycomb_open_tables(open_tables), hbase_adapter(NULL), cache(cache)
 {
   attach_thread(this->jvm, this->env);
   this->ref_length = 16;

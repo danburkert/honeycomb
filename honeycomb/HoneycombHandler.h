@@ -13,6 +13,7 @@
 #include "Util.h"
 #include "JavaFrame.h"
 #include "JNISetup.h"
+#include "JNICache.h"
 
 #include "my_global.h"          /* ulonglong */
 #include "thr_lock.h"           /* THR_LOCK, THR_LOCK_DATA */
@@ -43,6 +44,7 @@ class HoneycombHandler : public handler
     // HBase JNI Adapter:
     JNIEnv* env;
     JavaVM* jvm;
+    JNICache* cache;
     jclass hbase_adapter;
 
     jstring table_name();
@@ -147,7 +149,7 @@ class HoneycombHandler : public handler
 
   public:
     HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg,
-        mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm);
+        mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm, JNICache* cache);
     ~HoneycombHandler();
 
     const char *table_type() const

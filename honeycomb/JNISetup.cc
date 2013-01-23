@@ -10,6 +10,7 @@
 #include "Util.h"
 #include "Java.h"
 #include "JavaFrame.h"
+#include "JNICache.h"
 
 static const char* prefix = "-Djava.class.path=";
 static const int prefix_length = strlen(prefix);
@@ -137,18 +138,23 @@ static void destruct(JavaVMOption* options, int option_count)
   ARRAY_DELETE(options);
 }
 
-void initialize_adapter(JavaVM* jvm, JNIEnv* env)
+/**
+ * Initialize HBaseAdapter.  This should only be called once per MySQL Server
+ * instance during Handlerton initialization.
+ */
+void initialize_adapter(JavaVM* jvm)
 {
   Logging::info("Initializing HBaseAdapter");
-  JavaFrame frame(env);
-
-  jclass hbase_adapter = env->FindClass(MYSQLENGINE "HBaseAdapter");
-  if (hbase_adapter == NULL)
+  JNIEnv* env;
+  jint attach_result = attach_thread(jvm, env);
+  if(attach_result != JNI_OK)
   {
-    abort_with_fatal_error("The HBaseAdapter class could not be found. Make"
-        "sure classpath.conf has the correct jar path.");
+    Logging::fatal("Thread could not be attached in initialize_adapter");
+    perror("Failed to initalize adapter. Check honeycomb.log for details.");
+    abort();
   }
-
+  // TODO: check the result of these JNI calls with macro
+  jclass hbase_adapter = env->FindClass(MYSQLENGINE "HBaseAdapter");
   jmethodID initialize = env->GetStaticMethodID(hbase_adapter, "initialize", "()V");
   env->CallStaticVoidMethod(hbase_adapter, initialize);
   if (print_java_exception(env))
@@ -156,6 +162,8 @@ void initialize_adapter(JavaVM* jvm, JNIEnv* env)
     abort_with_fatal_error("Initialize failed with an error. Check"
         "HBaseAdapter.log and honeycomb.log for more information.");
   }
+  env->DeleteLocalRef(hbase_adapter);
+  detach_thread(jvm);
 }
 
 static long file_size(FILE* file)
@@ -163,7 +171,6 @@ static long file_size(FILE* file)
   fseek(file, 0, SEEK_END);
   long size = ftell(file);
   rewind(file);
-
   return size;
 }
 
@@ -276,10 +283,11 @@ static void handler(int sig)
 }
 #endif
 
-/* Creat an embedded JVM through the JNI Invocation API and initialize
- * HBaseAdapter in the JVM.  This should only be called once per MySQL Server
+/**
+ * Create an embedded JVM through the JNI Invocation API and calls
+ * initialize_adapter. This should only be called once per MySQL Server
  * instance during Handlerton initialization.  Aborts process if a JVM already
- * exists in the process.  After return the current thread is NOT attached.
+ * exists.  After return the current thread is NOT attached.
  */
 void initialize_jvm(JavaVM* &jvm)
 {
@@ -300,6 +308,7 @@ void initialize_jvm(JavaVM* &jvm)
     vm_args.options = options;
     vm_args.nOptions = option_count;
     vm_args.version = JNI_VERSION_1_6;
+    thread_attach_count++; // roundabout to attach_thread
     jint result = JNI_CreateJavaVM(&jvm, (void**)&env, &vm_args);
     if (result != 0)
     {
@@ -309,18 +318,18 @@ void initialize_jvm(JavaVM* &jvm)
     {
       abort_with_fatal_error("Environment not created correctly during JVM creation.");
     }
+    initialize_adapter(jvm);
     destruct(options, option_count);
     print_java_classpath(env);
-    initialize_adapter(jvm, env);
-    jvm->DetachCurrentThread();
+    detach_thread(jvm);
 #if defined(__APPLE__) || defined(__linux__)
     signal(SIGTERM, handler);
 #endif
   }
 }
 
-
-/* Attach current thread to the JVM.  Assign current environment to env.  Keeps
+/**
+ * Attach current thread to the JVM.  Assign current environment to env.  Keeps
  * track of how often the current thread has attached, and will not detach
  * until the number of calls to detach is the same as the number of calls to
  * attach.
@@ -333,7 +342,8 @@ jint attach_thread(JavaVM *jvm, JNIEnv* &env)
   return jvm->AttachCurrentThread((void**) &env, &attach_args);
 }
 
-/* Detach thread from JVM.  Will not detach unless the number of calls to
+/**
+ * Detach thread from JVM.  Will not detach unless the number of calls to
  * detach is the same as the number of calls to attach.
  *
  * Returns JNI_OK if successful, or a negative number on failure.

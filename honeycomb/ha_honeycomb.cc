@@ -100,9 +100,7 @@ static int honeycomb_done_func(void *p)
   {
     error= 1;
   }
-
   delete cache;
-
   Logging::close_logging();
   my_hash_free(&honeycomb_open_tables);
   mysql_mutex_destroy(&honeycomb_mutex);
@@ -134,7 +132,7 @@ static handler* honeycomb_create_handler(handlerton *hton, TABLE_SHARE *table,
     MEM_ROOT *mem_root)
 {
   return new (mem_root) HoneycombHandler(hton, table, &honeycomb_mutex,
-      &honeycomb_open_tables, jvm);
+      &honeycomb_open_tables, jvm, cache);
 }
 
 struct st_mysql_storage_engine honeycomb_storage_engine=
