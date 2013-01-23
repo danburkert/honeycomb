@@ -7,6 +7,7 @@ import static org.junit.Assert.assertNull;
 import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.util.Arrays;
+import java.util.List;
 
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Before;
@@ -175,11 +176,13 @@ public class ValueParserTest {
     public void testParseValidDateFormats() throws ParseException {
         metadata.setType(ColumnType.DATE);
 
-        final ImmutableList<String> formats = ImmutableList.of("1989-05-13",
-                "1989.05.13", "1989/05/13", "19890513");
+        final String expectedParsedDate = "1989-05-13";
+
+        final List<String> formats = ImmutableList.of(
+                expectedParsedDate, "1989.05.13", "1989/05/13", "19890513");
 
         for (final String format : formats) {
-            assertArrayEquals("1989-05-13".getBytes(),
+            assertArrayEquals(expectedParsedDate.getBytes(),
                     ValueParser.parse(format, metadata));
         }
     }
@@ -195,12 +198,22 @@ public class ValueParserTest {
     public void testParseTime() throws Exception {
         metadata.setType(ColumnType.TIME);
 
-        String[] formats = { "07:32:15", "073215" };
+        final String expectedParsedTime = "07:32:15";
+
+        final List<String> formats = ImmutableList.of(
+                expectedParsedTime, "073215");
 
         for (String format : formats) {
-            assertArrayEquals("07:32:15".getBytes(),
+            assertArrayEquals(expectedParsedTime.getBytes(),
                     ValueParser.parse(format, metadata));
         }
+    }
+
+    @Test(expected = ParseException.class)
+    public void testParseInvalidTimeFormat() throws ParseException {
+        metadata.setType(ColumnType.TIME);
+
+        ValueParser.parse("07_32_15", metadata);
     }
 
     @Test
