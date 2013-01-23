@@ -3,6 +3,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "Logging.h"
 #include "my_global.h"
 
@@ -15,6 +16,31 @@
 #include <libxml/xpath.h>
 
 static const char* config_file = "/etc/mysql/honeycomb.xml";
+static char* rtrim(char* string)
+{
+  char* original = string + strlen(string);
+  while(isspace(*--original));
+  *(original + 1) = '\0';
+  return string;
+}
+
+static char* ltrim(char *string)
+{
+  char* original = string;
+  char *p = original;
+  int trimmed = 0;
+  do
+  {
+    if (!isspace(*original) || trimmed)
+    {
+      trimmed = 1;
+      *p++ = *original;
+    }
+  }
+  while (*original++ != '\0');
+  return string;
+}
+
 
 static void abort_with_fatal_error(const char* message, ...)
 {
@@ -134,7 +160,8 @@ JavaVMOption* read_options(const char* filename, int* count)
   for(int i = 0; i < option_count; i++)
   {
     xmlNodePtr current_option = option_nodes->nodeTab[i];
-    options[i].optionString = (char*)xmlNodeListGetString(doc, current_option->xmlChildrenNode, 1);
+    char* opt = (char*)xmlNodeListGetString(doc, current_option->xmlChildrenNode, 1);
+    options[i].optionString = ltrim(rtrim(opt));
   }
 
   xmlXPathFreeNodeSet(option_nodes);
