@@ -9,6 +9,13 @@ import java.util.Map;
 import java.util.UUID;
 
 public class PutListFactory {
+    /**
+     * Takes a MySQL row and turns it into a collection of HBase rows.
+     * @param values A MySQL row
+     * @param info Metadata about the HBase sql table
+     * @param indexedKeys Columns with an index
+     * @return HBase table rows
+     */
     public static List<Put> createDataInsertPutList(final Map<String, byte[]> values, final TableInfo info, final List<List<String>> indexedKeys) {
         UUID rowId = UUID.randomUUID();
         final long tableId = info.getId();
@@ -35,6 +42,14 @@ public class PutListFactory {
         return createIndexForColumns(values, info, newIndexColumns, rowId);
     }
 
+    /**
+     * Creates an index HBase rows for a MySQL row.
+     * @param values A MySQL row
+     * @param info Metadata about the HBase sql table
+     * @param indexedKeys Columns with an index
+     * @param rowId The unique identifier for a MySQL row
+     * @return HBase index rows
+     */
     public static List<Put> createIndexForColumns(Map<String, byte[]> values, TableInfo info, List<List<String>> indexedKeys, UUID rowId) {
         final long tableId = info.getId();
         final Map<String, Long> columnNameToId = info.columnNameToIdMap();
