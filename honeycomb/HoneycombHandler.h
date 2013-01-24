@@ -132,7 +132,7 @@ class HoneycombHandler : public handler
 
     jclass adapter()
     {
-      return find_jni_class("HBaseAdapter", this->env);
+      return cache->hbase_adapter().clazz;
     }
 
     /* Index methods */

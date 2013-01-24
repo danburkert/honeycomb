@@ -60,44 +60,32 @@ jboolean java_map_is_empty(jobject java_map, JNIEnv* env)
   return (bool) result;
 }
 
-jobject find_flag_to_java(enum ha_rkey_function find_flag, JNIEnv* env)
+jfieldID find_flag_to_java(enum ha_rkey_function find_flag, JNICache* cache)
 {
-  const char* index_type_path = "L" MYSQLENGINE "IndexReadType;";
-  jclass read_class = find_jni_class("IndexReadType", env);
-  jfieldID field_id;
   if (find_flag == HA_READ_KEY_EXACT)
   {
-    field_id = env->GetStaticFieldID(read_class, "HA_READ_KEY_EXACT", index_type_path);
+    return cache->index_read_type().read_key_exact;
   }
   else if(find_flag == HA_READ_AFTER_KEY)
   {
-    field_id = env->GetStaticFieldID(read_class, "HA_READ_AFTER_KEY", index_type_path);
+    return cache->index_read_type().read_after_key;
   }
   else if(find_flag == HA_READ_KEY_OR_NEXT)
   {
-    field_id = env->GetStaticFieldID(read_class, "HA_READ_KEY_OR_NEXT", index_type_path);
+    return cache->index_read_type().read_key_or_next;
   }
   else if(find_flag == HA_READ_KEY_OR_PREV)
   {
-    field_id = env->GetStaticFieldID(read_class, "HA_READ_KEY_OR_PREV", index_type_path);
+    return cache->index_read_type().read_key_or_prev;
   }
   else if(find_flag == HA_READ_BEFORE_KEY)
   {
-    field_id = env->GetStaticFieldID(read_class, "HA_READ_BEFORE_KEY", index_type_path);
+    return cache->index_read_type().read_before_key;
   }
   else
   {
     return NULL;
   }
-
-  return env->GetStaticObjectField(read_class, field_id);
-}
-
-jobject java_find_flag_by_name(const char *name, JNIEnv* env)
-{
-  jclass read_class = find_jni_class("IndexReadType", env);
-  jfieldID field_id = env->GetStaticFieldID(read_class, name, "L" MYSQLENGINE "IndexReadType;");
-  return env->GetStaticObjectField(read_class, field_id);
 }
 
 bool print_java_exception(JNIEnv* env)
@@ -127,22 +115,6 @@ bool print_java_exception(JNIEnv* env)
   }
 
   return false;
-}
-
-jclass find_jni_class(const char* class_name, JNIEnv* env)
-{
-  const char* path = MYSQLENGINE;
-  char buffer[strlen(path) + strlen(class_name) + 1];
-  sprintf(buffer, "%s%s", path, class_name);
-  jclass clazz = env->FindClass(buffer);
-  if (clazz == NULL)
-  {
-    Logging::fatal("Class %s was not found.", class_name);
-    perror("Failed to retrieve class. Check honeycomb.log for details.");
-    abort();
-  }
-
-  return clazz;
 }
 
 jbyteArray convert_value_to_java_bytes(uchar* value, uint32 length, JNIEnv* env)
