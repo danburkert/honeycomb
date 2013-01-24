@@ -42,6 +42,10 @@ public class HBaseAdapter {
     private static boolean isInitialized = false;
     private static Configuration params;
 
+    /**
+     * Initializes the resources for connecting with HBase
+     * @throws IOException Connecting to HBase failed
+     */
     public static void initialize() throws IOException {
         // Working with static variables requires locking to ensure consistency.
         synchronized (initializationLock) {
@@ -61,8 +65,8 @@ public class HBaseAdapter {
             throw new FileNotFoundException(CONFIG_PATH + " doesn't exist or cannot be read.");
         }
 
-        try{
-        params = Util.readConfiguration(configFile);
+        try {
+            params = Util.readConfiguration(configFile);
         } catch (ParserConfigurationException e) {
             logger.fatal("The xml parser was not configured properly.", e);
         } catch (SAXException e) {
@@ -104,13 +108,23 @@ public class HBaseAdapter {
         return new HBaseWriter(table);
     }
 
+    /**
+     * Creates a sql table in HBase with columns and indexes.
+     * Called when a "create table XXX()" statement is executed.
+     *
+     * @param tableName      Name of sql table
+     * @param columns        Column name and metadata
+     * @param indexedColumns Indexed columns
+     * @return Success
+     * @throws HBaseAdapterException
+     */
     public static boolean createTable(String tableName,
-                                      Map<String, ColumnMetadata> columns, TableMultipartKeys multipartKeys)
+                                      Map<String, ColumnMetadata> columns, TableMultipartKeys indexedColumns)
             throws HBaseAdapterException {
         try {
             logger.debug("Creating table " + tableName);
             HBaseWriter writer = createWriter();
-            writer.createTableFull(tableName, columns, multipartKeys);
+            writer.createTableFull(tableName, columns, indexedColumns);
             writer.close();
             return true;
         } catch (Throwable e) {
@@ -159,6 +173,13 @@ public class HBaseAdapter {
         return returnValue;
     }
 
+    /**
+     * Create a "session" for writing data into HBase.
+     * To be called before writing any rows.
+     *
+     * @return A "session" ID for writing
+     * @throws HBaseAdapterException
+     */
     public static long startWrite() throws HBaseAdapterException {
         try {
             long writerId = activeWriterCounter.incrementAndGet();
@@ -174,6 +195,12 @@ public class HBaseAdapter {
         }
     }
 
+    /**
+     * Ends a "session" for writing data and cleans up resources.
+     *
+     * @param writeId ID of the "session"
+     * @throws HBaseAdapterException
+     */
     public static void endWrite(long writeId) throws HBaseAdapterException {
         try {
             if (logger.isDebugEnabled()) {
@@ -190,6 +217,14 @@ public class HBaseAdapter {
         }
     }
 
+    /**
+     * Create a "session" for a full table scan.
+     *
+     * @param tableName       SQL table name to scan
+     * @param isFullTableScan To remove
+     * @return scan ID of the "session"
+     * @throws HBaseAdapterException
+     */
     public static long startScan(String tableName, boolean isFullTableScan)
             throws HBaseAdapterException {
         try {
@@ -204,6 +239,13 @@ public class HBaseAdapter {
         }
     }
 
+    /**
+     * Retrieve a SQL row from HBase and move cursor forward.
+     *
+     * @param scanId The "session" ID for reading
+     * @return SQL row
+     * @throws HBaseAdapterException
+     */
     public static Row nextRow(long scanId) throws HBaseAdapterException {
         try {
             Row row = new Row();
@@ -226,6 +268,12 @@ public class HBaseAdapter {
         }
     }
 
+    /**
+     * Ends a "session" for reading data and cleans up resources.
+     *
+     * @param scanId ID of the "session"
+     * @throws HBaseAdapterException
+     */
     public static void endScan(long scanId) throws HBaseAdapterException {
         try {
             if (!activeScanLookup.containsKey(scanId)) {
@@ -241,6 +289,15 @@ public class HBaseAdapter {
         }
     }
 
+    /**
+     * Writes a SQL row into HBase "SQL" table.
+     *
+     * @param writeId   The "session" ID for writing
+     * @param tableName Name of SQL table
+     * @param values    SQL row values
+     * @return Success
+     * @throws HBaseAdapterException
+     */
     public static boolean writeRow(long writeId, String tableName, Map<String, byte[]> values)
             throws HBaseAdapterException {
         try {
@@ -257,6 +314,16 @@ public class HBaseAdapter {
         return true;
     }
 
+    /**
+     * Updates a SQL row with new values.
+     *
+     * @param writeId       The "session" ID for writing
+     * @param scanId        The "session" ID for reading
+     * @param changedFields Columns that will change
+     * @param tableName     Name of SQL table
+     * @param values        SQL row values
+     * @throws HBaseAdapterException
+     */
     public static void updateRow(long writeId, long scanId, List<String> changedFields, String tableName, Map<String, byte[]> values)
             throws HBaseAdapterException {
         try {
@@ -272,6 +339,11 @@ public class HBaseAdapter {
         }
     }
 
+    /**
+     * Flush data stored in cache out to HBase
+     *
+     * @param writeId The "session" ID for writing
+     */
     public static void flushWrites(long writeId) {
         try {
             if (logger.isDebugEnabled()) {
@@ -284,6 +356,13 @@ public class HBaseAdapter {
         }
     }
 
+    /**
+     * Deletes a SQL row out of HBase based on where the given scan
+     * resides.
+     * @param scanId The "session" ID for reading
+     * @return success
+     * @throws HBaseAdapterException
+     */
     public static boolean deleteRow(long scanId) throws HBaseAdapterException {
         try {
             ActiveScan activeScan = getActiveScanForId(scanId);
@@ -301,6 +380,13 @@ public class HBaseAdapter {
         }
     }
 
+    /**
+     * Remove all SQL rows from a SQL table
+     *
+     * @param tableName SQL table name
+     * @return Number of rows removed
+     * @throws HBaseAdapterException
+     */
     public static int deleteAllRows(String tableName) throws HBaseAdapterException {
         try {
             HBaseWriter writer = createWriter();
@@ -312,6 +398,13 @@ public class HBaseAdapter {
         }
     }
 
+    /**
+     * Drops a SQL table from HBase
+     *
+     * @param tableName SQL table name
+     * @return success
+     * @throws HBaseAdapterException
+     */
     public static boolean dropTable(String tableName) throws HBaseAdapterException {
         try {
             HBaseWriter writer = createWriter();
@@ -323,6 +416,14 @@ public class HBaseAdapter {
         }
     }
 
+    /**
+     * Retrieves a SQL row based on a unique identifier.
+     *
+     * @param scanId The "session" ID for reading
+     * @param uuid   Data row unique identifier
+     * @return SQL row
+     * @throws HBaseAdapterException
+     */
     public static Row getRow(long scanId, byte[] uuid) throws HBaseAdapterException {
         logger.info(String.format("scanId: %d,%s", scanId, Bytes.toString(uuid)));
         try {
@@ -353,12 +454,20 @@ public class HBaseAdapter {
 
     }
 
-    public static long startIndexScan(String tableName, String columnName)
+    /**
+     * Create a "session" for a index scan.
+     *
+     * @param tableName   SQL table name to scan
+     * @param columnNames Columns to scan on
+     * @return scan ID of the "session"
+     * @throws HBaseAdapterException
+     */
+    public static long startIndexScan(String tableName, String columnNames)
             throws HBaseAdapterException {
-        logger.info(String.format("tableName %s, columnNames: %s", tableName, columnName));
+        logger.info(String.format("tableName %s, columnNames: %s", tableName, columnNames));
         try {
             long scanId = activeScanCounter.incrementAndGet();
-            activeScanLookup.put(scanId, new ActiveScan(tableName, columnName));
+            activeScanLookup.put(scanId, new ActiveScan(tableName, columnNames));
             return scanId;
         } catch (Throwable e) {
             logger.error("Exception:", e);
@@ -366,6 +475,14 @@ public class HBaseAdapter {
         }
     }
 
+    /**
+     * Checks that the SQL row would not violate a unique index on insert.
+     *
+     * @param tableName SQL table name
+     * @param values    SQL row to check
+     * @return Columns that violate unique index
+     * @throws HBaseAdapterException
+     */
     public static String findDuplicateKey(String tableName, Map<String, byte[]> values)
             throws HBaseAdapterException {
         try {
@@ -376,6 +493,15 @@ public class HBaseAdapter {
         }
     }
 
+    /**
+     * Checks that the SQL row would not violate a unique index on update.
+     *
+     * @param tableName      SQL table name
+     * @param values         SQL row to check
+     * @param changedColumns Columns that will change on update
+     * @return Columns that violate unique index
+     * @throws HBaseAdapterException
+     */
     public static String findDuplicateKey(String tableName, Map<String, byte[]> values, List<String> changedColumns)
             throws HBaseAdapterException {
         try {
@@ -386,6 +512,14 @@ public class HBaseAdapter {
         }
     }
 
+    /**
+     * Checks that adding a unique index on an existing table would not have duplicates.
+     *
+     * @param tableName  SQL table name
+     * @param columnName Columns used in index
+     * @return A value that is duplicated in the table (null if no duplicates found)
+     * @throws HBaseAdapterException
+     */
     public static byte[] findDuplicateValue(String tableName, String columnName)
             throws HBaseAdapterException {
         try {
@@ -396,6 +530,14 @@ public class HBaseAdapter {
         }
     }
 
+    /**
+     * Retrieve the next auto increment value from a SQL table.
+     *
+     * @param tableName  SQL table name
+     * @param columnName Autoincrement column name
+     * @return
+     * @throws HBaseAdapterException
+     */
     public static long getNextAutoincrementValue(String tableName, String columnName)
             throws HBaseAdapterException {
         try {
@@ -409,6 +551,16 @@ public class HBaseAdapter {
         }
     }
 
+    /**
+     * Retrieves a SQL row from the index and sets up a cursor into the index.
+     * Returns null if no rows were found for the keys.
+     *
+     * @param scanId    The "session" ID for reading
+     * @param keyValues Keys to search the index with
+     * @param readType  Type of index scan
+     * @return SQL row
+     * @throws HBaseAdapterException
+     */
     public static IndexRow indexRead(long scanId, List<KeyValue> keyValues,
                                      IndexReadType readType)
             throws HBaseAdapterException {
@@ -492,6 +644,13 @@ public class HBaseAdapter {
         }
     }
 
+    /**
+     * Retrieves a SQL row from the index and moves the index cursor forward.
+     *
+     * @param scanId The "session" ID for reading
+     * @return SQL row
+     * @throws HBaseAdapterException
+     */
     public static IndexRow nextIndexRow(long scanId) throws HBaseAdapterException {
         try {
             IndexRow indexRow = new IndexRow();
@@ -526,6 +685,13 @@ public class HBaseAdapter {
         return conn;
     }
 
+    /**
+     * Increment the SQL row count in HBase.
+     *
+     * @param tableName SQL table name
+     * @param delta     Amount to increment
+     * @throws HBaseAdapterException
+     */
     public static void incrementRowCount(String tableName, long delta) throws HBaseAdapterException {
         try {
             HBaseWriter writer = createWriter();
@@ -537,10 +703,17 @@ public class HBaseAdapter {
         }
     }
 
-    public static void setRowCount(String tableName, long delta) throws HBaseAdapterException {
+    /**
+     * Set the SQL row count in HBase.
+     *
+     * @param tableName SQL table name
+     * @param count     Value to set the count to
+     * @throws HBaseAdapterException
+     */
+    public static void setRowCount(String tableName, long count) throws HBaseAdapterException {
         try {
             HBaseWriter writer = createWriter();
-            writer.setRowCount(tableName, delta);
+            writer.setRowCount(tableName, count);
             writer.close();
         } catch (Exception e) {
             logger.error("Exception: ", e);
@@ -548,6 +721,13 @@ public class HBaseAdapter {
         }
     }
 
+    /**
+     * Retrieve the SQL row count in HBase
+     *
+     * @param tableName SQL table name
+     * @return SQL row count
+     * @throws HBaseAdapterException
+     */
     public static long getRowCount(String tableName) throws HBaseAdapterException {
         try {
             return reader.getRowCount(tableName);
@@ -557,6 +737,13 @@ public class HBaseAdapter {
         }
     }
 
+    /**
+     * Renames a SQL table in HBase
+     *
+     * @param from Old SQL table name
+     * @param to   New SQL table name
+     * @throws HBaseAdapterException
+     */
     public static void renameTable(String from, String to) throws HBaseAdapterException {
         try {
             HBaseWriter writer = createWriter();
@@ -568,6 +755,14 @@ public class HBaseAdapter {
         }
     }
 
+    /**
+     * Query whether a column on a SQL table is NULL
+     *
+     * @param tableName  SQL table name
+     * @param columnName Column name in question
+     * @return Whether the column is nullable
+     * @throws HBaseAdapterException
+     */
     public static boolean isNullable(String tableName, String columnName) throws HBaseAdapterException {
         try {
             return reader.isNullable(tableName, columnName);
@@ -577,6 +772,13 @@ public class HBaseAdapter {
         }
     }
 
+    /**
+     * Adds an index to a SQL table
+     *
+     * @param tableName      SQL table name
+     * @param columnsToIndex SQL table columns used in the index
+     * @throws HBaseAdapterException
+     */
     public static void addIndex(String tableName, TableMultipartKeys columnsToIndex) throws HBaseAdapterException {
         try {
             HBaseWriter writer = createWriter();
@@ -588,6 +790,13 @@ public class HBaseAdapter {
         }
     }
 
+    /**
+     * Remove an index from a SQL table
+     *
+     * @param tableName   SQL table name
+     * @param indexToDrop SQL table columns used in the index
+     * @throws HBaseAdapterException
+     */
     public static void dropIndex(String tableName, String indexToDrop) throws HBaseAdapterException {
         try {
             HBaseWriter writer = createWriter();
