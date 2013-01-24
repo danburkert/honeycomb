@@ -91,20 +91,12 @@ int HoneycombHandler::create(const char *path, TABLE *table_arg,
   int fields = count_fields(table_arg);
   JavaFrame frame(env, fields + 2);
   jclass adapter_class = cache->hbase_adapter().clazz;
-  if (adapter_class == NULL)
-  {
-    my_error(ER_CREATE_FILEGROUP_FAILED, MYF(0),
-        "Could not find adapter class HBaseAdapter");
-    print_java_exception(this->env);
-    DBUG_RETURN(HA_ERR_INTERNAL_ERROR);
-  }
 
   char* table_name = extract_table_name_from_path(path);
   jstring jtable_name = string_to_java_string(table_name);
   jobject java_keys = this->create_multipart_keys(table_arg);
   ARRAY_DELETE(table_name);
   int rc = 0;
-  jmethodID create_table_method;
 
   jobject columnMap = create_java_map(this->env);
   FieldMetadata metadata(this->env);
@@ -126,7 +118,7 @@ int HoneycombHandler::create(const char *path, TABLE *table_arg,
     java_map_insert(columnMap, jfield_name, java_metadata_obj, this->env);
   }
 
-  create_table_method = cache->hbase_adapter().create_table;
+  jmethodID create_table_method = cache->hbase_adapter().create_table;
   this->env->CallStaticBooleanMethod(adapter_class, create_table_method,
       jtable_name, columnMap, java_keys);
   print_java_exception(this->env);
