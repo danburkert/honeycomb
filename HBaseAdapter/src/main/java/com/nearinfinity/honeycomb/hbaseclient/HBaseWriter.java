@@ -27,6 +27,14 @@ public class HBaseWriter implements Closeable {
         table.close();
     }
 
+    /**
+     * Writes a SQL row into HBase "SQL" table.
+     *
+     * @param tableName Name of SQL table
+     * @param values    SQL row values
+     * @return Success
+     * @throws IOException
+     */
     public void writeRow(String tableName, Map<String, byte[]> values) throws IOException {
         if (logger.isDebugEnabled()) {
             logger.debug(format("Writing row for %s: %s", tableName, new String(Util.serializeMap(values))));
@@ -45,6 +53,14 @@ public class HBaseWriter implements Closeable {
         }
     }
 
+    /**
+     * Updates a SQL row with new values.
+     *
+     * @param changedFields Columns that will change
+     * @param tableName     Name of SQL table
+     * @param newValues     SQL row values
+     * @throws IOException
+     */
     public void updateRow(UUID uuid, List<String> changedFields, String tableName, Map<String, byte[]> newValues) throws IOException {
         if (logger.isDebugEnabled()) {
             logger.debug(format("Updating fields %s on %s", Joiner.on(",").join(changedFields), tableName));
@@ -70,6 +86,13 @@ public class HBaseWriter implements Closeable {
         writeRow(tableName, oldRow);
     }
 
+    /**
+     * Renames a SQL table in HBase
+     *
+     * @param from Old SQL table name
+     * @param to   New SQL table name
+     * @throws IOException
+     */
     public void renameTable(String from, String to) throws IOException {
         checkNotNull(from);
         checkNotNull(to);
@@ -98,6 +121,14 @@ public class HBaseWriter implements Closeable {
         logger.debug("Rename complete!");
     }
 
+    /**
+     * Deletes a SQL row out of HBase based on the SQL row's unique identifier
+     *
+     * @param tableName SQL table name
+     * @param uuid      Unique identifier of the SQL row
+     * @return success
+     * @throws IOException
+     */
     public boolean deleteRow(String tableName, UUID uuid) throws IOException {
         if (uuid == null) {
             return false;
@@ -109,13 +140,13 @@ public class HBaseWriter implements Closeable {
         return true;
     }
 
-    public void deleteTableFromRoot(String tableName) throws IOException {
-        Delete delete = new Delete((RowKeyFactory.ROOT));
-        delete.deleteColumns(Constants.NIC, tableName.getBytes());
-
-        table.delete(delete);
-    }
-
+    /**
+     * Drops a SQL table from HBase
+     *
+     * @param tableName SQL table name
+     * @return success
+     * @throws IOException
+     */
     public boolean dropTable(String tableName) throws IOException {
         logger.debug("Preparing to drop table " + tableName);
         TableInfo info = getTableInfo(tableName);
@@ -132,6 +163,13 @@ public class HBaseWriter implements Closeable {
         return true;
     }
 
+    /**
+     * Remove all SQL rows from a SQL table
+     *
+     * @param tableName SQL table name
+     * @return Number of rows removed
+     * @throws IOException
+     */
     public int deleteAllRowsInTable(String tableName) throws IOException {
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
@@ -142,6 +180,13 @@ public class HBaseWriter implements Closeable {
         return 0;
     }
 
+    /**
+     * Set the SQL row count in HBase.
+     *
+     * @param tableName SQL table name
+     * @param value     Value to set the count to
+     * @throws IOException
+     */
     public void setRowCount(String tableName, long value) throws IOException {
         long tableId = getTableInfo(tableName).getId();
         Put put = new Put(RowKeyFactory.buildTableInfoKey(tableId)).add(Constants.NIC, Constants.ROW_COUNT, Bytes.toBytes(value));
@@ -154,6 +199,13 @@ public class HBaseWriter implements Closeable {
         table.incrementColumnValue(rowKey, Constants.NIC, Constants.ROW_COUNT, delta);
     }
 
+    /**
+     * Adds an index to a SQL table
+     *
+     * @param tableName    SQL table name
+     * @param columnString SQL table columns used in the index
+     * @throws IOException
+     */
     public void addIndex(String tableName, TableMultipartKeys columnString) throws IOException {
         final List<String> columnsToIndex = columnString.indexKeys().get(0);
         final List<List<String>> uniqueColumns = columnString.uniqueKeys();
@@ -189,6 +241,13 @@ public class HBaseWriter implements Closeable {
         });
     }
 
+    /**
+     * Remove an index from a SQL table
+     *
+     * @param tableName   SQL table name
+     * @param indexToDrop SQL table columns used in the index
+     * @throws IOException
+     */
     public void dropIndex(String tableName, String indexToDrop) throws IOException {
         final List<String> indexColumns = Arrays.asList(indexToDrop.split(","));
         final TableInfo info = getTableInfo(tableName);
@@ -214,6 +273,16 @@ public class HBaseWriter implements Closeable {
         });
     }
 
+    /**
+     * Sets the autoincrement value of a SQL column.
+     *
+     * @param tableName          SQL table name
+     * @param fieldName          SQL column
+     * @param autoincrementValue New autoincrement value
+     * @param isTruncate         Is SQL truncate command
+     * @return Success
+     * @throws IOException
+     */
     public boolean alterAutoincrementValue(String tableName, String fieldName, long autoincrementValue, boolean isTruncate) throws IOException {
         TableInfo info = getTableInfo(tableName);
         long columnId = info.getColumnIdByName(fieldName);
@@ -248,6 +317,14 @@ public class HBaseWriter implements Closeable {
         return true;
     }
 
+    /**
+     * Retrieves the next autoincrement value and increments the value.
+     *
+     * @param tableName  SQL table name
+     * @param columnName SQL column
+     * @return Next autoincrement value
+     * @throws IOException
+     */
     public long getNextAutoincrementValue(String tableName, String columnName) throws IOException {
         long nextAutoincrementValue = getTableInfo(tableName).getColumnMetadata(columnName).getAutoincrementValue();
         alterAutoincrementValue(tableName, columnName, nextAutoincrementValue + 1, false);
@@ -255,12 +332,22 @@ public class HBaseWriter implements Closeable {
         return nextAutoincrementValue;
     }
 
+    /**
+     * Creates a sql table in HBase with columns and indexes.
+     * Called when a "create table XXX()" statement is executed.
+     *
+     * @param tableName      Name of sql table
+     * @param columns        Column name and metadata
+     * @param indexedColumns Indexed columns
+     * @return Success
+     * @throws IOException
+     */
     public void createTableFull(String tableName, Map<String,
-            ColumnMetadata> columns, TableMultipartKeys multipartKeys)
+            ColumnMetadata> columns, TableMultipartKeys indexedColumns)
             throws IOException {
         List<Put> putList = new LinkedList<Put>();
 
-        createTable(tableName, putList, multipartKeys);
+        createTable(tableName, putList, indexedColumns);
 
         addColumns(tableName, columns, putList);
 
@@ -269,6 +356,9 @@ public class HBaseWriter implements Closeable {
         table.flushCommits();
     }
 
+    /**
+     * Flush data stored in cache out to HBase
+     */
     public void flushWrites() {
         try {
             table.flushCommits();
@@ -277,8 +367,15 @@ public class HBaseWriter implements Closeable {
         }
     }
 
-    public TableInfo getTableInfo(String tableName) throws IOException {
+    private TableInfo getTableInfo(String tableName) throws IOException {
         return TableCache.getTableInfo(tableName, table);
+    }
+
+    private void deleteTableFromRoot(String tableName) throws IOException {
+        Delete delete = new Delete((RowKeyFactory.ROOT));
+        delete.deleteColumns(Constants.NIC, tableName.getBytes());
+
+        table.delete(delete);
     }
 
     private void deleteAllRowsInTable(TableInfo info) throws IOException {

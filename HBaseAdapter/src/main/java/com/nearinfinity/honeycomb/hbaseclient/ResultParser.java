@@ -12,6 +12,12 @@ import java.util.UUID;
 public class ResultParser {
     private static final Logger logger = Logger.getLogger(ResultParser.class);
 
+    /**
+     * Extracts the unique identifier from an HBase {@code Result} that is a data row.
+     *
+     * @param result HBase data row result
+     * @return Unique identifier
+     */
     public static UUID parseUUID(Result result) {
         byte[] rowKey = result.getRow();
         if (logger.isDebugEnabled()) {
@@ -21,6 +27,12 @@ public class ResultParser {
         return new UUID(byteBuffer.getLong(), byteBuffer.getLong());
     }
 
+    /**
+     * Extracts the raw SQL row from an HBase {@code Result} that is an index row.
+     *
+     * @param result HBase index row result
+     * @return SQL row
+     */
     public static byte[] parseValueMap(Result result) {
         byte[] valueMap = result.getValue(Constants.NIC, Constants.VALUE_MAP);
         if (logger.isDebugEnabled()) {
@@ -30,11 +42,24 @@ public class ResultParser {
         return valueMap;
     }
 
+    /**
+     * Extracts the SQL row from an HBase {@code Result} that is an index row.
+     *
+     * @param result HBase index row result
+     * @return SQL row
+     */
     public static Map<String, byte[]> parseRowMap(Result result) {
         byte[] mapBytes = parseValueMap(result);
         return Util.deserializeMap(mapBytes);
     }
 
+    /**
+     * Extracts the SQL row from an HBase {@code Result} that is a data row.
+     *
+     * @param result HBase data row result
+     * @param info   Table metadata
+     * @return SQL row
+     */
     public static Map<String, byte[]> parseDataRow(Result result, TableInfo info) {
         Map<String, byte[]> columns = new HashMap<String, byte[]>();
         Map<byte[], byte[]> returnedColumns = result.getNoVersionMap().get(Constants.NIC);
