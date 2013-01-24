@@ -292,11 +292,6 @@ class JNICache
       hbase_adapter_.add_index                    = get_static_method_id(env, hbase_adapter_.clazz, "addIndex", "(Ljava/lang/String;Lcom/nearinfinity/honeycomb/hbaseclient/TableMultipartKeys;)V");
       hbase_adapter_.drop_index                   = get_static_method_id(env, hbase_adapter_.clazz, "dropIndex", "(Ljava/lang/String;Ljava/lang/String;)V");
 
-      hbase_adapter_.start_index_scan = get_static_method_id(env, hbase_adapter_.clazz, "startIndexScan", "(Ljava/lang/String;Ljava/lang/String;)J");
-      hbase_adapter_.add_index        = get_static_method_id(env, hbase_adapter_.clazz, "addIndex", "(Ljava/lang/String;L" HBASECLIENT "TableMultipartKeys;)V");
-      hbase_adapter_.create_table     = get_static_method_id(env, hbase_adapter_.clazz, "createTable", "(Ljava/lang/String;Ljava/util/Map;L" HBASECLIENT "TableMultipartKeys;)Z");
-      hbase_adapter_.index_read       = get_static_method_id(env, hbase_adapter_.clazz, "indexRead", "(JLjava/util/List;L" MYSQLENGINE "IndexReadType;)L" MYSQLENGINE "IndexRow;");
-
       index_read_type_.clazz            = get_class_ref(env, MYSQLENGINE "IndexReadType");
       index_read_type_.read_key_exact   = get_static_field_id(env, index_read_type_.clazz, "HA_READ_KEY_EXACT", "L" MYSQLENGINE "IndexReadType;");
       index_read_type_.read_after_key   = get_static_field_id(env, index_read_type_.clazz, "HA_READ_AFTER_KEY", "L" MYSQLENGINE "IndexReadType;");
