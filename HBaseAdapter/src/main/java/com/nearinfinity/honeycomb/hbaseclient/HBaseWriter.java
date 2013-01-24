@@ -246,7 +246,7 @@ public class HBaseWriter implements Closeable {
                 try {
                     table.put(puts);
                 } catch (IOException e) {
-                    e.printStackTrace();    // TODO: Bad way to handle an exception.
+                    throw new RuntimeException(e);
                 }
 
                 return null;

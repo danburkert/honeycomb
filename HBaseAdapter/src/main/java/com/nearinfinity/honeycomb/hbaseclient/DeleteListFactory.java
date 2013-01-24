@@ -6,6 +6,16 @@ import org.apache.hadoop.hbase.client.Result;
 import java.util.*;
 
 public class DeleteListFactory {
+    /**
+     * Creates the required HBase {@code Delete's} to remove a SQL row from HBase.
+     *
+     * @param uuid        Unique identifier of the SQL row
+     * @param info        Table metadata
+     * @param result      The SQL row from the data section
+     * @param dataRowKey  The HBase row key of the SQL row in the data section
+     * @param indexedKeys All indexed columns in the SQL table
+     * @return HBase deletes
+     */
     public static List<Delete> createDeleteRowList(UUID uuid, TableInfo info, Result result, byte[] dataRowKey, final List<List<String>> indexedKeys) {
         List<Delete> deleteList = new LinkedList<Delete>();
         deleteList.add(new Delete(dataRowKey));

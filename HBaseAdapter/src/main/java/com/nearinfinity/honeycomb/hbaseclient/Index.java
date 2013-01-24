@@ -9,6 +9,16 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.lang.String.format;
 
 public class Index {
+    /**
+     * Convert column names into the correct HBase index row format.
+     * For example:
+     * column "A" has value 1
+     * createColumnIds(["A"], {"A" => 1}) = [0, 0, 0, 0, 0, 0, 0, 1]
+     *
+     * @param columns        Column names to convert
+     * @param columnNameToId Column names' map to numeric value
+     * @return HBase index row format of the column names
+     */
     public static byte[] createColumnIds(final Iterable<String> columns, final Map<String, Long> columnNameToId) {
         return correctColumnIdSize(convertToByteArray(columns, new Function<String, byte[]>() {
             @Override
@@ -18,6 +28,13 @@ public class Index {
         }));
     }
 
+    /**
+     * Convert MySQL row into a HBase row format for given column names.
+     *
+     * @param columns Column names to convert
+     * @param values  MySQL row values
+     * @return HBase index row format of the column values
+     */
     public static byte[] createValues(final Iterable<String> columns, final Map<String, byte[]> values) {
         return convertToByteArray(columns, new Function<String, byte[]>() {
             @Override

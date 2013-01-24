@@ -10,9 +10,10 @@ import java.util.UUID;
 
 public class PutListFactory {
     /**
-     * Takes a MySQL row and turns it into a collection of HBase rows.
-     * @param values A MySQL row
-     * @param info Metadata about the HBase sql table
+     * Takes a MySQL row and turns it into a collection of HBase rows for insert/update.
+     *
+     * @param values      A MySQL row
+     * @param info        Metadata about the HBase sql table
      * @param indexedKeys Columns with an index
      * @return HBase table rows
      */
@@ -36,6 +37,15 @@ public class PutListFactory {
         return putList;
     }
 
+    /**
+     * Creates HBase index rows for a single SQL index.
+     *
+     * @param values      A MySQL row
+     * @param info        Metadata about the HBase sql table
+     * @param indexedKeys A column with an index
+     * @param rowId       The unique identifier for a MySQL row
+     * @return HBase index rows
+     */
     public static List<Put> createIndexForColumns(Map<String, byte[]> values, TableInfo info, UUID rowId, List<String> indexedKeys) {
         List<List<String>> newIndexColumns = new LinkedList<List<String>>();
         newIndexColumns.add(new LinkedList<String>(indexedKeys));
@@ -43,11 +53,12 @@ public class PutListFactory {
     }
 
     /**
-     * Creates an index HBase rows for a MySQL row.
-     * @param values A MySQL row
-     * @param info Metadata about the HBase sql table
+     * Creates HBase index rows for all SQL indexes for insert/update.
+     *
+     * @param values      A MySQL row
+     * @param info        Metadata about the HBase sql table
      * @param indexedKeys Columns with an index
-     * @param rowId The unique identifier for a MySQL row
+     * @param rowId       The unique identifier for a MySQL row
      * @return HBase index rows
      */
     public static List<Put> createIndexForColumns(Map<String, byte[]> values, TableInfo info, List<List<String>> indexedKeys, UUID rowId) {
