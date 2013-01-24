@@ -14,8 +14,7 @@ int HoneycombHandler::index_init(uint idx, bool sorted)
       pos->key_parts);
 
   jclass adapter_class = this->adapter();
-  jmethodID start_scan_method = find_static_method(adapter_class,
-      "startIndexScan", "(Ljava/lang/String;Ljava/lang/String;)J",this->env);
+  jmethodID start_scan_method = cache->hbase_adapter().start_index_scan;
   jstring table_name = this->table_name();
   jstring java_column_names = this->string_to_java_string(column_names);
 
@@ -63,9 +62,7 @@ int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
 {
   DBUG_ENTER("HoneycombHandler::index_read_map");
   jclass adapter_class = this->adapter();
-  jmethodID index_read_method = find_static_method(adapter_class, "indexRead",
-      "(JLjava/util/List;L" MYSQLENGINE "IndexReadType;)L" MYSQLENGINE "IndexRow;",
-      this->env);
+  jmethodID index_read_method = cache->hbase_adapter().index_read;
   if (find_flag == HA_READ_PREFIX_LAST_OR_PREV)
   {
     find_flag = HA_READ_KEY_OR_PREV;
@@ -174,8 +171,7 @@ int HoneycombHandler::get_next_index_row(uchar* buf)
 {
   JavaFrame frame(env);
   jclass adapter_class = this->adapter();
-  jmethodID index_next_method = find_static_method(adapter_class,
-      "nextIndexRow", "(J)L" MYSQLENGINE "IndexRow;",this->env);
+  jmethodID index_next_method = cache->hbase_adapter().next_index_row;
   jobject index_row = this->env->CallStaticObjectMethod(adapter_class,
       index_next_method, this->curr_scan_id);
 
@@ -188,9 +184,7 @@ int HoneycombHandler::get_index_row(const char* indexType, uchar* buf)
 {
   JavaFrame frame(env);
   jclass adapter_class = this->adapter();
-  jmethodID index_read_method = find_static_method(adapter_class, "indexRead",
-      "(JLjava/util/List;L" MYSQLENGINE "IndexReadType;)L" MYSQLENGINE "IndexRow;",
-      this->env);
+  jmethodID index_read_method = cache->hbase_adapter().index_read;
   jclass read_class = find_jni_class("IndexReadType", this->env);
   jfieldID field_id = this->env->GetStaticFieldID(read_class, indexType,
       "L" MYSQLENGINE "IndexReadType;");
@@ -240,8 +234,7 @@ int HoneycombHandler::rnd_pos(uchar *buf, uchar *pos)
   MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, FALSE);
 
   jclass adapter_class = this->adapter();
-  jmethodID get_row_method = find_static_method(adapter_class, "getRow",
-      "(J[B)L" MYSQLENGINE "Row;",this->env);
+  jmethodID get_row_method = cache->hbase_adapter().get_row;
   jbyteArray uuid = convert_value_to_java_bytes(pos, 16, this->env);
   jobject row = this->env->CallStaticObjectMethod(adapter_class, get_row_method,
       this->curr_scan_id, uuid);
@@ -312,8 +305,7 @@ int HoneycombHandler::rnd_init(bool scan)
 
   JavaFrame frame(env);
   jclass adapter_class = this->adapter();
-  jmethodID start_scan_method = find_static_method(adapter_class, "startScan",
-      "(Ljava/lang/String;Z)J",this->env);
+  jmethodID start_scan_method = cache->hbase_adapter().start_scan;
   jstring table_name = this->table_name();
 
   jboolean java_scan_boolean = scan ? JNI_TRUE : JNI_FALSE;
@@ -338,8 +330,7 @@ int HoneycombHandler::rnd_next(uchar *buf)
 
   memset(buf, 0, table->s->null_bytes);
   jclass adapter_class = this->adapter();
-  jmethodID next_row_method = find_static_method(adapter_class, "nextRow",
-      "(J)L" MYSQLENGINE "Row;",this->env);
+  jmethodID next_row_method = cache->hbase_adapter().next_row;
   jobject row = this->env->CallStaticObjectMethod(adapter_class,
       next_row_method, this->curr_scan_id);
 

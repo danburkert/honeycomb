@@ -145,19 +145,6 @@ jclass find_jni_class(const char* class_name, JNIEnv* env)
   return clazz;
 }
 
-jmethodID find_static_method(jclass clazz, const char* name, const char* signature, JNIEnv* env)
-{
-  jmethodID write_row_method = env->GetStaticMethodID(clazz, name, signature);
-  if (write_row_method == NULL)
-  {
-    Logging::fatal("Retrieving method %s with signature %s failed. Method was null.", name, signature);
-    perror("Failed to retrieve method. Check honeycomb.log for details.");
-    abort();
-  }
-
-  return write_row_method;
-}
-
 jbyteArray convert_value_to_java_bytes(uchar* value, uint32 length, JNIEnv* env)
 {
   jbyteArray byteArray = env->NewByteArray(length);
@@ -195,10 +182,4 @@ jobject new_multipart_key(JNIEnv* env)
   jclass multipart_keys_class = multipart_key_class(env);
   jmethodID constructor = env->GetMethodID(multipart_keys_class, "<init>", "()V");
   return env->NewObject(multipart_keys_class, constructor);
-}
-
-jmethodID add_multipart_key_method(JNIEnv* env)
-{
-  jclass multipart_keys_class = multipart_key_class(env);
-  return env->GetMethodID(multipart_keys_class, "addMultipartKey", "(Ljava/lang/String;Z)V");
 }
