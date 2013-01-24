@@ -100,17 +100,17 @@ class JNICache
     TreeMap tree_map_;
 
     /**
-     * Find class id of clazz in env, and return a global reference to it.
+     * Find class ref of clazz in env, and return a global reference to it.
      * Abort if the class is not found, or if there is not enough memory
      * to create references to it.
      */
     jclass get_class_ref(JNIEnv* env, const char* clazz)
     {
-      char log_buffer[200];
       JavaFrame frame(env, 1);
       jclass local_clazz_ref = env->FindClass(clazz);
       if (local_clazz_ref == NULL)
       {
+        char log_buffer[200];
         snprintf(log_buffer, sizeof(log_buffer),
             "JNICache: Failed to find class %s", clazz);
         Logging::fatal(log_buffer);
@@ -120,6 +120,7 @@ class JNICache
       jclass clazz_ref = (jclass) env->NewGlobalRef(local_clazz_ref);
       if (clazz_ref == NULL)
       {
+        char log_buffer[200];
         snprintf(log_buffer, sizeof(log_buffer),
             "JNICache: Not enough JVM memory to create global reference to class %s", clazz);
         Logging::fatal(log_buffer);
@@ -129,12 +130,16 @@ class JNICache
       return clazz_ref;
     }
 
+    /**
+     * Find id of method with signature on class clazz in env, and return it. Abort
+     * if the field is not found.
+     */
     jmethodID get_method_id(JNIEnv* env, jclass clazz, const char* method, const char* signature)
     {
-      char log_buffer[200];
       jmethodID method_id = env->GetMethodID(clazz, method, signature);
       if (method_id == NULL)
       {
+        char log_buffer[200];
         snprintf(log_buffer, sizeof(log_buffer),
             "JNICache: Failed to find method %s with signature %s", method, signature);
         Logging::fatal(log_buffer);
@@ -144,14 +149,37 @@ class JNICache
       return method_id;
     }
 
-    jfieldID get_static_field_id(JNIEnv* env, jclass clazz, const char* field, const char* signature)
+    /**
+     * Find id of static method with signature on class clazz in env, and
+     * return it. Abort if the field is not found.
+     */
+    jmethodID get_static_method_id(JNIEnv* env, jclass clazz, const char* method, const char* signature)
     {
-      char log_buffer[200];
-      jfieldID field_id = env->GetStaticFieldID(clazz, field, signature);
+      jmethodID method_id = env->GetStaticMethodID(clazz, method, signature);
+      if (method_id == NULL)
+      {
+        char log_buffer[200];
+        snprintf(log_buffer, sizeof(log_buffer),
+            "JNICache: Failed to find method %s with signature %s", method, signature);
+        Logging::fatal(log_buffer);
+        perror("Failure during JNI method id lookup. Check honeycomb.log for details.");
+        abort();
+      }
+      return method_id;
+    }
+
+    /**
+     * Find id of static field with type on class clazz in env, and return it.
+     * Abort if the field is not found.
+     */
+    jfieldID get_static_field_id(JNIEnv* env, jclass clazz, const char* field, const char* type)
+    {
+      jfieldID field_id = env->GetStaticFieldID(clazz, field, type);
       if (field_id == NULL)
       {
+        char log_buffer[200];
         snprintf(log_buffer, sizeof(log_buffer),
-            "JNICache: Failed to find static field %s with signature %s", field, signature);
+            "JNICache: Failed to find static field %s with type %s", field, type);
         Logging::fatal(log_buffer);
         perror("Failure during JNI static field id lookup. Check honeycomb.log for details.");
         abort();
