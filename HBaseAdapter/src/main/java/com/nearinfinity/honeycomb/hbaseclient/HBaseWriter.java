@@ -148,71 +148,6 @@ public class HBaseWriter implements Closeable {
         table.put(put);
     }
 
-    private void deleteAllRowsInTable(TableInfo info) throws IOException {
-        long tableId = info.getId();
-        byte[] prefix = ByteBuffer.allocate(9).put(RowType.DATA.getValue()).putLong(tableId).array();
-        Scan scan = ScanFactory.buildScan();
-        PrefixFilter filter = new PrefixFilter(prefix);
-        scan.setFilter(filter);
-
-        ResultScanner scanner = table.getScanner(scan);
-        List<List<String>> indexedKeys = Index.indexForTable(info.tableMetadata());
-        List<Delete> deleteList = new LinkedList<Delete>();
-        for (Result result : scanner) {
-            UUID uuid = ResultParser.parseUUID(result);
-            byte[] rowKey = result.getRow();
-            deleteList.addAll(DeleteListFactory.createDeleteRowList(uuid, info, result, rowKey, indexedKeys));
-        }
-        table.delete(deleteList);
-    }
-
-    private int deleteTableInfoRows(long tableId) throws IOException {
-        byte[] prefix = ByteBuffer.allocate(9).put(RowType.TABLE_INFO.getValue()).putLong(tableId).array();
-        return deleteRowsWithPrefix(prefix);
-    }
-
-    private int deleteColumns(long tableId) throws IOException {
-        logger.debug("Deleting all columns");
-        byte[] prefix = ByteBuffer.allocate(9).put(RowType.COLUMNS.getValue()).putLong(tableId).array();
-        return deleteRowsWithPrefix(prefix);
-    }
-
-    private int deleteColumnInfoRows(TableInfo info) throws IOException {
-        logger.debug("Deleting all column metadata rows");
-
-        long tableId = info.getId();
-        int affectedRows = 0;
-
-        for (Long columnId : info.getColumnIds()) {
-            byte[] metadataKey = RowKeyFactory.buildColumnInfoKey(tableId, columnId);
-            affectedRows += deleteRowsWithPrefix(metadataKey);
-        }
-
-        return affectedRows;
-    }
-
-    private int deleteRowsWithPrefix(byte[] prefix) throws IOException {
-        Scan scan = ScanFactory.buildScan();
-        PrefixFilter filter = new PrefixFilter(prefix);
-        scan.setFilter(filter);
-
-        ResultScanner scanner = table.getScanner(scan);
-        List<Delete> deleteList = new LinkedList<Delete>();
-        int count = 0;
-
-        for (Result result : scanner) {
-            byte[] rowKey = result.getRow();
-            Delete rowDelete = new Delete(rowKey);
-            deleteList.add(rowDelete);
-
-            ++count;
-        }
-
-        table.delete(deleteList);
-
-        return count;
-    }
-
     public void incrementRowCount(String tableName, long delta) throws IOException {
         long tableId = getTableInfo(tableName).getId();
         byte[] rowKey = RowKeyFactory.buildTableInfoKey(tableId);
@@ -277,6 +212,138 @@ public class HBaseWriter implements Closeable {
                 return null;
             }
         });
+    }
+
+    public boolean alterAutoincrementValue(String tableName, String fieldName, long autoincrementValue, boolean isTruncate) throws IOException {
+        TableInfo info = getTableInfo(tableName);
+        long columnId = info.getColumnIdByName(fieldName);
+        long tableId = info.getId();
+        byte[] columnInfoBytes = RowKeyFactory.buildColumnInfoKey(tableId, columnId);
+
+        Get get = new Get(columnInfoBytes);
+        Result result = table.get(get);
+
+        long currentValue = Bytes.toLong(result.getValue(Constants.NIC, new byte[0]));
+        ColumnMetadata metadata = new ColumnMetadata(result.getValue(Constants.NIC, Constants.METADATA));
+
+        // only set the new autoincrement value if it is greater than the
+        // current autoincrement value or if the autoincrement value is being reset in a truncate command
+        if (autoincrementValue > currentValue || isTruncate) {
+            metadata.setAutoincrement(true);
+            metadata.setAutoincrementValue(autoincrementValue);
+        } else {
+            logger.debug(format("The new auto_increment value of %d is less than the current count of %d, so this command will be ignored.", autoincrementValue, currentValue));
+            return false;
+        }
+
+        Put columnInfoPut = new Put(columnInfoBytes);
+        columnInfoPut.add(Constants.NIC, Constants.METADATA, metadata.toJson());
+        columnInfoPut.add(Constants.NIC, new byte[0], Bytes.toBytes(autoincrementValue));
+
+        table.put(columnInfoPut);
+        table.flushCommits();
+
+        info.setColumnMetadata(fieldName, metadata);
+
+        return true;
+    }
+
+    public long getNextAutoincrementValue(String tableName, String columnName) throws IOException {
+        long nextAutoincrementValue = getTableInfo(tableName).getColumnMetadata(columnName).getAutoincrementValue();
+        alterAutoincrementValue(tableName, columnName, nextAutoincrementValue + 1, false);
+
+        return nextAutoincrementValue;
+    }
+
+    public void createTableFull(String tableName, Map<String,
+            ColumnMetadata> columns, TableMultipartKeys multipartKeys)
+            throws IOException {
+        List<Put> putList = new LinkedList<Put>();
+
+        createTable(tableName, putList, multipartKeys);
+
+        addColumns(tableName, columns, putList);
+
+        table.put(putList);
+
+        table.flushCommits();
+    }
+
+    public void flushWrites() {
+        try {
+            table.flushCommits();
+        } catch (IOException e) {
+            logger.error("Encountered an exception while flushing commits : ", e);
+        }
+    }
+
+    public TableInfo getTableInfo(String tableName) throws IOException {
+        return TableCache.getTableInfo(tableName, table);
+    }
+
+    private void deleteAllRowsInTable(TableInfo info) throws IOException {
+        long tableId = info.getId();
+        byte[] prefix = ByteBuffer.allocate(9).put(RowType.DATA.getValue()).putLong(tableId).array();
+        Scan scan = ScanFactory.buildScan();
+        PrefixFilter filter = new PrefixFilter(prefix);
+        scan.setFilter(filter);
+
+        ResultScanner scanner = table.getScanner(scan);
+        List<List<String>> indexedKeys = Index.indexForTable(info.tableMetadata());
+        List<Delete> deleteList = new LinkedList<Delete>();
+        for (Result result : scanner) {
+            UUID uuid = ResultParser.parseUUID(result);
+            byte[] rowKey = result.getRow();
+            deleteList.addAll(DeleteListFactory.createDeleteRowList(uuid, info, result, rowKey, indexedKeys));
+        }
+        table.delete(deleteList);
+    }
+
+    private int deleteTableInfoRows(long tableId) throws IOException {
+        byte[] prefix = ByteBuffer.allocate(9).put(RowType.TABLE_INFO.getValue()).putLong(tableId).array();
+        return deleteRowsWithPrefix(prefix);
+    }
+
+    private int deleteColumns(long tableId) throws IOException {
+        logger.debug("Deleting all columns");
+        byte[] prefix = ByteBuffer.allocate(9).put(RowType.COLUMNS.getValue()).putLong(tableId).array();
+        return deleteRowsWithPrefix(prefix);
+    }
+
+    private int deleteColumnInfoRows(TableInfo info) throws IOException {
+        logger.debug("Deleting all column metadata rows");
+
+        long tableId = info.getId();
+        int affectedRows = 0;
+
+        for (Long columnId : info.getColumnIds()) {
+            byte[] metadataKey = RowKeyFactory.buildColumnInfoKey(tableId, columnId);
+            affectedRows += deleteRowsWithPrefix(metadataKey);
+        }
+
+        return affectedRows;
+    }
+
+    private int deleteRowsWithPrefix(byte[] prefix) throws IOException {
+        Scan scan = ScanFactory.buildScan();
+        PrefixFilter filter = new PrefixFilter(prefix);
+        scan.setFilter(filter);
+
+        ResultScanner scanner = table.getScanner(scan);
+        List<Delete> deleteList = new LinkedList<Delete>();
+        int count = 0;
+
+        for (Result result : scanner) {
+            byte[] rowKey = result.getRow();
+            Delete rowDelete = new Delete(rowKey);
+            deleteList.add(rowDelete);
+
+            ++count;
+        }
+
+        table.delete(deleteList);
+
+        return count;
     }
 
     private void updateIndexEntryToMetadata(TableInfo info, IndexFunction<List<List<String>>, Boolean, Void> updateFunc) throws IOException {
@@ -394,73 +461,6 @@ public class HBaseWriter implements Closeable {
 
             tableInfo.addColumn(columnName, columnId, columns.get(columnName));
         }
-    }
-
-    public boolean alterAutoincrementValue(String tableName, String fieldName, long autoincrementValue, boolean isTruncate) throws IOException {
-        TableInfo info = getTableInfo(tableName);
-        long columnId = info.getColumnIdByName(fieldName);
-        long tableId = info.getId();
-        byte[] columnInfoBytes = RowKeyFactory.buildColumnInfoKey(tableId, columnId);
-
-        Get get = new Get(columnInfoBytes);
-        Result result = table.get(get);
-
-        long currentValue = Bytes.toLong(result.getValue(Constants.NIC, new byte[0]));
-        ColumnMetadata metadata = new ColumnMetadata(result.getValue(Constants.NIC, Constants.METADATA));
-
-        // only set the new autoincrement value if it is greater than the
-        // current autoincrement value or if the autoincrement value is being reset in a truncate command
-        if (autoincrementValue > currentValue || isTruncate) {
-            metadata.setAutoincrement(true);
-            metadata.setAutoincrementValue(autoincrementValue);
-        } else {
-            logger.debug(format("The new auto_increment value of %d is less than the current count of %d, so this command will be ignored.", autoincrementValue, currentValue));
-            return false;
-        }
-
-        Put columnInfoPut = new Put(columnInfoBytes);
-        columnInfoPut.add(Constants.NIC, Constants.METADATA, metadata.toJson());
-        columnInfoPut.add(Constants.NIC, new byte[0], Bytes.toBytes(autoincrementValue));
-
-        table.put(columnInfoPut);
-        table.flushCommits();
-
-        info.setColumnMetadata(fieldName, metadata);
-
-        return true;
-    }
-
-    public long getNextAutoincrementValue(String tableName, String columnName) throws IOException {
-        long nextAutoincrementValue = getTableInfo(tableName).getColumnMetadata(columnName).getAutoincrementValue();
-        alterAutoincrementValue(tableName, columnName, nextAutoincrementValue + 1, false);
-
-        return nextAutoincrementValue;
-    }
-
-    public void createTableFull(String tableName, Map<String,
-            ColumnMetadata> columns, TableMultipartKeys multipartKeys)
-            throws IOException {
-        List<Put> putList = new LinkedList<Put>();
-
-        createTable(tableName, putList, multipartKeys);
-
-        addColumns(tableName, columns, putList);
-
-        table.put(putList);
-
-        table.flushCommits();
-    }
-
-    public void flushWrites() {
-        try {
-            table.flushCommits();
-        } catch (IOException e) {
-            logger.error("Encountered an exception while flushing commits : ", e);
-        }
-    }
-
-    public TableInfo getTableInfo(String tableName) throws IOException {
-        return TableCache.getTableInfo(tableName, table);
     }
 
     private interface IndexFunction<F1, F2, T> {
