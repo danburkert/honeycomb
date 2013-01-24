@@ -15,31 +15,72 @@ class JNICache
     struct HBaseAdapter
     {
       jclass clazz;
-      jmethodID start_index_scan,
-        add_index, create_table, index_read;
+      jmethodID initialize,
+                create_table,
+                get_autoincrement_value,
+                alter_autoincrement_value,
+                start_write,
+                end_write,
+                start_scan,
+                next_row,
+                end_scan,
+                write_row,
+                update_row,
+                flush_writes,
+                delete_row,
+                delete_all_rows,
+                drop_table,
+                get_row,
+                start_index_scan,
+                find_duplicate_key,
+                find_duplicate_key_list,
+                find_duplicate_value,
+                get_next_autoincrement_value,
+                index_read,
+                next_index_row,
+                increment_row_count,
+                set_row_count,
+                get_row_count,
+                rename_table,
+                is_nullable,
+                add_index,
+                drop_index;
     };
     struct IndexReadType
     {
       jclass clazz;
-      jfieldID read_key_exact, read_after_key, read_key_or_next,
-               read_key_or_prev, read_before_key, index_first,
-               index_last, index_null;
+      jfieldID read_key_exact,
+               read_after_key,
+               read_key_or_next,
+               read_key_or_prev,
+               read_before_key,
+               index_first,
+               index_last,
+               index_null;
     };
     struct IndexRow
     {
       jclass clazz;
-      jmethodID get_row_map, get_uuid;
+      jmethodID get_row_map,
+                get_uuid;
     };
     struct Row
     {
       jclass clazz;
-      jmethodID get_row_map, get_uuid;
+      jmethodID get_row_map,
+                get_uuid;
     };
     struct ColumnMetadata
     {
       jclass clazz;
-      jmethodID init, set_max_length, set_precision, set_scale, set_nullable,
-                set_primary_key, set_type, set_autoincrement,
+      jmethodID init,
+                set_max_length,
+                set_precision,
+                set_scale,
+                set_nullable,
+                set_primary_key,
+                set_type,
+                set_autoincrement,
                 set_autoincrement_value;
     };
     struct ColumnType
@@ -54,7 +95,10 @@ class JNICache
     struct TableMultipartKeys
     {
       jclass clazz;
-      jmethodID init, add_index, create_table, add_multipart_key;
+      jmethodID init,
+                add_index,
+                create_table,
+                add_multipart_key;
     };
     struct Throwable
     {
@@ -69,17 +113,23 @@ class JNICache
     struct StringWriter
     {
       jclass clazz;
-      jmethodID init, to_string;
+      jmethodID init,
+                to_string;
     };
     struct LinkedList
     {
       jclass clazz;
-      jmethodID init, add, size;
+      jmethodID init,
+                add,
+                size;
     };
     struct TreeMap
     {
       jclass clazz;
-      jmethodID init, get, put, is_empty;
+      jmethodID init,
+                get,
+                put,
+                is_empty;
     };
 
   private:
@@ -162,7 +212,7 @@ class JNICache
         snprintf(log_buffer, sizeof(log_buffer),
             "JNICache: Failed to find method %s with signature %s", method, signature);
         Logging::fatal(log_buffer);
-        perror("Failure during JNI method id lookup. Check honeycomb.log for details.");
+        perror("Failure during JNI static method id lookup. Check honeycomb.log for details.");
         abort();
       }
       return method_id;
@@ -208,11 +258,44 @@ class JNICache
       jint attach_result = attach_thread(jvm, env);
       CHECK_JNI_ABORT(attach_result, "JNICache: Failure while attaching thread to JVM.");
 
-      hbase_adapter_.clazz            = get_class_ref(env, MYSQLENGINE "HBaseAdapter");
-      //hbase_adapter_.start_index_scan = get_method_id(env, hbase_adapter_.clazz, "startIndexScan", "(Ljava/lang/String;Ljava/lang/String;)J");
-      //hbase_adapter_.add_index        = get_method_id(env, hbase_adapter_.clazz, "addIndex", "(Ljava/lang/String;L" HBASECLIENT "TableMultipartKeys;)V");
-      //hbase_adapter_.create_table     = get_method_id(env, hbase_adapter_.clazz, "createTable", "(Ljava/lang/String;Ljava/util/Map;L" HBASECLIENT "TableMultipartKeys;)Z");
-      //hbase_adapter_.index_read       = get_method_id(env, hbase_adapter_.clazz, "indexRead", "(JLjava/util/List;L" MYSQLENGINE "IndexReadType;)L" MYSQLENGINE "IndexRow;");
+      // (dburkert:) I do not recommend editing this section without javap -s,
+      // editor macros, and tabular.vim
+      hbase_adapter_.clazz                        = get_class_ref(env, MYSQLENGINE "HBaseAdapter");
+      hbase_adapter_.initialize                   = get_static_method_id(env, hbase_adapter_.clazz, "initialize", "()V");
+      hbase_adapter_.create_table                 = get_static_method_id(env, hbase_adapter_.clazz, "createTable", "(Ljava/lang/String;Ljava/util/Map;Lcom/nearinfinity/honeycomb/hbaseclient/TableMultipartKeys;)Z");
+      hbase_adapter_.get_autoincrement_value      = get_static_method_id(env, hbase_adapter_.clazz, "getAutoincrementValue", "(Ljava/lang/String;Ljava/lang/String;)J");
+      hbase_adapter_.alter_autoincrement_value    = get_static_method_id(env, hbase_adapter_.clazz, "alterAutoincrementValue", "(Ljava/lang/String;Ljava/lang/String;JZ)Z");
+      hbase_adapter_.start_write                  = get_static_method_id(env, hbase_adapter_.clazz, "startWrite", "()J");
+      hbase_adapter_.end_write                    = get_static_method_id(env, hbase_adapter_.clazz, "endWrite", "(J)V");
+      hbase_adapter_.start_scan                   = get_static_method_id(env, hbase_adapter_.clazz, "startScan", "(Ljava/lang/String;Z)J");
+      hbase_adapter_.next_row                     = get_static_method_id(env, hbase_adapter_.clazz, "nextRow", "(J)Lcom/nearinfinity/honeycomb/mysqlengine/Row;");
+      hbase_adapter_.end_scan                     = get_static_method_id(env, hbase_adapter_.clazz, "endScan", "(J)V");
+      hbase_adapter_.write_row                    = get_static_method_id(env, hbase_adapter_.clazz, "writeRow", "(JLjava/lang/String;Ljava/util/Map;)Z");
+      hbase_adapter_.update_row                   = get_static_method_id(env, hbase_adapter_.clazz, "updateRow", "(JJLjava/util/List;Ljava/lang/String;Ljava/util/Map;)V");
+      hbase_adapter_.flush_writes                 = get_static_method_id(env, hbase_adapter_.clazz, "flushWrites", "(J)V");
+      hbase_adapter_.delete_row                   = get_static_method_id(env, hbase_adapter_.clazz, "deleteRow", "(J)Z");
+      hbase_adapter_.delete_all_rows              = get_static_method_id(env, hbase_adapter_.clazz, "deleteAllRows", "(Ljava/lang/String;)I");
+      hbase_adapter_.drop_table                   = get_static_method_id(env, hbase_adapter_.clazz, "dropTable", "(Ljava/lang/String;)Z");
+      hbase_adapter_.get_row                      = get_static_method_id(env, hbase_adapter_.clazz, "getRow", "(J[B)Lcom/nearinfinity/honeycomb/mysqlengine/Row;");
+      hbase_adapter_.start_index_scan             = get_static_method_id(env, hbase_adapter_.clazz, "startIndexScan", "(Ljava/lang/String;Ljava/lang/String;)J");
+      hbase_adapter_.find_duplicate_key           = get_static_method_id(env, hbase_adapter_.clazz, "findDuplicateKey", "(Ljava/lang/String;Ljava/util/Map;)Ljava/lang/String;");
+      hbase_adapter_.find_duplicate_key_list      = get_static_method_id(env, hbase_adapter_.clazz, "findDuplicateKey", "(Ljava/lang/String;Ljava/util/Map;Ljava/util/List;)Ljava/lang/String;");
+      hbase_adapter_.find_duplicate_value         = get_static_method_id(env, hbase_adapter_.clazz, "findDuplicateValue", "(Ljava/lang/String;Ljava/lang/String;)[B");
+      hbase_adapter_.get_next_autoincrement_value = get_static_method_id(env, hbase_adapter_.clazz, "getNextAutoincrementValue", "(Ljava/lang/String;Ljava/lang/String;)J");
+      hbase_adapter_.index_read                   = get_static_method_id(env, hbase_adapter_.clazz, "indexRead", "(JLjava/util/List;Lcom/nearinfinity/honeycomb/mysqlengine/IndexReadType;)Lcom/nearinfinity/honeycomb/mysqlengine/IndexRow;");
+      hbase_adapter_.next_index_row               = get_static_method_id(env, hbase_adapter_.clazz, "nextIndexRow", "(J)Lcom/nearinfinity/honeycomb/mysqlengine/IndexRow;");
+      hbase_adapter_.increment_row_count          = get_static_method_id(env, hbase_adapter_.clazz, "incrementRowCount", "(Ljava/lang/String;J)V");
+      hbase_adapter_.set_row_count                = get_static_method_id(env, hbase_adapter_.clazz, "setRowCount", "(Ljava/lang/String;J)V");
+      hbase_adapter_.get_row_count                = get_static_method_id(env, hbase_adapter_.clazz, "getRowCount", "(Ljava/lang/String;)J");
+      hbase_adapter_.rename_table                 = get_static_method_id(env, hbase_adapter_.clazz, "renameTable", "(Ljava/lang/String;Ljava/lang/String;)V");
+      hbase_adapter_.is_nullable                  = get_static_method_id(env, hbase_adapter_.clazz, "isNullable", "(Ljava/lang/String;Ljava/lang/String;)Z");
+      hbase_adapter_.add_index                    = get_static_method_id(env, hbase_adapter_.clazz, "addIndex", "(Ljava/lang/String;Lcom/nearinfinity/honeycomb/hbaseclient/TableMultipartKeys;)V");
+      hbase_adapter_.drop_index                   = get_static_method_id(env, hbase_adapter_.clazz, "dropIndex", "(Ljava/lang/String;Ljava/lang/String;)V");
+
+      hbase_adapter_.start_index_scan = get_static_method_id(env, hbase_adapter_.clazz, "startIndexScan", "(Ljava/lang/String;Ljava/lang/String;)J");
+      hbase_adapter_.add_index        = get_static_method_id(env, hbase_adapter_.clazz, "addIndex", "(Ljava/lang/String;L" HBASECLIENT "TableMultipartKeys;)V");
+      hbase_adapter_.create_table     = get_static_method_id(env, hbase_adapter_.clazz, "createTable", "(Ljava/lang/String;Ljava/util/Map;L" HBASECLIENT "TableMultipartKeys;)Z");
+      hbase_adapter_.index_read       = get_static_method_id(env, hbase_adapter_.clazz, "indexRead", "(JLjava/util/List;L" MYSQLENGINE "IndexReadType;)L" MYSQLENGINE "IndexRow;");
 
       index_read_type_.clazz            = get_class_ref(env, MYSQLENGINE "IndexReadType");
       index_read_type_.read_key_exact   = get_static_field_id(env, index_read_type_.clazz, "HA_READ_KEY_EXACT", "L" MYSQLENGINE "IndexReadType;");
