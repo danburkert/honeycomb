@@ -93,12 +93,26 @@ public class TableCache {
                     " Cannot get table information from null table.", tableName));
         }
 
+        long tableId = retrieveTableId(tableName, table);
+
+        TableInfo info = new TableInfo(tableName, tableId);
+
+        addColumns(table, info);
+
+        addTableMetadata(info, table, tableName);
+
+        tableCache.put(tableName, info);
+
+        return info;
+    }
+
+    private static long retrieveTableId(String tableName, HTableInterface table) throws IOException {
         String htableName = format("HTable used \"%s\"",
                 Bytes.toString(table.getTableName()));
         Get tableIdGet = new Get(RowKeyFactory.ROOT);
-        Result result = table.get(tableIdGet);
         String tableNotFoundMessage = format("SQL table \"%s\" was not found. %s",
                 tableName, htableName);
+        Result result = table.get(tableIdGet);
         if (result.isEmpty()) {
             throw new TableNotFoundException(tableNotFoundMessage);
         }
@@ -112,11 +126,28 @@ public class TableCache {
         if (tableId < 0) {
             throw new IllegalStateException(format("Table id %d retrieved from HBase was not valid.", tableId));
         }
+        return tableId;
+    }
 
-        TableInfo info = new TableInfo(tableName, tableId);
+    private static void addTableMetadata(TableInfo info, HTableInterface table, String sqlTableName) throws IOException {
+        long tableId = info.getId();
+        byte[] rowKey = RowKeyFactory.buildTableInfoKey(tableId);
+        Result tableMetadata = table.get(new Get(rowKey));
 
+        NavigableMap<byte[], byte[]> familyMap = tableMetadata.getFamilyMap(Constants.NIC);
+        if (familyMap.isEmpty()) {
+            throw new IllegalStateException(format("SQL Table \"%s\" is missing metadata.", sqlTableName));
+        }
+        Map<String, byte[]> stringFamily = Maps.newHashMap();
+        for (Map.Entry<byte[], byte[]> entry : familyMap.entrySet()) {
+            stringFamily.put(new String(entry.getKey()), entry.getValue());
+        }
+        info.setTableMetadata(stringFamily);
+    }
+
+    private static void addColumns(HTableInterface table, TableInfo info) throws IOException {
+        long tableId = info.getId();
         byte[] rowKey = RowKeyFactory.buildColumnsKey(tableId);
-
         Get columnsGet = new Get(rowKey);
         Result columnsResult = table.get(columnsGet);
         if (columnsResult == null || columnsResult.isEmpty()) {
@@ -133,23 +164,6 @@ public class TableCache {
             long columnId = ByteBuffer.wrap(entry.getValue()).getLong();
             info.addColumn(columnName, columnId, getMetadataForColumn(tableId, columnId, table));
         }
-
-        rowKey = RowKeyFactory.buildTableInfoKey(tableId);
-        Result tableMetadata = table.get(new Get(rowKey));
-        NavigableMap<byte[], byte[]> familyMap = tableMetadata.getFamilyMap(Constants.NIC);
-        if (familyMap.isEmpty()) {
-            throw new IllegalStateException(format("SQL Table \"%s\" is missing metadata.", tableName));
-        }
-
-        Map<String, byte[]> stringFamily = Maps.newHashMap();
-        for (Map.Entry<byte[], byte[]> entry : familyMap.entrySet()) {
-            stringFamily.put(new String(entry.getKey()), entry.getValue());
-        }
-        info.setTableMetadata(stringFamily);
-
-        tableCache.put(tableName, info);
-
-        return info;
     }
 
     private static ColumnMetadata getMetadataForColumn(long tableId, long columnId, HTableInterface table) throws IOException {
