@@ -93,7 +93,7 @@ int HoneycombHandler::create(const char *path, TABLE *table_arg,
 
   int fields = count_fields(table_arg);
   JavaFrame frame(env, fields + 2);
-  jclass adapter_class = this->adapter();
+  jclass adapter_class = cache->hbase_adapter().clazz;
   if (adapter_class == NULL)
   {
     my_error(ER_CREATE_FILEGROUP_FAILED, MYF(0),
@@ -143,7 +143,7 @@ int HoneycombHandler::rename_table(const char *from, const char *to)
 
   JavaFrame frame(env);
 
-  jclass adapter_class = this->adapter();
+  jclass adapter_class = cache->hbase_adapter().clazz;
   jmethodID rename_table_method = cache->hbase_adapter().rename_table;
   char* from_str = extract_table_name_from_path(from);
   char* to_str = extract_table_name_from_path(to);
@@ -175,7 +175,7 @@ int HoneycombHandler::write_row(uchar* buf, jobject updated_fields)
 
   int fields = count_fields(table);
   JavaFrame frame(env, 2*fields + 3);
-  jclass adapter_class = this->adapter();
+  jclass adapter_class = cache->hbase_adapter().clazz;
   jmethodID write_row_method = cache->hbase_adapter().write_row;
   jstring table_name = this->table_name();
   jlong new_autoincrement_value = -1;
@@ -368,7 +368,7 @@ bool HoneycombHandler::row_has_duplicate_values(jobject value_map,
 {
   this->flush_writes(); // Flush before checking for duplicates to make sure the changes are in HBase.
   JavaFrame frame(env);
-  jclass adapter_class = this->adapter();
+  jclass adapter_class = cache->hbase_adapter().clazz;
   jmethodID has_duplicates_method;
   jstring duplicate_column;
   if(changedColumns == NULL)
@@ -507,7 +507,7 @@ int HoneycombHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_key
       }
     }
 
-    jclass adapter = this->adapter();
+    jclass adapter = cache->hbase_adapter().clazz;
     jobject java_keys = this->create_multipart_key(pos, key_part, end_key_part,
         key_info->key_parts);
     jmethodID add_index_method = cache->hbase_adapter().add_index;
@@ -521,7 +521,7 @@ int HoneycombHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_key
 
 jbyteArray HoneycombHandler::find_duplicate_column_values(char* columns)
 {
-  jclass adapter = this->adapter();
+  jclass adapter = cache->hbase_adapter().clazz;
   jmethodID column_has_duplicates_method = cache->hbase_adapter().find_duplicate_value;
   jbyteArray duplicate_value = (jbyteArray) this->env->CallStaticObjectMethod(adapter,
       column_has_duplicates_method, this->table_name(), string_to_java_string(columns));
@@ -533,7 +533,7 @@ jbyteArray HoneycombHandler::find_duplicate_column_values(char* columns)
 int HoneycombHandler::prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys)
 {
   JavaFrame frame(env, num_of_keys + 1);
-  jclass adapter = this->adapter();
+  jclass adapter = cache->hbase_adapter().clazz;
   jmethodID add_index_method = cache->hbase_adapter().drop_index;
   jstring table_name = this->table_name();
   for (uint key = 0; key < num_of_keys; key++)
@@ -552,7 +552,7 @@ int HoneycombHandler::delete_row(const uchar *buf)
 {
   DBUG_ENTER("HoneycombHandler::delete_row");
   ha_statistic_increment(&SSV::ha_delete_count);
-  jclass adapter_class = this->adapter();
+  jclass adapter_class = cache->hbase_adapter().clazz;
   jmethodID delete_row_method = cache->hbase_adapter().delete_row;
   this->env->CallStaticBooleanMethod(adapter_class, delete_row_method, this->curr_scan_id);
   DBUG_RETURN(0);
@@ -564,7 +564,7 @@ int HoneycombHandler::delete_all_rows()
 
   JavaFrame frame(env);
   jstring table_name = this->table_name();
-  jclass adapter_class = this->adapter();
+  jclass adapter_class = cache->hbase_adapter().clazz;
   jmethodID delete_rows_method = cache->hbase_adapter().delete_all_rows;
 
   this->env->CallStaticIntMethod(adapter_class, delete_rows_method, table_name);
@@ -596,7 +596,7 @@ void HoneycombHandler::update_honeycomb_autoincrement_value(jlong new_autoincrem
   }
 
   JavaFrame frame(env);
-  jclass adapter_class = this->adapter();
+  jclass adapter_class = cache->hbase_adapter().clazz;
   jmethodID get_alter_autoincrement_value_method = cache->hbase_adapter().alter_autoincrement_value;
   jstring field_name = string_to_java_string(table->found_next_number_field->field_name);
   jstring table_name =  this->table_name();
@@ -624,7 +624,7 @@ int HoneycombHandler::delete_table(const char *path)
   jstring table_name = string_to_java_string(table);
   ARRAY_DELETE(table);
 
-  jclass adapter_class = this->adapter();
+  jclass adapter_class = cache->hbase_adapter().clazz;
   jmethodID drop_table_method = cache->hbase_adapter().drop_table;
 
   this->env->CallStaticBooleanMethod(adapter_class, drop_table_method,

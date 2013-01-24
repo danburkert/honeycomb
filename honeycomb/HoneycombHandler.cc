@@ -13,7 +13,7 @@ const char **HoneycombHandler::bas_ext() const
 HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg,
     mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm, JNICache* cache)
 : handler(hton, table_arg), jvm(jvm), honeycomb_mutex(mutex),
-  honeycomb_open_tables(open_tables), hbase_adapter(NULL), cache(cache)
+  honeycomb_open_tables(open_tables), cache(cache)
 {
   attach_thread(this->jvm, this->env);
   this->ref_length = 16;
@@ -28,7 +28,7 @@ HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg,
 
 HoneycombHandler::~HoneycombHandler()
 {
-  jclass adapter_class = this->adapter();
+  jclass adapter_class = cache->hbase_adapter().clazz;
   jmethodID end_scan_method = cache->hbase_adapter().end_scan;
   for (int i = 0; i < this->scan_ids_count; i++)
   {
@@ -182,9 +182,9 @@ void HoneycombHandler::java_to_sql(uchar* buf, jobject row_map)
 int HoneycombHandler::external_lock(THD *thd, int lock_type)
 {
   DBUG_ENTER("HoneycombHandler::external_lock");
+  jclass adapter_class = cache->hbase_adapter().clazz;
   if (lock_type == F_WRLCK || lock_type == F_RDLCK)
   {
-    jclass adapter_class = this->adapter();
     jmethodID start_write_method = cache->hbase_adapter().start_write;
     jlong write_id = this->env->CallStaticLongMethod(adapter_class,
         start_write_method);
@@ -193,7 +193,6 @@ int HoneycombHandler::external_lock(THD *thd, int lock_type)
 
   if (lock_type == F_UNLCK)
   {
-    jclass adapter_class = this->adapter();
     jmethodID update_count_method = cache->hbase_adapter().increment_row_count;
     jstring table_name = this->table_name();
     this->env->CallStaticVoidMethod(adapter_class, update_count_method,
@@ -205,7 +204,6 @@ int HoneycombHandler::external_lock(THD *thd, int lock_type)
         (jlong)this->curr_write_id);
     this->curr_write_id = -1;
   }
-
   DBUG_RETURN(0);
 }
 
@@ -295,7 +293,7 @@ int HoneycombHandler::info(uint flag)
   if (flag & HA_STATUS_VARIABLE)
   {
     JavaFrame frame(env);
-    jclass adapter_class = this->adapter();
+    jclass adapter_class = cache->hbase_adapter().clazz;
     jmethodID get_count_method = cache->hbase_adapter().get_row_count;
     jstring table_name = this->table_name();
     jlong row_count = this->env->CallStaticLongMethod(adapter_class,
@@ -360,7 +358,7 @@ int HoneycombHandler::info(uint flag)
   }
   if ((flag & HA_STATUS_AUTO) && table->found_next_number_field) {
     JavaFrame frame(env);
-    jclass adapter_class = this->adapter();
+    jclass adapter_class = cache->hbase_adapter().clazz;
     jmethodID get_autoincrement_value_method = cache->hbase_adapter().get_autoincrement_value;
     jlong autoincrement_value = (jlong) this->env->CallStaticObjectMethod(adapter_class,
         get_autoincrement_value_method, this->table_name(),
@@ -490,7 +488,7 @@ void HoneycombHandler::get_auto_increment(ulonglong offset, ulonglong increment,
                                  ulonglong *nb_reserved_values)
 {
   DBUG_ENTER("HoneycombHandler::get_auto_increment");
-  jclass adapter_class = this->adapter();
+  jclass adapter_class = cache->hbase_adapter().clazz;
   jmethodID get_auto_increment_method = cache->hbase_adapter().get_next_autoincrement_value;
   jlong increment_value = (jlong) this->env->CallStaticObjectMethod(adapter_class,
       get_auto_increment_method, this->table_name(),
@@ -557,7 +555,7 @@ const char *HoneycombHandler::java_to_string(jstring string)
 bool HoneycombHandler::is_field_nullable(jstring table_name, const char* field_name)
 {
   JavaFrame frame(env);
-  jclass adapter_class = this->adapter();
+  jclass adapter_class = cache->hbase_adapter().clazz;
   jmethodID is_nullable_method = cache->hbase_adapter().is_nullable;
   bool result = (bool)this->env->CallStaticBooleanMethod(adapter_class,
       is_nullable_method, table_name, string_to_java_string(field_name));
@@ -598,7 +596,7 @@ ha_rows HoneycombHandler::estimate_rows_upper_bound()
   DBUG_ENTER("HoneycombHandler::estimate_rows_upper_bound");
   JavaFrame frame(env);
 
-  jclass adapter_class = this->adapter();
+  jclass adapter_class = cache->hbase_adapter().clazz;
   jmethodID get_count_method = cache->hbase_adapter().get_row_count;
   jstring table_name = this->table_name();
   jlong row_count = this->env->CallStaticLongMethod(adapter_class,
@@ -611,7 +609,7 @@ ha_rows HoneycombHandler::estimate_rows_upper_bound()
 
 void HoneycombHandler::flush_writes()
 {
-  jclass adapter_class = this->adapter();
+  jclass adapter_class = cache->hbase_adapter().clazz;
   jmethodID end_write_method = cache->hbase_adapter().flush_writes;
   this->env->CallStaticVoidMethod(adapter_class, end_write_method,
       (jlong)this->curr_write_id);
