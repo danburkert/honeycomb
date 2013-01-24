@@ -29,13 +29,6 @@ jlong java_list_size(jobject java_list, JNIEnv* env)
   return env->CallLongMethod(java_list, size_method);
 }
 
-jobject create_java_boolean(jboolean boolean, JNIEnv* env)
-{
-  jclass bool_class = env->FindClass("java/lang/Boolean");
-  jmethodID constructor = env->GetMethodID(bool_class, "<init>", "(Z)V");
-  return env->NewObject(bool_class, constructor, boolean);
-}
-
 jobject create_java_map(JNIEnv* env)
 {
   jclass map_class = env->FindClass(MAP_CLASS);

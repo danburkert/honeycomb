@@ -17,7 +17,6 @@ jobject HoneycombHandler::create_multipart_keys(TABLE* table_arg)
     ARRAY_DELETE(name);
   }
 
-
   return java_keys;
 }
 
