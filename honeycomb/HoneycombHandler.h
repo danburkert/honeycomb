@@ -45,7 +45,6 @@ class HoneycombHandler : public handler
     JNIEnv* env;
     JavaVM* jvm;
     JNICache* cache;
-    jclass hbase_adapter;
 
     jstring table_name();
     const char* java_to_string(jstring str);
@@ -128,11 +127,6 @@ class HoneycombHandler : public handler
       || field_type == MYSQL_TYPE_BIT
       || field_type == MYSQL_TYPE_SET
       || field_type == MYSQL_TYPE_GEOMETRY);
-    }
-
-    jclass adapter()
-    {
-      return cache->hbase_adapter().clazz;
     }
 
     /* Index methods */
