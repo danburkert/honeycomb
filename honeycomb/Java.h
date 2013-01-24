@@ -21,6 +21,5 @@ bool print_java_exception(JNIEnv* jni_env);
 jobject create_java_boolean(jboolean boolean, JNIEnv* env);
 jbyteArray convert_value_to_java_bytes(uchar* value, uint32 length, JNIEnv* env);
 char *char_array_from_java_bytes(jbyteArray java_bytes, JNIEnv* env);
-jobject new_multipart_key(JNIEnv* env);
 
 #endif
