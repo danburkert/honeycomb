@@ -44,6 +44,12 @@ public class Index {
         });
     }
 
+    /**
+     * Calculates the total length of the HBase index row given the columns.
+     * @param columns Columns expected in the index
+     * @param columnLengthMap Map of column to length
+     * @return Total length
+     */
     public static int calculateIndexValuesFullLength(final Iterable<String> columns, final Map<String, Integer> columnLengthMap) {
         int size = 0;
         for (String column : columns) {

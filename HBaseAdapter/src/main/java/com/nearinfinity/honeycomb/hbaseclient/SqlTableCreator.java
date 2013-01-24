@@ -11,6 +11,12 @@ import java.io.IOException;
 public class SqlTableCreator {
     private static final Logger logger = Logger.getLogger(SqlTableCreator.class);
 
+    /**
+     * Creates an HTable, with the correct column family, in HBase that will store all of the SQL tables.
+     *
+     * @param configuration Configuration of the HTable
+     * @throws IOException
+     */
     public static void initializeSqlTable(Configuration configuration) throws IOException {
         HTableDescriptor sqlTableDescriptor;
         HColumnDescriptor nicColumn = new HColumnDescriptor(Constants.NIC);
