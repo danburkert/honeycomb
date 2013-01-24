@@ -17,14 +17,39 @@ public class ValueEncoder {
     private static final byte ASC_BYTE_MASK = (byte) 0x00000000;
     private static final long INVERT_SIGN_MASK = 0x8000000000000000L;
 
+    /**
+     * Encodes SQL row values so they are correctly padded and are in ascending order when lexicographically ordered.
+     * Encoding only applies to numbers
+     *
+     * @param info   SQL table metadata
+     * @param values SQL row values
+     * @return Encoded and padded SQL row
+     */
     public static Map<String, byte[]> correctAscendingValuePadding(final TableInfo info, final Map<String, byte[]> values) {
         return correctAscendingValuePadding(info, values, new HashSet<String>());
     }
 
+    /**
+     * Encodes SQL row values so they are correctly padded and are in descending order when lexicographically ordered.
+     * Encoding only applies to numbers
+     *
+     * @param info   SQL table metadata
+     * @param values SQL row values
+     * @return Encoded and padded SQL row
+     */
     public static Map<String, byte[]> correctDescendingValuePadding(final TableInfo info, final Map<String, byte[]> values) {
         return correctDescendingValuePadding(info, values, new HashSet<String>());
     }
 
+    /**
+     * Encodes SQL row values so they are correctly padded and are in ascending order when lexicographically ordered.
+     * Encoding only applies to numbers
+     *
+     * @param info              SQL table metadata
+     * @param values            SQL row values
+     * @param nullSearchColumns Columns to treat as null (even if they aren't)
+     * @return Encoded and padded SQL row
+     */
     public static Map<String, byte[]> correctAscendingValuePadding(final TableInfo info, final Map<String, byte[]> values, final Set<String> nullSearchColumns) {
         checkNotNull(info, "info");
         checkNotNull(nullSearchColumns, "nullSearchColumns");
@@ -37,6 +62,15 @@ public class ValueEncoder {
         });
     }
 
+    /**
+     * Encodes SQL row values so they are correctly padded and are in descending order when lexicographically ordered.
+     * Encoding only applies to numbers
+     *
+     * @param info              SQL table metadata
+     * @param values            SQL row values
+     * @param nullSearchColumns Columns to treat as null (even if they aren't)
+     * @return Encoded and padded SQL row
+     */
     public static Map<String, byte[]> correctDescendingValuePadding(final TableInfo info, final Map<String, byte[]> values, final Set<String> nullSearchColumns) {
         checkNotNull(info, "info");
         checkNotNull(nullSearchColumns, "nullSearchColumns");

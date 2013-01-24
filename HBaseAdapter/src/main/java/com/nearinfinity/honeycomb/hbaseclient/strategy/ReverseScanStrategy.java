@@ -31,7 +31,7 @@ public class ReverseScanStrategy implements ScanStrategy {
         final byte[] columnIds = Index.createColumnIds(columns, info.columnNameToIdMap());
         final byte[] nextColumnIds = Util.incrementColumn(columnIds, Bytes.SIZEOF_LONG * (columnCount - 1));
 
-        byte[] paddedValue = Index.createValues(this.scanInfo.keyValueColumns(), descendingValueMap);
+        byte[] paddedValue = Index.convertToHBaseFormat(this.scanInfo.keyValueColumns(), descendingValueMap);
         paddedValue = Bytes.padTail(paddedValue, Math.max(indexValuesFullLength - paddedValue.length, 0));
 
         if (indexLast) {

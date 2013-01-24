@@ -35,7 +35,7 @@ public class Index {
      * @param values  MySQL row values
      * @return HBase index row format of the column values
      */
-    public static byte[] createValues(final Iterable<String> columns, final Map<String, byte[]> values) {
+    public static byte[] convertToHBaseFormat(final Iterable<String> columns, final Map<String, byte[]> values) {
         return convertToByteArray(columns, new Function<String, byte[]>() {
             @Override
             public byte[] apply(String column) {
@@ -46,7 +46,8 @@ public class Index {
 
     /**
      * Calculates the total length of the HBase index row given the columns.
-     * @param columns Columns expected in the index
+     *
+     * @param columns         Columns expected in the index
      * @param columnLengthMap Map of column to length
      * @return Total length
      */
@@ -59,21 +60,51 @@ public class Index {
         return size;
     }
 
+    /**
+     * Retrieve the columns of the indexes.
+     * @param tableMetadata SQL table metadata
+     * @return Columns in an index
+     */
     public static List<List<String>> indexForTable(final Map<String, byte[]> tableMetadata) {
         return extractTableMetadata(tableMetadata, Constants.INDEXES);
     }
 
+    /**
+     * Retrieve the columns of the indexes with a uniqueness constraint.
+     * @param tableMetadata SQL table metadata
+     * @return Columns with uniqueness constraint
+     */
     public static List<List<String>> uniqueKeysForTable(final Map<String, byte[]> tableMetadata) {
         return extractTableMetadata(tableMetadata, Constants.UNIQUES);
     }
 
+    /**
+     * Creates the reverse index for a SQL row.
+     *
+     * @param tableId          Unique identifier of the SQL table
+     * @param rowId            Unique identifier for the SQL row
+     * @param descendingValues HBase encoded form of the SQL row
+     * @param columns          Columns in the index
+     * @param columnIds        HBase format of the columns
+     * @return HBase index bytes for SQL row
+     */
     public static byte[] createReverseIndex(long tableId, UUID rowId, Map<String, byte[]> descendingValues, List<String> columns, byte[] columnIds) {
-        final byte[] descendingIndexValues = createValues(columns, descendingValues);
+        final byte[] descendingIndexValues = convertToHBaseFormat(columns, descendingValues);
         return RowKeyFactory.buildReverseIndexRowKey(tableId, columnIds, descendingIndexValues, rowId);
     }
 
+    /**
+     * Creates the primary index for a SQL row.
+     *
+     * @param tableId         Unique identifier of the SQL table
+     * @param rowId           Unique identifier for the SQL row
+     * @param ascendingValues HBase encoded form of the SQL row
+     * @param columns         Columns in the index
+     * @param columnIds       HBase format of the columns
+     * @return HBase index bytes for SQL row
+     */
     public static byte[] createPrimaryIndex(long tableId, UUID rowId, Map<String, byte[]> ascendingValues, List<String> columns, byte[] columnIds) {
-        final byte[] ascendingIndexValues = createValues(columns, ascendingValues);
+        final byte[] ascendingIndexValues = convertToHBaseFormat(columns, ascendingValues);
         return RowKeyFactory.buildIndexRowKey(tableId, columnIds, ascendingIndexValues, rowId);
     }
 

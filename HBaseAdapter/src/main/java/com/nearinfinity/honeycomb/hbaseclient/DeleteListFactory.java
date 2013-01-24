@@ -33,12 +33,30 @@ public class DeleteListFactory {
         return deleteList;
     }
 
+    /**
+     * Creates the required HBase {@code Delete's} to remove an index for a SQL row from HBase.
+     *
+     * @param values      SQL row
+     * @param info        Table metadata
+     * @param indexedKeys One index in the SQL table
+     * @param uuid        Unique identifier of the SQL row
+     * @return HBase deletes
+     */
     public static List<Delete> createDeleteForIndex(Map<String, byte[]> values, TableInfo info, UUID uuid, List<String> indexedKeys) {
         List<List<String>> newIndexColumns = new LinkedList<List<String>>();
         newIndexColumns.add(new LinkedList<String>(indexedKeys));
         return createDeleteForIndex(values, info, newIndexColumns, uuid);
     }
 
+    /**
+     * Creates the required HBase {@code Delete's} to remove all indexes for a SQL row from HBase.
+     *
+     * @param values      SQL row
+     * @param info        Table metadata
+     * @param indexedKeys All indexed columns in the SQL table
+     * @param uuid        Unique identifier of the SQL row
+     * @return HBase deletes
+     */
     public static List<Delete> createDeleteForIndex(Map<String, byte[]> values, TableInfo info, List<List<String>> indexedKeys, UUID uuid) {
         final long tableId = info.getId();
         List<Delete> deleteList = new LinkedList<Delete>();
