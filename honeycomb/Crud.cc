@@ -400,7 +400,8 @@ int HoneycombHandler::update_row(const uchar *old_row, uchar *new_row)
     table->timestamp_field->set_time();
 
   int rc = 0;
-  jobject updated_fieldnames = create_java_list(this->env);
+  jobject updated_fieldnames = env->NewObject(cache->linked_list().clazz,
+      cache->linked_list().init);
   this->collect_changed_fields(updated_fieldnames, old_row, new_row);
   jlong size = java_list_size(updated_fieldnames, this->env);
   if(size == 0)
@@ -458,8 +459,8 @@ void HoneycombHandler::collect_changed_fields(jobject updated_fields,
       && 0 != memcmp(old_field, new_field, old_field_length);
     if (field_lengths_are_different || original_not_null_and_field_has_changed)
     {
-      java_list_insert(updated_fields, string_to_java_string(field->field_name),
-          this->env);
+      env->CallObjectMethod(updated_fields, cache->linked_list().add,
+          string_to_java_string(field->field_name));
     }
   }
 }

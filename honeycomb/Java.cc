@@ -6,21 +6,6 @@
 #define MAP_CLASS "java/util/TreeMap"
 #define LIST_CLASS "java/util/LinkedList"
 
-jobject create_java_list(JNIEnv* env)
-{
-  jclass list_class = env->FindClass(LIST_CLASS);
-  jmethodID constructor = env->GetMethodID(list_class, "<init>", "()V");
-  return env->NewObject(list_class, constructor);
-}
-
-jobject java_list_insert(jobject java_list, jobject value, JNIEnv* env)
-{
-  jclass list_class = env->FindClass(LIST_CLASS);
-  jmethodID add_method = env->GetMethodID(list_class, "add", "(Ljava/lang/Object;)Z");
-
-  return env->CallObjectMethod(java_list, add_method, value);
-}
-
 jlong java_list_size(jobject java_list, JNIEnv* env)
 {
   jclass list_class = env->FindClass(LIST_CLASS);
@@ -142,9 +127,4 @@ char *char_array_from_java_bytes(jbyteArray java_bytes, JNIEnv* env)
   env->ReleaseByteArrayElements(java_bytes, jbytes, 0);
 
   return ret;
-}
-
-jclass multipart_key_class(JNIEnv* env)
-{
-  return env->FindClass(HBASECLIENT "TableMultipartKeys");
 }
