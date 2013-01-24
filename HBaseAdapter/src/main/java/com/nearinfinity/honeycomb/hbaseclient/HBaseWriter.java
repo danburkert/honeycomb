@@ -425,7 +425,7 @@ public class HBaseWriter implements Closeable {
         table.put(columnInfoPut);
         table.flushCommits();
 
-        TableCache.get(tableName).setColumnMetadata(fieldName, metadata);
+        info.setColumnMetadata(fieldName, metadata);
 
         return true;
     }

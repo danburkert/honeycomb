@@ -24,6 +24,14 @@ public class TableCache {
     private static final ReadWriteLock cacheLock = new ReentrantReadWriteLock();
     private static final Logger logger = Logger.getLogger(TableCache.class);
 
+    /**
+     * Retrieves SQL table metadata from a cache or HBase.
+     *
+     * @param tableName SQL table name
+     * @param table     HTable containing the metadata
+     * @return SQL table metadata
+     * @throws IOException
+     */
     public static TableInfo getTableInfo(String tableName, HTableInterface table) throws IOException {
         checkNotNull(tableName);
         cacheLock.readLock().lock();
@@ -44,20 +52,29 @@ public class TableCache {
             }
 
             logger.info(String.format("Table cache miss for %s. Going out to HBase.", tableName));
-            return TableCache.refreshCache(tableName, table, tableCache);
+            return refreshCache(tableName, table, tableCache);
         } finally {
             cacheLock.writeLock().unlock();
         }
     }
 
+    /**
+     * Put table metadata into the cache for a SQL table.
+     *
+     * @param tableName SQL table name
+     * @param info      Table metadata
+     */
     public static void put(String tableName, TableInfo info) {
         tableCache.put(tableName, info);
     }
 
-    public static TableInfo get(String tableName) {
-        return tableCache.get(tableName);
-    }
-
+    /**
+     * Atomically swap an old table name for a new one.
+     *
+     * @param from Old table name
+     * @param to   New table name
+     * @param info New table metadata
+     */
     public static void swap(String from, String to, TableInfo info) {
         cacheLock.writeLock().lock();
         try {
@@ -68,8 +85,8 @@ public class TableCache {
         }
     }
 
-    public static TableInfo refreshCache(String tableName, HTableInterface table,
-                                         ConcurrentHashMap<String, TableInfo> tableCache)
+    private static TableInfo refreshCache(String tableName, HTableInterface table,
+                                          ConcurrentHashMap<String, TableInfo> tableCache)
             throws IOException {
         if (table == null) {
             throw new IllegalStateException(format("Table %s is null." +
