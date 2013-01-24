@@ -3,9 +3,9 @@
 jobject HoneycombHandler::create_multipart_keys(TABLE* table_arg)
 {
   uint keys = table_arg->s->keys;
-  JavaFrame frame(env, keys + 1);
   jobject java_keys = env->NewObject(cache->table_multipart_keys().clazz,
       cache->table_multipart_keys().init);
+  JavaFrame frame(env, keys + 1);
   for (uint key = 0; key < keys; key++)
   {
     char* name = index_name(table_arg, key);
@@ -22,9 +22,9 @@ jobject HoneycombHandler::create_multipart_keys(TABLE* table_arg)
 jobject HoneycombHandler::create_multipart_key(KEY* key, KEY_PART_INFO* key_part,
     KEY_PART_INFO* key_part_end, uint key_parts)
 {
-  JavaFrame frame(env);
   jobject java_keys = env->NewObject(cache->table_multipart_keys().clazz,
       cache->table_multipart_keys().init);
+  JavaFrame frame(env);
   char* name = index_name(key_part, key_part_end, key_parts);
   jboolean is_unique = key->flags & HA_NOSAME ? JNI_TRUE : JNI_FALSE;
   this->env->CallVoidMethod(java_keys, cache->table_multipart_keys().add_multipart_key,
