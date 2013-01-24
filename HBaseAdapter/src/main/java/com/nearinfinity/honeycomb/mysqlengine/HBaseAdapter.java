@@ -53,61 +53,6 @@ public class HBaseAdapter {
         }
     }
 
-    private static void doInitialization() throws IOException {
-        if (isInitialized) {
-            return;
-        }
-
-        logger.info("Begin");
-
-        File configFile = new File(CONFIG_PATH);
-        if (!(configFile.exists() && configFile.canRead() && configFile.isFile())) {
-            throw new FileNotFoundException(CONFIG_PATH + " doesn't exist or cannot be read.");
-        }
-
-        try {
-            params = Util.readConfiguration(configFile);
-        } catch (ParserConfigurationException e) {
-            logger.fatal("The xml parser was not configured properly.", e);
-        } catch (SAXException e) {
-            logger.fatal("Exception while trying to parse the config file.", e);
-        }
-
-        logger.info(format("Read in {0} parameters.", params.size()));
-
-        try {
-            String tableName = params.get(Constants.HBASE_TABLE),
-                    zkQuorum = params.get("zk_quorum");
-            int poolSize = params.getInt("honeycomb.pool_size", DEFAULT_TABLE_POOL_SIZE);
-            long writeBuffer = params.getLong("write_buffer_size", DEFAULT_WRITE_BUFFER_SIZE);
-            boolean autoFlush = params.getBoolean("flush_changes_immediately", false);
-
-            Configuration configuration = HBaseConfiguration.create();
-            configuration.set("hbase.zookeeper.quorum", zkQuorum);
-            configuration.set(Constants.HBASE_TABLE, tableName);
-            SqlTableCreator.initializeSqlTable(configuration);
-            tablePool = new HTablePool(configuration, poolSize, new HTableFactory(writeBuffer, autoFlush));
-            HTableInterface readerTable = tablePool.getTable(tableName);
-            reader = new HBaseReader(readerTable);
-        } catch (ZooKeeperConnectionException e) {
-            logger.fatal("Could not connect to zookeeper. ", e);
-            throw e;
-        } catch (IOException e) {
-            logger.fatal("Could not create HBase client. Aborting initialization.");
-            throw e;
-        }
-
-        reader.setCacheSize(params.getInt("table_scan_cache_rows", DEFAULT_NUM_CACHED_ROWS));
-
-        isInitialized = true;
-        logger.info("End");
-    }
-
-    private static HBaseWriter createWriter() {
-        HTableInterface table = tablePool.getTable(params.get(Constants.HBASE_TABLE));
-        return new HBaseWriter(table);
-    }
-
     /**
      * Creates a sql table in HBase with columns and indexes.
      * Called when a "create table XXX()" statement is executed.
@@ -669,22 +614,6 @@ public class HBaseAdapter {
         }
     }
 
-    private static HBaseWriter getHBaseWriterForId(long writeId) throws HBaseAdapterException {
-        HBaseWriter writer = activeWriterLookup.get(writeId);
-        if (writer == null) {
-            throw new HBaseAdapterException("No connection for scanId: " + writeId, null);
-        }
-        return writer;
-    }
-
-    private static ActiveScan getActiveScanForId(long scanId) throws HBaseAdapterException {
-        ActiveScan conn = activeScanLookup.get(scanId);
-        if (conn == null) {
-            throw new HBaseAdapterException("No connection for scanId: " + scanId, null);
-        }
-        return conn;
-    }
-
     /**
      * Increment the SQL row count in HBase.
      *
@@ -806,5 +735,76 @@ public class HBaseAdapter {
             logger.error("Exception: ", e);
             throw new HBaseAdapterException("dropIndex", e);
         }
+    }
+
+    private static void doInitialization() throws IOException {
+        if (isInitialized) {
+            return;
+        }
+
+        logger.info("Begin");
+
+        File configFile = new File(CONFIG_PATH);
+        if (!(configFile.exists() && configFile.canRead() && configFile.isFile())) {
+            throw new FileNotFoundException(CONFIG_PATH + " doesn't exist or cannot be read.");
+        }
+
+        try {
+            params = Util.readConfiguration(configFile);
+        } catch (ParserConfigurationException e) {
+            logger.fatal("The xml parser was not configured properly.", e);
+        } catch (SAXException e) {
+            logger.fatal("Exception while trying to parse the config file.", e);
+        }
+
+        logger.info(format("Read in {0} parameters.", params.size()));
+
+        try {
+            String tableName = params.get(Constants.HBASE_TABLE),
+                    zkQuorum = params.get("zk_quorum");
+            int poolSize = params.getInt("honeycomb.pool_size", DEFAULT_TABLE_POOL_SIZE);
+            long writeBuffer = params.getLong("write_buffer_size", DEFAULT_WRITE_BUFFER_SIZE);
+            boolean autoFlush = params.getBoolean("flush_changes_immediately", false);
+
+            Configuration configuration = HBaseConfiguration.create();
+            configuration.set("hbase.zookeeper.quorum", zkQuorum);
+            configuration.set(Constants.HBASE_TABLE, tableName);
+            SqlTableCreator.initializeSqlTable(configuration);
+            tablePool = new HTablePool(configuration, poolSize, new HTableFactory(writeBuffer, autoFlush));
+            HTableInterface readerTable = tablePool.getTable(tableName);
+            reader = new HBaseReader(readerTable);
+        } catch (ZooKeeperConnectionException e) {
+            logger.fatal("Could not connect to zookeeper. ", e);
+            throw e;
+        } catch (IOException e) {
+            logger.fatal("Could not create HBase client. Aborting initialization.");
+            throw e;
+        }
+
+        reader.setCacheSize(params.getInt("table_scan_cache_rows", DEFAULT_NUM_CACHED_ROWS));
+
+        isInitialized = true;
+        logger.info("End");
+    }
+
+    private static HBaseWriter createWriter() {
+        HTableInterface table = tablePool.getTable(params.get(Constants.HBASE_TABLE));
+        return new HBaseWriter(table);
+    }
+
+    private static HBaseWriter getHBaseWriterForId(long writeId) throws HBaseAdapterException {
+        HBaseWriter writer = activeWriterLookup.get(writeId);
+        if (writer == null) {
+            throw new HBaseAdapterException("No connection for scanId: " + writeId, null);
+        }
+        return writer;
+    }
+
+    private static ActiveScan getActiveScanForId(long scanId) throws HBaseAdapterException {
+        ActiveScan conn = activeScanLookup.get(scanId);
+        if (conn == null) {
+            throw new HBaseAdapterException("No connection for scanId: " + scanId, null);
+        }
+        return conn;
     }
 }

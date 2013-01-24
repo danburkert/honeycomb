@@ -59,6 +59,24 @@ public class Index {
         return size;
     }
 
+    public static List<List<String>> indexForTable(final Map<String, byte[]> tableMetadata) {
+        return extractTableMetadata(tableMetadata, Constants.INDEXES);
+    }
+
+    public static List<List<String>> uniqueKeysForTable(final Map<String, byte[]> tableMetadata) {
+        return extractTableMetadata(tableMetadata, Constants.UNIQUES);
+    }
+
+    public static byte[] createReverseIndex(long tableId, UUID rowId, Map<String, byte[]> descendingValues, List<String> columns, byte[] columnIds) {
+        final byte[] descendingIndexValues = createValues(columns, descendingValues);
+        return RowKeyFactory.buildReverseIndexRowKey(tableId, columnIds, descendingIndexValues, rowId);
+    }
+
+    public static byte[] createPrimaryIndex(long tableId, UUID rowId, Map<String, byte[]> ascendingValues, List<String> columns, byte[] columnIds) {
+        final byte[] ascendingIndexValues = createValues(columns, ascendingValues);
+        return RowKeyFactory.buildIndexRowKey(tableId, columnIds, ascendingIndexValues, rowId);
+    }
+
     private static byte[] correctColumnIdSize(final byte[] columnIds) {
         int expectedSize = Constants.KEY_PART_COUNT * Bytes.SIZEOF_LONG;
         checkState(columnIds.length <= expectedSize, format("There should never be more than %d columns indexed. Found %d columns.", expectedSize / Bytes.SIZEOF_LONG, columnIds.length / Bytes.SIZEOF_LONG));
@@ -85,14 +103,6 @@ public class Index {
         return Util.mergeByteArrays(pieces, size);
     }
 
-    public static List<List<String>> indexForTable(final Map<String, byte[]> tableMetadata) {
-        return extractTableMetadata(tableMetadata, Constants.INDEXES);
-    }
-
-    public static List<List<String>> uniqueKeysForTable(final Map<String, byte[]> tableMetadata) {
-        return extractTableMetadata(tableMetadata, Constants.UNIQUES);
-    }
-
     private static List<List<String>> extractTableMetadata(Map<String, byte[]> tableMetadata, byte[] key) {
         byte[] jsonBytes = null;
         for (Map.Entry<String, byte[]> entry : tableMetadata.entrySet()) {
@@ -106,15 +116,5 @@ public class Index {
         }
 
         return Util.deserializeList(jsonBytes);
-    }
-
-    public static byte[] createReverseIndex(long tableId, UUID rowId, Map<String, byte[]> descendingValues, List<String> columns, byte[] columnIds) {
-        final byte[] descendingIndexValues = createValues(columns, descendingValues);
-        return RowKeyFactory.buildReverseIndexRowKey(tableId, columnIds, descendingIndexValues, rowId);
-    }
-
-    public static byte[] createPrimaryIndex(long tableId, UUID rowId, Map<String, byte[]> ascendingValues, List<String> columns, byte[] columnIds) {
-        final byte[] ascendingIndexValues = createValues(columns, ascendingValues);
-        return RowKeyFactory.buildIndexRowKey(tableId, columnIds, ascendingIndexValues, rowId);
     }
 }

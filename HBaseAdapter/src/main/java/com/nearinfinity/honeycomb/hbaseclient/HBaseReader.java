@@ -24,18 +24,6 @@ public class HBaseReader {
         this.table = table;
     }
 
-    private <K, V> Map<K, V> selectKeys(Map<K, V> map, Iterable<K> keys) {
-        Map<K, V> subset = new HashMap<K, V>();
-        for (K key : keys) {
-            V value = map.get(key);
-            if (map.containsKey(key) && value != null) {
-                subset.put(key, value);
-            }
-        }
-
-        return subset;
-    }
-
     public Result getDataRow(UUID uuid, String tableName) throws IOException {
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
@@ -68,19 +56,6 @@ public class HBaseReader {
             if (duplicateFound != null) {
                 return duplicateFound;
             }
-        }
-
-        return null;
-    }
-
-    private String doFindDuplicateKey(String tableName, Map<String, byte[]> values) throws IOException {
-        ScanStrategyInfo scanInfo = new ScanStrategyInfo(tableName, values.keySet(), valueMapToKeyValues(tableName, values));
-        PrefixScanStrategy strategy = new PrefixScanStrategy(scanInfo);
-
-        HBaseResultScanner scanner = new SingleResultScanner(getScanner(strategy));
-
-        if (scanner.next(null) != null) {
-            return Joiner.on(",").join(scanInfo.columnNames());
         }
 
         return null;
@@ -162,19 +137,6 @@ public class HBaseReader {
         return table.incrementColumnValue(rowKey, Constants.NIC, Constants.ROW_COUNT, 0);
     }
 
-    private List<KeyValue> valueMapToKeyValues(String tableName, Map<String, byte[]> valueMap) throws IOException {
-        TableInfo info = getTableInfo(tableName);
-        List<KeyValue> keyValues = new LinkedList<KeyValue>();
-        for (Map.Entry<String, byte[]> entry : valueMap.entrySet()) {
-            String key = entry.getKey();
-            ColumnMetadata metadata = info.getColumnMetadata(key);
-            byte[] value = entry.getValue();
-            keyValues.add(new KeyValue(key, value, metadata.isNullable(), value == null));
-        }
-
-        return keyValues;
-    }
-
     public ResultScanner getScanner(ScanStrategy strategy) throws IOException {
         TableInfo info = getTableInfo(strategy.getTableName());
 
@@ -190,5 +152,43 @@ public class HBaseReader {
 
     public TableInfo getTableInfo(String tableName) throws IOException {
         return TableCache.getTableInfo(tableName, table);
+    }
+
+    private <K, V> Map<K, V> selectKeys(Map<K, V> map, Iterable<K> keys) {
+        Map<K, V> subset = new HashMap<K, V>();
+        for (K key : keys) {
+            V value = map.get(key);
+            if (map.containsKey(key) && value != null) {
+                subset.put(key, value);
+            }
+        }
+
+        return subset;
+    }
+
+    private String doFindDuplicateKey(String tableName, Map<String, byte[]> values) throws IOException {
+        ScanStrategyInfo scanInfo = new ScanStrategyInfo(tableName, values.keySet(), valueMapToKeyValues(tableName, values));
+        PrefixScanStrategy strategy = new PrefixScanStrategy(scanInfo);
+
+        HBaseResultScanner scanner = new SingleResultScanner(getScanner(strategy));
+
+        if (scanner.next(null) != null) {
+            return Joiner.on(",").join(scanInfo.columnNames());
+        }
+
+        return null;
+    }
+
+    private List<KeyValue> valueMapToKeyValues(String tableName, Map<String, byte[]> valueMap) throws IOException {
+        TableInfo info = getTableInfo(tableName);
+        List<KeyValue> keyValues = new LinkedList<KeyValue>();
+        for (Map.Entry<String, byte[]> entry : valueMap.entrySet()) {
+            String key = entry.getKey();
+            ColumnMetadata metadata = info.getColumnMetadata(key);
+            byte[] value = entry.getValue();
+            keyValues.add(new KeyValue(key, value, metadata.isNullable(), value == null));
+        }
+
+        return keyValues;
     }
 }
