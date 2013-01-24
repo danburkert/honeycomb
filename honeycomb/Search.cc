@@ -1,4 +1,5 @@
 #include "HoneycombHandler.h"
+#include "JNICache.h"
 
 int HoneycombHandler::index_init(uint idx, bool sorted)
 {
@@ -39,21 +40,19 @@ jobject HoneycombHandler::create_key_value_list(int index, uint* key_sizes,
     uchar** key_copies, const char** key_names, jboolean* key_null_bits,
     jboolean* key_is_null)
 {
-  jobject key_values = create_java_list(this->env);
+  jobject key_values = env->NewObject(cache->linked_list().clazz,
+      cache->linked_list().init);
   JavaFrame frame(env, 3*index);
-  jclass key_value_class = this->env->FindClass(HBASECLIENT "KeyValue");
-  jmethodID key_value_ctor = this->env->GetMethodID(key_value_class, "<init>",
-      "(Ljava/lang/String;[BZZ)V");
   for(int x = 0; x < index; x++)
   {
     jbyteArray java_key = this->env->NewByteArray(key_sizes[x]);
     this->env->SetByteArrayRegion(java_key, 0, key_sizes[x], (jbyte*) key_copies[x]);
     jstring key_name = string_to_java_string(key_names[x]);
-    jobject key_value = this->env->NewObject(key_value_class, key_value_ctor,
-        key_name, java_key, key_null_bits[x], key_is_null[x]);
-    java_list_insert(key_values, key_value, this->env);
+    jobject key_value = this->env->NewObject(cache->key_value().clazz,
+        cache->key_value().init, key_name, java_key, key_null_bits[x],
+        key_is_null[x]);
+    env->CallObjectMethod(key_values, cache->linked_list().add, key_value);
   }
-
   return key_values;
 }
 
