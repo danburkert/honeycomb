@@ -8,7 +8,8 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.text.MessageFormat.format;
 
 public final class Util {
@@ -18,6 +19,14 @@ public final class Util {
     }.getType();
     private static Gson gson = new Gson();
 
+    /**
+     * Merges many byte arrays into a single large one.
+     * Requires: size >= sum (length pieces)
+     *
+     * @param pieces Multiple byte arrays
+     * @param size   Total length of the byte arrays merged
+     * @return Merged byte array
+     */
     public static byte[] mergeByteArrays(final Iterable<byte[]> pieces, final int size) {
         checkNotNull(pieces, "pieces");
         checkArgument(size >= 0, format("size must be positive. {0}", size));
@@ -26,7 +35,7 @@ public final class Util {
         final byte[] mergedArray = new byte[size];
         for (final byte[] piece : pieces) {
             int totalLength = offset + piece.length;
-            if(totalLength > size){
+            if (totalLength > size) {
                 throw new IllegalStateException(format("Merging byte arrays would exceed allocated size. Size {0}/Total {1}", size, totalLength));
             }
 
@@ -37,6 +46,15 @@ public final class Util {
         return mergedArray;
     }
 
+    /**
+     * Takes SQL column IDs in HBase format and increments the last column ID.
+     * For example:
+     * incrementColumn([0,0,0,0,0,0,0,1], 8) => [0,0,0,0,0,0,0,2]
+     *
+     * @param columnIds SQL column IDs
+     * @param offset    Position of the last column ID
+     * @return Incremented SQL column IDs
+     */
     public static byte[] incrementColumn(final byte[] columnIds, final int offset) {
         checkNotNull(columnIds, "columnIds");
         checkArgument(offset >= 0, "Offset must be positive");
@@ -53,21 +71,45 @@ public final class Util {
         return nextColumn;
     }
 
+    /**
+     * Serialize a map into a byte array
+     *
+     * @param values Map to serialize
+     * @return Serialized map
+     */
     public static byte[] serializeMap(final Map<String, byte[]> values) {
         checkNotNull(values, "values");
         return gson.toJson(values, mapType).getBytes();
     }
 
+    /**
+     * Deserialize a map from a byte array
+     *
+     * @param bytes Bytes of a map
+     * @return Deserialized map
+     */
     public static Map<String, byte[]> deserializeMap(final byte[] bytes) {
         checkNotNull(bytes, "bytes");
         return gson.fromJson(new String(bytes), mapType);
     }
 
+    /**
+     * Serialize a list into a byte array
+     *
+     * @param list List to serialize
+     * @return Serialized list
+     */
     public static byte[] serializeList(final List<List<String>> list) {
         checkNotNull(list, "list");
         return gson.toJson(list, listType).getBytes();
     }
 
+    /**
+     * Deserialize a byte array into a list
+     *
+     * @param bytes Bytes of a list
+     * @return Deserialized list
+     */
     public static List<List<String>> deserializeList(byte[] bytes) {
         checkNotNull(bytes, "bytes");
         return gson.fromJson(new String(bytes), listType);

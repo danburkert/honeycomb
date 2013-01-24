@@ -1,7 +1,7 @@
 package com.nearinfinity.honeycomb;
 
 import com.nearinfinity.honeycomb.mysqlengine.HBaseAdapter;
-import com.nearinfinity.honeycomb.mysqlengine.Row;
+import com.nearinfinity.honeycomb.hbaseclient.Row;
 
 public class HeapTester {
 

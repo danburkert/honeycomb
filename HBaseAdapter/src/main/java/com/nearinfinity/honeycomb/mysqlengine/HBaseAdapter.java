@@ -18,7 +18,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -44,6 +43,7 @@ public class HBaseAdapter {
 
     /**
      * Initializes the resources for connecting with HBase
+     *
      * @throws IOException Connecting to HBase failed
      */
     public static void initialize() throws IOException {
@@ -193,19 +193,14 @@ public class HBaseAdapter {
      */
     public static Row nextRow(long scanId) throws HBaseAdapterException {
         try {
-            Row row = new Row();
             ActiveScan conn = getActiveScanForId(scanId);
             HBaseResultScanner scanner = conn.getScanner();
-            Result result = scanner.next(null);
+            Row row = reader.nextRow(conn.getTableName(), scanner);
 
-            if (result == null) {
+            if (row == null) {
                 return null;
             }
 
-            TableInfo info = reader.getTableInfo(conn.getTableName());
-            Map<String, byte[]> values = ResultParser.parseDataRow(result, info);
-            UUID uuid = ResultParser.parseUUID(result);
-            row.parse(values, uuid);
             return row;
         } catch (Throwable e) {
             logger.error("Exception:", e);
@@ -304,6 +299,7 @@ public class HBaseAdapter {
     /**
      * Deletes a SQL row out of HBase based on where the given scan
      * resides.
+     *
      * @param scanId The "session" ID for reading
      * @return success
      * @throws HBaseAdapterException
@@ -370,27 +366,21 @@ public class HBaseAdapter {
      * @throws HBaseAdapterException
      */
     public static Row getRow(long scanId, byte[] uuid) throws HBaseAdapterException {
-        logger.info(String.format("scanId: %d,%s", scanId, Bytes.toString(uuid)));
+        logger.debug(String.format("scanId: %d,%s", scanId, Bytes.toString(uuid)));
         try {
-            Row row = new Row();
             ActiveScan activeScan = getActiveScanForId(scanId);
             String tableName = activeScan.getTableName();
             ByteBuffer buffer = ByteBuffer.wrap(uuid);
             UUID rowUuid = new UUID(buffer.getLong(), buffer.getLong());
 
-            Result result = reader.getDataRow(rowUuid, tableName);
+            Row row = reader.getDataRow(rowUuid, tableName);
 
-            if (result == null) {
+            if (row == null) {
                 logger.error("Exception: Row not found");
-                throw new HBaseAdapterException("getRow", new Exception());
+                throw new HBaseAdapterException("getRow");
             }
 
-            activeScan.getScanner().setLastResult(result);
-
-            TableInfo info = reader.getTableInfo(activeScan.getTableName());
-            Map<String, byte[]> values = ResultParser.parseDataRow(result, info);
-            row.setUUID(rowUuid);
-            row.setRowMap(values);
+            activeScan.getScanner().setLastResult(row.getResult());
             return row;
         } catch (Throwable e) {
             logger.error("Exception:", e);
@@ -480,7 +470,7 @@ public class HBaseAdapter {
      *
      * @param tableName  SQL table name
      * @param columnName Autoincrement column name
-     * @return
+     * @return Next value of the autoincrement column
      * @throws HBaseAdapterException
      */
     public static long getNextAutoincrementValue(String tableName, String columnName)
@@ -520,9 +510,8 @@ public class HBaseAdapter {
                     throw new IllegalArgumentException("keyValues can't be null unless first/last index read");
                 }
 
-                keyValues = new LinkedList<KeyValue>();
                 byte fill = (byte) (readType == IndexReadType.INDEX_FIRST ? 0x00 : 0xFF);
-                reader.setupKeyValues(tableName, columnName, keyValues, fill);
+                keyValues = reader.setupKeyValues(tableName, columnName, fill);
             }
 
             ScanStrategyInfo scanInfo = new ScanStrategyInfo(tableName, columnName, keyValues);
