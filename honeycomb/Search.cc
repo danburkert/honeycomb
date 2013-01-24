@@ -147,7 +147,8 @@ int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
     ARRAY_DELETE(key_copies[x]);
   }
 
-  jobject java_find_flag = find_flag_to_java(find_flag, this->env);
+  jobject java_find_flag = env->GetStaticObjectField(cache->index_read_type().clazz,
+      find_flag_to_java(find_flag, cache));
   jobject index_row = this->env->CallStaticObjectMethod(adapter_class,
       index_read_method, this->curr_scan_id, key_values, java_find_flag);
   int rc = read_index_row(index_row, buf);
@@ -185,7 +186,7 @@ int HoneycombHandler::get_index_row(const char* indexType, uchar* buf)
   JavaFrame frame(env);
   jclass adapter_class = this->adapter();
   jmethodID index_read_method = cache->hbase_adapter().index_read;
-  jclass read_class = find_jni_class("IndexReadType", this->env);
+  jclass read_class = cache->index_read_type().clazz;
   jfieldID field_id = this->env->GetStaticFieldID(read_class, indexType,
       "L" MYSQLENGINE "IndexReadType;");
   jobject java_find_flag = this->env->GetStaticObjectField(read_class, field_id);
@@ -198,7 +199,7 @@ int HoneycombHandler::get_index_row(const char* indexType, uchar* buf)
 
 int HoneycombHandler::read_index_row(jobject index_row, uchar* buf)
 {
-  jclass index_row_class = find_jni_class("IndexRow", this->env);
+  jclass index_row_class = cache->index_row().clazz;
   jmethodID get_uuid_method = this->env->GetMethodID(index_row_class, "getUUID",
       "()[B");
   jmethodID get_rowmap_method = this->env->GetMethodID(index_row_class,
@@ -239,7 +240,7 @@ int HoneycombHandler::rnd_pos(uchar *buf, uchar *pos)
   jobject row = this->env->CallStaticObjectMethod(adapter_class, get_row_method,
       this->curr_scan_id, uuid);
 
-  jclass row_class = find_jni_class("Row", this->env);
+  jclass row_class = cache->row().clazz;
   jmethodID get_row_map_method = this->env->GetMethodID(row_class, "getRowMap",
       "()Ljava/util/Map;");
 
@@ -334,7 +335,7 @@ int HoneycombHandler::rnd_next(uchar *buf)
   jobject row = this->env->CallStaticObjectMethod(adapter_class,
       next_row_method, this->curr_scan_id);
 
-  jclass row_class = find_jni_class("Row", this->env);
+  jclass row_class = cache->row().clazz;
   jmethodID get_row_map_method = this->env->GetMethodID(row_class, "getRowMap",
       "()Ljava/util/Map;");
   jmethodID get_uuid_method = this->env->GetMethodID(row_class, "getUUID",

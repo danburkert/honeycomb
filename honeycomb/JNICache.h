@@ -3,6 +3,7 @@
 
 #include "JNISetup.h"
 #include "JavaFrame.h"
+#include "Logging.h"
 #include "Macros.h"
 
 /* JNICache holds jmethodID's and jclass global refs to be used in later JNI
