@@ -17,6 +17,14 @@ public class SingleResultScanner implements HBaseResultScanner {
         this.scanner = scanner;
     }
 
+    /**
+     * Retrieve the next value in an HBase scan if passed null.
+     * Otherwise, retrieve the next value in an HBase scan that is not the value passed in.
+     *
+     * @param valueToSkip A value to skip over while looking for the next result
+     * @return HBase result from the scan
+     * @throws IOException
+     */
     @Override
     public Result next(byte[] valueToSkip) throws IOException {
         if (scanner == null) {
@@ -35,6 +43,10 @@ public class SingleResultScanner implements HBaseResultScanner {
 
             while (Arrays.equals(valueToSkip, value)) {
                 result = this.scanner.next();
+                if (result == null) {
+                    return null;
+                }
+
                 rowMap = ResultParser.parseRowMap(result);
                 value = rowMap.get(this.columnName);
             }
@@ -42,8 +54,7 @@ public class SingleResultScanner implements HBaseResultScanner {
 
         byte[] value = null;
 
-        while (valueToSkip != null && Arrays.equals(value, valueToSkip))
-        {
+        while (valueToSkip != null && Arrays.equals(value, valueToSkip)) {
             result = this.scanner.next();
             value = ResultParser.parseValueMap(result);
         }
