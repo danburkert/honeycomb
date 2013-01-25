@@ -10,23 +10,23 @@ jfieldID find_flag_to_java(enum ha_rkey_function find_flag, JNICache* cache)
 {
   if (find_flag == HA_READ_KEY_EXACT)
   {
-    return cache->index_read_type().read_key_exact;
+    return cache->index_read_type().READ_KEY_EXACT;
   }
   else if(find_flag == HA_READ_AFTER_KEY)
   {
-    return cache->index_read_type().read_after_key;
+    return cache->index_read_type().READ_AFTER_KEY;
   }
   else if(find_flag == HA_READ_KEY_OR_NEXT)
   {
-    return cache->index_read_type().read_key_or_next;
+    return cache->index_read_type().READ_KEY_OR_NEXT;
   }
   else if(find_flag == HA_READ_KEY_OR_PREV)
   {
-    return cache->index_read_type().read_key_or_prev;
+    return cache->index_read_type().READ_KEY_OR_PREV;
   }
   else if(find_flag == HA_READ_BEFORE_KEY)
   {
-    return cache->index_read_type().read_before_key;
+    return cache->index_read_type().READ_BEFORE_KEY;
   }
   else
   {
