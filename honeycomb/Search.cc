@@ -158,13 +158,13 @@ int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
 int HoneycombHandler::index_first(uchar *buf)
 {
   DBUG_ENTER("HoneycombHandler::index_first");
-  DBUG_RETURN(get_index_row("INDEX_FIRST", buf));
+  DBUG_RETURN(get_index_row(cache->index_read_type().INDEX_FIRST, buf));
 }
 
 int HoneycombHandler::index_last(uchar *buf)
 {
   DBUG_ENTER("HoneycombHandler::index_last");
-  DBUG_RETURN(get_index_row("INDEX_LAST", buf));
+  DBUG_RETURN(get_index_row(cache->index_read_type().INDEX_LAST, buf));
 }
 
 int HoneycombHandler::get_next_index_row(uchar* buf)
@@ -174,25 +174,20 @@ int HoneycombHandler::get_next_index_row(uchar* buf)
   jmethodID index_next_method = cache->hbase_adapter().next_index_row;
   jobject index_row = this->env->CallStaticObjectMethod(adapter_class,
       index_next_method, this->curr_scan_id);
-
   int rc = read_index_row(index_row, buf);
-
   return rc;
 }
 
-int HoneycombHandler::get_index_row(const char* indexType, uchar* buf)
+int HoneycombHandler::get_index_row(jfieldID field_id, uchar* buf)
 {
   JavaFrame frame(env);
   jclass adapter_class = cache->hbase_adapter().clazz;
   jmethodID index_read_method = cache->hbase_adapter().index_read;
   jclass read_class = cache->index_read_type().clazz;
-  jfieldID field_id = this->env->GetStaticFieldID(read_class, indexType,
-      "L" MYSQLENGINE "IndexReadType;");
   jobject java_find_flag = this->env->GetStaticObjectField(read_class, field_id);
   jobject index_row = this->env->CallStaticObjectMethod(adapter_class,
       index_read_method, this->curr_scan_id, NULL, java_find_flag);
   int rc = read_index_row(index_row, buf);
-
   return rc;
 }
 
