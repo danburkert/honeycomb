@@ -6,14 +6,6 @@
 #define MAP_CLASS "java/util/TreeMap"
 #define LIST_CLASS "java/util/LinkedList"
 
-jboolean java_map_is_empty(jobject java_map, JNIEnv* env)
-{
-  jclass map_class = env->FindClass(MAP_CLASS);
-  jmethodID is_empty_method = env->GetMethodID(map_class, "isEmpty", "()Z");
-  jboolean result = env->CallBooleanMethod(java_map, is_empty_method);
-  return (bool) result;
-}
-
 jfieldID find_flag_to_java(enum ha_rkey_function find_flag, JNICache* cache)
 {
   if (find_flag == HA_READ_KEY_EXACT)
