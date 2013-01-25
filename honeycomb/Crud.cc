@@ -116,7 +116,7 @@ int HoneycombHandler::create(const char *path, TABLE *table_arg,
     jobject java_metadata_obj = metadata.get_field_metadata(field, table_arg,
         create_info->auto_increment_value);
     jstring jfield_name = string_to_java_string(field->field_name);
-    java_map_insert(columnMap, jfield_name, java_metadata_obj, this->env);
+    env->CallObjectMethod(columnMap, cache->tree_map().put, jfield_name, java_metadata_obj);
   }
 
   jmethodID create_table_method = cache->hbase_adapter().create_table;
@@ -200,7 +200,7 @@ int HoneycombHandler::write_row(uchar* buf, jobject updated_fields)
 
     if (is_null)
     {
-      java_map_insert(java_row_map, field_name, NULL, this->env);
+      env->CallObjectMethod(java_row_map, cache->tree_map().put, field_name, NULL);
       continue;
     }
 
@@ -304,13 +304,13 @@ int HoneycombHandler::write_row(uchar* buf, jobject updated_fields)
     jbyteArray java_bytes = convert_value_to_java_bytes(byte_val,
         actualFieldSize, this->env);
     MY_FREE(byte_val);
-    java_map_insert(java_row_map, field_name, java_bytes, this->env);
+    env->CallObjectMethod(java_row_map, cache->tree_map().put, field_name, java_bytes);
 
     // Remember this field for later if we find that it has a unique index,
     // need to check it
     if (this->field_has_unique_index(field))
     {
-      java_map_insert(unique_values_map, field_name, java_bytes, this->env);
+      env->CallObjectMethod(java_row_map, cache->tree_map().put, field_name, java_bytes);
     }
   }
 
