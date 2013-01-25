@@ -94,6 +94,11 @@ void initialize_adapter(JavaVM* jvm)
   detach_thread(jvm);
 }
 
+/**
+ * @brief Ensure that the configuration file is there and readable.
+ *
+ * @param config_file Configuration file path
+ */
 static void test_config_file(const char* config_file)
 {
   FILE* config = fopen(config_file, "r");
@@ -156,6 +161,14 @@ static void handler(int sig)
 }
 #endif
 
+/**
+ * @brief Reads the configuration file and extracts the JVM options from it.
+ *
+ * @param filename Configuration file
+ * @param count Number of options found in configuration file [Out]
+ *
+ * @return JVM options
+ */
 JavaVMOption* read_options(const char* filename, uint* count) 
 {
   const xmlChar* xpath = (const xmlChar*)"/options/jvmoptions/jvmoption";
