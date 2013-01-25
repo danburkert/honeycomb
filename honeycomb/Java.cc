@@ -6,14 +6,6 @@
 #define MAP_CLASS "java/util/TreeMap"
 #define LIST_CLASS "java/util/LinkedList"
 
-jbyteArray java_map_get(jobject java_map, jstring key, JNIEnv* env)
-{
-  jclass map_class = env->FindClass(MAP_CLASS);
-  jmethodID get_method = env->GetMethodID(map_class, "get", "(Ljava/lang/Object;)Ljava/lang/Object;");
-
-  return (jbyteArray) env->CallObjectMethod(java_map, get_method, key);
-}
-
 jboolean java_map_is_empty(jobject java_map, JNIEnv* env)
 {
   jclass map_class = env->FindClass(MAP_CLASS);

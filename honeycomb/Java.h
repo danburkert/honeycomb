@@ -6,7 +6,6 @@
 #include "my_base.h"
 #include "JNICache.h"
 
-jbyteArray java_map_get(jobject java_map, jstring key, JNIEnv* env);
 jboolean java_map_is_empty(jobject java_map, JNIEnv* env);
 
 jfieldID find_flag_to_java(enum ha_rkey_function find_flag, JNICache* cache);
