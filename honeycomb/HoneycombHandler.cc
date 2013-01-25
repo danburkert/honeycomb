@@ -7,13 +7,15 @@
 const char **HoneycombHandler::bas_ext() const
 {
   static const char *honeycomb_exts[] = { NullS };
-
   return honeycomb_exts;
 }
-HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm)
-: handler(hton, table_arg), jvm(jvm), honeycomb_mutex(mutex), honeycomb_open_tables(open_tables), hbase_adapter(NULL)
+
+HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg,
+    mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm, JNICache* cache)
+: handler(hton, table_arg), jvm(jvm), honeycomb_mutex(mutex),
+  honeycomb_open_tables(open_tables), cache(cache)
 {
-  attach_thread();
+  attach_thread(this->jvm, this->env);
   this->ref_length = 16;
   this->rows_written = 0;
   this->failed_key_index = 0;
@@ -26,20 +28,21 @@ HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg, mys
 
 HoneycombHandler::~HoneycombHandler()
 {
-  jclass adapter_class = this->adapter();
-  jmethodID end_scan_method = find_static_method(adapter_class, "endScan", "(J)V",this->env);
+  jclass adapter_class = cache->hbase_adapter().clazz;
+  jmethodID end_scan_method = cache->hbase_adapter().end_scan;
   for (int i = 0; i < this->scan_ids_count; i++)
   {
     this->env->CallStaticVoidMethod(adapter_class, end_scan_method, scan_ids[i]);
   }
   ARRAY_DELETE(this->scan_ids);
   this->flush_writes();
-  detach_thread();
+  detach_thread(this->jvm);
 }
 
 void HoneycombHandler::release_auto_increment()
 {
-  // Stored functions call this last. Hack to get around MySQL not calling start/end bulk insert on insert in a stored function.
+  // Stored functions call this last. Hack to get around MySQL not calling
+  // start/end bulk insert on insert in a stored function.
   this->flush_writes();
 }
 
@@ -116,7 +119,8 @@ void HoneycombHandler::store_field_value(Field *field, char *val, int val_length
     }
     else if (is_decimal_field(type))
     {
-      // TODO: Is this reliable? Field_decimal doesn't seem to have these members. Potential crash for old decimal types. - ABC
+      // TODO: Is this reliable? Field_decimal doesn't seem to have these members.
+      // Potential crash for old decimal types. - ABC
       uint precision = ((Field_new_decimal*) field)->precision;
       uint scale = ((Field_new_decimal*) field)->dec;
       my_decimal decimal_val;
@@ -153,7 +157,8 @@ void HoneycombHandler::java_to_sql(uchar* buf, jobject row_map)
     Field *field = table->field[i];
     const char* key = field->field_name;
     jstring java_key = string_to_java_string(key);
-    jbyteArray java_val = java_map_get(row_map, java_key, this->env);
+    jbyteArray java_val = (jbyteArray) env->CallObjectMethod(row_map,
+        cache->tree_map().get, java_key);
     if (java_val == NULL)
     {
       field->set_null();
@@ -172,34 +177,34 @@ void HoneycombHandler::java_to_sql(uchar* buf, jobject row_map)
     this->env->ReleaseByteArrayElements(java_val, (jbyte*) val, 0);
   }
 
-  
   dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
 }
 
 int HoneycombHandler::external_lock(THD *thd, int lock_type)
 {
   DBUG_ENTER("HoneycombHandler::external_lock");
+  jclass adapter_class = cache->hbase_adapter().clazz;
   if (lock_type == F_WRLCK || lock_type == F_RDLCK)
   {
-    jclass adapter_class = this->adapter();
-    jmethodID start_write_method = find_static_method(adapter_class, "startWrite", "()J",this->env);
-    jlong write_id = this->env->CallStaticLongMethod(adapter_class, start_write_method);
+    jmethodID start_write_method = cache->hbase_adapter().start_write;
+    jlong write_id = this->env->CallStaticLongMethod(adapter_class,
+        start_write_method);
     this->curr_write_id = write_id;
   }
 
   if (lock_type == F_UNLCK)
   {
-    jclass adapter_class = this->adapter();
-    jmethodID update_count_method = find_static_method(adapter_class, "incrementRowCount", "(Ljava/lang/String;J)V",this->env);
+    jmethodID update_count_method = cache->hbase_adapter().increment_row_count;
     jstring table_name = this->table_name();
-    this->env->CallStaticVoidMethod(adapter_class, update_count_method, table_name, (jlong) this->rows_written);
+    this->env->CallStaticVoidMethod(adapter_class, update_count_method,
+        table_name, (jlong) this->rows_written);
     DELETE_REF(env, table_name);
     this->rows_written = 0;
-    jmethodID end_write_method = find_static_method(adapter_class, "endWrite", "(J)V",this->env);
-    this->env->CallStaticVoidMethod(adapter_class, end_write_method, (jlong)this->curr_write_id);
+    jmethodID end_write_method = cache->hbase_adapter().end_write;
+    this->env->CallStaticVoidMethod(adapter_class, end_write_method,
+        (jlong)this->curr_write_id);
     this->curr_write_id = -1;
   }
-
   DBUG_RETURN(0);
 }
 
@@ -211,7 +216,8 @@ char* HoneycombHandler::index_name(TABLE* table, uint key)
     return this->index_name(key_part, key_part_end, pos->key_parts);
 }
 
-char* HoneycombHandler::index_name(KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts)
+char* HoneycombHandler::index_name(KEY_PART_INFO* key_part,
+    KEY_PART_INFO* key_part_end, uint key_parts)
 {
     size_t size = 0;
 
@@ -273,20 +279,23 @@ ha_rows HoneycombHandler::records_in_range(uint inx, key_range *min_key,
   return stats.records;
 }
 
-// MySQL calls this function all over the place whenever it needs you to update some crucial piece of info.
-// It expects you to use this to set information about your indexes and error codes, as well as general info about your engine.
-// The bit flags (defined in my_base.h) passed in will vary depending on what it wants you to update during this call. - ABC
+// MySQL calls this function all over the place whenever it needs you to update
+// some crucial piece of info. It expects you to use this to set information
+// about your indexes and error codes, as well as general info about your engine.
+// The bit flags (defined in my_base.h) passed in will vary depending on what
+// it wants you to update during this call. - ABC
 int HoneycombHandler::info(uint flag)
 {
-  // TODO: Update this function to take into account the flag being passed in, like the other engines
-  ha_rows		rec_per_key;
+  // TODO: Update this function to take into account the flag being passed in,
+  // like the other engines
+  ha_rows rec_per_key;
 
   DBUG_ENTER("HoneycombHandler::info");
   if (flag & HA_STATUS_VARIABLE)
   {
     JavaFrame frame(env);
-    jclass adapter_class = this->adapter();
-    jmethodID get_count_method = find_static_method(adapter_class, "getRowCount", "(Ljava/lang/String;)J",this->env);
+    jclass adapter_class = cache->hbase_adapter().clazz;
+    jmethodID get_count_method = cache->hbase_adapter().get_row_count;
     jstring table_name = this->table_name();
     jlong row_count = this->env->CallStaticLongMethod(adapter_class,
         get_count_method, table_name);
@@ -295,7 +304,7 @@ int HoneycombHandler::info(uint flag)
     if (row_count == 0 && !(flag & HA_STATUS_TIME))
       row_count++;
 
-	THD*	thd = ha_thd();
+    THD* thd = ha_thd();
     if (thd_sql_command(thd) == SQLCOM_TRUNCATE)
     {
       row_count = 1;
@@ -314,8 +323,6 @@ int HoneycombHandler::info(uint flag)
     } else {
       stats.mean_rec_length = (ulong) (stats.data_file_length / stats.records);
     }
-
-    
   }
 
   if (flag & HA_STATUS_CONST)
@@ -336,28 +343,29 @@ int HoneycombHandler::info(uint flag)
           rec_per_key = 1;
         }
 
-        table->key_info[i].rec_per_key[j] = rec_per_key >= ~(ulong) 0 ? ~(ulong) 0 : (ulong) rec_per_key;
+        table->key_info[i].rec_per_key[j] = rec_per_key >= ~(ulong) 0 ?
+          ~(ulong) 0 : (ulong) rec_per_key;
       }
     }
   }
-  // MySQL needs us to tell it the index of the key which caused the last operation to fail
-  // Should be saved in this->failed_key_index for now
-  // Later, when we implement transactions, we should use this opportunity to grab the info from the trx itself.
+  // MySQL needs us to tell it the index of the key which caused the last
+  // operation to fail Should be saved in this->failed_key_index for now
+  // Later, when we implement transactions, we should use this opportunity to
+  // grab the info from the trx itself.
   if (flag & HA_STATUS_ERRKEY)
   {
     this->errkey = this->failed_key_index;
     this->failed_key_index = -1;
   }
-
   if ((flag & HA_STATUS_AUTO) && table->found_next_number_field) {
     JavaFrame frame(env);
-    jclass adapter_class = this->adapter();
-    jmethodID get_autoincrement_value_method = find_static_method(adapter_class, "getAutoincrementValue", "(Ljava/lang/String;Ljava/lang/String;)J",this->env);
-    jlong autoincrement_value = (jlong) this->env->CallStaticObjectMethod(adapter_class, get_autoincrement_value_method, this->table_name(), string_to_java_string(table->found_next_number_field->field_name));
+    jclass adapter_class = cache->hbase_adapter().clazz;
+    jmethodID get_autoincrement_value_method = cache->hbase_adapter().get_autoincrement_value;
+    jlong autoincrement_value = (jlong) this->env->CallStaticObjectMethod(adapter_class,
+        get_autoincrement_value_method, this->table_name(),
+        string_to_java_string(table->found_next_number_field->field_name));
     stats.auto_increment_value = (ulonglong) autoincrement_value;
-    
   }
-
   DBUG_RETURN(0);
 }
 
@@ -481,9 +489,11 @@ void HoneycombHandler::get_auto_increment(ulonglong offset, ulonglong increment,
                                  ulonglong *nb_reserved_values)
 {
   DBUG_ENTER("HoneycombHandler::get_auto_increment");
-  jclass adapter_class = this->adapter();
-  jmethodID get_auto_increment_method = find_static_method(adapter_class, "getNextAutoincrementValue", "(Ljava/lang/String;Ljava/lang/String;)J",this->env);
-  jlong increment_value = (jlong) this->env->CallStaticObjectMethod(adapter_class, get_auto_increment_method, this->table_name(), string_to_java_string(table->next_number_field->field_name));
+  jclass adapter_class = cache->hbase_adapter().clazz;
+  jmethodID get_auto_increment_method = cache->hbase_adapter().get_next_autoincrement_value;
+  jlong increment_value = (jlong) this->env->CallStaticObjectMethod(adapter_class,
+      get_auto_increment_method, this->table_name(),
+      string_to_java_string(table->next_number_field->field_name));
   *first_value = (ulonglong)increment_value;
   *nb_reserved_values = ULONGLONG_MAX;
   DBUG_VOID_RETURN;
@@ -520,7 +530,8 @@ bool HoneycombHandler::field_has_unique_index(Field *field)
 
     while(key_part < end_key_part)
     {
-      if ((key_info->flags & HA_NOSAME) && strcmp(key_part->field->field_name, field->field_name) == 0)
+      if ((key_info->flags & HA_NOSAME) && strcmp(key_part->field->field_name,
+            field->field_name) == 0)
       {
         return true;
       }
@@ -545,10 +556,10 @@ const char *HoneycombHandler::java_to_string(jstring string)
 bool HoneycombHandler::is_field_nullable(jstring table_name, const char* field_name)
 {
   JavaFrame frame(env);
-  jclass adapter_class = this->adapter();
-  jmethodID is_nullable_method = find_static_method(adapter_class, "isNullable", "(Ljava/lang/String;Ljava/lang/String;)Z",this->env);
-  bool result = (bool)this->env->CallStaticBooleanMethod(adapter_class, is_nullable_method, table_name, string_to_java_string(field_name));
-  
+  jclass adapter_class = cache->hbase_adapter().clazz;
+  jmethodID is_nullable_method = cache->hbase_adapter().is_nullable;
+  bool result = (bool)this->env->CallStaticBooleanMethod(adapter_class,
+      is_nullable_method, table_name, string_to_java_string(field_name));
   return result;
 }
 
@@ -559,7 +570,6 @@ void HoneycombHandler::store_uuid_ref(jobject index_row, jmethodID get_uuid_meth
   uchar* pos = (uchar*) this->env->GetByteArrayElements(uuid, JNI_FALSE);
   memcpy(this->ref, pos, this->ref_length);
   this->env->ReleaseByteArrayElements(uuid, (jbyte*) pos, 0);
-  
 }
 
 int HoneycombHandler::analyze(THD* thd, HA_CHECK_OPT* check_opt)
@@ -567,8 +577,9 @@ int HoneycombHandler::analyze(THD* thd, HA_CHECK_OPT* check_opt)
   DBUG_ENTER("HoneycombHandler::analyze");
 
   // For each key, just tell MySQL that there is only one value per keypart.
-  // This is, in effect, like telling MySQL that all our indexes are unique, and should essentially always be used for lookups.
-  // If you don't do this, the optimizer REALLY tries to do scans, even when they're not ideal. - ABC
+  // This is, in effect, like telling MySQL that all our indexes are unique,
+  // and should essentially always be used for lookups.  If you don't do this,
+  // the optimizer REALLY tries to do scans, even when they're not ideal. - ABC
 
   for (int i = 0; i < this->table->s->keys; i++)
   {
@@ -586,47 +597,23 @@ ha_rows HoneycombHandler::estimate_rows_upper_bound()
   DBUG_ENTER("HoneycombHandler::estimate_rows_upper_bound");
   JavaFrame frame(env);
 
-  jclass adapter_class = this->adapter();
-  jmethodID get_count_method = find_static_method(adapter_class, "getRowCount", "(Ljava/lang/String;)J",this->env);
+  jclass adapter_class = cache->hbase_adapter().clazz;
+  jmethodID get_count_method = cache->hbase_adapter().get_row_count;
   jstring table_name = this->table_name();
   jlong row_count = this->env->CallStaticLongMethod(adapter_class,
       get_count_method, table_name);
 
-  // Stupid MySQL and its filesort. This must be large enough to filesort when there are less than 2 records.
+  // Stupid MySQL and its filesort. This must be large enough to filesort when
+  // there are less than 2 records.
   DBUG_RETURN(row_count < 2 ? 10 : 2*row_count + 1);
 }
 
 void HoneycombHandler::flush_writes()
 {
-  jclass adapter_class = this->adapter();
-  jmethodID end_write_method = find_static_method(adapter_class, "flushWrites", "(J)V",this->env);
-  this->env->CallStaticVoidMethod(adapter_class, end_write_method, (jlong)this->curr_write_id);
-}
-
-void HoneycombHandler::detach_thread()
-{
-  thread_ref_count--;
-
-  if (thread_ref_count <= 0)
-  {
-    this->jvm->DetachCurrentThread();
-    this->env = NULL;
-  }
-}
-
-void HoneycombHandler::attach_thread()
-{
-  thread_ref_count++;
-  JavaVMAttachArgs attachArgs;
-  attachArgs.version = JNI_VERSION_1_6;
-  attachArgs.name = NULL;
-  attachArgs.group = NULL;
-
-  this->jvm->GetEnv((void**) &this->env, attachArgs.version);
-  if (this->env == NULL)
-  {
-    this->jvm->AttachCurrentThread((void**) &this->env, &attachArgs);
-  }
+  jclass adapter_class = cache->hbase_adapter().clazz;
+  jmethodID end_write_method = cache->hbase_adapter().flush_writes;
+  this->env->CallStaticVoidMethod(adapter_class, end_write_method,
+      (jlong)this->curr_write_id);
 }
 
 jstring HoneycombHandler::table_name()
