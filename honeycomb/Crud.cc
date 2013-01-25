@@ -403,7 +403,8 @@ int HoneycombHandler::update_row(const uchar *old_row, uchar *new_row)
   jobject updated_fieldnames = env->NewObject(cache->linked_list().clazz,
       cache->linked_list().init);
   this->collect_changed_fields(updated_fieldnames, old_row, new_row);
-  jlong size = java_list_size(updated_fieldnames, this->env);
+  jlong size = env->CallLongMethod(updated_fieldnames, cache->linked_list().size);
+
   if(size == 0)
   {
     // No fields have actually changed. Don't write a new row.
