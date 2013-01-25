@@ -6,13 +6,6 @@
 #define MAP_CLASS "java/util/TreeMap"
 #define LIST_CLASS "java/util/LinkedList"
 
-jobject create_java_map(JNIEnv* env)
-{
-  jclass map_class = env->FindClass(MAP_CLASS);
-  jmethodID constructor = env->GetMethodID(map_class, "<init>", "()V");
-  return env->NewObject(map_class, constructor);
-}
-
 jobject java_map_insert(jobject java_map, jobject key, jobject value, JNIEnv* env)
 {
   jclass map_class = env->FindClass(MAP_CLASS);

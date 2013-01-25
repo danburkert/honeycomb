@@ -6,7 +6,6 @@
 #include "my_base.h"
 #include "JNICache.h"
 
-jobject create_java_map(JNIEnv* env);
 jobject java_map_insert(jobject java_map, jobject key, jobject value, JNIEnv* env);
 jbyteArray java_map_get(jobject java_map, jstring key, JNIEnv* env);
 jboolean java_map_is_empty(jobject java_map, JNIEnv* env);
