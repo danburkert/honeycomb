@@ -6,14 +6,6 @@
 #define MAP_CLASS "java/util/TreeMap"
 #define LIST_CLASS "java/util/LinkedList"
 
-jlong java_list_size(jobject java_list, JNIEnv* env)
-{
-  jclass list_class = env->FindClass(LIST_CLASS);
-  jmethodID size_method = env->GetMethodID(list_class, "size", "()I");
-
-  return env->CallLongMethod(java_list, size_method);
-}
-
 jobject create_java_map(JNIEnv* env)
 {
   jclass map_class = env->FindClass(MAP_CLASS);
