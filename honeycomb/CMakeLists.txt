@@ -6,7 +6,7 @@ endif()
 
 include(ExternalProject)
 ExternalProject_Add(libxml2
-  URL ftp://xmlsoft.org/libxml2/libxml2-2.7.2.tar.gz
+  URL libxml2-2.7.2.tar.gz
   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=${CMAKE_BINARY_DIR}/dependencies
   BUILD_COMMAND ${MAKE})
 
