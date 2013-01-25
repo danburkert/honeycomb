@@ -233,7 +233,7 @@ int HoneycombHandler::rnd_pos(uchar *buf, uchar *pos)
       this->curr_scan_id, uuid);
 
   jclass row_class = cache->row().clazz;
-  jmethodID get_row_map_method = cache->index_row().get_row_map;
+  jmethodID get_row_map_method = cache->row().get_row_map;
 
   jobject row_map = this->env->CallObjectMethod(row, get_row_map_method);
 
@@ -327,8 +327,8 @@ int HoneycombHandler::rnd_next(uchar *buf)
       next_row_method, this->curr_scan_id);
 
   jclass row_class = cache->row().clazz;
-  jmethodID get_uuid_method = cache->index_row().get_uuid;
-  jmethodID get_row_map_method = cache->index_row().get_row_map;
+  jmethodID get_uuid_method = cache->row().get_uuid;
+  jmethodID get_row_map_method = cache->row().get_row_map;
 
   jobject row_map = this->env->CallObjectMethod(row, get_row_map_method);
 
