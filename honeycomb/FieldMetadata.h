@@ -31,6 +31,7 @@ public:
     jmethodID set_autoincrement_value_method = cache->column_metadata().set_autoincrement_value;
 
     jobject metadata_object = this->env->NewObject(metadata_class, metadata_constructor);
+    JNICache::ColumnType column_type = cache->column_type();
 
     switch (field->real_type())
     {
@@ -43,22 +44,19 @@ public:
         if (is_unsigned_field(field))
         {
           env->CallVoidMethod(metadata_object, set_type_method,
-              env->GetStaticObjectField(cache->column_type().clazz,
-                cache->column_type().ULONG));
+              env->GetStaticObjectField(column_type.clazz, column_type.ULONG));
         }
         else
         {
           env->CallVoidMethod(metadata_object, set_type_method,
-              env->GetStaticObjectField(cache->column_type().clazz,
-                cache->column_type().LONG));
+              env->GetStaticObjectField(column_type.clazz, column_type.LONG));
         }
         this->env->CallVoidMethod(metadata_object, set_max_length_method, (jint)8);
         break;
       case MYSQL_TYPE_FLOAT:
       case MYSQL_TYPE_DOUBLE:
         env->CallVoidMethod(metadata_object, set_type_method,
-            env->GetStaticObjectField(cache->column_type().clazz,
-              cache->column_type().DOUBLE));
+            env->GetStaticObjectField(column_type.clazz, column_type.DOUBLE));
         this->env->CallVoidMethod(metadata_object, set_max_length_method, (jint)8);
         break;
       case MYSQL_TYPE_DECIMAL:
@@ -67,8 +65,7 @@ public:
           uint precision = ((Field_new_decimal*) field)->precision;
           uint scale = ((Field_new_decimal*) field)->dec;
           env->CallVoidMethod(metadata_object, set_type_method,
-              env->GetStaticObjectField(cache->column_type().clazz,
-                cache->column_type().DECIMAL));
+              env->GetStaticObjectField(column_type.clazz, column_type.DECIMAL));
           this->env->CallVoidMethod(metadata_object, set_precision_method, (jint)precision);
           this->env->CallVoidMethod(metadata_object, set_scale_method, (jint)scale);
           this->env->CallVoidMethod(metadata_object, set_max_length_method, (jint)field->field_length);
@@ -77,21 +74,18 @@ public:
       case MYSQL_TYPE_DATE:
       case MYSQL_TYPE_NEWDATE:
         env->CallVoidMethod(metadata_object, set_type_method,
-            env->GetStaticObjectField(cache->column_type().clazz,
-              cache->column_type().DATE));
+            env->GetStaticObjectField(column_type.clazz, column_type.DATE));
         this->env->CallVoidMethod(metadata_object, set_max_length_method, (jint)field->field_length);
         break;
       case MYSQL_TYPE_TIME:
         env->CallVoidMethod(metadata_object, set_type_method,
-            env->GetStaticObjectField(cache->column_type().clazz,
-              cache->column_type().TIME));
+            env->GetStaticObjectField(column_type.clazz, column_type.TIME));
         this->env->CallVoidMethod(metadata_object, set_max_length_method, (jint)field->field_length);
         break;
       case MYSQL_TYPE_DATETIME:
       case MYSQL_TYPE_TIMESTAMP:
         env->CallVoidMethod(metadata_object, set_type_method,
-            env->GetStaticObjectField(cache->column_type().clazz,
-              cache->column_type().DATETIME));
+            env->GetStaticObjectField(column_type.clazz, column_type.DATETIME));
         this->env->CallVoidMethod(metadata_object, set_max_length_method, (jint)field->field_length);
         break;
       case MYSQL_TYPE_STRING:
@@ -104,14 +98,12 @@ public:
           if (field->binary())
           {
             env->CallVoidMethod(metadata_object, set_type_method,
-                env->GetStaticObjectField(cache->column_type().clazz,
-                  cache->column_type().BINARY));
+                env->GetStaticObjectField(column_type.clazz, column_type.BINARY));
           }
           else
           {
             env->CallVoidMethod(metadata_object, set_type_method,
-                env->GetStaticObjectField(cache->column_type().clazz,
-                  cache->column_type().STRING));
+                env->GetStaticObjectField(column_type.clazz, column_type.STRING));
           }
         }
         break;
@@ -120,13 +112,11 @@ public:
       case MYSQL_TYPE_MEDIUM_BLOB:
       case MYSQL_TYPE_LONG_BLOB:
         env->CallVoidMethod(metadata_object, set_type_method,
-            env->GetStaticObjectField(cache->column_type().clazz,
-              cache->column_type().BINARY));
+            env->GetStaticObjectField(column_type.clazz, column_type.BINARY));
         break;
       case MYSQL_TYPE_ENUM:
         env->CallVoidMethod(metadata_object, set_type_method,
-            env->GetStaticObjectField(cache->column_type().clazz,
-              cache->column_type().ULONG));
+            env->GetStaticObjectField(column_type.clazz, column_type.ULONG));
         break;
       case MYSQL_TYPE_NULL:
       case MYSQL_TYPE_BIT:
