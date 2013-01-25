@@ -7,20 +7,21 @@
 #include "ha_honeycomb.h"
 #include "probes_mysql.h"
 #include "sql_plugin.h"
+#include "JNICache.h"
 #include <stdlib.h>
 
 static handler *honeycomb_create_handler(handlerton *hton,
-    TABLE_SHARE *table,
-    MEM_ROOT *mem_root);
+    TABLE_SHARE *table, MEM_ROOT *mem_root);
 
 handlerton *honeycomb_hton;
 
 mysql_mutex_t honeycomb_mutex;
-static JNIEnv* env = NULL;
-static JavaVM* jvm = NULL;
+static JavaVM* jvm;
+static JNICache* cache;
 static HASH honeycomb_open_tables;
 
-static uchar* honeycomb_get_key(HoneycombShare *share, size_t *length, my_bool not_used __attribute__((unused)))
+static uchar* honeycomb_get_key(HoneycombShare *share, size_t *length,
+    my_bool not_used __attribute__((unused)))
 {
   *length=share->table_path_length;
   return (uchar*) share->path_to_table;
@@ -68,6 +69,7 @@ static uint honeycomb_alter_table_flags(uint flags)
 static int honeycomb_init_func(void *p)
 {
   DBUG_ENTER("ha_honeycomb::honeycomb_init_func");
+  Logging::setup_logging(NULL);
 
 #ifdef HAVE_PSI_INTERFACE
   init_honeycomb_psi_keys();
@@ -83,8 +85,8 @@ static int honeycomb_init_func(void *p)
   honeycomb_hton->flags = HTON_TEMPORARY_NOT_SUPPORTED;
   honeycomb_hton->alter_table_flags = honeycomb_alter_table_flags;
 
-  Logging::setup_logging(NULL);
-  create_or_find_jvm(&jvm);
+  initialize_jvm(jvm);
+  cache = new JNICache(jvm);
 
   DBUG_RETURN(0);
 }
@@ -98,7 +100,7 @@ static int honeycomb_done_func(void *p)
   {
     error= 1;
   }
-
+  delete cache;
   Logging::close_logging();
   my_hash_free(&honeycomb_open_tables);
   mysql_mutex_destroy(&honeycomb_mutex);
@@ -126,9 +128,11 @@ static int free_share(HoneycombShare *share)
   return 0;
 }
 
-static handler* honeycomb_create_handler(handlerton *hton, TABLE_SHARE *table, MEM_ROOT *mem_root)
+static handler* honeycomb_create_handler(handlerton *hton, TABLE_SHARE *table,
+    MEM_ROOT *mem_root)
 {
-  return new (mem_root) HoneycombHandler(hton, table, &honeycomb_mutex, &honeycomb_open_tables, jvm);
+  return new (mem_root) HoneycombHandler(hton, table, &honeycomb_mutex,
+      &honeycomb_open_tables, jvm, cache);
 }
 
 struct st_mysql_storage_engine honeycomb_storage_engine=

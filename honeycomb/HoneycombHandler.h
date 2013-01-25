@@ -12,6 +12,8 @@
 #include "Java.h"
 #include "Util.h"
 #include "JavaFrame.h"
+#include "JNISetup.h"
+#include "JNICache.h"
 
 #include "my_global.h"          /* ulonglong */
 #include "thr_lock.h"           /* THR_LOCK, THR_LOCK_DATA */
@@ -20,8 +22,6 @@
 #include <jni.h>
 #include <string.h>
 #include "probes_mysql.h"
-
-static __thread int thread_ref_count=0;
 
 class HoneycombHandler : public handler
 {
@@ -44,7 +44,7 @@ class HoneycombHandler : public handler
     // HBase JNI Adapter:
     JNIEnv* env;
     JavaVM* jvm;
-    jclass hbase_adapter;
+    JNICache* cache;
 
     jstring table_name();
     const char* java_to_string(jstring str);
@@ -56,12 +56,10 @@ class HoneycombHandler : public handler
     void drop_table(const char *name);
     int truncate();
     bool is_key_null(const uchar *key);
-    void attach_thread();
-    void detach_thread();
     void store_uuid_ref(jobject index_row, jmethodID get_uuid_method);
     void bytes_to_long(const uchar* buff, unsigned int buff_length, bool is_signed, uchar* long_buff);
     int read_index_row(jobject index_row, uchar* buf);
-    int get_index_row(const char* indexType, uchar* buf);
+    int get_index_row(jfieldID field_id, uchar* buf);
     int get_next_index_row(uchar* buf);
     void flush_writes();
     void end_scan();
@@ -131,11 +129,6 @@ class HoneycombHandler : public handler
       || field_type == MYSQL_TYPE_GEOMETRY);
     }
 
-    jclass adapter()
-    {
-      return find_jni_class("HBaseAdapter", this->env);
-    }
-
     /* Index methods */
     int index_init(uint idx, bool sorted);
     int index_end();
@@ -144,11 +137,13 @@ class HoneycombHandler : public handler
     int index_first(uchar *buf);
     int index_last(uchar *buf);
 
-    void update_honeycomb_autoincrement_value(jlong new_autoincrement_value, jboolean is_truncate); 
+    void update_honeycomb_autoincrement_value(jlong new_autoincrement_value,
+        jboolean is_truncate);
     void release_auto_increment();
 
   public:
-    HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg, mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm);
+    HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg,
+        mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm, JNICache* cache);
     ~HoneycombHandler();
 
     const char *table_type() const
@@ -183,7 +178,8 @@ class HoneycombHandler : public handler
 
     ulong index_flags(uint inx, uint part, bool all_parts) const
     {
-      return HA_READ_NEXT | HA_READ_ORDER | HA_READ_RANGE | HA_READ_PREV | HA_ONLY_WHOLE_INDEX;
+      return HA_READ_NEXT | HA_READ_ORDER | HA_READ_RANGE
+        | HA_READ_PREV | HA_ONLY_WHOLE_INDEX;
     }
 
     uint max_supported_record_length() const
