@@ -4,7 +4,7 @@
 int HoneycombHandler::index_init(uint idx, bool sorted)
 {
   DBUG_ENTER("HoneycombHandler::index_init");
-  JavaFrame frame(env);
+  JavaFrame frame(env, 2);
 
   this->active_index = idx;
 
@@ -39,14 +39,14 @@ int HoneycombHandler::index_end()
 /**
  * @brief Creates a key value list out of the columns used in an index search.
  *
- * @param index Number columns in index search
- * @param key_sizes How large is each column
+ * @param index Number of columns in index search
+ * @param key_sizes Size of each column
  * @param key_copies HBase formatted index column value
  * @param key_names Column names
  * @param key_null_bits Which columns are nullable
- * @param key_is_null Whether the whole column is null 
+ * @param key_is_null Whether the whole column is null
  *
- * @return 
+ * @return Returns a JNI local ref to the link list of key value objects.
  */
 jobject HoneycombHandler::create_key_value_list(int index, uint* key_sizes,
     uchar** key_copies, const char** key_names, jboolean* key_null_bits,
@@ -76,8 +76,6 @@ int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
     key_part_map keypart_map, enum ha_rkey_function find_flag)
 {
   DBUG_ENTER("HoneycombHandler::index_read_map");
-  jclass adapter_class = cache->hbase_adapter().clazz;
-  jmethodID index_read_method = cache->hbase_adapter().index_read;
   if (find_flag == HA_READ_PREFIX_LAST_OR_PREV)
   {
     find_flag = HA_READ_KEY_OR_PREV;
@@ -154,7 +152,9 @@ int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
     index++;
   }
 
-  JavaFrame frame(env);
+  jclass adapter_class = cache->hbase_adapter().clazz;
+  jmethodID index_read_method = cache->hbase_adapter().index_read;
+  JavaFrame frame(env, 3);
   jobject key_values = create_key_value_list(index, key_sizes, key_copies,
       key_names, key_null_bits, key_is_null);
   for (int x = 0; x < index; x++)
@@ -185,18 +185,19 @@ int HoneycombHandler::index_last(uchar *buf)
 
 int HoneycombHandler::get_next_index_row(uchar* buf)
 {
-  JavaFrame frame(env);
+  JavaFrame frame(env, 1);
   jclass adapter_class = cache->hbase_adapter().clazz;
   jmethodID index_next_method = cache->hbase_adapter().next_index_row;
-  jobject index_row = this->env->CallStaticObjectMethod(adapter_class,
-      index_next_method, this->curr_scan_id);
+  JNICache::HBaseAdapter hbase_adapter = cache->hbase_adapter();
+  jobject index_row = this->env->CallStaticObjectMethod(hbase_adapter.clazz,
+      hbase_adapter.next_index_row, this->curr_scan_id);
   int rc = read_index_row(index_row, buf);
   return rc;
 }
 
 int HoneycombHandler::get_index_row(jfieldID field_id, uchar* buf)
 {
-  JavaFrame frame(env);
+  JavaFrame frame(env, 2);
   jclass adapter_class = cache->hbase_adapter().clazz;
   jmethodID index_read_method = cache->hbase_adapter().index_read;
   jclass read_class = cache->index_read_type().clazz;
@@ -209,6 +210,7 @@ int HoneycombHandler::get_index_row(jfieldID field_id, uchar* buf)
 
 int HoneycombHandler::read_index_row(jobject index_row, uchar* buf)
 {
+  JavaFrame frame(env, 1);
   jclass index_row_class = cache->index_row().clazz;
   jmethodID get_uuid_method = cache->index_row().get_uuid;
   jmethodID get_row_map_method = cache->index_row().get_row_map;
@@ -242,6 +244,7 @@ int HoneycombHandler::rnd_pos(uchar *buf, uchar *pos)
 
   MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, FALSE);
 
+  JavaFrame frame(env, 3);
   jclass adapter_class = cache->hbase_adapter().clazz;
   jmethodID get_row_method = cache->hbase_adapter().get_row;
   jbyteArray uuid = convert_value_to_java_bytes(pos, 16, this->env);
@@ -256,18 +259,13 @@ int HoneycombHandler::rnd_pos(uchar *buf, uchar *pos)
   if (row_map == NULL)
   {
     this->table->status = STATUS_NOT_FOUND;
-    rc = HA_ERR_END_OF_FILE;
-    goto cleanup;
+    DBUG_RETURN(HA_ERR_END_OF_FILE);
   }
 
   java_to_sql(buf, row_map);
   this->table->status = 0;
 
   MYSQL_READ_ROW_DONE(rc);
-cleanup:
-  DELETE_REF(env, row);
-  DELETE_REF(env, uuid);
-
   DBUG_RETURN(rc);
 }
 
@@ -311,15 +309,13 @@ int HoneycombHandler::rnd_init(bool scan)
 {
   DBUG_ENTER("HoneycombHandler::rnd_init");
 
-  JavaFrame frame(env);
+  JavaFrame frame(env, 1);
   jclass adapter_class = cache->hbase_adapter().clazz;
   jmethodID start_scan_method = cache->hbase_adapter().start_scan;
   jstring table_name = this->table_name();
 
-  jboolean java_scan_boolean = scan ? JNI_TRUE : JNI_FALSE;
-
   this->curr_scan_id = this->env->CallStaticLongMethod(adapter_class,
-      start_scan_method, table_name, java_scan_boolean);
+      start_scan_method, table_name, scan);
 
   this->performing_scan = scan;
 
@@ -334,7 +330,7 @@ int HoneycombHandler::rnd_next(uchar *buf)
   DBUG_ENTER("HoneycombHandler::rnd_next");
 
   MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, TRUE);
-  JavaFrame frame(env);
+  JavaFrame frame(env, 2);
 
   memset(buf, 0, table->s->null_bytes);
   jclass adapter_class = cache->hbase_adapter().clazz;
