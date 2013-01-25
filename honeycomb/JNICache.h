@@ -50,14 +50,14 @@ class JNICache
     struct IndexReadType
     {
       jclass clazz;
-      jfieldID read_key_exact,
-               read_after_key,
-               read_key_or_next,
-               read_key_or_prev,
-               read_before_key,
-               index_first,
-               index_last,
-               index_null;
+      jfieldID READ_KEY_EXACT,
+               READ_AFTER_KEY,
+               READ_KEY_OR_NEXT,
+               READ_KEY_OR_PREV,
+               READ_BEFORE_KEY,
+               INDEX_FIRST,
+               INDEX_LAST,
+               INDEX_NULL;
     };
     struct IndexRow
     {
@@ -304,14 +304,14 @@ class JNICache
       hbase_adapter_.drop_index                   = get_static_method_id(env, hbase_adapter_.clazz, "dropIndex", "(Ljava/lang/String;Ljava/lang/String;)V");
 
       index_read_type_.clazz            = get_class_ref(env, MYSQLENGINE "IndexReadType");
-      index_read_type_.read_key_exact   = get_static_field_id(env, index_read_type_.clazz, "HA_READ_KEY_EXACT", "L" MYSQLENGINE "IndexReadType;");
-      index_read_type_.read_after_key   = get_static_field_id(env, index_read_type_.clazz, "HA_READ_AFTER_KEY", "L" MYSQLENGINE "IndexReadType;");
-      index_read_type_.read_key_or_next = get_static_field_id(env, index_read_type_.clazz, "HA_READ_KEY_OR_NEXT", "L" MYSQLENGINE "IndexReadType;");
-      index_read_type_.read_key_or_prev = get_static_field_id(env, index_read_type_.clazz, "HA_READ_KEY_OR_PREV", "L" MYSQLENGINE "IndexReadType;");
-      index_read_type_.read_before_key  = get_static_field_id(env, index_read_type_.clazz, "HA_READ_BEFORE_KEY", "L" MYSQLENGINE "IndexReadType;");
-      index_read_type_.index_first      = get_static_field_id(env, index_read_type_.clazz, "INDEX_FIRST", "L" MYSQLENGINE "IndexReadType;");
-      index_read_type_.index_last       = get_static_field_id(env, index_read_type_.clazz, "INDEX_LAST", "L" MYSQLENGINE "IndexReadType;");
-      index_read_type_.index_null       = get_static_field_id(env, index_read_type_.clazz, "INDEX_NULL", "L" MYSQLENGINE "IndexReadType;");
+      index_read_type_.READ_KEY_EXACT   = get_static_field_id(env, index_read_type_.clazz, "HA_READ_KEY_EXACT", "L" MYSQLENGINE "IndexReadType;");
+      index_read_type_.READ_AFTER_KEY   = get_static_field_id(env, index_read_type_.clazz, "HA_READ_AFTER_KEY", "L" MYSQLENGINE "IndexReadType;");
+      index_read_type_.READ_KEY_OR_NEXT = get_static_field_id(env, index_read_type_.clazz, "HA_READ_KEY_OR_NEXT", "L" MYSQLENGINE "IndexReadType;");
+      index_read_type_.READ_KEY_OR_PREV = get_static_field_id(env, index_read_type_.clazz, "HA_READ_KEY_OR_PREV", "L" MYSQLENGINE "IndexReadType;");
+      index_read_type_.READ_BEFORE_KEY  = get_static_field_id(env, index_read_type_.clazz, "HA_READ_BEFORE_KEY", "L" MYSQLENGINE "IndexReadType;");
+      index_read_type_.INDEX_FIRST      = get_static_field_id(env, index_read_type_.clazz, "INDEX_FIRST", "L" MYSQLENGINE "IndexReadType;");
+      index_read_type_.INDEX_LAST       = get_static_field_id(env, index_read_type_.clazz, "INDEX_LAST", "L" MYSQLENGINE "IndexReadType;");
+      index_read_type_.INDEX_NULL       = get_static_field_id(env, index_read_type_.clazz, "INDEX_NULL", "L" MYSQLENGINE "IndexReadType;");
 
       index_row_.clazz       = get_class_ref(env, MYSQLENGINE "IndexRow");
       index_row_.get_row_map = get_method_id(env, index_row_.clazz, "getRowMap", "()Ljava/util/Map;");
