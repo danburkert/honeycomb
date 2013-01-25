@@ -1,5 +1,12 @@
 #include "HoneycombHandler.h"
 
+/**
+ * @brief Create the Java object for the multi-column index.
+ *
+ * @param table_arg SQL Table 
+ *
+ * @return Multi-column index object
+ */
 jobject HoneycombHandler::create_multipart_keys(TABLE* table_arg)
 {
   uint keys = table_arg->s->keys;
@@ -424,6 +431,13 @@ cleanup:
   DBUG_RETURN(rc);
 }
 
+/**
+ * @brief Determines what fields have changed in a MySQL row on update.
+ *
+ * @param updated_fields Collects changed fields
+ * @param old_row Old MySQL row
+ * @param new_row New MySQL row
+ */
 void HoneycombHandler::collect_changed_fields(jobject updated_fields,
     const uchar* old_row, uchar* new_row)
 {
