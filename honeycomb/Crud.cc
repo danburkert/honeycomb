@@ -310,7 +310,7 @@ int HoneycombHandler::write_row(uchar* buf, jobject updated_fields)
     // need to check it
     if (this->field_has_unique_index(field))
     {
-      env->CallObjectMethod(java_row_map, cache->tree_map().put, field_name, java_bytes);
+      env->CallObjectMethod(unique_values_map, cache->tree_map().put, field_name, java_bytes);
     }
   }
 
