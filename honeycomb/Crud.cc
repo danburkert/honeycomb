@@ -98,7 +98,8 @@ int HoneycombHandler::create(const char *path, TABLE *table_arg,
   ARRAY_DELETE(table_name);
   int rc = 0;
 
-  jobject columnMap = create_java_map(this->env);
+  jobject columnMap = env->NewObject(cache->tree_map().clazz,
+      cache->tree_map().init);
   FieldMetadata metadata(this->env);
 
   for (Field **field_ptr = table_arg->field; *field_ptr; field_ptr++)
@@ -169,8 +170,10 @@ int HoneycombHandler::write_row(uchar* buf, jobject updated_fields)
   jstring table_name = this->table_name();
   jlong new_autoincrement_value = -1;
 
-  jobject java_row_map = create_java_map(this->env);
-  jobject unique_values_map = create_java_map(this->env);
+  jobject java_row_map = env->NewObject(cache->tree_map().clazz,
+      cache->tree_map().init);
+  jobject unique_values_map = env->NewObject(cache->tree_map().clazz,
+      cache->tree_map().init);
 
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
     table->timestamp_field->set_time();
