@@ -161,38 +161,66 @@ static void handler(int sig)
 }
 #endif
 
-/**
- * @brief Reads the configuration file and extracts the JVM options from it.
- *
- * @param filename Configuration file
- * @param count Number of options found in configuration file [Out]
- *
- * @return JVM options
- */
-JavaVMOption* read_options(const char* filename, uint* count) 
+class Options
 {
-  const xmlChar* xpath = (const xmlChar*)"/options/jvmoptions/jvmoption";
-  xmlInitParser();
-  xmlDocPtr doc = xmlParseFile(filename);
-  xmlXPathContextPtr xpath_ctx = xmlXPathNewContext(doc);
-  xmlXPathObjectPtr jvm_options = xmlXPathEvalExpression(xpath, xpath_ctx);
-  xmlNodeSetPtr option_nodes = jvm_options->nodesetval;
-  int option_count = option_nodes->nodeNr;
-  *count = option_count;
-  JavaVMOption* options = (JavaVMOption*)malloc(option_count * sizeof(JavaVMOption));
-  for(int i = 0; i < option_count; i++)
+private:
+  JavaVMOption* options;
+  uint count;
+  bool error_reading;
+  /**
+   * @brief Reads the configuration file and extracts the JVM options from it.
+   *
+   * @param filename Configuration file
+   * @param count Number of options found in configuration file [Out]
+   *
+   * @return JVM options
+   */
+  void read_options(const char* filename) 
   {
-    xmlNodePtr current_option = option_nodes->nodeTab[i];
-    char* opt = (char*)xmlNodeListGetString(doc, current_option->xmlChildrenNode, 1);
-    options[i].optionString = ltrim(rtrim(opt));
+    const xmlChar* xpath = (const xmlChar*)"/options/jvmoptions/jvmoption";
+    xmlInitParser();
+    xmlDocPtr doc = xmlParseFile(filename);
+    xmlXPathContextPtr xpath_ctx = xmlXPathNewContext(doc);
+    xmlXPathObjectPtr jvm_options = xmlXPathEvalExpression(xpath, xpath_ctx);
+    xmlNodeSetPtr option_nodes = jvm_options->nodesetval;
+    int option_count = option_nodes->nodeNr;
+    count = option_count;
+    options = (JavaVMOption*)malloc(option_count * sizeof(JavaVMOption));
+    for(int i = 0; i < option_count; i++)
+    {
+      xmlNodePtr current_option = option_nodes->nodeTab[i];
+      char* opt = (char*)xmlNodeListGetString(doc, current_option->xmlChildrenNode, 1);
+      options[i].optionString = ltrim(rtrim(opt));
+    }
+
+    xmlXPathFreeNodeSet(option_nodes);
+    xmlXPathFreeContext(xpath_ctx);
+    xmlFreeDoc(doc);
+    xmlCleanupParser();
+  }
+public:
+  Options(const char* filename) : options(NULL), count(0)
+  {
+    read_options(filename);
+  }
+  ~Options()
+  {
+    if(options == NULL)
+    {
+      for(int i = 0; i < count; i++)
+      {
+        xmlFree(options[i].optionString);
+      }
+
+      free(options);
+      options = NULL;
+    }
   }
 
-  xmlXPathFreeNodeSet(option_nodes);
-  xmlXPathFreeContext(xpath_ctx);
-  xmlFreeDoc(doc);
-  xmlCleanupParser();
-  return options;
-}
+  inline JavaVMOption* get_options() const { return options; }
+  inline uint get_count() const { return count; }
+};
+
 
 /**
  * Create an embedded JVM through the JNI Invocation API and calls
@@ -213,10 +241,9 @@ void initialize_jvm(JavaVM* &jvm)
   {
     JNIEnv* env;
     JavaVMInitArgs vm_args;
-    uint option_count;
-    JavaVMOption* options = read_options(config_file, &option_count);
-    vm_args.options = options;
-    vm_args.nOptions = option_count;
+    Options options(config_file);
+    vm_args.options = options.get_options();
+    vm_args.nOptions = options.get_count();
     vm_args.version = JNI_VERSION_1_6;
     thread_attach_count++; // roundabout to attach_thread
     jint result = JNI_CreateJavaVM(&jvm, (void**)&env, &vm_args);
@@ -234,13 +261,6 @@ void initialize_jvm(JavaVM* &jvm)
 #if defined(__APPLE__) || defined(__linux__)
     signal(SIGTERM, handler);
 #endif
-
-    for(int i = 0; i < option_count; i++)
-    {
-      xmlFree(options[i].optionString);
-    }
-
-    free(options);
   }
 }
 
