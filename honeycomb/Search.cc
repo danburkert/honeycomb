@@ -199,12 +199,10 @@ int HoneycombHandler::get_index_row(const char* indexType, uchar* buf)
 int HoneycombHandler::read_index_row(jobject index_row, uchar* buf)
 {
   jclass index_row_class = cache->index_row().clazz;
-  jmethodID get_uuid_method = this->env->GetMethodID(index_row_class, "getUUID",
-      "()[B");
-  jmethodID get_rowmap_method = this->env->GetMethodID(index_row_class,
-      "getRowMap", "()Ljava/util/Map;");
+  jmethodID get_uuid_method = cache->index_row().get_uuid;
+  jmethodID get_row_map_method = cache->index_row().get_row_map;
 
-  jobject rowMap = this->env->CallObjectMethod(index_row, get_rowmap_method);
+  jobject rowMap = this->env->CallObjectMethod(index_row, get_row_map_method);
   if (rowMap == NULL)
   {
     this->table->status = STATUS_NOT_FOUND;
@@ -240,8 +238,7 @@ int HoneycombHandler::rnd_pos(uchar *buf, uchar *pos)
       this->curr_scan_id, uuid);
 
   jclass row_class = cache->row().clazz;
-  jmethodID get_row_map_method = this->env->GetMethodID(row_class, "getRowMap",
-      "()Ljava/util/Map;");
+  jmethodID get_row_map_method = cache->index_row().get_row_map;
 
   jobject row_map = this->env->CallObjectMethod(row, get_row_map_method);
 
@@ -335,10 +332,8 @@ int HoneycombHandler::rnd_next(uchar *buf)
       next_row_method, this->curr_scan_id);
 
   jclass row_class = cache->row().clazz;
-  jmethodID get_row_map_method = this->env->GetMethodID(row_class, "getRowMap",
-      "()Ljava/util/Map;");
-  jmethodID get_uuid_method = this->env->GetMethodID(row_class, "getUUID",
-      "()[B");
+  jmethodID get_uuid_method = cache->index_row().get_uuid;
+  jmethodID get_row_map_method = cache->index_row().get_row_map;
 
   jobject row_map = this->env->CallObjectMethod(row, get_row_map_method);
 
