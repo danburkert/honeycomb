@@ -87,6 +87,16 @@ class JNICache
     struct ColumnType
     {
       jclass clazz;
+      jfieldID NONE,
+               STRING,
+               BINARY,
+               ULONG,
+               LONG,
+               DOUBLE,
+               TIME,
+               DATE,
+               DATETIME,
+               DECIMAL;
     };
     struct KeyValue
     {
@@ -322,7 +332,17 @@ class JNICache
       column_metadata_.set_autoincrement       = get_method_id(env, column_metadata_.clazz, "setAutoincrement", "(Z)V");
       column_metadata_.set_autoincrement_value = get_method_id(env, column_metadata_.clazz, "setAutoincrementValue", "(J)V");
 
-      column_type_.clazz = get_class_ref(env, HBASECLIENT "ColumnType");
+      column_type_.clazz    = get_class_ref(env, HBASECLIENT "ColumnType");
+      column_type_.NONE     = get_static_field_id(env, column_type_.clazz, "NONE", "L" HBASECLIENT "ColumnType;");
+      column_type_.STRING   = get_static_field_id(env, column_type_.clazz, "STRING", "L" HBASECLIENT "ColumnType;");
+      column_type_.BINARY   = get_static_field_id(env, column_type_.clazz, "BINARY", "L" HBASECLIENT "ColumnType;");
+      column_type_.ULONG    = get_static_field_id(env, column_type_.clazz, "ULONG", "L" HBASECLIENT "ColumnType;");
+      column_type_.LONG     = get_static_field_id(env, column_type_.clazz, "LONG", "L" HBASECLIENT "ColumnType;");
+      column_type_.DOUBLE   = get_static_field_id(env, column_type_.clazz, "DOUBLE", "L" HBASECLIENT "ColumnType;");
+      column_type_.TIME     = get_static_field_id(env, column_type_.clazz, "TIME", "L" HBASECLIENT "ColumnType;");
+      column_type_.DATE     = get_static_field_id(env, column_type_.clazz, "DATE", "L" HBASECLIENT "ColumnType;");
+      column_type_.DATETIME = get_static_field_id(env, column_type_.clazz, "DATETIME", "L" HBASECLIENT "ColumnType;");
+      column_type_.DECIMAL  = get_static_field_id(env, column_type_.clazz, "DECIMAL", "L" HBASECLIENT "ColumnType;");
 
       key_value_.clazz = get_class_ref(env, HBASECLIENT "KeyValue");
       key_value_.init  = get_method_id(env, key_value_.clazz, "<init>", "(Ljava/lang/String;[BZZ)V");

@@ -100,7 +100,7 @@ int HoneycombHandler::create(const char *path, TABLE *table_arg,
 
   jobject columnMap = env->NewObject(cache->tree_map().clazz,
       cache->tree_map().init);
-  FieldMetadata metadata(this->env);
+  FieldMetadata metadata(env, cache);
 
   for (Field **field_ptr = table_arg->field; *field_ptr; field_ptr++)
   {
