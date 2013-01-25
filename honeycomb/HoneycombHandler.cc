@@ -184,7 +184,7 @@ void HoneycombHandler::java_to_sql(uchar* buf, jobject row_map)
     field->move_field_offset(offset);
 
     field->set_notnull(); // for some reason the field was inited as null during rnd_pos
-    this->store_field_value(field, val, val_length);
+    store_field_value(field, val, val_length);
 
     field->move_field_offset(-offset);
     this->env->ReleaseByteArrayElements(java_val, (jbyte*) val, 0);
@@ -196,25 +196,23 @@ void HoneycombHandler::java_to_sql(uchar* buf, jobject row_map)
 int HoneycombHandler::external_lock(THD *thd, int lock_type)
 {
   DBUG_ENTER("HoneycombHandler::external_lock");
-  jclass adapter_class = cache->hbase_adapter().clazz;
+  JNICache::HBaseAdapter hbase_adapter = cache->hbase_adapter();
   if (lock_type == F_WRLCK || lock_type == F_RDLCK)
   {
-    jmethodID start_write_method = cache->hbase_adapter().start_write;
-    jlong write_id = this->env->CallStaticLongMethod(adapter_class,
-        start_write_method);
+    jlong write_id = this->env->CallStaticLongMethod(hbase_adapter.clazz,
+        hbase_adapter.start_write);
     this->curr_write_id = write_id;
   }
 
   if (lock_type == F_UNLCK)
   {
-    jmethodID update_count_method = cache->hbase_adapter().increment_row_count;
+    JavaFrame frame(env, 1);
     jstring table_name = this->table_name();
-    this->env->CallStaticVoidMethod(adapter_class, update_count_method,
-        table_name, (jlong) this->rows_written);
-    DELETE_REF(env, table_name);
+    this->env->CallStaticVoidMethod(hbase_adapter.clazz,
+        hbase_adapter.increment_row_count, table_name,
+        (jlong) this->rows_written);
     this->rows_written = 0;
-    jmethodID end_write_method = cache->hbase_adapter().end_write;
-    this->env->CallStaticVoidMethod(adapter_class, end_write_method,
+    this->env->CallStaticVoidMethod(hbase_adapter.clazz, hbase_adapter.end_write,
         (jlong)this->curr_write_id);
     this->curr_write_id = -1;
   }
@@ -382,12 +380,13 @@ int HoneycombHandler::info(uint flag)
     this->failed_key_index = -1;
   }
   if ((flag & HA_STATUS_AUTO) && table->found_next_number_field) {
-    JavaFrame frame(env);
+    JavaFrame frame(env, 2);
     jclass adapter_class = cache->hbase_adapter().clazz;
+    jstring table_name = this->table_name();
+    jstring field_name = string_to_java_string(table->found_next_number_field->field_name);
     jmethodID get_autoincrement_value_method = cache->hbase_adapter().get_autoincrement_value;
-    jlong autoincrement_value = (jlong) this->env->CallStaticObjectMethod(adapter_class,
-        get_autoincrement_value_method, this->table_name(),
-        string_to_java_string(table->found_next_number_field->field_name));
+    jlong autoincrement_value = env->CallStaticLongMethod(adapter_class,
+        get_autoincrement_value_method, table_name, field_name);
     stats.auto_increment_value = (ulonglong) autoincrement_value;
   }
   DBUG_RETURN(0);
@@ -403,14 +402,14 @@ HoneycombShare *HoneycombHandler::get_share(const char *table_name, TABLE *table
   path_length = (uint) strlen(table_name);
 
   /*
-   If share is not present in the hash, create a new share and
-   initialize its members.
-   */
+     If share is not present in the hash, create a new share and
+     initialize its members.
+     */
   if (!(share = (HoneycombShare*) my_hash_search(honeycomb_open_tables,
-      (uchar*) table_name, path_length)))
+          (uchar*) table_name, path_length)))
   {
     if (!my_multi_malloc(MYF(MY_WME | MY_ZEROFILL), &share, sizeof(*share),
-        &tmp_path_name, path_length + 1, NullS))
+          &tmp_path_name, path_length + 1, NullS))
     {
       mysql_mutex_unlock(honeycomb_mutex);
       return NULL;
@@ -432,7 +431,7 @@ HoneycombShare *HoneycombHandler::get_share(const char *table_name, TABLE *table
 
   return share;
 
-  error:
+error:
   mysql_mutex_unlock(honeycomb_mutex);
   my_free(share);
 
@@ -574,26 +573,41 @@ bool HoneycombHandler::field_has_unique_index(Field *field)
   return false;
 }
 
+
+/**
+ * Create java string from native string.  The returned jstring is a local reference
+ * which must be freed.  Returns NULL if the string cannot be constructed.
+ */
 jstring HoneycombHandler::string_to_java_string(const char *string)
 {
   return this->env->NewStringUTF(string);
 }
 
+/**
+ * Create const char* string from java string.  The passed in java string is NOT
+ * cleaned up, the reference must be freed by the caller.
+ */
 const char *HoneycombHandler::java_to_string(jstring string)
 {
   return this->env->GetStringUTFChars(string, JNI_FALSE);
 }
 
+/**
+ * Test whether a column in a table is nullable.
+ */
 bool HoneycombHandler::is_field_nullable(jstring table_name, const char* field_name)
 {
-  JavaFrame frame(env);
-  jclass adapter_class = cache->hbase_adapter().clazz;
-  jmethodID is_nullable_method = cache->hbase_adapter().is_nullable;
-  bool result = (bool)this->env->CallStaticBooleanMethod(adapter_class,
-      is_nullable_method, table_name, string_to_java_string(field_name));
-  return result;
+  JavaFrame frame(env, 1);
+  jstring field = string_to_java_string(field_name);
+  jboolean result = env->CallStaticBooleanMethod(cache->hbase_adapter().clazz,
+      cache->hbase_adapter().is_nullable, table_name, field);
+  return (bool) result;
 }
 
+/**
+ * Stores the UUID of index_row into the pos field of the handler.  MySQL
+ * uses pos during later rnd_pos calls.
+ */
 void HoneycombHandler::store_uuid_ref(jobject index_row, jmethodID get_uuid_method)
 {
   JavaFrame frame(env);
@@ -623,6 +637,10 @@ int HoneycombHandler::analyze(THD* thd, HA_CHECK_OPT* check_opt)
   DBUG_RETURN(0);
 }
 
+/**
+ * Estimate the number of rows contained in the table associated with this
+ * handler.  Called by the optimizer.
+ */
 ha_rows HoneycombHandler::estimate_rows_upper_bound()
 {
   DBUG_ENTER("HoneycombHandler::estimate_rows_upper_bound");
@@ -639,6 +657,9 @@ ha_rows HoneycombHandler::estimate_rows_upper_bound()
   DBUG_RETURN(row_count < 2 ? 10 : 2*row_count + 1);
 }
 
+/**
+ * Tell HBase to flush writes to the regionservers.
+ */
 void HoneycombHandler::flush_writes()
 {
   jclass adapter_class = cache->hbase_adapter().clazz;
@@ -648,7 +669,9 @@ void HoneycombHandler::flush_writes()
 }
 
 /**
- * @brief Retrieve the database and table name of the current table in format: database.tablename 
+ * @brief Retrieve the database and table name of the current table in format: database.tablename
+ * @todo We should only be calling out to JNI once and caching the result,
+ * probably in HoneycombHandler constructor.
  *
  * @return database.tablename 
  */
