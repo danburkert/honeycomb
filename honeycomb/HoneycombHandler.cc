@@ -67,6 +67,13 @@ int HoneycombHandler::close(void)
   DBUG_RETURN(free_share(share));
 }
 
+/**
+ * @brief Stores a value pulled out of HBase into a MySQL field.
+ *
+ * @param field MySQL to store an HBase value
+ * @param val HBase value
+ * @param val_length Length of the HBase value
+ */
 void HoneycombHandler::store_field_value(Field *field, char *val, int val_length)
 {
   int type = field->real_type();
@@ -145,6 +152,12 @@ void HoneycombHandler::store_field_value(Field *field, char *val, int val_length
   }
 }
 
+/**
+ * @brief Converts a HBase row into the MySQL unireg row format.
+ *
+ * @param buf MySQL unireg row buffer
+ * @param row_map HBase row
+ */
 void HoneycombHandler::java_to_sql(uchar* buf, jobject row_map)
 {
   jboolean is_copy = JNI_FALSE;
@@ -216,6 +229,17 @@ char* HoneycombHandler::index_name(TABLE* table, uint key)
     return this->index_name(key_part, key_part_end, pos->key_parts);
 }
 
+/**
+ * @brief Extracts the columns used in a table index.
+ * For example:
+ * create table example (x int, y int, index(x,y)) => "x,y"
+ *
+ * @param key_part Index keys
+ * @param key_part_end End of index keys
+ * @param key_parts Number of columns in index
+ *
+ * @return Columns in index
+ */
 char* HoneycombHandler::index_name(KEY_PART_INFO* key_part,
     KEY_PART_INFO* key_part_end, uint key_parts)
 {
@@ -499,6 +523,13 @@ void HoneycombHandler::get_auto_increment(ulonglong offset, ulonglong increment,
   DBUG_VOID_RETURN;
 }
 
+/**
+ * @brief Retrieves the index of the column that produced the duplicate key on insert/update.
+ *
+ * @param key_name Name of column with duplicates
+ *
+ * @return Column index
+ */
 int HoneycombHandler::get_failed_key_index(const char *key_name)
 {
   if (this->table->s->keys == 0)
@@ -616,6 +647,11 @@ void HoneycombHandler::flush_writes()
       (jlong)this->curr_write_id);
 }
 
+/**
+ * @brief Retrieve the database and table name of the current table in format: database.tablename 
+ *
+ * @return database.tablename 
+ */
 jstring HoneycombHandler::table_name()
 {
   char* database_name = this->table->s->db.str;

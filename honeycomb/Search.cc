@@ -36,6 +36,18 @@ int HoneycombHandler::index_end()
   DBUG_RETURN(0);
 }
 
+/**
+ * @brief Creates a key value list out of the columns used in an index search.
+ *
+ * @param index Number columns in index search
+ * @param key_sizes How large is each column
+ * @param key_copies HBase formatted index column value
+ * @param key_names Column names
+ * @param key_null_bits Which columns are nullable
+ * @param key_is_null Whether the whole column is null 
+ *
+ * @return 
+ */
 jobject HoneycombHandler::create_key_value_list(int index, uint* key_sizes,
     uchar** key_copies, const char** key_names, jboolean* key_null_bits,
     jboolean* key_is_null)
