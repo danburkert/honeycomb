@@ -157,7 +157,8 @@ void HoneycombHandler::java_to_sql(uchar* buf, jobject row_map)
     Field *field = table->field[i];
     const char* key = field->field_name;
     jstring java_key = string_to_java_string(key);
-    jbyteArray java_val = java_map_get(row_map, java_key, this->env);
+    jbyteArray java_val = (jbyteArray) env->CallObjectMethod(row_map,
+        cache->tree_map().get, java_key);
     if (java_val == NULL)
     {
       field->set_null();
