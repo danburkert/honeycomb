@@ -56,6 +56,10 @@ jobject HoneycombHandler::create_key_value_list(int index, uint* key_sizes,
   return key_values;
 }
 
+/**
+ * Called once per index scan after index_init.  Sets cursor into the row
+ * specified by the key map and buf, and returns first result.
+ */
 int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
     key_part_map keypart_map, enum ha_rkey_function find_flag)
 {
