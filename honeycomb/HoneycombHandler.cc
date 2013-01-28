@@ -576,7 +576,7 @@ bool HoneycombHandler::field_has_unique_index(Field *field)
 
 /**
  * Create java string from native string.  The returned jstring is a local reference
- * which must be freed.  Returns NULL if the string cannot be constructed.
+ * which must be deleted.  Returns NULL if the string cannot be constructed.
  */
 jstring HoneycombHandler::string_to_java_string(const char *string)
 {
@@ -674,7 +674,7 @@ void HoneycombHandler::flush_writes()
  * @todo We should only be calling out to JNI once and caching the result,
  * probably in HoneycombHandler constructor.
  *
- * @return database.tablename 
+ * @return database.tablename
  */
 jstring HoneycombHandler::table_name()
 {
