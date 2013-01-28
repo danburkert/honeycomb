@@ -12,43 +12,9 @@
 #include "Java.h"
 #include "JavaFrame.h"
 #include "JNICache.h"
-
-#include <libxml/tree.h>
-#include <libxml/parser.h>
-#include <libxml/xpath.h>
+#include "OptionParser.h"
 
 static const char* config_file = "/etc/mysql/honeycomb.xml";
-
-/**
- * Trim whitespace from right of string.
- */
-static char* rtrim(char* string)
-{
-  char* original = string + strlen(string);
-  while(isspace(*--original));
-  *(original + 1) = '\0';
-  return string;
-}
-
-/**
- * Trim whitespace from left of string.
- */
-static char* ltrim(char *string)
-{
-  char* original = string;
-  char *p = original;
-  int trimmed = 0;
-  do
-  {
-    if (!isspace(*original) || trimmed)
-    {
-      trimmed = 1;
-      *p++ = *original;
-    }
-  }
-  while (*original++ != '\0');
-  return string;
-}
 
 static void abort_with_fatal_error(const char* message, ...)
 {
@@ -94,23 +60,6 @@ void initialize_adapter(JavaVM* jvm)
   detach_thread(jvm);
 }
 
-/**
- * @brief Ensure that the configuration file is there and readable.
- *
- * @param config_file Configuration file path
- */
-static void test_config_file(const char* config_file)
-{
-  FILE* config = fopen(config_file, "r");
-  if(config != NULL)
-  {
-    fclose(config);
-  }
-  else
-  {
-    abort_with_fatal_error("Could not open \"%s\". %s must be readable.", config_file, config_file);
-  }
-}
 
 static void print_java_classpath(JNIEnv* env)
 {
@@ -161,67 +110,6 @@ static void handler(int sig)
 }
 #endif
 
-class Options
-{
-private:
-  JavaVMOption* options;
-  uint count;
-  bool error_reading;
-  /**
-   * @brief Reads the configuration file and extracts the JVM options from it.
-   *
-   * @param filename Configuration file
-   * @param count Number of options found in configuration file [Out]
-   *
-   * @return JVM options
-   */
-  void read_options(const char* filename) 
-  {
-    const xmlChar* xpath = (const xmlChar*)"/options/jvmoptions/jvmoption";
-    xmlInitParser();
-    xmlDocPtr doc = xmlParseFile(filename);
-    xmlXPathContextPtr xpath_ctx = xmlXPathNewContext(doc);
-    xmlXPathObjectPtr jvm_options = xmlXPathEvalExpression(xpath, xpath_ctx);
-    xmlNodeSetPtr option_nodes = jvm_options->nodesetval;
-    int option_count = option_nodes->nodeNr;
-    count = option_count;
-    options = (JavaVMOption*)malloc(option_count * sizeof(JavaVMOption));
-    for(int i = 0; i < option_count; i++)
-    {
-      xmlNodePtr current_option = option_nodes->nodeTab[i];
-      char* opt = (char*)xmlNodeListGetString(doc, current_option->xmlChildrenNode, 1);
-      options[i].optionString = ltrim(rtrim(opt));
-    }
-
-    xmlXPathFreeNodeSet(option_nodes);
-    xmlXPathFreeContext(xpath_ctx);
-    xmlFreeDoc(doc);
-    xmlCleanupParser();
-  }
-public:
-  Options(const char* filename) : options(NULL), count(0)
-  {
-    read_options(filename);
-  }
-  ~Options()
-  {
-    if(options == NULL)
-    {
-      for(int i = 0; i < count; i++)
-      {
-        xmlFree(options[i].optionString);
-      }
-
-      free(options);
-      options = NULL;
-    }
-  }
-
-  inline JavaVMOption* get_options() const { return options; }
-  inline uint get_count() const { return count; }
-};
-
-
 /**
  * Create an embedded JVM through the JNI Invocation API and calls
  * initialize_adapter. This should only be called once per MySQL Server
@@ -241,9 +129,15 @@ void initialize_jvm(JavaVM* &jvm)
   {
     JNIEnv* env;
     JavaVMInitArgs vm_args;
-    Options options(config_file);
-    vm_args.options = options.get_options();
-    vm_args.nOptions = options.get_count();
+    Option* options = new_options(config_file);
+    if (has_error(options))
+    {
+      char* error_message = get_errormessage(options);
+      abort_with_fatal_error(error_message);
+    }
+
+    vm_args.options = get_options(options);
+    vm_args.nOptions = get_optioncount(options);
     vm_args.version = JNI_VERSION_1_6;
     thread_attach_count++; // roundabout to attach_thread
     jint result = JNI_CreateJavaVM(&jvm, (void**)&env, &vm_args);
@@ -255,6 +149,8 @@ void initialize_jvm(JavaVM* &jvm)
     {
       abort_with_fatal_error("Environment not created correctly during JVM creation.");
     }
+
+    free_options(options);
     initialize_adapter(jvm);
     print_java_classpath(env);
     detach_thread(jvm);
