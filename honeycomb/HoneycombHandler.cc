@@ -585,7 +585,8 @@ jstring HoneycombHandler::string_to_java_string(const char *string)
 
 /**
  * Create const char* string from java string.  The passed in java string is NOT
- * cleaned up, the reference must be freed by the caller.
+ * cleaned up, cleaned up with a call to
+ * ReleaseStringUTFChars(jstring, native_string).
  */
 const char *HoneycombHandler::java_to_string(jstring string)
 {
