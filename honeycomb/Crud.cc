@@ -348,11 +348,11 @@ int HoneycombHandler::write_row(uchar* buf, jobject updated_fields)
   }
   if (new_autoincrement_value >= 0 && new_autoincrement_value < LLONG_MAX)
   {
-    update_honeycomb_autoincrement_value(new_autoincrement_value + 1, JNI_FALSE);
+    set_autoinc_counter(new_autoincrement_value + 1, JNI_FALSE);
   }
   else if (new_autoincrement_value >= 0)
   {
-    update_honeycomb_autoincrement_value(new_autoincrement_value, JNI_FALSE);
+    set_autoinc_counter(new_autoincrement_value, JNI_FALSE);
   }
 
   return 0;
@@ -587,14 +587,13 @@ int HoneycombHandler::truncate()
 {
   DBUG_ENTER("HoneycombHandler::truncate");
 
-  update_honeycomb_autoincrement_value(1, JNI_TRUE);
+  set_autoinc_counter(1, JNI_TRUE);
   int returnValue = delete_all_rows();
 
   DBUG_RETURN(returnValue);
 }
 
-void HoneycombHandler::update_honeycomb_autoincrement_value(jlong new_autoincrement_value,
-    jboolean is_truncate)
+void HoneycombHandler::set_autoinc_counter(jlong new_value, jboolean is_truncate)
 {
   if(table->found_next_number_field == NULL)
   {
@@ -608,9 +607,9 @@ void HoneycombHandler::update_honeycomb_autoincrement_value(jlong new_autoincrem
   jstring table_name =  this->table_name();
   if (this->env->CallStaticBooleanMethod(adapter_class,
         alter_autoincrement_value, table_name, field_name,
-        new_autoincrement_value, is_truncate))
+        new_value, is_truncate))
   {
-    stats.auto_increment_value = (ulonglong) new_autoincrement_value;
+    stats.auto_increment_value = (ulonglong) new_value;
   }
 }
 
@@ -649,8 +648,7 @@ void HoneycombHandler::update_create_info(HA_CREATE_INFO* create_info)
   }
   //alter table
   else if (create_info->used_fields == 1) {
-    update_honeycomb_autoincrement_value((jlong) create_info->auto_increment_value,
-        JNI_FALSE);
+    set_autoinc_counter(create_info->auto_increment_value, JNI_FALSE);
   }
 
   DBUG_VOID_RETURN;
