@@ -70,26 +70,18 @@ bool print_java_exception(JNIEnv* env)
 jbyteArray convert_value_to_java_bytes(uchar* value, uint32 length, JNIEnv* env)
 {
   jbyteArray byteArray = env->NewByteArray(length);
-  jbyte *java_bytes = env->GetByteArrayElements(byteArray, 0);
-
-  memcpy(java_bytes, value, length);
-
-  env->SetByteArrayRegion(byteArray, 0, length, java_bytes);
-  env->ReleaseByteArrayElements(byteArray, java_bytes, 0);
-
+  env->SetByteArrayRegion(byteArray, 0, length, (jbyte*) value);
   return byteArray;
 }
 
+/**
+ * Convert java byte array to native char array.  Returns a pointer to the
+ * native array, which is heap allocated and must be array deleted by the caller.
+ */
 char *char_array_from_java_bytes(jbyteArray java_bytes, JNIEnv* env)
 {
   int length = (int) env->GetArrayLength(java_bytes);
-  jbyte *jbytes = env->GetByteArrayElements(java_bytes, JNI_FALSE);
-
   char* ret = new char[length];
-
-  memcpy(ret, jbytes, length);
-
-  env->ReleaseByteArrayElements(java_bytes, jbytes, 0);
-
+  env->GetByteArrayRegion(java_bytes, 0, length, (jbyte*) ret);
   return ret;
 }
