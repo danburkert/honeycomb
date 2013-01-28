@@ -56,3 +56,11 @@ then
   echo "Creating a symbolic link from $link to $target"
   ln -s $target $link
 fi
+
+link=/etc/mysql/honeycomb.xsd
+target=$HONEYCOMB_HOME/honeycomb/honeycomb.xsd
+if [ ! -h $link ]
+then
+  echo "Creating a symbolic link from $link to $target"
+  sudo ln -s $target $link
+fi
