@@ -137,8 +137,7 @@ class HoneycombHandler : public handler
     int index_first(uchar *buf);
     int index_last(uchar *buf);
 
-    void update_honeycomb_autoincrement_value(jlong new_autoincrement_value,
-        jboolean is_truncate);
+    void set_autoinc_counter(jlong new_value, jboolean is_truncate);
     void release_auto_increment();
 
   public:
