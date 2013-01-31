@@ -33,6 +33,7 @@ HoneycombHandler::~HoneycombHandler()
   for (int i = 0; i < this->scan_ids_count; i++)
   {
     this->env->CallStaticVoidMethod(adapter_class, end_scan_method, scan_ids[i]);
+    EXCEPTION_CHECK("HoneycombHandler::destructor", "ending scan.");
   }
   ARRAY_DELETE(this->scan_ids);
   this->flush_writes();
@@ -63,7 +64,6 @@ int HoneycombHandler::open(const char *path, int mode, uint test_if_locked)
 int HoneycombHandler::close(void)
 {
   DBUG_ENTER("HoneycombHandler::close");
-
   DBUG_RETURN(free_share(share));
 }
 
@@ -157,13 +157,14 @@ void HoneycombHandler::store_field_value(Field *field, char *val, int val_length
  *
  * @param buf MySQL unireg row buffer
  * @param row_map HBase row
+ * @return 0 on success
  */
-void HoneycombHandler::java_to_sql(uchar* buf, jobject row_map)
+int HoneycombHandler::java_to_sql(uchar* buf, jobject row_map)
 {
+  JavaFrame frame(env, table->s->fields + 1);
   jboolean is_copy = JNI_FALSE;
   my_bitmap_map *orig_bitmap;
   orig_bitmap = dbug_tmp_use_all_columns(table, table->write_set);
-  JavaFrame frame(env, table->s->fields + 1);
 
   for (int i = 0; i < table->s->fields; i++)
   {
@@ -172,12 +173,15 @@ void HoneycombHandler::java_to_sql(uchar* buf, jobject row_map)
     jstring java_key = string_to_java_string(key);
     jbyteArray java_val = (jbyteArray) env->CallObjectMethod(row_map,
         cache->tree_map().get, java_key);
+    EXCEPTION_CHECK_IE("HoneycombHandler::java_to_sql", "calling row_map.get");
     if (java_val == NULL)
     {
       field->set_null();
       continue;
     }
     char* val = (char*) this->env->GetByteArrayElements(java_val, &is_copy);
+    NULL_CHECK_IE(val, "HoneycombHandler::java_to_sql",
+        "getting byte array of field value");
     jsize val_length = this->env->GetArrayLength(java_val);
 
     my_ptrdiff_t offset = (my_ptrdiff_t) (buf - this->table->record[0]);
@@ -191,6 +195,7 @@ void HoneycombHandler::java_to_sql(uchar* buf, jobject row_map)
   }
 
   dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
+  return 0;
 }
 
 int HoneycombHandler::external_lock(THD *thd, int lock_type)
@@ -201,6 +206,8 @@ int HoneycombHandler::external_lock(THD *thd, int lock_type)
   {
     jlong write_id = this->env->CallStaticLongMethod(hbase_adapter.clazz,
         hbase_adapter.start_write);
+    EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::external_lock",
+        "calling startWrite");
     this->curr_write_id = write_id;
   }
 
@@ -211,9 +218,13 @@ int HoneycombHandler::external_lock(THD *thd, int lock_type)
     this->env->CallStaticVoidMethod(hbase_adapter.clazz,
         hbase_adapter.increment_row_count, table_name,
         (jlong) this->rows_written);
+    EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::external_lock",
+        "calling startWrite");
     this->rows_written = 0;
     this->env->CallStaticVoidMethod(hbase_adapter.clazz, hbase_adapter.end_write,
         (jlong)this->curr_write_id);
+    EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::external_lock",
+        "calling endWrite");
     this->curr_write_id = -1;
   }
   DBUG_RETURN(0);
@@ -221,10 +232,10 @@ int HoneycombHandler::external_lock(THD *thd, int lock_type)
 
 char* HoneycombHandler::index_name(TABLE* table, uint key)
 {
-    KEY *pos = table->key_info + key;
-    KEY_PART_INFO *key_part = pos->key_part;
-    KEY_PART_INFO *key_part_end = key_part + pos->key_parts;
-    return this->index_name(key_part, key_part_end, pos->key_parts);
+  KEY *pos = table->key_info + key;
+  KEY_PART_INFO *key_part = pos->key_part;
+  KEY_PART_INFO *key_part_end = key_part + pos->key_parts;
+  return this->index_name(key_part, key_part_end, pos->key_parts);
 }
 
 /**
@@ -241,29 +252,29 @@ char* HoneycombHandler::index_name(TABLE* table, uint key)
 char* HoneycombHandler::index_name(KEY_PART_INFO* key_part,
     KEY_PART_INFO* key_part_end, uint key_parts)
 {
-    size_t size = 0;
+  size_t size = 0;
 
-    KEY_PART_INFO* start = key_part;
-    for (; key_part != key_part_end; key_part++)
+  KEY_PART_INFO* start = key_part;
+  for (; key_part != key_part_end; key_part++)
+  {
+    Field *field = key_part->field;
+    size += strlen(field->field_name);
+  }
+
+  key_part = start;
+  char* name = new char[size + key_parts];
+  memset(name, 0, size + key_parts);
+  for (; key_part != key_part_end; key_part++)
+  {
+    Field *field = key_part->field;
+    strcat(name, field->field_name);
+    if ((key_part+1) != key_part_end)
     {
-      Field *field = key_part->field;
-      size += strlen(field->field_name);
+      strcat(name, ",");
     }
+  }
 
-    key_part = start;
-    char* name = new char[size + key_parts];
-    memset(name, 0, size + key_parts);
-    for (; key_part != key_part_end; key_part++)
-    {
-      Field *field = key_part->field;
-      strcat(name, field->field_name);
-      if ((key_part+1) != key_part_end)
-      {
-        strcat(name, ",");
-      }
-    }
-
-    return name;
+  return name;
 }
 
 THR_LOCK_DATA **HoneycombHandler::store_lock(THD *thd, THR_LOCK_DATA **to,
@@ -321,6 +332,8 @@ int HoneycombHandler::info(uint flag)
     jstring table_name = this->table_name();
     jlong row_count = this->env->CallStaticLongMethod(adapter_class,
         get_count_method, table_name);
+    EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::info", "calling getRowCount");
+
     if (row_count < 0)
       row_count = 0;
     if (row_count == 0 && !(flag & HA_STATUS_TIME))
@@ -387,6 +400,7 @@ int HoneycombHandler::info(uint flag)
     jmethodID get_autoincrement_value_method = cache->hbase_adapter().get_autoincrement_value;
     jlong autoincrement_value = env->CallStaticLongMethod(adapter_class,
         get_autoincrement_value_method, table_name, field_name);
+    EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::info", "calling getAutoincrementValue");
     stats.auto_increment_value = (ulonglong) autoincrement_value;
   }
   DBUG_RETURN(0);
@@ -517,6 +531,7 @@ void HoneycombHandler::get_auto_increment(ulonglong offset, ulonglong increment,
   jlong increment_value = (jlong) this->env->CallStaticObjectMethod(adapter_class,
       get_auto_increment_method, this->table_name(),
       string_to_java_string(table->next_number_field->field_name));
+  EXCEPTION_CHECK("HoneycombHandler::get_auto_increment", "calling getNextAutoincrementValue");
   *first_value = (ulonglong)increment_value;
   *nb_reserved_values = ULONGLONG_MAX;
   DBUG_VOID_RETURN;
@@ -576,11 +591,13 @@ bool HoneycombHandler::field_has_unique_index(Field *field)
 
 /**
  * Create java string from native string.  The returned jstring is a local reference
- * which must be deleted.  Returns NULL if the string cannot be constructed.
+ * which must be deleted.  Aborts if the string cannot be constructed.
  */
 jstring HoneycombHandler::string_to_java_string(const char *string)
 {
-  return this->env->NewStringUTF(string);
+  jstring jstring = this->env->NewStringUTF(string);
+  NULL_CHECK_ABORT(jstring, "HoneycombHandler::string_to_java_string: OutOfMemoryError while calling NewStringUTF");
+  return jstring;
 }
 
 /**
@@ -590,7 +607,9 @@ jstring HoneycombHandler::string_to_java_string(const char *string)
  */
 const char *HoneycombHandler::java_to_string(jstring string)
 {
-  return this->env->GetStringUTFChars(string, JNI_FALSE);
+  const char* chars = this->env->GetStringUTFChars(string, JNI_FALSE);
+  NULL_CHECK_ABORT(chars, "HoneycombHandler::java_to_string: OutOfMemoryError while calling GetStringUTFChars");
+  return chars;
 }
 
 /**
@@ -602,7 +621,8 @@ bool HoneycombHandler::is_field_nullable(jstring table_name, const char* field_n
   jstring field = string_to_java_string(field_name);
   jboolean result = env->CallStaticBooleanMethod(cache->hbase_adapter().clazz,
       cache->hbase_adapter().is_nullable, table_name, field);
-  return (bool) result;
+  EXCEPTION_CHECK("HoneycombHandler::is_field_nullable", "calling isNullable()");
+  return result;
 }
 
 /**
@@ -614,6 +634,8 @@ void HoneycombHandler::store_uuid_ref(jobject index_row, jmethodID get_uuid_meth
   JavaFrame frame(env);
   jbyteArray uuid = (jbyteArray) this->env->CallObjectMethod(index_row, get_uuid_method);
   uchar* pos = (uchar*) this->env->GetByteArrayElements(uuid, JNI_FALSE);
+  NULL_CHECK_ABORT(pos, "HoneycombHandler::store_uuid_ref: OutOfMemoryError while calling GetByteArrayElements");
+
   memcpy(this->ref, pos, this->ref_length);
   this->env->ReleaseByteArrayElements(uuid, (jbyte*) pos, 0);
 }
@@ -645,13 +667,14 @@ int HoneycombHandler::analyze(THD* thd, HA_CHECK_OPT* check_opt)
 ha_rows HoneycombHandler::estimate_rows_upper_bound()
 {
   DBUG_ENTER("HoneycombHandler::estimate_rows_upper_bound");
-  JavaFrame frame(env);
+  JavaFrame frame(env, 1);
 
   jclass adapter_class = cache->hbase_adapter().clazz;
   jmethodID get_count_method = cache->hbase_adapter().get_row_count;
   jstring table_name = this->table_name();
   jlong row_count = this->env->CallStaticLongMethod(adapter_class,
       get_count_method, table_name);
+  EXCEPTION_CHECK("HonecyombHandler::estimate_rows_upper_bound", "calling getRowCount");
 
   // Stupid MySQL and its filesort. This must be large enough to filesort when
   // there are less than 2 records.
@@ -666,7 +689,8 @@ void HoneycombHandler::flush_writes()
   jclass adapter_class = cache->hbase_adapter().clazz;
   jmethodID end_write_method = cache->hbase_adapter().flush_writes;
   this->env->CallStaticVoidMethod(adapter_class, end_write_method,
-      (jlong)this->curr_write_id);
+      this->curr_write_id);
+  EXCEPTION_CHECK("HonecyombHandler::flush_writes", "calling endWrite");
 }
 
 /**
@@ -682,5 +706,6 @@ jstring HoneycombHandler::table_name()
   char* table_name = this->table->s->table_name.str;
   char namespaced_table[strlen(database_name) + strlen(table_name) + 2];
   sprintf(namespaced_table, "%s.%s", database_name, table_name);
-  return string_to_java_string(namespaced_table);
+  jstring jtable_name = string_to_java_string(namespaced_table);
+  return jtable_name;
 }

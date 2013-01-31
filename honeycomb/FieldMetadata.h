@@ -31,6 +31,7 @@ public:
     jmethodID set_autoincrement_value_method = cache->column_metadata().set_autoincrement_value;
 
     jobject metadata_object = this->env->NewObject(metadata_class, metadata_constructor);
+    EXCEPTION_CHECK_ABORT("FieldMetadata::get_field_metadata: OutOfMemoryException while calling NewObject");
     JNICache::ColumnType column_type = cache->column_type();
 
     switch (field->real_type())
@@ -45,19 +46,24 @@ public:
         {
           env->CallVoidMethod(metadata_object, set_type_method,
               env->GetStaticObjectField(column_type.clazz, column_type.ULONG));
+          EXCEPTION_CHECK("FieldMetadata::get_field_metadata", "calling setType");
         }
         else
         {
           env->CallVoidMethod(metadata_object, set_type_method,
               env->GetStaticObjectField(column_type.clazz, column_type.LONG));
+          EXCEPTION_CHECK("FieldMetadata::get_field_metadata", "calling setType");
         }
         this->env->CallVoidMethod(metadata_object, set_max_length_method, (jint)8);
+        EXCEPTION_CHECK("FieldMetadata::get_field_metadata", "calling setMaxLength");
         break;
       case MYSQL_TYPE_FLOAT:
       case MYSQL_TYPE_DOUBLE:
         env->CallVoidMethod(metadata_object, set_type_method,
             env->GetStaticObjectField(column_type.clazz, column_type.DOUBLE));
+        EXCEPTION_CHECK("FieldMetadata::get_field_metadata", "calling setType");
         this->env->CallVoidMethod(metadata_object, set_max_length_method, (jint)8);
+        EXCEPTION_CHECK("FieldMetadata::get_field_metadata", "calling setMaxLength");
         break;
       case MYSQL_TYPE_DECIMAL:
       case MYSQL_TYPE_NEWDECIMAL:
@@ -66,27 +72,37 @@ public:
           uint scale = ((Field_new_decimal*) field)->dec;
           env->CallVoidMethod(metadata_object, set_type_method,
               env->GetStaticObjectField(column_type.clazz, column_type.DECIMAL));
+          EXCEPTION_CHECK("FieldMetadata::get_field_metadata", "calling setType");
           this->env->CallVoidMethod(metadata_object, set_precision_method, (jint)precision);
+          EXCEPTION_CHECK("FieldMetadata::get_field_metadata", "calling setPrecision");
           this->env->CallVoidMethod(metadata_object, set_scale_method, (jint)scale);
+          EXCEPTION_CHECK("FieldMetadata::get_field_metadata", "calling setScale");
           this->env->CallVoidMethod(metadata_object, set_max_length_method, (jint)field->field_length);
+          EXCEPTION_CHECK("FieldMetadata::get_field_metadata", "calling setMaxLength");
         }
         break;
       case MYSQL_TYPE_DATE:
       case MYSQL_TYPE_NEWDATE:
         env->CallVoidMethod(metadata_object, set_type_method,
             env->GetStaticObjectField(column_type.clazz, column_type.DATE));
+        EXCEPTION_CHECK("FieldMetadata::get_field_metadata", "calling setType");
         this->env->CallVoidMethod(metadata_object, set_max_length_method, (jint)field->field_length);
+        EXCEPTION_CHECK("FieldMetadata::get_field_metadata", "calling setMaxLength");
         break;
       case MYSQL_TYPE_TIME:
         env->CallVoidMethod(metadata_object, set_type_method,
             env->GetStaticObjectField(column_type.clazz, column_type.TIME));
+        EXCEPTION_CHECK("FieldMetadata::get_field_metadata", "calling setType");
         this->env->CallVoidMethod(metadata_object, set_max_length_method, (jint)field->field_length);
+        EXCEPTION_CHECK("FieldMetadata::get_field_metadata", "calling setMaxLength");
         break;
       case MYSQL_TYPE_DATETIME:
       case MYSQL_TYPE_TIMESTAMP:
         env->CallVoidMethod(metadata_object, set_type_method,
             env->GetStaticObjectField(column_type.clazz, column_type.DATETIME));
+        EXCEPTION_CHECK("FieldMetadata::get_field_metadata", "calling setType");
         this->env->CallVoidMethod(metadata_object, set_max_length_method, (jint)field->field_length);
+        EXCEPTION_CHECK("FieldMetadata::get_field_metadata", "calling setMaxLength");
         break;
       case MYSQL_TYPE_STRING:
       case MYSQL_TYPE_VARCHAR:
@@ -94,16 +110,19 @@ public:
           long long max_char_length = (long long) field->field_length;
 
           this->env->CallVoidMethod(metadata_object, set_max_length_method, (jint)max_char_length);
+          EXCEPTION_CHECK("FieldMetadata::get_field_metadata", "calling setMaxLength");
 
           if (field->binary())
           {
             env->CallVoidMethod(metadata_object, set_type_method,
                 env->GetStaticObjectField(column_type.clazz, column_type.BINARY));
+            EXCEPTION_CHECK("FieldMetadata::get_field_metadata", "calling setType");
           }
           else
           {
             env->CallVoidMethod(metadata_object, set_type_method,
                 env->GetStaticObjectField(column_type.clazz, column_type.STRING));
+            EXCEPTION_CHECK("FieldMetadata::get_field_metadata", "calling setType");
           }
         }
         break;
@@ -113,10 +132,12 @@ public:
       case MYSQL_TYPE_LONG_BLOB:
         env->CallVoidMethod(metadata_object, set_type_method,
             env->GetStaticObjectField(column_type.clazz, column_type.BINARY));
+        EXCEPTION_CHECK("FieldMetadata::get_field_metadata", "calling setType");
         break;
       case MYSQL_TYPE_ENUM:
         env->CallVoidMethod(metadata_object, set_type_method,
             env->GetStaticObjectField(column_type.clazz, column_type.ULONG));
+        EXCEPTION_CHECK("FieldMetadata::get_field_metadata", "calling setType");
         break;
       case MYSQL_TYPE_NULL:
       case MYSQL_TYPE_BIT:
@@ -130,13 +151,16 @@ public:
     if (field->real_maybe_null())
     {
       this->env->CallVoidMethod(metadata_object, set_nullable_method, JNI_TRUE);
+      EXCEPTION_CHECK("FieldMetadata::get_field_metadata", "calling setNullable");
     }
 
     if(table_arg->found_next_number_field != NULL && field == table_arg->found_next_number_field)
     {
       this->env->CallVoidMethod(metadata_object, set_autoincrement_method, JNI_TRUE);
+      EXCEPTION_CHECK("FieldMetadata::get_field_metadata", "calling setAutoincrement");
       this->env->CallVoidMethod(metadata_object, set_autoincrement_value_method,
           auto_increment_value == 0 ? 1 : auto_increment_value);
+      EXCEPTION_CHECK("FieldMetadata::get_field_metadata", "calling setAutoincrementValue");
     }
 
     // 64 is obviously some key flag indicating no primary key, but I have no
@@ -147,6 +171,7 @@ public:
             field->field_name) == 0)
       {
         this->env->CallVoidMethod(metadata_object, set_primary_key_method, JNI_TRUE);
+        EXCEPTION_CHECK("FieldMetadata::get_field_metadata", "calling setPrimaryKey");
       }
     }
     return metadata_object;
