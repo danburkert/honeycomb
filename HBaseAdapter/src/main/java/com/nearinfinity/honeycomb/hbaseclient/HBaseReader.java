@@ -35,7 +35,7 @@ public class HBaseReader {
     public Row nextRow(String tableName, HBaseResultScanner scanner) throws IOException {
         Result result = scanner.next(null);
         if (result == null) {
-            return null;
+            return new Row();
         }
 
         TableInfo info = getTableInfo(tableName);

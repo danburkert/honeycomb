@@ -3,7 +3,6 @@ package com.nearinfinity.honeycomb.hbaseclient;
 import org.apache.hadoop.hbase.client.Result;
 
 import java.nio.ByteBuffer;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -14,7 +13,6 @@ public class Row {
     private Result result;
 
     public Row() {
-        this.rowMap = new HashMap<String, byte[]>();
         this.uuid = new byte[16];
     }
 

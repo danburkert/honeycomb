@@ -49,7 +49,7 @@ class HoneycombHandler : public handler
     jstring table_name();
     const char* java_to_string(jstring str);
     jstring string_to_java_string(const char *string);
-    void java_to_sql(uchar *buf, jobject row_map);
+    int java_to_sql(uchar *buf, jobject row_map);
     jobject sql_to_java();
     int delete_all_rows();
     int delete_table(const char *name);

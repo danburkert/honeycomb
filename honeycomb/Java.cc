@@ -70,7 +70,9 @@ bool print_java_exception(JNIEnv* env)
 jbyteArray convert_value_to_java_bytes(uchar* value, uint32 length, JNIEnv* env)
 {
   jbyteArray byteArray = env->NewByteArray(length);
+  NULL_CHECK_ABORT(byteArray, "Java::convert_value_to_java_bytes: OutOfMemoryException while calling NewByteArray");
   env->SetByteArrayRegion(byteArray, 0, length, (jbyte*) value);
+  EXCEPTION_CHECK_ABORT("Java::convert_value_to_java_bytes: Exception while calling SetByteArrayRegion");
   return byteArray;
 }
 
@@ -83,5 +85,6 @@ char *char_array_from_java_bytes(jbyteArray java_bytes, JNIEnv* env)
   int length = (int) env->GetArrayLength(java_bytes);
   char* ret = new char[length];
   env->GetByteArrayRegion(java_bytes, 0, length, (jbyte*) ret);
+  EXCEPTION_CHECK_ABORT("Java::char_array_from_java_bytes: ArrayIndexOutOfBoundsException while calling GetByteArrayRegion");
   return ret;
 }
