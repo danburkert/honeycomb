@@ -4,7 +4,6 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.List;
@@ -13,6 +12,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.nearinfinity.honeycomb.hbaseclient.ColumnMetadata;
 import com.nearinfinity.honeycomb.hbaseclient.ColumnType;
@@ -26,7 +26,7 @@ import com.nearinfinity.honeycomb.hbaseclient.ColumnType;
 public class ValueParserTest {
 
     private static final String EMPTY_STRING = "";
-    private static final String CHARSET_UTF_8 = "UTF-8";
+
     private ColumnMetadata metadata;
 
     @Before
@@ -300,8 +300,7 @@ public class ValueParserTest {
     public void testParseStringEmptyValue() throws ParseException {
         metadata.setType(ColumnType.STRING);
 
-        assertArrayEquals(
-                EMPTY_STRING.getBytes(Charset.forName(CHARSET_UTF_8)),
+        assertArrayEquals(EMPTY_STRING.getBytes(Charsets.UTF_8),
                 ValueParser.parse(EMPTY_STRING, metadata));
     }
 
@@ -309,8 +308,7 @@ public class ValueParserTest {
     public void testParseBinaryEmptyValue() throws ParseException {
         metadata.setType(ColumnType.BINARY);
 
-        assertArrayEquals(
-                EMPTY_STRING.getBytes(Charset.forName(CHARSET_UTF_8)),
+        assertArrayEquals(EMPTY_STRING.getBytes(Charsets.UTF_8),
                 ValueParser.parse(EMPTY_STRING, metadata));
     }
 }
