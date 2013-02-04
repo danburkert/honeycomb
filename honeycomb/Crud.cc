@@ -438,7 +438,7 @@ void HoneycombHandler::collect_changed_fields(jobject updated_fields,
   uint n_fields = table->s->fields;
   const ulint null_field = 0xFFFFFFFF;
   JavaFrame frame(env, n_fields);
-  for (int i = 0; i < n_fields; i++)
+  for (uint i = 0; i < n_fields; i++)
   {
     Field* field = table->field[i];
 

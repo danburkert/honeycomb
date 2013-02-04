@@ -135,7 +135,7 @@ cleanup:
 
 static void extract_values(Option* options, xmlDocPtr doc, xmlNodeSetPtr option_nodes)
 {
-  for(int i = 0; i < options->count; i++)
+  for(unsigned int i = 0; i < options->count; i++)
   {
     xmlNodePtr current_option = option_nodes->nodeTab[i];
     char* opt = (char*)xmlNodeListGetString(doc, current_option->xmlChildrenNode, 1);
@@ -236,7 +236,7 @@ void free_options(Option* options)
 {
   if (options != NULL)
   {
-    for(int i = 0; i < options->count; i++)
+    for(unsigned int i = 0; i < options->count; i++)
     {
       if (options->options[i].optionString != NULL)
       {

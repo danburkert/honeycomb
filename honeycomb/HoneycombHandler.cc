@@ -12,8 +12,11 @@ const char **HoneycombHandler::bas_ext() const
 
 HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg,
     mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm, JNICache* cache)
-: handler(hton, table_arg), jvm(jvm), honeycomb_mutex(mutex),
-  honeycomb_open_tables(open_tables), cache(cache)
+: handler(hton, table_arg), 
+  honeycomb_mutex(mutex), 
+  honeycomb_open_tables(open_tables),
+  jvm(jvm), 
+  cache(cache)
 {
   attach_thread(this->jvm, this->env);
   this->ref_length = 16;
@@ -165,7 +168,7 @@ void HoneycombHandler::java_to_sql(uchar* buf, jobject row_map)
   orig_bitmap = dbug_tmp_use_all_columns(table, table->write_set);
   JavaFrame frame(env, table->s->fields + 1);
 
-  for (int i = 0; i < table->s->fields; i++)
+  for (uint i = 0; i < table->s->fields; i++)
   {
     Field *field = table->field[i];
     const char* key = field->field_name;
@@ -355,9 +358,9 @@ int HoneycombHandler::info(uint flag)
        index selectivity is 2 times better than
        our estimate: */
 
-    for (int i = 0; i < this->table->s->keys; i++)
+    for (uint i = 0; i < this->table->s->keys; i++)
     {
-      for (int j = 0; j < table->key_info[i].key_parts; j++)
+      for (uint j = 0; j < table->key_info[i].key_parts; j++)
       {
         rec_per_key = stats.records / 2;
 
@@ -552,7 +555,7 @@ int HoneycombHandler::get_failed_key_index(const char *key_name)
 
 bool HoneycombHandler::field_has_unique_index(Field *field)
 {
-  for (int i = 0; i < table->s->keys; i++)
+  for (uint i = 0; i < table->s->keys; i++)
   {
     KEY *key_info = table->s->key_info + i;
     KEY_PART_INFO *key_part = key_info->key_part;
@@ -627,9 +630,9 @@ int HoneycombHandler::analyze(THD* thd, HA_CHECK_OPT* check_opt)
   // and should essentially always be used for lookups.  If you don't do this,
   // the optimizer REALLY tries to do scans, even when they're not ideal. - ABC
 
-  for (int i = 0; i < this->table->s->keys; i++)
+  for (uint i = 0; i < this->table->s->keys; i++)
   {
-    for (int j = 0; j < table->key_info[i].key_parts; j++)
+    for (uint j = 0; j < table->key_info[i].key_parts; j++)
     {
       this->table->key_info[i].rec_per_key[j] = 1;
     }
