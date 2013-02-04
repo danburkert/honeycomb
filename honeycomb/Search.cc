@@ -21,8 +21,9 @@ int HoneycombHandler::index_init(uint idx, bool sorted)
 
   this->curr_scan_id = this->env->CallStaticLongMethod(adapter_class,
       start_scan_method, table_name, java_column_names);
-  ARRAY_DELETE(column_names);
+  EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::index_init", "calling startScan()");
 
+  ARRAY_DELETE(column_names);
 
   DBUG_RETURN(0);
 }
@@ -54,16 +55,20 @@ jobject HoneycombHandler::create_key_value_list(int index, uint* key_sizes,
 {
   jobject key_values = env->NewObject(cache->linked_list().clazz,
       cache->linked_list().init);
+  EXCEPTION_CHECK_ABORT("HoneycombHandler::create_key_value_list: Exception while instantiating LinkedList");
   JavaFrame frame(env, 3*index);
   for(int x = 0; x < index; x++)
   {
     jbyteArray java_key = this->env->NewByteArray(key_sizes[x]);
+    NULL_CHECK_ABORT(java_key, "HoneycombHandler::create_key_value_list: OutOfMemoryError while calling NewByteArray");
     this->env->SetByteArrayRegion(java_key, 0, key_sizes[x], (jbyte*) key_copies[x]);
+    EXCEPTION_CHECK_ABORT("HoneycombHandler::create_key_value_list: ArrayIndexOutOfBoundsException while calling NewByteArray");
     jstring key_name = string_to_java_string(key_names[x]);
     jobject key_value = this->env->NewObject(cache->key_value().clazz,
         cache->key_value().init, key_name, java_key, key_null_bits[x],
         key_is_null[x]);
     env->CallObjectMethod(key_values, cache->linked_list().add, key_value);
+    EXCEPTION_CHECK("HoneycombHandler::create_key_value_list", "adding key_value to linked list");
   }
   return key_values;
 }
@@ -166,6 +171,7 @@ int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
       find_flag_to_java(find_flag, cache));
   jobject index_row = this->env->CallStaticObjectMethod(adapter_class,
       index_read_method, this->curr_scan_id, key_values, java_find_flag);
+  EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::index_read_map", "calling indexRead");
   int rc = read_index_row(index_row, buf);
 
   DBUG_RETURN(rc);
@@ -189,6 +195,7 @@ int HoneycombHandler::get_next_index_row(uchar* buf)
   JNICache::HBaseAdapter hbase_adapter = cache->hbase_adapter();
   jobject index_row = this->env->CallStaticObjectMethod(hbase_adapter.clazz,
       hbase_adapter.next_index_row, this->curr_scan_id);
+  EXCEPTION_CHECK_IE("HoneycombHandler::get_next_index_row", "calling nextIndexRow");
   int rc = read_index_row(index_row, buf);
   return rc;
 }
@@ -202,6 +209,7 @@ int HoneycombHandler::get_index_row(jfieldID field_id, uchar* buf)
   jobject java_find_flag = this->env->GetStaticObjectField(read_class, field_id);
   jobject index_row = this->env->CallStaticObjectMethod(adapter_class,
       index_read_method, this->curr_scan_id, NULL, java_find_flag);
+  EXCEPTION_CHECK_IE("HoneycombHandler::get_index_row", "calling getIndexRow");
   int rc = read_index_row(index_row, buf);
   return rc;
 }
@@ -221,7 +229,11 @@ int HoneycombHandler::read_index_row(jobject index_row, uchar* buf)
 
   this->store_uuid_ref(index_row, get_uuid_method);
 
-  this->java_to_sql(buf, rowMap);
+  if (java_to_sql(buf, rowMap))
+  {
+    this->table->status = STATUS_NOT_READ;
+    return HA_ERR_INTERNAL_ERROR;
+  }
 
   this->table->status = 0;
   return 0;
@@ -247,10 +259,12 @@ int HoneycombHandler::rnd_pos(uchar *buf, uchar *pos)
   jbyteArray uuid = convert_value_to_java_bytes(pos, 16, this->env);
   jobject row = this->env->CallStaticObjectMethod(adapter_class, get_row_method,
       this->curr_scan_id, uuid);
+  EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::rnd_pos", "calling getRow");
 
   jmethodID get_row_map_method = cache->row().get_row_map;
 
   jobject row_map = this->env->CallObjectMethod(row, get_row_map_method);
+  EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::rnd_pos", "calling getRowMap");
 
   if (row_map == NULL)
   {
@@ -258,7 +272,11 @@ int HoneycombHandler::rnd_pos(uchar *buf, uchar *pos)
     DBUG_RETURN(HA_ERR_END_OF_FILE);
   }
 
-  java_to_sql(buf, row_map);
+  if (java_to_sql(buf, row_map))
+  {
+    this->table->status = STATUS_NOT_READ;
+    DBUG_RETURN(HA_ERR_INTERNAL_ERROR);
+  }
   this->table->status = 0;
 
   MYSQL_READ_ROW_DONE(rc);
@@ -312,6 +330,7 @@ int HoneycombHandler::rnd_init(bool scan)
 
   this->curr_scan_id = this->env->CallStaticLongMethod(adapter_class,
       start_scan_method, table_name, scan);
+  EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::rnd_init", "calling startScan");
 
   this->performing_scan = scan;
 
@@ -333,25 +352,31 @@ int HoneycombHandler::rnd_next(uchar *buf)
   jmethodID next_row_method = cache->hbase_adapter().next_row;
   jobject row = this->env->CallStaticObjectMethod(adapter_class,
       next_row_method, this->curr_scan_id);
+  EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::rnd_init", "calling startScan");
 
   jmethodID get_uuid_method = cache->row().get_uuid;
   jmethodID get_row_map_method = cache->row().get_row_map;
 
   jobject row_map = this->env->CallObjectMethod(row, get_row_map_method);
+  EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::rnd_init", "calling getRowMap");
 
   if (row_map == NULL)
   {
     this->table->status = STATUS_NOT_FOUND;
-    rc = HA_ERR_END_OF_FILE;
-    DBUG_RETURN(rc);
+    DBUG_RETURN(HA_ERR_END_OF_FILE);
   }
 
   this->store_uuid_ref(row, get_uuid_method);
-  java_to_sql(buf, row_map);
+  if (java_to_sql(buf, row_map))
+  {
+    this->table->status = STATUS_NOT_READ;
+    DBUG_RETURN(HA_ERR_INTERNAL_ERROR);
+  }
   this->table->status = 0;
 
   MYSQL_READ_ROW_DONE(rc);
 
+  EXCEPTION_CHECK("HoneycombHandler::rnd_next", "leaving function.");
   DBUG_RETURN(rc);
 }
 
