@@ -14,6 +14,7 @@
         <hadoop.artifactId>hadoop-core</hadoop.artifactId>
         <hadoop.version>1.0.4</hadoop.version>
         <hbase.version>0.94.1</hbase.version>
+        <powermock.version>1.5</powermock.version>
     </properties>
 
     <distributionManagement>
@@ -226,6 +227,24 @@
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
                 <version>4.11</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-all</artifactId>
+                <version>1.9.5</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.powermock</groupId>
+                <artifactId>powermock-module-junit4</artifactId>
+                <version>${powermock.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.powermock</groupId>
+                <artifactId>powermock-api-mockito</artifactId>
+                <version>${powermock.version}</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>
