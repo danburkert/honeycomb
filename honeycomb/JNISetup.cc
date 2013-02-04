@@ -15,7 +15,11 @@
 #include "OptionParser.h"
 
 static const char* config_file = "/etc/mysql/honeycomb.xml";
+static __thread int thread_attach_count=0;
+static JavaVMAttachArgs attach_args = {JNI_VERSION_1_6, NULL, NULL};
+class JNICache;
 
+__attribute__((noreturn))
 static void abort_with_fatal_error(const char* message, ...)
 {
     va_list args;

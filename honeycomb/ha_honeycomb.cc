@@ -107,27 +107,6 @@ static int honeycomb_done_func(void *p)
   DBUG_RETURN(error);
 }
 
-/**
-  @brief
-  Free lock controls. We call this whenever we close a table. If the table had
-  the last reference to the share, then we free memory associated with it.
-  */
-
-static int free_share(HoneycombShare *share)
-{
-  mysql_mutex_lock(&honeycomb_mutex);
-  if (!--share->use_count)
-  {
-    my_hash_delete(&honeycomb_open_tables, (uchar*) share);
-    thr_lock_delete(&share->lock);
-    mysql_mutex_destroy(&share->mutex);
-    my_free(share);
-  }
-
-  mysql_mutex_unlock(&honeycomb_mutex);
-  return 0;
-}
-
 static handler* honeycomb_create_handler(handlerton *hton, TABLE_SHARE *table,
     MEM_ROOT *mem_root)
 {

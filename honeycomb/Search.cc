@@ -84,7 +84,7 @@ int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
   KEY *key_info = table->s->key_info + this->active_index;
   KEY_PART_INFO *key_part = key_info->key_part;
   KEY_PART_INFO *end_key_part = key_part + key_info->key_parts;
-  int key_count = 0;
+  uint key_count = 0;
   if (keypart_map == HA_WHOLE_KEY)
   {
     key_count = key_info->key_parts;
@@ -108,7 +108,7 @@ int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
   memset(key_is_null, JNI_FALSE, key_count);
   memset(key_copies, 0, key_count);
   uchar* key_iter = (uchar*)key;
-  int index = 0;
+  uint index = 0;
 
   while (key_part < end_key_part && keypart_map)
   {
@@ -123,7 +123,7 @@ int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
         if(index == (key_count - 1) && find_flag == HA_READ_AFTER_KEY)
         {
           key_is_null[index] = JNI_FALSE;
-          for (int x = 0; x < index; x++)
+          for (uint x = 0; x < index; x++)
           {
             ARRAY_DELETE(key_copies[x]);
           }
@@ -157,7 +157,7 @@ int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
   JavaFrame frame(env, 3);
   jobject key_values = create_key_value_list(index, key_sizes, key_copies,
       key_names, key_null_bits, key_is_null);
-  for (int x = 0; x < index; x++)
+  for (uint x = 0; x < index; x++)
   {
     ARRAY_DELETE(key_copies[x]);
   }
@@ -186,8 +186,6 @@ int HoneycombHandler::index_last(uchar *buf)
 int HoneycombHandler::get_next_index_row(uchar* buf)
 {
   JavaFrame frame(env, 1);
-  jclass adapter_class = cache->hbase_adapter().clazz;
-  jmethodID index_next_method = cache->hbase_adapter().next_index_row;
   JNICache::HBaseAdapter hbase_adapter = cache->hbase_adapter();
   jobject index_row = this->env->CallStaticObjectMethod(hbase_adapter.clazz,
       hbase_adapter.next_index_row, this->curr_scan_id);
@@ -211,7 +209,6 @@ int HoneycombHandler::get_index_row(jfieldID field_id, uchar* buf)
 int HoneycombHandler::read_index_row(jobject index_row, uchar* buf)
 {
   JavaFrame frame(env, 1);
-  jclass index_row_class = cache->index_row().clazz;
   jmethodID get_uuid_method = cache->index_row().get_uuid;
   jmethodID get_row_map_method = cache->index_row().get_row_map;
 
@@ -251,7 +248,6 @@ int HoneycombHandler::rnd_pos(uchar *buf, uchar *pos)
   jobject row = this->env->CallStaticObjectMethod(adapter_class, get_row_method,
       this->curr_scan_id, uuid);
 
-  jclass row_class = cache->row().clazz;
   jmethodID get_row_map_method = cache->row().get_row_map;
 
   jobject row_map = this->env->CallObjectMethod(row, get_row_map_method);
@@ -338,7 +334,6 @@ int HoneycombHandler::rnd_next(uchar *buf)
   jobject row = this->env->CallStaticObjectMethod(adapter_class,
       next_row_method, this->curr_scan_id);
 
-  jclass row_class = cache->row().clazz;
   jmethodID get_uuid_method = cache->row().get_uuid;
   jmethodID get_row_map_method = cache->row().get_row_map;
 

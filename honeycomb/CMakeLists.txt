@@ -33,8 +33,7 @@ endif()
 
 SET(HONEYCOMB_PLUGIN_DYNAMIC "ha_honeycomb")
 SET(HONEYCOMB_SOURCES HoneycombHandler.cc Search.cc Crud.cc ha_honeycomb.cc Util.cc JNISetup.cc Logging.cc Java.cc OptionParser.cc)
-SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-error -g")
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-error -g")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-error -g -Wextra -Wno-unused-parameter -Wswitch-default -Wcast-qual -Weffc++ -Wwrite-strings -Winit-self -Winline -Wmissing-noreturn -Wredundant-decls -Wpointer-arith -Wbad-function-cast -Wstrict-overflow=5 -Wstrict-aliasing=2 -Wno-deprecated-declarations -Wno-unknown-pragmas -Wctor-dtor-privacy -Woverloaded-virtual")
 MYSQL_ADD_PLUGIN(honeycomb ${HONEYCOMB_SOURCES} STORAGE_ENGINE MODULE_ONLY
   LINK_LIBRARIES  ${LIBS})
 
