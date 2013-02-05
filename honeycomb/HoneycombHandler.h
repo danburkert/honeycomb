@@ -6,22 +6,16 @@
 #endif
 
 #include "HoneycombShare.h"
-#include "Macros.h"
-#include "FieldMetadata.h"
-#include "Logging.h"
-#include "Java.h"
 #include "Util.h"
-#include "JavaFrame.h"
-#include "JNISetup.h"
-#include "JNICache.h"
 
 #include "my_global.h"          /* ulonglong */
 #include "thr_lock.h"           /* THR_LOCK, THR_LOCK_DATA */
 #include "handler.h"            /* handler */
 #include "my_base.h"            /* ha_rows */
 #include <jni.h>
-#include <string.h>
 #include "probes_mysql.h"
+
+class JNICache;
 
 class HoneycombHandler : public handler
 {

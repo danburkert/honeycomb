@@ -1,8 +1,6 @@
 #ifndef LOGGING_H
 #define LOGGING_H
 
-#define DEFAULT_LOG_PATH "/tmp/honeycomb.log"
-
 namespace Logging
 {
   void setup_logging(const char* log_path);
@@ -13,4 +11,5 @@ namespace Logging
   void error(const char* format, ...);
   void fatal(const char* format, ...);
 }
+
 #endif

@@ -4,11 +4,17 @@
 
 #include "sql_priv.h"
 #include "sql_class.h"           // MYSQL_HANDLERTON_INTERFACE_VERSION
-#include "ha_honeycomb.h"
 #include "probes_mysql.h"
 #include "sql_plugin.h"
-#include "JNICache.h"
 #include <stdlib.h>
+
+#include "HoneycombHandler.h"
+#include "HoneycombShare.h"
+#include "Util.h"
+#include "Macros.h"
+#include "JNISetup.h"
+#include "Logging.h"
+#include "JNICache.h"
 
 static handler *honeycomb_create_handler(handlerton *hton,
     TABLE_SHARE *table, MEM_ROOT *mem_root);

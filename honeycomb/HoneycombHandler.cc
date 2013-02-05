@@ -3,6 +3,12 @@
 #endif
 
 #include "HoneycombHandler.h"
+#include "JNICache.h"
+#include "JNISetup.h"
+#include "JavaFrame.h"
+#include <string.h>
+#include "Logging.h"
+#include "Macros.h"
 
 const char **HoneycombHandler::bas_ext() const
 {
