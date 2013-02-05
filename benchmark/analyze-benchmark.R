@@ -16,7 +16,7 @@ data_summary <- daply(data, .(Table, Clients, Query), function(x) {
 pdf(file=pdf_filename)
 ymax <- max(data$QPS)
 ymiddle <- ymax / 2
-bwplot(QPS~Table|paste("Clients:",Clients)+paste("Query:",Query),
+bwplot(QPS~Table|sprintf("Clients: %02d",Clients)+paste("Query:",Query),
        data=data,
        auto.key=T,
        main="QPS by Table, Clients, & Query",
@@ -48,9 +48,9 @@ panel <- function(...){
          panel.xyplot(...)
          }
 
-color_seq <- seq(12, 12+table_count-1)
+color_seq <- seq(16, 16+table_count-1)
 line_types <- 1:table_count
-xyplot(QPS~Timestep|Query+paste("Clients:", Clients),
+xyplot(QPS~Timestep|Query+sprintf("Clients: %02d", Clients),
        main= "QPS / Time by Table",
        data=data,
        type="l",
@@ -65,7 +65,7 @@ xyplot(QPS~Timestep|Query+paste("Clients:", Clients),
                 lines = list(lwd=lwd, lty=line_types, col=color_seq)),
        panel=panel)
 
-color_seq <- seq(12, 12+client_count-1)
+color_seq <- seq(16, 16+client_count-1)
 line_types <- 1:client_count
 xyplot(QPS~Timestep|paste("Table:",Table)+Query,
        main= "QPS / Time by Clients",
@@ -78,7 +78,7 @@ xyplot(QPS~Timestep|paste("Table:",Table)+Query,
        lwd=lwd,
        ylab="Queries/Second",
        xlab="Time",
-       key=list(text = list(as.character(paste("Client:", unique(data$Clients)))),
+       key=list(text = list(as.character(paste("Clients:", unique(data$Clients)))),
                 lines = list(lwd=lwd, lty=line_types, col=color_seq)),
        panel=panel)
 
