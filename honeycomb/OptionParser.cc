@@ -8,7 +8,7 @@
 #include <cstdlib>
 #include <cctype>
 
-const char* schema = "/etc/mysql/honeycomb.xsd";
+static const char* schema = "/etc/mysql/honeycomb.xsd";
 
 struct st_optionparser
 {
