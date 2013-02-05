@@ -196,11 +196,6 @@ public class HBaseAdapter {
             ActiveScan conn = getActiveScanForId(scanId);
             HBaseResultScanner scanner = conn.getScanner();
             Row row = reader.nextRow(conn.getTableName(), scanner);
-
-            if (row == null) {
-                return null;
-            }
-
             return row;
         } catch (Throwable e) {
             logger.error("Exception:", e);
