@@ -98,6 +98,8 @@ int HoneycombHandler::create(const char *path, TABLE *table_arg,
     HA_CREATE_INFO *create_info)
 {
   DBUG_ENTER("HoneycombHandler::create");
+  attach_thread(jvm, env);
+
   if(table_arg->part_info != NULL)
   {
     my_error(ER_CREATE_FILEGROUP_FAILED, MYF(0),
@@ -105,42 +107,46 @@ int HoneycombHandler::create(const char *path, TABLE *table_arg,
     DBUG_RETURN(HA_WRONG_CREATE_OPTION);
   }
 
-  int fields = count_fields(table_arg);
-  JavaFrame frame(env, 3 + 2 * fields);
-  jclass adapter_class = cache->hbase_adapter().clazz;
-
-  char* table_name = extract_table_name_from_path(path);
-  jstring jtable_name = string_to_java_string(table_name);
-  jobject java_keys = this->create_multipart_keys(table_arg);
-  ARRAY_DELETE(table_name);
   int rc = 0;
+  { // Destruct frame before calling detach_thread
+    int fields = count_fields(table_arg);
+    JavaFrame frame(env, 3 + 2 * fields);
+    jclass adapter_class = cache->hbase_adapter().clazz;
 
-  jobject columnMap = env->NewObject(cache->tree_map().clazz,
-      cache->tree_map().init);
-  FieldMetadata metadata(env, cache);
+    char* table_name = extract_table_name_from_path(path);
+    jstring jtable_name = string_to_java_string(table_name);
+    jobject java_keys = this->create_multipart_keys(table_arg);
+    ARRAY_DELETE(table_name);
 
-  for (Field **field_ptr = table_arg->field; *field_ptr; field_ptr++)
-  {
-    Field* field = *field_ptr;
-    int error_number;
-    if(!is_allowed_column(field, &error_number))
+    jobject columnMap = env->NewObject(cache->tree_map().clazz,
+        cache->tree_map().init);
+    FieldMetadata metadata(env, cache);
+
+    for (Field **field_ptr = table_arg->field; *field_ptr; field_ptr++)
     {
-      my_error(ER_CREATE_FILEGROUP_FAILED, MYF(0),
-          table_creation_errors[error_number]);
-      DBUG_RETURN(HA_WRONG_CREATE_OPTION);
+      Field* field = *field_ptr;
+      int error_number;
+      if(!is_allowed_column(field, &error_number))
+      {
+        my_error(ER_CREATE_FILEGROUP_FAILED, MYF(0),
+            table_creation_errors[error_number]);
+        DBUG_RETURN(HA_WRONG_CREATE_OPTION);
+      }
+
+      jobject java_metadata_obj = metadata.get_field_metadata(field, table_arg,
+          create_info->auto_increment_value);
+      jstring jfield_name = string_to_java_string(field->field_name);
+      env->CallVoidMethod(columnMap, cache->tree_map().put, jfield_name, java_metadata_obj);
+      EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::create", "calling map.put");
     }
 
-    jobject java_metadata_obj = metadata.get_field_metadata(field, table_arg,
-        create_info->auto_increment_value);
-    jstring jfield_name = string_to_java_string(field->field_name);
-    env->CallVoidMethod(columnMap, cache->tree_map().put, jfield_name, java_metadata_obj);
-    EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::create", "calling map.put");
+    jmethodID create_table_method = cache->hbase_adapter().create_table;
+    this->env->CallStaticBooleanMethod(adapter_class, create_table_method,
+        jtable_name, columnMap, java_keys);
+    EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::create", "calling createTable");
   }
 
-  jmethodID create_table_method = cache->hbase_adapter().create_table;
-  this->env->CallStaticBooleanMethod(adapter_class, create_table_method,
-      jtable_name, columnMap, java_keys);
-  EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::create", "calling createTable");
+  detach_thread(jvm);
 
   DBUG_RETURN(rc);
 }
@@ -650,17 +656,21 @@ int HoneycombHandler::delete_table(const char *path)
 {
   DBUG_ENTER("HoneycombHandler::delete_table");
 
-  JavaFrame frame(env, 1);
-  char* table = extract_table_name_from_path(path);
-  jstring table_name = string_to_java_string(table);
-  ARRAY_DELETE(table);
+  attach_thread(jvm, env);
+  { // destruct frame before detaching
+    JavaFrame frame(env, 1);
+    char* table = extract_table_name_from_path(path);
+    jstring table_name = string_to_java_string(table);
+    ARRAY_DELETE(table);
 
-  jclass adapter_class = cache->hbase_adapter().clazz;
-  jmethodID drop_table_method = cache->hbase_adapter().drop_table;
+    jclass adapter_class = cache->hbase_adapter().clazz;
+    jmethodID drop_table_method = cache->hbase_adapter().drop_table;
 
-  this->env->CallStaticBooleanMethod(adapter_class, drop_table_method,
-      table_name);
-  EXCEPTION_CHECK("HoneycombHandler::delete_table", "calling dropTable");
+    this->env->CallStaticBooleanMethod(adapter_class, drop_table_method,
+        table_name);
+    EXCEPTION_CHECK("HoneycombHandler::delete_table", "calling dropTable");
+  }
+  detach_thread(jvm);
 
   DBUG_RETURN(0);
 }
