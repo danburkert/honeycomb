@@ -15,6 +15,7 @@ int HoneycombHandler::index_init(uint idx, bool sorted)
       pos->key_parts);
 
   jclass adapter_class = cache->hbase_adapter().clazz;
+  this->terminate_scan();
   jmethodID start_scan_method = cache->hbase_adapter().start_index_scan;
   jstring table_name = this->table_name();
   jstring java_column_names = this->string_to_java_string(column_names);
@@ -310,6 +311,7 @@ int HoneycombHandler::rnd_init(bool scan)
   jmethodID start_scan_method = cache->hbase_adapter().start_scan;
   jstring table_name = this->table_name();
 
+  this->terminate_scan();
   this->curr_scan_id = this->env->CallStaticLongMethod(adapter_class,
       start_scan_method, table_name, scan);
 
@@ -355,17 +357,18 @@ int HoneycombHandler::rnd_next(uchar *buf)
   DBUG_RETURN(rc);
 }
 
+void HoneycombHandler::terminate_scan()
+{
+  if (this->curr_scan_id != -1)
+  {
+    JavaFrame frame(env, 1);
+    jclass adapter_class = cache->hbase_adapter().clazz;
+    jmethodID end_scan_method = cache->hbase_adapter().end_scan;
+    this->env->CallStaticVoidMethod(adapter_class, end_scan_method, this->curr_scan_id);
+    this->curr_scan_id = -1;
+  }
+}
+
 void HoneycombHandler::end_scan()
 {
-  if(scan_ids_count == scan_ids_length)
-  {
-    long long* old = scan_ids;
-    scan_ids_length *= 2;
-    scan_ids = new long long[scan_ids_length];
-    memset(scan_ids, 0, scan_ids_length);
-    memcpy(scan_ids, old, (scan_ids_count - 1) * sizeof(long long));
-    ARRAY_DELETE(old);
-  }
-
-  scan_ids[scan_ids_count++] = this->curr_scan_id;
 }

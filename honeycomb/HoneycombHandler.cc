@@ -22,22 +22,11 @@ HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg,
   this->ref_length = 16;
   this->rows_written = 0;
   this->failed_key_index = 0;
-  this->scan_ids_length = 32;
-  this->scan_ids_count = 0;
-  this->scan_ids = new long long[this->scan_ids_length];
-  this->curr_write_id = -1;
-  memset(scan_ids, 0, scan_ids_length);
+  this->curr_scan_id = -1;
 }
 
 HoneycombHandler::~HoneycombHandler()
 {
-  jclass adapter_class = cache->hbase_adapter().clazz;
-  jmethodID end_scan_method = cache->hbase_adapter().end_scan;
-  for (int i = 0; i < this->scan_ids_count; i++)
-  {
-    this->env->CallStaticVoidMethod(adapter_class, end_scan_method, scan_ids[i]);
-  }
-  ARRAY_DELETE(this->scan_ids);
   this->flush_writes();
   detach_thread(this->jvm);
 }
