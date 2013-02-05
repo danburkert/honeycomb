@@ -34,7 +34,7 @@ class HoneycombHandler : public handler
     uint failed_key_index;
 
     // HBase JNI Adapter:
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     JavaVM* jvm;
     JNICache* cache;
 
