@@ -4,6 +4,7 @@
 #include "Java.h"
 #include "Logging.h"
 #include "Macros.h"
+#include "JNISetup.h"
 
 /**
  * @brief Create the Java object for the multi-column index.
