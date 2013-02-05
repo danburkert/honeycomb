@@ -33,8 +33,6 @@ class HoneycombHandler : public handler
     bool performing_scan;
     HoneycombShare *get_share(const char *table_name, TABLE *table);
     uint32 max_row_length();
-    long long* scan_ids;
-    int scan_ids_count, scan_ids_length;
 
     long long curr_scan_id, curr_write_id;
     ulonglong rows_written;
@@ -79,6 +77,7 @@ class HoneycombHandler : public handler
     int retrieve_value_from_index(uchar* buf);
     int write_row(uchar* buf, jobject updated_fields);
     void collect_changed_fields(jobject updated_fields, const uchar* old_row, uchar* new_row);
+    void terminate_scan();
 
     bool is_integral_field(int field_type)
     {
