@@ -3,7 +3,7 @@
 /**
  * @brief Create the Java object for the multi-column index.
  *
- * @param table_arg SQL Table 
+ * @param table_arg SQL Table
  *
  * @return Multi-column index object
  */
@@ -12,6 +12,7 @@ jobject HoneycombHandler::create_multipart_keys(TABLE* table_arg)
   uint keys = table_arg->s->keys;
   jobject java_keys = env->NewObject(cache->table_multipart_keys().clazz,
       cache->table_multipart_keys().init);
+  NULL_CHECK_ABORT(java_keys, "HoneycombHandler::create_multipart_keys: OutOfMemoryError while calling NewObject");
   JavaFrame frame(env, keys);
   for (uint key = 0; key < keys; key++)
   {
@@ -20,6 +21,7 @@ jobject HoneycombHandler::create_multipart_keys(TABLE* table_arg)
     jstring jname = string_to_java_string(name);
     this->env->CallVoidMethod(java_keys,
         cache->table_multipart_keys().add_multipart_key, jname, is_unique);
+    EXCEPTION_CHECK("HoneycombHandler::create_multipart_keys", "calling addMultipartKey");
     ARRAY_DELETE(name);
   }
   return java_keys;
@@ -33,10 +35,12 @@ jobject HoneycombHandler::create_multipart_key(KEY* key, KEY_PART_INFO* key_part
 {
   jobject java_keys = env->NewObject(cache->table_multipart_keys().clazz,
       cache->table_multipart_keys().init);
+  NULL_CHECK_ABORT(java_keys, "HoneycombHandler::create_multipart_key: OutOfMemoryError while calling NewObject");
   char* name = index_name(key_part, key_part_end, key_parts);
   jboolean is_unique = key->flags & HA_NOSAME;
   this->env->CallVoidMethod(java_keys, cache->table_multipart_keys().add_multipart_key,
       string_to_java_string(name), is_unique);
+  EXCEPTION_CHECK("HoneycombHandler::create_multipart_key", "calling addMultipartKey");
   ARRAY_DELETE(name);
   return java_keys;
 }
@@ -125,12 +129,13 @@ int HoneycombHandler::create(const char *path, TABLE *table_arg,
         create_info->auto_increment_value);
     jstring jfield_name = string_to_java_string(field->field_name);
     env->CallVoidMethod(columnMap, cache->tree_map().put, jfield_name, java_metadata_obj);
+    EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::create", "calling map.put");
   }
 
   jmethodID create_table_method = cache->hbase_adapter().create_table;
   this->env->CallStaticBooleanMethod(adapter_class, create_table_method,
       jtable_name, columnMap, java_keys);
-  print_java_exception(this->env);
+  EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::create", "calling createTable");
 
   DBUG_RETURN(rc);
 }
@@ -149,6 +154,7 @@ int HoneycombHandler::rename_table(const char *from, const char *to)
   ARRAY_DELETE(to_str);
   env->CallStaticVoidMethod(adapter_class, rename_table_method,
       current_table_name, new_table_name);
+  EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::rename_table", "calling renameTable");
   DBUG_RETURN(0);
 }
 
@@ -209,6 +215,7 @@ int HoneycombHandler::write_row(uchar* buf, jobject updated_fields)
     if (is_null)
     {
       env->CallVoidMethod(java_row_map, cache->tree_map().put, field_name, NULL);
+      EXCEPTION_CHECK_IE("HoneycombHandler::write_row", "calling map.put");
       continue;
     }
 
@@ -312,12 +319,14 @@ int HoneycombHandler::write_row(uchar* buf, jobject updated_fields)
         actualFieldSize, this->env);
     MY_FREE(byte_val);
     env->CallVoidMethod(java_row_map, cache->tree_map().put, field_name, java_bytes);
+    EXCEPTION_CHECK_IE("HoneycombHandler::write_row", "calling map.put");
 
     // Remember this field for later if we find that it has a unique index,
     // need to check it
     if (this->field_has_unique_index(field))
     {
       env->CallVoidMethod(unique_values_map, cache->tree_map().put, field_name, java_bytes);
+      EXCEPTION_CHECK_IE("HoneycombHandler::write_row", "calling map.put");
     }
   }
   if (updated_fields)
@@ -335,6 +344,7 @@ int HoneycombHandler::write_row(uchar* buf, jobject updated_fields)
     this->env->CallStaticBooleanMethod(adapter_class, update_row_method,
         this->curr_write_id, this->curr_scan_id, updated_fields, table_name,
         java_row_map);
+    EXCEPTION_CHECK_IE("HoneycombHandler::write_row", "calling updateRow");
   }
   else
   {
@@ -344,6 +354,7 @@ int HoneycombHandler::write_row(uchar* buf, jobject updated_fields)
     }
     this->env->CallStaticBooleanMethod(adapter_class, write_row_method,
         this->curr_write_id, table_name, java_row_map);
+    EXCEPTION_CHECK_IE("HoneycombHandler::write_row", "calling writeRow");
     this->rows_written++;
   }
   if (new_autoincrement_value >= 0 && new_autoincrement_value < LLONG_MAX)
@@ -371,12 +382,14 @@ bool HoneycombHandler::row_has_duplicate_values(jobject value_map,
     has_duplicates_method = cache->hbase_adapter().find_duplicate_key;
     duplicate_column = (jstring) this->env->CallStaticObjectMethod(adapter_class,
         has_duplicates_method, this->table_name(), value_map);
+    EXCEPTION_CHECK_IE("HoneycombHandler::row_has_duplicate_values", "calling findDuplicateKey");
   }
   else
   {
     has_duplicates_method = cache->hbase_adapter().find_duplicate_key_list;
     duplicate_column = (jstring) this->env->CallStaticObjectMethod(adapter_class,
         has_duplicates_method, this->table_name(), value_map, changedColumns);
+    EXCEPTION_CHECK_IE("HoneycombHandler::row_has_duplicate_values", "calling findDuplicateKey (list)");
   }
 
   bool error = duplicate_column != NULL;
@@ -514,6 +527,7 @@ int HoneycombHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_key
     jmethodID add_index_method = cache->hbase_adapter().add_index;
     jstring table_name = this->table_name();
     this->env->CallStaticVoidMethod(adapter, add_index_method, table_name, java_keys);
+    EXCEPTION_CHECK_IE("HoneycombHandler::add_index", "calling addIndex");
     ARRAY_DELETE(index_columns);
   }
 
@@ -525,7 +539,9 @@ int HoneycombHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_key
  */
 jbyteArray HoneycombHandler::find_duplicate_column_values(char* columns)
 {
-  env->EnsureLocalCapacity(2); // TODO this is useless unless we check the return value
+  int err = env->EnsureLocalCapacity(2);
+  CHECK_JNI_ABORT(err, "HoneycombHandler::find_duplicate_column_values: OutOfMemoryError error while calling EnsureLocalCapacity");
+
   jclass adapter = cache->hbase_adapter().clazz;
   jmethodID column_has_duplicates_method = cache->hbase_adapter().find_duplicate_value;
   jstring jcolumns = string_to_java_string(columns);
@@ -533,6 +549,7 @@ jbyteArray HoneycombHandler::find_duplicate_column_values(char* columns)
 
   jbyteArray duplicate_value = (jbyteArray) this->env->CallStaticObjectMethod(adapter,
       column_has_duplicates_method, jtable_name, jcolumns);
+  EXCEPTION_CHECK("HoneycombHandler::find_duplicate_value", "calling findDuplicateValue");
 
   env->DeleteLocalRef(jcolumns);
   env->DeleteLocalRef(jtable_name);
@@ -544,13 +561,14 @@ int HoneycombHandler::prepare_drop_index(TABLE *table_arg, uint *key_num, uint n
 {
   JavaFrame frame(env, num_of_keys + 1);
   jclass adapter = cache->hbase_adapter().clazz;
-  jmethodID add_index_method = cache->hbase_adapter().drop_index;
+  jmethodID drop_index_method = cache->hbase_adapter().drop_index;
   jstring table_name = this->table_name();
   for (uint key = 0; key < num_of_keys; key++)
   {
     char* name = index_name(table_arg, key_num[key]);
     jstring jname = string_to_java_string(name);
-    this->env->CallStaticVoidMethod(adapter, add_index_method, table_name, jname);
+    this->env->CallStaticVoidMethod(adapter, drop_index_method, table_name, jname);
+    EXCEPTION_CHECK_IE("HoneycombHandler::prepare_drop_index", "calling dropIndex");
     ARRAY_DELETE(name);
   }
   return 0;
@@ -563,6 +581,7 @@ int HoneycombHandler::delete_row(const uchar *buf)
   jclass adapter_class = cache->hbase_adapter().clazz;
   jmethodID delete_row_method = cache->hbase_adapter().delete_row;
   this->env->CallStaticBooleanMethod(adapter_class, delete_row_method, this->curr_scan_id);
+  EXCEPTION_CHECK_IE("HoneycombHandler::delete_row", "calling deleteRow");
   DBUG_RETURN(0);
 }
 
@@ -577,7 +596,9 @@ int HoneycombHandler::delete_all_rows()
   jmethodID set_row_count = cache->hbase_adapter().set_row_count;
 
   this->env->CallStaticIntMethod(adapter_class, delete_all_rows, table_name);
+  EXCEPTION_CHECK_IE("HoneycombHandler::delete_all_rows", "calling deleteAllRows");
   this->env->CallStaticVoidMethod(adapter_class, set_row_count, table_name, 0);
+  EXCEPTION_CHECK_IE("HoneycombHandler::delete_all_rows", "calling setRowCount");
   this->flush_writes();
 
   DBUG_RETURN(0);
@@ -611,6 +632,7 @@ void HoneycombHandler::set_autoinc_counter(jlong new_value, jboolean is_truncate
   {
     stats.auto_increment_value = (ulonglong) new_value;
   }
+  EXCEPTION_CHECK("HoneycombHandler::set_autoinc_counter", "calling alterAutoincrementValue");
 }
 
 void HoneycombHandler::drop_table(const char *path)
@@ -633,6 +655,7 @@ int HoneycombHandler::delete_table(const char *path)
 
   this->env->CallStaticBooleanMethod(adapter_class, drop_table_method,
       table_name);
+  EXCEPTION_CHECK("HoneycombHandler::delete_table", "calling dropTable");
 
   DBUG_RETURN(0);
 }
