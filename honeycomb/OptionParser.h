@@ -1,7 +1,7 @@
 #ifndef OPTIONPARSER_H
 #define OPTIONPARSER_H
 #include <jni.h>
-typedef struct st_options Option;
+typedef struct st_optionparser OptionParser;
 
 /**
  * @brief Reads in the options from a file.
@@ -10,48 +10,48 @@ typedef struct st_options Option;
  *
  * @return Options in file
  */
-Option* new_options(const char* filename);
+OptionParser* new_parser(const char* filename);
 
 /**
  * @brief Release resources held by options.
  *
- * @param options Options
+ * @param parser parser
  */
-void free_options(Option* options);
+void free_parser(OptionParser* parser);
 
 /**
  * @brief Retrieve the JNI options found in the file.
  *
- * @param options Options
+ * @param parser parser
  *
  * @return JNI options
  */
-JavaVMOption* get_options(Option* options);
+JavaVMOption* get_options(OptionParser* parser);
 
 /**
  * @brief Retrieve the number of options found in the file.
  *
- * @param options Options
+ * @param parser parser
  *
  * @return Number of options found
  */
-unsigned int get_optioncount(Option* options);
+unsigned int get_optioncount(OptionParser* parser);
 
 /**
  * @brief Retrieves the error message from reading. Returns NULL if there was no error.
  *
- * @param options Options
+ * @param parser parser
  *
  * @return Error during reading
  */
-char* get_errormessage(Option* options);
+char* get_errormessage(OptionParser* parser);
 
 /**
  * @brief Describes whether there was an error while trying to read the options.
  *
- * @param options Options
+ * @param parser parser
  *
  * @return Was an error during reading
  */
-bool has_error(Option* options);
+bool has_error(OptionParser* parser);
 #endif

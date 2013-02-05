@@ -10,7 +10,7 @@
 
 const char* schema = "/etc/mysql/honeycomb.xsd";
 
-struct st_options
+struct st_optionparser
 {
   JavaVMOption* options;
   unsigned int count;
@@ -19,13 +19,13 @@ struct st_options
   xmlErrorPtr error;
 };
 
-static void format_error(Option* options, int size, const char* message, ...)
+static void format_error(OptionParser* parser, int size, const char* message, ...)
 {
     va_list args;
     va_start(args,message);
-    options->error_message = (char*)std::malloc(size); 
-    vsnprintf(options->error_message, size, message, args);
-    options->has_error = true;
+    parser->error_message = (char*)std::malloc(size); 
+    vsnprintf(parser->error_message, size, message, args);
+    parser->has_error = true;
     va_end(args);
 }
 /**
@@ -33,7 +33,7 @@ static void format_error(Option* options, int size, const char* message, ...)
  *
  * @param config_file Configuration file path
  */
-static bool test_config_file(Option* options, const char* config_file)
+static bool test_config_file(OptionParser* parser, const char* config_file)
 {
   FILE* config = fopen(config_file, "r");
   if(config != NULL)
@@ -45,7 +45,7 @@ static bool test_config_file(Option* options, const char* config_file)
   {
     const char* message = "Could not open \"%s\". File must be readable.";
     int size = strlen(message) + strlen(config_file) + 1;
-    format_error(options, size, message, config_file);
+    format_error(parser, size, message, config_file);
     return false;
   }
 }
@@ -133,17 +133,17 @@ cleanup:
   return rc;
 }
 
-static void extract_values(Option* options, xmlDocPtr doc, xmlNodeSetPtr option_nodes)
+static void extract_values(OptionParser* parser, xmlDocPtr doc, xmlNodeSetPtr option_nodes)
 {
-  for(unsigned int i = 0; i < options->count; i++)
+  for(unsigned int i = 0; i < parser->count; i++)
   {
     xmlNodePtr current_option = option_nodes->nodeTab[i];
     char* opt = (char*)xmlNodeListGetString(doc, current_option->xmlChildrenNode, 1);
-    options->options[i].optionString = opt != NULL ? ltrim(rtrim(opt)) : NULL;
+    parser->options[i].optionString = opt != NULL ? ltrim(rtrim(opt)) : NULL;
   }
 }
 
-static void read_options(Option* options, const char* filename) 
+static void read_options(OptionParser* parser, const char* filename) 
 {
   const xmlChar* xpath = (const xmlChar*)"/options/jvmoptions/jvmoption";
   xmlXPathObjectPtr jvm_options;
@@ -163,23 +163,23 @@ static void read_options(Option* options, const char* filename)
   if (jvm_options == NULL) { goto error; }
 
   option_nodes = jvm_options->nodesetval;
-  options->count = option_nodes->nodeNr;
-  options->options = (JavaVMOption*)malloc(options->count * sizeof(JavaVMOption));
-  if (options == NULL)
+  parser->count = option_nodes->nodeNr;
+  parser->options = (JavaVMOption*)malloc(parser->count * sizeof(JavaVMOption));
+  if (parser == NULL)
   {
     const char* error = "Could not allocate memory.";
-    format_error(options, strlen(error) + 1, error);
+    format_error(parser, strlen(error) + 1, error);
     goto cleanup;
   }
 
-  extract_values(options, doc, option_nodes);
+  extract_values(parser, doc, option_nodes);
   goto cleanup;
 
 error:
-  options->error = xmlGetLastError();
-  if (options->error != NULL)
+  parser->error = xmlGetLastError();
+  if (parser->error != NULL)
   {
-    options->has_error = true;
+    parser->has_error = true;
   }
 
 cleanup:
@@ -189,64 +189,64 @@ cleanup:
   xmlCleanupParser();
 }
 
-unsigned int get_optioncount(Option* options)
+unsigned int get_optioncount(OptionParser* parser)
 {
-  return options->count;
+  return parser->count;
 }
 
-JavaVMOption* get_options(Option* options)
+JavaVMOption* get_options(OptionParser* parser)
 {
-  return options->options;
+  return parser->options;
 }
 
-char* get_errormessage(Option* options)
+char* get_errormessage(OptionParser* parser)
 {
-  if(!options->has_error)
+  if(!parser->has_error)
   {
     return NULL;
   }
 
-  if(options->error != NULL)
+  if(parser->error != NULL)
   {
-    return options->error->message;
+    return parser->error->message;
   }
 
-  return options->error_message;
+  return parser->error_message;
 }
 
-bool has_error(Option* options)
+bool has_error(OptionParser* parser)
 {
-  return options->has_error;
+  return parser->has_error;
 }
 
-Option* new_options(const char* filename) 
+OptionParser* new_parser(const char* filename) 
 {
-  Option* options = (Option*)std::calloc(1, sizeof(Option));
-  if (!test_config_file(options, filename))
+  OptionParser* parser = (OptionParser*)std::calloc(1, sizeof(OptionParser));
+  if (!test_config_file(parser, filename))
   {
-    return options;
+    return parser;
   }
 
-  read_options(options, filename);
+  read_options(parser, filename);
 
-  return options;
+  return parser;
 }
 
-void free_options(Option* options)
+void free_parser(OptionParser* parser)
 {
-  if (options != NULL)
+  if (parser != NULL)
   {
-    for(unsigned int i = 0; i < options->count; i++)
+    for(unsigned int i = 0; i < parser->count; i++)
     {
-      if (options->options[i].optionString != NULL)
+      if (parser->options[i].optionString != NULL)
       {
-        xmlFree(options->options[i].optionString);
+        xmlFree(parser->options[i].optionString);
       }
     }
 
-    free(options->options);
-    options->options = NULL;
-    free(options);
-    options = NULL;
+    free(parser->options);
+    parser->options = NULL;
+    free(parser);
+    parser = NULL;
   }
 }

@@ -133,15 +133,15 @@ void initialize_jvm(JavaVM* &jvm)
   {
     JNIEnv* env;
     JavaVMInitArgs vm_args;
-    Option* options = new_options(config_file);
-    if (has_error(options))
+    OptionParser* parser = new_parser(config_file);
+    if (has_error(parser))
     {
-      char* error_message = get_errormessage(options);
+      char* error_message = get_errormessage(parser);
       abort_with_fatal_error(error_message);
     }
 
-    vm_args.options = get_options(options);
-    vm_args.nOptions = get_optioncount(options);
+    vm_args.options = get_options(parser);
+    vm_args.nOptions = get_optioncount(parser);
     vm_args.version = JNI_VERSION_1_6;
     thread_attach_count++; // roundabout to attach_thread
     jint result = JNI_CreateJavaVM(&jvm, (void**)&env, &vm_args);
@@ -154,7 +154,7 @@ void initialize_jvm(JavaVM* &jvm)
       abort_with_fatal_error("Environment not created correctly during JVM creation.");
     }
 
-    free_options(options);
+    free_parser(parser);
     initialize_adapter(jvm);
     print_java_classpath(env);
     detach_thread(jvm);
