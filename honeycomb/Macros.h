@@ -17,9 +17,9 @@
  */
 #define CHECK_JNI_ABORT(result, message) \
   do { if (result != JNI_OK) { \
+    perror("Failure during JNI call: " message); \
     Logging::fatal(message); \
     env->ExceptionDescribe(); \
-    perror("Failure during JNI call. Check honeycomb.log for details."); \
     abort(); \
   }} while(0)
 
@@ -35,6 +35,7 @@
  */
 #define EXCEPTION_CHECK_IE(location, reason) \
   do { if (env->ExceptionCheck()) { \
+    perror("Failure during JNI call in " location ": " reason); \
     Logging::error(location ": pending java exception after " reason); \
     env->ExceptionDescribe(); \
     return HA_ERR_INTERNAL_ERROR; \
@@ -52,6 +53,7 @@
  */
 #define EXCEPTION_CHECK_DBUG_IE(location, reason) \
   do { if (env->ExceptionCheck()) { \
+    perror("Failure during JNI call in " location ": " reason); \
     Logging::error(location ": pending java exception after " reason); \
     env->ExceptionDescribe(); \
     DBUG_RETURN(HA_ERR_INTERNAL_ERROR); \
@@ -65,6 +67,7 @@
  */
 #define EXCEPTION_CHECK_ABORT(message) \
   do { if (env->ExceptionCheck()) { \
+    perror("Failure during JNI call: " message); \
     Logging::fatal(message); \
     env->ExceptionDescribe(); \
     perror("Failure during JNI call. Check honeycomb.log for details."); \
@@ -80,6 +83,7 @@
  */
 #define EXCEPTION_CHECK(location, reason) \
   do { if (env->ExceptionCheck()) { \
+    perror("Failure during JNI call in " location ": " reason); \
     Logging::error(location ": pending java exception after " reason); \
     env->ExceptionDescribe(); \
   }} while(0)
@@ -94,6 +98,7 @@
  */
 #define NULL_CHECK_IE(value, location, reason) \
   do { if (value == NULL) { \
+    perror("Failure during JNI call in " location ": " reason); \
     Logging::error(location ": pending java exception after " reason); \
     env->ExceptionDescribe(); \
     return HA_ERR_INTERNAL_ERROR; \
@@ -110,9 +115,9 @@
  */
 #define NULL_CHECK_ABORT(value, message) \
   do { if (value == NULL) { \
+    perror("Failure during JNI call: " message); \
     Logging::fatal(message); \
     env->ExceptionDescribe(); \
-    perror("Failure during JNI call. Check honeycomb.log for details."); \
     abort(); \
   }} while(0)
 
