@@ -1,14 +1,12 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#ifndef MYSQL_SERVER
 #define MYSQL_SERVER 1
+#endif
 
 #include "sql_class.h"
-#include <jni.h>
-#include <tztime.h>
-
-#include "Macros.h"
-#include "m_string.h"
+#include <stdint.h>
 
 bool is_unsigned_field(Field *field);
 void reverse_bytes(uchar *begin, uint length);

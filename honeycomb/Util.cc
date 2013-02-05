@@ -1,4 +1,6 @@
 #include "Util.h"
+#include <tztime.h>
+#include "my_global.h"
 
 uint64_t bswap64(uint64_t x)
 {

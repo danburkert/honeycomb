@@ -1,5 +1,6 @@
 #ifndef MACROS_H
 #define MACROS_H
+#include <cstdlib>
 
 #define INFO(format_string) DBUG_PRINT("INFO", format_string)
 #define ERROR(format_string) DBUG_PRINT("ERROR", format_string)

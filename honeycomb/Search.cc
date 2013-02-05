@@ -1,5 +1,8 @@
 #include "HoneycombHandler.h"
-#include "JNICache.h"
+#include "JavaFrame.h"
+#include "Java.h"
+#include "Logging.h"
+#include "Macros.h"
 
 int HoneycombHandler::index_init(uint idx, bool sorted)
 {

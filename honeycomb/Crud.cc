@@ -1,4 +1,9 @@
 #include "HoneycombHandler.h"
+#include "FieldMetadata.h"
+#include "JavaFrame.h"
+#include "Java.h"
+#include "Logging.h"
+#include "Macros.h"
 
 /**
  * @brief Create the Java object for the multi-column index.

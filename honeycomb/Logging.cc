@@ -5,6 +5,8 @@
 #include "my_pthread.h"
 namespace Logging
 {
+
+#define DEFAULT_LOG_PATH "/tmp/honeycomb.log"
   static FILE* log_file;
   static pthread_mutex_t log_lock;
 
