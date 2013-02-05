@@ -12,13 +12,12 @@ const char **HoneycombHandler::bas_ext() const
 
 HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg,
     mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm, JNICache* cache)
-: handler(hton, table_arg), 
-  honeycomb_mutex(mutex), 
+: handler(hton, table_arg),
+  honeycomb_mutex(mutex),
   honeycomb_open_tables(open_tables),
-  jvm(jvm), 
+  jvm(jvm),
   cache(cache)
 {
-  attach_thread(this->jvm, this->env);
   this->ref_length = 16;
   this->rows_written = 0;
   this->failed_key_index = 0;
@@ -27,6 +26,7 @@ HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg,
 
 HoneycombHandler::~HoneycombHandler()
 {
+  attach_thread(this->jvm, this->env);
   this->flush_writes();
   detach_thread(this->jvm);
 }
@@ -195,6 +195,7 @@ int HoneycombHandler::external_lock(THD *thd, int lock_type)
   JNICache::HBaseAdapter hbase_adapter = cache->hbase_adapter();
   if (lock_type == F_WRLCK || lock_type == F_RDLCK)
   {
+    attach_thread(jvm, env);
     jlong write_id = this->env->CallStaticLongMethod(hbase_adapter.clazz,
         hbase_adapter.start_write);
     EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::external_lock",
@@ -204,19 +205,22 @@ int HoneycombHandler::external_lock(THD *thd, int lock_type)
 
   if (lock_type == F_UNLCK)
   {
-    JavaFrame frame(env, 1);
-    jstring table_name = this->table_name();
-    this->env->CallStaticVoidMethod(hbase_adapter.clazz,
-        hbase_adapter.increment_row_count, table_name,
-        (jlong) this->rows_written);
-    EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::external_lock",
-        "calling startWrite");
-    this->rows_written = 0;
-    this->env->CallStaticVoidMethod(hbase_adapter.clazz, hbase_adapter.end_write,
-        (jlong)this->curr_write_id);
-    EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::external_lock",
-        "calling endWrite");
-    this->curr_write_id = -1;
+    { // Destruct frame before detaching
+      JavaFrame frame(env, 1);
+      jstring table_name = this->table_name();
+      this->env->CallStaticVoidMethod(hbase_adapter.clazz,
+          hbase_adapter.increment_row_count, table_name,
+          (jlong) this->rows_written);
+      EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::external_lock",
+          "calling startWrite");
+      this->rows_written = 0;
+      this->env->CallStaticVoidMethod(hbase_adapter.clazz, hbase_adapter.end_write,
+          (jlong)this->curr_write_id);
+      EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::external_lock",
+          "calling endWrite");
+      this->curr_write_id = -1;
+    }
+    detach_thread(jvm);
   }
   DBUG_RETURN(0);
 }
@@ -679,8 +683,7 @@ void HoneycombHandler::flush_writes()
 {
   jclass adapter_class = cache->hbase_adapter().clazz;
   jmethodID end_write_method = cache->hbase_adapter().flush_writes;
-  this->env->CallStaticVoidMethod(adapter_class, end_write_method,
-      this->curr_write_id);
+  env->CallStaticVoidMethod(adapter_class, end_write_method, curr_write_id);
   EXCEPTION_CHECK("HonecyombHandler::flush_writes", "calling endWrite");
 }
 
