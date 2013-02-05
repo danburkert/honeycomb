@@ -390,6 +390,7 @@ void HoneycombHandler::terminate_scan()
     jclass adapter_class = cache->hbase_adapter().clazz;
     jmethodID end_scan_method = cache->hbase_adapter().end_scan;
     this->env->CallStaticVoidMethod(adapter_class, end_scan_method, this->curr_scan_id);
+    EXCEPTION_CHECK("HoneycombHandler::terminate_scan", "leaving function.");
     this->curr_scan_id = -1;
   }
 }
