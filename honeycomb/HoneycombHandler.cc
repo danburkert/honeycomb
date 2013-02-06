@@ -323,6 +323,7 @@ int HoneycombHandler::info(uint flag)
   // TODO: Update this function to take into account the flag being passed in,
   // like the other engines
   ha_rows rec_per_key;
+  attach_thread(jvm, env);
 
   DBUG_ENTER("HoneycombHandler::info");
   if (flag & HA_STATUS_VARIABLE)
@@ -404,6 +405,8 @@ int HoneycombHandler::info(uint flag)
     EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::info", "calling getAutoincrementValue");
     stats.auto_increment_value = (ulonglong) autoincrement_value;
   }
+
+  detach_thread(jvm);
   DBUG_RETURN(0);
 }
 
