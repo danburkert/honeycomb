@@ -155,18 +155,22 @@ int HoneycombHandler::create(const char *path, TABLE *table_arg,
 int HoneycombHandler::rename_table(const char *from, const char *to)
 {
   DBUG_ENTER("HoneycombHandler::rename_table");
-  JavaFrame frame(env, 2);
-  jclass adapter_class = cache->hbase_adapter().clazz;
-  jmethodID rename_table_method = cache->hbase_adapter().rename_table;
-  char* from_str = extract_table_name_from_path(from);
-  char* to_str = extract_table_name_from_path(to);
-  jstring current_table_name = string_to_java_string(from_str);
-  jstring new_table_name = string_to_java_string(to_str);
-  ARRAY_DELETE(from_str);
-  ARRAY_DELETE(to_str);
-  env->CallStaticVoidMethod(adapter_class, rename_table_method,
-      current_table_name, new_table_name);
-  EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::rename_table", "calling renameTable");
+  attach_thread(jvm, env);
+  {
+    JavaFrame frame(env, 2);
+    jclass adapter_class = cache->hbase_adapter().clazz;
+    jmethodID rename_table_method = cache->hbase_adapter().rename_table;
+    char* from_str = extract_table_name_from_path(from);
+    char* to_str = extract_table_name_from_path(to);
+    jstring current_table_name = string_to_java_string(from_str);
+    jstring new_table_name = string_to_java_string(to_str);
+    ARRAY_DELETE(from_str);
+    ARRAY_DELETE(to_str);
+    env->CallStaticVoidMethod(adapter_class, rename_table_method,
+        current_table_name, new_table_name);
+    EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::rename_table", "calling renameTable");
+  }
+  detach_thread(jvm);
   DBUG_RETURN(0);
 }
 
