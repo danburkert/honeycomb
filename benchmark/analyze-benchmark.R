@@ -9,17 +9,17 @@ pdf_filename <- args[2]
 data <- read.table(benchmark_file, header=T, sep=" ")
 data <- data[with(data, order(Table,Query, Clients,Timestep)), ]
 data_summary <- daply(data, .(Table, Clients, Query), function(x) {
-  out <- capture.output(summary(x$QPS))
+  out <- capture.output(summary(x$OPS))
   info <- paste("Table:", x$Table[1], "Clients:", x$Clients[1], "Query:", x$Query[1])
   paste(info, "\n", out[1],"\n", out[2], "\n")
 })
 pdf(file=pdf_filename)
-ymax <- max(data$QPS)
+ymax <- max(data$OPS)
 ymiddle <- ymax / 2
-bwplot(QPS~Table|sprintf("Clients: %02d",Clients)+paste("Query:",Query),
+bwplot(OPS~Table|sprintf("Clients: %02d",Clients)+paste("Query:",Query),
        data=data,
        auto.key=T,
-       main="QPS by Table, Clients, & Query",
+       main="OPS by Table, Clients, & Query",
        xlab.top="(Mean / Median / Standard Deviation)",
        par.settings = list(plot.symbol = list(col = "transparent")),
        ylab="Queries/Second",
@@ -50,8 +50,8 @@ panel <- function(...){
 
 color_seq <- seq(16, 16+table_count-1)
 line_types <- 1:table_count
-xyplot(QPS~Timestep|Query+sprintf("Clients: %02d", Clients),
-       main= "QPS / Time by Table",
+xyplot(OPS~Timestep|Query+sprintf("Clients: %02d", Clients),
+       main= "OPS / Time by Table",
        data=data,
        type="l",
        col=color_seq,
@@ -67,8 +67,8 @@ xyplot(QPS~Timestep|Query+sprintf("Clients: %02d", Clients),
 
 color_seq <- seq(16, 16+client_count-1)
 line_types <- 1:client_count
-xyplot(QPS~Timestep|paste("Table:",Table)+Query,
-       main= "QPS / Time by Clients",
+xyplot(OPS~Timestep|paste("Table:",Table)+Query,
+       main= "OPS / Time by Clients",
        data=data,
        type="l",
        col=color_seq,
