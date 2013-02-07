@@ -1,17 +1,7 @@
 package com.nearinfinity.honeycomb;
 
-import au.com.bytecode.opencsv.CSVParser;
-import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
-import com.nearinfinity.honeycomb.hbaseclient.*;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.log4j.Logger;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -20,8 +10,25 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.String.format;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.log4j.Logger;
+
+import au.com.bytecode.opencsv.CSVParser;
+
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
+import com.nearinfinity.honeycomb.hbaseclient.ColumnMetadata;
+import com.nearinfinity.honeycomb.hbaseclient.Index;
+import com.nearinfinity.honeycomb.hbaseclient.PutListFactory;
+import com.nearinfinity.honeycomb.hbaseclient.TableCache;
+import com.nearinfinity.honeycomb.hbaseclient.TableInfo;
 
 public class BulkLoadMapper
         extends Mapper<LongWritable, Text, ImmutableBytesWritable, Put> {
@@ -72,7 +79,7 @@ public class BulkLoadMapper
             throw new IOException("honeycomb.hb.table not set");
         }
 
-        HTable table = new HTable(conf, hbTable);
+        final HTableInterface table = new HTable(conf, hbTable);
 
         tableInfo = TableCache.getTableInfo(sqlTable, table);
         indexColumns = Index.indexForTable(tableInfo.tableMetadata());
