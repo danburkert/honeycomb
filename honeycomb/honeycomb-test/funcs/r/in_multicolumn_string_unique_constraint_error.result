@@ -79,7 +79,7 @@ INSERT INTO t1 (c1,c2,c3) VALUES('abc','abc','def');
 ERROR 23000: Duplicate entry 'abc-abc-def' for key 'c1'
 INSERT INTO t1 (c1,c2,c3) VALUES('abc','def','def');
 ERROR 23000: Duplicate entry 'abc-def-def' for key 'c1'
-SELECT * FROM t1;
+SELECT * FROM t1 order by c1,c2,c3;
 c1	c2	c3
 abc	abc	abc
 abc	abc	def
