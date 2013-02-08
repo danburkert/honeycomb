@@ -16,13 +16,14 @@ data_summary <- daply(data, .(Table, Clients, Query), function(x) {
 pdf(file=pdf_filename)
 ymax <- max(data$QPS)
 ymiddle <- ymax / 2
-bwplot(QPS~Table|sprintf("Clients: %02d",Clients)+paste("Query:",Query),
+bwplot(QPS~Table|sprintf("Clients: %02d",Clients)+Query,
        data=data,
        auto.key=T,
        main="QPS by Table, Clients, & Query",
        xlab.top="(Mean / Median / Standard Deviation)",
        par.settings = list(plot.symbol = list(col = "transparent")),
        ylab="Queries/Second",
+       scales=list(x=list(rot=90)),
        panel=function(x, y,...){
          panel.grid(v=0,h=-1)
          panel.bwplot(x,y, ...)
@@ -61,6 +62,7 @@ xyplot(QPS~Timestep|Query+sprintf("Clients: %02d", Clients),
        lwd=lwd,
        ylab="Queries/Second",
        xlab="Time",
+       scales=list(x=list(rot=90)),
        key=list(text = list(as.character(paste("Table:", unique(data$Table)))),
                 lines = list(lwd=lwd, lty=line_types, col=color_seq)),
        panel=panel)
@@ -78,6 +80,7 @@ xyplot(QPS~Timestep|paste("Table:",Table)+Query,
        lwd=lwd,
        ylab="Queries/Second",
        xlab="Time",
+       scales=list(x=list(rot=90)),
        key=list(text = list(as.character(paste("Clients:", unique(data$Clients)))),
                 lines = list(lwd=lwd, lty=line_types, col=color_seq)),
        panel=panel)
