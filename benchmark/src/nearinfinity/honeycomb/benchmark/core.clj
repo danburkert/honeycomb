@@ -71,14 +71,29 @@
   "Run benchmarks against different configurations of tables, concurrent client
    connections, and query types.  The database, warmup period, benchmark period,
    and resolution are consistent across runs."
-  [db-spec tables queries clients warmup bench resolution]
-  (doseq [table tables
-          query queries
+  [db-spec queries tables clients warmup bench resolution]
+  (doseq [query queries
+          table tables
           clients clients]
-    (-> (benchmark db-spec (query table) clients warmup bench)
-        flatten
-        (aggregate-timesteps resolution)
-        (print-results table query clients bench resolution))))
+    (let [query-op (get (ns-publics 'nearinfinity.honeycomb.benchmark.query) query)]
+      (-> (benchmark db-spec (query-op table) clients warmup bench)
+          flatten
+          (aggregate-timesteps resolution)
+          (print-results table query clients bench resolution)))))
+
+(defn- benchmark-ddls
+  "Run benchmarks against different configurations of storage engines,
+   concurrent client connections, and ddl statements.  The database, warmup
+   period, benchmark period, and resolution are consistent across runs."
+  [db-spec stmts engines clients warmup bench resolution]
+  (doseq [stmt stmts
+          engine engines
+          clients clients]
+    (let [stmt-op (get (ns-publics 'nearinfinity.honeycomb.benchmark.ddl) stmt)]
+      (-> (benchmark db-spec (stmt-op engine) clients warmup bench)
+          flatten
+          (aggregate-timesteps resolution)
+          (print-results engine (name stmt) clients bench resolution)))))
 
 (defn- xnor [a b]
   "Complement of logical XOR."
@@ -115,14 +130,21 @@
                          *out*)]
       (binding [*out* writer
                 *flush-on-newline* false]
-        (print-header)
-        (if-let [queries (map (partial get (ns-publics 'nearinfinity.honeycomb.benchmark.query))
-                              (:queries opts))]
+        (when-not (:append opts) (print-header))
+        (if-let [queries (:queries opts)]
           (benchmark-queries (:db opts)
-                             (:tables opts)
                              queries
+                             (:tables opts)
                              (:clients opts)
                              (:warmup opts)
                              (:bench opts)
-                             (:resolution opts)))))
+                             (:resolution opts)))
+        (if-let [ddls (:ddls opts)]
+          (benchmark-ddls (:db opts)
+                          ddls
+                          (:engines opts)
+                          (:clients opts)
+                          (:warmup opts)
+                          (:bench opts)
+                          (:resolution opts)))))
     (shutdown-agents)))
