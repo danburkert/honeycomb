@@ -86,6 +86,24 @@
                            (< :salary high))))
           (ql/compile nil)))))
 
+(defn iscan-firstname-asc-10 [table]
+  (wrap-query
+    (-> (ql/table table)
+        (ql/select
+          (ql/where (>= :first_name (n/first-name))))
+        (ql/sort [:first_name#asc])
+        (ql/take 10)
+        (ql/compile nil))))
+
+(defn iscan-firstname-desc-10 [table]
+  (wrap-query
+    (-> (ql/table table)
+        (ql/select
+          (ql/where (<= :first_name (n/first-name))))
+        (ql/sort [:first_name#desc])
+        (ql/take 10)
+        (ql/compile nil))))
+
 ;;; Multi-Column Queries
 
 (defn point-firstname-phone [table]
