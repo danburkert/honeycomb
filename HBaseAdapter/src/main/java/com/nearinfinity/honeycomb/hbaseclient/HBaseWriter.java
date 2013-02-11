@@ -1,18 +1,31 @@
 package com.nearinfinity.honeycomb.hbaseclient;
 
-import com.google.common.base.Joiner;
-import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.filter.PrefixFilter;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.log4j.Logger;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.String.format;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.filter.PrefixFilter;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.log4j.Logger;
+
+import com.google.common.base.Joiner;
 
 public class HBaseWriter implements Closeable {
     private static final Logger logger = Logger.getLogger(HBaseWriter.class);
@@ -32,7 +45,6 @@ public class HBaseWriter implements Closeable {
      *
      * @param tableName Name of SQL table
      * @param values    SQL row values
-     * @return Success
      * @throws IOException
      */
     public void writeRow(String tableName, Map<String, byte[]> values) throws IOException {
@@ -339,7 +351,6 @@ public class HBaseWriter implements Closeable {
      * @param tableName      Name of sql table
      * @param columns        Column name and metadata
      * @param indexedColumns Indexed columns
-     * @return Success
      * @throws IOException
      */
     public void createTableFull(String tableName, Map<String,
