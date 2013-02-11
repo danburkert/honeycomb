@@ -9,4 +9,5 @@
                            [mysql/mysql-connector-java "5.1.6"]
                            [clojureql "1.0.4"]
                            [org.clojure/tools.cli "0.2.2"]
+                           [org.clojure/data.generators "0.1.0"]
                            [nearinfinity/clj-faker "0.1.1"]])
