@@ -17,7 +17,7 @@ cd $build_dir
 if [ ! -e CMakeCache.txt ]
 then
   echo "Running cmake with debug enabled."
-  cmake -DWITH_DEBUG=1 ../mysql-5.5.28
+  cmake -DWITH_DEBUG=1 -DMYSQL_MAINTAINER_MODE=0 ../mysql-5.5.28
   [ $? -ne 0 ] && { echo "CMake failed stopping the script.\n*** Don't forget to delete CMakeCache.txt before running again.***"; exit 1; }
 fi
 
