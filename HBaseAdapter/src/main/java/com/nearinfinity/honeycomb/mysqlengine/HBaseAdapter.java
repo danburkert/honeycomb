@@ -394,7 +394,9 @@ public class HBaseAdapter {
      */
     public static long startIndexScan(String tableName, String columnNames)
             throws HBaseAdapterException {
-        logger.info(String.format("tableName %s, columnNames: %s", tableName, columnNames));
+        if (logger.isDebugEnabled()) {
+            logger.debug(String.format("tableName %s, columnNames: %s", tableName, columnNames));
+        }
         try {
             long scanId = activeScanCounter.incrementAndGet();
             activeScanLookup.put(scanId, new ActiveScan(tableName, columnNames));

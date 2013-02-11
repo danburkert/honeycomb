@@ -68,6 +68,6 @@ INSERT INTO t1 (c1,c2,c3) VALUES('abc','abc','def');
 --error ER_DUP_ENTRY
 INSERT INTO t1 (c1,c2,c3) VALUES('abc','def','def');
 --sorted_result
-SELECT * FROM t1;
+SELECT * FROM t1 order by c1,c2,c3;
 DROP TABLE t1;
 
