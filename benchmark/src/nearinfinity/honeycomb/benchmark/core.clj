@@ -62,10 +62,9 @@
 (defn- print-results
   [results table query clients bench resolution]
   (binding [*print-readably* false]
-    (let [query-names (clojure.set/map-invert (ns-publics 'nearinfinity.honeycomb.benchmark.query))]
-      (dotimes [timestep (* bench resolution)]
-        (prn (name table) (get query-names query) clients
-             (float (/ timestep resolution)) (float (or (get results timestep) 0)))))))
+    (dotimes [timestep (* bench resolution)]
+      (prn (name table) query clients
+           (float (/ timestep resolution)) (float (or (get results timestep) 0))))))
 
 (defn- benchmark-queries
   "Run benchmarks against different configurations of tables, concurrent client
@@ -93,7 +92,7 @@
       (-> (benchmark db-spec (stmt-op engine) clients warmup bench)
           flatten
           (aggregate-timesteps resolution)
-          (print-results engine (name stmt) clients bench resolution)))))
+          (print-results engine stmt clients bench resolution)))))
 
 (defn- xnor [a b]
   "Complement of logical XOR."
