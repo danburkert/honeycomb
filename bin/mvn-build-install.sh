@@ -13,8 +13,8 @@ else
   honeycomb_lib=/usr/local/lib/honeycomb
 fi
 
-cd $HONEYCOMB_HOME/HBaseAdapter
-echo "Running: mvn package install"
+cd $HONEYCOMB_HOME
+echo "Running: mvn install"
 mvn package install -Dapache
 $HONEYCOMB_HOME/bin/install-honeycomb-jars.sh "`pwd`" $honeycomb_lib
 

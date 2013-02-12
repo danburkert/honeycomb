@@ -8,6 +8,7 @@ decimal :
 double :
 encoding_collation :
 enum :
+explain :
 float :
 foreign_key :
 group_by :

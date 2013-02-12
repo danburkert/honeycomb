@@ -1,0 +1,13 @@
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+--enable_warnings
+
+CREATE TABLE t1 (c1 INT, c2 INT, INDEX(c1));
+INSERT INTO t1 VALUES (0, 0), (1, 1), (2, 2), (3, 3), (4, 4), (5, 5), (NULL, NULL);
+
+let $col = c1;
+let $val = 2;
+
+--source explain_opts.inc
+
+DROP TABLE t1;
