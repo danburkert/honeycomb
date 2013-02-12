@@ -129,19 +129,7 @@ int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
     {
       if(key_iter[0] == 1)
       {
-        if(index == (key_count - 1) && find_flag == HA_READ_AFTER_KEY)
-        {
-          key_is_null[index] = JNI_FALSE;
-          for (uint x = 0; x < index; x++)
-          {
-            ARRAY_DELETE(key_copies[x]);
-          }
-          DBUG_RETURN(index_first(buf));
-        }
-        else
-        {
           key_is_null[index] = JNI_TRUE;
-        }
       }
 
       // If the index is nullable, then the first byte is the null flag.
