@@ -8,3 +8,4 @@ eval EXPLAIN SELECT * FROM t1 WHERE $col != $val $opts;
 eval EXPLAIN SELECT * FROM t1 WHERE $col <> $val $opts;
 eval EXPLAIN SELECT * FROM t1 WHERE $col IS NULL $opts;
 eval EXPLAIN SELECT * FROM t1 WHERE $col IS NOT NULL $opts;
+eval EXPLAIN SELECT * FROM t1 $opts;
