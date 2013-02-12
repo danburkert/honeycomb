@@ -97,7 +97,7 @@ static void print_java_classpath(JNIEnv* env)
  */
 extern bool volatile abort_loop;
 #if defined(__APPLE__)
-extern pthread_handler_t kill_server_thread(void *arg __attribute__((unused)));
+extern "C" pthread_handler_t kill_server_thread(void *arg __attribute__((unused)));
 static void handler(int sig)
 {
   abort_loop = true;
