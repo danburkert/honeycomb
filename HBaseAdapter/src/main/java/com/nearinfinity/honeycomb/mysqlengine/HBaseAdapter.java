@@ -514,7 +514,7 @@ public class HBaseAdapter {
             ScanStrategyInfo scanInfo = new ScanStrategyInfo(tableName, columnName, keyValues);
 
             byte[] valueToSkip = null;
-            HBaseResultScanner scanner = null;
+            HBaseResultScanner scanner;
 
             switch (readType) {
                 case HA_READ_KEY_EXACT: {
@@ -523,9 +523,16 @@ public class HBaseAdapter {
                 }
                 break;
                 case HA_READ_AFTER_KEY: {
+                    KeyValue lastKey = Iterables.getLast(scanInfo.keyValues());
                     ScanStrategy strategy = new OrderedScanStrategy(scanInfo);
-                    scanner = new SingleResultScanner(reader.getScanner(strategy));
-                    valueToSkip = Iterables.getLast(scanInfo.keyValueValues());
+                    if (lastKey.isNull()) {
+                        scanner = new NonNullResultScanner(reader.getScanner(strategy));
+                        valueToSkip = null;
+                    } else {
+                        scanner = new SingleResultScanner(reader.getScanner(strategy));
+                        valueToSkip = Iterables.getLast(scanInfo.keyValueValues());
+                    }
+
                 }
                 break;
                 case HA_READ_KEY_OR_NEXT: {
