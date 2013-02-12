@@ -1,8 +1,17 @@
 (ns nearinfinity.honeycomb.benchmark.query
   (:require [clojureql.core :as ql]
+            [clojure.java.jdbc :as sql]
             [nearinfinity.clj-faker.address :as a]
             [nearinfinity.clj-faker.phone :as p]
             [nearinfinity.clj-faker.name :as n]))
+
+(defmacro wrap-query
+  "Wrap a ClojureQL query in an op function suitable for passing to the client."
+  [& body]
+  `(fn []
+     (sql/with-query-results res#
+       ~@body
+       (dorun res#))))
 
 (defn- salary [] (rand-int 100000))
 (defn- salary-range []
@@ -14,90 +23,120 @@
 ;;; Point Queries
 
 (defn point-name [table]
-  (-> (ql/table table)
-      (ql/select
-        (ql/where (and (= :first_name (n/first-name))
-                       (= :last_name (n/last-name)))))
-      (ql/compile nil)))
+  (wrap-query
+    (-> (ql/table table)
+        (ql/select
+          (ql/where (and (= :first_name (n/first-name))
+                         (= :last_name (n/last-name)))))
+        (ql/compile nil))))
 
 (defn point-firstname [table]
-  (-> (ql/table table)
-      (ql/select
-        (ql/where (= :first_name (n/first-name))))
-      (ql/compile nil)))
+  (wrap-query
+    (-> (ql/table table)
+        (ql/select
+          (ql/where (= :first_name (n/first-name))))
+        (ql/compile nil))))
 
 (defn point-lastname [table]
-  (-> (ql/table table)
-      (ql/select
-        (ql/where (= :last_name (n/last-name))))
-      (ql/compile nil)))
+  (wrap-query
+    (-> (ql/table table)
+        (ql/select
+          (ql/where (= :last_name (n/last-name))))
+        (ql/compile nil))))
 
 (defn point-address [table]
-  (-> (ql/table table)
-      (ql/select
-        (ql/where (and (= :address (a/street-address))
-                       (= :zip (a/post-code))
-                       (= :state (a/state-abbr))
-                       (= :country (a/country)))))
-      (ql/compile nil)))
+  (wrap-query
+    (-> (ql/table table)
+        (ql/select
+          (ql/where (and (= :address (a/street-address))
+                         (= :zip (a/post-code))
+                         (= :state (a/state-abbr))
+                         (= :country (a/country)))))
+        (ql/compile nil))))
 
 (defn point-phone [table]
-  (-> (ql/table table)
-      (ql/select
-        (ql/where (= :phone (p/phone-number))))
-      (ql/compile nil)))
+  (wrap-query
+    (-> (ql/table table)
+        (ql/select
+          (ql/where (= :phone (p/phone-number))))
+        (ql/compile nil))))
 
 (defn point-salary [table]
-  (-> (ql/table table)
-      (ql/select
-        (ql/where (= :salary (rand-int 100000))))
-      (ql/compile nil)))
+  (wrap-query
+    (-> (ql/table table)
+        (ql/select
+          (ql/where (= :salary (rand-int 100000))))
+        (ql/compile nil))))
 
 (defn point-fk [table]
-  (-> (ql/table table)
-      (ql/select
-        (ql/where (= :fk (rand-int 10))))
-      (ql/compile nil)))
+  (wrap-query
+    (-> (ql/table table)
+        (ql/select
+          (ql/where (= :fk (rand-int 10))))
+        (ql/compile nil))))
 
 ;;; Range Queries
 
 (defn range-salary [table]
-  (let [[low high] (salary-range)]
+  (wrap-query
+    (let [[low high] (salary-range)]
+      (-> (ql/table table)
+          (ql/select
+            (ql/where (and (> :salary low)
+                           (< :salary high))))
+          (ql/compile nil)))))
+
+(defn iscan-firstname-asc-10 [table]
+  (wrap-query
     (-> (ql/table table)
         (ql/select
-          (ql/where (and (> :salary low)
-                         (< :salary high))))
+          (ql/where (>= :first_name (n/first-name))))
+        (ql/sort [:first_name#asc])
+        (ql/take 10)
+        (ql/compile nil))))
+
+(defn iscan-firstname-desc-10 [table]
+  (wrap-query
+    (-> (ql/table table)
+        (ql/select
+          (ql/where (<= :first_name (n/first-name))))
+        (ql/sort [:first_name#desc])
+        (ql/take 10)
         (ql/compile nil))))
 
 ;;; Multi-Column Queries
 
 (defn point-firstname-phone [table]
-  (-> (ql/table table)
-      (ql/select
-        (ql/where (and (= :first_name (n/first-name))
-                       (= :phone (p/phone-number)))))
-      (ql/compile nil)))
+  (wrap-query
+    (-> (ql/table table)
+        (ql/select
+          (ql/where (and (= :first_name (n/first-name))
+                         (= :phone (p/phone-number)))))
+        (ql/compile nil))))
 
 (defn point-name-range-salary [table]
-  (let [[low high] (salary-range)]
-    (-> (ql/table table)
-        (ql/select
-          (ql/where (and (= :first_name (n/first-name))
-                         (= :last_name (n/last-name))
-                         (> :salary low)
-                         (< :salary high))))
-        (ql/compile nil))))
+  (wrap-query
+    (let [[low high] (salary-range)]
+      (-> (ql/table table)
+          (ql/select
+            (ql/where (and (= :first_name (n/first-name))
+                           (= :last_name (n/last-name))
+                           (> :salary low)
+                           (< :salary high))))
+          (ql/compile nil)))))
 
 (defn point-firstname-range-salary [table]
-  (let [[low high] (salary-range)]
-    (-> (ql/table table)
-        (ql/select
-          (ql/where (and (= :first_name (n/first-name))
-                         (> :salary low)
-                         (< :salary high))))
-        (ql/compile nil))))
+  (wrap-query
+    (let [[low high] (salary-range)]
+      (-> (ql/table table)
+          (ql/select
+            (ql/where (and (= :first_name (n/first-name))
+                           (> :salary low)
+                           (< :salary high))))
+          (ql/compile nil)))))
 
 (defn count-all [table]
-  (-> (ql/table table)
-      (ql/aggregate [:count/*])
-      (ql/compile nil)))
+  (wrap-query
+    (-> (ql/table table)
+        (ql/aggregate [:count/*])
+        (ql/compile nil))))
