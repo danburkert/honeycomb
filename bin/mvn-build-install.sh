@@ -16,11 +16,7 @@ fi
 cd $HONEYCOMB_HOME
 echo "Running: mvn install"
 mvn package install -Dapache
-$HONEYCOMB_HOME/bin/install-honeycomb-jars.sh "`pwd`" $honeycomb_lib
-
-echo "Setting up the classpath.conf file with the complete classpath."
-create_classpath=$($HONEYCOMB_HOME/bin/create-classpath.rb $honeycomb_lib $honeycomb_lib/lib)
-echo $create_classpath | sudo tee /etc/mysql/classpath.conf > /dev/null
+$HONEYCOMB_HOME/bin/install-honeycomb-jars.sh "$HONEYCOMB_HOME/HBaseAdapter" $honeycomb_lib
 
 conf_path=/etc/mysql
 adapter_conf=$conf_path/honeycomb.xml
