@@ -1,7 +1,7 @@
 #!/bin/bash
 [ $# -eq 2 ] || { echo "Usage: $0 <HBaseAdapter directory> <honeycomb lib>"; exit 1; }
 
-src=$1/HBaseAdapter
+src=$1
 honeycomb_lib=$2
 if [ ! -d $honeycomb_lib ]
 then
