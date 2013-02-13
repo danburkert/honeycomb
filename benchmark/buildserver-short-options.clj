@@ -1,8 +1,8 @@
-{:tables [:inno_05 :inno_06 :hc_05 :hc_06]
- :warmup 10
- :bench 30
+{:tables [:inno_05 :hc_05 ]
+ :warmup 30
+ :bench 60
  :clients [1 8 16]
- :queries [range-salary point-name]
+ :queries [iscan-firstname-10]
  :append false
  :out "benchmark-short.ssv"
  :db {:classname "com.mysql.jdbc.Driver"

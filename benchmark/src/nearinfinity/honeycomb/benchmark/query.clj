@@ -104,6 +104,9 @@
         (ql/take 10)
         (ql/compile nil))))
 
+(defn iscan-firstname-10 [table]
+  ((rand-nth [iscan-firstname-asc-10 iscan-firstname-desc-10]) table))
+
 ;;; Multi-Column Queries
 
 (defn point-firstname-phone [table]
