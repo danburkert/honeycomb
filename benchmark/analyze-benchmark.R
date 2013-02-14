@@ -33,9 +33,9 @@ bwplot(OPS~Table|sprintf("Clients: %02d",Clients)+Query,
                 {
                   txt <- paste(round(mean(y)), "/", median(y), "/", round(sd(y)))
                   multiplier <- -1 * sign(median(y) - ymiddle)
-                  offset <- multiplier * (0.07 * ymax + 1.5 * (quantile(y, probs=c(.99)) - median(y)))
+                  offset <- multiplier * (0.09 * ymax + 1.5 * (quantile(y, probs=c(.99)) - median(y)))
                   q <- quantile(y, probs=c(.99))
-                  panel.text(x[1], q + offset, label=txt, cex=0.5)
+                  panel.text(x[1], q + offset, label=txt, cex=0.5, srt=90)
                  })
            1
          })
