@@ -1,0 +1,8 @@
+@namespace("com.nearinfinity.honeycomb.mysql")
+protocol mysql {
+    fixed Position(16);
+
+    record Row {
+        map<bytes> records;
+    }
+}
