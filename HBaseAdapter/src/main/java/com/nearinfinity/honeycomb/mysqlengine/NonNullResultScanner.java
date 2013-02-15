@@ -1,5 +1,6 @@
 package com.nearinfinity.honeycomb.mysqlengine;
 
+import com.nearinfinity.honeycomb.hbaseclient.Metrics;
 import com.nearinfinity.honeycomb.hbaseclient.ResultParser;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -16,13 +17,20 @@ public class NonNullResultScanner implements HBaseResultScanner {
         this.scanner = scanner;
     }
 
+    /**
+     * Retrieve the next value from HBase where the index column is not null in the map.
+     *
+     * @param valueToSkip Ignored
+     * @return Next non-null result
+     * @throws IOException
+     */
     @Override
     public Result next(byte[] valueToSkip) throws IOException {
         if (scanner == null) {
             return null;
         }
 
-        Result result = this.scanner.next();
+        Result result = timedNext();
 
         if (result == null) {
             return null;
@@ -32,8 +40,9 @@ public class NonNullResultScanner implements HBaseResultScanner {
         byte[] value = rowMap.get(this.columnName);
 
         while (value == null) {
-            result = this.scanner.next();
+            result = timedNext();
             if (result == null) {
+
                 return null;
             }
 
@@ -42,6 +51,7 @@ public class NonNullResultScanner implements HBaseResultScanner {
         }
 
         this.lastResult = result;
+
         return result;
     }
 
@@ -65,5 +75,13 @@ public class NonNullResultScanner implements HBaseResultScanner {
     @Override
     public void setColumnName(String columnName) {
         this.columnName = columnName;
+    }
+
+    private Result timedNext() throws IOException {
+        long start = System.currentTimeMillis();
+        Result result = this.scanner.next();
+        long end = System.currentTimeMillis();
+        Metrics.getInstance().addHBaseTime(end - start);
+        return result;
     }
 }

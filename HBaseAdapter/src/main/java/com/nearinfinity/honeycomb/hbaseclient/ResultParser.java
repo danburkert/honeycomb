@@ -49,8 +49,12 @@ public class ResultParser {
      * @return SQL row
      */
     public static Map<String, byte[]> parseRowMap(Result result) {
+        long start = System.currentTimeMillis();
         byte[] mapBytes = parseValueMap(result);
-        return Util.deserializeMap(mapBytes);
+        Map<String, byte[]> map = Util.deserializeMap(mapBytes);
+        long end = System.currentTimeMillis();
+        Metrics.getInstance().addParseRowMapTime(end - start);
+        return map;
     }
 
     /**

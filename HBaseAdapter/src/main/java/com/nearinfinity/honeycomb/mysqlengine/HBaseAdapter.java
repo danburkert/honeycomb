@@ -10,6 +10,7 @@ import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.HTablePool;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.metrics2.util.MBeans;
 import org.apache.log4j.Logger;
 import org.xml.sax.SAXException;
 
@@ -497,6 +498,7 @@ public class HBaseAdapter {
                                      IndexReadType readType)
             throws HBaseAdapterException {
         try {
+
             IndexRow indexRow = new IndexRow();
             ActiveScan activeScan = getActiveScanForId(scanId);
             String tableName = activeScan.getTableName();
@@ -568,13 +570,16 @@ public class HBaseAdapter {
             scanner.setColumnName(Iterables.getLast(scanInfo.keyValueColumns()));
 
             activeScan.setScanner(scanner);
+
             Result result = scanner.next(valueToSkip);
+
 
             if (result == null) {
                 return indexRow;
             }
 
             indexRow.parseResult(result);
+
             return indexRow;
         } catch (Throwable e) {
             logger.error("Exception:", e);
@@ -775,6 +780,8 @@ public class HBaseAdapter {
         }
 
         reader.setCacheSize(params.getInt("table_scan_cache_rows", DEFAULT_NUM_CACHED_ROWS));
+
+        MBeans.register("Honeycomb", "Statistics", Metrics.getInstance());
 
         isInitialized = true;
         logger.info("End");
