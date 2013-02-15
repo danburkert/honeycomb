@@ -23,12 +23,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static java.text.MessageFormat.format;
 
 public class HBaseAdapter {
-    private static final AtomicLong activeScanCounter = new AtomicLong(0L), activeWriterCounter = new AtomicLong(0L);
+    private static final AtomicLong
+            activeScanCounter = new AtomicLong(0L),
+            activeWriterCounter = new AtomicLong(0L),
+            rowCountCache = new AtomicLong(0L);
+    private static final AtomicBoolean rowCountUpdate = new AtomicBoolean(true);
     private static final Map<Long, ActiveScan> activeScanLookup = new ConcurrentHashMap<Long, ActiveScan>();
     private static final Map<Long, HBaseWriter> activeWriterLookup = new ConcurrentHashMap<Long, HBaseWriter>();
     private static final Logger logger = Logger.getLogger(HBaseAdapter.class);
@@ -157,6 +162,7 @@ public class HBaseAdapter {
                 writer.close();
                 activeWriterLookup.remove(writeId);
             }
+
         } catch (Throwable e) {
             logger.error("Exception", e);
             throw new HBaseAdapterException("endWrite", e);
@@ -242,6 +248,7 @@ public class HBaseAdapter {
             }
             HBaseWriter writer = getHBaseWriterForId(writeId);
             writer.writeRow(tableName, values);
+            rowCountUpdate.set(true);
         } catch (Exception e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("writeRow", e);
@@ -269,6 +276,7 @@ public class HBaseAdapter {
             UUID uuid = ResultParser.parseUUID(result);
             HBaseWriter writer = getHBaseWriterForId(writeId);
             writer.updateRow(uuid, changedFields, tableName, values);
+            rowCountUpdate.set(true);
         } catch (Exception e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("writeRow", e);
@@ -623,6 +631,7 @@ public class HBaseAdapter {
         try {
             HBaseWriter writer = createWriter();
             writer.incrementRowCount(tableName, delta);
+            rowCountCache.incrementAndGet();
             writer.close();
         } catch (Exception e) {
             logger.error("Exception: ", e);
@@ -640,6 +649,7 @@ public class HBaseAdapter {
     public static void setRowCount(String tableName, long count) throws HBaseAdapterException {
         try {
             HBaseWriter writer = createWriter();
+            rowCountCache.getAndSet(count);
             writer.setRowCount(tableName, count);
             writer.close();
         } catch (Exception e) {
@@ -657,7 +667,12 @@ public class HBaseAdapter {
      */
     public static long getRowCount(String tableName) throws HBaseAdapterException {
         try {
-            return reader.getRowCount(tableName);
+            if (rowCountUpdate.compareAndSet(true, false)) {
+                rowCountCache.set(reader.getRowCount(tableName));
+                return rowCountCache.get();
+            }
+
+            return rowCountCache.get();
         } catch (Exception e) {
             logger.error("Exception: ", e);
             throw new HBaseAdapterException("getRowCount", e);
