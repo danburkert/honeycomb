@@ -1,7 +1,8 @@
 package com.nearinfinity.honeycomb.mysqlengine;
 
+import com.nearinfinity.honeycomb.hbase.ResultReader;
 import com.nearinfinity.honeycomb.hbaseclient.Metrics;
-import com.nearinfinity.honeycomb.hbaseclient.ResultParser;
+import com.nearinfinity.honeycomb.mysql.Row;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 
@@ -10,7 +11,6 @@ import java.util.Map;
 
 public class NonNullResultScanner implements HBaseResultScanner {
     private ResultScanner scanner;
-    private Result lastResult;
     private String columnName;
 
     public NonNullResultScanner(ResultScanner scanner) {
@@ -29,28 +29,22 @@ public class NonNullResultScanner implements HBaseResultScanner {
         if (scanner == null) {
             return null;
         }
+        Result result;
+        Row row;
+        Map<String, byte[]> rowMap;
+        byte[] value;
 
-        Result result = timedNext();
-
-        if (result == null) {
-            return null;
-        }
-
-        Map<String, byte[]> rowMap = ResultParser.parseRowMap(result);
-        byte[] value = rowMap.get(this.columnName);
-
-        while (value == null) {
+        do {
             result = timedNext();
             if (result == null) {
-
                 return null;
             }
-
-            rowMap = ResultParser.parseRowMap(result);
+            row = ResultReader.readIndexRow(result);
+            rowMap = row.getRecords();
             value = rowMap.get(this.columnName);
-        }
 
-        this.lastResult = result;
+
+        } while (value == null);
 
         return result;
     }
@@ -60,16 +54,6 @@ public class NonNullResultScanner implements HBaseResultScanner {
         if (scanner != null) {
             this.scanner.close();
         }
-    }
-
-    @Override
-    public Result getLastResult() {
-        return this.lastResult;
-    }
-
-    @Override
-    public void setLastResult(Result result) {
-        this.lastResult = result;
     }
 
     @Override

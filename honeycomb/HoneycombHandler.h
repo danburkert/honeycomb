@@ -48,7 +48,7 @@ class HoneycombHandler : public handler
     void drop_table(const char *name);
     int truncate();
     bool is_key_null(const uchar *key);
-    void store_uuid_ref(jobject index_row, jmethodID get_uuid_method);
+    void store_uuid_ref(jobject row);
     void bytes_to_long(const uchar* buff, unsigned int buff_length, bool is_signed, uchar* long_buff);
     int read_index_row(jobject index_row, uchar* buf);
     int get_index_row(jfieldID field_id, uchar* buf);
