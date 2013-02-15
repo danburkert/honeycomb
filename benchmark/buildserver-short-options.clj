@@ -1,4 +1,4 @@
-{:tables [:inno_05 :hc_05 :inno_06 :hc_06 :inno_07 :hc_07]
+{:tables [:inno_05 :hc_05]
  :warmup 30
  :bench 60
  :clients [1 8 16]
