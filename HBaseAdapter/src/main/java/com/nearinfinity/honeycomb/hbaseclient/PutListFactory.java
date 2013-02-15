@@ -1,12 +1,12 @@
 package com.nearinfinity.honeycomb.hbaseclient;
 
+import com.nearinfinity.honeycomb.mysql.Row;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.*;
 
 public class PutListFactory {
     /**
@@ -17,7 +17,7 @@ public class PutListFactory {
      * @param indexedKeys Columns with an index
      * @return HBase table rows
      */
-    public static List<Put> createDataInsertPutList(final Map<String, byte[]> values, final TableInfo info, final List<List<String>> indexedKeys) {
+    public static List<Put> createDataInsertPutList(final Map<String, byte[]> values, final TableInfo info, final List<List<String>> indexedKeys) throws IOException {
         UUID rowId = UUID.randomUUID();
         final long tableId = info.getId();
         final List<Put> putList = new LinkedList<Put>();
@@ -46,7 +46,7 @@ public class PutListFactory {
      * @param rowId       The unique identifier for a MySQL row
      * @return HBase index rows
      */
-    public static List<Put> createIndexForColumns(Map<String, byte[]> values, TableInfo info, UUID rowId, List<String> indexedKeys) {
+    public static List<Put> createIndexForColumns(Map<String, byte[]> values, TableInfo info, UUID rowId, List<String> indexedKeys) throws IOException {
         List<List<String>> newIndexColumns = new LinkedList<List<String>>();
         newIndexColumns.add(new LinkedList<String>(indexedKeys));
         return createIndexForColumns(values, info, newIndexColumns, rowId);
@@ -61,11 +61,17 @@ public class PutListFactory {
      * @param rowId       The unique identifier for a MySQL row
      * @return HBase index rows
      */
-    public static List<Put> createIndexForColumns(Map<String, byte[]> values, TableInfo info, List<List<String>> indexedKeys, UUID rowId) {
+    public static List<Put> createIndexForColumns(Map<String, byte[]> values, TableInfo info, List<List<String>> indexedKeys, UUID rowId) throws IOException {
+        Map<String, ByteBuffer> records = new HashMap<String, ByteBuffer>();
+        for (Map.Entry<String, byte[]> entry : values.entrySet()) {
+            records.put(entry.getKey(), (entry.getValue() == null) ? null : ByteBuffer.wrap(entry.getValue()));
+        }
+        Row row = new Row(records, rowId);
+
         final long tableId = info.getId();
         final Map<String, Long> columnNameToId = info.columnNameToIdMap();
         final List<Put> putList = new LinkedList<Put>();
-        final byte[] rowByteArray = Util.serializeMap(values);
+        final byte[] rowByteArray = row.serialize();
         final Map<String, byte[]> ascendingValues = ValueEncoder.correctAscendingValuePadding(info, values);
         final Map<String, byte[]> descendingValues = ValueEncoder.correctDescendingValuePadding(info, values);
 

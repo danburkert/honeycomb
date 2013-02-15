@@ -1,8 +1,9 @@
-@namespace("com.nearinfinity.honeycomb.mysql")
+@namespace("com.nearinfinity.honeycomb.mysql.gen")
 protocol mysql {
-    fixed Position(16);
+    fixed UUIDContainer(16);
 
-    record Row {
-        map<bytes> records;
+    record RowContainer{
+        UUIDContainer uuid;
+        map<union {null, bytes}> records;
     }
 }

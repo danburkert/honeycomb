@@ -1,6 +1,7 @@
 package com.nearinfinity.honeycomb.hbaseclient;
 
 import com.google.common.base.Joiner;
+import com.nearinfinity.honeycomb.hbase.ResultReader;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -36,7 +37,7 @@ public class HBaseWriter implements Closeable {
      */
     public void writeRow(String tableName, Map<String, byte[]> values) throws IOException {
         if (logger.isDebugEnabled()) {
-            logger.debug(format("Writing row for %s: %s", tableName, new String(Util.serializeMap(values))));
+            logger.debug(format("Writing row for %s: %s", tableName, values));
         }
 
         TableInfo info = TableCache.getTableInfo(tableName, table);
@@ -228,8 +229,8 @@ public class HBaseWriter implements Closeable {
         changeIndex(info, new IndexFunction<Map<String, byte[]>, UUID, Void>() {
             @Override
             public Void apply(Map<String, byte[]> values, UUID uuid) {
-                List<Put> puts = PutListFactory.createIndexForColumns(values, info, uuid, columnsToIndex);
                 try {
+                    List<Put> puts = PutListFactory.createIndexForColumns(values, info, uuid, columnsToIndex);
                     table.put(puts);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
@@ -473,7 +474,7 @@ public class HBaseWriter implements Closeable {
         ResultScanner scanner = table.getScanner(scan);
         Result result;
         while ((result = scanner.next()) != null) {
-            Map<String, byte[]> values = ResultParser.parseDataRow(result, info);
+            Map<String, byte[]> values = ResultReader.readDataRow(result, info).getRecords();
             UUID rowId = ResultParser.parseUUID(result);
             function.apply(values, rowId);
         }
@@ -482,16 +483,18 @@ public class HBaseWriter implements Closeable {
     }
 
     private Map<String, byte[]> retrieveRowAndDelete(String tableName, UUID uuid) throws IOException {
+        checkNotNull(tableName, "tableName may not be null.");
+        checkNotNull(uuid, "uuid may not be null.");
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
 
         byte[] dataRowKey = RowKeyFactory.buildDataKey(tableId, uuid);
         Get get = new Get(dataRowKey);
         Result result = table.get(get);
-        Map<String, byte[]> oldRow = ResultParser.parseDataRow(result, info);
+        Map<String, byte[]> oldRow = ResultReader.readDataRow(result, info).getRecords();
         if (logger.isDebugEnabled()) {
             logger.debug(format("Deleting row in table %s / Table ID %d", tableName, tableId));
-            logger.debug(format("Old row %s", new String(Util.serializeMap(oldRow))));
+            logger.debug(format("Old row %s", oldRow));
         }
 
         List<Delete> deleteList = DeleteListFactory.createDeleteRowList(uuid, info, result, dataRowKey, Index.indexForTable(info.tableMetadata()));

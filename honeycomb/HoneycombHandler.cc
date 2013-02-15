@@ -28,6 +28,7 @@ HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg,
   this->rows_written = 0;
   this->failed_key_index = 0;
   this->curr_scan_id = -1;
+  this->curr_write_id = -1;
 }
 
 HoneycombHandler::~HoneycombHandler()
@@ -642,14 +643,17 @@ bool HoneycombHandler::is_field_nullable(jstring table_name, const char* field_n
 /**
  * Stores the UUID of index_row into the pos field of the handler.  MySQL
  * uses pos during later rnd_pos calls.
+ *
+ * TODO: The NULL_CHECK_ABORT not having to do with memory exhaustion should be taken out
  */
-void HoneycombHandler::store_uuid_ref(jobject index_row, jmethodID get_uuid_method)
+void HoneycombHandler::store_uuid_ref(jobject row)
 {
-  JavaFrame frame(env);
-  jbyteArray uuid = (jbyteArray) this->env->CallObjectMethod(index_row, get_uuid_method);
+  jmethodID get_uuid_method = cache->row().get_uuid;
+  jbyteArray uuid = (jbyteArray) this->env->CallObjectMethod(row, get_uuid_method);
+  EXCEPTION_CHECK("HoneycombHandler::read_index_row", "calling getUUIDBuffer");
+  NULL_CHECK_ABORT(uuid, "HoneycombHandler::store_uuid_ref-> UUID returned from getUUIDBuffer is NULL");
   uchar* pos = (uchar*) this->env->GetByteArrayElements(uuid, JNI_FALSE);
   NULL_CHECK_ABORT(pos, "HoneycombHandler::store_uuid_ref: OutOfMemoryError while calling GetByteArrayElements");
-
   memcpy(this->ref, pos, this->ref_length);
   this->env->ReleaseByteArrayElements(uuid, (jbyte*) pos, 0);
 }

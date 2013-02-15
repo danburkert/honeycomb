@@ -2,9 +2,11 @@ package com.nearinfinity.honeycomb.hbaseclient;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
+import com.nearinfinity.honeycomb.hbase.ResultReader;
 import com.nearinfinity.honeycomb.hbaseclient.strategy.PrefixScanStrategy;
 import com.nearinfinity.honeycomb.hbaseclient.strategy.ScanStrategy;
 import com.nearinfinity.honeycomb.hbaseclient.strategy.ScanStrategyInfo;
+import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.mysqlengine.HBaseResultScanner;
 import com.nearinfinity.honeycomb.mysqlengine.SingleResultScanner;
 import org.apache.hadoop.hbase.client.*;
@@ -29,27 +31,26 @@ public class HBaseReader {
      *
      * @param tableName SQL table name
      * @param scanner   Cursor to a record in HBase
-     * @return
+     * @return Row object, or null if no more rows
      * @throws IOException
      */
     public Row nextRow(String tableName, HBaseResultScanner scanner) throws IOException {
         Result result = scanner.next(null);
         if (result == null) {
-            return new Row();
+            return null;
         }
 
         TableInfo info = getTableInfo(tableName);
-        Row row = new Row();
-        row.parse(result, info);
-        return row;
+        return ResultReader.readDataRow(result, info);
     }
 
     /**
      * Retrieves a SQL row based on a unique identifier.
      *
+     *
      * @param uuid      Data row unique identifier
      * @param tableName SQL table name
-     * @return SQL row
+     * @return Row object, or null if row with UUID does not exist
      * @throws IOException
      */
     public Row getDataRow(UUID uuid, String tableName) throws IOException {
@@ -59,14 +60,11 @@ public class HBaseReader {
         byte[] rowKey = RowKeyFactory.buildDataKey(tableId, uuid);
 
         Get get = new Get(rowKey);
-        Row row = new Row();
         Result result = table.get(get);
-        if (result == null) {
+        if (result.getRow() == null) {
             return null;
         }
-
-        row.parse(result, info);
-        return row;
+        return ResultReader.readDataRow(result, info);
     }
 
     /**

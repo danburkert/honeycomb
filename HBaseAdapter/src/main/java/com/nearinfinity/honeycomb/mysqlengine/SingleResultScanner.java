@@ -1,7 +1,8 @@
 package com.nearinfinity.honeycomb.mysqlengine;
 
+import com.nearinfinity.honeycomb.hbase.ResultReader;
 import com.nearinfinity.honeycomb.hbaseclient.Metrics;
-import com.nearinfinity.honeycomb.hbaseclient.ResultParser;
+import com.nearinfinity.honeycomb.mysql.Row;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 
@@ -11,7 +12,6 @@ import java.util.Map;
 
 public class SingleResultScanner implements HBaseResultScanner {
     private ResultScanner scanner;
-    private Result lastResult;
     private String columnName;
 
     public SingleResultScanner(ResultScanner scanner) {
@@ -31,38 +31,24 @@ public class SingleResultScanner implements HBaseResultScanner {
         if (scanner == null) {
             return null;
         }
-
-        Result result = timedNext();
-
-        if (result == null) {
-            return null;
-        }
-
-        if (valueToSkip != null) {
-            Map<String, byte[]> rowMap = ResultParser.parseRowMap(result);
-            byte[] value = rowMap.get(this.columnName);
-
-            while (Arrays.equals(valueToSkip, value)) {
+        if (valueToSkip == null) {return timedNext();}
+        else { // Assumes an index scan.  Will fail otherwise
+            Result result;
+            Row row;
+            Map<String, byte[]> rowMap;
+            byte[] value;
+            do {
                 result = timedNext();
                 if (result == null) {
                     return null;
                 }
-
-                rowMap = ResultParser.parseRowMap(result);
+                row = ResultReader.readIndexRow(result);
+                rowMap = row.getRecords();
                 value = rowMap.get(this.columnName);
-            }
+            } while (Arrays.equals(value, valueToSkip));
+
+            return result;
         }
-
-        byte[] value = null;
-
-        while (valueToSkip != null && Arrays.equals(value, valueToSkip)) {
-            result = timedNext();
-            value = ResultParser.parseValueMap(result);
-        }
-
-        this.lastResult = result;
-
-        return result;
     }
 
     @Override
@@ -70,16 +56,6 @@ public class SingleResultScanner implements HBaseResultScanner {
         if (scanner != null) {
             this.scanner.close();
         }
-    }
-
-    @Override
-    public Result getLastResult() {
-        return this.lastResult;
-    }
-
-    @Override
-    public void setLastResult(Result result) {
-        this.lastResult = result;
     }
 
     @Override

@@ -1,8 +1,11 @@
 package com.nearinfinity.honeycomb.mysqlengine;
 
 import com.google.common.collect.Iterables;
+import com.nearinfinity.honeycomb.hbase.ResultReader;
 import com.nearinfinity.honeycomb.hbaseclient.*;
 import com.nearinfinity.honeycomb.hbaseclient.strategy.*;
+import com.nearinfinity.honeycomb.mysql.Row;
+import com.nearinfinity.honeycomb.mysql.Util;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
@@ -18,7 +21,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -195,15 +197,14 @@ public class HBaseAdapter {
      * Retrieve a SQL row from HBase and move cursor forward.
      *
      * @param scanId The "session" ID for reading
-     * @return SQL row
+     * @return Row object or null if no more rows
      * @throws HBaseAdapterException
      */
     public static Row nextRow(long scanId) throws HBaseAdapterException {
         try {
             ActiveScan conn = getActiveScanForId(scanId);
             HBaseResultScanner scanner = conn.getScanner();
-            Row row = reader.nextRow(conn.getTableName(), scanner);
-            return row;
+            return reader.nextRow(conn.getTableName(), scanner);
         } catch (Throwable e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("nextRow", e);
@@ -261,19 +262,16 @@ public class HBaseAdapter {
      * Updates a SQL row with new values.
      *
      * @param writeId       The "session" ID for writing
-     * @param scanId        The "session" ID for reading
+     * @param uuidBuff      The UUID (in a byte buffer) of the row to be updated
      * @param changedFields Columns that will change
      * @param tableName     Name of SQL table
      * @param values        SQL row values
      * @throws HBaseAdapterException
      */
-    public static void updateRow(long writeId, long scanId, List<String> changedFields, String tableName, Map<String, byte[]> values)
+    public static void updateRow(long writeId, byte[] uuidBuff, List<String> changedFields, String tableName, Map<String, byte[]> values)
             throws HBaseAdapterException {
         try {
-            ActiveScan activeScan = getActiveScanForId(scanId);
-            HBaseResultScanner scanner = activeScan.getScanner();
-            Result result = scanner.getLastResult();
-            UUID uuid = ResultParser.parseUUID(result);
+            UUID uuid = Util.BytesToUUID(uuidBuff);
             HBaseWriter writer = getHBaseWriterForId(writeId);
             writer.updateRow(uuid, changedFields, tableName, values);
             rowCountUpdate.set(true);
@@ -296,7 +294,7 @@ public class HBaseAdapter {
             HBaseWriter writer = getHBaseWriterForId(writeId);
             writer.flushWrites();
         } catch (Throwable e) {
-
+            logger.error("Exception:", e);
         }
     }
 
@@ -304,17 +302,14 @@ public class HBaseAdapter {
      * Deletes a SQL row out of HBase based on where the given scan
      * resides.
      *
-     * @param scanId The "session" ID for reading
+     * @param tableName
+     * @param uuidBuffer
      * @return success
      * @throws HBaseAdapterException
      */
-    public static boolean deleteRow(long scanId) throws HBaseAdapterException {
+    public static boolean deleteRow(String tableName, byte[] uuidBuffer) throws HBaseAdapterException {
         try {
-            ActiveScan activeScan = getActiveScanForId(scanId);
-            HBaseResultScanner scanner = activeScan.getScanner();
-            Result result = scanner.getLastResult();
-            String tableName = activeScan.getTableName();
-            UUID uuid = ResultParser.parseUUID(result);
+            UUID uuid = Util.BytesToUUID(uuidBuffer);
             HBaseWriter writer = createWriter();
             boolean success = writer.deleteRow(tableName, uuid);
             writer.close();
@@ -335,8 +330,7 @@ public class HBaseAdapter {
     public static int deleteAllRows(String tableName) throws HBaseAdapterException {
         try {
             HBaseWriter writer = createWriter();
-            int count = writer.deleteAllRowsInTable(tableName);
-            return count;
+            return writer.deleteAllRowsInTable(tableName);
         } catch (Throwable e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("deleteAllRowsInTable", e);
@@ -353,8 +347,7 @@ public class HBaseAdapter {
     public static boolean dropTable(String tableName) throws HBaseAdapterException {
         try {
             HBaseWriter writer = createWriter();
-            boolean success = writer.dropTable(tableName);
-            return success;
+            return writer.dropTable(tableName);
         } catch (Throwable e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("dropTable", e);
@@ -374,17 +367,11 @@ public class HBaseAdapter {
         try {
             ActiveScan activeScan = getActiveScanForId(scanId);
             String tableName = activeScan.getTableName();
-            ByteBuffer buffer = ByteBuffer.wrap(uuid);
-            UUID rowUuid = new UUID(buffer.getLong(), buffer.getLong());
+            UUID rowUuid = Util.BytesToUUID(uuid);
 
             Row row = reader.getDataRow(rowUuid, tableName);
+            assert(row != null);
 
-            if (row == null) {
-                logger.error("Exception: Row not found");
-                throw new HBaseAdapterException("getRow");
-            }
-
-            activeScan.getScanner().setLastResult(row.getResult());
             return row;
         } catch (Throwable e) {
             logger.error("Exception:", e);
@@ -502,12 +489,9 @@ public class HBaseAdapter {
      * @return SQL row
      * @throws HBaseAdapterException
      */
-    public static IndexRow indexRead(long scanId, List<KeyValue> keyValues,
-                                     IndexReadType readType)
+    public static Row indexRead(long scanId, List<KeyValue> keyValues, IndexReadType readType)
             throws HBaseAdapterException {
         try {
-
-            IndexRow indexRow = new IndexRow();
             ActiveScan activeScan = getActiveScanForId(scanId);
             String tableName = activeScan.getTableName();
             List<String> columnName = activeScan.getColumnName();
@@ -583,12 +567,10 @@ public class HBaseAdapter {
 
 
             if (result == null) {
-                return indexRow;
+                return null;
             }
 
-            indexRow.parseResult(result);
-
-            return indexRow;
+            return ResultReader.readIndexRow(result);
         } catch (Throwable e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("indexRead", e);
@@ -597,23 +579,22 @@ public class HBaseAdapter {
 
     /**
      * Retrieves a SQL row from the index and moves the index cursor forward.
+     * Returns null if there are no more rows.
      *
      * @param scanId The "session" ID for reading
      * @return SQL row
      * @throws HBaseAdapterException
      */
-    public static IndexRow nextIndexRow(long scanId) throws HBaseAdapterException {
+    public static Row nextIndexRow(long scanId) throws HBaseAdapterException {
         try {
-            IndexRow indexRow = new IndexRow();
             ActiveScan conn = getActiveScanForId(scanId);
             HBaseResultScanner scanner = conn.getScanner();
             Result result = scanner.next(null);
             if (result == null) {
-                return indexRow;
+                return null;
             }
 
-            indexRow.parseResult(result);
-            return indexRow;
+            return ResultReader.readIndexRow(result);
         } catch (Throwable e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("nextIndexRow", e);
