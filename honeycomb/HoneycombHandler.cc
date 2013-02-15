@@ -214,11 +214,14 @@ int HoneycombHandler::external_lock(THD *thd, int lock_type)
     { // Destruct frame before detaching
       JavaFrame frame(env, 1);
       jstring table_name = this->table_name();
-      this->env->CallStaticVoidMethod(hbase_adapter.clazz,
-          hbase_adapter.increment_row_count, table_name,
-          (jlong) this->rows_written);
-      EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::external_lock",
-          "calling startWrite");
+      if (this->rows_written > 0)
+      {
+        this->env->CallStaticVoidMethod(hbase_adapter.clazz,
+            hbase_adapter.increment_row_count, table_name,
+            (jlong) this->rows_written);
+        EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::external_lock",
+            "calling incrementRowCount");
+      }
       this->rows_written = 0;
       this->env->CallStaticVoidMethod(hbase_adapter.clazz, hbase_adapter.end_write,
           (jlong)this->curr_write_id);
