@@ -1,5 +1,6 @@
 package com.nearinfinity.honeycomb.mysqlengine;
 
+import com.nearinfinity.honeycomb.hbaseclient.Metrics;
 import com.nearinfinity.honeycomb.hbaseclient.ResultParser;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -31,7 +32,7 @@ public class SingleResultScanner implements HBaseResultScanner {
             return null;
         }
 
-        Result result = this.scanner.next();
+        Result result = timedNext();
 
         if (result == null) {
             return null;
@@ -42,7 +43,7 @@ public class SingleResultScanner implements HBaseResultScanner {
             byte[] value = rowMap.get(this.columnName);
 
             while (Arrays.equals(valueToSkip, value)) {
-                result = this.scanner.next();
+                result = timedNext();
                 if (result == null) {
                     return null;
                 }
@@ -55,11 +56,12 @@ public class SingleResultScanner implements HBaseResultScanner {
         byte[] value = null;
 
         while (valueToSkip != null && Arrays.equals(value, valueToSkip)) {
-            result = this.scanner.next();
+            result = timedNext();
             value = ResultParser.parseValueMap(result);
         }
 
         this.lastResult = result;
+
         return result;
     }
 
@@ -83,5 +85,13 @@ public class SingleResultScanner implements HBaseResultScanner {
     @Override
     public void setColumnName(String columnName) {
         this.columnName = columnName;
+    }
+
+    private Result timedNext() throws IOException {
+        long start = System.currentTimeMillis();
+        Result result = this.scanner.next();
+        long end = System.currentTimeMillis();
+        Metrics.getInstance().addHBaseTime(end - start);
+        return result;
     }
 }
