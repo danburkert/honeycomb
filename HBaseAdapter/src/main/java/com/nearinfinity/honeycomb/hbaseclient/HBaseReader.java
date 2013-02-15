@@ -230,11 +230,16 @@ public class HBaseReader {
         TableInfo tableInfo = getTableInfo(tableName);
         long tableId = tableInfo.getId();
         byte[] rowKey = RowKeyFactory.buildTableInfoKey(tableId);
-        return table.incrementColumnValue(rowKey, Constants.NIC, Constants.ROW_COUNT, 0);
+        Get get = new Get(rowKey);
+        Result result = table.get(get);
+        NavigableMap<byte[], byte[]> map = result.getFamilyMap(Constants.NIC);
+        long rowCount = ByteBuffer.wrap(map.get(Constants.ROW_COUNT)).getLong();
+        return rowCount;
     }
 
     /**
      * Create a {@code ResultScanner} from a {@code ScanStrategy}
+     *
      * @param strategy How the scan is going to move through HBase
      * @return HBase scanner
      * @throws IOException

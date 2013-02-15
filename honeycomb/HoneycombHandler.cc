@@ -202,11 +202,14 @@ int HoneycombHandler::external_lock(THD *thd, int lock_type)
   if (lock_type == F_WRLCK || lock_type == F_RDLCK)
   {
     attach_thread(jvm, env);
-    jlong write_id = this->env->CallStaticLongMethod(hbase_adapter.clazz,
-        hbase_adapter.start_write);
-    EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::external_lock",
-        "calling startWrite");
-    this->curr_write_id = write_id;
+    if (lock_type == F_WRLCK)
+    {
+      jlong write_id = this->env->CallStaticLongMethod(hbase_adapter.clazz,
+          hbase_adapter.start_write);
+      EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::external_lock",
+          "calling startWrite");
+      this->curr_write_id = write_id;
+    }
   }
 
   if (lock_type == F_UNLCK)
@@ -221,13 +224,17 @@ int HoneycombHandler::external_lock(THD *thd, int lock_type)
             (jlong) this->rows_written);
         EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::external_lock",
             "calling incrementRowCount");
+        this->rows_written = 0;
       }
-      this->rows_written = 0;
-      this->env->CallStaticVoidMethod(hbase_adapter.clazz, hbase_adapter.end_write,
-          (jlong)this->curr_write_id);
-      EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::external_lock",
-          "calling endWrite");
-      this->curr_write_id = -1;
+
+      if (this->curr_write_id != -1)
+      {
+        this->env->CallStaticVoidMethod(hbase_adapter.clazz, hbase_adapter.end_write,
+            (jlong)this->curr_write_id);
+        EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::external_lock",
+            "calling endWrite");
+        this->curr_write_id = -1;
+      }
     }
     detach_thread(jvm);
   }

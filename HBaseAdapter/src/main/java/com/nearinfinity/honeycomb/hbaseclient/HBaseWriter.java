@@ -1,31 +1,18 @@
 package com.nearinfinity.honeycomb.hbaseclient;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.String.format;
-
-import java.io.Closeable;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
+import com.google.common.base.Joiner;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
 
-import com.google.common.base.Joiner;
+import java.io.Closeable;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.*;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 
 public class HBaseWriter implements Closeable {
     private static final Logger logger = Logger.getLogger(HBaseWriter.class);
