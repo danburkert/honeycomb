@@ -114,7 +114,7 @@ public final class Util {
      * @param bytes Bytes of a map
      * @return Deserialized map
      */
-    public static Map<String, byte[]> deserializeMap(final byte[] bytes) {
+    public static TreeMap<String, byte[]> deserializeMap(final byte[] bytes) {
         checkNotNull(bytes, "bytes");
         SpecificDatumReader<Row> rowReader = new SpecificDatumReader<Row>(Row.class);
         Decoder decoder = DecoderFactory.get().binaryDecoder(bytes, null);
@@ -125,7 +125,7 @@ public final class Util {
             e.printStackTrace();
         }
 
-        Map<String, byte[]> retMap = new TreeMap<String, byte[]>();
+        TreeMap<String, byte[]> retMap = new TreeMap<String, byte[]>();
         for (Map.Entry<String, ByteBuffer> entry : row.getRecords().entrySet()) {
             retMap.put(entry.getKey(), entry.getValue().array());
         }
