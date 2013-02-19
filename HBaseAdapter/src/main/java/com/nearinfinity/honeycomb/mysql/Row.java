@@ -1,10 +1,6 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import com.nearinfinity.honeycomb.mysql.gen.RowContainer;
-import com.nearinfinity.honeycomb.mysql.gen.UUIDContainer;
-import org.apache.avro.io.*;
-import org.apache.avro.specific.SpecificDatumReader;
-import org.apache.avro.specific.SpecificDatumWriter;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -14,17 +10,27 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import org.apache.avro.io.DatumReader;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.io.Decoder;
+import org.apache.avro.io.DecoderFactory;
+import org.apache.avro.io.Encoder;
+import org.apache.avro.io.EncoderFactory;
+import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.avro.specific.SpecificDatumWriter;
+
+import com.nearinfinity.honeycomb.mysql.gen.RowContainer;
+import com.nearinfinity.honeycomb.mysql.gen.UUIDContainer;
 
 public class Row {
-    private RowContainer row;
-    private static DatumWriter<RowContainer> writer =
+    private final RowContainer row;
+    private static final DatumWriter<RowContainer> writer =
             new SpecificDatumWriter<RowContainer>(RowContainer.class);
-    private static DatumReader<RowContainer> reader =
+    private static final DatumReader<RowContainer> reader =
             new SpecificDatumReader<RowContainer>(RowContainer.class);
 
     /**
-     * Constructs a new Row with specified records and UUID.
+     * Constructs a new instance with specified records and {@link UUID}.
      * @param records Map of column name to record value
      * @param uuid UUID representing the unique position of the Row
      */
@@ -36,14 +42,14 @@ public class Row {
 
     /**
      * Constructor called during deserialization.
-     * @param row Avro RowContainer class
+     * @param row {@link RowContainer} the underlying content for this row
      */
     private Row(RowContainer row) {
         this.row = row;
     }
 
     /**
-     * Returns the UUID of this Row.
+     * Returns the {@link UUID} of this Row.
      * @return UUID of this Row.
      */
     public UUID getUUID() {
@@ -71,7 +77,7 @@ public class Row {
     }
 
     /**
-     * Serialize {@link Row} into {@link byte[]}.
+     * Serialize this {@link Row} instance to a byte array.
      * @return Serialized row
      * @throws IOException when serialization fails
      */
@@ -84,10 +90,10 @@ public class Row {
     }
 
     /**
-     * Deserialize {@link byte[]} into new {@link Row} instance
+     * Deserialize the provided serialized row buffer to a new {@link Row} instance
      * @param serializedRow byte buffer containing serialized Row
      * @return new Row instance from serializedRow
-     * @throws IOException
+     * @throws IOException On deserialization read failure
      */
     public static Row deserialize(byte[] serializedRow) throws IOException {
         ByteArrayInputStream in = new ByteArrayInputStream(serializedRow);
@@ -95,11 +101,29 @@ public class Row {
         return new Row(reader.read(null, decoder));
     }
 
-    public boolean equals(Object oThat) {
-        if (this == oThat) return true;
-        if (!(oThat instanceof Row)) return false;
-        Row that = (Row) oThat;
-        return this.row.equals(that.row);
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((row == null) ? 0 : row.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Row other = (Row) obj;
+        if (row == null) {
+            if (other.row != null)
+                return false;
+        } else if (!row.equals(other.row))
+            return false;
+        return true;
     }
 
     /**
