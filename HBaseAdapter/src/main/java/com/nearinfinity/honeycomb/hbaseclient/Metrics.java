@@ -44,6 +44,7 @@ public class Metrics implements MetricsMXBean {
         hbaseCalls.set(1);
         hbaseTime.set(0);
         parseResultTime.set(0);
+        statistics.clear();
     }
 
     @Override
