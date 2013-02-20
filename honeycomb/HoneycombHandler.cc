@@ -33,9 +33,13 @@ HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg,
 
 HoneycombHandler::~HoneycombHandler()
 {
-  attach_thread(this->jvm, this->env);
-  this->flush_writes();
-  detach_thread(this->jvm);
+  if (this->curr_write_id != -1)
+  {
+    attach_thread(this->jvm, this->env);
+    this->flush_writes();
+    EXCEPTION_CHECK("destructor", "flush_writes");
+    detach_thread(this->jvm);
+  }
 }
 
 void HoneycombHandler::release_auto_increment()
@@ -43,6 +47,7 @@ void HoneycombHandler::release_auto_increment()
   // Stored functions call this last. Hack to get around MySQL not calling
   // start/end bulk insert on insert in a stored function.
   this->flush_writes();
+  EXCEPTION_CHECK("release_auto_increment", "flush_writes");
 }
 
 int HoneycombHandler::open(const char *path, int mode, uint test_if_locked)
@@ -707,7 +712,6 @@ void HoneycombHandler::flush_writes()
   jclass adapter_class = cache->hbase_adapter().clazz;
   jmethodID end_write_method = cache->hbase_adapter().flush_writes;
   env->CallStaticVoidMethod(adapter_class, end_write_method, curr_write_id);
-  EXCEPTION_CHECK("HonecyombHandler::flush_writes", "calling endWrite");
 }
 
 /**
