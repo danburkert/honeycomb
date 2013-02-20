@@ -121,11 +121,11 @@ public class HBaseReader {
      */
     public byte[] findDuplicateValue(String tableName, String columnNameStrings) throws IOException {
         TableInfo info = getTableInfo(tableName);
+        long tableId = info.getId();
         List<String> columnNames = Arrays.asList(columnNameStrings.split(","));
-
-        Scan scan = ScanFactory.buildScan();
-        byte[] prefix = ByteBuffer.allocate(9).put(RowType.DATA.getValue()).putLong(info.getId()).array();
-        PrefixFilter prefixFilter = new PrefixFilter(prefix);
+        byte[] startKey = RowKeyFactory.buildDataKey(tableId, Constants.ZERO_UUID);
+        byte[] endKey = RowKeyFactory.buildDataKey(tableId, Constants.FULL_UUID);
+        Scan scan = ScanFactory.buildScan(startKey, endKey);
 
         List<byte[]> columnIds = new LinkedList<byte[]>();
         for (String columnName : columnNames) {
@@ -133,8 +133,6 @@ public class HBaseReader {
             columnIds.add(columnIdBytes);
             scan.addColumn(Constants.NIC, columnIdBytes);
         }
-
-        scan.setFilter(prefixFilter);
 
         Set<ByteBuffer> columnValues = new HashSet<ByteBuffer>();
 

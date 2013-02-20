@@ -379,10 +379,9 @@ public class HBaseWriter implements Closeable {
 
     private void deleteAllRowsInTable(TableInfo info) throws IOException {
         long tableId = info.getId();
-        byte[] prefix = ByteBuffer.allocate(9).put(RowType.DATA.getValue()).putLong(tableId).array();
-        Scan scan = ScanFactory.buildScan();
-        PrefixFilter filter = new PrefixFilter(prefix);
-        scan.setFilter(filter);
+        byte[] startKey = RowKeyFactory.buildDataKey(tableId, Constants.ZERO_UUID);
+        byte[] endKey = RowKeyFactory.buildDataKey(tableId, Constants.FULL_UUID);
+        Scan scan = ScanFactory.buildScan(startKey, endKey);
 
         ResultScanner scanner = table.getScanner(scan);
         List<List<String>> indexedKeys = Index.indexForTable(info.tableMetadata());
