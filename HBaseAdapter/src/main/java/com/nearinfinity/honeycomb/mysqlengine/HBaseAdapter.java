@@ -75,10 +75,13 @@ public class HBaseAdapter {
                                       Map<String, ColumnMetadata> columns, TableMultipartKeys indexedColumns)
             throws HBaseAdapterException {
         try {
+            long start = System.currentTimeMillis();
             logger.debug("Creating table " + tableName);
             HBaseWriter writer = createWriter();
             writer.createTableFull(tableName, columns, indexedColumns);
             writer.close();
+            long end = System.currentTimeMillis();
+            Metrics.getInstance().addStat("Create table", end - start);
             return true;
         } catch (Throwable e) {
             logger.error("Exception:", e);
@@ -286,7 +289,7 @@ public class HBaseAdapter {
      *
      * @param writeId The "session" ID for writing
      */
-    public static void flushWrites(long writeId) {
+    public static void flushWrites(long writeId) throws HBaseAdapterException {
         try {
             if (logger.isDebugEnabled()) {
                 logger.debug(format("Flushing writer {0}", writeId));
@@ -295,6 +298,7 @@ public class HBaseAdapter {
             writer.flushWrites();
         } catch (Throwable e) {
             logger.error("Exception:", e);
+            throw new HBaseAdapterException("Flush writes", e);
         }
     }
 
@@ -346,8 +350,13 @@ public class HBaseAdapter {
      */
     public static boolean dropTable(String tableName) throws HBaseAdapterException {
         try {
+            long start = System.currentTimeMillis();
             HBaseWriter writer = createWriter();
-            return writer.dropTable(tableName);
+            boolean b = writer.dropTable(tableName);
+            long end = System.currentTimeMillis();
+            Metrics.getInstance().addStat("Drop table", end - start);
+            writer.close();
+            return b;
         } catch (Throwable e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("dropTable", e);
@@ -370,7 +379,7 @@ public class HBaseAdapter {
             UUID rowUuid = Util.BytesToUUID(uuid);
 
             Row row = reader.getDataRow(rowUuid, tableName);
-            assert(row != null);
+            assert (row != null);
 
             return row;
         } catch (Throwable e) {
