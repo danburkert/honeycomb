@@ -1,9 +1,9 @@
 package com.nearinfinity.honeycomb.hbaseclient;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
 import com.nearinfinity.honeycomb.hbase.ResultReader;
 import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
 
@@ -150,13 +150,9 @@ public class HBaseWriter implements Closeable {
     public boolean dropTable(String tableName) throws IOException {
         logger.debug("Preparing to drop table " + tableName);
         TableInfo info = getTableInfo(tableName);
-        long tableId = info.getId();
-        deleteAllRowsInTable(info);
 
-        deleteColumnInfoRows(info);
-        deleteColumns(tableId);
-        deleteTableInfoRows(tableId);
-        deleteTableFromRoot(tableName);
+        deleteAllRowsInTable(info);
+        dropTableMetadata(info, tableName);
 
         logger.debug("Table " + tableName + " is no more!");
 
@@ -370,11 +366,21 @@ public class HBaseWriter implements Closeable {
         return TableCache.getTableInfo(tableName, table);
     }
 
-    private void deleteTableFromRoot(String tableName) throws IOException {
-        Delete delete = new Delete((RowKeyFactory.ROOT));
-        delete.deleteColumns(Constants.NIC, tableName.getBytes());
+    private void dropTableMetadata(TableInfo info, String fullTableName) throws IOException {
+        long tableId = info.getId();
+        List<Delete> deletes = Lists.newArrayList();
+        deletes.add(new Delete(RowKeyFactory.buildTableInfoKey(tableId)));
+        deletes.add(new Delete(RowKeyFactory.buildColumnsKey(tableId)));
 
-        table.delete(delete);
+        for (Long columnId : info.getColumnIds()) {
+            deletes.add(new Delete(RowKeyFactory.buildColumnInfoKey(tableId, columnId)));
+        }
+
+        Delete delete = new Delete(RowKeyFactory.ROOT);
+        delete.deleteColumns(Constants.NIC, fullTableName.getBytes());
+        deletes.add(delete);
+
+        table.delete(deletes);
     }
 
     private void deleteAllRowsInTable(TableInfo info) throws IOException {
@@ -392,53 +398,6 @@ public class HBaseWriter implements Closeable {
             deleteList.addAll(DeleteListFactory.createDeleteRowList(uuid, info, result, rowKey, indexedKeys));
         }
         table.delete(deleteList);
-    }
-
-    private int deleteTableInfoRows(long tableId) throws IOException {
-        byte[] prefix = ByteBuffer.allocate(9).put(RowType.TABLE_INFO.getValue()).putLong(tableId).array();
-        return deleteRowsWithPrefix(prefix);
-    }
-
-    private int deleteColumns(long tableId) throws IOException {
-        logger.debug("Deleting all columns");
-        byte[] prefix = ByteBuffer.allocate(9).put(RowType.COLUMNS.getValue()).putLong(tableId).array();
-        return deleteRowsWithPrefix(prefix);
-    }
-
-    private int deleteColumnInfoRows(TableInfo info) throws IOException {
-        logger.debug("Deleting all column metadata rows");
-
-        long tableId = info.getId();
-        int affectedRows = 0;
-
-        for (Long columnId : info.getColumnIds()) {
-            byte[] metadataKey = RowKeyFactory.buildColumnInfoKey(tableId, columnId);
-            affectedRows += deleteRowsWithPrefix(metadataKey);
-        }
-
-        return affectedRows;
-    }
-
-    private int deleteRowsWithPrefix(byte[] prefix) throws IOException {
-        Scan scan = ScanFactory.buildScan();
-        PrefixFilter filter = new PrefixFilter(prefix);
-        scan.setFilter(filter);
-
-        ResultScanner scanner = table.getScanner(scan);
-        List<Delete> deleteList = new LinkedList<Delete>();
-        int count = 0;
-
-        for (Result result : scanner) {
-            byte[] rowKey = result.getRow();
-            Delete rowDelete = new Delete(rowKey);
-            deleteList.add(rowDelete);
-
-            ++count;
-        }
-
-        table.delete(deleteList);
-
-        return count;
     }
 
     private void updateIndexEntryToMetadata(TableInfo info, IndexFunction<List<List<String>>, Boolean, Void> updateFunc) throws IOException {
