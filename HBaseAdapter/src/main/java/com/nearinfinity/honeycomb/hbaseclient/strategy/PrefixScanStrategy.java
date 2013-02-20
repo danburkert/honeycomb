@@ -22,13 +22,7 @@ public class PrefixScanStrategy implements ScanStrategy {
         byte[] startKey = RowKeyFactory.buildIndexRowKey(tableId, columnId, paddedValue, Constants.ZERO_UUID);
         byte[] endKey = RowKeyFactory.buildIndexRowKey(tableId, columnId, paddedValue, Constants.FULL_UUID);
 
-        byte[] prefix = RowKeyFactory.buildValueIndexPrefix(tableId, columnId, paddedValue);
-
         Scan scan = ScanFactory.buildScan(startKey, endKey);
-
-        PrefixFilter filter = new PrefixFilter(prefix);
-
-        scan.setFilter(filter);
 
         return scan;
     }
