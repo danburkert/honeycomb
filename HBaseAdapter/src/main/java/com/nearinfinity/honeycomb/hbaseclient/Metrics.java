@@ -1,11 +1,14 @@
 package com.nearinfinity.honeycomb.hbaseclient;
 
+import org.apache.log4j.Logger;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Metrics implements MetricsMXBean {
+    private static final Logger logger = Logger.getLogger(Metrics.class);
     private static Metrics metrics = new Metrics();
     private AtomicLong hbaseTime;
     private AtomicInteger hbaseCalls;
@@ -69,6 +72,10 @@ public class Metrics implements MetricsMXBean {
 
     @Override
     public Map<String, Long> getStatistics() {
+        for (Map.Entry<String, Long> s : statistics.entrySet()) {
+            logger.info(s.getKey() + " => " + s.getValue());
+        }
+        logger.info("\n");
         return statistics;
     }
 }
