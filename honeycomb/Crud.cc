@@ -349,7 +349,7 @@ int HoneycombHandler::write_row(uchar* buf, jobject updated_fields)
   {
     THD* thd = ha_thd();
     int command = thd_sql_command(thd);
-    if(command == SQLCOM_UPDATE)
+    if(command == SQLCOM_UPDATE) // Taken when actual update, but not on ON DUPLICATE KEY UPDATE
     {
       if (this->row_has_duplicate_values(unique_values_map, updated_fields))
       {
