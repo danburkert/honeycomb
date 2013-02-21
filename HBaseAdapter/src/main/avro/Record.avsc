@@ -1,0 +1,5 @@
+{
+    "type": ["null", "bytes"],
+    "name": "Record",
+    "namespace": "com.nearinfinity.honeycomb.mysql.gen"
+}
