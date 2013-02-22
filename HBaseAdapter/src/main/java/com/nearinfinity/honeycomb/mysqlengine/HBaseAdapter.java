@@ -48,6 +48,7 @@ public class HBaseAdapter {
     private static HTablePool tablePool;
     private static boolean isInitialized = false;
     private static Configuration params;
+    private static long writeBufferSize;
 
     /**
      * Initializes the resources for connecting with HBase
@@ -827,15 +828,15 @@ public class HBaseAdapter {
         try {
             String tableName = params.get(Constants.HBASE_TABLE),
                     zkQuorum = params.get("zk_quorum");
+            writeBufferSize = params.getLong("write_buffer_size", DEFAULT_WRITE_BUFFER_SIZE);
             int poolSize = params.getInt("honeycomb.pool_size", DEFAULT_TABLE_POOL_SIZE);
-            long writeBuffer = params.getLong("write_buffer_size", DEFAULT_WRITE_BUFFER_SIZE);
             boolean autoFlush = params.getBoolean("flush_changes_immediately", false);
 
             Configuration configuration = HBaseConfiguration.create();
             configuration.set("hbase.zookeeper.quorum", zkQuorum);
             configuration.set(Constants.HBASE_TABLE, tableName);
             SqlTableCreator.initializeSqlTable(configuration);
-            tablePool = new HTablePool(configuration, poolSize, new HTableFactory(writeBuffer, autoFlush));
+            tablePool = new HTablePool(configuration, poolSize, new HTableFactory(writeBufferSize, autoFlush));
             HTableInterface readerTable = tablePool.getTable(tableName);
             reader = new HBaseReader(readerTable);
         } catch (ZooKeeperConnectionException e) {
@@ -858,6 +859,7 @@ public class HBaseAdapter {
         long start = System.currentTimeMillis();
         HTableInterface table = tablePool.getTable(params.get(Constants.HBASE_TABLE));
         HBaseWriter w = new HBaseWriter(table);
+        w.setWriteBufferSize(writeBufferSize);
         long end = System.currentTimeMillis();
         Metrics.getInstance().addStat("create writer", end - start);
         return w;
