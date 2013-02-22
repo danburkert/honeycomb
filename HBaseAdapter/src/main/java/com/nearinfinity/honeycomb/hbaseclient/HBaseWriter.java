@@ -18,9 +18,15 @@ import static java.lang.String.format;
 public class HBaseWriter implements Closeable {
     private static final Logger logger = Logger.getLogger(HBaseWriter.class);
     private final HTableInterface table;
+    private long writeBufferSize;
 
     public HBaseWriter(HTableInterface table) {
         this.table = table;
+        this.writeBufferSize = 0;
+    }
+
+    public void setWriteBufferSize(long writeBufferSize){
+        this.writeBufferSize = writeBufferSize;
     }
 
     @Override
@@ -384,6 +390,7 @@ public class HBaseWriter implements Closeable {
     }
 
     private void deleteAllRowsInTable(TableInfo info) throws IOException {
+        long totalDeleteSize = 0;
         long tableId = info.getId();
         byte[] startKey = RowKeyFactory.buildDataKey(tableId, Constants.ZERO_UUID);
         byte[] endKey = RowKeyFactory.buildDataKey(tableId, Constants.FULL_UUID);
@@ -395,8 +402,15 @@ public class HBaseWriter implements Closeable {
         for (Result result : scanner) {
             UUID uuid = ResultParser.parseUUID(result);
             byte[] rowKey = result.getRow();
-            deleteList.addAll(DeleteListFactory.createDeleteRowList(uuid, info, result, rowKey, indexedKeys));
+            List<Delete> deletes = DeleteListFactory.createDeleteRowList(uuid, info, result, rowKey, indexedKeys);
+            totalDeleteSize += deletes.size() * result.getWritableSize();
+            deleteList.addAll(deletes);
+            if (writeBufferSize > 0 && totalDeleteSize > writeBufferSize) {
+                table.delete(deleteList);
+                totalDeleteSize = 0;
+            }
         }
+
         table.delete(deleteList);
     }
 
