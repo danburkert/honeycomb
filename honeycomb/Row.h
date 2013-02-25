@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-const char ROW_CONTAINER_SCHEMA[] = "{\"type\": \"record\", \"name\": \"RowContainer\", \"namespace\": \"com.nearinfinity.honeycomb.mysql.gen\", \"fields\": [ {\"name\": \"uuid\", \"type\": {\"type\":\"fixed\", \"name\": \"UUIDContainer\", \"size\": 16}}, {\"name\":\"records\",\"type\":{\"type\":\"map\",\"values\":[\"null\",\"bytes\"],\"avro.java.string\":\"String\"}}]}";
+const char ROW_CONTAINER_SCHEMA[] = "{\"type\": \"record\", \"name\": \"RowContainer\", \"namespace\": \"com.nearinfinity.honeycomb.mysql.gen\", \"fields\": [ {\"name\": \"uuid\", \"type\": {\"type\":\"fixed\", \"name\": \"UUIDContainer\", \"size\": 16}}, {\"name\":\"records\",\"type\":{\"type\":\"map\",\"values\":[\"bytes\"],\"avro.java.string\":\"String\"}}]}";
 
 class Row
 {
@@ -192,21 +192,6 @@ class Row
   }
 
   /**
-   * @brief set record to null in Row.
-   *
-   * @param column_name   Record to set to null
-   * @return Error code
-   */
-  int set_null_record(const char* column_name)
-  {
-    int ret = 0;
-    avro_value_t record;
-    ret |= set_record(column_name, "null", &record);
-    ret |= avro_value_set_null(&record);
-    return ret;
-  }
-
-  /**
    * @brief set count to the number of records in the row
    * @param the count
    * @return Error code
@@ -254,17 +239,20 @@ class Row
     {
       avro_writer_t writer = avro_writer_memory(*buf, *len);
       ret |= avro_value_write(writer, &row_container);
+      avro_writer_free(writer);
     } else {
       ret = -1;
     }
-
     return ret;
   }
 
   int deserialize(const char* buf, int64_t len)
   {
+    int ret = 0;
     avro_reader_t reader = avro_reader_memory(buf, len);
-    return avro_value_read(reader, &row_container);
+    ret |= avro_value_read(reader, &row_container);
+    avro_reader_free(reader);
+    return ret;
   }
 };
 #endif
