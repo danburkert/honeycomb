@@ -200,11 +200,17 @@ public class HBaseAdapter {
      * @return Row object or null if no more rows
      * @throws HBaseAdapterException
      */
-    public static Row nextRow(long scanId) throws HBaseAdapterException {
+    public static byte[] nextRow(long scanId) throws HBaseAdapterException {
         try {
             ActiveScan conn = getActiveScanForId(scanId);
             HBaseResultScanner scanner = conn.getScanner();
-            return reader.nextRow(conn.getTableName(), scanner);
+            Row row = reader.nextRow(conn.getTableName(), scanner);
+            if (row == null) // No more results
+            {
+                return null;
+            } else {
+                return row.serialize();
+            }
         } catch (Throwable e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("nextRow", e);
@@ -362,7 +368,7 @@ public class HBaseAdapter {
      * @return SQL row
      * @throws HBaseAdapterException
      */
-    public static Row getRow(long scanId, byte[] uuid) throws HBaseAdapterException {
+    public static byte[] getRow(long scanId, byte[] uuid) throws HBaseAdapterException {
         logger.debug(String.format("scanId: %d,%s", scanId, Bytes.toString(uuid)));
         try {
             ActiveScan activeScan = getActiveScanForId(scanId);
@@ -372,7 +378,7 @@ public class HBaseAdapter {
             Row row = reader.getDataRow(rowUuid, tableName);
             assert(row != null);
 
-            return row;
+            return row.serialize();
         } catch (Throwable e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("getRow", e);
@@ -489,7 +495,7 @@ public class HBaseAdapter {
      * @return SQL row
      * @throws HBaseAdapterException
      */
-    public static Row indexRead(long scanId, List<KeyValue> keyValues, IndexReadType readType)
+    public static byte[] indexRead(long scanId, List<KeyValue> keyValues, IndexReadType readType)
             throws HBaseAdapterException {
         try {
             ActiveScan activeScan = getActiveScanForId(scanId);
@@ -570,7 +576,7 @@ public class HBaseAdapter {
                 return null;
             }
 
-            return ResultReader.readIndexRow(result);
+            return ResultReader.readIndexRow(result).serialize();
         } catch (Throwable e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("indexRead", e);
@@ -585,7 +591,7 @@ public class HBaseAdapter {
      * @return SQL row
      * @throws HBaseAdapterException
      */
-    public static Row nextIndexRow(long scanId) throws HBaseAdapterException {
+    public static byte[] nextIndexRow(long scanId) throws HBaseAdapterException {
         try {
             ActiveScan conn = getActiveScanForId(scanId);
             HBaseResultScanner scanner = conn.getScanner();
@@ -594,7 +600,7 @@ public class HBaseAdapter {
                 return null;
             }
 
-            return ResultReader.readIndexRow(result);
+            return ResultReader.readIndexRow(result).serialize();
         } catch (Throwable e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("nextIndexRow", e);

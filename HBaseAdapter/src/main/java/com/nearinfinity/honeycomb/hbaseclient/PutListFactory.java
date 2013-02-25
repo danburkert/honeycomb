@@ -62,9 +62,12 @@ public class PutListFactory {
      * @return HBase index rows
      */
     public static List<Put> createIndexForColumns(Map<String, byte[]> values, TableInfo info, List<List<String>> indexedKeys, UUID rowId) throws IOException {
-        Map<String, ByteBuffer> records = new HashMap<String, ByteBuffer>();
+        Map<String, Object> records = new HashMap<String, Object>();
         for (Map.Entry<String, byte[]> entry : values.entrySet()) {
-            records.put(entry.getKey(), (entry.getValue() == null) ? null : ByteBuffer.wrap(entry.getValue()));
+            if (entry.getValue() != null)
+            {
+                records.put(entry.getKey(), ByteBuffer.wrap(entry.getValue()));
+            }
         }
         Row row = new Row(records, rowId);
 

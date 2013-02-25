@@ -9,10 +9,10 @@ import java.util.Map;
 import java.util.UUID;
 
 public class RowGenerator implements Generator<Row> {
-    Generator<Map<String, ByteBuffer>> records =
+    Generator<Map<String, Object>> records =
             CombinedGenerators.maps(
                     PrimitiveGenerators.strings(),
-                    CombinedGenerators.nullsAnd(new ByteBufferGenerator()));
+                    new ByteBufferGenerator());
     Generator<UUID> uuids = new UUIDGenerator();
 
     @Override
@@ -20,10 +20,10 @@ public class RowGenerator implements Generator<Row> {
         return new Row(records.next(), uuids.next());
     }
 
-    private class ByteBufferGenerator implements Generator<ByteBuffer> {
+    private class ByteBufferGenerator implements Generator<Object> {
         Generator<byte[]> bytes = CombinedGenerators.byteArrays();
         @Override
-        public ByteBuffer next() {
+        public Object next() {
             return ByteBuffer.wrap(bytes.next());
         }
     }
