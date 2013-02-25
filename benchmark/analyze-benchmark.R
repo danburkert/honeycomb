@@ -8,18 +8,13 @@ benchmark_file <- args[1]
 pdf_filename <- args[2]
 data <- read.table(benchmark_file, header=T, sep=" ")
 data <- data[with(data, order(Table,Query, Clients,Timestep)), ]
-data_summary <- daply(data, .(Table, Clients, Query), function(x) {
-  out <- capture.output(summary(x$OPS))
-  info <- paste("Table:", x$Table[1], "Clients:", x$Clients[1], "Query:", x$Query[1])
-  paste(info, "\n", out[1],"\n", out[2], "\n")
-})
 pdf(file=pdf_filename)
 ymax <- max(data$OPS)
 ymiddle <- ymax / 2
 bwplot(OPS~Table|sprintf("Clients: %02d",Clients)+Query,
        data=data,
        auto.key=T,
-       main="OPS by Table, Clients, & Query",
+       main=sprintf("OPS by Table, Clients, & Query (%s)", Sys.time()),
        xlab.top="(Mean / Median / Standard Deviation)",
        par.settings = list(plot.symbol = list(col = "transparent")),
        ylab="Queries/Second",
@@ -33,9 +28,9 @@ bwplot(OPS~Table|sprintf("Clients: %02d",Clients)+Query,
                 {
                   txt <- paste(round(mean(y)), "/", median(y), "/", round(sd(y)))
                   multiplier <- -1 * sign(median(y) - ymiddle)
-                  offset <- multiplier * (0.07 * ymax + 1.5 * (quantile(y, probs=c(.99)) - median(y)))
+                  offset <- multiplier * (0.09 * ymax + 1.5 * (quantile(y, probs=c(.99)) - median(y)))
                   q <- quantile(y, probs=c(.99))
-                  panel.text(x[1], q + offset, label=txt, cex=0.5)
+                  panel.text(x[1], q + offset, label=txt, cex=0.5, srt=90)
                  })
            1
          })
@@ -85,5 +80,4 @@ xyplot(OPS~Timestep|paste("Table:",Table)+Query,
                 lines = list(lwd=lwd, lty=line_types, col=color_seq)),
        panel=panel)
 
-textplot(data_summary)
 dev.off()

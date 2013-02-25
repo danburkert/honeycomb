@@ -22,3 +22,4 @@ restart-mysql.sh
 *.project
 *.settings
 repl-port
+gen/

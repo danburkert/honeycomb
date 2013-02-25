@@ -16,12 +16,3 @@ if [ $failed_tests != 0 ]
 then
   exit 1
 fi
-test_type=`grep "Using suites:" $output`
-if [ "$test_type" == "" ]
-then
-  ruby ./parse-perf-output.rb $output $csv_file 
-else
-  ruby ./parse-test-output.rb $output $csv_file
-fi
-
-Rscript ./analyze-tests.R $csv_file $pdf_file $build_number

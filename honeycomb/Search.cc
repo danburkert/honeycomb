@@ -129,19 +129,7 @@ int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
     {
       if(key_iter[0] == 1)
       {
-        if(index == (key_count - 1) && find_flag == HA_READ_AFTER_KEY)
-        {
-          key_is_null[index] = JNI_FALSE;
-          for (uint x = 0; x < index; x++)
-          {
-            ARRAY_DELETE(key_copies[x]);
-          }
-          DBUG_RETURN(index_first(buf));
-        }
-        else
-        {
           key_is_null[index] = JNI_TRUE;
-        }
       }
 
       // If the index is nullable, then the first byte is the null flag.
@@ -221,17 +209,17 @@ int HoneycombHandler::get_index_row(jfieldID field_id, uchar* buf)
 int HoneycombHandler::read_index_row(jobject index_row, uchar* buf)
 {
   JavaFrame frame(env, 1);
-  jmethodID get_uuid_method = cache->index_row().get_uuid;
-  jmethodID get_row_map_method = cache->index_row().get_row_map;
-
-  jobject rowMap = this->env->CallObjectMethod(index_row, get_row_map_method);
-  if (rowMap == NULL)
+  if (index_row == NULL)
   {
     this->table->status = STATUS_NOT_FOUND;
     return HA_ERR_END_OF_FILE;
   }
+  this->store_uuid_ref(index_row);
 
-  this->store_uuid_ref(index_row, get_uuid_method);
+  jmethodID get_row_map_method = cache->row().get_row_map;
+  jobject rowMap = this->env->CallObjectMethod(index_row, get_row_map_method);
+  EXCEPTION_CHECK_IE("HoneycombHandler::read_index_row", "calling getRowMap");
+  NULL_CHECK_IE(rowMap, "HoneycombHandler::read_index_row", "found NULL rowMap");
 
   if (java_to_sql(buf, rowMap))
   {
@@ -281,6 +269,7 @@ int HoneycombHandler::rnd_pos(uchar *buf, uchar *pos)
     this->table->status = STATUS_NOT_READ;
     DBUG_RETURN(HA_ERR_INTERNAL_ERROR);
   }
+  store_uuid_ref(row);
   this->table->status = 0;
 
   MYSQL_READ_ROW_DONE(rc);
@@ -357,21 +346,23 @@ int HoneycombHandler::rnd_next(uchar *buf)
   jmethodID next_row_method = cache->hbase_adapter().next_row;
   jobject row = this->env->CallStaticObjectMethod(adapter_class,
       next_row_method, this->curr_scan_id);
-  EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::rnd_init", "calling startScan");
+  EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::rnd_next", "calling nextRow");
 
-  jmethodID get_uuid_method = cache->row().get_uuid;
-  jmethodID get_row_map_method = cache->row().get_row_map;
-
-  jobject row_map = this->env->CallObjectMethod(row, get_row_map_method);
-  EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::rnd_init", "calling getRowMap");
-
-  if (row_map == NULL)
+  if (row == NULL)
   {
     this->table->status = STATUS_NOT_FOUND;
     DBUG_RETURN(HA_ERR_END_OF_FILE);
   }
 
-  this->store_uuid_ref(row, get_uuid_method);
+  store_uuid_ref(row);
+
+  jmethodID get_row_map_method = cache->row().get_row_map;
+
+  jobject row_map = this->env->CallObjectMethod(row, get_row_map_method);
+  EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::rnd_next", "calling getRowMap");
+  NULL_CHECK_IE(row_map, "HoneycombHandler::rnd_next", "null row_map found");
+
+
   if (java_to_sql(buf, row_map))
   {
     this->table->status = STATUS_NOT_READ;

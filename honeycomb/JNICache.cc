@@ -19,22 +19,22 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   hbase_adapter_.start_write                  = get_static_method_id(env, hbase_adapter_.clazz, "startWrite", "()J");
   hbase_adapter_.end_write                    = get_static_method_id(env, hbase_adapter_.clazz, "endWrite", "(J)V");
   hbase_adapter_.start_scan                   = get_static_method_id(env, hbase_adapter_.clazz, "startScan", "(Ljava/lang/String;Z)J");
-  hbase_adapter_.next_row                     = get_static_method_id(env, hbase_adapter_.clazz, "nextRow", "(J)Lcom/nearinfinity/honeycomb/hbaseclient/Row;");
+  hbase_adapter_.next_row                     = get_static_method_id(env, hbase_adapter_.clazz, "nextRow", "(J)Lcom/nearinfinity/honeycomb/mysql/Row;");
   hbase_adapter_.end_scan                     = get_static_method_id(env, hbase_adapter_.clazz, "endScan", "(J)V");
   hbase_adapter_.write_row                    = get_static_method_id(env, hbase_adapter_.clazz, "writeRow", "(JLjava/lang/String;Ljava/util/Map;)Z");
-  hbase_adapter_.update_row                   = get_static_method_id(env, hbase_adapter_.clazz, "updateRow", "(JJLjava/util/List;Ljava/lang/String;Ljava/util/Map;)V");
+  hbase_adapter_.update_row                   = get_static_method_id(env, hbase_adapter_.clazz, "updateRow", "(J[BLjava/util/List;Ljava/lang/String;Ljava/util/Map;)V");
   hbase_adapter_.flush_writes                 = get_static_method_id(env, hbase_adapter_.clazz, "flushWrites", "(J)V");
-  hbase_adapter_.delete_row                   = get_static_method_id(env, hbase_adapter_.clazz, "deleteRow", "(J)Z");
+  hbase_adapter_.delete_row                   = get_static_method_id(env, hbase_adapter_.clazz, "deleteRow", "(Ljava/lang/String;[B)Z");
   hbase_adapter_.delete_all_rows              = get_static_method_id(env, hbase_adapter_.clazz, "deleteAllRows", "(Ljava/lang/String;)I");
   hbase_adapter_.drop_table                   = get_static_method_id(env, hbase_adapter_.clazz, "dropTable", "(Ljava/lang/String;)Z");
-  hbase_adapter_.get_row                      = get_static_method_id(env, hbase_adapter_.clazz, "getRow", "(J[B)Lcom/nearinfinity/honeycomb/hbaseclient/Row;");
+  hbase_adapter_.get_row                      = get_static_method_id(env, hbase_adapter_.clazz, "getRow", "(J[B)Lcom/nearinfinity/honeycomb/mysql/Row;");
   hbase_adapter_.start_index_scan             = get_static_method_id(env, hbase_adapter_.clazz, "startIndexScan", "(Ljava/lang/String;Ljava/lang/String;)J");
   hbase_adapter_.find_duplicate_key           = get_static_method_id(env, hbase_adapter_.clazz, "findDuplicateKey", "(Ljava/lang/String;Ljava/util/Map;)Ljava/lang/String;");
   hbase_adapter_.find_duplicate_key_list      = get_static_method_id(env, hbase_adapter_.clazz, "findDuplicateKey", "(Ljava/lang/String;Ljava/util/Map;Ljava/util/List;)Ljava/lang/String;");
   hbase_adapter_.find_duplicate_value         = get_static_method_id(env, hbase_adapter_.clazz, "findDuplicateValue", "(Ljava/lang/String;Ljava/lang/String;)[B");
   hbase_adapter_.get_next_autoincrement_value = get_static_method_id(env, hbase_adapter_.clazz, "getNextAutoincrementValue", "(Ljava/lang/String;Ljava/lang/String;)J");
-  hbase_adapter_.index_read                   = get_static_method_id(env, hbase_adapter_.clazz, "indexRead", "(JLjava/util/List;Lcom/nearinfinity/honeycomb/mysqlengine/IndexReadType;)Lcom/nearinfinity/honeycomb/hbaseclient/IndexRow;");
-  hbase_adapter_.next_index_row               = get_static_method_id(env, hbase_adapter_.clazz, "nextIndexRow", "(J)Lcom/nearinfinity/honeycomb/hbaseclient/IndexRow;");
+  hbase_adapter_.index_read                   = get_static_method_id(env, hbase_adapter_.clazz, "indexRead", "(JLjava/util/List;Lcom/nearinfinity/honeycomb/mysqlengine/IndexReadType;)Lcom/nearinfinity/honeycomb/mysql/Row;");
+  hbase_adapter_.next_index_row               = get_static_method_id(env, hbase_adapter_.clazz, "nextIndexRow", "(J)Lcom/nearinfinity/honeycomb/mysql/Row;");
   hbase_adapter_.increment_row_count          = get_static_method_id(env, hbase_adapter_.clazz, "incrementRowCount", "(Ljava/lang/String;J)V");
   hbase_adapter_.set_row_count                = get_static_method_id(env, hbase_adapter_.clazz, "setRowCount", "(Ljava/lang/String;J)V");
   hbase_adapter_.get_row_count                = get_static_method_id(env, hbase_adapter_.clazz, "getRowCount", "(Ljava/lang/String;)J");
@@ -53,13 +53,9 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   index_read_type_.INDEX_LAST       = get_static_field_id(env, index_read_type_.clazz, "INDEX_LAST", "L" MYSQLENGINE "IndexReadType;");
   index_read_type_.INDEX_NULL       = get_static_field_id(env, index_read_type_.clazz, "INDEX_NULL", "L" MYSQLENGINE "IndexReadType;");
 
-  index_row_.clazz       = get_class_ref(env, HBASECLIENT "IndexRow");
-  index_row_.get_row_map = get_method_id(env, index_row_.clazz, "getRowMap", "()Ljava/util/Map;");
-  index_row_.get_uuid    = get_method_id(env, index_row_.clazz, "getUUID", "()[B");
-
-  row_.clazz       = get_class_ref(env, HBASECLIENT "Row");
+  row_.clazz       = get_class_ref(env, "com/nearinfinity/honeycomb/mysql/Row");
   row_.get_row_map = get_method_id(env, row_.clazz, "getRowMap", "()Ljava/util/Map;");
-  row_.get_uuid    = get_method_id(env, row_.clazz, "getUUID", "()[B");
+  row_.get_uuid    = get_method_id(env, row_.clazz, "getUUIDBuffer", "()[B");
 
   column_metadata_.clazz                   = get_class_ref(env, HBASECLIENT "ColumnMetadata");
   column_metadata_.init                    = get_method_id(env, column_metadata_.clazz, "<init>", "()V");
@@ -124,7 +120,6 @@ JNICache::~JNICache()
 
   env->DeleteGlobalRef(hbase_adapter_.clazz);
   env->DeleteGlobalRef(index_read_type_.clazz);
-  env->DeleteGlobalRef(index_row_.clazz);
   env->DeleteGlobalRef(row_.clazz);
   env->DeleteGlobalRef(column_metadata_.clazz);
   env->DeleteGlobalRef(column_type_.clazz);

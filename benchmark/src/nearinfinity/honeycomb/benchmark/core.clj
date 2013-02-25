@@ -14,16 +14,20 @@
    offset from the beggining of the benchmark period."
   [db-spec op phase]
   (future
-    (sql/with-connection db-spec
-      (loop [times []]
-        (condp = @phase
-          :bench (recur (conj times
-                              (let [t (. System (nanoTime))]
-                                (op)
-                                t)))
-          :warmup (do (op)
-                      (recur []))
-          :stop (map #(/ (- % (first times)) 1000000000.0) times))))))
+    (try (sql/with-connection db-spec
+           (loop [times []]
+             (condp = @phase
+               :bench (recur (conj times
+                                   (let [t (. System (nanoTime))]
+                                     (op)
+                                     t)))
+               :warmup (do (op)
+                           (recur []))
+               :stop (map #(/ (- % (first times)) 1000000000.0) times))))
+         (catch Exception e
+           (.printStackTrace e)
+           (System/exit 1))))) ; The benchmarks should not continue if
+                               ; there are SQL errors.
 
 (defn- benchmark
   "Run individual benchmark and return results."

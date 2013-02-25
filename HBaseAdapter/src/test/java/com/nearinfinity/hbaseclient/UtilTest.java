@@ -46,16 +46,6 @@ public class UtilTest {
     }
 
     @Test
-    public void testSerDe() throws Exception {
-        Map<String, byte[]> map = new HashMap<String, byte[]>();
-        byte[] b = new byte[]{2};
-        map.put("Test", b);
-        byte[] mapBytes = Util.serializeMap(map);
-        Map<String, byte[]> result = Util.deserializeMap(mapBytes);
-        Assert.assertArrayEquals(b, result.get("Test"));
-    }
-
-    @Test
     public void utilCorrectlySerializesLists() {
         List<List<String>> s = new LinkedList<List<String>>();
         s.add(new LinkedList<String>() {{

@@ -2,9 +2,11 @@ package com.nearinfinity.honeycomb.hbaseclient;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
+import com.nearinfinity.honeycomb.hbase.ResultReader;
 import com.nearinfinity.honeycomb.hbaseclient.strategy.PrefixScanStrategy;
 import com.nearinfinity.honeycomb.hbaseclient.strategy.ScanStrategy;
 import com.nearinfinity.honeycomb.hbaseclient.strategy.ScanStrategyInfo;
+import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.mysqlengine.HBaseResultScanner;
 import com.nearinfinity.honeycomb.mysqlengine.SingleResultScanner;
 import org.apache.hadoop.hbase.client.*;
@@ -29,27 +31,26 @@ public class HBaseReader {
      *
      * @param tableName SQL table name
      * @param scanner   Cursor to a record in HBase
-     * @return
+     * @return Row object, or null if no more rows
      * @throws IOException
      */
     public Row nextRow(String tableName, HBaseResultScanner scanner) throws IOException {
         Result result = scanner.next(null);
         if (result == null) {
-            return new Row();
+            return null;
         }
 
         TableInfo info = getTableInfo(tableName);
-        Row row = new Row();
-        row.parse(result, info);
-        return row;
+        return ResultReader.readDataRow(result, info);
     }
 
     /**
      * Retrieves a SQL row based on a unique identifier.
      *
+     *
      * @param uuid      Data row unique identifier
      * @param tableName SQL table name
-     * @return SQL row
+     * @return Row object, or null if row with UUID does not exist
      * @throws IOException
      */
     public Row getDataRow(UUID uuid, String tableName) throws IOException {
@@ -59,14 +60,11 @@ public class HBaseReader {
         byte[] rowKey = RowKeyFactory.buildDataKey(tableId, uuid);
 
         Get get = new Get(rowKey);
-        Row row = new Row();
         Result result = table.get(get);
-        if (result == null) {
+        if (result.getRow() == null) {
             return null;
         }
-
-        row.parse(result, info);
-        return row;
+        return ResultReader.readDataRow(result, info);
     }
 
     /**
@@ -123,11 +121,11 @@ public class HBaseReader {
      */
     public byte[] findDuplicateValue(String tableName, String columnNameStrings) throws IOException {
         TableInfo info = getTableInfo(tableName);
+        long tableId = info.getId();
         List<String> columnNames = Arrays.asList(columnNameStrings.split(","));
-
-        Scan scan = ScanFactory.buildScan();
-        byte[] prefix = ByteBuffer.allocate(9).put(RowType.DATA.getValue()).putLong(info.getId()).array();
-        PrefixFilter prefixFilter = new PrefixFilter(prefix);
+        byte[] startKey = RowKeyFactory.buildDataKey(tableId, Constants.ZERO_UUID);
+        byte[] endKey = RowKeyFactory.buildDataKey(tableId, Constants.FULL_UUID);
+        Scan scan = ScanFactory.buildScan(startKey, endKey);
 
         List<byte[]> columnIds = new LinkedList<byte[]>();
         for (String columnName : columnNames) {
@@ -135,8 +133,6 @@ public class HBaseReader {
             columnIds.add(columnIdBytes);
             scan.addColumn(Constants.NIC, columnIdBytes);
         }
-
-        scan.setFilter(prefixFilter);
 
         Set<ByteBuffer> columnValues = new HashSet<ByteBuffer>();
 
@@ -230,11 +226,16 @@ public class HBaseReader {
         TableInfo tableInfo = getTableInfo(tableName);
         long tableId = tableInfo.getId();
         byte[] rowKey = RowKeyFactory.buildTableInfoKey(tableId);
-        return table.incrementColumnValue(rowKey, Constants.NIC, Constants.ROW_COUNT, 0);
+        Get get = new Get(rowKey);
+        Result result = table.get(get);
+        NavigableMap<byte[], byte[]> map = result.getFamilyMap(Constants.NIC);
+        long rowCount = ByteBuffer.wrap(map.get(Constants.ROW_COUNT)).getLong();
+        return rowCount;
     }
 
     /**
      * Create a {@code ResultScanner} from a {@code ScanStrategy}
+     *
      * @param strategy How the scan is going to move through HBase
      * @return HBase scanner
      * @throws IOException

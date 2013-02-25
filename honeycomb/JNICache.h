@@ -145,7 +145,6 @@ class JNICache
 
     HBaseAdapter hbase_adapter_;
     IndexReadType index_read_type_;
-    IndexRow index_row_;
     Row row_;
     ColumnMetadata column_metadata_;
     ColumnType column_type_;
@@ -165,7 +164,6 @@ class JNICache
   public:
     inline HBaseAdapter hbase_adapter()              const{return hbase_adapter_;};
     inline IndexReadType index_read_type()           const{return index_read_type_;};
-    inline IndexRow index_row()                      const{return index_row_;};
     inline Row row()                                 const{return row_;};
     inline ColumnMetadata column_metadata()          const{return column_metadata_;};
     inline ColumnType column_type()                  const{return column_type_;};

@@ -48,7 +48,7 @@ class HoneycombHandler : public handler
     void drop_table(const char *name);
     int truncate();
     bool is_key_null(const uchar *key);
-    void store_uuid_ref(jobject index_row, jmethodID get_uuid_method);
+    void store_uuid_ref(jobject row);
     void bytes_to_long(const uchar* buff, unsigned int buff_length, bool is_signed, uchar* long_buff);
     int read_index_row(jobject index_row, uchar* buf);
     int get_index_row(jfieldID field_id, uchar* buf);
@@ -171,7 +171,7 @@ class HoneycombHandler : public handler
     ulong index_flags(uint inx, uint part, bool all_parts) const
     {
       return HA_READ_NEXT | HA_READ_ORDER | HA_READ_RANGE
-        | HA_READ_PREV | HA_ONLY_WHOLE_INDEX;
+          | HA_READ_PREV | HA_ONLY_WHOLE_INDEX | HA_KEYREAD_ONLY;
     }
 
     uint max_supported_record_length() const
@@ -206,7 +206,7 @@ class HoneycombHandler : public handler
 
     virtual double read_time(uint, uint, ha_rows rows)
     {
-      return (double) rows *  20.0+1;
+      return (double) rows /  20.0+1;
     }
 
     virtual int final_add_index(handler_add_index *add, bool commit)
