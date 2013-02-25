@@ -51,9 +51,9 @@ jobject HoneycombHandler::create_multipart_key(KEY* key, KEY_PART_INFO* key_part
   return java_keys;
 }
 
-#define YEAR2_NOT_SUPPORTED 0
-#define ODD_TYPES_NOT_SUPPORTED 1
-#define UTF_REQUIRED 2
+const int YEAR2_NOT_SUPPORTED = 0;
+const int ODD_TYPES_NOT_SUPPORTED = 1;
+const int UTF_REQUIRED = 2;
 const char* table_creation_errors[] = {
   "table. YEAR(2) is not supported.",
   "table. Bit, set and geometry are not supported.",

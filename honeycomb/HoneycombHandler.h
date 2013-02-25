@@ -73,7 +73,7 @@ class HoneycombHandler : public handler
     void collect_changed_fields(jobject updated_fields, const uchar* old_row, uchar* new_row);
     void terminate_scan();
 
-    bool is_integral_field(int field_type)
+    bool is_integral_field(enum_field_types field_type)
     {
       return (field_type == MYSQL_TYPE_LONG
           || field_type == MYSQL_TYPE_SHORT
@@ -84,7 +84,7 @@ class HoneycombHandler : public handler
           || field_type == MYSQL_TYPE_YEAR);
     }
 
-    bool is_date_or_time_field(int field_type)
+    bool is_date_or_time_field(enum_field_types field_type)
     {
       return (field_type == MYSQL_TYPE_DATE
           || field_type == MYSQL_TYPE_DATETIME
@@ -93,17 +93,17 @@ class HoneycombHandler : public handler
           || field_type == MYSQL_TYPE_NEWDATE);
     }
 
-    bool is_floating_point_field(int field_type)
+    bool is_floating_point_field(enum_field_types field_type)
     {
       return (field_type == MYSQL_TYPE_FLOAT || field_type == MYSQL_TYPE_DOUBLE);
     }
 
-    bool is_decimal_field(int field_type)
+    bool is_decimal_field(enum_field_types field_type)
     {
       return (field_type == MYSQL_TYPE_DECIMAL || field_type == MYSQL_TYPE_NEWDECIMAL);
     }
 
-    bool is_byte_field(int field_type)
+    bool is_byte_field(enum_field_types field_type)
     {
       return (field_type == MYSQL_TYPE_VARCHAR
     || field_type == MYSQL_TYPE_VAR_STRING
@@ -114,7 +114,7 @@ class HoneycombHandler : public handler
     || field_type == MYSQL_TYPE_LONG_BLOB);
     }
 
-    bool is_unsupported_field(int field_type)
+    bool is_unsupported_field(enum_field_types field_type)
     {
       return (field_type == MYSQL_TYPE_NULL
       || field_type == MYSQL_TYPE_BIT
