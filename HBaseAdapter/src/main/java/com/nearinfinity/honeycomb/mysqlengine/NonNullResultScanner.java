@@ -7,23 +7,21 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Map;
 
-public class SingleResultScanner implements HBaseResultScanner {
+public class NonNullResultScanner implements HBaseResultScanner {
     private ResultScanner scanner;
     private String columnName;
 
-    public SingleResultScanner(ResultScanner scanner) {
+    public NonNullResultScanner(ResultScanner scanner) {
         this.scanner = scanner;
     }
 
     /**
-     * Retrieve the next value in an HBase scan if passed null.
-     * Otherwise, retrieve the next value in an HBase scan that is not the value passed in.
+     * Retrieve the next value from HBase where the index column is not null in the map.
      *
-     * @param valueToSkip A value to skip over while looking for the next result
-     * @return HBase result from the scan
+     * @param valueToSkip Ignored
+     * @return Next non-null result
      * @throws IOException
      */
     @Override
@@ -31,24 +29,24 @@ public class SingleResultScanner implements HBaseResultScanner {
         if (scanner == null) {
             return null;
         }
-        if (valueToSkip == null) {return timedNext();}
-        else { // Assumes an index scan.  Will fail otherwise
-            Result result;
-            Row row;
-            Map<String, byte[]> rowMap;
-            byte[] value;
-            do {
-                result = timedNext();
-                if (result == null) {
-                    return null;
-                }
-                row = ResultReader.readIndexRow(result);
-                rowMap = row.getRecords();
-                value = rowMap.get(this.columnName);
-            } while (Arrays.equals(value, valueToSkip));
+        Result result;
+        Row row;
+        Map<String, byte[]> rowMap;
+        byte[] value;
 
-            return result;
-        }
+        do {
+            result = timedNext();
+            if (result == null) {
+                return null;
+            }
+            row = ResultReader.readIndexRow(result);
+            rowMap = row.getRecords();
+            value = rowMap.get(this.columnName);
+
+
+        } while (value == null);
+
+        return result;
     }
 
     @Override

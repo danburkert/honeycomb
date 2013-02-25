@@ -6,15 +6,12 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import java.lang.reflect.Type;
 import java.util.List;
-import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.text.MessageFormat.format;
 
 public final class Util {
-    private static Type mapType = new TypeToken<Map<String, byte[]>>() {
-    }.getType();
     private static Type listType = new TypeToken<List<List<String>>>() {
     }.getType();
     private static Gson gson = new Gson();
@@ -69,28 +66,6 @@ public final class Util {
         System.arraycopy(columnIds, finalOffset, nextColumn, finalOffset, columnIds.length - finalOffset);
 
         return nextColumn;
-    }
-
-    /**
-     * Serialize a map into a byte array
-     *
-     * @param values Map to serialize
-     * @return Serialized map
-     */
-    public static byte[] serializeMap(final Map<String, byte[]> values) {
-        checkNotNull(values, "values");
-        return gson.toJson(values, mapType).getBytes();
-    }
-
-    /**
-     * Deserialize a map from a byte array
-     *
-     * @param bytes Bytes of a map
-     * @return Deserialized map
-     */
-    public static Map<String, byte[]> deserializeMap(final byte[] bytes) {
-        checkNotNull(bytes, "bytes");
-        return gson.fromJson(new String(bytes), mapType);
     }
 
     /**

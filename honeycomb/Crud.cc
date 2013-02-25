@@ -357,8 +357,9 @@ int HoneycombHandler::write_row(uchar* buf, jobject updated_fields)
       }
     }
     jmethodID update_row_method = cache->hbase_adapter().update_row;
+    jbyteArray uuid = convert_value_to_java_bytes(this->ref, 16, this->env);
     this->env->CallStaticBooleanMethod(adapter_class, update_row_method,
-        this->curr_write_id, this->curr_scan_id, updated_fields, table_name,
+        this->curr_write_id, uuid, updated_fields, table_name,
         java_row_map);
     EXCEPTION_CHECK_IE("HoneycombHandler::write_row", "calling updateRow");
   }
@@ -389,6 +390,7 @@ bool HoneycombHandler::row_has_duplicate_values(jobject value_map,
     jobject changedColumns)
 {
   this->flush_writes(); // Flush before checking for duplicates to make sure the changes are in HBase.
+  EXCEPTION_CHECK("row_has_duplicate_values", "flush_writes");
   JavaFrame frame(env, 1);
   jclass adapter_class = cache->hbase_adapter().clazz;
   jmethodID has_duplicates_method;
@@ -450,6 +452,7 @@ int HoneycombHandler::update_row(const uchar *old_row, uchar *new_row)
   int rc = write_row(new_row, updated_fieldnames);
   dbug_tmp_restore_column_map(table->read_set, old_map);
   this->flush_writes();
+  EXCEPTION_CHECK("update_row", "flush_writes");
   DBUG_RETURN(rc);
 }
 
@@ -590,14 +593,24 @@ int HoneycombHandler::prepare_drop_index(TABLE *table_arg, uint *key_num, uint n
   return 0;
 }
 
+
+/**
+ * Called by MySQL when the last scanned row should be deleted.
+ */
 int HoneycombHandler::delete_row(const uchar *buf)
 {
   DBUG_ENTER("HoneycombHandler::delete_row");
   ha_statistic_increment(&SSV::ha_delete_count);
+
+  JavaFrame frame(env, 2);
+  jstring table_name = this->table_name();
+  jbyteArray pos = convert_value_to_java_bytes(this->ref, 16, this->env);
+
   jclass adapter_class = cache->hbase_adapter().clazz;
   jmethodID delete_row_method = cache->hbase_adapter().delete_row;
-  this->env->CallStaticBooleanMethod(adapter_class, delete_row_method, this->curr_scan_id);
+  this->env->CallStaticBooleanMethod(adapter_class, delete_row_method, table_name, pos);
   EXCEPTION_CHECK_IE("HoneycombHandler::delete_row", "calling deleteRow");
+
   DBUG_RETURN(0);
 }
 
@@ -616,6 +629,7 @@ int HoneycombHandler::delete_all_rows()
   this->env->CallStaticVoidMethod(adapter_class, set_row_count, table_name, 0);
   EXCEPTION_CHECK_IE("HoneycombHandler::delete_all_rows", "calling setRowCount");
   this->flush_writes();
+  EXCEPTION_CHECK("delete_all_rows", "flush_writes");
 
   DBUG_RETURN(0);
 }

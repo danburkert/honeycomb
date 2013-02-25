@@ -1,38 +1,32 @@
 package com.nearinfinity.honeycomb.hbaseclient;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.String.format;
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
+import com.nearinfinity.honeycomb.hbase.ResultReader;
+import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.log4j.Logger;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.filter.PrefixFilter;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.log4j.Logger;
-
-import com.google.common.base.Joiner;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 
 public class HBaseWriter implements Closeable {
     private static final Logger logger = Logger.getLogger(HBaseWriter.class);
     private final HTableInterface table;
+    private long writeBufferSize;
 
     public HBaseWriter(HTableInterface table) {
         this.table = table;
+        this.writeBufferSize = 0;
+    }
+
+    public void setWriteBufferSize(long writeBufferSize){
+        this.writeBufferSize = writeBufferSize;
     }
 
     @Override
@@ -49,7 +43,7 @@ public class HBaseWriter implements Closeable {
      */
     public void writeRow(String tableName, Map<String, byte[]> values) throws IOException {
         if (logger.isDebugEnabled()) {
-            logger.debug(format("Writing row for %s: %s", tableName, new String(Util.serializeMap(values))));
+            logger.debug(format("Writing row for %s: %s", tableName, values));
         }
 
         TableInfo info = TableCache.getTableInfo(tableName, table);
@@ -162,13 +156,9 @@ public class HBaseWriter implements Closeable {
     public boolean dropTable(String tableName) throws IOException {
         logger.debug("Preparing to drop table " + tableName);
         TableInfo info = getTableInfo(tableName);
-        long tableId = info.getId();
-        deleteAllRowsInTable(info);
 
-        deleteColumnInfoRows(info);
-        deleteColumns(tableId);
-        deleteTableInfoRows(tableId);
-        deleteTableFromRoot(tableName);
+        deleteAllRowsInTable(info);
+        dropTableMetadata(info, tableName);
 
         logger.debug("Table " + tableName + " is no more!");
 
@@ -241,8 +231,8 @@ public class HBaseWriter implements Closeable {
         changeIndex(info, new IndexFunction<Map<String, byte[]>, UUID, Void>() {
             @Override
             public Void apply(Map<String, byte[]> values, UUID uuid) {
-                List<Put> puts = PutListFactory.createIndexForColumns(values, info, uuid, columnsToIndex);
                 try {
+                    List<Put> puts = PutListFactory.createIndexForColumns(values, info, uuid, columnsToIndex);
                     table.put(puts);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
@@ -382,19 +372,29 @@ public class HBaseWriter implements Closeable {
         return TableCache.getTableInfo(tableName, table);
     }
 
-    private void deleteTableFromRoot(String tableName) throws IOException {
-        Delete delete = new Delete((RowKeyFactory.ROOT));
-        delete.deleteColumns(Constants.NIC, tableName.getBytes());
+    private void dropTableMetadata(TableInfo info, String fullTableName) throws IOException {
+        long tableId = info.getId();
+        List<Delete> deletes = Lists.newArrayList();
+        deletes.add(new Delete(RowKeyFactory.buildTableInfoKey(tableId)));
+        deletes.add(new Delete(RowKeyFactory.buildColumnsKey(tableId)));
 
-        table.delete(delete);
+        for (Long columnId : info.getColumnIds()) {
+            deletes.add(new Delete(RowKeyFactory.buildColumnInfoKey(tableId, columnId)));
+        }
+
+        Delete delete = new Delete(RowKeyFactory.ROOT);
+        delete.deleteColumns(Constants.NIC, fullTableName.getBytes());
+        deletes.add(delete);
+
+        table.delete(deletes);
     }
 
     private void deleteAllRowsInTable(TableInfo info) throws IOException {
+        long totalDeleteSize = 0;
         long tableId = info.getId();
-        byte[] prefix = ByteBuffer.allocate(9).put(RowType.DATA.getValue()).putLong(tableId).array();
-        Scan scan = ScanFactory.buildScan();
-        PrefixFilter filter = new PrefixFilter(prefix);
-        scan.setFilter(filter);
+        byte[] startKey = RowKeyFactory.buildDataKey(tableId, Constants.ZERO_UUID);
+        byte[] endKey = RowKeyFactory.buildDataKey(tableId, Constants.FULL_UUID);
+        Scan scan = ScanFactory.buildScan(startKey, endKey);
 
         ResultScanner scanner = table.getScanner(scan);
         List<List<String>> indexedKeys = Index.indexForTable(info.tableMetadata());
@@ -402,56 +402,16 @@ public class HBaseWriter implements Closeable {
         for (Result result : scanner) {
             UUID uuid = ResultParser.parseUUID(result);
             byte[] rowKey = result.getRow();
-            deleteList.addAll(DeleteListFactory.createDeleteRowList(uuid, info, result, rowKey, indexedKeys));
-        }
-        table.delete(deleteList);
-    }
-
-    private int deleteTableInfoRows(long tableId) throws IOException {
-        byte[] prefix = ByteBuffer.allocate(9).put(RowType.TABLE_INFO.getValue()).putLong(tableId).array();
-        return deleteRowsWithPrefix(prefix);
-    }
-
-    private int deleteColumns(long tableId) throws IOException {
-        logger.debug("Deleting all columns");
-        byte[] prefix = ByteBuffer.allocate(9).put(RowType.COLUMNS.getValue()).putLong(tableId).array();
-        return deleteRowsWithPrefix(prefix);
-    }
-
-    private int deleteColumnInfoRows(TableInfo info) throws IOException {
-        logger.debug("Deleting all column metadata rows");
-
-        long tableId = info.getId();
-        int affectedRows = 0;
-
-        for (Long columnId : info.getColumnIds()) {
-            byte[] metadataKey = RowKeyFactory.buildColumnInfoKey(tableId, columnId);
-            affectedRows += deleteRowsWithPrefix(metadataKey);
-        }
-
-        return affectedRows;
-    }
-
-    private int deleteRowsWithPrefix(byte[] prefix) throws IOException {
-        Scan scan = ScanFactory.buildScan();
-        PrefixFilter filter = new PrefixFilter(prefix);
-        scan.setFilter(filter);
-
-        ResultScanner scanner = table.getScanner(scan);
-        List<Delete> deleteList = new LinkedList<Delete>();
-        int count = 0;
-
-        for (Result result : scanner) {
-            byte[] rowKey = result.getRow();
-            Delete rowDelete = new Delete(rowKey);
-            deleteList.add(rowDelete);
-
-            ++count;
+            List<Delete> deletes = DeleteListFactory.createDeleteRowList(uuid, info, result, rowKey, indexedKeys);
+            totalDeleteSize += deletes.size() * result.getWritableSize();
+            deleteList.addAll(deletes);
+            if (writeBufferSize > 0 && totalDeleteSize > writeBufferSize) {
+                table.delete(deleteList);
+                totalDeleteSize = 0;
+            }
         }
 
         table.delete(deleteList);
-
-        return count;
     }
 
     private void updateIndexEntryToMetadata(TableInfo info, IndexFunction<List<List<String>>, Boolean, Void> updateFunc) throws IOException {
@@ -486,7 +446,7 @@ public class HBaseWriter implements Closeable {
         ResultScanner scanner = table.getScanner(scan);
         Result result;
         while ((result = scanner.next()) != null) {
-            Map<String, byte[]> values = ResultParser.parseDataRow(result, info);
+            Map<String, byte[]> values = ResultReader.readDataRow(result, info).getRecords();
             UUID rowId = ResultParser.parseUUID(result);
             function.apply(values, rowId);
         }
@@ -495,16 +455,18 @@ public class HBaseWriter implements Closeable {
     }
 
     private Map<String, byte[]> retrieveRowAndDelete(String tableName, UUID uuid) throws IOException {
+        checkNotNull(tableName, "tableName may not be null.");
+        checkNotNull(uuid, "uuid may not be null.");
         TableInfo info = getTableInfo(tableName);
         long tableId = info.getId();
 
         byte[] dataRowKey = RowKeyFactory.buildDataKey(tableId, uuid);
         Get get = new Get(dataRowKey);
         Result result = table.get(get);
-        Map<String, byte[]> oldRow = ResultParser.parseDataRow(result, info);
+        Map<String, byte[]> oldRow = ResultReader.readDataRow(result, info).getRecords();
         if (logger.isDebugEnabled()) {
             logger.debug(format("Deleting row in table %s / Table ID %d", tableName, tableId));
-            logger.debug(format("Old row %s", new String(Util.serializeMap(oldRow))));
+            logger.debug(format("Old row %s", oldRow));
         }
 
         List<Delete> deleteList = DeleteListFactory.createDeleteRowList(uuid, info, result, dataRowKey, Index.indexForTable(info.tableMetadata()));

@@ -9,9 +9,5 @@ public interface HBaseResultScanner {
 
     public void close();
 
-    public Result getLastResult();
-
-    public void setLastResult(Result result);
-
     public void setColumnName(String columnName);
 }

@@ -54,7 +54,7 @@ public class ValueEncoder {
         checkNotNull(info, "info");
         checkNotNull(nullSearchColumns, "nullSearchColumns");
         checkNotNull(values, "values");
-        return convertToCorrectOrder(info, values, nullSearchColumns, new Function<byte[], ColumnType, Integer, byte[]>() {
+        return convertToCorrectOrder(info, values, nullSearchColumns, (byte) 0, new Function<byte[], ColumnType, Integer, byte[]>() {
             @Override
             public byte[] apply(byte[] value, ColumnType columnType, Integer padLength) {
                 return ascendingEncode(value, columnType, padLength);
@@ -75,7 +75,7 @@ public class ValueEncoder {
         checkNotNull(info, "info");
         checkNotNull(nullSearchColumns, "nullSearchColumns");
         checkNotNull(values, "values");
-        return convertToCorrectOrder(info, values, nullSearchColumns, new Function<byte[], ColumnType, Integer, byte[]>() {
+        return convertToCorrectOrder(info, values, nullSearchColumns, (byte) 1, new Function<byte[], ColumnType, Integer, byte[]>() {
             @Override
             public byte[] apply(byte[] value, ColumnType columnType, Integer padLength) {
                 return descendingEncode(value, columnType, padLength);
@@ -102,7 +102,10 @@ public class ValueEncoder {
         checkArgument(padLength >= 0, "padLength cannot be less than zero. Value: %s", padLength);
     }
 
-    private static Map<String, byte[]> convertToCorrectOrder(final TableInfo info, final Map<String, byte[]> values, final Set<String> nullSearchColumns, Function<byte[], ColumnType, Integer, byte[]> convert) {
+    private static Map<String, byte[]> convertToCorrectOrder(final TableInfo info, final Map<String, byte[]> values,
+                                                             final Set<String> nullSearchColumns,
+                                                             byte nullByte,
+                                                             Function<byte[], ColumnType, Integer, byte[]> convert) {
         final ImmutableMap.Builder<String, byte[]> result = ImmutableMap.builder();
         for (Map.Entry<String, byte[]> entry : values.entrySet()) {
             String columnName = entry.getKey();
@@ -123,7 +126,10 @@ public class ValueEncoder {
             final byte[] paddedValue = convert.apply(value, columnType, padLength);
             if (metadata.isNullable()) {
                 byte[] nullPadValue = Bytes.padHead(paddedValue, 1);
-                nullPadValue[0] = isNull ? (byte) 1 : 0;
+                // Primary Index 1 - Not Null / 0 - Null
+                // Reverse Index 0 - Not Null / 1 - Null
+                // Stupid MySQL sorting.
+                nullPadValue[0] = isNull ? nullByte : (byte) ((nullByte + 1) % 2);
                 result.put(columnName, nullPadValue);
             } else {
                 result.put(columnName, paddedValue);

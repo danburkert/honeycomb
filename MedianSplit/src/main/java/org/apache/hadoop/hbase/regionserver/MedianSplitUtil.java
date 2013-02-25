@@ -1,18 +1,18 @@
 package org.apache.hadoop.hbase.regionserver;
 
+import java.io.IOException;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 
-import java.io.IOException;
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * Utilities used by the MedianSplitPolicy and MedianSplitObserver classes
+ * Utilities used by the {@link MedianSplitPolicy} and {@link MedianSplitObserver} classes
  */
 public class MedianSplitUtil {
     static final Log LOG = LogFactory.getLog(MedianSplitUtil.class);
@@ -89,7 +89,7 @@ public class MedianSplitUtil {
         byte[] combined = combined_val.toByteArray();
 
         // If the leading byte is 0, it came from BigInteger adding a byte to
-        // indicate a positive two's compliment value.  Strip it.
+        // indicate a positive two's complement value.  Strip it.
         if (combined[0] == 0x00) {
             combined = Bytes.tail(combined, 1);
         }

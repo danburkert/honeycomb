@@ -65,7 +65,8 @@ bool print_java_exception(JNIEnv* env)
 
 /**
  * Convert native byte array to java byte array.  Returns a JNI local ref to
- * the java byte array.  This reference must be deleted by the caller.
+ * the java byte array.  This reference must be deleted by the caller (or the
+ * call should happen inside a JavaFrame, it uses 1 LocalRef).
  */
 jbyteArray convert_value_to_java_bytes(uchar* value, uint32 length, JNIEnv* env)
 {

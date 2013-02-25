@@ -28,13 +28,18 @@ HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg,
   this->rows_written = 0;
   this->failed_key_index = 0;
   this->curr_scan_id = -1;
+  this->curr_write_id = -1;
 }
 
 HoneycombHandler::~HoneycombHandler()
 {
-  attach_thread(this->jvm, this->env);
-  this->flush_writes();
-  detach_thread(this->jvm);
+  if (this->curr_write_id != -1)
+  {
+    attach_thread(this->jvm, this->env);
+    this->flush_writes();
+    EXCEPTION_CHECK("destructor", "flush_writes");
+    detach_thread(this->jvm);
+  }
 }
 
 void HoneycombHandler::release_auto_increment()
@@ -42,6 +47,7 @@ void HoneycombHandler::release_auto_increment()
   // Stored functions call this last. Hack to get around MySQL not calling
   // start/end bulk insert on insert in a stored function.
   this->flush_writes();
+  EXCEPTION_CHECK("release_auto_increment", "flush_writes");
 }
 
 int HoneycombHandler::open(const char *path, int mode, uint test_if_locked)
@@ -202,11 +208,14 @@ int HoneycombHandler::external_lock(THD *thd, int lock_type)
   if (lock_type == F_WRLCK || lock_type == F_RDLCK)
   {
     attach_thread(jvm, env);
-    jlong write_id = this->env->CallStaticLongMethod(hbase_adapter.clazz,
-        hbase_adapter.start_write);
-    EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::external_lock",
-        "calling startWrite");
-    this->curr_write_id = write_id;
+    if (lock_type == F_WRLCK)
+    {
+      jlong write_id = this->env->CallStaticLongMethod(hbase_adapter.clazz,
+          hbase_adapter.start_write);
+      EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::external_lock",
+          "calling startWrite");
+      this->curr_write_id = write_id;
+    }
   }
 
   if (lock_type == F_UNLCK)
@@ -214,17 +223,24 @@ int HoneycombHandler::external_lock(THD *thd, int lock_type)
     { // Destruct frame before detaching
       JavaFrame frame(env, 1);
       jstring table_name = this->table_name();
-      this->env->CallStaticVoidMethod(hbase_adapter.clazz,
-          hbase_adapter.increment_row_count, table_name,
-          (jlong) this->rows_written);
-      EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::external_lock",
-          "calling startWrite");
-      this->rows_written = 0;
-      this->env->CallStaticVoidMethod(hbase_adapter.clazz, hbase_adapter.end_write,
-          (jlong)this->curr_write_id);
-      EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::external_lock",
-          "calling endWrite");
-      this->curr_write_id = -1;
+      if (this->rows_written > 0)
+      {
+        this->env->CallStaticVoidMethod(hbase_adapter.clazz,
+            hbase_adapter.increment_row_count, table_name,
+            (jlong) this->rows_written);
+        EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::external_lock",
+            "calling incrementRowCount");
+        this->rows_written = 0;
+      }
+
+      if (this->curr_write_id != -1)
+      {
+        this->env->CallStaticVoidMethod(hbase_adapter.clazz, hbase_adapter.end_write,
+            (jlong)this->curr_write_id);
+        EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::external_lock",
+            "calling endWrite");
+        this->curr_write_id = -1;
+      }
     }
     detach_thread(jvm);
   }
@@ -632,14 +648,17 @@ bool HoneycombHandler::is_field_nullable(jstring table_name, const char* field_n
 /**
  * Stores the UUID of index_row into the pos field of the handler.  MySQL
  * uses pos during later rnd_pos calls.
+ *
+ * TODO: The NULL_CHECK_ABORT not having to do with memory exhaustion should be taken out
  */
-void HoneycombHandler::store_uuid_ref(jobject index_row, jmethodID get_uuid_method)
+void HoneycombHandler::store_uuid_ref(jobject row)
 {
-  JavaFrame frame(env);
-  jbyteArray uuid = (jbyteArray) this->env->CallObjectMethod(index_row, get_uuid_method);
+  jmethodID get_uuid_method = cache->row().get_uuid;
+  jbyteArray uuid = (jbyteArray) this->env->CallObjectMethod(row, get_uuid_method);
+  EXCEPTION_CHECK("HoneycombHandler::read_index_row", "calling getUUIDBuffer");
+  NULL_CHECK_ABORT(uuid, "HoneycombHandler::store_uuid_ref-> UUID returned from getUUIDBuffer is NULL");
   uchar* pos = (uchar*) this->env->GetByteArrayElements(uuid, JNI_FALSE);
   NULL_CHECK_ABORT(pos, "HoneycombHandler::store_uuid_ref: OutOfMemoryError while calling GetByteArrayElements");
-
   memcpy(this->ref, pos, this->ref_length);
   this->env->ReleaseByteArrayElements(uuid, (jbyte*) pos, 0);
 }
@@ -693,7 +712,6 @@ void HoneycombHandler::flush_writes()
   jclass adapter_class = cache->hbase_adapter().clazz;
   jmethodID end_write_method = cache->hbase_adapter().flush_writes;
   env->CallStaticVoidMethod(adapter_class, end_write_method, curr_write_id);
-  EXCEPTION_CHECK("HonecyombHandler::flush_writes", "calling endWrite");
 }
 
 /**

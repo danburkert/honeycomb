@@ -1,5 +1,6 @@
 package com.nearinfinity.honeycomb.hbaseclient;
 
+import com.nearinfinity.honeycomb.hbase.ResultReader;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Result;
 
@@ -20,7 +21,7 @@ public class DeleteListFactory {
         List<Delete> deleteList = new LinkedList<Delete>();
         deleteList.add(new Delete(dataRowKey));
 
-        Map<String, byte[]> values = ResultParser.parseDataRow(result, info);
+        Map<String, byte[]> values = ResultReader.readDataRow(result, info).getRecords();
         Set<String> columnNames = info.getColumnNames();
         for (String columnName : columnNames) {
             if (!values.containsKey(columnName)) {

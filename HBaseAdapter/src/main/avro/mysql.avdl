@@ -1,0 +1,9 @@
+@namespace("com.nearinfinity.honeycomb.mysql.gen")
+protocol mysql {
+    fixed UUIDContainer(16);
+
+    record RowContainer{
+        UUIDContainer uuid;
+        map<union {null, bytes}> records;
+    }
+}

@@ -32,7 +32,7 @@
  * @param location Name of surrounding function
  * @param reason Previous call into JNI
  *
- * @return Internal error 
+ * @return Internal error
  */
 #define EXCEPTION_CHECK_IE(location, reason) \
   do { if (env->ExceptionCheck()) { \
@@ -43,14 +43,14 @@
   }} while(0)
 
 /**
- * @brief Check the environment for exceptions.  If there is a pending exception, 
- * write location and reason to the logger, and DBUG_RETURN HA_ERR_INTERNAL_ERROR.  
+ * @brief Check the environment for exceptions.  If there is a pending exception,
+ * write location and reason to the logger, and DBUG_RETURN HA_ERR_INTERNAL_ERROR.
  * Relies on env being in scope.
  *
  * @param location Name of surrounding function
  * @param reason Previous call into JNI
  *
- * @return Internal error 
+ * @return Internal error
  */
 #define EXCEPTION_CHECK_DBUG_IE(location, reason) \
   do { if (env->ExceptionCheck()) { \
