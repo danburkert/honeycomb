@@ -145,7 +145,7 @@ void bytes_to_long(const uchar* buff, unsigned int buff_length,
 
 uchar* create_key_copy(Field* index_field, const uchar* key, uint* key_len, THD* thd)
 {
-  int index_field_type = index_field->real_type();
+  enum_field_types index_field_type = index_field->real_type();
   uchar* key_copy;
   switch (index_field_type)
   {

@@ -73,13 +73,13 @@ int HoneycombHandler::close(void)
  */
 void HoneycombHandler::store_field_value(Field *field, char *val, int val_length)
 {
-  int type = field->real_type();
+  enum_field_types type = field->real_type();
 
   if (!is_unsupported_field(type))
   {
     if (is_integral_field(type))
     {
-      if(type == MYSQL_TYPE_LONGLONG)
+      if (type == MYSQL_TYPE_LONGLONG)
       {
         memcpy(field->ptr, val, sizeof(ulonglong));
         if (is_little_endian())
@@ -150,7 +150,7 @@ void HoneycombHandler::store_field_value(Field *field, char *val, int val_length
 }
 
 /**
- * @brief Converts a HBase row into the MySQL unireg row format.
+ * @brief Converts an HBase row into the MySQL unireg row format.
  *
  * @param buf MySQL unireg row buffer
  * @param row_map HBase row
@@ -417,7 +417,7 @@ HoneycombShare *HoneycombHandler::get_share(const char *table_name, TABLE *table
   uint path_length;
 
   mysql_mutex_lock(honeycomb_mutex);
-  path_length = (uint) strlen(table_name);
+  path_length = static_cast<uint>(strlen(table_name));
 
   /*
      If share is not present in the hash, create a new share and
