@@ -7,6 +7,7 @@
 
 #include "HoneycombShare.h"
 #include "Util.h"
+#include "Row.h"
 
 #include "my_global.h"          /* ulonglong */
 #include "thr_lock.h"           /* THR_LOCK, THR_LOCK_DATA */
@@ -38,19 +39,20 @@ class HoneycombHandler : public handler
     JavaVM* jvm;
     JNICache* cache;
 
+    Row* row;
     jstring table_name();
     const char* java_to_string(jstring str);
     jstring string_to_java_string(const char *string);
-    int java_to_sql(uchar *buf, jobject row_map);
+    int java_to_sql(uchar *buf, Row *row);
     jobject sql_to_java();
     int delete_all_rows();
     int delete_table(const char *name);
     void drop_table(const char *name);
     int truncate();
     bool is_key_null(const uchar *key);
-    void store_uuid_ref(jobject row);
+    void store_uuid_ref(Row* row);
     void bytes_to_long(const uchar* buff, unsigned int buff_length, bool is_signed, uchar* long_buff);
-    int read_index_row(jobject index_row, uchar* buf);
+    int read_row(uchar* buf, Row* row);
     int get_index_row(jfieldID field_id, uchar* buf);
     int get_next_index_row(uchar* buf);
     void flush_writes();
@@ -60,7 +62,7 @@ class HoneycombHandler : public handler
     jbyteArray find_duplicate_column_values(char* columns);
     bool row_has_duplicate_values(jobject value_map, jobject changedColumns);
     int get_failed_key_index(const char *key_name);
-    void store_field_value(Field *field, char *key, int length);
+    void store_field_value(Field *field, const char* val, int length);
     jobject create_multipart_keys(TABLE* table_arg);
     jobject create_multipart_key(KEY* key, KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts);
     char* index_name(KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts);

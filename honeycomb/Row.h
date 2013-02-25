@@ -137,6 +137,20 @@ class Row
   }
 
   /**
+   * @brief set count to the number of records in the row
+   * @param the count
+   * @return Error code
+   */
+  int record_count(size_t* count)
+  {
+    int ret = 0;
+    avro_value_t records_map;
+    ret |= avro_value_get_by_name(&row_container, "records", &records_map, NULL);
+    ret |= avro_value_get_size(&records_map, count);
+    return ret;
+  }
+
+  /**
    * @brief Get the UUID of the Row
    * @param buf A pointer to a char buffer.  Upon return the pointer will point
    *            to a byte buffer containing the UUID's bytes.
@@ -192,20 +206,6 @@ class Row
   }
 
   /**
-   * @brief set count to the number of records in the row
-   * @param the count
-   * @return Error code
-   */
-  int record_count(size_t* count)
-  {
-    int ret = 0;
-    avro_value_t records_map;
-    ret |= avro_value_get_by_name(&row_container, "records", &records_map, NULL);
-    ret |= avro_value_get_size(&records_map, count);
-    return ret;
-  }
-
-  /**
    * @brief Set record in Row to given value and size.
    *
    * @param column_name Column of record
@@ -222,7 +222,6 @@ class Row
     ret |= avro_value_set_bytes(&record, value, size);
     return ret;
   }
-
 
   /**
    * @brief Serialize Row to buf and set serialized length in len

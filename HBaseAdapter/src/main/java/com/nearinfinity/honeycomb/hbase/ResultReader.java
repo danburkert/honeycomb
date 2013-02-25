@@ -27,7 +27,7 @@ public class ResultReader {
      * @return
      */
     public static Row readDataRow(Result result, TableInfo info) {
-        Map<String, ByteBuffer> records = new HashMap<String, ByteBuffer>();
+        Map<String, Object> records = new HashMap<String, Object>();
         Map<byte[], byte[]> returnedColumns = result.getNoVersionMap().get(Constants.NIC);
 
         UUID uuid = parseUUID(result);
