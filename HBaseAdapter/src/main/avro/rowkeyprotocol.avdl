@@ -1,0 +1,111 @@
+@namespace("avro.gen")
+protocol RowKeyProtocol {
+
+    /*
+     * Used to identify the type of the serialized rowkey 
+     */
+    enum RowType {
+        ROOT,
+        COLUMNS,
+        COLUMN_METADATA,
+        TABLE_METADATA,
+        DATA,
+        PRIMARY_INDEX,
+        REVERSE_INDEX
+    }
+
+    /*
+     * Represents the storage container for the 'TABLES' constant
+     */
+    fixed TablesConst(6);
+
+    /*
+     * Represents the storage container for the row's UUID
+     */
+    fixed UUIDBytes(16);
+
+
+    /*
+     * Column info container used for primary index rows.  The values are 
+     * stored such that nulls are ordered first in ascending order.
+     */
+    record PrimaryColumnInfo {
+        long columnId;
+        union { null, bytes } value = null;
+    }
+    
+    /*
+     * Column info container used for reverse index rows.  The values are 
+     * stored such that non-nulls are ordered first in ascending order.
+     */    
+    record ReverseColumnInfo {
+        long columnId;
+        union { bytes, null } value = null;
+    }    
+
+
+
+    /*
+     * Rowkey container for the ROOT row
+     */
+    record RootRow {
+        TablesConst tables;
+    }
+
+    /*
+     * Rowkey container for the COLUMNS row
+     */
+    record ColumnsRow {
+        long tableId;
+    }
+
+    /*
+     * Rowkey container for the COLUMN METADATA row
+     */    
+    record ColumnMetadataRow {
+        long tableId;
+        long columnId;
+    }
+
+    /*
+     * Rowkey container for the TABLE METADATA row
+     */    
+    record TableMetadataRow {
+        long tableId;
+    }
+
+    /*
+     * Rowkey container for the DATA row
+     */    
+    record DataRow {
+        long tableId;
+        UUIDBytes uuid;
+    }
+
+    
+    /*
+     * Rowkey container for the PRIMARY INDEX row
+     */    
+    record PrimaryIndexRow {
+        long tableId;
+        array<PrimaryColumnInfo> columnDetails;
+        UUIDBytes uuid;
+    }    
+
+    /*
+     * Rowkey container for the REVERSE INDEX row
+     */    
+    record ReverseIndexRow {
+        long tableId;
+        array<ReverseColumnInfo> columnDetails;
+        UUIDBytes uuid;
+    }    
+
+    /*
+     * Core rowkey container used to store each type of rowkey
+     */    
+    record RowKey {
+        RowType type;
+        union { RootRow, ColumnsRow, ColumnMetadataRow, TableMetadataRow, DataRow, PrimaryIndexRow, ReverseIndexRow } content;
+    }
+}
