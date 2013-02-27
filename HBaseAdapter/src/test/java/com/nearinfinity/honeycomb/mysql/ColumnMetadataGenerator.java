@@ -13,10 +13,11 @@ public class ColumnMetadataGenerator implements Generator<ColumnMetadata> {
         ColumnMetadata metadata = new ColumnMetadata();
         metadata.setName(nameGen.next());
         ColumnType type = typeGen.next();
-        switch(type) {
-            case STRING:
-                
-        }
+//        switch(type) {
+//            case STRING:
+//
+//        }
+        return metadata;
 
     }
 }

@@ -75,7 +75,7 @@ public class Util {
      * @return Serialized row
      * @throws IOException when serialization fails
      */
-    private byte[] serializeAvroObject(Object obj, Class clazz) throws IOException {
+    public static byte[] serializeAvroObject(Object obj, Class clazz) throws IOException {
         DatumWriter<Object> writer = new SpecificDatumWriter<Object>(clazz);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Encoder encoder = EncoderFactory.get().binaryEncoder(out, null);
@@ -90,12 +90,21 @@ public class Util {
      * @return new Row instance from serializedRow
      * @throws IOException
      */
-    private static Object deserializeAvroObject(byte[] obj, Class clazz)
+    public static Object deserializeAvroObject(byte[] obj, Class clazz)
             throws IOException {
         DatumReader<Object> reader = new SpecificDatumReader<Object>(clazz);
         ByteArrayInputStream in = new ByteArrayInputStream(obj);
         Decoder decoder = DecoderFactory.get().binaryDecoder(in, null);
         return reader.read(null, decoder);
+    }
+
+    public static String generateHexString(final byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02X ", b));
+        }
+
+        return sb.toString();
     }
 
     public static Configuration readConfiguration(File source)
