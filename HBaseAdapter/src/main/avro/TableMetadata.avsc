@@ -1,0 +1,31 @@
+{
+    "type": "record",
+    "name": "TableMetadata",
+    "namespace": "com.nearinfinity.honeycomb.mysql.gen",
+    "fields": [
+        {"name": "database", "type": "string"},
+        {"name": "name", "type": "string"},
+        {"name": "columns", "type": {"type": "map", "values":
+            {
+                "type": "record",
+                "name": "ColumnMetadata",
+                "namespace": "com.nearinfinity.honeycomb.mysql.gen",
+                "fields": [
+                    {"name": "name", "type": "string"},
+                    {"name": "type", "type":
+                        { "type": "enum",
+                          "name": "ColumnType",
+                          "symbols": ["STRING", "BINARY", "ULONG", "LONG",
+                                      "DOUBLE", "TIME",   "DATE",  "DATETIME",
+                                      "DECIMAL"]}},
+                    {"name": "isNullable", "type": "boolean", "default": true},
+                    {"name": "isPrimaryKey", "type": "boolean", "default": false},
+                    {"name": "isAutoincrement", "type": "boolean", "default": false},
+                    {"name": "maxLength", "type": ["null", "long"], "default": null},
+                    {"name": "scale", "type": ["null", "long"], "default": null},
+                    {"name": "precision", "type": ["null", "long"], "default": null}
+                ]
+            }}
+        }
+    ]
+}

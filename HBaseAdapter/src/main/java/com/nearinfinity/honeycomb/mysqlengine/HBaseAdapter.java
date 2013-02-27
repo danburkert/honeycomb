@@ -99,7 +99,7 @@ public class HBaseAdapter {
             returnValue = reader.getAutoincrementValue(tableName, fieldName);
         } catch (Throwable e) {
             logger.error("Exception:", e);
-            throw new HBaseAdapterException("alterTableAutoincrementValue", e);
+            throw new HBaseAdapterException("getTableAutoincrementValue", e);
         }
 
         return returnValue;
@@ -425,6 +425,11 @@ public class HBaseAdapter {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("hasDuplicateValues", e);
         }
+    }
+
+    public static boolean containsDuplicateRecord(String tableName, Row row)
+            throws HBaseAdapterException {
+        return false;
     }
 
     /**

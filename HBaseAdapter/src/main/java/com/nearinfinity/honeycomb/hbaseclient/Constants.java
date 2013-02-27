@@ -7,6 +7,8 @@ import java.util.UUID;
 public final class Constants {
     public static final String HBASE_TABLE = "hbase_table_name";
 
+    public static final String ZK_QUORUM = "zkQuorum";
+
     public static final byte[] NIC = "nic".getBytes();
 
     public static final byte[] IS_DELETED = "isDeleted".getBytes();
