@@ -1,7 +1,7 @@
 {:tables [:hc_05 :inno_05]
- :warmup 5
- :bench 30
- :clients [1 5]
- :queries [point-firstname]
+ :warmup 30
+ :bench 60
+ :clients [1 8 16]
+ :queries [iscan-firstname-10]
  :append false
  :out "benchmark.ssv"}

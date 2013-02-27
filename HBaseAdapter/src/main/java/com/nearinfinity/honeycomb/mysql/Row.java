@@ -24,7 +24,7 @@ public class Row {
             new SpecificDatumReader<RowContainer>(RowContainer.class);
 
     /**
-     * Constructs a new Row with specified records and UUID.
+     * Construct a new Row with specified records and UUID.
      * @param records Map of column name to record value
      * @param uuid UUID representing the unique position of the Row
      */
@@ -37,7 +37,7 @@ public class Row {
     /**
      * Constructor called during deserialization.
      * @param row Avro RowContainer class
-     */
+    */
     private Row(RowContainer row) {
         this.row = row;
     }
