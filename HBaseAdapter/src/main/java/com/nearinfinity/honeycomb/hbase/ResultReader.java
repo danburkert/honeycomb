@@ -13,6 +13,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import static com.nearinfinity.honeycomb.mysql.Util.UUID_WIDTH;
+
 /**
  * Read results from HBase table scans and transform results into the appropriate
  * object.
@@ -76,8 +78,8 @@ public class ResultReader {
         if (logger.isDebugEnabled()) {
             logger.debug("UUID parse: " + Bytes.toStringBinary(rowKey));
         }
-        assert(rowKey.length >= 16);
-        ByteBuffer uuidBytes = ByteBuffer.wrap(rowKey, rowKey.length - 16, 16);
+        assert(rowKey.length >= UUID_WIDTH);
+        ByteBuffer uuidBytes = ByteBuffer.wrap(rowKey, rowKey.length - UUID_WIDTH, UUID_WIDTH);
         return new UUID(uuidBytes.getLong(), uuidBytes.getLong());
     }
 }
