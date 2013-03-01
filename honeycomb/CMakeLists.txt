@@ -4,14 +4,21 @@ else()
   MESSAGE( "******** ERROR: JAVA_HOME not defined.  If running cmake with sudo consider using the -E flag" )
 endif()
 
-include(ExternalProject)
-ExternalProject_Add(libxml2
-  URL ${CMAKE_SOURCE_DIR}/storage/honeycomb/libxml2-2.9.0.tar.gz
-  CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=${CMAKE_BINARY_DIR}/dependencies
-  BUILD_COMMAND ${MAKE})
-
 INCLUDE_DIRECTORIES("$ENV{JAVA_HOME}/include")
-INCLUDE_DIRECTORIES("${CMAKE_BINARY_DIR}/dependencies/include/libxml2")
+
+FIND_PACKAGE(LibXml2 REQUIRED)
+if (LIBXML2_FOUND)
+  INCLUDE_DIRECTORIES(${LIBXML2_INCLUDE_DIR})
+  LINK_LIBRARIES(${LIBXML2_LIBRARIES})
+endif()
+
+SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/storage/honeycomb/cmake/")
+
+FIND_PACKAGE(LibAvro REQUIRED)
+if (LIBAVRO_FOUND)
+  INCLUDE_DIRECTORIES(${LIBAVRO_INCLUDE_DIR})
+  LINK_LIBRARIES(${LIBAVRO_LIBRARIES})
+endif()
 
 if (APPLE)
   MESSAGE( "Compiling on Apple System" )
@@ -25,6 +32,7 @@ else()
       SET(path "i386")
   endif()
   LINK_DIRECTORIES("${CMAKE_BINARY_DIR}/dependencies/lib/")
+  LINK_DIRECTORIES("/usr/local/avro/lang/c/build/avrolib/lib")
   LINK_DIRECTORIES("$ENV{JAVA_HOME}/jre/lib/${path}")
   LINK_DIRECTORIES("$ENV{JAVA_HOME}/jre/lib/${path}/server")
   LINK_DIRECTORIES("$ENV{JAVA_HOME}/jre/lib/${path}/xawt")
@@ -36,5 +44,3 @@ SET(HONEYCOMB_SOURCES HoneycombHandler.cc Search.cc Crud.cc ha_honeycomb.cc Util
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-error -g -Wextra -Wno-unused-parameter -Wswitch-default -Wcast-qual -Weffc++ -Wwrite-strings -Winit-self -Winline -Wmissing-noreturn -Wredundant-decls -Wpointer-arith -Wstrict-overflow=5 -Wstrict-aliasing=2 -Wno-deprecated-declarations -Wno-unknown-pragmas -Wctor-dtor-privacy -Woverloaded-virtual")
 MYSQL_ADD_PLUGIN(honeycomb ${HONEYCOMB_SOURCES} STORAGE_ENGINE MODULE_ONLY
   LINK_LIBRARIES  ${LIBS})
-
-add_dependencies(honeycomb libxml2)

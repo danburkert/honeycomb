@@ -1,5 +1,10 @@
 package com.nearinfinity.honeycomb.mysql;
 
+import com.nearinfinity.honeycomb.mysql.gen.ColumnMetadata;
+import com.nearinfinity.honeycomb.mysql.gen.TableMetadata;
+import org.apache.avro.io.*;
+import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
@@ -10,6 +15,8 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -45,6 +52,59 @@ public class Util {
         checkArgument(bytes.length == 16, "bytes must be of length 16.");
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         return new UUID(buffer.getLong(), buffer.getLong());
+    }
+
+    public byte[] serializeTableMetadata(TableMetadata metadata) throws IOException {
+        return serializeAvroObject(metadata, TableMetadata.class);
+    }
+
+    public TableMetadata deserializeTableMetadata(byte[] metadata) throws IOException {
+        return (TableMetadata) deserializeAvroObject(metadata, TableMetadata.class);
+    }
+
+    public byte[] serializeColumnMetadata(ColumnMetadata metadata) throws IOException {
+        return serializeAvroObject(metadata, ColumnMetadata.class);
+    }
+
+    public ColumnMetadata deserializeColumnMetadata(byte[] metadata) throws IOException {
+        return (ColumnMetadata) deserializeAvroObject(metadata, ColumnMetadata.class);
+    }
+
+    /**
+     * Serialize obj into byte[]
+     * @return Serialized row
+     * @throws IOException when serialization fails
+     */
+    public static byte[] serializeAvroObject(Object obj, Class clazz) throws IOException {
+        DatumWriter<Object> writer = new SpecificDatumWriter<Object>(clazz);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        Encoder encoder = EncoderFactory.get().binaryEncoder(out, null);
+        writer.write(obj, encoder);
+        encoder.flush();
+        return out.toByteArray();
+    }
+
+    /**
+     * Deserialize obj into new clazz instance
+     * @param obj byte buffer containing serialized Object
+     * @return new Row instance from serializedRow
+     * @throws IOException
+     */
+    public static Object deserializeAvroObject(byte[] obj, Class clazz)
+            throws IOException {
+        DatumReader<Object> reader = new SpecificDatumReader<Object>(clazz);
+        ByteArrayInputStream in = new ByteArrayInputStream(obj);
+        Decoder decoder = DecoderFactory.get().binaryDecoder(in, null);
+        return reader.read(null, decoder);
+    }
+
+    public static String generateHexString(final byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02X", b));
+        }
+
+        return sb.toString();
     }
 
     public static Configuration readConfiguration(File source)

@@ -29,6 +29,7 @@ HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg,
   this->failed_key_index = 0;
   this->curr_scan_id = -1;
   this->curr_write_id = -1;
+  this->row = new Row();
 }
 
 HoneycombHandler::~HoneycombHandler()
@@ -77,7 +78,7 @@ int HoneycombHandler::close(void)
  * @param val HBase value
  * @param val_length Length of the HBase value
  */
-void HoneycombHandler::store_field_value(Field *field, char *val, int val_length)
+void HoneycombHandler::store_field_value(Field *field, const char *val, int val_length)
 {
   enum_field_types type = field->real_type();
 
@@ -162,39 +163,32 @@ void HoneycombHandler::store_field_value(Field *field, char *val, int val_length
  * @param row_map HBase row
  * @return 0 on success
  */
-int HoneycombHandler::java_to_sql(uchar* buf, jobject row_map)
+int HoneycombHandler::java_to_sql(uchar* buf, Row* row)
 {
-  JavaFrame frame(env, table->s->fields + 1);
   jboolean is_copy = JNI_FALSE;
   my_bitmap_map *orig_bitmap;
   orig_bitmap = dbug_tmp_use_all_columns(table, table->write_set);
+  const char* value;
+  size_t size;
 
   for (uint i = 0; i < table->s->fields; i++)
   {
     Field *field = table->field[i];
     const char* key = field->field_name;
-    jstring java_key = string_to_java_string(key);
-    jbyteArray java_val = (jbyteArray) env->CallObjectMethod(row_map,
-        cache->tree_map().get, java_key);
-    EXCEPTION_CHECK_IE("HoneycombHandler::java_to_sql", "calling row_map.get");
-    if (java_val == NULL)
+    row->get_bytes_record(key, &value, &size);
+    if (value == NULL)
     {
       field->set_null();
       continue;
     }
-    char* val = (char*) this->env->GetByteArrayElements(java_val, &is_copy);
-    NULL_CHECK_IE(val, "HoneycombHandler::java_to_sql",
-        "getting byte array of field value");
-    jsize val_length = this->env->GetArrayLength(java_val);
 
     my_ptrdiff_t offset = (my_ptrdiff_t) (buf - this->table->record[0]);
     field->move_field_offset(offset);
 
     field->set_notnull(); // for some reason the field was inited as null during rnd_pos
-    store_field_value(field, val, val_length);
+    store_field_value(field, value, size);
 
     field->move_field_offset(-offset);
-    this->env->ReleaseByteArrayElements(java_val, (jbyte*) val, 0);
   }
 
   dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
@@ -646,21 +640,14 @@ bool HoneycombHandler::is_field_nullable(jstring table_name, const char* field_n
 }
 
 /**
- * Stores the UUID of index_row into the pos field of the handler.  MySQL
+ * Stores the UUID of row into the pos field of the handler.  MySQL
  * uses pos during later rnd_pos calls.
- *
- * TODO: The NULL_CHECK_ABORT not having to do with memory exhaustion should be taken out
  */
-void HoneycombHandler::store_uuid_ref(jobject row)
+void HoneycombHandler::store_uuid_ref(Row* row)
 {
-  jmethodID get_uuid_method = cache->row().get_uuid;
-  jbyteArray uuid = (jbyteArray) this->env->CallObjectMethod(row, get_uuid_method);
-  EXCEPTION_CHECK("HoneycombHandler::read_index_row", "calling getUUIDBuffer");
-  NULL_CHECK_ABORT(uuid, "HoneycombHandler::store_uuid_ref-> UUID returned from getUUIDBuffer is NULL");
-  uchar* pos = (uchar*) this->env->GetByteArrayElements(uuid, JNI_FALSE);
-  NULL_CHECK_ABORT(pos, "HoneycombHandler::store_uuid_ref: OutOfMemoryError while calling GetByteArrayElements");
-  memcpy(this->ref, pos, this->ref_length);
-  this->env->ReleaseByteArrayElements(uuid, (jbyte*) pos, 0);
+  const char* uuid;
+  row->get_UUID(&uuid);
+  memcpy(this->ref, uuid, this->ref_length);
 }
 
 int HoneycombHandler::analyze(THD* thd, HA_CHECK_OPT* check_opt)

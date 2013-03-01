@@ -7,4 +7,4 @@ process=`ps ax | grep -E "/bin/(mysqld|mysqld_safe)"`
 
 if [ ! -z $process ]; then
   sudo mysql.server stop
-fi 
+fi

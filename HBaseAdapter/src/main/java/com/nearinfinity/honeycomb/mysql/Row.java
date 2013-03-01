@@ -30,11 +30,11 @@ public class Row {
             new SpecificDatumReader<RowContainer>(RowContainer.class);
 
     /**
-     * Constructs a new instance with specified records and {@link UUID}.
+     * Construct a new Row with specified records and UUID.
      * @param records Map of column name to record value
      * @param uuid UUID representing the unique position of the Row
      */
-    public Row(Map<String, ByteBuffer> records, UUID uuid) {
+    public Row(Map<String, Object> records, UUID uuid) {
         checkNotNull(records, "records must not be null.");
         // uuid nullity will be checked by UUIDToBytes
         row = new RowContainer(new UUIDContainer(Util.UUIDToBytes(uuid)), records);
@@ -70,8 +70,8 @@ public class Row {
         // will be unnecessary, and we can replace it with
         // return row.getRecords();
         Map<String, byte[]> retMap = new TreeMap<String, byte[]>();
-        for (Map.Entry<String, ByteBuffer> entry : row.getRecords().entrySet()) {
-            retMap.put(entry.getKey(), (entry.getValue() == null) ? null : entry.getValue().array());
+        for (Map.Entry<String, Object> entry : row.getRecords().entrySet()) {
+            retMap.put(entry.getKey(), (entry.getValue() == null) ? null : ((ByteBuffer) entry.getValue()).array());
         }
         return retMap;
     }
@@ -146,7 +146,7 @@ public class Row {
     }
 
     public String[] getKeys() {
-        Map<String, ByteBuffer> records = row.getRecords();
+        Map<String, Object> records = row.getRecords();
         return records.keySet().toArray(new String[records.size()]);
     }
 }

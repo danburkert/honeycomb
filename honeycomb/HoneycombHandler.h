@@ -7,6 +7,7 @@
 
 #include "HoneycombShare.h"
 #include "Util.h"
+#include "Row.h"
 
 #include "my_global.h"          /* ulonglong */
 #include "thr_lock.h"           /* THR_LOCK, THR_LOCK_DATA */
@@ -37,20 +38,22 @@ class HoneycombHandler : public handler
     JNIEnv* env;
     JavaVM* jvm;
     JNICache* cache;
+    Row* row;
 
+    int pack_row(uchar *buf, TABLE* table, Row* row);
     jstring table_name();
     const char* java_to_string(jstring str);
     jstring string_to_java_string(const char *string);
-    int java_to_sql(uchar *buf, jobject row_map);
+    int java_to_sql(uchar *buf, Row *row);
     jobject sql_to_java();
     int delete_all_rows();
     int delete_table(const char *name);
     void drop_table(const char *name);
     int truncate();
     bool is_key_null(const uchar *key);
-    void store_uuid_ref(jobject row);
+    void store_uuid_ref(Row* row);
     void bytes_to_long(const uchar* buff, unsigned int buff_length, bool is_signed, uchar* long_buff);
-    int read_index_row(jobject index_row, uchar* buf);
+    int read_row(uchar* buf, Row* row);
     int get_index_row(jfieldID field_id, uchar* buf);
     int get_next_index_row(uchar* buf);
     void flush_writes();
@@ -60,7 +63,7 @@ class HoneycombHandler : public handler
     jbyteArray find_duplicate_column_values(char* columns);
     bool row_has_duplicate_values(jobject value_map, jobject changedColumns);
     int get_failed_key_index(const char *key_name);
-    void store_field_value(Field *field, char *key, int length);
+    void store_field_value(Field *field, const char* val, int length);
     jobject create_multipart_keys(TABLE* table_arg);
     jobject create_multipart_key(KEY* key, KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts);
     char* index_name(KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts);
@@ -222,28 +225,34 @@ class HoneycombHandler : public handler
     const char **bas_ext() const;
     int open(const char *name, int mode, uint test_if_locked);    // required
     int close(void);                                              // required
+
     int rnd_init(bool scan);                                      //required
     int rnd_next(uchar *buf);                                     ///< required
     int rnd_pos(uchar *buf, uchar *pos);                          ///< required
-    void position(const uchar *record);                           ///< required
-    int info(uint);                                               ///< required
-    int external_lock(THD *thd, int lock_type);                   ///< required
-    int create(const char *name, TABLE *form, HA_CREATE_INFO *create_info); ///< required
-    THR_LOCK_DATA **store_lock(THD *thd, THR_LOCK_DATA **to, enum thr_lock_type lock_type);     ///< required
-    void update_create_info(HA_CREATE_INFO* create_info);
-    int extra(enum ha_extra_function operation);
+    int rnd_end();
+
+    int index_read_map(uchar * buf, const uchar * key, key_part_map keypart_map, enum ha_rkey_function find_flag);
+
     int update_row(const uchar *old_data, uchar *new_data);
     int write_row(uchar *buf);
     int delete_row(const uchar *buf);
+
+    void position(const uchar *record);                           ///< required
+    int info(uint);                                               ///< required
+    int external_lock(THD *thd, int lock_type);                   ///< required
+
+    int create(const char *name, TABLE *form, HA_CREATE_INFO *create_info); ///< required
+
+    THR_LOCK_DATA **store_lock(THD *thd, THR_LOCK_DATA **to, enum thr_lock_type lock_type);     ///< required
+    void update_create_info(HA_CREATE_INFO* create_info);
+    int extra(enum ha_extra_function operation);
     int free_share(HoneycombShare *share);
-    int rnd_end();
     ha_rows records_in_range(uint inx, key_range *min_key, key_range *max_key);
     int analyze(THD* thd, HA_CHECK_OPT* check_opt);
     ha_rows estimate_rows_upper_bound();
     bool check_if_incompatible_data(HA_CREATE_INFO *create_info, uint table_changes);
     int rename_table(const char *from, const char *to);
     void get_auto_increment(ulonglong offset, ulonglong increment, ulonglong nb_desired_values, ulonglong *first_value, ulonglong *nb_reserved_values);
-    int index_read_map(uchar * buf, const uchar * key, key_part_map keypart_map, enum ha_rkey_function find_flag);
     int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add);
     int prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys);
 };

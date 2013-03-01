@@ -1,0 +1,10 @@
+{
+    "type": "record",
+    "name": "IndexContainer",
+    "namespace": "com.nearinfinity.honeycomb.mysql.gen",
+    "fields":
+    [
+        {"name": "columns", "type": {"type": "array", "items": "string"}},
+        {"name": "records", "type": {"type": "map", "values": "bytes"}}
+    ]
+}
