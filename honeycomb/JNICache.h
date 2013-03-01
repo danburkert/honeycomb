@@ -162,18 +162,18 @@ class JNICache
     jfieldID get_static_field_id(JNIEnv* env, jclass clazz, const char* field, const char* type);
 
   public:
-    inline HBaseAdapter hbase_adapter()              const{return hbase_adapter_;};
-    inline IndexReadType index_read_type()           const{return index_read_type_;};
-    inline Row row()                                 const{return row_;};
-    inline ColumnMetadata column_metadata()          const{return column_metadata_;};
-    inline ColumnType column_type()                  const{return column_type_;};
-    inline KeyValue key_value()                      const{return key_value_;};
-    inline TableMultipartKeys table_multipart_keys() const{return table_multipart_keys_;};
-    inline Throwable throwable()                     const{return throwable_;};
-    inline PrintWriter print_writer()                const{return print_writer_;};
-    inline StringWriter string_writer()              const{return string_writer_;};
-    inline LinkedList linked_list()                  const{return linked_list_;};
-    inline TreeMap tree_map()                        const{return tree_map_;};
+    HBaseAdapter hbase_adapter()              const {return hbase_adapter_;};
+    IndexReadType index_read_type()           const {return index_read_type_;};
+    Row row()                                 const {return row_;};
+    ColumnMetadata column_metadata()          const {return column_metadata_;};
+    ColumnType column_type()                  const {return column_type_;};
+    KeyValue key_value()                      const {return key_value_;};
+    TableMultipartKeys table_multipart_keys() const {return table_multipart_keys_;};
+    Throwable throwable()                     const {return throwable_;};
+    PrintWriter print_writer()                const {return print_writer_;};
+    StringWriter string_writer()              const {return string_writer_;};
+    LinkedList linked_list()                  const {return linked_list_;};
+    TreeMap tree_map()                        const {return tree_map_;};
 
     JNICache(JavaVM* jvm); 
     ~JNICache();

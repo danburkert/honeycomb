@@ -7,6 +7,8 @@ import org.apache.log4j.Logger;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
+import static com.nearinfinity.honeycomb.mysql.Util.UUID_WIDTH;
+
 public class ResultParser {
     private static final Logger logger = Logger.getLogger(ResultParser.class);
 
@@ -21,7 +23,7 @@ public class ResultParser {
         if (logger.isDebugEnabled()) {
             logger.debug("UUID parse: " + Bytes.toStringBinary(rowKey));
         }
-        ByteBuffer byteBuffer = ByteBuffer.wrap(rowKey, rowKey.length - 16, 16);
+        ByteBuffer byteBuffer = ByteBuffer.wrap(rowKey, rowKey.length - UUID_WIDTH, UUID_WIDTH);
         return new UUID(byteBuffer.getLong(), byteBuffer.getLong());
     }
 }
