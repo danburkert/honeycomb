@@ -1,15 +1,7 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.UUID;
-
+import com.nearinfinity.honeycomb.mysql.gen.RowContainer;
+import com.nearinfinity.honeycomb.mysql.gen.UUIDContainer;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.io.Decoder;
@@ -19,8 +11,15 @@ import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
 
-import com.nearinfinity.honeycomb.mysql.gen.RowContainer;
-import com.nearinfinity.honeycomb.mysql.gen.UUIDContainer;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.UUID;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Row {
     private final RowContainer row;
@@ -103,26 +102,32 @@ public class Row {
 
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((row == null) ? 0 : row.hashCode());
-        return result;
+        return row.hashCode();
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+
+        if (getClass() != obj.getClass()) {
             return false;
+        }
+
         Row other = (Row) obj;
         if (row == null) {
-            if (other.row != null)
+            if (other.row != null) {
                 return false;
-        } else if (!row.equals(other.row))
+            }
+        } else if (!row.equals(other.row)) {
             return false;
+        }
+
         return true;
     }
 

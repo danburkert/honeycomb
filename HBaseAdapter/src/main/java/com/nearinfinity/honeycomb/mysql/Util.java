@@ -31,25 +31,26 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class Util {
     private static final Logger logger = Logger.getLogger(Util.class);
 
+    public static final int UUID_WIDTH = 16;
     /**
-     * Returns a 16 byte wide buffer from a {@link UUID}.
+     * Returns a UUID_WIDTH byte wide buffer from a {@link UUID}.
      * @param uuid
      */
     public static byte[] UUIDToBytes(UUID uuid) {
         checkNotNull(uuid, "uuid must not be null.");
-        return ByteBuffer.allocate(16)
+        return ByteBuffer.allocate( UUID_WIDTH )
                 .putLong(uuid.getMostSignificantBits())
                 .putLong(uuid.getLeastSignificantBits())
                 .array();
     }
 
     /**
-     * Create a {@link UUID} from a {@link byte[]} 16 bytes long.
-     * @param bytes A byte buffer 16 bytes wide
+     * Create a {@link UUID} from a {@link byte[]} UUID_WIDTH bytes long.
+     * @param bytes A byte buffer UUID_WIDTH bytes wide
      */
     public static UUID BytesToUUID(byte[] bytes) {
         checkNotNull(bytes, "bytes must not be null.");
-        checkArgument(bytes.length == 16, "bytes must be of length 16.");
+        checkArgument(bytes.length == UUID_WIDTH, "bytes must be of length " + UUID_WIDTH + ".");
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         return new UUID(buffer.getLong(), buffer.getLong());
     }
