@@ -6,7 +6,7 @@ endif()
 
 include(ExternalProject)
 ExternalProject_Add(libxml2
-  URL ${CMAKE_SOURCE_DIR}/storage/honeycomb/libxml2-2.7.2.tar.gz
+  URL ${CMAKE_SOURCE_DIR}/storage/honeycomb/libxml2-2.9.0.tar.gz
   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=${CMAKE_BINARY_DIR}/dependencies
   BUILD_COMMAND ${MAKE})
 
