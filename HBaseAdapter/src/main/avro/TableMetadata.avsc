@@ -2,7 +2,8 @@
     "type": "record",
     "name": "TableMetadata",
     "namespace": "com.nearinfinity.honeycomb.mysql.gen",
-    "fields": [
+    "fields":
+    [
         {"name": "database", "type": "string"},
         {"name": "name", "type": "string"},
         {"name": "columns", "type": {"type": "map", "values":
@@ -10,7 +11,8 @@
                 "type": "record",
                 "name": "ColumnMetadata",
                 "namespace": "com.nearinfinity.honeycomb.mysql.gen",
-                "fields": [
+                "fields":
+                [
                     {"name": "name", "type": "string"},
                     {"name": "type", "type":
                         { "type": "enum",
