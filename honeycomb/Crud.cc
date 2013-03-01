@@ -183,6 +183,134 @@ int HoneycombHandler::write_row(uchar *buf)
   DBUG_RETURN(rc);
 }
 
+/**
+ * Pack the MySQL formatted row contained in buf and table into the Avro format.
+ * @param buf MySQL row in buffer format
+ * @param table MySQL TABLE object holding fields to be packed
+ * @param row Row object to be packed
+ */
+int HoneycombHandler::pack_row(uchar *buf, TABLE* table, Row* row)
+{
+  row->reset();
+  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
+  {
+    table->timestamp_field->set_time();
+  }
+  if(table->next_number_field && buf == table->record[0])
+
+  {
+    int res;
+    if(res = update_auto_increment())
+    {
+      return res;
+    }
+  }
+
+  size_t actualFieldSize;
+  char* byte_val;
+
+  for (Field **field_ptr = table->field; *field_ptr; field_ptr++)
+  {
+    Field * field = *field_ptr;
+    const char* field_name = field->field_name;
+
+    if (field->is_null()) { continue; }
+
+    switch (field->real_type())
+    {
+    case MYSQL_TYPE_TINY:
+    case MYSQL_TYPE_SHORT:
+    case MYSQL_TYPE_LONG:
+    case MYSQL_TYPE_LONGLONG:
+    case MYSQL_TYPE_INT24:
+    case MYSQL_TYPE_YEAR:
+    case MYSQL_TYPE_ENUM:
+    case MYSQL_TYPE_TIME: // Time is a special case for sorting
+    {
+      long long integral_value = field->val_int();
+      if (is_little_endian())
+      {
+        integral_value = bswap64(integral_value);
+      }
+      actualFieldSize = sizeof integral_value;
+      byte_val = (char*) my_malloc(actualFieldSize, MYF(MY_WME));
+      memcpy(byte_val, &integral_value, actualFieldSize);
+      break;
+    }
+    case MYSQL_TYPE_FLOAT:
+    case MYSQL_TYPE_DOUBLE:
+    {
+      double fp_value = field->val_real();
+      long long* fp_ptr = (long long*) &fp_value;
+      if (is_little_endian())
+      {
+        *fp_ptr = bswap64(*fp_ptr);
+      }
+      actualFieldSize = sizeof fp_value;
+      byte_val = (char*) my_malloc(actualFieldSize, MYF(MY_WME));
+      memcpy(byte_val, fp_ptr, actualFieldSize);
+      break;
+    }
+    case MYSQL_TYPE_DECIMAL:
+    case MYSQL_TYPE_NEWDECIMAL:
+      actualFieldSize = field->key_length();
+      byte_val = (char*) my_malloc(actualFieldSize, MYF(MY_WME));
+      memcpy(byte_val, field->ptr, actualFieldSize);
+      break;
+    case MYSQL_TYPE_DATE:
+    case MYSQL_TYPE_NEWDATE:
+    case MYSQL_TYPE_DATETIME:
+    case MYSQL_TYPE_TIMESTAMP:
+    {
+      MYSQL_TIME mysql_time;
+      char temporal_value[MAX_DATE_STRING_REP_LENGTH];
+      field->get_time(&mysql_time);
+      my_TIME_to_str(&mysql_time, temporal_value);
+      actualFieldSize = strlen(temporal_value);
+      byte_val = (char*) my_malloc(actualFieldSize, MYF(MY_WME));
+      memcpy(byte_val, temporal_value, actualFieldSize);
+      break;
+    }
+    case MYSQL_TYPE_BLOB:
+    case MYSQL_TYPE_TINY_BLOB:
+    case MYSQL_TYPE_MEDIUM_BLOB:
+    case MYSQL_TYPE_LONG_BLOB:
+    {
+      String string_value;
+      field->val_str(&string_value);
+      actualFieldSize = string_value.length();
+      byte_val = (char*) my_malloc(actualFieldSize, MYF(MY_WME));
+      memcpy(byte_val, string_value.ptr(), actualFieldSize);
+      break;
+    }
+    case MYSQL_TYPE_VARCHAR:
+    case MYSQL_TYPE_VAR_STRING:
+    {
+      char string_value_buff[field->field_length];
+      String string_value(string_value_buff, sizeof(string_value_buff),&my_charset_bin);
+      field->val_str(&string_value);
+      actualFieldSize = string_value.length();
+      byte_val = (char*) my_malloc(actualFieldSize, MYF(MY_WME));
+      memcpy(byte_val, string_value.ptr(), actualFieldSize);
+      break;
+    }
+    case MYSQL_TYPE_NULL:
+    case MYSQL_TYPE_BIT:
+    case MYSQL_TYPE_SET:
+    case MYSQL_TYPE_GEOMETRY:
+    default:
+      actualFieldSize = field->key_length();
+      byte_val = (char*) my_malloc(actualFieldSize, MYF(MY_WME));
+      memcpy(byte_val, field->ptr, actualFieldSize);
+      break;
+    }
+    row->set_bytes_record(field_name, byte_val, actualFieldSize);
+    MY_FREE(byte_val);
+  }
+
+  return 0;
+}
+
 int HoneycombHandler::write_row(uchar* buf, jobject updated_fields)
 {
   if (share->crashed)
@@ -349,7 +477,7 @@ int HoneycombHandler::write_row(uchar* buf, jobject updated_fields)
   {
     THD* thd = ha_thd();
     int command = thd_sql_command(thd);
-    if(command == SQLCOM_UPDATE)
+    if(command == SQLCOM_UPDATE) // Taken when actual update, but not on ON DUPLICATE KEY UPDATE
     {
       if (this->row_has_duplicate_values(unique_values_map, updated_fields))
       {

@@ -63,7 +63,7 @@ jobject HoneycombHandler::create_key_value_list(int index, uint* key_sizes,
   JavaFrame frame(env, 3*index);
   for(int x = 0; x < index; x++)
   {
-    jbyteArray java_key = this->env->NewByteArray(key_sizes[x]);
+    jbyteArray java_key = (jbyteArray) this->env->NewByteArray(key_sizes[x]);
     NULL_CHECK_ABORT(java_key, "HoneycombHandler::create_key_value_list: OutOfMemoryError while calling NewByteArray");
     this->env->SetByteArrayRegion(java_key, 0, key_sizes[x], (jbyte*) key_copies[x]);
     EXCEPTION_CHECK_ABORT("HoneycombHandler::create_key_value_list: ArrayIndexOutOfBoundsException while calling NewByteArray");
@@ -161,10 +161,22 @@ int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
 
   jobject java_find_flag = env->GetStaticObjectField(cache->index_read_type().clazz,
       find_flag_to_java(find_flag, cache));
-  jobject index_row = this->env->CallStaticObjectMethod(adapter_class,
+  jbyteArray row_jbuf = (jbyteArray) this->env->CallStaticObjectMethod(adapter_class,
       index_read_method, this->curr_scan_id, key_values, java_find_flag);
   EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::index_read_map", "calling indexRead");
-  int rc = read_index_row(index_row, buf);
+
+  if (row_jbuf == NULL)
+  {
+    this->table->status = STATUS_NOT_FOUND;
+    DBUG_RETURN(HA_ERR_END_OF_FILE);
+  }
+
+  jbyte* row_buf = this->env->GetByteArrayElements(row_jbuf, JNI_FALSE);
+  NULL_CHECK_ABORT(row_buf, "HoneycombHandler::index_read_map: OutOfMemoryError while calling GetByteArrayElements");
+  this->row->deserialize((const char*) row_buf, this->env->GetArrayLength(row_jbuf));
+  this->env->ReleaseByteArrayElements(row_jbuf, row_buf, 0);
+
+  int rc = read_row(buf, this->row);
 
   DBUG_RETURN(rc);
 }
@@ -185,10 +197,22 @@ int HoneycombHandler::get_next_index_row(uchar* buf)
 {
   JavaFrame frame(env, 1);
   JNICache::HBaseAdapter hbase_adapter = cache->hbase_adapter();
-  jobject index_row = this->env->CallStaticObjectMethod(hbase_adapter.clazz,
+  jbyteArray row_jbuf = (jbyteArray) this->env->CallStaticObjectMethod(hbase_adapter.clazz,
       hbase_adapter.next_index_row, this->curr_scan_id);
   EXCEPTION_CHECK_IE("HoneycombHandler::get_next_index_row", "calling nextIndexRow");
-  int rc = read_index_row(index_row, buf);
+
+  if (row_jbuf == NULL)
+  {
+    this->table->status = STATUS_NOT_FOUND;
+    return HA_ERR_END_OF_FILE;
+  }
+
+  jbyte* row_buf = this->env->GetByteArrayElements(row_jbuf, JNI_FALSE);
+  NULL_CHECK_ABORT(row_buf, "HoneycombHandler::get_next_index_row: OutOfMemoryError while calling GetByteArrayElements");
+  this->row->deserialize((const char*) row_buf, this->env->GetArrayLength(row_jbuf));
+  this->env->ReleaseByteArrayElements(row_jbuf, row_buf, 0);
+
+  int rc = read_row(buf, this->row);
   return rc;
 }
 
@@ -199,34 +223,34 @@ int HoneycombHandler::get_index_row(jfieldID field_id, uchar* buf)
   jmethodID index_read_method = cache->hbase_adapter().index_read;
   jclass read_class = cache->index_read_type().clazz;
   jobject java_find_flag = this->env->GetStaticObjectField(read_class, field_id);
-  jobject index_row = this->env->CallStaticObjectMethod(adapter_class,
+  jbyteArray row_jbuf = (jbyteArray) this->env->CallStaticObjectMethod(adapter_class,
       index_read_method, this->curr_scan_id, NULL, java_find_flag);
   EXCEPTION_CHECK_IE("HoneycombHandler::get_index_row", "calling getIndexRow");
-  int rc = read_index_row(index_row, buf);
-  return rc;
-}
 
-int HoneycombHandler::read_index_row(jobject index_row, uchar* buf)
-{
-  JavaFrame frame(env, 1);
-  if (index_row == NULL)
+  if (row_jbuf == NULL)
   {
     this->table->status = STATUS_NOT_FOUND;
     return HA_ERR_END_OF_FILE;
   }
-  this->store_uuid_ref(index_row);
 
-  jmethodID get_row_map_method = cache->row().get_row_map;
-  jobject rowMap = this->env->CallObjectMethod(index_row, get_row_map_method);
-  EXCEPTION_CHECK_IE("HoneycombHandler::read_index_row", "calling getRowMap");
-  NULL_CHECK_IE(rowMap, "HoneycombHandler::read_index_row", "found NULL rowMap");
+  jbyte* row_buf = this->env->GetByteArrayElements(row_jbuf, JNI_FALSE);
+  NULL_CHECK_ABORT(row_buf, "HoneycombHandler::get_index_row: OutOfMemoryError while calling GetByteArrayElements");
+  this->row->deserialize((const char*) row_buf, this->env->GetArrayLength(row_jbuf));
+  this->env->ReleaseByteArrayElements(row_jbuf, row_buf, 0);
 
-  if (java_to_sql(buf, rowMap))
+  int rc = read_row(buf, this->row);
+  return rc;
+}
+
+int HoneycombHandler::read_row(uchar *buf, Row* row)
+{
+  store_uuid_ref(this->row);
+
+  if (java_to_sql(buf, this->row))
   {
     this->table->status = STATUS_NOT_READ;
     return HA_ERR_INTERNAL_ERROR;
   }
-
   this->table->status = 0;
   return 0;
 }
@@ -249,27 +273,28 @@ int HoneycombHandler::rnd_pos(uchar *buf, uchar *pos)
   jclass adapter_class = cache->hbase_adapter().clazz;
   jmethodID get_row_method = cache->hbase_adapter().get_row;
   jbyteArray uuid = convert_value_to_java_bytes(pos, 16, this->env);
-  jobject row = this->env->CallStaticObjectMethod(adapter_class, get_row_method,
-      this->curr_scan_id, uuid);
+
+  jbyteArray row_jbuf = (jbyteArray) this->env->CallStaticObjectMethod(adapter_class,
+      get_row_method, this->curr_scan_id, uuid);
   EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::rnd_pos", "calling getRow");
 
-  jmethodID get_row_map_method = cache->row().get_row_map;
-
-  jobject row_map = this->env->CallObjectMethod(row, get_row_map_method);
-  EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::rnd_pos", "calling getRowMap");
-
-  if (row_map == NULL)
+  if (row_jbuf == NULL)
   {
     this->table->status = STATUS_NOT_FOUND;
     DBUG_RETURN(HA_ERR_END_OF_FILE);
   }
 
-  if (java_to_sql(buf, row_map))
+  jbyte* row_buf = this->env->GetByteArrayElements(row_jbuf, JNI_FALSE);
+  NULL_CHECK_ABORT(row_buf, "HoneycombHandler::rnd_next: OutOfMemoryError while calling GetByteArrayElements");
+  this->row->deserialize((const char*) row_buf, this->env->GetArrayLength(row_jbuf));
+  this->env->ReleaseByteArrayElements(row_jbuf, row_buf, 0);
+
+  if (java_to_sql(buf, this->row))
   {
     this->table->status = STATUS_NOT_READ;
     DBUG_RETURN(HA_ERR_INTERNAL_ERROR);
   }
-  store_uuid_ref(row);
+  store_uuid_ref(this->row);
   this->table->status = 0;
 
   MYSQL_READ_ROW_DONE(rc);
@@ -344,26 +369,24 @@ int HoneycombHandler::rnd_next(uchar *buf)
   memset(buf, 0, table->s->null_bytes);
   jclass adapter_class = cache->hbase_adapter().clazz;
   jmethodID next_row_method = cache->hbase_adapter().next_row;
-  jobject row = this->env->CallStaticObjectMethod(adapter_class,
+
+  jbyteArray row_jbuf = (jbyteArray) this->env->CallStaticObjectMethod(adapter_class,
       next_row_method, this->curr_scan_id);
   EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::rnd_next", "calling nextRow");
-
-  if (row == NULL)
+  if (row_jbuf == NULL)
   {
     this->table->status = STATUS_NOT_FOUND;
     DBUG_RETURN(HA_ERR_END_OF_FILE);
   }
 
-  store_uuid_ref(row);
+  jbyte* row_buf = this->env->GetByteArrayElements(row_jbuf, JNI_FALSE);
+  NULL_CHECK_ABORT(row_buf, "HoneycombHandler::rnd_next: OutOfMemoryError while calling GetByteArrayElements");
+  this->row->deserialize((const char*) row_buf, this->env->GetArrayLength(row_jbuf));
+  this->env->ReleaseByteArrayElements(row_jbuf, row_buf, 0);
 
-  jmethodID get_row_map_method = cache->row().get_row_map;
+  store_uuid_ref(this->row);
 
-  jobject row_map = this->env->CallObjectMethod(row, get_row_map_method);
-  EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::rnd_next", "calling getRowMap");
-  NULL_CHECK_IE(row_map, "HoneycombHandler::rnd_next", "null row_map found");
-
-
-  if (java_to_sql(buf, row_map))
+  if (java_to_sql(buf, this->row))
   {
     this->table->status = STATUS_NOT_READ;
     DBUG_RETURN(HA_ERR_INTERNAL_ERROR);

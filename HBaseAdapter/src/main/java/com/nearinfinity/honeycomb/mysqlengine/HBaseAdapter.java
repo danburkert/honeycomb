@@ -103,7 +103,7 @@ public class HBaseAdapter {
             returnValue = reader.getAutoincrementValue(tableName, fieldName);
         } catch (Throwable e) {
             logger.error("Exception:", e);
-            throw new HBaseAdapterException("alterTableAutoincrementValue", e);
+            throw new HBaseAdapterException("getTableAutoincrementValue", e);
         }
 
         return returnValue;
@@ -207,15 +207,20 @@ public class HBaseAdapter {
      * @return Row object or null if no more rows
      * @throws HBaseAdapterException
      */
-    public static Row nextRow(long scanId) throws HBaseAdapterException {
+    public static byte[] nextRow(long scanId) throws HBaseAdapterException {
         try {
             long start = System.currentTimeMillis();
             ActiveScan conn = getActiveScanForId(scanId);
             HBaseResultScanner scanner = conn.getScanner();
-            Row r = reader.nextRow(conn.getTableName(), scanner);
+            Row row = reader.nextRow(conn.getTableName(), scanner);
             long end = System.currentTimeMillis();
             Metrics.getInstance().addStat("Next row", end - start);
-            return r;
+            if (row == null) // No more results
+            {
+                return null;
+            } else {
+                return row.serialize();
+            }
         } catch (Throwable e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("nextRow", e);
@@ -395,7 +400,7 @@ public class HBaseAdapter {
      * @return SQL row
      * @throws HBaseAdapterException
      */
-    public static Row getRow(long scanId, byte[] uuid) throws HBaseAdapterException {
+    public static byte[] getRow(long scanId, byte[] uuid) throws HBaseAdapterException {
         logger.debug(String.format("scanId: %d,%s", scanId, Bytes.toString(uuid)));
         try {
             long start = System.currentTimeMillis();
@@ -408,7 +413,7 @@ public class HBaseAdapter {
             Metrics.getInstance().addStat("get row", end - start);
             assert (row != null);
 
-            return row;
+            return row.serialize();
         } catch (Throwable e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("getRow", e);
@@ -459,6 +464,11 @@ public class HBaseAdapter {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("hasDuplicateValues", e);
         }
+    }
+
+    public static boolean containsDuplicateRecord(String tableName, Row row)
+            throws HBaseAdapterException {
+        return false;
     }
 
     /**
@@ -540,7 +550,7 @@ public class HBaseAdapter {
      * @return SQL row
      * @throws HBaseAdapterException
      */
-    public static Row indexRead(long scanId, List<KeyValue> keyValues, IndexReadType readType)
+    public static byte[] indexRead(long scanId, List<KeyValue> keyValues, IndexReadType readType)
             throws HBaseAdapterException {
         try {
             long start = System.currentTimeMillis();
@@ -623,11 +633,10 @@ public class HBaseAdapter {
                 Metrics.getInstance().addStat("index read", end - start);
                 return null;
             }
-
-            Row r = ResultReader.readIndexRow(result);
+            Row row = ResultReader.readIndexRow(result);
             long end = System.currentTimeMillis();
             Metrics.getInstance().addStat("index read", end - start);
-            return r;
+            return row.serialize();
         } catch (Throwable e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("indexRead", e);
@@ -642,7 +651,7 @@ public class HBaseAdapter {
      * @return SQL row
      * @throws HBaseAdapterException
      */
-    public static Row nextIndexRow(long scanId) throws HBaseAdapterException {
+    public static byte[] nextIndexRow(long scanId) throws HBaseAdapterException {
         try {
             long start = System.currentTimeMillis();
             ActiveScan conn = getActiveScanForId(scanId);
@@ -654,10 +663,10 @@ public class HBaseAdapter {
                 return null;
             }
 
-            Row r = ResultReader.readIndexRow(result);
+            Row row = ResultReader.readIndexRow(result);
             long end = System.currentTimeMillis();
             Metrics.getInstance().addStat("next index row", end - start);
-            return r;
+            return row.serialize();
         } catch (Throwable e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("nextIndexRow", e);
