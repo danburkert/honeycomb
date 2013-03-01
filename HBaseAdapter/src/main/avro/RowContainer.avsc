@@ -2,8 +2,9 @@
     "type": "record",
     "name": "RowContainer",
     "namespace": "com.nearinfinity.honeycomb.mysql.gen",
-    "fields": [
+    "fields":
+     [
         {"name": "uuid", "type": {"type": "fixed", "name": "UUIDContainer", "size": 16}},
-        {"name": "records", "type": {"type": "map", "values": ["bytes"], "avro.java.string": "String"}}
-    ]
+        {"name": "records", "type": {"type": "map", "values": ["bytes"]}}
+     ]
 }

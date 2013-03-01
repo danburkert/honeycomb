@@ -178,15 +178,7 @@ int HoneycombHandler::write_row(uchar *buf)
 {
   DBUG_ENTER("HoneycombHandler::write_row");
   my_bitmap_map *old_map = dbug_tmp_use_all_columns(table, table->read_set);
-  if (share->crashed)
-  {
-    DBUG_RETURN(HA_ERR_CRASHED_ON_USAGE);
-  }
-
-  int rc = pack_row(buf, this->table, this->row);
-
-  ha_statistic_increment(&SSV::ha_write_count);
-
+  int rc = write_row(buf, NULL);
   dbug_tmp_restore_column_map(table->read_set, old_map);
   DBUG_RETURN(rc);
 }
