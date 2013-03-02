@@ -2,7 +2,6 @@ package com.nearinfinity.honeycomb.hbaseclient.strategy;
 
 import com.nearinfinity.honeycomb.hbaseclient.*;
 import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.filter.PrefixFilter;
 
 import java.util.Map;
 
@@ -12,6 +11,7 @@ public class PrefixScanStrategy implements ScanStrategy {
     public PrefixScanStrategy(ScanStrategyInfo scanInfo) {
         this.scanInfo = scanInfo;
     }
+
     @Override
     public Scan getScan(TableInfo info) {
         long tableId = info.getId();

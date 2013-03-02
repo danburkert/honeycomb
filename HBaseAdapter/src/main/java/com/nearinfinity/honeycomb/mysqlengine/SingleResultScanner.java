@@ -31,8 +31,9 @@ public class SingleResultScanner implements HBaseResultScanner {
         if (scanner == null) {
             return null;
         }
-        if (valueToSkip == null) {return timedNext();}
-        else { // Assumes an index scan.  Will fail otherwise
+        if (valueToSkip == null) {
+            return timedNext();
+        } else { // Assumes an index scan.  Will fail otherwise
             Result result;
             Row row;
             Map<String, byte[]> rowMap;

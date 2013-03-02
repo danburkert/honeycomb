@@ -25,7 +25,7 @@ public class HBaseWriter implements Closeable {
         this.writeBufferSize = 0;
     }
 
-    public void setWriteBufferSize(long writeBufferSize){
+    public void setWriteBufferSize(long writeBufferSize) {
         this.writeBufferSize = writeBufferSize;
     }
 

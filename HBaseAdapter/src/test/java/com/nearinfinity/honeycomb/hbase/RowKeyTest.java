@@ -19,7 +19,7 @@ public class RowKeyTest {
         List<RowKey> rowKeys = new ArrayList<RowKey>();
         List<byte[]> encodedRowKeys = new ArrayList<byte[]>();
 
-        for(RowKey rowKey : Iterables.toIterable(rowKeyGen)) {
+        for (RowKey rowKey : Iterables.toIterable(rowKeyGen)) {
             rowKeys.add(rowKey);
             encodedRowKeys.add(rowKey.encode());
         }
@@ -40,7 +40,9 @@ public class RowKeyTest {
         public int compare(RowKey row1, RowKey row2) {
             Class row1Class = row1.getClass();
             int classCompare = row1.getPrefix() - row2.getPrefix();
-            if (classCompare != 0) { return classCompare; }
+            if (classCompare != 0) {
+                return classCompare;
+            }
 
             if (row1Class == TablesRow.class) {
                 return 0;
@@ -68,8 +70,11 @@ public class RowKeyTest {
         private int columnMetadataRowCompare(ColumnMetadataRow row1,
                                              ColumnMetadataRow row2) {
             int tableCompare = Long.signum(row1.getTableId() - row2.getTableId());
-            if (tableCompare != 0) { return tableCompare; }
-            else { return Long.signum(row1.getColumnId() - row2.getColumnId()); }
+            if (tableCompare != 0) {
+                return tableCompare;
+            } else {
+                return Long.signum(row1.getColumnId() - row2.getColumnId());
+            }
         }
 
         private int tableMetadataRowCompare(TableMetadataRow row1,
@@ -79,7 +84,9 @@ public class RowKeyTest {
 
         private int dataRowCompare(DataRow row1, DataRow row2) {
             int tableCompare = Long.signum(row1.getTableId() - row2.getTableId());
-            if (tableCompare != 0) { return tableCompare; }
+            if (tableCompare != 0) {
+                return tableCompare;
+            }
             return UnsignedBytes.lexicographicalComparator().compare(
                     Util.UUIDToBytes(row1.getUuid()),
                     Util.UUIDToBytes(row2.getUuid()));
@@ -96,12 +103,18 @@ public class RowKeyTest {
         private int indexCompare(IndexRow row1, IndexRow row2, int nullOrder) {
             int compare;
             compare = Long.signum(row1.getTableId() - row2.getTableId());
-            if (compare != 0) { return compare; }
+            if (compare != 0) {
+                return compare;
+            }
             compare = columnsCompare(row1.getColumnIds(), row2.getColumnIds());
-            if (compare != 0) { return compare; }
+            if (compare != 0) {
+                return compare;
+            }
             compare = recordsCompare(row1.getColumnIds(), row1.getRecords(),
                     row2.getRecords(), nullOrder);
-            if (compare != 0) { return compare; }
+            if (compare != 0) {
+                return compare;
+            }
             return UnsignedBytes.lexicographicalComparator().compare(
                     Util.UUIDToBytes(row1.getUuid()),
                     Util.UUIDToBytes(row2.getUuid()));
@@ -111,7 +124,9 @@ public class RowKeyTest {
             int compare;
             for (int i = 0; i < Math.min(columns1.size(), columns2.size()); i++) {
                 compare = Long.signum(columns1.get(i) - columns2.get(i));
-                if (compare != 0) { return compare; }
+                if (compare != 0) {
+                    return compare;
+                }
             }
             return columns1.size() - columns2.size();
         }
@@ -123,11 +138,19 @@ public class RowKeyTest {
             for (Long columnId : columnIds) {
                 value1 = records1.get(columnId);
                 value2 = records2.get(columnId);
-                if (value1 == value2) { continue; }
-                if (value1 == null) { return nullOrder; }
-                if (value2 == null) { return nullOrder * -1; }
+                if (value1 == value2) {
+                    continue;
+                }
+                if (value1 == null) {
+                    return nullOrder;
+                }
+                if (value2 == null) {
+                    return nullOrder * -1;
+                }
                 compare = new ByteArrayComparator().compare(value1, value2);
-                if (compare != 0) { return compare; }
+                if (compare != 0) {
+                    return compare;
+                }
             }
             return 0;
         }

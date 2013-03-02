@@ -5,7 +5,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
 
 public class UtilTest {
     @Test

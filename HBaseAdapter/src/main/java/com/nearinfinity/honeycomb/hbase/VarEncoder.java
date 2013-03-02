@@ -26,7 +26,7 @@ public class VarEncoder {
     }
 
     private static int varLongSize(final long value) {
-        if ((value & (0xffffffffffffffffL <<  8)) == 0) return 1;
+        if ((value & (0xffffffffffffffffL << 8)) == 0) return 1;
         if ((value & (0xffffffffffffffffL << 16)) == 0) return 2;
         if ((value & (0xffffffffffffffffL << 24)) == 0) return 3;
         if ((value & (0xffffffffffffffffL << 32)) == 0) return 4;
@@ -68,9 +68,13 @@ public class VarEncoder {
 
     public static byte[] appendByteArrays(List<byte[]> arrays) {
         int size = 0;
-        for (byte[] array : arrays) { size += array.length; }
+        for (byte[] array : arrays) {
+            size += array.length;
+        }
         ByteBuffer bb = ByteBuffer.allocate(size);
-        for (byte[] array : arrays) { bb.put(array); }
+        for (byte[] array : arrays) {
+            bb.put(array);
+        }
         return bb.array();
     }
 

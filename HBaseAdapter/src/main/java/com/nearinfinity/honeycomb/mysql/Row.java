@@ -2,12 +2,7 @@ package com.nearinfinity.honeycomb.mysql;
 
 import com.nearinfinity.honeycomb.mysql.gen.RowContainer;
 import com.nearinfinity.honeycomb.mysql.gen.UUIDContainer;
-import org.apache.avro.io.DatumReader;
-import org.apache.avro.io.DatumWriter;
-import org.apache.avro.io.Decoder;
-import org.apache.avro.io.DecoderFactory;
-import org.apache.avro.io.Encoder;
-import org.apache.avro.io.EncoderFactory;
+import org.apache.avro.io.*;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
 
@@ -30,8 +25,9 @@ public class Row {
 
     /**
      * Construct a new Row with specified records and UUID.
+     *
      * @param records Map of column name to record value
-     * @param uuid UUID representing the unique position of the Row
+     * @param uuid    UUID representing the unique position of the Row
      */
     public Row(Map<String, Object> records, UUID uuid) {
         checkNotNull(records, "records must not be null.");
@@ -41,6 +37,7 @@ public class Row {
 
     /**
      * Constructor called during deserialization.
+     *
      * @param row {@link RowContainer} the underlying content for this row
      */
     private Row(RowContainer row) {
@@ -49,6 +46,7 @@ public class Row {
 
     /**
      * Returns the {@link UUID} of this Row.
+     *
      * @return UUID of this Row.
      */
     public UUID getUUID() {
@@ -57,6 +55,7 @@ public class Row {
 
     /**
      * Returns the a map of column names to records of this Row.
+     *
      * @return Map of column names to records
      */
     public Map<String, byte[]> getRecords() {
@@ -77,6 +76,7 @@ public class Row {
 
     /**
      * Serialize this {@link Row} instance to a byte array.
+     *
      * @return Serialized row
      * @throws IOException when serialization fails
      */
@@ -90,6 +90,7 @@ public class Row {
 
     /**
      * Deserialize the provided serialized row buffer to a new {@link Row} instance
+     *
      * @param serializedRow byte buffer containing serialized Row
      * @return new Row instance from serializedRow
      * @throws IOException On deserialization read failure

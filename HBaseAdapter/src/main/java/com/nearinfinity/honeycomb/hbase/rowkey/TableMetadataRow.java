@@ -28,7 +28,7 @@ public class TableMetadataRow implements RowKey {
 
     @Override
     public String toString() {
-        return "["+ String.format("%02X", PREFIX)
+        return "[" + String.format("%02X", PREFIX)
                 + "\t" + tableId + "]";
     }
 }

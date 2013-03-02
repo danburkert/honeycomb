@@ -10,7 +10,7 @@ public class DescIndexRow extends IndexRow {
     private static final byte[] NULL_BYTES = {0x01};
 
     public DescIndexRow(long tableId, UUID uuid, List<Long> columnIds,
-                       Map<Long, byte[]> records) {
+                        Map<Long, byte[]> records) {
         super(tableId, uuid, columnIds, records, PREFIX,
                 NOT_NULL_BYTES, NULL_BYTES);
     }

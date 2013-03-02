@@ -18,7 +18,8 @@ public class TablesRow implements RowKey {
         return PREFIX;
     }
 
-    @Override public String toString() {
-        return "["+ String.format("%02X", PREFIX) +"]";
+    @Override
+    public String toString() {
+        return "[" + String.format("%02X", PREFIX) + "]";
     }
 }

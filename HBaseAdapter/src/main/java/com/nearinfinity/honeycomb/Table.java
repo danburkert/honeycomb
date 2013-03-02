@@ -16,12 +16,14 @@ import java.util.UUID;
 public interface Table extends Closeable {
     /**
      * Insert row into table
+     *
      * @param row Row to be inserted
      */
     public void insert(Row row);
 
     /**
      * Update row in table
+     *
      * @param row Row containing UUID of row to be updated, as well as updated
      *            record values.
      * @throws IOException
@@ -31,6 +33,7 @@ public interface Table extends Closeable {
 
     /**
      * Remove row with given UUID from the table
+     *
      * @param uuid UUID of row to be deleted
      * @throws IOException
      * @throws RowNotFoundException
@@ -45,6 +48,7 @@ public interface Table extends Closeable {
 
     /**
      * Get row with uuid from table
+     *
      * @param uuid UUID of requested row
      * @return Row with given UUID
      */
@@ -52,6 +56,7 @@ public interface Table extends Closeable {
 
     /**
      * Create a scanner for an unordered full table scan
+     *
      * @return Scanner over table
      */
     public Scanner tableScan();
@@ -59,6 +64,7 @@ public interface Table extends Closeable {
     /**
      * Return a scanner over the table's index at the specified key / values in
      * ascending sort.
+     *
      * @return Scanner over index
      */
     public Scanner AscIndexScanAt(/* KeyValueContainer keyValues */);
@@ -66,6 +72,7 @@ public interface Table extends Closeable {
     /**
      * Return a scanner over the table's index after the specified key / values
      * in ascending sort.
+     *
      * @return Scanner over index
      */
     public Scanner AscIndexScanAfter(/* KeyValueContainer keyValues */);
@@ -73,6 +80,7 @@ public interface Table extends Closeable {
     /**
      * Return a scanner over the table's index at the specified key / values in
      * descending sort.
+     *
      * @return Scanner over index
      */
     public Scanner DescIndexScanAt(/* KeyValueContainer keyValues */);
@@ -80,41 +88,46 @@ public interface Table extends Closeable {
     /**
      * Return a scanner over the table's index after the specified key / values
      * in descending sort.
+     *
      * @return Scanner over index
      */
     public Scanner DescIndexScanAfter(/* KeyValueContainer keyValues */);
 
     /**
      * Return a scanner over the rows in the table with the specified key /values
+     *
      * @return Scanner over index
      */
     public Scanner indexScanExact(/* KeyValueContainer keyValues */);
 
     /**
      * Return the current autoincrement value of the column
+     *
      * @param column The name of the column
      * @return
      * @throws IOException
      * @throws ColumnNotFoundException Thrown when the column does not exist in
-     * the table, or the column is not an auto increment column
+     *                                 the table, or the column is not an auto increment column
      */
     public long getAutoIncValue(String column)
             throws IOException, ColumnNotFoundException;
 
     /**
      * Set the autoincrement value of the column
+     *
      * @param column The name of the column
-     * @param value New auto increment value
+     * @param value  New auto increment value
      * @return
      * @throws IOException
      * @throws ColumnNotFoundException Thrown when the column does not exist in
-     * the table, or the column is not an auto increment column
+     *                                 the table, or the column is not an auto increment column
      */
     public void setAutoIncValue(String column, long value)
             throws IOException, ColumnNotFoundException;
 
     /**
      * Return the ColumnMetadata container for the column
+     *
      * @param column Name of the column
      * @return ColumnMetadata of column
      * @throws IOException
@@ -125,6 +138,7 @@ public interface Table extends Closeable {
 
     /**
      * Get the table name of the Table
+     *
      * @return the table name
      * @throws IOException
      */
@@ -132,6 +146,7 @@ public interface Table extends Closeable {
 
     /**
      * Get the database name of the Table
+     *
      * @return the database name
      * @throws IOException
      */

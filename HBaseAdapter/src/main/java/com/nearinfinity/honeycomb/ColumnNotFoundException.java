@@ -5,5 +5,5 @@ public class ColumnNotFoundException extends Exception {
 
     public ColumnNotFoundException(String column) {
         this.column = column;
-    };
+    }
 }

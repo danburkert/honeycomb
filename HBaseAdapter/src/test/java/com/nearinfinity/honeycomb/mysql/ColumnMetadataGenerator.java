@@ -8,6 +8,7 @@ import net.java.quickcheck.generator.PrimitiveGenerators;
 public class ColumnMetadataGenerator implements Generator<ColumnMetadata> {
     private static Generator<String> nameGen = PrimitiveGenerators.strings();
     private static Generator<ColumnType> typeGen = PrimitiveGenerators.enumValues(ColumnType.class);
+
     @Override
     public ColumnMetadata next() {
         ColumnMetadata metadata = new ColumnMetadata();

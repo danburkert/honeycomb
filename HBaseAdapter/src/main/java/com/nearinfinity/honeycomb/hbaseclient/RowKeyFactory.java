@@ -66,7 +66,7 @@ public class RowKeyFactory {
      *
      * @param tableId  SQL table ID
      * @param columnId SQL column ID
-     * @param value SQL row
+     * @param value    SQL row
      * @return Row key
      */
     public static byte[] buildValueIndexPrefix(final long tableId, final byte[] columnId, final byte[] value) {

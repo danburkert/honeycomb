@@ -64,8 +64,7 @@ public class PutListFactory {
     public static List<Put> createIndexForColumns(Map<String, byte[]> values, TableInfo info, List<List<String>> indexedKeys, UUID rowId) throws IOException {
         Map<String, Object> records = new HashMap<String, Object>();
         for (Map.Entry<String, byte[]> entry : values.entrySet()) {
-            if (entry.getValue() != null)
-            {
+            if (entry.getValue() != null) {
                 records.put(entry.getKey(), ByteBuffer.wrap(entry.getValue()));
             }
         }

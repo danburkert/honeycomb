@@ -68,12 +68,15 @@ public class RowKeyGenerator implements Generator<RowKey> {
 
     private class ColumnMetadataGenerator implements Generator<RowKey> {
         Generator<Long> tableIdGen;
+
         public ColumnMetadataGenerator() {
             tableIdGen = randIdGen;
         }
+
         public ColumnMetadataGenerator(Long tableId) {
             tableIdGen = new FixedValuesGenerator<Long>(tableId);
         }
+
         @Override
         public RowKey next() {
             return new ColumnMetadataRow(tableIdGen.next(), randIdGen.next());
@@ -89,12 +92,15 @@ public class RowKeyGenerator implements Generator<RowKey> {
 
     private class DataRowGenerator implements Generator<RowKey> {
         Generator<Long> tableIdGen;
+
         public DataRowGenerator() {
             tableIdGen = randIdGen;
         }
+
         public DataRowGenerator(Long tableId) {
             tableIdGen = new FixedValuesGenerator<Long>(tableId);
         }
+
         @Override
         public RowKey next() {
             return new DataRow(tableIdGen.next(), uuidGen.next());
@@ -105,22 +111,26 @@ public class RowKeyGenerator implements Generator<RowKey> {
         private Generator<Long> columnIdGen;
         private Generator<List<Long>> columnsGen;
         private Generator<byte[]> valueGen;
+
         public IndexRowGenerator() {
             columnIdGen = randIdGen;
             columnsGen = randIdsGen;
             valueGen = randValueGen;
         }
+
         public IndexRowGenerator(Long tableId) {
             columnIdGen = new FixedValuesGenerator<Long>(tableId);
             columnsGen = CombinedGenerators.lists(randIdGen,
                     PrimitiveGenerators.integers(1, 4));
             valueGen = randValueGen;
         }
+
         public IndexRowGenerator(Long tableId, List<Long> tableIds) {
             columnIdGen = new FixedValuesGenerator<Long>(tableId);
             columnsGen = new FixedValuesGenerator<List<Long>>(tableIds);
             valueGen = randValueGen;
         }
+
         public IndexRowGenerator(Long tableId, List<Long> tableIds, List<byte[]> values) {
             columnIdGen = new FixedValuesGenerator<Long>(tableId);
             columnsGen = new FixedValuesGenerator<List<Long>>(tableIds);
@@ -139,7 +149,7 @@ public class RowKeyGenerator implements Generator<RowKey> {
         }
 
         private RowKey createIndexRow(Long tableId, UUID uuid, List<Long> columnIds,
-                               Map<Long, byte[]> records) {
+                                      Map<Long, byte[]> records) {
             if (rand.nextBoolean()) {
                 return new AscIndexRow(tableId, uuid, columnIds, records);
             } else {

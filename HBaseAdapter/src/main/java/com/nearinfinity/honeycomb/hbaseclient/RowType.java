@@ -12,7 +12,7 @@ public enum RowType {
     private byte value;
 
     RowType(int value) {
-        this.value = (byte)value;
+        this.value = (byte) value;
     }
 
     public byte getValue() {

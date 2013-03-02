@@ -38,17 +38,18 @@ public class IndexRow implements RowKey {
     }
 
     public byte[] encode() {
-        byte[] prefixBytes = { prefix };
+        byte[] prefixBytes = {prefix};
         List<byte[]> encodedParts = new ArrayList<byte[]>();
         encodedParts.add(prefixBytes);
         encodedParts.add(VarEncoder.encodeULong(tableId));
-        for(Long columnId : columnIds) {
+        for (Long columnId : columnIds) {
             encodedParts.add(VarEncoder.encodeULong(columnId));
         }
-        for(Long columnId : columnIds) {
+        for (Long columnId : columnIds) {
             byte[] recordValue = records.get(columnId);
-            if (recordValue == null) { encodedParts.add(nullBytes); }
-            else {
+            if (recordValue == null) {
+                encodedParts.add(nullBytes);
+            } else {
                 encodedParts.add(notNullBytes);
                 encodedParts.add(VarEncoder.encodeBytes(recordValue));
             }

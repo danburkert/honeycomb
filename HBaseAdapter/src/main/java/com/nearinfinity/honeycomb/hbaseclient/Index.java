@@ -62,6 +62,7 @@ public class Index {
 
     /**
      * Retrieve the columns of the indexes.
+     *
      * @param tableMetadata SQL table metadata
      * @return Columns in an index
      */
@@ -71,6 +72,7 @@ public class Index {
 
     /**
      * Retrieve the columns of the indexes with a uniqueness constraint.
+     *
      * @param tableMetadata SQL table metadata
      * @return Columns with uniqueness constraint
      */

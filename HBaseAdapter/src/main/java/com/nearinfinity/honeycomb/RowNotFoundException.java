@@ -7,5 +7,5 @@ public class RowNotFoundException extends Exception {
 
     public RowNotFoundException(UUID uuid) {
         this.uuid = uuid;
-    };
+    }
 }

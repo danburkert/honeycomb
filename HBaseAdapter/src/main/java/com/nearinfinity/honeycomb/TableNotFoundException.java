@@ -7,5 +7,5 @@ public class TableNotFoundException extends Exception {
     public TableNotFoundException(String database, String name) {
         this.database = database;
         this.name = name;
-    };
+    }
 }

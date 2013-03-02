@@ -24,12 +24,12 @@ public class VarEncoderTest {
 
     @Test
     public void testULongEncDec() {
-        for(long n : Iterables.toIterable(uLongGen)) {
+        for (long n : Iterables.toIterable(uLongGen)) {
             Assert.assertEquals(n, VarEncoder.decodeULong(VarEncoder.encodeULong(n)));
         }
     }
 
-    @Test(expected=IllegalArgumentException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testULongEncFailsWhenNeg() {
         VarEncoder.encodeULong(-1);
     }
@@ -39,7 +39,7 @@ public class VarEncoderTest {
         List<Long> longs = new ArrayList<Long>();
         List<byte[]> bytes = new ArrayList<byte[]>();
 
-        for(long n : Iterables.toIterable(uLongGen)) {
+        for (long n : Iterables.toIterable(uLongGen)) {
             longs.add(new Long(n));
             bytes.add(VarEncoder.encodeULong(n));
         }
@@ -57,7 +57,7 @@ public class VarEncoderTest {
 
     @Test
     public void testBytesEncDec() {
-        for(byte[] b : Iterables.toIterable(bytesGen)) {
+        for (byte[] b : Iterables.toIterable(bytesGen)) {
             Assert.assertArrayEquals(b, VarEncoder.decodeBytes(VarEncoder.encodeBytes(b)));
         }
     }
@@ -67,7 +67,7 @@ public class VarEncoderTest {
         List<byte[]> bytes = new ArrayList<byte[]>();
         List<byte[]> encodedBytes = new ArrayList<byte[]>();
 
-        for(byte[] b : Iterables.toIterable(bytesGen)) {
+        for (byte[] b : Iterables.toIterable(bytesGen)) {
             bytes.add(b);
             encodedBytes.add(VarEncoder.encodeBytes(b));
         }

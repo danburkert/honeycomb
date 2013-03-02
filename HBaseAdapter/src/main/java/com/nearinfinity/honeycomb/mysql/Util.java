@@ -32,13 +32,15 @@ public class Util {
     private static final Logger logger = Logger.getLogger(Util.class);
 
     public static final int UUID_WIDTH = 16;
+
     /**
      * Returns a UUID_WIDTH byte wide buffer from a {@link UUID}.
+     *
      * @param uuid
      */
     public static byte[] UUIDToBytes(UUID uuid) {
         checkNotNull(uuid, "uuid must not be null.");
-        return ByteBuffer.allocate( UUID_WIDTH )
+        return ByteBuffer.allocate(UUID_WIDTH)
                 .putLong(uuid.getMostSignificantBits())
                 .putLong(uuid.getLeastSignificantBits())
                 .array();
@@ -46,6 +48,7 @@ public class Util {
 
     /**
      * Create a {@link UUID} from a {@link byte[]} UUID_WIDTH bytes long.
+     *
      * @param bytes A byte buffer UUID_WIDTH bytes wide
      */
     public static UUID BytesToUUID(byte[] bytes) {
@@ -73,6 +76,7 @@ public class Util {
 
     /**
      * Serialize obj into byte[]
+     *
      * @return Serialized row
      * @throws IOException when serialization fails
      */
@@ -87,6 +91,7 @@ public class Util {
 
     /**
      * Deserialize obj into new clazz instance
+     *
      * @param obj byte buffer containing serialized Object
      * @return new Row instance from serializedRow
      * @throws IOException

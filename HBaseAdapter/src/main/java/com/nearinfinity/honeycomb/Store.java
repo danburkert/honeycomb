@@ -11,12 +11,14 @@ import java.io.IOException;
 public interface Store {
     /**
      * Get the singleton instance of the Store
+     *
      * @return the store
      */
     public Store getStore(Configuration configuration) throws IOException;
 
     /**
      * Return the table
+     *
      * @param name The name of the table
      * @return the table
      * @throws TableNotFoundException
@@ -26,6 +28,7 @@ public interface Store {
     /**
      * Create a table, or if the table already exists with the same name and
      * columns, open it.
+     *
      * @param metadata
      * @return
      * @throws IOException
@@ -34,6 +37,7 @@ public interface Store {
 
     /**
      * Delete the specified table
+     *
      * @param name name of the table
      * @throws IOException
      */

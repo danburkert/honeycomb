@@ -4,7 +4,9 @@ import com.google.gson.Gson;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.Writable;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 
 public class ColumnMetadata implements Writable {
     private ColumnType type;

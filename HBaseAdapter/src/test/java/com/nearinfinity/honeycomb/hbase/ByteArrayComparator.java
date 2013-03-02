@@ -11,11 +11,15 @@ import java.util.Comparator;
 public class ByteArrayComparator implements Comparator<byte[]> {
     @Override
     public int compare(byte[] b1, byte[] b2) {
-        if (b1.length != b2.length) { return b1.length - b2.length; }
-        else {
+        if (b1.length != b2.length) {
+            return b1.length - b2.length;
+        } else {
             for (int i = 0; i < b1.length; i++) {
-                if (b1[i] == b2[i]) { continue; }
-                else { return UnsignedBytes.compare(b1[i], b2[i]); }
+                if (b1[i] == b2[i]) {
+                    continue;
+                } else {
+                    return UnsignedBytes.compare(b1[i], b2[i]);
+                }
             }
         }
         return 0;

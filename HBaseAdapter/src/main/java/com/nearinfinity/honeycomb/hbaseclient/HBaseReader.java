@@ -10,7 +10,6 @@ import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.mysqlengine.HBaseResultScanner;
 import com.nearinfinity.honeycomb.mysqlengine.SingleResultScanner;
 import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
 
@@ -46,7 +45,6 @@ public class HBaseReader {
 
     /**
      * Retrieves a SQL row based on a unique identifier.
-     *
      *
      * @param uuid      Data row unique identifier
      * @param tableName SQL table name
