@@ -150,6 +150,7 @@ jclass JNICache::get_class_ref(JNIEnv* env, const char* clazz)
         "JNICache: Failed to find class %s", clazz);
     Logging::fatal(log_buffer);
     perror("Failure during JNI class lookup. Check honeycomb.log for details.");
+    env->ExceptionDescribe();
     abort();
   }
   jclass clazz_ref = (jclass) env->NewGlobalRef(local_clazz_ref);
@@ -160,6 +161,7 @@ jclass JNICache::get_class_ref(JNIEnv* env, const char* clazz)
         "JNICache: Not enough JVM memory to create global reference to class %s", clazz);
     Logging::fatal(log_buffer);
     perror("Failure during JNI reference creation. Check honeycomb.log for details.");
+    env->ExceptionDescribe();
     abort();
   }
   return clazz_ref;
