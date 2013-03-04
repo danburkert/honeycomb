@@ -44,9 +44,8 @@ public class HBaseMetadata {
         return deserializeId(tableIdBytes);
     }
 
-    public BiMap<String, Long> getColumnIds(String tableName)
+    public BiMap<String, Long> getColumnIds(long tableId)
             throws IOException, TableNotFoundException {
-        Long tableId = getTableId(tableName);
         Get get = new Get(new ColumnsRow(tableId).encode());
         get.addFamily(COLUMN_FAMILY);
         Result result = hTable.get(get);
@@ -64,9 +63,8 @@ public class HBaseMetadata {
         return ImmutableBiMap.copyOf(columnIds);
     }
 
-    public TableSchema getSchema(String tableName)
+    public TableSchema getSchema(long tableId)
             throws IOException, TableNotFoundException {
-        Long tableId = getTableId(tableName);
         byte[] serializedTableId = serializeId(tableId);
 
         Get get = new Get(new SchemaRow().encode());
@@ -74,7 +72,7 @@ public class HBaseMetadata {
         Result result = hTable.get(get);
         byte[] serializedSchema = result.getValue(COLUMN_FAMILY, serializedTableId);
         if (serializedSchema == null) {
-            throw new TableNotFoundException(tableName);
+            throw new TableNotFoundException(tableId);
         }
         return Util.deserializeTableSchema(serializedSchema);
     }
@@ -98,7 +96,6 @@ public class HBaseMetadata {
         byte[] serializedId = serializeId(tableId);
 
         List<Delete> deletes = new ArrayList<Delete>();
-
 
         Delete columnIdsDelete = new Delete(new ColumnsRow(tableId).encode());
         // commented out because MockHTable seems to be broken

@@ -12,11 +12,11 @@ import java.util.UUID;
 
 public class HBaseTable implements Table {
     final private HTableInterface hTable;
-    final private String name;
+    final private long tableId;
 
-    public HBaseTable(HTableInterface hTable, String name) {
+    public HBaseTable(HTableInterface hTable, long tableId) {
         this.hTable = hTable;
-        this.name = name;
+        this.tableId = tableId;
     }
 
     @Override

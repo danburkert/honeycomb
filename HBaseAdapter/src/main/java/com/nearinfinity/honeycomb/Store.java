@@ -13,20 +13,11 @@ public interface Store {
     /**
      * Return the table
      *
-     * @param name The name of the table
+     * @param tableName The name of the table
      * @return the table
      * @throws TableNotFoundException
      */
-    public Table openTable(String name) throws TableNotFoundException;
-
-    /**
-     * Return the table's metadata
-     *
-     * @param name The table name
-     * @return The table's metadata
-     * @throws TableNotFoundException
-     */
-    public TableSchema getTableMetadata(String name) throws TableNotFoundException;
+    public Table openTable(String tableName) throws Exception;
 
     /**
      * Create a table, or if the table already exists with the same name and
@@ -36,13 +27,33 @@ public interface Store {
      * @return
      * @throws IOException
      */
-    public Table createTable(TableSchema schema) throws IOException /*TableExistsException?*/;
+    public Table createTable(TableSchema schema) throws Exception;
 
     /**
      * Delete the specified table
      *
-     * @param name name of the table
+     * @param tableName name of the table
      * @throws IOException
      */
-    public void deleteTable(String name) throws IOException;
+    public void deleteTable(String tableName) throws Exception;
+
+    /**
+     * Return the table's metadata
+     *
+     *
+     * @param tableName The table name
+     * @return The table's metadata
+     * @throws TableNotFoundException
+     */
+    public TableSchema getTableMetadata(String tableName) throws Exception;
+
+    /**
+     * Alter the table with the specified name.
+     *
+     * @param tableName The name of the table to be altered
+     * @param schema The new schema for the table
+     * @throws TableNotFoundException
+     * @throws IOException
+     */
+    public void alterTable(String tableName, TableSchema schema) throws Exception;
 }
