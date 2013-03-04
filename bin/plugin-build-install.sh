@@ -8,7 +8,7 @@ command -v make >/dev/null 2>&1 || { echo >&2 "make is required to run $0."; exi
 build_dir=$HONEYCOMB_HOME/build
 if [ ! -d $build_dir ]
 then
-  echo "Creating $build_dir"
+  echo "Creating build output directory: $build_dir"
   mkdir $build_dir
 fi
 
@@ -40,12 +40,12 @@ then
   [ $? -ne 0 ] && { echo "mysql_install_db failed stopping the script."; exit 1; }
   echo "Starting up MySQL"
   support-files/mysql.server start
-  [ $? -ne 0 ] && { echo "mysql_install_db failed stopping the script."; exit 1; }
+  [ $? -ne 0 ] && { echo "Starting MySQL server failed, stopping the script."; exit 1; }
   popd
 fi
 
 link=$MYSQL_HOME/lib/plugin/ha_honeycomb.so
-target=$HONEYCOMB_HOME/build/storage/honeycomb/ha_honeycomb.so
+target=$build_dir/storage/honeycomb/ha_honeycomb.so
 if [ ! -h $link ]
 then
   if [ -e $link ]; then
