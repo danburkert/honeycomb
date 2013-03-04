@@ -1,7 +1,25 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
-import org.apache.avro.io.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.UUID;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.apache.avro.io.BinaryDecoder;
+import org.apache.avro.io.DatumReader;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.io.DecoderFactory;
+import org.apache.avro.io.Encoder;
+import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.hadoop.conf.Configuration;
@@ -11,18 +29,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.UUID;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 
 /**
  * Utility class containing helper functions.
@@ -31,6 +38,10 @@ public class Util {
     private static final Logger logger = Logger.getLogger(Util.class);
 
     public static final int UUID_WIDTH = 16;
+
+
+    private static BinaryDecoder binaryDecoder;
+
 
     /**
      * Returns a UUID_WIDTH byte wide buffer from a {@link UUID}.
@@ -62,7 +73,7 @@ public class Util {
     }
 
     public static TableSchema deserializeTableSchema(byte[] schema) throws IOException {
-        return (TableSchema) deserializeAvroObject(schema, TableSchema.class);
+        return deserializeAvroObject(schema, TableSchema.class);
     }
 
     /**
@@ -81,19 +92,20 @@ public class Util {
     }
 
     /**
-     * Deserialize obj into new clazz instance
-     *
-     * @param obj byte buffer containing serialized Object
-     * @return new Row instance from serializedRow
-     * @throws IOException
+     * Deserialize the provided serialized data into an instance of the specified class type
+     * @param serializedData a buffer containing the serialized data
+     * @param clazz the class type to instantiate to store the deserialized data
+     * @return A new instance of the specified class representing the deserialized data
+     * @throws IOException On deserialization reader failure
      */
-    public static Object deserializeAvroObject(byte[] obj, Class clazz)
-            throws IOException {
-        DatumReader<Object> reader = new SpecificDatumReader<Object>(clazz);
-        ByteArrayInputStream in = new ByteArrayInputStream(obj);
-        Decoder decoder = DecoderFactory.get().binaryDecoder(in, null);
-        return reader.read(null, decoder);
+    public static <T> T deserializeAvroObject(byte[] serializedData, Class<T> clazz) throws IOException {
+        final DatumReader<T> userDatumReader = new SpecificDatumReader<T>(clazz);
+        final ByteArrayInputStream in = new ByteArrayInputStream(serializedData);
+        binaryDecoder = DecoderFactory.get().binaryDecoder(in, binaryDecoder);
+
+        return userDatumReader.read(null, binaryDecoder);
     }
+
 
     public static String generateHexString(final byte[] bytes) {
         StringBuilder sb = new StringBuilder();
