@@ -56,4 +56,13 @@ public interface Store {
      * @throws IOException
      */
     public void alterTable(String tableName, TableSchema schema) throws Exception;
+
+    /**
+     * Gets the current value of the auto increment column in the table
+     *
+     * @param tableName
+     * @return
+     * @throws Exception
+     */
+    public long getAutoInc(String tableName) throws Exception;
 }

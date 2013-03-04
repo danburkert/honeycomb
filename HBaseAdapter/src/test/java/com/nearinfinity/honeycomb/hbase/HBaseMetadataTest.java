@@ -6,6 +6,7 @@ import com.nearinfinity.honeycomb.TableNotFoundException;
 import com.nearinfinity.honeycomb.mysql.ColumnSchemaGenerator;
 import com.nearinfinity.honeycomb.mysql.TableSchemaGenerator;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.PrimitiveGenerators;
@@ -27,14 +28,14 @@ public class HBaseMetadataTest {
     static Generator<TableSchema> tableMetadataGen = new TableSchemaGenerator();
     static Generator<ColumnSchema> columnSchemaGen = new ColumnSchemaGenerator();
     static HBaseMetadata hbaseMetadata;
-    static Map<String, TableSchema> metadatas;
+    static Map<String, TableSchema> tableSchemas;
 
     @BeforeClass
     public static void setUp() throws Exception {
         hbaseMetadata = new HBaseMetadata(MockHTable.create());
-        metadatas = new HashMap<String, TableSchema>();
+        tableSchemas = new HashMap<String, TableSchema>();
         for (TableSchema schema : Iterables.toIterable(tableMetadataGen)) {
-            metadatas.put(schema.getName(), schema);
+            tableSchemas.put(schema.getName(), schema);
             hbaseMetadata.putSchema(schema);
         }
     }
@@ -42,14 +43,14 @@ public class HBaseMetadataTest {
     @AfterClass
     public static void tearDown() throws Exception {
         hbaseMetadata = null;
-        metadatas = null;
+        tableSchemas = null;
     }
 
     @Test
     public void testUniqueTableIds() throws Exception {
         Set<Long> ids = new HashSet<Long>();
         Long id;
-        for (String table : metadatas.keySet()) {
+        for (String table : tableSchemas.keySet()) {
             id = hbaseMetadata.getTableId(table);
             Assert.assertFalse(ids.contains(id));
             ids.add(id);
@@ -58,18 +59,22 @@ public class HBaseMetadataTest {
 
     @Test
     public void testUniqueColumnIds() throws Exception {
-        for (String table : metadatas.keySet()) {
+        long tableId;
+        for (String table : tableSchemas.keySet()) {
             // If there are duplicate column ids BiMap will throw an
             // IllegalArgumentException, so no assertion needed.
-            hbaseMetadata.getColumnIds(table);
+            tableId = hbaseMetadata.getTableId(table);
+            hbaseMetadata.getColumnIds(tableId);
         }
     }
 
     @Test
     public void testSchemaGet() throws Exception {
-        for (String tableName : metadatas.keySet()) {
-            TableSchema expected = metadatas.get(tableName);
-            TableSchema actual = hbaseMetadata.getSchema(tableName);
+        long tableId;
+        for (String tableName : tableSchemas.keySet()) {
+            TableSchema expected = tableSchemas.get(tableName);
+            tableId = hbaseMetadata.getTableId(tableName);
+            TableSchema actual = hbaseMetadata.getSchema(tableId);
             Assert.assertEquals(expected, actual);
         }
     }
@@ -81,7 +86,8 @@ public class HBaseMetadataTest {
         TableSchema schema = tableMetadataGen.next();
         String tableName = schema.getName();
         hbaseMetadata2.putSchema(schema);
-        TableSchema expected = hbaseMetadata2.getSchema(tableName);
+        long tableId = hbaseMetadata2.getTableId(tableName);
+        TableSchema expected = hbaseMetadata2.getSchema(tableId);
         Assert.assertEquals(schema, expected);
 
         hbaseMetadata2.deleteSchema(tableName);
@@ -95,9 +101,10 @@ public class HBaseMetadataTest {
         TableSchema schema = tableMetadataGen.next();
         String tableName = schema.getName();
         hbaseMetadata.putSchema(schema);
-        Assert.assertEquals(schema, hbaseMetadata.getSchema(tableName));
+        long tableId = hbaseMetadata.getTableId(tableName);
+        Assert.assertEquals(schema, hbaseMetadata.getSchema(tableId));
         hbaseMetadata.deleteSchema(tableName);
-        hbaseMetadata.getSchema(tableName);
+        hbaseMetadata.getSchema(tableId);
     }
 
     @Test
@@ -114,8 +121,8 @@ public class HBaseMetadataTest {
         hbaseMetadata2.updateSchema(origSchema, newSchema);
         Assert.assertEquals(hbaseMetadata2.getTableId(newName), origId);
         Assert.assertEquals(origSchema.getColumns(),
-                hbaseMetadata2.getSchema(newName).getColumns());
-        Assert.assertEquals(hbaseMetadata2.getSchema(newName).getName(), newName);
+                hbaseMetadata2.getSchema(origId).getColumns());
+        Assert.assertEquals(hbaseMetadata2.getSchema(origId).getName(), newName);
     }
 
     @Test
@@ -134,7 +141,8 @@ public class HBaseMetadataTest {
         hbaseMetadata2.putSchema(origSchema);
         hbaseMetadata2.updateSchema(origSchema, newSchema);
 
-        TableSchema returnedSchema = hbaseMetadata2.getSchema(tableName);
+        long tableId = hbaseMetadata2.getTableId(tableName);
+        TableSchema returnedSchema = hbaseMetadata2.getSchema(tableId);
 
         Assert.assertEquals(newSchema, returnedSchema);
         Assert.assertEquals(origSchema.getColumns().size() - 1,
@@ -158,11 +166,17 @@ public class HBaseMetadataTest {
         hbaseMetadata2.putSchema(origSchema);
         hbaseMetadata2.updateSchema(origSchema, newSchema);
 
-        TableSchema returnedSchema = hbaseMetadata2.getSchema(tableName);
+        long tableId = hbaseMetadata2.getTableId(tableName);
+        TableSchema returnedSchema = hbaseMetadata2.getSchema(tableId);
 
         Assert.assertEquals(newSchema, returnedSchema);
         Assert.assertEquals(origSchema.getColumns().size() + 1,
                 returnedSchema.getColumns().size());
         Assert.assertEquals(newColumn, returnedSchema.getColumns().get(columnName));
+    }
+
+    @Test public void testAutoInc() throws Exception {
+        ColumnSchema column = new ColumnSchema(ColumnType.LONG, true, true, null, null, null);
+        Map<String, ColumnSchema> columns = new HashMap<String, ColumnSchema>();
     }
 }

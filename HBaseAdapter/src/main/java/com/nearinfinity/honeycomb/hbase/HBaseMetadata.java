@@ -12,6 +12,7 @@ import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -168,6 +169,21 @@ public class HBaseMetadata {
         hTable.delete(deletes);
         hTable.put(puts);
         hTable.flushCommits();
+    }
+
+    public long getAutoInc(long tableId) throws IOException {
+        Get get = new Get(new AutoIncRow().encode());
+        byte[] serializedTableId = serializeId(tableId);
+        get.addColumn(COLUMN_FAMILY, serializedTableId);
+        Result result = hTable.get(get);
+        return result == null
+                ? 0L
+                : Bytes.toLong(result.getValue(COLUMN_FAMILY, serializedTableId));
+    }
+
+    public long incrementAutoInc(long tableId, long amount) throws IOException {
+        return hTable.incrementColumnValue(new AutoIncRow().encode(),
+                COLUMN_FAMILY, serializeId(tableId), amount);
     }
 
     private long getNextTableId() throws IOException {

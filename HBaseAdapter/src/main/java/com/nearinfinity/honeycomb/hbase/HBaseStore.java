@@ -164,6 +164,12 @@ public class HBaseStore implements Store {
         invalidateCache(tableName);
     }
 
+    @Override
+    public long getAutoInc(String tableName) throws Exception {
+        long tableId = tableCache.get(tableName);
+        return 0;
+    }
+
     private void invalidateCache(String tableName) throws Exception {
         long tableId = tableCache.get(tableName);
         tableCache.invalidate(tableName);
