@@ -7,9 +7,16 @@ HONEYCOMB_XML_PATH = "/etc/mysql/honeycomb.xml"
 CLASSPATH_PREFIX = "-Djava.class.path="
 MYSQLENGINE_JAR =  "/usr/local/lib/honeycomb/mysqlengine-0.1.jar"
 
+if ARGV.length == 0
+  puts "Please specify the 'home' location of the project"
+  exit 
+elsif ARGV.length > 0
+  project_home = ARGV[0]
+end
+
 begin
   honeycomb_file = File.open(HONEYCOMB_XML_PATH, "r+")
-  classpath_file = File.open("../HBaseAdapter/target/classpath")
+  classpath_file = File.open("#{project_home}/HBaseAdapter/target/classpath")
 
   classpath = classpath_file.gets
   xml = Nokogiri::XML(honeycomb_file)
