@@ -1,23 +1,15 @@
 package com.nearinfinity.honeycomb.hbaseclient;
 
-import org.apache.hadoop.hbase.util.Bytes;
-
 import java.util.UUID;
 
 public final class Constants {
     public static final String HBASE_TABLE = "hbase_table_name";
 
-    public static final String ZK_QUORUM = "zkQuorum";
+    public static final String ZK_QUORUM = "zk_quorum";
 
     public static final byte[] NIC = "nic".getBytes();
 
-    public static final byte[] IS_DELETED = "isDeleted".getBytes();
-
-    public static final byte[] DELETED_VAL = Bytes.toBytes(1L);
-
     public static final byte[] VALUE_MAP = "valueMap".getBytes();
-
-    public static final byte[] VALUE_COLUMN = "value".getBytes();
 
     public static final byte[] METADATA = "metadata".getBytes();
 

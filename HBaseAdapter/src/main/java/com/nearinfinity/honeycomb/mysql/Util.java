@@ -58,19 +58,19 @@ public class Util {
         return new UUID(buffer.getLong(), buffer.getLong());
     }
 
-    public byte[] serializeTableMetadata(TableMetadata metadata) throws IOException {
+    public static byte[] serializeTableMetadata(TableMetadata metadata) throws IOException {
         return serializeAvroObject(metadata, TableMetadata.class);
     }
 
-    public TableMetadata deserializeTableMetadata(byte[] metadata) throws IOException {
+    public static TableMetadata deserializeTableMetadata(byte[] metadata) throws IOException {
         return (TableMetadata) deserializeAvroObject(metadata, TableMetadata.class);
     }
 
-    public byte[] serializeColumnMetadata(ColumnMetadata metadata) throws IOException {
+    public static byte[] serializeColumnMetadata(ColumnMetadata metadata) throws IOException {
         return serializeAvroObject(metadata, ColumnMetadata.class);
     }
 
-    public ColumnMetadata deserializeColumnMetadata(byte[] metadata) throws IOException {
+    public static ColumnMetadata deserializeColumnMetadata(byte[] metadata) throws IOException {
         return (ColumnMetadata) deserializeAvroObject(metadata, ColumnMetadata.class);
     }
 

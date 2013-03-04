@@ -5,8 +5,6 @@ import com.nearinfinity.honeycomb.RowNotFoundException;
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.mysql.Row;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnMetadata;
-import com.nearinfinity.honeycomb.mysql.gen.TableMetadata;
 import org.apache.hadoop.hbase.client.HTableInterface;
 
 import java.io.IOException;
@@ -23,7 +21,6 @@ public class HBaseTable implements Table {
 
     @Override
     public void insert(Row row) {
-
     }
 
     @Override
@@ -74,34 +71,17 @@ public class HBaseTable implements Table {
     }
 
     @Override
-    public long getAutoIncValue(String column)
-            throws IOException, ColumnNotFoundException {
+    public long getAutoIncValue(String column) throws IOException, ColumnNotFoundException {
         return 0;
     }
 
     @Override
-    public void setAutoIncValue(String column, long value)
-            throws IOException, ColumnNotFoundException {
+    public void setAutoIncValue(String column, long value) throws IOException, ColumnNotFoundException {
     }
 
     @Override
-    public ColumnMetadata getColumnMetadata(String column)
-            throws IOException, ColumnNotFoundException {
+    public String getName() throws IOException {
         return null;
-    }
-
-    @Override
-    public String getTableName() throws IOException {
-        return null;
-    }
-
-    @Override
-    public String getDatabaseName() throws IOException {
-        return null;
-    }
-
-    @Override
-    public void alterTable(TableMetadata tableMetadata) throws IOException {
     }
 
     @Override

@@ -46,14 +46,8 @@ public class RowKeyTest {
 
             if (row1Class == TablesRow.class) {
                 return 0;
-            } else if (row1Class == ColumnsRow.class) {
-                return columnsRowCompare((ColumnsRow) row1, (ColumnsRow) row2);
-            } else if (row1Class == ColumnMetadataRow.class) {
-                return columnMetadataRowCompare((ColumnMetadataRow) row1,
-                        (ColumnMetadataRow) row2);
-            } else if (row1Class == TableMetadataRow.class) {
-                return tableMetadataRowCompare((TableMetadataRow) row1,
-                        (TableMetadataRow) row2);
+            } else if (row1 instanceof MetadataRow) {
+                return metadataRowCompare((MetadataRow) row1, (MetadataRow) row2);
             } else if (row1Class == DataRow.class) {
                 return dataRowCompare((DataRow) row1, (DataRow) row2);
             } else if (row1Class == AscIndexRow.class) {
@@ -63,22 +57,7 @@ public class RowKeyTest {
             }
         }
 
-        private int columnsRowCompare(ColumnsRow row1, ColumnsRow row2) {
-            return Long.signum(row1.getTableId() - row2.getTableId());
-        }
-
-        private int columnMetadataRowCompare(ColumnMetadataRow row1,
-                                             ColumnMetadataRow row2) {
-            int tableCompare = Long.signum(row1.getTableId() - row2.getTableId());
-            if (tableCompare != 0) {
-                return tableCompare;
-            } else {
-                return Long.signum(row1.getColumnId() - row2.getColumnId());
-            }
-        }
-
-        private int tableMetadataRowCompare(TableMetadataRow row1,
-                                            TableMetadataRow row2) {
+        private int metadataRowCompare(MetadataRow row1, MetadataRow row2) {
             return Long.signum(row1.getTableId() - row2.getTableId());
         }
 

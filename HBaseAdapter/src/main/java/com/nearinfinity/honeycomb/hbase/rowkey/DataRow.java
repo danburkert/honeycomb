@@ -12,17 +12,28 @@ public class DataRow implements RowKey {
     private long tableId;
     private UUID uuid;
 
-    public DataRow(long tableId, UUID uuid) {
+    public DataRow(long tableId) {
         Preconditions.checkArgument(tableId >= 0, "Table ID must be non-zero.");
-        Preconditions.checkNotNull(uuid, "Data RowKey UUID must not be null.");
         this.tableId = tableId;
+        this.uuid = null;
+    }
+
+    public DataRow(long tableId, UUID uuid) {
+        this(tableId);
+        Preconditions.checkNotNull(uuid, "Data RowKey UUID must not be null.");
         this.uuid = uuid;
     }
 
     public byte[] encode() {
-        return VarEncoder.appendByteArraysWithPrefix(PREFIX,
-                VarEncoder.encodeULong(tableId),
-                Util.UUIDToBytes(uuid));
+        if (uuid != null) {
+            return VarEncoder.appendByteArraysWithPrefix(PREFIX,
+                    VarEncoder.encodeULong(tableId),
+                    Util.UUIDToBytes(uuid));
+        } else {
+            return  VarEncoder.appendByteArraysWithPrefix(PREFIX,
+                    VarEncoder.encodeULong(tableId));
+        }
+
     }
 
     public long getTableId() {
@@ -44,7 +55,7 @@ public class DataRow implements RowKey {
         sb.append("\t");
         sb.append(tableId);
         sb.append("\t");
-        sb.append(Util.generateHexString(Util.UUIDToBytes(uuid)));
+        sb.append(uuid == null ? "" : Util.generateHexString(Util.UUIDToBytes(uuid)));
         sb.append("]");
         return sb.toString();
     }

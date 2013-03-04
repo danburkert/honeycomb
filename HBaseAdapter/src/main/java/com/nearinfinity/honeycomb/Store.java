@@ -1,20 +1,14 @@
 package com.nearinfinity.honeycomb;
 
 import com.nearinfinity.honeycomb.mysql.gen.TableMetadata;
-import org.apache.hadoop.conf.Configuration;
 
 import java.io.IOException;
 
 /**
- * The store is a singleton which opens, creates, and deletes Tables.
+ * The store is responsible for meta operations on tables: opening, creating,
+ * altering, deleting, and retrieving metadata.
  */
 public interface Store {
-    /**
-     * Get the singleton instance of the Store
-     *
-     * @return the store
-     */
-    public Store getStore(Configuration configuration) throws IOException;
 
     /**
      * Return the table
@@ -23,7 +17,16 @@ public interface Store {
      * @return the table
      * @throws TableNotFoundException
      */
-    public Table open(String name) throws TableNotFoundException;
+    public Table openTable(String name) throws TableNotFoundException;
+
+    /**
+     * Return the table's metadata
+     *
+     * @param name The table name
+     * @return The table's metadata
+     * @throws TableNotFoundException
+     */
+    public TableMetadata getTableMetadata(String name) throws TableNotFoundException;
 
     /**
      * Create a table, or if the table already exists with the same name and
@@ -33,7 +36,7 @@ public interface Store {
      * @return
      * @throws IOException
      */
-    public Table create(TableMetadata metadata) throws IOException /*TableExistsException?*/;
+    public Table createTable(TableMetadata metadata) throws IOException /*TableExistsException?*/;
 
     /**
      * Delete the specified table

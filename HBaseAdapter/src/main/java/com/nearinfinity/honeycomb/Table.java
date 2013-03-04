@@ -1,8 +1,6 @@
 package com.nearinfinity.honeycomb;
 
 import com.nearinfinity.honeycomb.mysql.Row;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnMetadata;
-import com.nearinfinity.honeycomb.mysql.gen.TableMetadata;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -10,8 +8,7 @@ import java.util.UUID;
 
 /**
  * A Table handles operations for a single MySQL table.  It must support insert,
- * update, delete and get operations on Rows, table and index scan operations,
- * and store and alter operations on the table metadata (schema).
+ * update, delete and get operations on Rows, table and index scan operations
  */
 public interface Table extends Closeable {
     /**
@@ -126,32 +123,11 @@ public interface Table extends Closeable {
             throws IOException, ColumnNotFoundException;
 
     /**
-     * Return the ColumnMetadata container for the column
-     *
-     * @param column Name of the column
-     * @return ColumnMetadata of column
-     * @throws IOException
-     * @throws ColumnNotFoundException
-     */
-    public ColumnMetadata getColumnMetadata(String column)
-            throws IOException, ColumnNotFoundException;
-
-    /**
-     * Get the table name of the Table
+     * Get the name of the Table
      *
      * @return the table name
      * @throws IOException
      */
-    public String getTableName() throws IOException;
+    public String getName() throws IOException;
 
-    /**
-     * Get the database name of the Table
-     *
-     * @return the database name
-     * @throws IOException
-     */
-    public String getDatabaseName() throws IOException;
-
-    // Have not figure this one out yet
-    public void alterTable(TableMetadata tableMetadata) throws IOException;
 }

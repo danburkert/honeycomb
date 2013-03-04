@@ -1,6 +1,7 @@
 package com.nearinfinity.honeycomb.hbase;
 
 import com.nearinfinity.honeycomb.hbase.rowkey.*;
+import com.nearinfinity.honeycomb.hbaseclient.Constants;
 import com.nearinfinity.honeycomb.mysql.UUIDGenerator;
 import net.java.quickcheck.FrequencyGenerator;
 import net.java.quickcheck.Generator;
@@ -20,7 +21,7 @@ public class RowKeyGenerator implements Generator<RowKey> {
             CombinedGenerators.nullsAnd(CombinedGenerators.byteArrays(), 5);
 
     private Generator<List<Long>> randIdsGen = CombinedGenerators.lists(randIdGen,
-            PrimitiveGenerators.integers(1, 4));
+            PrimitiveGenerators.integers(1, Constants.KEY_PART_COUNT));
     private FrequencyGenerator<RowKey> rowKeyGen;
 
     public RowKeyGenerator() {
@@ -29,10 +30,7 @@ public class RowKeyGenerator implements Generator<RowKey> {
         // The first tests sorting on tableId, the second holds tableId constant
         // and tests sorting on columnId.
         rowKeyGen = new DefaultFrequencyGenerator<RowKey>(new TablesRowGenerator(), 1);
-        rowKeyGen.add(new ColumnsRowGenerator(), 2);
-        rowKeyGen.add(new ColumnMetadataGenerator(), 2);
-        rowKeyGen.add(new ColumnMetadataGenerator(randIdGen.next()), 2);
-        rowKeyGen.add(new TableMetadataRowGenerator(), 2);
+        rowKeyGen.add(new MetadataRowGenerator(), 4);
         rowKeyGen.add(new DataRowGenerator(), 3);
         rowKeyGen.add(new DataRowGenerator(randIdGen.next()), 3);
         rowKeyGen.add(new IndexRowGenerator(), 3);
@@ -59,34 +57,22 @@ public class RowKeyGenerator implements Generator<RowKey> {
         }
     }
 
-    private class ColumnsRowGenerator implements Generator<RowKey> {
-        @Override
+    private class MetadataRowGenerator implements Generator<RowKey> {
         public RowKey next() {
-            return new ColumnsRow(randIdGen.next());
-        }
-    }
-
-    private class ColumnMetadataGenerator implements Generator<RowKey> {
-        Generator<Long> tableIdGen;
-
-        public ColumnMetadataGenerator() {
-            tableIdGen = randIdGen;
-        }
-
-        public ColumnMetadataGenerator(Long tableId) {
-            tableIdGen = new FixedValuesGenerator<Long>(tableId);
-        }
-
-        @Override
-        public RowKey next() {
-            return new ColumnMetadataRow(tableIdGen.next(), randIdGen.next());
-        }
-    }
-
-    private class TableMetadataRowGenerator implements Generator<RowKey> {
-        @Override
-        public RowKey next() {
-            return new TableMetadataRow(randIdGen.next());
+            MetadataRow row = null;
+            long tableId = randIdGen.next();
+            switch (rand.nextInt(3)) {
+                case 0:
+                    row = new ColumnsRow(tableId);
+                    break;
+                case 1:
+                    row = new ColumnMetadataRow(tableId);
+                    break;
+                case 2:
+                    row = new TableMetadataRow(tableId);
+                    break;
+            }
+            return row;
         }
     }
 
@@ -151,9 +137,9 @@ public class RowKeyGenerator implements Generator<RowKey> {
         private RowKey createIndexRow(Long tableId, UUID uuid, List<Long> columnIds,
                                       Map<Long, byte[]> records) {
             if (rand.nextBoolean()) {
-                return new AscIndexRow(tableId, uuid, columnIds, records);
+                return new AscIndexRow(tableId, columnIds, records, uuid);
             } else {
-                return new DescIndexRow(tableId, uuid, columnIds, records);
+                return new DescIndexRow(tableId, columnIds, records, uuid);
             }
         }
     }
