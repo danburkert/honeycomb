@@ -65,4 +65,22 @@ public interface Store {
      * @throws Exception
      */
     public long getAutoInc(String tableName) throws Exception;
+
+    /**
+     * Increment the table's auto increment value by amount
+     *
+     * @param tableName Name of table
+     * @param amount Amount to auto increment by
+     * @return
+     * @throws Exception
+     */
+    public long incrementAutoInc(String tableName, long amount) throws Exception;
+
+    /**
+     * Truncate the tables auto increment value.
+     *
+     * @param tableName Name of table
+     * @throws Exception
+     */
+    public void truncateAutoInc(String tableName) throws Exception;
 }

@@ -71,8 +71,8 @@ public class Util {
      * @return Serialized row
      * @throws IOException when serialization fails
      */
-    public static byte[] serializeAvroObject(Object obj, Class clazz) throws IOException {
-        DatumWriter<Object> writer = new SpecificDatumWriter<Object>(clazz);
+    public static <T> byte[] serializeAvroObject(T obj, Class<T> clazz) throws IOException {
+        DatumWriter<T> writer = new SpecificDatumWriter<T>(clazz);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Encoder encoder = EncoderFactory.get().binaryEncoder(out, null);
         writer.write(obj, encoder);

@@ -175,15 +175,20 @@ public class HBaseMetadata {
         Get get = new Get(new AutoIncRow().encode());
         byte[] serializedTableId = serializeId(tableId);
         get.addColumn(COLUMN_FAMILY, serializedTableId);
-        Result result = hTable.get(get);
-        return result == null
-                ? 0L
-                : Bytes.toLong(result.getValue(COLUMN_FAMILY, serializedTableId));
+        byte[] value = hTable.get(get).getValue(COLUMN_FAMILY, serializedTableId);
+        return value == null ? 0 : Bytes.toLong(value);
     }
 
     public long incrementAutoInc(long tableId, long amount) throws IOException {
         return hTable.incrementColumnValue(new AutoIncRow().encode(),
                 COLUMN_FAMILY, serializeId(tableId), amount);
+    }
+
+    public void truncateAutoInc(long tableId) throws IOException {
+        Delete delete = new Delete(new AutoIncRow().encode());
+        delete.deleteColumn(COLUMN_FAMILY, serializeId(tableId));
+        hTable.delete(delete);
+        hTable.flushCommits();
     }
 
     private long getNextTableId() throws IOException {

@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class HBaseMetadataTest {
-    static Generator<TableSchema> tableMetadataGen = new TableSchemaGenerator();
+    static Generator<TableSchema> tableSchemaGen = new TableSchemaGenerator();
     static Generator<ColumnSchema> columnSchemaGen = new ColumnSchemaGenerator();
     static HBaseMetadata hbaseMetadata;
     static Map<String, TableSchema> tableSchemas;
@@ -34,7 +34,7 @@ public class HBaseMetadataTest {
     public static void setUp() throws Exception {
         hbaseMetadata = new HBaseMetadata(MockHTable.create());
         tableSchemas = new HashMap<String, TableSchema>();
-        for (TableSchema schema : Iterables.toIterable(tableMetadataGen)) {
+        for (TableSchema schema : Iterables.toIterable(tableSchemaGen)) {
             tableSchemas.put(schema.getName(), schema);
             hbaseMetadata.putSchema(schema);
         }
@@ -83,7 +83,7 @@ public class HBaseMetadataTest {
     public void testSchemaDeleteRemovesAllRowIds() throws Exception {
         HTableInterface hTable = MockHTable.create();
         HBaseMetadata hbaseMetadata2 = new HBaseMetadata(hTable);
-        TableSchema schema = tableMetadataGen.next();
+        TableSchema schema = tableSchemaGen.next();
         String tableName = schema.getName();
         hbaseMetadata2.putSchema(schema);
         long tableId = hbaseMetadata2.getTableId(tableName);
@@ -98,7 +98,7 @@ public class HBaseMetadataTest {
 
     @Test(expected = TableNotFoundException.class)
     public void testSchemaDeleteRemovesTable() throws Exception {
-        TableSchema schema = tableMetadataGen.next();
+        TableSchema schema = tableSchemaGen.next();
         String tableName = schema.getName();
         hbaseMetadata.putSchema(schema);
         long tableId = hbaseMetadata.getTableId(tableName);
@@ -111,7 +111,7 @@ public class HBaseMetadataTest {
     public void testUpdateSchemaRenameTable() throws Exception {
         String originalName = "OriginalName";
         String newName = "NewName";
-        TableSchema origSchema = tableMetadataGen.next();
+        TableSchema origSchema = tableSchemaGen.next();
         TableSchema newSchema = new TableSchema(newName, origSchema.getColumns());
         origSchema.setName(originalName);
         HTableInterface hTable = MockHTable.create();
@@ -127,7 +127,7 @@ public class HBaseMetadataTest {
 
     @Test
     public void testUpdateSchemaDropColumn() throws Exception {
-        TableSchema newSchema = tableMetadataGen.next();
+        TableSchema newSchema = tableSchemaGen.next();
         String tableName = newSchema.getName();
         Map<String, ColumnSchema> origColumns = ImmutableMap.copyOf(newSchema.getColumns());
         Map<String, ColumnSchema> newColumns = newSchema.getColumns();
@@ -152,7 +152,7 @@ public class HBaseMetadataTest {
 
     @Test
     public void testUpdateSchemaAddColumn() throws Exception {
-        TableSchema newSchema = tableMetadataGen.next();
+        TableSchema newSchema = tableSchemaGen.next();
         ColumnSchema newColumn = columnSchemaGen.next();
         String columnName = PrimitiveGenerators.strings().next();
         String tableName = newSchema.getName();
@@ -178,5 +178,19 @@ public class HBaseMetadataTest {
     @Test public void testAutoInc() throws Exception {
         ColumnSchema column = new ColumnSchema(ColumnType.LONG, true, true, null, null, null);
         Map<String, ColumnSchema> columns = new HashMap<String, ColumnSchema>();
+        columns.put("column1", column);
+        TableSchema table = new TableSchema("table1", columns);
+
+        HTableInterface hTable = MockHTable.create();
+        HBaseMetadata hbaseMetadata2 = new HBaseMetadata(hTable);
+        hbaseMetadata2.putSchema(table);
+
+        long tableId = hbaseMetadata2.getTableId(table.getName());
+        Assert.assertEquals(hbaseMetadata2.getAutoInc(tableId), 0);
+        Assert.assertEquals(hbaseMetadata2.incrementAutoInc(tableId, 3), 3);
+        Assert.assertEquals(hbaseMetadata2.getAutoInc(tableId), 3);
+
+        hbaseMetadata2.truncateAutoInc(tableId);
+        Assert.assertEquals(hbaseMetadata2.getAutoInc(tableId), 0);
     }
 }
