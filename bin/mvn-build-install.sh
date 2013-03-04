@@ -14,8 +14,11 @@ else
 fi
 
 cd $HONEYCOMB_HOME
-echo "Running: mvn install"
-mvn package install -Dapache
+
+MAVEN_BUILD_CMD="mvn -V clean install -Dapache"
+echo "Running: $MAVEN_BUILD_CMD"
+$MAVEN_BUILD_CMD
+
 $HONEYCOMB_HOME/bin/install-honeycomb-jars.sh "$HONEYCOMB_HOME/HBaseAdapter" $honeycomb_lib
 
 conf_path=/etc/mysql
