@@ -204,12 +204,12 @@ class HoneycombHandler : public handler
 
     virtual double scan_time()
     {
-      return (double) (stats.records+stats.deleted) / 20.0+10;
+      return ((stats.records+stats.deleted) / 20.0) + 10;
     }
 
     virtual double read_time(uint, uint, ha_rows rows)
     {
-      return (double) rows /  20.0+1;
+      return (rows / 20.0) + 1;
     }
 
     virtual int final_add_index(handler_add_index *add, bool commit)
