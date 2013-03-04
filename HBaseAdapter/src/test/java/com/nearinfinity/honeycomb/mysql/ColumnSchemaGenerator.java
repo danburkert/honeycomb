@@ -7,7 +7,7 @@ import net.java.quickcheck.generator.PrimitiveGenerators;
 
 import java.util.Random;
 
-public class ColumnMetadataGenerator implements Generator<ColumnSchema> {
+public class ColumnSchemaGenerator implements Generator<ColumnSchema> {
     private static Generator<ColumnType> typeGen = PrimitiveGenerators.enumValues(ColumnType.class);
     private static Generator<Integer> lengthGen = PrimitiveGenerators.integers(0, 65535);
     private static Random rand = new Random();

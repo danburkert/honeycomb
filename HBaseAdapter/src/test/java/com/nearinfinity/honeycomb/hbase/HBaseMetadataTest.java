@@ -1,10 +1,14 @@
 package com.nearinfinity.honeycomb.hbase;
 
+import com.google.common.collect.ImmutableMap;
 import com.nearinfinity.honeycomb.MockHTable;
 import com.nearinfinity.honeycomb.TableNotFoundException;
-import com.nearinfinity.honeycomb.mysql.TableMetadataGenerator;
+import com.nearinfinity.honeycomb.mysql.ColumnSchemaGenerator;
+import com.nearinfinity.honeycomb.mysql.TableSchemaGenerator;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import net.java.quickcheck.Generator;
+import net.java.quickcheck.generator.PrimitiveGenerators;
 import net.java.quickcheck.generator.iterable.Iterables;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -20,7 +24,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class HBaseMetadataTest {
-    static Generator<TableSchema> tableMetadataGen = new TableMetadataGenerator();
+    static Generator<TableSchema> tableMetadataGen = new TableSchemaGenerator();
+    static Generator<ColumnSchema> columnSchemaGen = new ColumnSchemaGenerator();
     static HBaseMetadata hbaseMetadata;
     static Map<String, TableSchema> metadatas;
 
@@ -93,5 +98,71 @@ public class HBaseMetadataTest {
         Assert.assertEquals(schema, hbaseMetadata.getSchema(tableName));
         hbaseMetadata.deleteSchema(tableName);
         hbaseMetadata.getSchema(tableName);
+    }
+
+    @Test
+    public void testUpdateSchemaRenameTable() throws Exception {
+        String originalName = "OriginalName";
+        String newName = "NewName";
+        TableSchema origSchema = tableMetadataGen.next();
+        TableSchema newSchema = new TableSchema(newName, origSchema.getColumns());
+        origSchema.setName(originalName);
+        HTableInterface hTable = MockHTable.create();
+        HBaseMetadata hbaseMetadata2 = new HBaseMetadata(hTable);
+        hbaseMetadata2.putSchema(origSchema);
+        long origId = hbaseMetadata2.getTableId(originalName);
+        hbaseMetadata2.updateSchema(origSchema, newSchema);
+        Assert.assertEquals(hbaseMetadata2.getTableId(newName), origId);
+        Assert.assertEquals(origSchema.getColumns(),
+                hbaseMetadata2.getSchema(newName).getColumns());
+        Assert.assertEquals(hbaseMetadata2.getSchema(newName).getName(), newName);
+    }
+
+    @Test
+    public void testUpdateSchemaDropColumn() throws Exception {
+        TableSchema newSchema = tableMetadataGen.next();
+        String tableName = newSchema.getName();
+        Map<String, ColumnSchema> origColumns = ImmutableMap.copyOf(newSchema.getColumns());
+        Map<String, ColumnSchema> newColumns = newSchema.getColumns();
+        Map.Entry<String, ColumnSchema> removedColumn = newColumns.entrySet().iterator().next();
+        newColumns.entrySet().remove(removedColumn);
+
+        TableSchema origSchema = new TableSchema(tableName, origColumns);
+
+        HTableInterface hTable = MockHTable.create();
+        HBaseMetadata hbaseMetadata2 = new HBaseMetadata(hTable);
+        hbaseMetadata2.putSchema(origSchema);
+        hbaseMetadata2.updateSchema(origSchema, newSchema);
+
+        TableSchema returnedSchema = hbaseMetadata2.getSchema(tableName);
+
+        Assert.assertEquals(newSchema, returnedSchema);
+        Assert.assertEquals(origSchema.getColumns().size() - 1,
+                returnedSchema.getColumns().size());
+        Assert.assertNull(returnedSchema.getColumns().get(removedColumn.getKey()));
+    }
+
+    @Test
+    public void testUpdateSchemaAddColumn() throws Exception {
+        TableSchema newSchema = tableMetadataGen.next();
+        ColumnSchema newColumn = columnSchemaGen.next();
+        String columnName = PrimitiveGenerators.strings().next();
+        String tableName = newSchema.getName();
+        Map<String, ColumnSchema> origColumns = ImmutableMap.copyOf(newSchema.getColumns());
+        newSchema.getColumns().put(columnName, newColumn);
+
+        TableSchema origSchema = new TableSchema(tableName, origColumns);
+
+        HTableInterface hTable = MockHTable.create();
+        HBaseMetadata hbaseMetadata2 = new HBaseMetadata(hTable);
+        hbaseMetadata2.putSchema(origSchema);
+        hbaseMetadata2.updateSchema(origSchema, newSchema);
+
+        TableSchema returnedSchema = hbaseMetadata2.getSchema(tableName);
+
+        Assert.assertEquals(newSchema, returnedSchema);
+        Assert.assertEquals(origSchema.getColumns().size() + 1,
+                returnedSchema.getColumns().size());
+        Assert.assertEquals(newColumn, returnedSchema.getColumns().get(columnName));
     }
 }
