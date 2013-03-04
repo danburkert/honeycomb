@@ -19,6 +19,6 @@ fi
 
 if [ ! -L $test_link ]
 then
-  echo "Creating a link from $source $test_link"
+  echo "Creating a symbolic link from $source to $test_link"
   ln -s $source $test_link
 fi
