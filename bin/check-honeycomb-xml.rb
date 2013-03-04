@@ -23,22 +23,12 @@ xml = nil
 File.open(HONEYCOMB_XML_PATH, "r") do |honeycomb_file|
   xml = Nokogiri::XML(honeycomb_file)
 end
-
-if xml.nil?
-  puts "Could not read the xml file"
-  exit 1
-end
-
 options_node = xml.at_css("options").at_css("jvmoptions")
-
+new_classpath = "#{CLASSPATH_PREFIX}#{MYSQLENGINE_JAR + mysql_engine_jar}:#{classpath}"
 options_node.children.each do |option|
-  option.remove if Regexp.new("^" + CLASSPATH_PREFIX).match(option.content)
+  if Regexp.new("^" + CLASSPATH_PREFIX).match(option.content)
+    puts "Update" if option.content != new_classpath
+    exit 0
+  end
 end
 
-classpath_node = Nokogiri::XML::Node.new("jvmoption", xml)
-classpath_node.content = "#{CLASSPATH_PREFIX}#{MYSQLENGINE_JAR + mysql_engine_jar}:#{classpath}"
-options_node.add_child(classpath_node)
-
-File.open(HONEYCOMB_XML_PATH, "w") do |honeycomb_file|
-  honeycomb_file.write(xml.to_xml)
-end
