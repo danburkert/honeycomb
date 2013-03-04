@@ -8,7 +8,7 @@ import java.util.UUID;
 
 /**
  * A Table handles operations for a single MySQL table.  It must support insert,
- * update, delete and get operations on Rows, table and index scan operations
+ * update, delete and get operations on RowsRow, table and index scan operations
  */
 public interface Table extends Closeable {
     /**

@@ -15,6 +15,10 @@ import java.util.*;
 public class RowKeyGenerator implements Generator<RowKey> {
     private static final Random rand = new Random();
     private static final TablesRow tablesRow = new TablesRow();
+    private static final RowsRow rowsRow = new RowsRow();
+    private static final AutoIncRow autoIncRow = new AutoIncRow();
+    private static final SchemaRow schemaRow = new SchemaRow();
+
     private static Generator<Long> randIdGen = PrimitiveGenerators.longs(0, Long.MAX_VALUE);
     private static Generator<UUID> uuidGen = new UUIDGenerator();
     private static Generator<byte[]> randValueGen =
@@ -26,11 +30,11 @@ public class RowKeyGenerator implements Generator<RowKey> {
 
     public RowKeyGenerator() {
         // The duplicated generator types are testing the sorts of the different
-        // parts of the row key.  E.G. There are two ColumnMetadata generators.
+        // parts of the row key.  E.G. There are two ColumnSchema generators.
         // The first tests sorting on tableId, the second holds tableId constant
         // and tests sorting on columnId.
-        rowKeyGen = new DefaultFrequencyGenerator<RowKey>(new TablesRowGenerator(), 1);
-        rowKeyGen.add(new MetadataRowGenerator(), 4);
+        rowKeyGen = new DefaultFrequencyGenerator<RowKey>(new PrefixRowGenerator(), 2);
+        rowKeyGen.add(new ColumnsRowGenerator(), 1);
         rowKeyGen.add(new DataRowGenerator(), 3);
         rowKeyGen.add(new DataRowGenerator(randIdGen.next()), 3);
         rowKeyGen.add(new IndexRowGenerator(), 3);
@@ -50,29 +54,25 @@ public class RowKeyGenerator implements Generator<RowKey> {
         return rowKeyGen.next();
     }
 
-    private class TablesRowGenerator implements Generator<RowKey> {
-        @Override
+    private class PrefixRowGenerator implements Generator<RowKey> {
         public RowKey next() {
-            return tablesRow;
+            switch (rand.nextInt(4)) {
+                case 0:
+                    return tablesRow;
+                case 1:
+                    return rowsRow;
+                case 2:
+                    return autoIncRow;
+                case 3:
+                    return schemaRow;
+            }
+            throw new RuntimeException("Should never reach me");
         }
     }
 
-    private class MetadataRowGenerator implements Generator<RowKey> {
+    private class ColumnsRowGenerator implements Generator<RowKey> {
         public RowKey next() {
-            MetadataRow row = null;
-            long tableId = randIdGen.next();
-            switch (rand.nextInt(3)) {
-                case 0:
-                    row = new ColumnsRow(tableId);
-                    break;
-                case 1:
-                    row = new ColumnMetadataRow(tableId);
-                    break;
-                case 2:
-                    row = new TableMetadataRow(tableId);
-                    break;
-            }
-            return row;
+            return new ColumnsRow(randIdGen.next());
         }
     }
 

@@ -30,7 +30,6 @@ public class RowKeyTest {
         for (int i = 0; i < rowKeys.size(); i++) {
             RowKey rowKey = rowKeys.get(i);
             byte[] encodedRowKey = encodedRowKeys.get(i);
-
             Assert.assertArrayEquals(encodedRowKey, rowKey.encode());
         }
     }
@@ -44,10 +43,10 @@ public class RowKeyTest {
                 return classCompare;
             }
 
-            if (row1Class == TablesRow.class) {
+            if (row1 instanceof PrefixRow) {
                 return 0;
-            } else if (row1 instanceof MetadataRow) {
-                return metadataRowCompare((MetadataRow) row1, (MetadataRow) row2);
+            } else if (row1 instanceof ColumnsRow) {
+                return ColumnsRowCompare((ColumnsRow) row1, (ColumnsRow) row2);
             } else if (row1Class == DataRow.class) {
                 return dataRowCompare((DataRow) row1, (DataRow) row2);
             } else if (row1Class == AscIndexRow.class) {
@@ -57,7 +56,7 @@ public class RowKeyTest {
             }
         }
 
-        private int metadataRowCompare(MetadataRow row1, MetadataRow row2) {
+        private int ColumnsRowCompare(ColumnsRow row1, ColumnsRow row2) {
             return Long.signum(row1.getTableId() - row2.getTableId());
         }
 

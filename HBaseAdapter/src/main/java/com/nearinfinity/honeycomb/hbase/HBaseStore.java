@@ -6,7 +6,7 @@ import com.nearinfinity.honeycomb.TableNotFoundException;
 import com.nearinfinity.honeycomb.hbaseclient.Constants;
 import com.nearinfinity.honeycomb.hbaseclient.SqlTableCreator;
 import com.nearinfinity.honeycomb.mysql.Util;
-import com.nearinfinity.honeycomb.mysql.gen.TableMetadata;
+import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import com.nearinfinity.honeycomb.mysqlengine.HTableFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -85,12 +85,12 @@ public class HBaseStore implements Store {
     }
 
     @Override
-    public TableMetadata getTableMetadata(String name) throws TableNotFoundException {
+    public TableSchema getTableMetadata(String name) throws TableNotFoundException {
         return null;
     }
 
     @Override
-    public Table createTable(TableMetadata metadata) throws IOException {
+    public Table createTable(TableSchema schema) throws IOException {
         return null;
     }
 

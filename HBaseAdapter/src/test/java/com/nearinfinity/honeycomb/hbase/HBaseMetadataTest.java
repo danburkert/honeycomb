@@ -3,7 +3,7 @@ package com.nearinfinity.honeycomb.hbase;
 import com.nearinfinity.honeycomb.MockHTable;
 import com.nearinfinity.honeycomb.TableNotFoundException;
 import com.nearinfinity.honeycomb.mysql.TableMetadataGenerator;
-import com.nearinfinity.honeycomb.mysql.gen.TableMetadata;
+import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.iterable.Iterables;
 import org.apache.hadoop.hbase.client.HTableInterface;
@@ -20,17 +20,17 @@ import java.util.Map;
 import java.util.Set;
 
 public class HBaseMetadataTest {
-    static Generator<TableMetadata> tableMetadataGen = new TableMetadataGenerator();
+    static Generator<TableSchema> tableMetadataGen = new TableMetadataGenerator();
     static HBaseMetadata hbaseMetadata;
-    static Map<String, TableMetadata> metadatas;
+    static Map<String, TableSchema> metadatas;
 
     @BeforeClass
     public static void setUp() throws Exception {
         hbaseMetadata = new HBaseMetadata(MockHTable.create());
-        metadatas = new HashMap<String, TableMetadata>();
-        for (TableMetadata metadata : Iterables.toIterable(tableMetadataGen)) {
-            metadatas.put(metadata.getName(), metadata);
-            hbaseMetadata.putTableMetadata(metadata);
+        metadatas = new HashMap<String, TableSchema>();
+        for (TableSchema schema : Iterables.toIterable(tableMetadataGen)) {
+            metadatas.put(schema.getName(), schema);
+            hbaseMetadata.putSchema(schema);
         }
     }
 
@@ -61,37 +61,37 @@ public class HBaseMetadataTest {
     }
 
     @Test
-    public void testTableMetadataGet() throws Exception {
+    public void testSchemaGet() throws Exception {
         for (String tableName : metadatas.keySet()) {
-            TableMetadata expected = metadatas.get(tableName);
-            TableMetadata actual = hbaseMetadata.getTableMetadata(tableName);
+            TableSchema expected = metadatas.get(tableName);
+            TableSchema actual = hbaseMetadata.getSchema(tableName);
             Assert.assertEquals(expected, actual);
         }
     }
 
     @Test
-    public void testTableMetadataDeleteRemovesAllRows() throws Exception {
+    public void testSchemaDeleteRemovesAllRowIds() throws Exception {
         HTableInterface hTable = MockHTable.create();
         HBaseMetadata hbaseMetadata2 = new HBaseMetadata(hTable);
-        TableMetadata metadata = tableMetadataGen.next();
-        String tableName = metadata.getName();
-        hbaseMetadata2.putTableMetadata(metadata);
-        TableMetadata expected = hbaseMetadata2.getTableMetadata(tableName);
-        Assert.assertEquals(metadata, expected);
+        TableSchema schema = tableMetadataGen.next();
+        String tableName = schema.getName();
+        hbaseMetadata2.putSchema(schema);
+        TableSchema expected = hbaseMetadata2.getSchema(tableName);
+        Assert.assertEquals(schema, expected);
 
-        hbaseMetadata2.deleteColumnMetadata(tableName);
+        hbaseMetadata2.deleteSchema(tableName);
         ResultScanner results = hTable.getScanner(new Scan());
         Assert.assertTrue(results.next().getNoVersionMap().size() == 1); // Table id counter
         Assert.assertNull(results.next());
     }
 
     @Test(expected = TableNotFoundException.class)
-    public void testTableMetadataDeleteRemovesTable() throws Exception {
-        TableMetadata metadata = tableMetadataGen.next();
-        String tableName = metadata.getName();
-        hbaseMetadata.putTableMetadata(metadata);
-        Assert.assertEquals(metadata, hbaseMetadata.getTableMetadata(tableName));
-        hbaseMetadata.deleteColumnMetadata(tableName);
-        hbaseMetadata.getTableMetadata(tableName);
+    public void testSchemaDeleteRemovesTable() throws Exception {
+        TableSchema schema = tableMetadataGen.next();
+        String tableName = schema.getName();
+        hbaseMetadata.putSchema(schema);
+        Assert.assertEquals(schema, hbaseMetadata.getSchema(tableName));
+        hbaseMetadata.deleteSchema(tableName);
+        hbaseMetadata.getSchema(tableName);
     }
 }

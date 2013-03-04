@@ -1,6 +1,6 @@
 package com.nearinfinity.honeycomb;
 
-import com.nearinfinity.honeycomb.mysql.gen.TableMetadata;
+import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 
 import java.io.IOException;
 
@@ -26,17 +26,17 @@ public interface Store {
      * @return The table's metadata
      * @throws TableNotFoundException
      */
-    public TableMetadata getTableMetadata(String name) throws TableNotFoundException;
+    public TableSchema getTableMetadata(String name) throws TableNotFoundException;
 
     /**
      * Create a table, or if the table already exists with the same name and
      * columns, open it.
      *
-     * @param metadata
+     * @param schema
      * @return
      * @throws IOException
      */
-    public Table createTable(TableMetadata metadata) throws IOException /*TableExistsException?*/;
+    public Table createTable(TableSchema schema) throws IOException /*TableExistsException?*/;
 
     /**
      * Delete the specified table

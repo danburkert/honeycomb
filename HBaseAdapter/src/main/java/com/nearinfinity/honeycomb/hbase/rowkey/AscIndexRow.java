@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public class AscIndexRow extends IndexRow {
-    private static final byte PREFIX = 0x05;
+    private static final byte PREFIX = 0x06;
     private static final byte[] NOT_NULL_BYTES = {0x01};
     private static final byte[] NULL_BYTES = {0x00};
 

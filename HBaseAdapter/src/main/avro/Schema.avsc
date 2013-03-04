@@ -1,6 +1,6 @@
 {
     "type": "record",
-    "name": "TableMetadata",
+    "name": "TableSchema",
     "namespace": "com.nearinfinity.honeycomb.mysql.gen",
     "fields":
     [
@@ -8,7 +8,7 @@
         {"name": "columns", "type": {"type": "map", "values":
             {
                 "type": "record",
-                "name": "ColumnMetadata",
+                "name": "ColumnSchema",
                 "namespace": "com.nearinfinity.honeycomb.mysql.gen",
                 "fields":
                 [

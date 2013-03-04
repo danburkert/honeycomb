@@ -1,7 +1,6 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import com.nearinfinity.honeycomb.mysql.gen.ColumnMetadata;
-import com.nearinfinity.honeycomb.mysql.gen.TableMetadata;
+import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import org.apache.avro.io.*;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
@@ -58,20 +57,12 @@ public class Util {
         return new UUID(buffer.getLong(), buffer.getLong());
     }
 
-    public static byte[] serializeTableMetadata(TableMetadata metadata) throws IOException {
-        return serializeAvroObject(metadata, TableMetadata.class);
+    public static byte[] serializeTableSchema(TableSchema schema) throws IOException {
+        return serializeAvroObject(schema, TableSchema.class);
     }
 
-    public static TableMetadata deserializeTableMetadata(byte[] metadata) throws IOException {
-        return (TableMetadata) deserializeAvroObject(metadata, TableMetadata.class);
-    }
-
-    public static byte[] serializeColumnMetadata(ColumnMetadata metadata) throws IOException {
-        return serializeAvroObject(metadata, ColumnMetadata.class);
-    }
-
-    public static ColumnMetadata deserializeColumnMetadata(byte[] metadata) throws IOException {
-        return (ColumnMetadata) deserializeAvroObject(metadata, ColumnMetadata.class);
+    public static TableSchema deserializeTableSchema(byte[] schema) throws IOException {
+        return (TableSchema) deserializeAvroObject(schema, TableSchema.class);
     }
 
     /**

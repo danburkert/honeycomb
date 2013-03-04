@@ -8,7 +8,7 @@ import com.nearinfinity.honeycomb.mysql.Util;
 import java.util.UUID;
 
 public class DataRow implements RowKey {
-    private static final byte PREFIX = 0x04;
+    private static final byte PREFIX = 0x05;
     private long tableId;
     private UUID uuid;
 
