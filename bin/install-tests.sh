@@ -15,7 +15,7 @@ if [ -L $test_link ] || [ -d $test_link ]
 then
   echo "$test_link already exists. Not creating a link."
   exit 0
-fi 
+fi
 
 if [ ! -L $test_link ]
 then
