@@ -31,5 +31,12 @@ then
   echo "Creating the honeycomb.xml from the repository."
   sudo cp $HONEYCOMB_HOME/honeycomb/honeycomb-example.xml $adapter_conf
 fi
-sudo $HONEYCOMB_HOME/bin/update-honeycomb-xml.rb "$HONEYCOMB_HOME" mysqlengine-0.1.jar
+
+jar=mysqlengine-0.1.jar
+if [ "$($HONEYCOMB_HOME/bin/check-honeycomb-xml.rb "$HONEYCOMB_HOME" $jar)" == "Update" ]
+then
+  echo "Updating honeycomb.xml, it's out of date"
+  sudo $HONEYCOMB_HOME/bin/update-honeycomb-xml.rb "$HONEYCOMB_HOME" $jar
+fi
+
 echo "*** Don't forget to restart MySQL. The JVM doesn't autoreload the jar from the disk. ***"
