@@ -15,7 +15,7 @@ public class DescIndexRow extends IndexRow {
 
     public DescIndexRow(long tableId, List<Long> columnIds,
                         Map<Long, byte[]> records) {
-        super(tableId, columnIds, PREFIX, NOT_NULL_BYTES, NULL_BYTES);
+        super(tableId, columnIds, records, PREFIX, NOT_NULL_BYTES, NULL_BYTES);
     }
 
     public DescIndexRow(long tableId, List<Long> columnIds,
