@@ -1,26 +1,26 @@
 package com.nearinfinity.honeycomb.hbase.rowkey;
 
-import com.nearinfinity.honeycomb.hbase.RowKey;
-import com.nearinfinity.honeycomb.hbase.VarEncoder;
-import com.nearinfinity.honeycomb.hbaseclient.Constants;
-import com.nearinfinity.honeycomb.mysql.Util;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.nearinfinity.honeycomb.hbase.RowKey;
+import com.nearinfinity.honeycomb.hbase.VarEncoder;
+import com.nearinfinity.honeycomb.hbaseclient.Constants;
+import com.nearinfinity.honeycomb.mysql.Util;
 
 public class IndexRow implements RowKey {
-    private byte prefix;
-    private long tableId;
+    private final byte prefix;
+    private final long tableId;
     private UUID uuid;
-    private List<Long> columnIds;
+    private final List<Long> columnIds;
     private Map<Long, byte[]> records;
-    private byte[] notNullBytes;
-    private byte[] nullBytes;
+    private final byte[] notNullBytes;
+    private final byte[] nullBytes;
 
     protected IndexRow(long tableId,
                     List<Long> columnIds,
@@ -34,8 +34,8 @@ public class IndexRow implements RowKey {
                 Constants.KEY_PART_COUNT);
         this.tableId = tableId;
         this.columnIds = columnIds;
-        this.records = null;
-        this.uuid = null;
+        records = null;
+        uuid = null;
         this.prefix = prefix;
         this.notNullBytes = notNullBytes;
         this.nullBytes = nullBytes;
@@ -64,6 +64,7 @@ public class IndexRow implements RowKey {
         this.uuid = uuid;
     }
 
+    @Override
     public byte[] encode() {
         byte[] prefixBytes = {prefix};
         List<byte[]> encodedParts = new ArrayList<byte[]>();
@@ -89,6 +90,7 @@ public class IndexRow implements RowKey {
         return VarEncoder.appendByteArrays(encodedParts);
     }
 
+    @Override
     public byte getPrefix() {
         return prefix;
     }

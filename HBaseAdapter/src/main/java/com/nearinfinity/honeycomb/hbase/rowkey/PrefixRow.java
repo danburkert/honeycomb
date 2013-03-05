@@ -3,16 +3,18 @@ package com.nearinfinity.honeycomb.hbase.rowkey;
 import com.nearinfinity.honeycomb.hbase.RowKey;
 
 public class PrefixRow implements RowKey {
-    private byte[] rowKey;
+    private final byte[] rowKey;
 
     public PrefixRow(byte[] rowKey) {
         this.rowKey = rowKey;
     }
 
+    @Override
     public byte[] encode() {
         return rowKey;
     }
 
+    @Override
     public byte getPrefix() {
         return rowKey[0];
     }

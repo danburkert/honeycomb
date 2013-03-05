@@ -1,21 +1,21 @@
 package com.nearinfinity.honeycomb.hbase.rowkey;
 
+import java.util.UUID;
+
 import com.google.common.base.Preconditions;
 import com.nearinfinity.honeycomb.hbase.RowKey;
 import com.nearinfinity.honeycomb.hbase.VarEncoder;
 import com.nearinfinity.honeycomb.mysql.Util;
 
-import java.util.UUID;
-
 public class DataRow implements RowKey {
     private static final byte PREFIX = 0x05;
-    private long tableId;
+    private final long tableId;
     private UUID uuid;
 
     public DataRow(long tableId) {
         Preconditions.checkArgument(tableId >= 0, "Table ID must be non-zero.");
         this.tableId = tableId;
-        this.uuid = null;
+        uuid = null;
     }
 
     public DataRow(long tableId, UUID uuid) {
@@ -24,16 +24,15 @@ public class DataRow implements RowKey {
         this.uuid = uuid;
     }
 
+    @Override
     public byte[] encode() {
         if (uuid != null) {
             return VarEncoder.appendByteArraysWithPrefix(PREFIX,
                     VarEncoder.encodeULong(tableId),
                     Util.UUIDToBytes(uuid));
-        } else {
-            return  VarEncoder.appendByteArraysWithPrefix(PREFIX,
-                    VarEncoder.encodeULong(tableId));
         }
-
+        return  VarEncoder.appendByteArraysWithPrefix(PREFIX,
+                VarEncoder.encodeULong(tableId));
     }
 
     public long getTableId() {
@@ -44,6 +43,7 @@ public class DataRow implements RowKey {
         return uuid;
     }
 
+    @Override
     public byte getPrefix() {
         return PREFIX;
     }
