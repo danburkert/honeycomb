@@ -29,12 +29,15 @@ Supported Hadoop & HBase versions
 Building MySQL and Storage Engine Plugin
 ----------------------------------------
 
-First step, add the following line to your .bashrc/.zshrc and restart your terminal:
+Add the following line to your .bashrc/.zshrc and restart your terminal:
 
     export HONEYCOMB_HOME=<path to git repository> # Very important, scripts key off this.
-    export MYSQL_HOME=<path to mysql installation>
+    export MYSQL_HOME=<path to mysql installation> # MySQL home doesn't have to exist before running this (usually $MYSQL_HOME = /usr/local/mysql)
 
-Second step, run the following:
+Before building the storage engine, install Maven, libncurses and cmake. After installing Maven, set the M2_HOME or M3_HOME.
+
+
+Run the following:
 
     cd $HONEYCOMB_HOME/bin
     ./build.sh
@@ -46,8 +49,7 @@ The honeycomb plugin has been installed in MySQL.
 
 
 The HBaseAdapter jar will be copied into /usr/local/lib/honeycomb along with all of its dependencies.
-/etc/mysql/classpath.conf will be updated with the correct java path to /usr/local/lib/honeycomb/*.jar.
-By default, the /etc/mysql/adapter.conf will be setup to have zookeeper as the localhost.
+/etc/mysql/honeycomb.xml will be created with the settings for the storage engine.
 
 To build and install the plugin alone:
 
@@ -62,6 +64,7 @@ To build and install HBaseAdapter alone:
 Note: MySQL can get into very strange states.
 
 * Extremely large stack allocations (due to uninitialized variables) can make gdb attach to the MySQL process very slowly. To fix this restart your machine.
+* On Mac OS X, if MySQL crashes, a large core dump file will appear in /cores. 
 
 
 Testing the Storage Engine Plugin
@@ -87,9 +90,4 @@ How to prevent a certain test from running:
     vi disabled.def
     Add text after the ":" for the test you want disabled. (The chosen text is unimportant.)
 
-How to connect to TeamCity:
-
-    cd $HONEYCOMB_HOME/bin
-    ./teamcity-tunnel.sh <nic-hadoop-admin username>
-
-Go to localhost:8111 to see the CI server.
+Go to nic-hadoop-admin:8111 to see the CI server.
