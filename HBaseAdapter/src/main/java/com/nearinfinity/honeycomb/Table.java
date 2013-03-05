@@ -8,7 +8,7 @@ import java.util.UUID;
 
 /**
  * A Table handles operations for a single MySQL table.  It must support insert,
- * update, delete and get operations on RowsRow, table and index scan operations
+ * update, delete and get operations on rows, as well as table and index scans
  */
 public interface Table extends Closeable {
     /**
@@ -96,38 +96,4 @@ public interface Table extends Closeable {
      * @return Scanner over index
      */
     public Scanner indexScanExact(/* KeyValueContainer keyValues */);
-
-    /**
-     * Return the current autoincrement value of the column
-     *
-     * @param column The name of the column
-     * @return
-     * @throws IOException
-     * @throws ColumnNotFoundException Thrown when the column does not exist in
-     *                                 the table, or the column is not an auto increment column
-     */
-    public long getAutoIncValue(String column)
-            throws IOException, ColumnNotFoundException;
-
-    /**
-     * Set the autoincrement value of the column
-     *
-     * @param column The name of the column
-     * @param value  New auto increment value
-     * @return
-     * @throws IOException
-     * @throws ColumnNotFoundException Thrown when the column does not exist in
-     *                                 the table, or the column is not an auto increment column
-     */
-    public void setAutoIncValue(String column, long value)
-            throws IOException, ColumnNotFoundException;
-
-    /**
-     * Get the name of the Table
-     *
-     * @return the table name
-     * @throws IOException
-     */
-    public String getName() throws IOException;
-
 }
