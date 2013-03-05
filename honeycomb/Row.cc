@@ -153,7 +153,7 @@ int Row::serialize(const char** buf, size_t* len)
 {
   int ret = 0;
   ret |= avro_value_sizeof(&row_container, len);
-  *buf = (const char*) malloc(sizeof(const char) * (*len));
+  *buf = new char[*len];
   if(*buf)
   {
     avro_writer_t writer = avro_writer_memory(*buf, *len);

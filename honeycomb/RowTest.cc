@@ -51,16 +51,16 @@ int test_rand_record_map(Row* row) {
   int num_records = rand() % 100; // [0, 100) records
   int val_len;
   int key_len;
-  char** keys = (char**) malloc(sizeof(char*) * num_records);
-  char** vals = (char**) malloc(sizeof(char*) * num_records);
-  int* val_lens = (int*) malloc(sizeof(int) * num_records);
+  char** keys = new char*[num_records];
+  char** vals = new char*[num_records];
+  int* val_lens = new int[num_records];
 
   for (int i = 0; i < num_records; i++)
   {
     key_len = (rand() % 500) + 500; // [500, 1000) bytes per key
     val_lens[i] = rand() % 1023 + 1; // [1, 1024) bytes per record
-    keys[i] = (char*) malloc(sizeof(char*) * key_len);
-    vals[i] = (char*) malloc(sizeof(char*) * val_lens[i]);
+    keys[i] = new char[key_len];
+    vals[i] = new char[val_lens[i]];
     gen_random_string(keys[i], key_len);
     gen_random_bytes(vals[i], val_lens[i]);
     try(row->set_bytes_record(keys[i], vals[i], val_lens[i]),
@@ -83,12 +83,12 @@ int test_rand_record_map(Row* row) {
 
   for(int i = 0; i < num_records; i++)
   {
-    free(vals[i]);
-    free(keys[i]);
+    delete[] vals[i];
+    delete[] keys[i];
   }
-  free(keys);
-  free(vals);
-  free(val_lens);
+  delete[] keys;
+  delete[] vals;
+  delete[] val_lens;
   return 0;
 }
 
@@ -145,14 +145,14 @@ int test_bytes_records(Row* row) {
 
 int test_rand_uuid(Row* row) {
   try(row->reset(), "Error while calling reset in test_rand_uuid.");
-  char* uuid_buf = (char*) malloc(16);
+  char* uuid_buf = new char[16];
   const char* out_buf;
   gen_random_bytes(uuid_buf, 16);
 
   try(row->set_UUID(uuid_buf), "Error while calling set_UUID.");
   try(row->get_UUID(&out_buf), "Error while calling get_UUID.");
   assert_that(memcmp(uuid_buf, out_buf, 16) == 0, "Retrieved UUID does not match.");
-  free(uuid_buf);
+  delete[] uuid_buf;
   return 0;
 }
 
@@ -163,7 +163,7 @@ int test_rand_serde(Row* row_se) {
   // Setup row with random records & UUID
   try(test_rand_record_map(row_se),
       "Error while calling test_rand_record_map from test_serde.");
-  char* uuid_buf = (char*) malloc(16);
+  char* uuid_buf = new char[16];
   gen_random_bytes(uuid_buf, 16);
   try(row_se->set_UUID(uuid_buf),
       "Error while calling set_UUID from test_serde.");
@@ -176,8 +176,8 @@ int test_rand_serde(Row* row_se) {
   assert_that(row_se->equal(*row_de),
       "The deserialized row does not equal the serialized row.");
 
-  free(uuid_buf);
-  free((void*) serialized);
+  delete[] uuid_buf;
+  delete[] serialized;
   delete row_de;
   return 0;
 }

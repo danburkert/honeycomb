@@ -96,7 +96,7 @@ class Row
   /**
    * @brief Serialize Row to buf and set serialized length in len
    * @param buf Pointer to a byte buffer holding the serialized Row.  The caller
-   * is responsible for freeing the buffer after finishing with it.
+   * is responsible for delete[] the buffer after finishing with it.
    * @return Error code
    */
   int serialize(const char** buf, size_t* len);
