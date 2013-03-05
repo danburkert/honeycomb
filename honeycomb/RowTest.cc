@@ -190,6 +190,7 @@ int main(int argc, char **argv) {
   for (int i = 0; i < 100;   i++) { ret |= test_rand_record_map(row); }
   for (int i = 0; i < 5000; i++) { ret |= test_rand_uuid(row); }
   for (int i = 0; i < 5000; i++) { ret |= test_rand_serde(row); }
+  printf("Successfully ran all tests.\n");
   delete row;
   return ret;
 }
