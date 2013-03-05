@@ -6,18 +6,20 @@ import com.nearinfinity.honeycomb.hbase.VarEncoder;
 
 public class ColumnsRow implements RowKey {
     private final byte PREFIX = 0x01;
-    private long tableId;
+    private final long tableId;
 
     public ColumnsRow(long tableId) {
         Preconditions.checkArgument(tableId >= 0, "Table ID must be non-zero.");
         this.tableId = tableId;
     }
 
+    @Override
     public byte[] encode() {
         byte[] table = VarEncoder.encodeULong(tableId);
         return VarEncoder.appendByteArraysWithPrefix(PREFIX, table);
     }
 
+    @Override
     public byte getPrefix() {
         return PREFIX;
     }
