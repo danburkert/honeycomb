@@ -1,11 +1,11 @@
 package com.nearinfinity.honeycomb.hbase;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * Helper functions for variable length encoding data in a binary-sort safe
@@ -33,7 +33,7 @@ public class VarEncoder {
         if ((value & (0xffffffffffffffffL << 40)) == 0) return 5;
         if ((value & (0xffffffffffffffffL << 48)) == 0) return 6;
         if ((value & (0xffffffffffffffffL << 56)) == 0) return 7;
-        else return 8;
+        return 8;
     }
 
     public static long decodeULong(byte[] encodedValue) {

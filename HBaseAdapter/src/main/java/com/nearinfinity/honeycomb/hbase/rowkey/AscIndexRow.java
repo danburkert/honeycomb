@@ -15,7 +15,7 @@ public class AscIndexRow extends IndexRow {
 
     public AscIndexRow(long tableId, List<Long> columnIds,
                         Map<Long, byte[]> records) {
-        super(tableId, columnIds, PREFIX, NOT_NULL_BYTES, NULL_BYTES);
+        super(tableId, columnIds, records, PREFIX, NOT_NULL_BYTES, NULL_BYTES);
     }
 
     public AscIndexRow(long tableId, List<Long> columnIds,
