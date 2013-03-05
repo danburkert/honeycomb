@@ -112,7 +112,8 @@ public class HBaseMetadataTest {
         String originalName = "OriginalName";
         String newName = "NewName";
         TableSchema origSchema = tableSchemaGen.next();
-        TableSchema newSchema = new TableSchema(newName, origSchema.getColumns());
+        TableSchema newSchema = new TableSchema(newName, origSchema.getColumns(),
+                origSchema.getIndices());
         origSchema.setName(originalName);
         HTableInterface hTable = MockHTable.create();
         HBaseMetadata hbaseMetadata2 = new HBaseMetadata(hTable);
@@ -129,12 +130,15 @@ public class HBaseMetadataTest {
     public void testUpdateSchemaDropColumn() throws Exception {
         TableSchema newSchema = tableSchemaGen.next();
         String tableName = newSchema.getName();
-        Map<String, ColumnSchema> origColumns = ImmutableMap.copyOf(newSchema.getColumns());
+        Map<String, ColumnSchema> origColumns =
+                ImmutableMap.copyOf(newSchema.getColumns());
         Map<String, ColumnSchema> newColumns = newSchema.getColumns();
-        Map.Entry<String, ColumnSchema> removedColumn = newColumns.entrySet().iterator().next();
+        Map.Entry<String, ColumnSchema> removedColumn =
+                newColumns.entrySet().iterator().next();
         newColumns.entrySet().remove(removedColumn);
 
-        TableSchema origSchema = new TableSchema(tableName, origColumns);
+        TableSchema origSchema = new TableSchema(tableName, origColumns,
+                newSchema.getIndices());
 
         HTableInterface hTable = MockHTable.create();
         HBaseMetadata hbaseMetadata2 = new HBaseMetadata(hTable);
@@ -156,10 +160,12 @@ public class HBaseMetadataTest {
         ColumnSchema newColumn = columnSchemaGen.next();
         String columnName = PrimitiveGenerators.strings().next();
         String tableName = newSchema.getName();
-        Map<String, ColumnSchema> origColumns = ImmutableMap.copyOf(newSchema.getColumns());
+        Map<String, ColumnSchema> origColumns =
+                ImmutableMap.copyOf(newSchema.getColumns());
         newSchema.getColumns().put(columnName, newColumn);
 
-        TableSchema origSchema = new TableSchema(tableName, origColumns);
+        TableSchema origSchema = new TableSchema(tableName, origColumns,
+                newSchema.getIndices());
 
         HTableInterface hTable = MockHTable.create();
         HBaseMetadata hbaseMetadata2 = new HBaseMetadata(hTable);

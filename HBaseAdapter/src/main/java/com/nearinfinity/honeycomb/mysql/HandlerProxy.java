@@ -30,6 +30,4 @@ public class HandlerProxy {
 
         return store.getAutoInc(tableName);
     }
-
-
 }
