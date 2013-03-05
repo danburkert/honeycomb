@@ -13,4 +13,4 @@ fi
 
 
 # Find all of the process ids that correspond to HBase
-$PROCESS_STATUS_CMD | grep $HBASE_PACKAGE | grep -v "grep" | awk '{ print $1, $(NF-1) }'
+$PROCESS_STATUS_CMD | grep $HBASE_PACKAGE | grep -v "grep" | awk '{ print $1, $NF }'
