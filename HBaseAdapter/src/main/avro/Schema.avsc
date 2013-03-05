@@ -25,6 +25,20 @@
                     {"name": "precision", "type": ["null", "int"], "default": null}
                 ]
             }}
+        },
+        {"name": "indices", "type": {"type": "map", "values":
+            {
+                "type": "record",
+                "name": "IndexSchema",
+                "namespace": "com.nearinfinity.honeycomb.mysql.gen",
+                "fields":
+                [
+                    {"name": "columns", "type":
+                        {"type": "array", "items": "string"}
+                    },
+                    {"name": "isUnique", "type": "boolean", "default": false}
+                ]
+            }}
         }
     ]
 }
