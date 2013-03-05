@@ -172,23 +172,41 @@ public class HBaseMetadata {
     }
 
     public long getAutoInc(long tableId) throws IOException {
-        Get get = new Get(new AutoIncRow().encode());
-        byte[] serializedTableId = serializeId(tableId);
-        get.addColumn(COLUMN_FAMILY, serializedTableId);
-        byte[] value = hTable.get(get).getValue(COLUMN_FAMILY, serializedTableId);
-        return value == null ? 0 : Bytes.toLong(value);
+        return getCounter(new AutoIncRow().encode(), serializeId(tableId));
     }
 
     public long incrementAutoInc(long tableId, long amount) throws IOException {
-        return hTable.incrementColumnValue(new AutoIncRow().encode(),
-                COLUMN_FAMILY, serializeId(tableId), amount);
+        return incrementCounter(new AutoIncRow().encode(),
+                serializeId(tableId), amount);
     }
 
     public void truncateAutoInc(long tableId) throws IOException {
-        Delete delete = new Delete(new AutoIncRow().encode());
-        delete.deleteColumn(COLUMN_FAMILY, serializeId(tableId));
-        hTable.delete(delete);
+        hTable.delete(deleteAutoIncCounter(tableId));
         hTable.flushCommits();
+    }
+
+    public long getRowCount(long tableId) throws IOException {
+        return getCounter(new RowsRow().encode(), serializeId(tableId));
+    }
+
+    public long incrementRowCount(long tableId, long amount) throws IOException {
+        return incrementCounter(new RowsRow().encode(), serializeId(tableId), amount);
+    }
+
+    public void truncateRowCount(long tableId) throws IOException {
+        hTable.delete(deleteRowsCounter(tableId));
+        hTable.flushCommits();
+    }
+
+    private long getCounter(byte[] row, byte[] identifier) throws IOException {
+        Get get = new Get(row).addColumn(COLUMN_FAMILY, identifier);
+        byte[] value = hTable.get(get).getValue(COLUMN_FAMILY, identifier);
+        return value == null ? 0 : Bytes.toLong(value);
+    }
+
+    private long incrementCounter(byte[] row, byte[] identifier, long amount)
+            throws IOException {
+        return hTable.incrementColumnValue(row, COLUMN_FAMILY, identifier, amount);
     }
 
     private long getNextTableId() throws IOException {
@@ -208,6 +226,11 @@ public class HBaseMetadata {
 
     private Delete deleteAutoIncCounter(long tableId) {
         return new Delete(new AutoIncRow().encode())
+                .deleteColumn(COLUMN_FAMILY, serializeId(tableId));
+    }
+
+    private Delete deleteRowsCounter(long tableId) {
+        return new Delete(new RowsRow().encode())
                 .deleteColumn(COLUMN_FAMILY, serializeId(tableId));
     }
 

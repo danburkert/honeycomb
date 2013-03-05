@@ -41,7 +41,7 @@ public class HBaseStore implements Store {
 
     private final LoadingCache<String, Long> tableCache;
     private final LoadingCache<Long, BiMap<String, Long>> columnsCache;
-//    private final LoadingCache<Long, Long> rowsCache;
+    private final LoadingCache<Long, Long> rowsCache;
     private final LoadingCache<Long, Long> autoIncCache;
     private final LoadingCache<Long, TableSchema> schemaCache;
 
@@ -128,6 +128,19 @@ public class HBaseStore implements Store {
                 }
                 );
 
+        rowsCache = CacheBuilder
+                .newBuilder()
+                .build(new CacheLoader<Long, Long>() {
+                    public Long load(Long tableId)
+                            throws IOException, TableNotFoundException {
+                        HTableInterface hTable = getFreshHTable();
+                        Long columns = new HBaseMetadata(hTable).getRowCount(tableId);
+                        hTable.close();
+                        return columns;
+                    }
+                }
+                );
+
         schemaCache = CacheBuilder
                 .newBuilder()
                 .build(new CacheLoader<Long, TableSchema>() {
@@ -199,6 +212,26 @@ public class HBaseStore implements Store {
         HBaseMetadata metadata = new HBaseMetadata(hTable);
         metadata.truncateAutoInc(tableId);
         autoIncCache.invalidate(tableId);
+    }
+
+    @Override
+    public long getRowCount(String tableName) throws Exception {
+        return rowsCache.get(tableCache.get(tableName));
+    }
+
+    public long incrementRowCount(long tableId, long amount) throws Exception {
+        HTableInterface hTable = getFreshHTable();
+        HBaseMetadata metadata = new HBaseMetadata(hTable);
+        long value = metadata.incrementRowCount(tableId, amount);
+        autoIncCache.put(tableId, value);
+        return value;
+    }
+
+    public void truncateRowCount(long tableId) throws Exception {
+        HTableInterface hTable = getFreshHTable();
+        HBaseMetadata metadata = new HBaseMetadata(hTable);
+        metadata.truncateRowCount(tableId);
+        rowsCache.invalidate(tableId);
     }
 
     private void invalidateCache(String tableName) throws Exception {

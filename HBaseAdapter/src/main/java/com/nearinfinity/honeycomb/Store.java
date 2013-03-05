@@ -77,10 +77,19 @@ public interface Store {
     public long incrementAutoInc(String tableName, long amount) throws Exception;
 
     /**
-     * Truncate the tables auto increment value.
+     * Truncate the table's auto increment value.
      *
      * @param tableName Name of table
      * @throws Exception
      */
     public void truncateAutoInc(String tableName) throws Exception;
+
+    /**
+     * Get the table's row count
+     *
+     * @param tableName the table
+     * @return row count
+     * @throws Exception
+     */
+    public long getRowCount(String tableName) throws Exception;
 }

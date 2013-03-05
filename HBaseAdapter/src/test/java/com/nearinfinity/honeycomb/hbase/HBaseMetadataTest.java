@@ -6,7 +6,6 @@ import com.nearinfinity.honeycomb.TableNotFoundException;
 import com.nearinfinity.honeycomb.mysql.ColumnSchemaGenerator;
 import com.nearinfinity.honeycomb.mysql.TableSchemaGenerator;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.PrimitiveGenerators;
@@ -27,6 +26,7 @@ import java.util.Set;
 public class HBaseMetadataTest {
     static Generator<TableSchema> tableSchemaGen = new TableSchemaGenerator();
     static Generator<ColumnSchema> columnSchemaGen = new ColumnSchemaGenerator();
+    static Generator<Long> longGen = PrimitiveGenerators.longs();
     static HBaseMetadata hbaseMetadata;
     static Map<String, TableSchema> tableSchemas;
 
@@ -176,21 +176,34 @@ public class HBaseMetadataTest {
     }
 
     @Test public void testAutoInc() throws Exception {
-        ColumnSchema column = new ColumnSchema(ColumnType.LONG, true, true, null, null, null);
-        Map<String, ColumnSchema> columns = new HashMap<String, ColumnSchema>();
-        columns.put("column1", column);
-        TableSchema table = new TableSchema("table1", columns);
-
+        TableSchema table = tableSchemaGen.next();
         HTableInterface hTable = MockHTable.create();
         HBaseMetadata hbaseMetadata2 = new HBaseMetadata(hTable);
         hbaseMetadata2.putSchema(table);
 
         long tableId = hbaseMetadata2.getTableId(table.getName());
+        long value = longGen.next();
         Assert.assertEquals(hbaseMetadata2.getAutoInc(tableId), 0);
-        Assert.assertEquals(hbaseMetadata2.incrementAutoInc(tableId, 3), 3);
-        Assert.assertEquals(hbaseMetadata2.getAutoInc(tableId), 3);
+        Assert.assertEquals(hbaseMetadata2.incrementAutoInc(tableId, value), value);
+        Assert.assertEquals(hbaseMetadata2.getAutoInc(tableId), value);
 
         hbaseMetadata2.truncateAutoInc(tableId);
         Assert.assertEquals(hbaseMetadata2.getAutoInc(tableId), 0);
+    }
+
+    @Test public void testRowCount() throws Exception {
+        TableSchema table = tableSchemaGen.next();
+        HTableInterface hTable = MockHTable.create();
+        HBaseMetadata hbaseMetadata2 = new HBaseMetadata(hTable);
+        hbaseMetadata2.putSchema(table);
+
+        long tableId = hbaseMetadata2.getTableId(table.getName());
+        long value = longGen.next();
+        Assert.assertEquals(hbaseMetadata2.getRowCount(tableId), 0);
+        Assert.assertEquals(hbaseMetadata2.incrementRowCount(tableId, value), value);
+        Assert.assertEquals(hbaseMetadata2.getRowCount(tableId), value);
+
+        hbaseMetadata2.truncateRowCount(tableId);
+        Assert.assertEquals(hbaseMetadata2.getRowCount(tableId), 0);
     }
 }
