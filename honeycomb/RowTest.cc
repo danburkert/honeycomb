@@ -5,21 +5,7 @@
 #include <string.h>
 #include <avro.h>
 #include "Row.h"
-
-#define assert_that(call, msg) \
-  do { \
-    if (!call) { \
-      fprintf(stderr, msg "\n"); \
-      return -1; \
-    } \
-  } while (0)
-
-#define try(call, msg) \
-  do { \
-    if (call) { \
-      fprintf(stderr, msg "\n"); \
-    } \
-  } while (0)
+#include "TestMacros.h"
 
 /**
  * Generate random byte string of required length
