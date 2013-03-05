@@ -1,6 +1,5 @@
 package com.nearinfinity.honeycomb.hbase;
 
-import com.nearinfinity.honeycomb.ColumnNotFoundException;
 import com.nearinfinity.honeycomb.RowNotFoundException;
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Table;
@@ -67,20 +66,6 @@ public class HBaseTable implements Table {
 
     @Override
     public Scanner indexScanExact() {
-        return null;
-    }
-
-    @Override
-    public long getAutoIncValue(String column) throws IOException, ColumnNotFoundException {
-        return 0;
-    }
-
-    @Override
-    public void setAutoIncValue(String column, long value) throws IOException, ColumnNotFoundException {
-    }
-
-    @Override
-    public String getName() throws IOException {
         return null;
     }
 
