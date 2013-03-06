@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <avro.h>
-#include "Row.h"
+#include "../Row.h"
 #include "TestMacros.h"
 
 /**
