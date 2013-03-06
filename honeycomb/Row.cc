@@ -173,4 +173,3 @@ int Row::deserialize(const char* buf, int64_t len)
   avro_reader_free(reader);
   return ret;
 }
-

@@ -37,7 +37,7 @@ class Row
 
   public:
 
-  Row(); 
+  Row();
   ~Row();
 
   /**
