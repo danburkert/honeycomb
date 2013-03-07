@@ -1,39 +1,38 @@
-SET(UNIT_TEST_SOURCES "${HONEYCOMB_SOURCE_DIR}/Row.cc" "${HONEYCOMB_SOURCE_DIR}/IndexSchema.cc")
+cmake_minimum_required(VERSION 2.8.8)
+set(PROJECT_NAME_STR google-test-examples)
+project(${PROJECT_NAME_STR} C CXX)
+add_definitions(-Wall -ansi -Wno-deprecated -pthread) 
 
-INCLUDE(ExternalProject)
+#-------------------
+# set common include folder for module
+#-------------------
+set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR}/include ../)
+set(EXT_PROJECTS_DIR ${PROJECT_SOURCE_DIR}/ext)
 
-# Add gtest
-ExternalProject_Add(
-    googletest
-    PREFIX ${HONEYCOMB_BINARY_DIR}/unit-test/googletest
-    DOWNLOAD_DIR ${HONEYCOMB_THIRD_PARTY}/googletest
-    URL http://googletest.googlecode.com/files/gtest-1.6.0.zip
-    URL_MD5 4577b49f2973c90bf9ba69aa8166b786
+#-------------------
+# Module source
+#-------------------
+#set(PROJECT_LIB_NAME ${PROJECT_NAME_STR}_impl)
 
-    CMAKE_ARGS  -DCMAKE_ARCHIVE_OUTPUT_DIRECTORY:PATH=${HONEYCOMB_THIRD_PARTY}/libs/gtest
-                -DCMAKE_LIBRARY_OUTPUT_DIRECTORY:PATH=${HONEYCOMB_THIRD_PARTY}/libs/gtest
-                -DCMAKE_C_FLAGS:STRING=${CMAKE_C_FLAGS}
-                -DCMAKE_CXX_FLAGS:STRING=${CMAKE_CXX_FLAGS}
-    INSTALL_COMMAND ""
-)
+#include_directories(${COMMON_INCLUDES})
+#file(GLOB SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cpp)
+#add_library(${PROJECT_LIB_NAME} ${SRC_FILES})
 
-SET(GTEST_DIR "${HONEYCOMB_BINARY_DIR}/unit-test/googletest/src/googletest")
-SET(GTEST_INCLUDE_DIR "${GTEST_DIR}/include")
-SET(GTEST_LIB_DIR "${HONEYCOMB_THIRD_PARTY}/libs/gtest/")
+add_subdirectory(${EXT_PROJECTS_DIR}/gtest)
 
-# Specify include dir
-INCLUDE_DIRECTORIES(${GTEST_INCLUDE_DIR})
+#-------------------
+# Test
+#-------------------
+enable_testing()
+set(PROJECT_TEST_NAME ${PROJECT_NAME_STR}_test)
+include_directories(${GTEST_INCLUDE_DIRS} ${COMMON_INCLUDES})
 
-LINK_DIRECTORIES(${GTEST_LIB_DIR})
+file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/*.cc ../Row.cc ../IndexSchema.cc)
+add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES})
+add_dependencies(${PROJECT_TEST_NAME} googletest)
 
-# Add test executable target
-ADD_EXECUTABLE(runUnitTests RowTest.cc IndexSchemaTest.cc ${UNIT_TEST_SOURCES})
+target_link_libraries(${PROJECT_TEST_NAME} pthread)
+target_link_libraries(${PROJECT_TEST_NAME} avro)
+target_link_libraries(${PROJECT_TEST_NAME} ${GTEST_LIBS_DIR}/libgtest.a ${GTEST_LIBS_DIR}/libgtest_main.a)
 
-ADD_DEPENDENCIES(runUnitTests googletest)
-TARGET_LINK_LIBRARIES(runUnitTests gtest)
-TARGET_LINK_LIBRARIES(runUnitTests gtest_main)
-TARGET_LINK_LIBRARIES(runUnitTests pthread)
-
-ENABLE_TESTING()
-ADD_TEST(NAME Honeycomb-unit-tests
-         COMMAND runUnitTests)
+add_test(test1 ${PROJECT_TEST_NAME})
