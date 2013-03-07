@@ -18,11 +18,16 @@ set(EXT_PROJECTS_DIR ${PROJECT_SOURCE_DIR}/ext)
 #file(GLOB SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cpp)
 #add_library(${PROJECT_LIB_NAME} ${SRC_FILES})
 
+SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${HONEYCOMB_SOURCE_DIR}/cmake/")
 add_subdirectory(${EXT_PROJECTS_DIR}/gtest)
 
-#-------------------
-# Test
-#-------------------
+FIND_PACKAGE(LibAvro REQUIRED)
+if (LIBAVRO_FOUND)
+  INCLUDE_DIRECTORIES(${LIBAVRO_INCLUDE_DIR})
+  LINK_LIBRARIES(${LIBAVRO_LIBRARIES})
+endif()
+LINK_DIRECTORIES("/usr/local/avro/lang/c/build/avrolib/lib")
+
 enable_testing()
 set(PROJECT_TEST_NAME ${PROJECT_NAME_STR}_test)
 include_directories(${GTEST_INCLUDE_DIRS} ${COMMON_INCLUDES})
