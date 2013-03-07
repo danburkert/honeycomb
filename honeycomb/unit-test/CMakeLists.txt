@@ -32,6 +32,7 @@ ADD_EXECUTABLE(runUnitTests RowTest.cc ${UNIT_TEST_SOURCES})
 ADD_DEPENDENCIES(runUnitTests googletest)
 TARGET_LINK_LIBRARIES(runUnitTests gtest)
 TARGET_LINK_LIBRARIES(runUnitTests gtest_main)
+TARGET_LINK_LIBRARIES(runUnitTests pthread)
 
 ENABLE_TESTING()
 ADD_TEST(NAME Honeycomb-unit-tests
