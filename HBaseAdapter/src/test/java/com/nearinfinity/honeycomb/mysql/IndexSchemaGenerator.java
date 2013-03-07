@@ -22,7 +22,7 @@ public class IndexSchemaGenerator implements Generator<IndexSchema> {
     @Override
     public IndexSchema next() {
         Collections.shuffle(columnNames);
-        List<String> columns = columnNames.subList(0, lengthGen.next());
+        List<String> columns = columnNames.subList(0, Math.min(lengthGen.next(), columnNames.size()));
         return new IndexSchema(columns, rand.nextBoolean());
     }
 }
