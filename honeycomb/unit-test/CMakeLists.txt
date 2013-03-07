@@ -24,12 +24,14 @@ SET(GTEST_LIB_DIR "${HONEYCOMB_THIRD_PARTY}/libs/gtest/")
 # Specify include dir
 INCLUDE_DIRECTORIES(${GTEST_INCLUDE_DIR})
 
+LINK_DIRECTORIES(${GTEST_LIB_DIR})
+
 # Add test executable target
 ADD_EXECUTABLE(runUnitTests RowTest.cc ${UNIT_TEST_SOURCES})
 
 ADD_DEPENDENCIES(runUnitTests googletest)
-TARGET_LINK_LIBRARIES(runUnitTests ${GTEST_LIB_DIR}/libgtest.a)
-TARGET_LINK_LIBRARIES(runUnitTests ${GTEST_LIB_DIR}/libgtest_main.a)
+TARGET_LINK_LIBRARIES(runUnitTests gtest)
+TARGET_LINK_LIBRARIES(runUnitTests gtest_main)
 
 ENABLE_TESTING()
 ADD_TEST(NAME Honeycomb-unit-tests
