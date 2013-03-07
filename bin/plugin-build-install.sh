@@ -46,7 +46,7 @@ fi
 
 echo "Running Honeycomb unit tests"
 make test -C storage/honeycomb/unit-test
-[ $? -ne 0 ] && { echo "Unit test failed.  Stopping Build."; exit 1; }
+[ $? -ne 0 ] && { echo "Unit test failed. Stopping Build. Execute build/storage/honeycomb/unit-test/runUnitTests for more details."; exit 1; }
 
 link=$MYSQL_HOME/lib/plugin/ha_honeycomb.so
 target=$build_dir/storage/honeycomb/ha_honeycomb.so
