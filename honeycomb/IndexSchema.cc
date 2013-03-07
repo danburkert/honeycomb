@@ -71,7 +71,7 @@ int IndexSchema::get_column(size_t n, const char** column, size_t* len) {
   avro_value_t column_list;
   avro_value_t column_value;
   ret |= avro_value_get_by_name(&index_schema, "columns", &column_list, NULL);
-  ret |= avro_value_get_by_index(&index_schema, n, &column_value, NULL);
+  ret |= avro_value_get_by_index(&column_list, n, &column_value, NULL);
   ret |= avro_value_get_string(&column_value, column, len);
   return ret;
 }

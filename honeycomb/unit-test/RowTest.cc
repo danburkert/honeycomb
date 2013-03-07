@@ -2,18 +2,20 @@
 #include <stdio.h>
 #include <string.h>
 #include <avro.h>
-#include "../Row.h"
 #include "Generator.h"
 #include "gtest/gtest.h"
+#include "../Row.h"
 
 const int ITERATIONS = 1000;
 
-class RowTest : public ::testing::Test {
+class RowTest : public ::testing::Test
+{
   protected:
     Row row;
 };
 
-void rand_record_map(Row* row) {
+void rand_record_map(Row* row)
+{
   ASSERT_FALSE(row->reset());
   int num_records = rand() % 100; // [0, 100) records
   int val_len;
@@ -24,14 +26,13 @@ void rand_record_map(Row* row) {
 
   for (int i = 0; i < num_records; i++)
   {
-    key_len = (rand() % 500) + 500; // [500, 1000) bytes per key
+    key_len = (rand() % 51) + 14; // [14, 64) chars per column name
     val_lens[i] = rand() % 1023 + 1; // [1, 1024) bytes per record
     keys[i] = new char[key_len];
     vals[i] = new char[val_lens[i]];
     gen_random_string(keys[i], key_len);
     gen_random_bytes(vals[i], val_lens[i]);
     ASSERT_FALSE(row->set_bytes_record(keys[i], vals[i], val_lens[i]));
-    row->set_bytes_record(keys[i], vals[i], val_lens[i]);
   }
 
   size_t count;
@@ -56,13 +57,16 @@ void rand_record_map(Row* row) {
   delete[] vals;
   delete[] val_lens;
 }
-TEST_F(RowTest, RandRecordMap) {
-  for(int i = 0; i < ITERATIONS; i++) {
+TEST_F(RowTest, RandRecordMap)
+{
+  for(int i = 0; i < ITERATIONS; i++)
+  {
     rand_record_map(&row);
   }
 }
 
-void bytes_record(Row* row) {
+void bytes_record(Row* row)
+{
   ASSERT_FALSE(row->reset());
   const char keys[][8] = {"column0",
                           "column1",
@@ -106,13 +110,16 @@ void bytes_record(Row* row) {
   ASSERT_FALSE(row->get_bytes_record("foozball", &get_val, NULL));
   ASSERT_EQ(NULL, get_val);
 }
-TEST_F(RowTest, BytesRecord) {
-  for(int i = 0; i < ITERATIONS; i++) {
+TEST_F(RowTest, BytesRecord)
+{
+  for(int i = 0; i < ITERATIONS; i++)
+  {
     bytes_record(&row);
   }
 }
 
-void rand_uuid(Row* row) {
+void rand_uuid(Row* row)
+{
   ASSERT_FALSE(row->reset());
   char* uuid_buf = new char[16];
   const char* out_buf;
@@ -123,13 +130,16 @@ void rand_uuid(Row* row) {
   ASSERT_EQ(0, memcmp(uuid_buf, out_buf, 16));
   delete[] uuid_buf;
 }
-TEST_F(RowTest, RandUUID) {
-  for(int i = 0; i < ITERATIONS; i++) {
+TEST_F(RowTest, RandUUID)
+{
+  for(int i = 0; i < ITERATIONS; i++)
+  {
     rand_uuid(&row);
   }
 }
 
-void rand_ser_de(Row* row_se) {
+void rand_ser_de(Row* row_se)
+{
   ASSERT_FALSE(row_se->reset());
   Row* row_de = new Row();
 
@@ -150,7 +160,8 @@ void rand_ser_de(Row* row_se) {
   delete[] serialized;
   delete row_de;
 }
-TEST_F(RowTest, RandSerDe) {
+TEST_F(RowTest, RandSerDe)
+{
   for(int i = 0; i < ITERATIONS; i++) {
     rand_ser_de(&row);
   }
