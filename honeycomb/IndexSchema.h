@@ -33,7 +33,7 @@ class IndexSchema
     /**
      * Return the nth column of the index.
      */
-    int get_column(size_t n, const char** column, size_t* len);
+    const char* get_column(size_t n);
 
     /**
      * Add a column to the index.

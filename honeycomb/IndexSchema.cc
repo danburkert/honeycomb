@@ -66,14 +66,14 @@ size_t IndexSchema::size() {
 /**
  * Return the nth column of the index.
  */
-int IndexSchema::get_column(size_t n, const char** column, size_t* len) {
-  int ret = 0;
+const char* IndexSchema::get_column(size_t n) {
+  const char* column;
   avro_value_t column_list;
   avro_value_t column_value;
-  ret |= avro_value_get_by_name(&index_schema, "columns", &column_list, NULL);
-  ret |= avro_value_get_by_index(&column_list, n, &column_value, NULL);
-  ret |= avro_value_get_string(&column_value, column, len);
-  return ret;
+  avro_value_get_by_name(&index_schema, "columns", &column_list, NULL);
+  avro_value_get_by_index(&column_list, n, &column_value, NULL);
+  avro_value_get_string(&column_value, &column, NULL);
+  return column;
 }
 
 /**
