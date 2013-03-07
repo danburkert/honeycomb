@@ -1,4 +1,4 @@
-SET(UNIT_TEST_SOURCES "${HONEYCOMB_SOURCE_DIR}/Row.cc")
+SET(UNIT_TEST_SOURCES "${HONEYCOMB_SOURCE_DIR}/Row.cc" "${HONEYCOMB_SOURCE_DIR}/IndexSchema.cc")
 
 INCLUDE(ExternalProject)
 
@@ -27,7 +27,7 @@ INCLUDE_DIRECTORIES(${GTEST_INCLUDE_DIR})
 LINK_DIRECTORIES(${GTEST_LIB_DIR})
 
 # Add test executable target
-ADD_EXECUTABLE(runUnitTests RowTest.cc ${UNIT_TEST_SOURCES})
+ADD_EXECUTABLE(runUnitTests RowTest.cc IndexSchemaTest.cc ${UNIT_TEST_SOURCES})
 
 ADD_DEPENDENCIES(runUnitTests googletest)
 TARGET_LINK_LIBRARIES(runUnitTests gtest)

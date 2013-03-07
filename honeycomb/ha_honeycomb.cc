@@ -16,6 +16,7 @@
 #include "Logging.h"
 #include "JNICache.h"
 #include "Row.h"
+#include "IndexSchema.h"
 
 static handler *honeycomb_create_handler(handlerton *hton,
     TABLE_SHARE *table, MEM_ROOT *mem_root);
