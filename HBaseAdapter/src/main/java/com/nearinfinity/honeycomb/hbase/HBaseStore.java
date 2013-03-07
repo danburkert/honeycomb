@@ -1,5 +1,21 @@
 package com.nearinfinity.honeycomb.hbase;
 
+import static java.text.MessageFormat.format;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.HTablePool;
+import org.apache.log4j.Logger;
+import org.xml.sax.SAXException;
+
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -12,20 +28,6 @@ import com.nearinfinity.honeycomb.hbaseclient.SqlTableCreator;
 import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import com.nearinfinity.honeycomb.mysqlengine.HTableFactory;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.ZooKeeperConnectionException;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.HTablePool;
-import org.apache.log4j.Logger;
-import org.xml.sax.SAXException;
-
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-
-import static java.text.MessageFormat.format;
 
 public class HBaseStore implements Store {
     private static boolean isInitialized = true;
@@ -92,6 +94,7 @@ public class HBaseStore implements Store {
         tableCache = CacheBuilder
                 .newBuilder()
                 .build(new CacheLoader<String, Long>() {
+                    @Override
                     public Long load(String tableName)
                             throws IOException, TableNotFoundException {
                         HTableInterface hTable = getFreshHTable();
@@ -104,6 +107,7 @@ public class HBaseStore implements Store {
         columnsCache = CacheBuilder
                 .newBuilder()
                 .build(new CacheLoader<Long, BiMap<String, Long>>() {
+                    @Override
                     public BiMap<String, Long> load(Long tableId)
                             throws IOException, TableNotFoundException {
                         HTableInterface hTable = getFreshHTable();
@@ -118,6 +122,7 @@ public class HBaseStore implements Store {
         autoIncCache = CacheBuilder
                 .newBuilder()
                 .build(new CacheLoader<Long, Long>() {
+                    @Override
                     public Long load(Long tableId)
                             throws IOException, TableNotFoundException {
                         HTableInterface hTable = getFreshHTable();
@@ -131,6 +136,7 @@ public class HBaseStore implements Store {
         rowsCache = CacheBuilder
                 .newBuilder()
                 .build(new CacheLoader<Long, Long>() {
+                    @Override
                     public Long load(Long tableId)
                             throws IOException, TableNotFoundException {
                         HTableInterface hTable = getFreshHTable();
@@ -144,6 +150,7 @@ public class HBaseStore implements Store {
         schemaCache = CacheBuilder
                 .newBuilder()
                 .build(new CacheLoader<Long, TableSchema>() {
+                    @Override
                     public TableSchema load(Long tableId)
                             throws IOException, TableNotFoundException {
                         HTableInterface hTable = getFreshHTable();
@@ -167,10 +174,10 @@ public class HBaseStore implements Store {
     }
 
     @Override
-    public Table createTable(TableSchema schema) throws Exception {
+    public Table createTable(String tableName, TableSchema schema) throws Exception {
         HTableInterface hTable = getFreshHTable();
-        new HBaseMetadata(hTable).putSchema(schema);
-        return new HBaseTable(hTable, tableCache.get(schema.getName()));
+        new HBaseMetadata(hTable).putSchema(tableName, schema);
+        return new HBaseTable(hTable, tableCache.get(tableName));
     }
 
     @Override
@@ -186,8 +193,15 @@ public class HBaseStore implements Store {
         long tableId = tableCache.get(tableName);
         HTableInterface hTable = getFreshHTable();
         HBaseMetadata metadata = new HBaseMetadata(hTable);
-        metadata.updateSchema(schemaCache.get(tableId), schema);
+        metadata.updateSchema(tableId, schemaCache.get(tableId), schema);
         invalidateCache(tableName);
+    }
+
+    @Override
+    public void renameTable(String curTableName, String newTableName) throws Exception {
+        HBaseMetadata metadata = new HBaseMetadata(getFreshHTable());
+        metadata.renameExistingTable(curTableName, newTableName);
+        invalidateCache(curTableName);
     }
 
     @Override

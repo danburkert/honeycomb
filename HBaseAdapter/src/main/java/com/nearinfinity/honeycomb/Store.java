@@ -1,8 +1,8 @@
 package com.nearinfinity.honeycomb;
 
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
-
 import java.io.IOException;
+
+import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 
 /**
  * The store is responsible for meta operations on tables: opening, creating,
@@ -23,11 +23,12 @@ public interface Store {
      * Create a table, or if the table already exists with the same name and
      * columns, open it.
      *
+     * @param tableName
      * @param schema
      * @return
      * @throws IOException
      */
-    public Table createTable(TableSchema schema) throws Exception;
+    public Table createTable(String tableName, TableSchema schema) throws Exception;
 
     /**
      * Delete the specified table
@@ -36,6 +37,14 @@ public interface Store {
      * @throws IOException
      */
     public void deleteTable(String tableName) throws Exception;
+
+    /**
+     * Renames the specified existing table to the provided table name
+     * @param curTableName
+     * @param newTableName
+     * @throws Exception
+     */
+    public void renameTable(String curTableName, String newTableName) throws Exception;
 
     /**
      * Return the table's metadata

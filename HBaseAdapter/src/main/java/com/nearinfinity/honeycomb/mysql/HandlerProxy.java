@@ -1,5 +1,6 @@
 package com.nearinfinity.honeycomb.mysql;
 
+import com.google.common.base.Preconditions;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.hbase.HBaseStore;
@@ -15,10 +16,24 @@ public class HandlerProxy {
         table = store.openTable(tableName);
     }
 
-    public HandlerProxy(byte[] serializedTableSchema) throws Exception {
+    public HandlerProxy(String tableName, byte[] serializedTableSchema) throws Exception {
         TableSchema tableSchema = Util.deserializeTableSchema(serializedTableSchema);
-        table = store.createTable(tableSchema);
-        tableName = tableSchema.getName();
+        table = store.createTable(tableName, tableSchema);
+        this.tableName = tableName;
+    }
+
+    /**
+     * Updates the existing SQL table name representation in the underlying
+     * {@link Store} implementation to the specified new table name
+     * @param newName The new table name to represent, not null or empty
+     * @throws Exception
+     */
+    public void renameTable(final String newName) throws Exception {
+        Preconditions.checkNotNull(newName, "The specified table name is invalid");
+        Preconditions.checkArgument(!newName.isEmpty(), "The specified table name cannot be empty");
+
+        store.renameTable(tableName, newName);
+        tableName = newName;
     }
 
     public Long getAutoIncValue(String columnName)

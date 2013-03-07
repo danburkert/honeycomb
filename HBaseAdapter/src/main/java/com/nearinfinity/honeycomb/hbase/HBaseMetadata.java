@@ -14,8 +14,10 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
 import com.nearinfinity.honeycomb.TableNotFoundException;
@@ -87,11 +89,11 @@ public class HBaseMetadata {
         return Util.deserializeTableSchema(serializedSchema);
     }
 
-    public void putSchema(TableSchema schema)
+    public void putSchema(String tableName, TableSchema schema)
             throws IOException {
         long tableId = getNextTableId();
         List<Put> puts = new ArrayList<Put>();
-        puts.add(putTableId(schema.getName(), tableId));
+        puts.add(putTableId(tableName, tableId));
         puts.add(putColumnIds(tableId, schema.getColumns()));
         puts.add(putTableSchema(tableId, schema));
 
@@ -124,7 +126,7 @@ public class HBaseMetadata {
         hTable.flushCommits();
     }
 
-    public void updateSchema(TableSchema oldSchema, TableSchema newSchema)
+    public void updateSchema(long tableId, TableSchema oldSchema, TableSchema newSchema)
             throws IOException, TableNotFoundException {
         if (oldSchema.equals(newSchema)) {
             return;
@@ -132,15 +134,6 @@ public class HBaseMetadata {
 
         List<Put> puts = new ArrayList<Put>();
         List<Delete> deletes = new ArrayList<Delete>();
-        String oldTableName = oldSchema.getName();
-        String tableName = newSchema.getName();
-        long tableId = getTableId(oldTableName);
-
-        if (!oldTableName.equals(tableName)) { // Table name has changed
-            puts.add(putTableId(tableName,
-                    getTableId(oldTableName)));
-            deletes.add(deleteTableId(oldTableName));
-        }
 
         MapDifference<String, ColumnSchema> diff = Maps.difference(oldSchema.getColumns(),
                 newSchema.getColumns());
@@ -175,10 +168,30 @@ public class HBaseMetadata {
 
         puts.add(putTableSchema(tableId, newSchema));
 
-        hTable.delete(deletes);
-        hTable.put(puts);
-        hTable.flushCommits();
+        performMutations(deletes, puts);
     }
+
+    /**
+     * Performs the operations necessary to rename an existing table stored in a {@link TablesRow} row
+     * @param oldTableName The name of the existing table
+     * @param newTableName The new name to use for this table
+     * @throws IOException Thrown on HBase mutation failure
+     * @throws TableNotFoundException Thrown when existing table cannot be found
+     */
+    public void renameExistingTable(final String oldTableName, final String newTableName) throws IOException, TableNotFoundException {
+        Preconditions.checkNotNull(oldTableName, "The current table name provided is invalid");
+        Preconditions.checkArgument(!oldTableName.isEmpty(), "The current table name provided cannot be empty");
+        Preconditions.checkNotNull(newTableName, "The new table name provided is invalid");
+        Preconditions.checkArgument(!newTableName.isEmpty(), "The new table name provided cannot be empty");
+
+        final long tableId = getTableId(oldTableName);
+
+        List<Delete> deletes = ImmutableList.of(deleteTableId(oldTableName));
+        List<Put> puts = ImmutableList.of(putTableId(newTableName, tableId));
+
+        performMutations(deletes, puts);
+    }
+
 
     public long getAutoInc(long tableId) throws IOException {
         return getCounter(new AutoIncRow().encode(), serializeId(tableId));
@@ -288,5 +301,11 @@ public class HBaseMetadata {
 
     private long deserializeId(byte[] id) {
         return VarEncoder.decodeULong(id);
+    }
+
+    private void performMutations(final List<Delete> deletes, final List<Put> puts) throws IOException {
+        hTable.delete(deletes);
+        hTable.put(puts);
+        hTable.flushCommits();
     }
 }
