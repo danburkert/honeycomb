@@ -1,4 +1,5 @@
 build/
+unit-test-build/
 target/
 
 .idea/

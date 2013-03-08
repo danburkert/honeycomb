@@ -6,6 +6,14 @@ command -v cmake >/dev/null 2>&1 || { echo >&2 "cmake is required to run $0."; e
 command -v make >/dev/null 2>&1 || { echo >&2 "make is required to run $0."; exit 1; }
 
 build_dir=$HONEYCOMB_HOME/build
+unit_test_dir=$HONEYCOMB_HOME/unit-test-build
+
+if [ ! -d $unit_test_dir ]
+then
+  echo "Creating build output directory: $unit_test_dir"
+  mkdir $unit_test_dir
+fi
+
 if [ ! -d $build_dir ]
 then
   echo "Creating build output directory: $build_dir"
@@ -44,10 +52,6 @@ then
   popd
 fi
 
-echo "Running Honeycomb unit tests"
-make test -C storage/honeycomb/unit-test
-[ $? -ne 0 ] && { echo "Unit test failed. Stopping Build. Execute build/storage/honeycomb/unit-test/runUnitTests for more details."; exit 1; }
-
 link=$MYSQL_HOME/lib/plugin/ha_honeycomb.so
 target=$build_dir/storage/honeycomb/ha_honeycomb.so
 if [ ! -h $link ]
@@ -68,3 +72,13 @@ then
   echo "Creating a symbolic link from $link to $target"
   sudo ln -s $target $link
 fi
+
+cd $unit_test_dir
+if [ ! -e CMakeCache.txt ]
+then
+  cmake ../honeycomb/unit-test -DHONEYCOMB_SOURCE_DIR=$HONEYCOMB_HOME/honeycomb
+  make
+fi
+echo "Running Honeycomb unit tests"
+make test 
+[ $? -ne 0 ] && { echo "Unit test failed. Stopping Build. Execute build/storage/honeycomb/unit-test/runUnitTests for more details."; exit 1; }
