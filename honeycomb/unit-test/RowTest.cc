@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
 #include <string.h>
 #include <avro.h>
 #include "Generator.h"
@@ -12,6 +13,9 @@ class RowTest : public ::testing::Test
 {
   protected:
     Row row;
+    virtual void SetUp() {
+      srand(time(NULL));
+    }
 };
 
 void rand_record_map(Row* row)

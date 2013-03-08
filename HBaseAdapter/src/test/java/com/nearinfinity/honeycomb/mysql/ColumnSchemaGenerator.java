@@ -27,7 +27,7 @@ public class ColumnSchemaGenerator implements Generator<ColumnSchema> {
             case LONG:
             case ULONG:
             case DOUBLE:
-                schema.setIsAutoincrement(rand.nextBoolean());
+                schema.setIsAutoIncrement(rand.nextBoolean());
                 break;
             case DECIMAL:
                 int precision = rand.nextInt(66);

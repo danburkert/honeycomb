@@ -21,6 +21,12 @@ class IndexSchema
      */
     int reset();
 
+    bool equal(const IndexSchema& other);
+
+    int serialize(const char** buf, size_t* len);
+
+    int deserialize(const char* buf, int64_t len);
+
     bool get_is_unique();
 
     int set_is_unique(bool is_unique);

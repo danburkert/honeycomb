@@ -1,17 +1,16 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
+import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.CombinedGenerators;
 import net.java.quickcheck.generator.PrimitiveGenerators;
 import net.java.quickcheck.generator.distribution.Distribution;
 
-import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
-import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class TableSchemaGenerator implements Generator<TableSchema> {
     public static final int MYSQL_MAX_NAME_LENGTH = 64; // https://dev.mysql.com/doc/refman/5.5/en/identifiers.html

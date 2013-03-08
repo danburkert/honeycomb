@@ -32,7 +32,7 @@ enable_testing()
 set(PROJECT_TEST_NAME ${PROJECT_NAME_STR}_test)
 include_directories(${GTEST_INCLUDE_DIRS} ${COMMON_INCLUDES})
 
-file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/*.cc ../Row.cc ../IndexSchema.cc)
+file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/*.cc ../Row.cc ../IndexSchema.cc ../ColumnSchema.cc)
 add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES})
 add_dependencies(${PROJECT_TEST_NAME} googletest)
 

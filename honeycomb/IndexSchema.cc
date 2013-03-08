@@ -26,14 +26,40 @@ IndexSchema::~IndexSchema()
   avro_schema_decref(index_schema_schema);
 }
 
-/**
- * @brief Resets the IndexSchema to a fresh state. Reseting an existing
- * IndexSchema is much faster than creating a new one.
- * @return Error code
- */
 int IndexSchema::reset()
 {
   return avro_value_reset(&index_schema);
+}
+
+bool IndexSchema::equal( const IndexSchema& other)
+{
+  avro_value_t other_index_schema = other.index_schema;
+  return avro_value_equal(&index_schema, &other_index_schema);
+};
+
+int IndexSchema::serialize(const char** buf, size_t* len)
+{
+  int ret = 0;
+  ret |= avro_value_sizeof(&index_schema, len);
+  *buf = new char[*len];
+  if(*buf)
+  {
+    avro_writer_t writer = avro_writer_memory(*buf, *len);
+    ret |= avro_value_write(writer, &index_schema);
+    avro_writer_free(writer);
+  } else {
+    ret = -1;
+  }
+  return ret;
+};
+
+int IndexSchema::deserialize(const char* buf, int64_t len)
+{
+  int ret = 0;
+  avro_reader_t reader = avro_reader_memory(buf, len);
+  ret |= avro_value_read(reader, &index_schema);
+  avro_reader_free(reader);
+  return ret;
 }
 
 bool IndexSchema::get_is_unique() {
