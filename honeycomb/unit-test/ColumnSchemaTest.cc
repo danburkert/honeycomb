@@ -5,12 +5,9 @@
 #include <avro.h>
 #include "gtest/gtest.h"
 #include "../ColumnSchema.h"
+#include "Generator.h"
 
-const int ITERATIONS = 1000;
-const int NUM_TYPES = 9;
-const int MAX_LENGTH = 65535;
-const int MAX_PRECISION = 65;
-const int MAX_SCALE = 30;
+const int ITERATIONS = 100;
 
 class ColumnSchemaTest : public ::testing::Test
 {
@@ -122,18 +119,6 @@ TEST_F(ColumnSchemaTest, SetPrecision)
   EXPECT_EQ(precision, schema.get_precision());
 };
 
-/**
- * Randomize the schema.
- */
-void column_schema_gen(ColumnSchema* schema) {
-  ASSERT_FALSE(schema->set_type((ColumnSchema::ColumnType) (rand() % NUM_TYPES)));
-  ASSERT_FALSE(schema->set_is_nullable(rand() % 2));
-  ASSERT_FALSE(schema->set_is_auto_increment(rand() % 2));
-  ASSERT_FALSE(schema->set_max_length(rand() % MAX_LENGTH));
-  ASSERT_FALSE(schema->set_precision(rand() % MAX_PRECISION + 1));
-  ASSERT_FALSE(schema->set_scale(rand() % MAX_SCALE));
-}
-
 void test_ser_de(ColumnSchema* schema)
 {
   ASSERT_FALSE(schema->reset());
@@ -143,10 +128,10 @@ void test_ser_de(ColumnSchema* schema)
 
   const char* serialized;
   size_t size;
-  schema->serialize(&serialized, &size);
+  ASSERT_FALSE(schema->serialize(&serialized, &size));
 
-  schema_de->deserialize(serialized, (int64_t) size);
-  ASSERT_TRUE(schema->equal(*schema_de));
+  ASSERT_FALSE(schema_de->deserialize(serialized, (int64_t) size));
+  ASSERT_TRUE(schema->equals(*schema_de));
 
   delete[] serialized;
   delete schema_de;

@@ -16,6 +16,7 @@
 #include "Logging.h"
 #include "JNICache.h"
 #include "Row.h"
+#include "TableSchema.h"
 #include "IndexSchema.h"
 #include "ColumnSchema.h"
 

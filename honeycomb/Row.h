@@ -47,7 +47,17 @@ class Row
    */
   int reset();
 
-  bool equal(const Row& other);
+  bool equals(const Row& other);
+
+  /**
+   * @brief Serialize Row to buf and set serialized length in len
+   * @param buf Pointer to a byte buffer holding the serialized Row.  The caller
+   * is responsible for delete[] the buffer after finishing with it.
+   * @return Error code
+   */
+  int serialize(const char** buf, size_t* len);
+
+  int deserialize(const char* buf, int64_t len);
 
   /**
    * @brief set count to the number of records in the row
@@ -92,15 +102,5 @@ class Row
    * @return Error code
    */
   int set_bytes_record(const char* column_name, char* value, size_t size);
-
-  /**
-   * @brief Serialize Row to buf and set serialized length in len
-   * @param buf Pointer to a byte buffer holding the serialized Row.  The caller
-   * is responsible for delete[] the buffer after finishing with it.
-   * @return Error code
-   */
-  int serialize(const char** buf, size_t* len);
-
-  int deserialize(const char* buf, int64_t len);
 };
 #endif

@@ -2,7 +2,6 @@
 #include "AvroUtil.h"
 #include <stdio.h>
 
-const char INDEX_SCHEMA[] = "{\"type\":\"record\",\"name\":\"IndexSchema\",\"namespace\":\"com.nearinfinity.honeycomb.mysql.gen\",\"fields\":[{\"name\":\"columns\",\"type\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"avro.java.string\":\"String\"}}},{\"name\":\"isUnique\",\"type\":\"boolean\",\"default\":false}]}";
 const char IS_UNIQUE[] = "isUnique";
 
 IndexSchema::IndexSchema()
@@ -32,7 +31,7 @@ int IndexSchema::reset()
   return avro_value_reset(&index_schema);
 }
 
-bool IndexSchema::equal( const IndexSchema& other)
+bool IndexSchema::equals( const IndexSchema& other)
 {
   avro_value_t other_index_schema = other.index_schema;
   return avro_value_equal(&index_schema, &other_index_schema);
@@ -101,3 +100,13 @@ int IndexSchema::add_column(const char* column_name)
   ret |= avro_value_set_string(&column, column_name);
   return ret;
 }
+
+avro_value_t* IndexSchema::get_avro_value()
+{
+  return &index_schema;
+};
+
+int IndexSchema::set_avro_value(avro_value_t* value)
+{
+  return avro_value_copy(&index_schema, value);
+};

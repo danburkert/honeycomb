@@ -87,7 +87,7 @@ int Row::reset()
   return avro_value_reset(&row_container);
 }
 
-bool Row::equal(const Row& other)
+bool Row::equals(const Row& other)
 {
   avro_value_t other_row_container = other.row_container;
   return avro_value_equal(&row_container, &other_row_container);

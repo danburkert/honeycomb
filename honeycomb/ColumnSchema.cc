@@ -1,7 +1,6 @@
 #include "ColumnSchema.h"
 #include "AvroUtil.h"
 
-const char COLUMN_SCHEMA[] = "{\"type\":\"record\",\"name\":\"ColumnSchema\",\"namespace\":\"com.nearinfinity.honeycomb.mysql.gen\",\"fields\":[{\"name\":\"type\",\"type\":{\"type\":\"enum\",\"name\":\"ColumnType\",\"symbols\":[\"STRING\",\"BINARY\",\"ULONG\",\"LONG\",\"DOUBLE\",\"DECIMAL\",\"TIME\",\"DATE\",\"DATETIME\"]}},{\"name\":\"isNullable\",\"type\":\"boolean\",\"default\":true},{\"name\":\"isAutoIncrement\",\"type\":\"boolean\",\"default\":false},{\"name\":\"maxLength\",\"type\":[\"null\",\"int\"],\"default\":null},{\"name\":\"scale\",\"type\":[\"null\",\"int\"],\"default\":null},{\"name\":\"precision\",\"type\":[\"null\",\"int\"],\"default\":null}]}";
 const char TYPE[] = "type";
 const char IS_NULLABLE[] = "isNullable";
 const char IS_AUTO_INCREMENT[] = "isAutoIncrement";
@@ -119,7 +118,7 @@ int ColumnSchema::reset()
   return avro_value_reset(&column_schema) || set_defaults();
 }
 
-bool ColumnSchema::equal( const ColumnSchema& other)
+bool ColumnSchema::equals( const ColumnSchema& other)
 {
   avro_value_t other_column_schema = other.column_schema;
   return avro_value_equal(&column_schema, &other_column_schema);
@@ -202,3 +201,13 @@ int ColumnSchema::set_precision(int precision)
 {
   return set_int_field(PRECISION, precision);
 }
+
+avro_value_t* ColumnSchema::get_avro_value()
+{
+  return &column_schema;
+};
+
+int ColumnSchema::set_avro_value(avro_value_t* value)
+{
+  return avro_value_copy(&column_schema, value);
+};

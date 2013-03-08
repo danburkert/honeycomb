@@ -3,6 +3,8 @@
 
 #include <avro.h>
 
+#define COLUMN_SCHEMA "{\"type\":\"record\",\"name\":\"ColumnSchema\",\"namespace\":\"com.nearinfinity.honeycomb.mysql.gen\",\"fields\":[{\"name\":\"type\",\"type\":{\"type\":\"enum\",\"name\":\"ColumnType\",\"symbols\":[\"STRING\",\"BINARY\",\"ULONG\",\"LONG\",\"DOUBLE\",\"DECIMAL\",\"TIME\",\"DATE\",\"DATETIME\"]}},{\"name\":\"isNullable\",\"type\":\"boolean\",\"default\":true},{\"name\":\"isAutoIncrement\",\"type\":\"boolean\",\"default\":false},{\"name\":\"maxLength\",\"type\":[\"null\",\"int\"],\"default\":null},{\"name\":\"scale\",\"type\":[\"null\",\"int\"],\"default\":null},{\"name\":\"precision\",\"type\":[\"null\",\"int\"],\"default\":null}]}"
+
 class ColumnSchema
 {
   private:
@@ -32,58 +34,61 @@ class ColumnSchema
 
   public:
 
-  enum ColumnType
-  {
-    STRING,
-    BINARY,
-    ULONG,
-    LONG,
-    DOUBLE,
-    DECIMAL,
-    TIME,
-    DATE,
-    DATETIME
-  };
+    enum ColumnType
+    {
+      STRING,
+      BINARY,
+      ULONG,
+      LONG,
+      DOUBLE,
+      DECIMAL,
+      TIME,
+      DATE,
+      DATETIME
+    };
 
-  ColumnSchema();
-  ~ColumnSchema();
+    ColumnSchema();
+    ~ColumnSchema();
 
-  /**
-   * @brief Resets the ColumnSchema to a fresh state.  Reseting an existing Row
-   * is much faster than creating a new one.
-   * @return Error code
-   */
-  int reset();
+    /**
+     * @brief Resets the ColumnSchema to a fresh state.  Reseting an existing Row
+     * is much faster than creating a new one.
+     * @return Error code
+     */
+    int reset();
 
-  bool equal(const ColumnSchema& other);
+    bool equals(const ColumnSchema& other);
 
-  int serialize(const char** buf, size_t* len);
+    int serialize(const char** buf, size_t* len);
 
-  int deserialize(const char* buf, int64_t len);
+    int deserialize(const char* buf, int64_t len);
 
-  ColumnType get_type();
+    ColumnType get_type();
 
-  int set_type(ColumnType type);
+    int set_type(ColumnType type);
 
-  bool get_is_nullable();
+    bool get_is_nullable();
 
-  int set_is_nullable(bool is_nullable);
+    int set_is_nullable(bool is_nullable);
 
-  bool get_is_auto_increment();
+    bool get_is_auto_increment();
 
-  int set_is_auto_increment(bool is_nullable);
+    int set_is_auto_increment(bool is_nullable);
 
-  int get_max_length();
+    int get_max_length();
 
-  int set_max_length(int length);
+    int set_max_length(int length);
 
-  int get_scale();
+    int get_scale();
 
-  int set_scale(int scale);
+    int set_scale(int scale);
 
-  int get_precision();
+    int get_precision();
 
-  int set_precision(int precision);
+    int set_precision(int precision);
 
+    avro_value_t* get_avro_value();
+
+    int set_avro_value(avro_value_t*);
 };
 #endif

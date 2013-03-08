@@ -7,7 +7,7 @@
 #include "gtest/gtest.h"
 #include "../IndexSchema.h"
 
-const int ITERATIONS = 1000;
+const int ITERATIONS = 100;
 
 class IndexSchemaTest : public ::testing::Test
 {
@@ -76,22 +76,6 @@ TEST_F(IndexSchemaTest, RandColumnsAdd)
   }
 }
 
-void index_schema_gen(IndexSchema* schema)
-{
-  ASSERT_FALSE(schema->reset());
-
-  int num_columns = 1 + rand() % 4;
-  char column_name[64];
-  int length;
-
-  for (int i = 0; i < num_columns; i++)
-  {
-    length = 1 + rand() % 64;
-    gen_random_string(column_name, length);
-    ASSERT_FALSE(schema->add_column(column_name));
-  }
-}
-
 void test_ser_de(IndexSchema* schema)
 {
   ASSERT_FALSE(schema->reset());
@@ -104,7 +88,7 @@ void test_ser_de(IndexSchema* schema)
   schema->serialize(&serialized, &size);
 
   schema_de->deserialize(serialized, (int64_t) size);
-  ASSERT_TRUE(schema->equal(*schema_de));
+  ASSERT_TRUE(schema->equals(*schema_de));
 
   delete[] serialized;
   delete schema_de;

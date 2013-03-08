@@ -158,7 +158,7 @@ void rand_ser_de(Row* row_se)
   row_se->serialize(&serialized, &size);
 
   row_de->deserialize(serialized, (int64_t) size);
-  ASSERT_TRUE(row_se->equal(*row_de));
+  ASSERT_TRUE(row_se->equals(*row_de));
 
   delete[] uuid_buf;
   delete[] serialized;
