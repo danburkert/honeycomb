@@ -23,8 +23,6 @@ if (LIBAVRO_FOUND)
   LINK_LIBRARIES(${LIBAVRO_LIBRARIES})
 endif()
 
-ADD_SUBDIRECTORY(unit-test)
-
 if (APPLE)
   MESSAGE( "Compiling on Apple System" )
   LINK_DIRECTORIES("${CMAKE_BINARY_DIR}/dependencies/lib/")
