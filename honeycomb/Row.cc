@@ -55,10 +55,6 @@ int Row::set_record(const char* column_name, const char* type, avro_value_t* rec
   union_schema = avro_value_get_schema(&record_union);
   avro_schema_union_branch_by_name(union_schema, &type_disc, type);
 
-  // The return value from avro_value_get_current_branch is not an error
-  // code as far as I can tell.  See test_avro_value.c.  It returns 22 when
-  // there is no current branch, which would be most of the time during a set
-  avro_value_get_current_branch(&record_union, record);
   ret |= avro_value_set_branch(&record_union, type_disc, record);
 
   return ret;
