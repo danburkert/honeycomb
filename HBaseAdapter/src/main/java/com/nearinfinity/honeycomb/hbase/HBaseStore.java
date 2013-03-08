@@ -80,6 +80,7 @@ public class HBaseStore implements Store {
         HBaseMetadata metadata = getHBaseMetadata(hTable);
         metadata.deleteSchema(tableName);
         invalidateCache(tableName);
+        hTable.close();
     }
 
     @Override
@@ -89,13 +90,16 @@ public class HBaseStore implements Store {
         HBaseMetadata metadata = getHBaseMetadata(hTable);
         metadata.updateSchema(tableId, schemaCache.get(tableId), schema);
         invalidateCache(tableName);
+        hTable.close();
     }
 
     @Override
     public void renameTable(String curTableName, String newTableName) throws Exception {
-        HBaseMetadata metadata = getHBaseMetadata(getFreshHTable());
+        HTableInterface freshHTable = getFreshHTable();
+        HBaseMetadata metadata = getHBaseMetadata(freshHTable);
         metadata.renameExistingTable(curTableName, newTableName);
         invalidateCache(curTableName);
+        freshHTable.close();
     }
 
     @Override
@@ -110,6 +114,7 @@ public class HBaseStore implements Store {
         HBaseMetadata metadata = getHBaseMetadata(hTable);
         long value = metadata.incrementAutoInc(tableId, amount);
         autoIncCache.put(tableId, value);
+        hTable.close();
         return value;
     }
 
@@ -120,6 +125,7 @@ public class HBaseStore implements Store {
         HBaseMetadata metadata = getHBaseMetadata(hTable);
         metadata.truncateAutoInc(tableId);
         autoIncCache.invalidate(tableId);
+        hTable.close();
     }
 
     @Override
@@ -131,7 +137,8 @@ public class HBaseStore implements Store {
         HTableInterface hTable = getFreshHTable();
         HBaseMetadata metadata = getHBaseMetadata(hTable);
         long value = metadata.incrementRowCount(tableId, amount);
-        autoIncCache.put(tableId, value);
+        rowsCache.put(tableId, value);
+        hTable.close();
         return value;
     }
 
@@ -140,6 +147,7 @@ public class HBaseStore implements Store {
         HBaseMetadata metadata = getHBaseMetadata(hTable);
         metadata.truncateRowCount(tableId);
         rowsCache.invalidate(tableId);
+        hTable.close();
     }
 
     private void doInitialization() throws ParserConfigurationException, IOException, SAXException {
