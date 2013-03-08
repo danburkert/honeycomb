@@ -1,21 +1,5 @@
 package com.nearinfinity.honeycomb.hbase;
 
-import static java.text.MessageFormat.format;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.ZooKeeperConnectionException;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.HTablePool;
-import org.apache.log4j.Logger;
-import org.xml.sax.SAXException;
-
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -28,37 +12,58 @@ import com.nearinfinity.honeycomb.hbaseclient.SqlTableCreator;
 import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import com.nearinfinity.honeycomb.mysqlengine.HTableFactory;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.HTablePool;
+import org.apache.log4j.Logger;
+import org.xml.sax.SAXException;
+
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+
+import static java.text.MessageFormat.format;
 
 public class HBaseStore implements Store {
-    private static boolean isInitialized = true;
-    private static HBaseStore ourInstance = new HBaseStore();
     private static final String HBASE_TABLE = "nic";
-
+    private static final String CONFIG_PATH = "/etc/mysql/honeycomb.xml";
+    private static final HBaseStore ourInstance = new HBaseStore();
+    private static volatile boolean isInitialized;
     private final int DEFAULT_TABLE_POOL_SIZE = 5;
     private final long DEFAULT_WRITE_BUFFER_SIZE = 5 * 1024 * 1024;
-    private static final String CONFIG_PATH = "/etc/mysql/honeycomb.xml";
-
     private final Logger logger = Logger.getLogger(HBaseStore.class);
+    private LoadingCache<String, Long> tableCache;
+    private LoadingCache<Long, BiMap<String, Long>> columnsCache;
+    private LoadingCache<Long, Long> rowsCache;
+    private LoadingCache<Long, Long> autoIncCache;
+    private LoadingCache<Long, TableSchema> schemaCache;
     private HTablePool hTablePool = null;
 
-    private final LoadingCache<String, Long> tableCache;
-    private final LoadingCache<Long, BiMap<String, Long>> columnsCache;
-    private final LoadingCache<Long, Long> rowsCache;
-    private final LoadingCache<Long, Long> autoIncCache;
-    private final LoadingCache<Long, TableSchema> schemaCache;
-
-    public static HBaseStore getInstance() throws RuntimeException {
-        if (isInitialized) {
-            return ourInstance;
-        } else {
-            throw new RuntimeException("HBaseStore has not been initialized correctly.");
-        }
+    private HBaseStore() {
     }
 
-    private HBaseStore() {
+    public static HBaseStore getInstance() throws IOException, SAXException, ParserConfigurationException {
+        if (!isInitialized) {
+            synchronized (ourInstance) {
+                if (!isInitialized) {
+                    ourInstance.doInitialization();
+                }
+            }
+        }
+
+        return ourInstance;
+    }
+
+    private void doInitialization() throws ParserConfigurationException, IOException, SAXException {
+        if (isInitialized) {
+            return;
+        }
+
         File configFile = new File(CONFIG_PATH);
         Configuration params;
-        isInitialized = true;
         try {
             if (!(configFile.exists() && configFile.canRead() && configFile.isFile())) {
                 throw new FileNotFoundException(CONFIG_PATH + " doesn't exist or cannot be read.");
@@ -79,16 +84,16 @@ public class HBaseStore implements Store {
 
         } catch (ParserConfigurationException e) {
             logger.fatal("The xml parser was not configured properly.", e);
-            isInitialized = false;
+            throw e;
         } catch (SAXException e) {
             logger.fatal("Exception while trying to parse the config file.", e);
-            isInitialized = false;
+            throw e;
         } catch (ZooKeeperConnectionException e) {
             logger.fatal("Could not connect to zookeeper. ", e);
-            isInitialized = false;
+            throw e;
         } catch (IOException e) {
             logger.fatal("Could not create HBaseStore. Aborting initialization.");
-            isInitialized = false;
+            throw e;
         }
 
         tableCache = CacheBuilder
@@ -100,7 +105,8 @@ public class HBaseStore implements Store {
                         HTableInterface hTable = getFreshHTable();
                         long id = new HBaseMetadata(hTable).getTableId(tableName);
                         hTable.close();
-                        return id;                    }
+                        return id;
+                    }
                 }
                 );
 
@@ -161,6 +167,7 @@ public class HBaseStore implements Store {
                     }
                 }
                 );
+        isInitialized = true;
     }
 
     @Override
