@@ -1,4 +1,5 @@
 #include "IndexSchema.h"
+#include "AvroUtil.h"
 #include <stdio.h>
 
 const char INDEX_SCHEMA[] = "{\"type\":\"record\",\"name\":\"IndexSchema\",\"namespace\":\"com.nearinfinity.honeycomb.mysql.gen\",\"fields\":[{\"name\":\"columns\",\"type\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"avro.java.string\":\"String\"}}},{\"name\":\"isUnique\",\"type\":\"boolean\",\"default\":false}]}";
@@ -39,27 +40,12 @@ bool IndexSchema::equal( const IndexSchema& other)
 
 int IndexSchema::serialize(const char** buf, size_t* len)
 {
-  int ret = 0;
-  ret |= avro_value_sizeof(&index_schema, len);
-  *buf = new char[*len];
-  if(*buf)
-  {
-    avro_writer_t writer = avro_writer_memory(*buf, *len);
-    ret |= avro_value_write(writer, &index_schema);
-    avro_writer_free(writer);
-  } else {
-    ret = -1;
-  }
-  return ret;
+  return serialize_object(&index_schema, buf, len);
 };
 
 int IndexSchema::deserialize(const char* buf, int64_t len)
 {
-  int ret = 0;
-  avro_reader_t reader = avro_reader_memory(buf, len);
-  ret |= avro_value_read(reader, &index_schema);
-  avro_reader_free(reader);
-  return ret;
+  return deserialize_object(&index_schema, buf, len);
 }
 
 bool IndexSchema::get_is_unique() {

@@ -1,4 +1,5 @@
 #include "ColumnSchema.h"
+#include "AvroUtil.h"
 
 const char COLUMN_SCHEMA[] = "{\"type\":\"record\",\"name\":\"ColumnSchema\",\"namespace\":\"com.nearinfinity.honeycomb.mysql.gen\",\"fields\":[{\"name\":\"type\",\"type\":{\"type\":\"enum\",\"name\":\"ColumnType\",\"symbols\":[\"STRING\",\"BINARY\",\"ULONG\",\"LONG\",\"DOUBLE\",\"DECIMAL\",\"TIME\",\"DATE\",\"DATETIME\"]}},{\"name\":\"isNullable\",\"type\":\"boolean\",\"default\":true},{\"name\":\"isAutoIncrement\",\"type\":\"boolean\",\"default\":false},{\"name\":\"maxLength\",\"type\":[\"null\",\"int\"],\"default\":null},{\"name\":\"scale\",\"type\":[\"null\",\"int\"],\"default\":null},{\"name\":\"precision\",\"type\":[\"null\",\"int\"],\"default\":null}]}";
 const char TYPE[] = "type";
@@ -126,27 +127,12 @@ bool ColumnSchema::equal( const ColumnSchema& other)
 
 int ColumnSchema::serialize(const char** buf, size_t* len)
 {
-  int ret = 0;
-  ret |= avro_value_sizeof(&column_schema, len);
-  *buf = new char[*len];
-  if(*buf)
-  {
-    avro_writer_t writer = avro_writer_memory(*buf, *len);
-    ret |= avro_value_write(writer, &column_schema);
-    avro_writer_free(writer);
-  } else {
-    ret = -1;
-  }
-  return ret;
+  return serialize_object(&column_schema, buf, len);
 };
 
 int ColumnSchema::deserialize(const char* buf, int64_t len)
 {
-  int ret = 0;
-  avro_reader_t reader = avro_reader_memory(buf, len);
-  ret |= avro_value_read(reader, &column_schema);
-  avro_reader_free(reader);
-  return ret;
+  return deserialize_object(&column_schema, buf, len);
 }
 
 ColumnSchema::ColumnType ColumnSchema::get_type()
