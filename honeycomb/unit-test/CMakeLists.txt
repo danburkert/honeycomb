@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.8)
-set(PROJECT_NAME_STR google-test-examples)
+set(PROJECT_NAME_STR runUnitTests)
 project(${PROJECT_NAME_STR} C CXX)
-add_definitions(-Wall -ansi -Wno-deprecated -pthread) 
+add_definitions(-Wall -ansi -Wno-deprecated -pthread)
 
 #-------------------
 # set common include folder for module
@@ -29,10 +29,10 @@ endif()
 LINK_DIRECTORIES("/usr/local/avro/lang/c/build/avrolib/lib")
 
 enable_testing()
-set(PROJECT_TEST_NAME ${PROJECT_NAME_STR}_test)
+set(PROJECT_TEST_NAME ${PROJECT_NAME_STR})
 include_directories(${GTEST_INCLUDE_DIRS} ${COMMON_INCLUDES})
 
-file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/*.cc ../AvroUtil.cc ../Row.cc ../IndexSchema.cc ../ColumnSchema.cc)
+file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/*.cc ../AvroUtil.cc ../Row.cc ../TableSchema.cc ../IndexSchema.cc ../ColumnSchema.cc)
 add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES})
 add_dependencies(${PROJECT_TEST_NAME} googletest)
 
