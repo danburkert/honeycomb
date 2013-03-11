@@ -125,7 +125,7 @@ public class HBaseMetadata {
     }
 
     public void updateSchema(long tableId, TableSchema oldSchema, TableSchema newSchema)
-            throws IOException, TableNotFoundException {
+            throws IOException {
         if (oldSchema.equals(newSchema)) {
             return;
         }
