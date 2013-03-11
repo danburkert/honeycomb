@@ -17,6 +17,8 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.powermock.api.mockito.PowerMockito;
 
 import com.google.common.collect.ImmutableMap;
 import com.nearinfinity.honeycomb.MockHTable;
@@ -112,29 +114,33 @@ public class HBaseMetadataTest {
         hbaseMetadata.getSchema(tableId);
     }
 
+
     @Test(expected = TableNotFoundException.class)
-    public void testRenameExistingTable() throws Exception {
+    public void testRenameExistingTableNoAutoFlush() throws Exception {
         String originalName = "OriginalName";
         String newName = "NewName";
 
         TableSchema origSchema = tableSchemaGen.next();
 
-        HTableInterface hTable = MockHTable.create();
-        HBaseMetadata hbaseMetadata2 = new HBaseMetadata(hTable);
+        // Configure the table to disable auto flush
+        HTableInterface hTableSpy = PowerMockito.spy(MockHTable.create());
+        Mockito.when(hTableSpy.isAutoFlush()).thenReturn(false);
 
-        hbaseMetadata2.putSchema(originalName, origSchema);
+        HBaseMetadata hbaseMetadataNoFlush = new HBaseMetadata(hTableSpy);
 
-        long origId = hbaseMetadata2.getTableId(originalName);
-        hbaseMetadata2.renameExistingTable(originalName, newName);
+        hbaseMetadataNoFlush.putSchema(originalName, origSchema);
 
-        long newId = hbaseMetadata2.getTableId(newName);
+        long origId = hbaseMetadataNoFlush.getTableId(originalName);
+        hbaseMetadataNoFlush.renameExistingTable(originalName, newName);
+
+        long newId = hbaseMetadataNoFlush.getTableId(newName);
 
         Assert.assertEquals(origId, newId);
         Assert.assertEquals(origSchema.getColumns(),
-                hbaseMetadata2.getSchema(newId).getColumns());
+                hbaseMetadataNoFlush.getSchema(newId).getColumns());
 
         // Trying to access the id of the old table name will result in an exception
-        hbaseMetadata2.getTableId(originalName);
+        hbaseMetadataNoFlush.getTableId(originalName);
     }
 
     @Test(expected = NullPointerException.class)

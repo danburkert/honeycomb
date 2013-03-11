@@ -87,8 +87,7 @@ public class HBaseMetadata {
         puts.add(putColumnIds(tableId, schema.getColumns()));
         puts.add(putTableSchema(tableId, schema));
 
-        getHTable().put(puts);
-        getHTable().flushCommits();
+        performMutations(ImmutableList.<Delete>of(), puts);
     }
 
     public void deleteSchema(String tableName)
@@ -111,12 +110,11 @@ public class HBaseMetadata {
         deletes.add(deleteAutoIncCounter(tableId));
         deletes.add(deleteTableSchema(tableId));
 
-        getHTable().delete(deletes);
-        getHTable().flushCommits();
+        performMutations(deletes, ImmutableList.<Put>of());
     }
 
     public void updateSchema(long tableId, TableSchema oldSchema, TableSchema newSchema)
-            throws IOException, TableNotFoundException {
+            throws IOException {
         if (oldSchema.equals(newSchema)) {
             return;
         }
@@ -192,8 +190,8 @@ public class HBaseMetadata {
     }
 
     public void truncateAutoInc(long tableId) throws IOException {
-        getHTable().delete(deleteAutoIncCounter(tableId));
-        getHTable().flushCommits();
+        performMutations(ImmutableList.<Delete>of(deleteAutoIncCounter(tableId)),
+                ImmutableList.<Put>of());
     }
 
     public long getRowCount(long tableId) throws IOException {
@@ -205,8 +203,8 @@ public class HBaseMetadata {
     }
 
     public void truncateRowCount(long tableId) throws IOException {
-        getHTable().delete(deleteRowsCounter(tableId));
-        getHTable().flushCommits();
+        performMutations(ImmutableList.<Delete>of(deleteRowsCounter(tableId)),
+                ImmutableList.<Put>of());
     }
 
     private long getCounter(byte[] row, byte[] identifier) throws IOException {
@@ -292,13 +290,29 @@ public class HBaseMetadata {
         return VarEncoder.decodeULong(id);
     }
 
+    /**
+     * Performs the operations necessary to commit the specified mutations to the underlying data store.
+     * If no operations are specified then no mutations occur.
+     * @param deletes A list of {@link Delete} operations to execute, not null
+     * @param puts A list of  {@link Put} operations to execute, not null
+     * @throws IOException Thrown on mutation commit failure
+     */
     private void performMutations(final List<Delete> deletes, final List<Put> puts) throws IOException {
-        getHTable().delete(deletes);
-        getHTable().put(puts);
-        getHTable().flushCommits();
-    }
+        Preconditions.checkNotNull(deletes, "The delete mutations container is invalid");
+        Preconditions.checkNotNull(puts, "The put mutations container is invalid");
+        Preconditions.checkArgument(!deletes.isEmpty() || !puts.isEmpty(), "At least one mutation operation must be specified");
 
-    private HTableInterface getHTable() {
-        return this.provider.get();
+        if( !deletes.isEmpty() ) {
+            hTable.delete(deletes);
+        }
+
+        if( !puts.isEmpty() ) {
+            hTable.put(puts);
+        }
+
+        // Only flush if the table is not configured to auto flush
+        if( !hTable.isAutoFlush() ) {
+            hTable.flushCommits();
+        }
     }
 }
