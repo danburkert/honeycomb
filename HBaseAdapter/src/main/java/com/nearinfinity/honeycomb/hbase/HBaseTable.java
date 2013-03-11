@@ -1,5 +1,7 @@
 package com.nearinfinity.honeycomb.hbase;
 
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 import com.nearinfinity.honeycomb.RowNotFoundException;
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Table;
@@ -10,12 +12,13 @@ import java.io.IOException;
 import java.util.UUID;
 
 public class HBaseTable implements Table {
-    final private HTableInterface hTable;
-    final private long tableId;
+    private final HTableInterface hTable;
+    private final long tableId;
 
-    public HBaseTable(HTableInterface hTable, long tableId) {
+    @Inject
+    public HBaseTable(HTableInterface hTable, HBaseStore store, @Assisted String tableName) throws Exception {
         this.hTable = hTable;
-        this.tableId = tableId;
+        this.tableId = store.getTableId(tableName);
     }
 
     @Override

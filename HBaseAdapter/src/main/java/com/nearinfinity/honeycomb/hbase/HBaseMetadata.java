@@ -1,35 +1,24 @@
 package com.nearinfinity.honeycomb.hbase;
 
+import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.*;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.nearinfinity.honeycomb.TableNotFoundException;
+import com.nearinfinity.honeycomb.hbase.rowkey.*;
+import com.nearinfinity.honeycomb.hbaseclient.Constants;
+import com.nearinfinity.honeycomb.mysql.Util;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.util.Bytes;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.util.Bytes;
-
-import com.google.common.base.Charsets;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.ImmutableBiMap;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.MapDifference;
-import com.google.common.collect.Maps;
-import com.nearinfinity.honeycomb.TableNotFoundException;
-import com.nearinfinity.honeycomb.hbase.rowkey.AutoIncRow;
-import com.nearinfinity.honeycomb.hbase.rowkey.ColumnsRow;
-import com.nearinfinity.honeycomb.hbase.rowkey.RowsRow;
-import com.nearinfinity.honeycomb.hbase.rowkey.SchemaRow;
-import com.nearinfinity.honeycomb.hbase.rowkey.TablesRow;
-import com.nearinfinity.honeycomb.hbaseclient.Constants;
-import com.nearinfinity.honeycomb.mysql.Util;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 
 /**
  * Manages writing and reading table & column schemas, table & column ids, and
@@ -37,10 +26,11 @@ import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
  */
 public class HBaseMetadata {
     private static final byte[] COLUMN_FAMILY = Constants.NIC;
-    private final HTableInterface hTable;
+    private final Provider<HTableInterface> provider;
 
-    public HBaseMetadata(HTableInterface hTable) {
-        this.hTable = hTable;
+    @Inject
+    public HBaseMetadata(Provider<HTableInterface> provider) {
+        this.provider = provider;
     }
 
     public long getTableId(String table)
@@ -48,7 +38,7 @@ public class HBaseMetadata {
         Get get = new Get(new TablesRow().encode());
         byte[] serializedName = serializeName(table);
         get.addColumn(COLUMN_FAMILY, serializedName);
-        Result result = hTable.get(get);
+        Result result = getHTable().get(get);
         byte[] tableIdBytes = result.getValue(COLUMN_FAMILY, serializedName);
         if (tableIdBytes == null) {
             throw new TableNotFoundException(table);
@@ -60,7 +50,7 @@ public class HBaseMetadata {
             throws IOException {
         Get get = new Get(new ColumnsRow(tableId).encode());
         get.addFamily(COLUMN_FAMILY);
-        Result result = hTable.get(get);
+        Result result = getHTable().get(get);
 
         Map<byte[], byte[]> serializedColumnIds = result.getFamilyMap(COLUMN_FAMILY);
         Map<String, Long> columnIds = new HashMap<String, Long>(serializedColumnIds.size());
@@ -81,7 +71,7 @@ public class HBaseMetadata {
 
         Get get = new Get(new SchemaRow().encode());
         get.addColumn(COLUMN_FAMILY, serializedTableId);
-        Result result = hTable.get(get);
+        Result result = getHTable().get(get);
         byte[] serializedSchema = result.getValue(COLUMN_FAMILY, serializedTableId);
         if (serializedSchema == null) {
             throw new TableNotFoundException(tableId);
@@ -97,10 +87,9 @@ public class HBaseMetadata {
         puts.add(putColumnIds(tableId, schema.getColumns()));
         puts.add(putTableSchema(tableId, schema));
 
-        hTable.put(puts);
-        hTable.flushCommits();
+        getHTable().put(puts);
+        getHTable().flushCommits();
     }
-
 
     public void deleteSchema(String tableName)
             throws TableNotFoundException, IOException {
@@ -122,8 +111,8 @@ public class HBaseMetadata {
         deletes.add(deleteAutoIncCounter(tableId));
         deletes.add(deleteTableSchema(tableId));
 
-        hTable.delete(deletes);
-        hTable.flushCommits();
+        getHTable().delete(deletes);
+        getHTable().flushCommits();
     }
 
     public void updateSchema(long tableId, TableSchema oldSchema, TableSchema newSchema)
@@ -173,9 +162,10 @@ public class HBaseMetadata {
 
     /**
      * Performs the operations necessary to rename an existing table stored in a {@link TablesRow} row
+     *
      * @param oldTableName The name of the existing table
      * @param newTableName The new name to use for this table
-     * @throws IOException Thrown on HBase mutation failure
+     * @throws IOException            Thrown on HBase mutation failure
      * @throws TableNotFoundException Thrown when existing table cannot be found
      */
     public void renameExistingTable(final String oldTableName, final String newTableName) throws IOException, TableNotFoundException {
@@ -192,7 +182,6 @@ public class HBaseMetadata {
         performMutations(deletes, puts);
     }
 
-
     public long getAutoInc(long tableId) throws IOException {
         return getCounter(new AutoIncRow().encode(), serializeId(tableId));
     }
@@ -203,8 +192,8 @@ public class HBaseMetadata {
     }
 
     public void truncateAutoInc(long tableId) throws IOException {
-        hTable.delete(deleteAutoIncCounter(tableId));
-        hTable.flushCommits();
+        getHTable().delete(deleteAutoIncCounter(tableId));
+        getHTable().flushCommits();
     }
 
     public long getRowCount(long tableId) throws IOException {
@@ -216,28 +205,28 @@ public class HBaseMetadata {
     }
 
     public void truncateRowCount(long tableId) throws IOException {
-        hTable.delete(deleteRowsCounter(tableId));
-        hTable.flushCommits();
+        getHTable().delete(deleteRowsCounter(tableId));
+        getHTable().flushCommits();
     }
 
     private long getCounter(byte[] row, byte[] identifier) throws IOException {
         Get get = new Get(row).addColumn(COLUMN_FAMILY, identifier);
-        byte[] value = hTable.get(get).getValue(COLUMN_FAMILY, identifier);
+        byte[] value = getHTable().get(get).getValue(COLUMN_FAMILY, identifier);
         return value == null ? 0 : Bytes.toLong(value);
     }
 
     private long incrementCounter(byte[] row, byte[] identifier, long amount)
             throws IOException {
-        return hTable.incrementColumnValue(row, COLUMN_FAMILY, identifier, amount);
+        return getHTable().incrementColumnValue(row, COLUMN_FAMILY, identifier, amount);
     }
 
     private long getNextTableId() throws IOException {
-        return hTable.incrementColumnValue(new TablesRow().encode(),
+        return getHTable().incrementColumnValue(new TablesRow().encode(),
                 COLUMN_FAMILY, new byte[0], 1);
     }
 
     private long getNextColumnId(long tableId, int n) throws IOException {
-        return hTable.incrementColumnValue(new ColumnsRow(tableId).encode(),
+        return getHTable().incrementColumnValue(new ColumnsRow(tableId).encode(),
                 COLUMN_FAMILY, new byte[0], n);
     }
 
@@ -304,8 +293,12 @@ public class HBaseMetadata {
     }
 
     private void performMutations(final List<Delete> deletes, final List<Put> puts) throws IOException {
-        hTable.delete(deletes);
-        hTable.put(puts);
-        hTable.flushCommits();
+        getHTable().delete(deletes);
+        getHTable().put(puts);
+        getHTable().flushCommits();
+    }
+
+    private HTableInterface getHTable() {
+        return this.provider.get();
     }
 }

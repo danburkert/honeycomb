@@ -20,8 +20,9 @@ public class HandlerProxy {
     public void createTable(String tableName, byte[] serializedTableSchema) throws Exception {
         checkTableName(tableName);
         TableSchema tableSchema = Util.deserializeTableSchema(serializedTableSchema);
-        this.table = store.createTable(tableName, tableSchema);
+        store.createTable(tableName, tableSchema);
         this.tableName = tableName;
+        this.table = store.openTable(tableName);
     }
 
     public void openTable(String tableName) throws Exception {

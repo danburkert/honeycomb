@@ -25,10 +25,9 @@ public interface Store {
      *
      * @param tableName
      * @param schema
-     * @return
      * @throws IOException
      */
-    public Table createTable(String tableName, TableSchema schema) throws Exception;
+    public void createTable(String tableName, TableSchema schema) throws Exception;
 
     /**
      * Delete the specified table
