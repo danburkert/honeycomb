@@ -26,6 +26,11 @@ IndexSchema::~IndexSchema()
   avro_schema_decref(index_schema_schema);
 }
 
+/**
+ * @brief Resets the IndexSchema to a fresh state. Resetting an existing
+ * IndexSchema is much faster than creating a new one.
+ * @return Error code
+ */
 int IndexSchema::reset()
 {
   return avro_value_reset(&index_schema);
