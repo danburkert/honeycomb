@@ -27,7 +27,7 @@ IndexSchema::~IndexSchema()
 }
 
 /**
- * @brief Resets the IndexSchema to a fresh state. Reseting an existing
+ * @brief Resets the IndexSchema to a fresh state. Resetting an existing
  * IndexSchema is much faster than creating a new one.
  * @return Error code
  */
