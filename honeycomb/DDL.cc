@@ -30,13 +30,11 @@ const char* table_creation_errors[] = {
  * Called by MySQL during CREATE TABLE statements.  Converts the table's
  * schema into a TableSchema object and hands it off to the HandlerProxy.
  *
- * @param path  path to file MySQL assumes we will use.  In the format of
- *              "./database_name/table_name".
+ * @param path  path to file MySQL assumes we will use.  We don't use it.
  * @param table TABLE object associated with this thread and query.  Holds most
  *              of the information we need.  See sql/table.h.
  * @param create_info contains info specified during table creation such as
- *                    initial auto_increment value and default collation & char
- *                    set
+ *                    initial auto_increment value.
  */
 int HoneycombHandler::create(const char *path, TABLE *table,
     HA_CREATE_INFO *create_info)
@@ -86,8 +84,11 @@ int HoneycombHandler::create(const char *path, TABLE *table,
 
     jstring jtable_name = string_to_java_string(table->s->table_name.str);
     jstring jdb_name = string_to_java_string(table->s->db.str);
-    jstring jtablespace = string_to_java_string(table->s->tablespace
-        ? table->s->tablespace : "");
+    jstring jtablespace = NULL;
+    if (table->s->tablespace != NULL)
+    {
+      jtablespace = string_to_java_string(table->s->tablespace);
+    }
     jlong jauto_inc_value = create_info->auto_increment_value;
 
     const char* buf;

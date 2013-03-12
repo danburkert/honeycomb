@@ -17,6 +17,16 @@ public class HandlerProxy {
         this.storeFactory = storeFactory;
     }
 
+    /**
+     * Create a table with the given specifications
+     * @param databaseName Database containing the table
+     * @param tableName Name of the table
+     * @param tableSpace Indicates what store to create the table in.  If null,
+     *                   create the table in the default store.
+     * @param serializedTableSchema Serialized TableSchema avro object
+     * @param autoInc Initial auto increment value
+     * @throws Exception
+     */
     public void createTable(String databaseName, String tableName, String tableSpace,
                             byte[] serializedTableSchema, long autoInc) throws Exception {
         checkTableName(tableName);
