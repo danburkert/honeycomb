@@ -125,8 +125,12 @@ static int honeycomb_done_func(void *p)
 static handler* honeycomb_create_handler(handlerton *hton, TABLE_SHARE *table,
     MEM_ROOT *mem_root)
 {
+  JNIEnv* env;
+  attach_thread(jvm, env);
+  jobject handler_proxy = handler_factory(env);
+  detach_thread(jvm);
   return new (mem_root) HoneycombHandler(hton, table, &honeycomb_mutex,
-      &honeycomb_open_tables, jvm, cache, handler_factory);
+      &honeycomb_open_tables, jvm, cache, handler_proxy);
 }
 
 struct st_mysql_storage_engine honeycomb_storage_engine=

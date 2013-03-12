@@ -17,13 +17,13 @@ const char **HoneycombHandler::bas_ext() const
 }
 
 HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg,
-    mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm, JNICache* cache, createHandler handler_factory)
+    mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm, JNICache* cache, jobject handler_proxy)
 : handler(hton, table_arg),
   honeycomb_mutex(mutex),
   honeycomb_open_tables(open_tables),
   jvm(jvm),
   cache(cache),
-  handler_proxy_factory(handler_factory),
+  handler_proxy(handler_proxy),
   row(new Row())
 {
   this->ref_length = 16;

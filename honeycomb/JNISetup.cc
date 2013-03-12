@@ -52,7 +52,7 @@ jobject bootstrap(JavaVM* jvm)
     abort();
   }
   // TODO: check the result of these JNI calls with macro
-  jclass hbase_adapter = env->FindClass(MYSQLENGINE "Bootstrap");
+  jclass hbase_adapter = env->FindClass("com/nearinfinity/honeycomb/mysql/Bootstrap");
   jmethodID initialize = env->GetStaticMethodID(hbase_adapter, "startup", "()Lcom/nearinfinity/honeycomb/mysql/HandlerProxyFactory;");
   jobject handler_proxy_factory = env->CallStaticObjectMethod(hbase_adapter, initialize);
   if (print_java_exception(env))
