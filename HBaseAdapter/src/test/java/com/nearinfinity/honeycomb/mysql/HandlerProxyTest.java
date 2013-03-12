@@ -41,7 +41,7 @@ public class HandlerProxyTest {
         final String newTableName = "bar";
 
         final HandlerProxy proxy = createProxy();
-        proxy.openTable(DUMMY_TABLE_NAME);
+        proxy.openTable("database", DUMMY_TABLE_NAME);
         proxy.renameTable(newTableName);
 
         verify(storageMock, times(1)).renameTable(eq(DUMMY_TABLE_NAME), eq(newTableName));
