@@ -141,8 +141,8 @@ class HoneycombHandler : public handler
     void release_auto_increment();
 
     /* DDL helper methods */
-
-    int pack_column_schema(ColumnSchema* schema, Field* field, TABLE* table);
+    int pack_column_schema(ColumnSchema* schema, Field* field);
+    int pack_index_schema(IndexSchema* schema, KEY* key);
 
   public:
     HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg,
