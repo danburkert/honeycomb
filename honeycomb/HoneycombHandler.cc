@@ -17,19 +17,20 @@ const char **HoneycombHandler::bas_ext() const
 }
 
 HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg,
-    mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm, JNICache* cache)
+    mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm, JNICache* cache, createHandler handler_factory)
 : handler(hton, table_arg),
   honeycomb_mutex(mutex),
   honeycomb_open_tables(open_tables),
   jvm(jvm),
-  cache(cache)
+  cache(cache),
+  handler_proxy_factory(handler_factory),
+  row(new Row())
 {
   this->ref_length = 16;
   this->rows_written = 0;
   this->failed_key_index = 0;
   this->curr_scan_id = -1;
   this->curr_write_id = -1;
-  this->row = new Row();
 }
 
 HoneycombHandler::~HoneycombHandler()

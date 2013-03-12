@@ -108,6 +108,9 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   tree_map_.put      = get_method_id(env, tree_map_.clazz, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
   tree_map_.is_empty = get_method_id(env, tree_map_.clazz, "isEmpty", "()Z");
 
+  handler_proxy_factory_.clazz              = get_class_ref(env, "com/nearinfinity/honeycomb/mysql/HandlerProxyFactory");
+  handler_proxy_factory_.createHandlerProxy = get_method_id(env, handler_proxy_factory_.clazz, "createHandlerProxy", "()Lcom/nearinfinity/honeycomb/mysql/HandlerProxy;");
+
   detach_thread(jvm);
 }
 

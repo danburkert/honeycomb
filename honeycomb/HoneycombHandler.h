@@ -17,6 +17,7 @@
 #include "probes_mysql.h"
 
 class JNICache;
+typedef jobject (*createHandler)(JNIEnv* env);
 
 class HoneycombHandler : public handler
 {
@@ -38,6 +39,7 @@ class HoneycombHandler : public handler
     JNIEnv* env;
     JavaVM* jvm;
     JNICache* cache;
+    createHandler handler_proxy_factory;
     Row* row;
 
     int pack_row(uchar *buf, TABLE* table, Row* row);
@@ -138,7 +140,7 @@ class HoneycombHandler : public handler
 
   public:
     HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg,
-        mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm, JNICache* cache);
+        mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm, JNICache* cache, createHandler handler_factory);
     ~HoneycombHandler();
 
     const char *table_type() const
