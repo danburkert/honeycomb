@@ -1,7 +1,6 @@
 package com.nearinfinity.honeycomb.hbase;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.inject.Provider;
 import com.nearinfinity.honeycomb.MockHTable;
 import com.nearinfinity.honeycomb.TableNotFoundException;
 import com.nearinfinity.honeycomb.mysql.ColumnSchemaGenerator;
@@ -30,7 +29,7 @@ public class HBaseMetadataTest {
     private static Generator<ColumnSchema> columnSchemaGen = new ColumnSchemaGenerator();
     private static Generator<Long> longGen = PrimitiveGenerators.longs();
     @Mock
-    Provider<HTableInterface> provider;
+    HTableProvider provider;
     MockHTable table;
 
     private HBaseMetadata getHBaseMetadata() {

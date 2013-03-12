@@ -4,6 +4,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.BiMap;
+import com.google.inject.Inject;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.TableNotFoundException;
@@ -22,6 +23,7 @@ public class HBaseStore implements Store {
     private LoadingCache<Long, Long> autoIncCache;
     private LoadingCache<Long, TableSchema> schemaCache;
 
+    @Inject
     public HBaseStore(HBaseMetadata metadata, HBaseTableFactory tableFactory) {
         this.metadata = metadata;
         this.tableFactory = tableFactory;

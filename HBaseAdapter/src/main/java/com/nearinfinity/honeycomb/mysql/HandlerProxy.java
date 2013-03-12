@@ -17,9 +17,9 @@ public class HandlerProxy {
         this.storeFactory = storeFactory;
     }
 
-    public void createTable(String tableName, byte[] serializedTableSchema) throws Exception {
+    public void createTable(String databaseName, String tableName, byte[] serializedTableSchema) throws Exception {
         checkTableName(tableName);
-        this.store = this.storeFactory.createStore(tableName);
+        this.store = this.storeFactory.createStore(databaseName);
         TableSchema tableSchema = Util.deserializeTableSchema(serializedTableSchema);
         store.createTable(tableName, tableSchema);
         this.tableName = tableName;

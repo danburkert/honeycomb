@@ -29,7 +29,7 @@ public class HBaseMetadata {
     private final Provider<HTableInterface> provider;
 
     @Inject
-    public HBaseMetadata(Provider<HTableInterface> provider) {
+    public HBaseMetadata(HTableProvider provider) {
         this.provider = provider;
     }
 

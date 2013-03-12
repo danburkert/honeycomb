@@ -24,6 +24,8 @@ public class HandlerProxyTest {
     @Mock
     private HBaseStore storageMock;
     @Mock
+    private StoreFactory storeFactory;
+    @Mock
     private Table tableMock;
 
     @Before
@@ -33,6 +35,7 @@ public class HandlerProxyTest {
 
     @Test
     public void testRenameTable() throws Exception {
+        when(storeFactory.createStore(anyString())).thenReturn(storageMock);
         when(storageMock.openTable(anyString())).thenReturn(tableMock);
 
         final String newTableName = "bar";
@@ -56,6 +59,6 @@ public class HandlerProxyTest {
     }
 
     private HandlerProxy createProxy() throws Exception {
-        return new HandlerProxy(storageMock);
+        return new HandlerProxy(storeFactory);
     }
 }

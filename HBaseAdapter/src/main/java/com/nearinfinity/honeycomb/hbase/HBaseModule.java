@@ -1,8 +1,6 @@
 package com.nearinfinity.honeycomb.hbase;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Provider;
-import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
 import com.nearinfinity.honeycomb.Store;
@@ -44,14 +42,13 @@ public class HBaseModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        storeMapBinder.addBinding("hbase").to(HBaseStore.class);
+        storeMapBinder.addBinding(Constants.HBASE_BINDING).to(HBaseStore.class);
+
         install(new FactoryModuleBuilder()
                 .implement(Table.class, HBaseTable.class)
                 .build(HBaseTableFactory.class));
 
-        bind(new TypeLiteral<Provider<HTableInterface>>() {
-        }).toInstance(this.hTableProvider);
-
+        bind(HTableProvider.class).toInstance(this.hTableProvider);
         bind(HTableInterface.class).toProvider(this.hTableProvider);
     }
 }

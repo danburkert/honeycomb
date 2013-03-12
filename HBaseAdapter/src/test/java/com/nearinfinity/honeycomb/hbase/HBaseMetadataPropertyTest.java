@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 public class HBaseMetadataPropertyTest {
     static HBaseMetadata hbaseMetadata;
     static Map<String, TableSchema> tableSchemas;
-    static Provider<HTableInterface> provider;
+    static HTableProvider provider;
     static MockHTable table;
     private static Generator<TableSchema> tableSchemaGen = new TableSchemaGenerator();
 
