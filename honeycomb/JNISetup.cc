@@ -65,7 +65,7 @@ void initialize_adapter(JavaVM* jvm)
 }
 
 
-static void print_java_classpath(JNIEnv* env)
+static void log_java_classpath(JNIEnv* env)
 {
   Logging::info("Java classpath:");
   jclass classloader_class = env->FindClass("java/lang/ClassLoader");
@@ -156,7 +156,7 @@ void initialize_jvm(JavaVM* &jvm)
 
     free_parser(parser);
     initialize_adapter(jvm);
-    print_java_classpath(env);
+    log_java_classpath(env);
     detach_thread(jvm);
 #if defined(__APPLE__) || defined(__linux__)
     signal(SIGTERM, handler);
