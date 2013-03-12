@@ -44,9 +44,10 @@ public class Util {
 
 
     /**
-     * Returns a UUID_WIDTH byte wide buffer from a {@link UUID}.
+     * Returns a byte wide buffer from a {@link UUID}.
      *
-     * @param uuid
+     * @param uuid The {@link UUID} to convert
+     * @return A byte array representation that is {@value #UUID_WIDTH} bytes wide
      */
     public static byte[] UUIDToBytes(UUID uuid) {
         checkNotNull(uuid, "uuid must not be null.");
@@ -57,9 +58,10 @@ public class Util {
     }
 
     /**
-     * Create a {@link UUID} from a {@link byte[]} UUID_WIDTH bytes long.
+     * Create a {@link UUID} from the provided byte array.
      *
-     * @param bytes A byte buffer UUID_WIDTH bytes wide
+     * @param bytes A byte array that must be {@value #UUID_WIDTH} bytes wide, not null
+     * @return A {@link UUID} representation
      */
     public static UUID BytesToUUID(byte[] bytes) {
         checkNotNull(bytes, "bytes must not be null.");
@@ -77,8 +79,9 @@ public class Util {
     }
 
     /**
-     * Serialize obj into byte[]
-     *
+     * Serialize an object to a byte array
+     * @param obj The object to serialize
+     * @param clazz The type of the object being serialized
      * @return Serialized row
      * @throws IOException when serialization fails
      */
