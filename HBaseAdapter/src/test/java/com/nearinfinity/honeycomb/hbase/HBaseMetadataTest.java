@@ -10,91 +10,41 @@ import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.PrimitiveGenerators;
-import net.java.quickcheck.generator.iterable.Iterables;
 import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 import org.powermock.api.mockito.PowerMockito;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class HBaseMetadataTest {
-    static HBaseMetadata hbaseMetadata;
-    static Map<String, TableSchema> tableSchemas;
-    static Provider<HTableInterface> provider;
-    static MockHTable table;
     private static Generator<TableSchema> tableSchemaGen = new TableSchemaGenerator();
     private static Generator<ColumnSchema> columnSchemaGen = new ColumnSchemaGenerator();
     private static Generator<Long> longGen = PrimitiveGenerators.longs();
+    @Mock
+    Provider<HTableInterface> provider;
+    MockHTable table;
 
-    @AfterClass
-    public static void tearDown() throws Exception {
-        hbaseMetadata = null;
-        tableSchemas = null;
-    }
-
-    @BeforeClass
-    public static void setUp() throws Exception {
-        provider = mock(HTableProvider.class);
-        table = MockHTable.create();
-        when(provider.get()).thenReturn(table);
-        hbaseMetadata = getHBaseMetadata();
-        tableSchemas = new HashMap<String, TableSchema>();
-        for (TableSchema schema : Iterables.toIterable(tableSchemaGen)) {
-            final String tableName = TableSchemaGenerator.MYSQL_NAME_GEN.next();
-            tableSchemas.put(tableName, schema);
-            hbaseMetadata.putSchema(tableName, schema);
-        }
-    }
-
-    private static HBaseMetadata getHBaseMetadata() {
+    private HBaseMetadata getHBaseMetadata() {
         return new HBaseMetadata(provider);
     }
 
-    @Test
-    public void testUniqueTableIds() throws Exception {
-        Set<Long> ids = new HashSet<Long>();
-        Long id;
-        for (String table : tableSchemas.keySet()) {
-            id = hbaseMetadata.getTableId(table);
-            Assert.assertFalse(ids.contains(id));
-            ids.add(id);
-        }
+    @Before
+    public void testSetup() {
+        MockitoAnnotations.initMocks(this);
+        table = MockHTable.create();
+        when(provider.get()).thenReturn(table);
     }
 
     @Test
-    public void testUniqueColumnIds() throws Exception {
-        long tableId;
-        for (String table : tableSchemas.keySet()) {
-            // If there are duplicate column ids BiMap will throw an
-            // IllegalArgumentException, so no assertion needed.
-            tableId = hbaseMetadata.getTableId(table);
-            hbaseMetadata.getColumnIds(tableId);
-        }
-    }
-
-    @Test
-    public void testSchemaGet() throws Exception {
-        long tableId;
-        for (String tableName : tableSchemas.keySet()) {
-            TableSchema expected = tableSchemas.get(tableName);
-            tableId = hbaseMetadata.getTableId(tableName);
-            TableSchema actual = hbaseMetadata.getSchema(tableId);
-            Assert.assertEquals(expected, actual);
-        }
-    }
-
-    // @Test
     public void testSchemaDeleteRemovesAllRowIds() throws Exception {
         HBaseMetadata hbaseMetadata2 = getHBaseMetadata();
         TableSchema schema = tableSchemaGen.next();
@@ -106,20 +56,8 @@ public class HBaseMetadataTest {
 
         hbaseMetadata2.deleteSchema(tableName);
         ResultScanner results = table.getScanner(new Scan());
-        Result next = results.next();
-        Assert.assertTrue(next.getNoVersionMap().size() == 1); // Table id counter
-        Assert.assertNull(next);
-    }
-
-    @Test(expected = TableNotFoundException.class)
-    public void testSchemaDeleteRemovesTable() throws Exception {
-        TableSchema schema = tableSchemaGen.next();
-        final String tableName = TableSchemaGenerator.MYSQL_NAME_GEN.next();
-        hbaseMetadata.putSchema(tableName, schema);
-        long tableId = hbaseMetadata.getTableId(tableName);
-        Assert.assertEquals(schema, hbaseMetadata.getSchema(tableId));
-        hbaseMetadata.deleteSchema(tableName);
-        hbaseMetadata.getSchema(tableId);
+        Assert.assertTrue(results.next().getNoVersionMap().size() == 1); // Table id counter
+        Assert.assertNull(results.next());
     }
 
     @Test(expected = TableNotFoundException.class)
@@ -150,26 +88,6 @@ public class HBaseMetadataTest {
         hbaseMetadataNoFlush.getTableId(originalName);
     }
 
-    @Test(expected = NullPointerException.class)
-    public void testRenameExistingTableNullCurrentTableName() throws IOException, TableNotFoundException {
-        hbaseMetadata.renameExistingTable(null, "foo");
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testRenameExistingTableEmptyCurrentTableName() throws IOException, TableNotFoundException {
-        hbaseMetadata.renameExistingTable("", "foo");
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void testRenameExistingTableNullNewTableName() throws IOException, TableNotFoundException {
-        hbaseMetadata.renameExistingTable("foo", null);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testRenameExistingTableEmptyNewTableName() throws IOException, TableNotFoundException {
-        hbaseMetadata.renameExistingTable("foo", "");
-    }
-
     @Test
     public void testUpdateSchemaDropColumn() throws Exception {
         TableSchema newSchema = tableSchemaGen.next();
@@ -184,7 +102,6 @@ public class HBaseMetadataTest {
         TableSchema origSchema = new TableSchema(origColumns,
                 newSchema.getIndices());
 
-        HTableInterface hTable = MockHTable.create();
         HBaseMetadata hbaseMetadata2 = getHBaseMetadata();
         hbaseMetadata2.putSchema(tableName, origSchema);
 
@@ -212,7 +129,6 @@ public class HBaseMetadataTest {
         TableSchema origSchema = new TableSchema(origColumns,
                 newSchema.getIndices());
 
-        HTableInterface hTable = MockHTable.create();
         HBaseMetadata hbaseMetadata2 = getHBaseMetadata();
         hbaseMetadata2.putSchema(tableName, origSchema);
 
@@ -232,7 +148,7 @@ public class HBaseMetadataTest {
     public void testAutoInc() throws Exception {
         TableSchema table = tableSchemaGen.next();
         final String tableName = TableSchemaGenerator.MYSQL_NAME_GEN.next();
-        HTableInterface hTable = MockHTable.create();
+
         HBaseMetadata hbaseMetadata2 = getHBaseMetadata();
         hbaseMetadata2.putSchema(tableName, table);
 
@@ -250,7 +166,6 @@ public class HBaseMetadataTest {
     public void testRowCount() throws Exception {
         TableSchema table = tableSchemaGen.next();
         final String tableName = TableSchemaGenerator.MYSQL_NAME_GEN.next();
-        HTableInterface hTable = MockHTable.create();
         HBaseMetadata hbaseMetadata2 = getHBaseMetadata();
         hbaseMetadata2.putSchema(tableName, table);
 
