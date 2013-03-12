@@ -207,7 +207,7 @@ class HoneycombHandler : public handler
 
     uint max_supported_key_parts() const
     {
-      return 4;
+      return MAX_REF_PARTS;
     }
 
     virtual double scan_time()

@@ -17,13 +17,16 @@ public class HandlerProxy {
         this.storeFactory = storeFactory;
     }
 
-    public void createTable(String databaseName, String tableName, byte[] serializedTableSchema) throws Exception {
+    public void createTable(String databaseName, String tableName, String tableSpace,
+                            byte[] serializedTableSchema, long autoInc) throws Exception {
         checkTableName(tableName);
         this.store = this.storeFactory.createStore(databaseName);
         TableSchema tableSchema = Util.deserializeTableSchema(serializedTableSchema);
         store.createTable(tableName, tableSchema);
-        this.tableName = tableName;
-        this.table = store.openTable(tableName);
+        if (autoInc > 0) {
+            store.incrementAutoInc(tableName, autoInc);
+        }
+        this.store = null;
     }
 
     public void openTable(String databaseName, String tableName) throws Exception {

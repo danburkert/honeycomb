@@ -51,7 +51,7 @@ int HoneycombHandler::create(const char *path, TABLE *table,
 
   int rc = 0;
   { // Destruct frame before calling detach_thread
-    JavaFrame frame(env, 3);
+    JavaFrame frame(env, 4);
 
     TableSchema table_schema;
     ColumnSchema column_schema;
@@ -86,6 +86,9 @@ int HoneycombHandler::create(const char *path, TABLE *table,
 
     jstring jtable_name = string_to_java_string(table->s->table_name.str);
     jstring jdb_name = string_to_java_string(table->s->db.str);
+    jstring jtablespace = string_to_java_string(table->s->tablespace
+        ? table->s->tablespace : "");
+    jlong jauto_inc_value = create_info->auto_increment_value;
 
     const char* buf;
     size_t buf_len;
@@ -93,7 +96,7 @@ int HoneycombHandler::create(const char *path, TABLE *table,
     jbyteArray jserialized_schema = convert_value_to_java_bytes((uchar*) buf, buf_len, env);
 
     this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().create_table,
-        jdb_name, jtable_name, jserialized_schema);
+        jdb_name, jtable_name, jtablespace, jserialized_schema, jauto_inc_value);
     EXCEPTION_CHECK_DBUG_IE("HandlerProxy::create", "calling createTable");
   }
   detach_thread(jvm);
