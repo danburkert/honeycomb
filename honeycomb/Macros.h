@@ -1,6 +1,7 @@
 #ifndef MACROS_H
 #define MACROS_H
 #include <cstdlib>
+#include "Logging.h"
 
 #define INFO(format_string) DBUG_PRINT("INFO", format_string)
 #define ERROR(format_string) DBUG_PRINT("ERROR", format_string)
@@ -122,6 +123,7 @@
     abort(); \
   }} while(0)
 
+#define HONEYCOMB "com/nearinfinity/honeycomb/"
 #define HBASECLIENT "com/nearinfinity/honeycomb/hbaseclient/"
 #define MYSQLENGINE "com/nearinfinity/honeycomb/mysqlengine/"
 #endif
