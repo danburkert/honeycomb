@@ -78,7 +78,13 @@ static uint honeycomb_alter_table_flags(uint flags)
 static jobject handler_proxy_factory;
 static jobject handler_factory(JNIEnv* env)
 {
-  return env->CallObjectMethod(handler_proxy_factory, cache->handler_proxy_factory().createHandlerProxy);
+  jobject handler_proxy_local = env->CallObjectMethod(handler_proxy_factory,
+      cache->handler_proxy_factory().createHandlerProxy);
+  EXCEPTION_CHECK("ha_honeycomb::handler_factory", "createHandlerProxy");
+  jobject handler_proxy = env->NewGlobalRef(handler_proxy_local);
+  NULL_CHECK_ABORT(handler_proxy, "Out of Memory while creating global ref to HandlerProxy");
+  env->DeleteLocalRef(handler_proxy_local);
+  return handler_proxy;
 }
 
 static int honeycomb_init_func(void *p)

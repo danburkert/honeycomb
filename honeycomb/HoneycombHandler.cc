@@ -40,6 +40,7 @@ HoneycombHandler::~HoneycombHandler()
     attach_thread(this->jvm, this->env);
     this->flush_writes();
     EXCEPTION_CHECK("destructor", "flush_writes");
+    env->DeleteGlobalRef(handler_proxy);
     detach_thread(this->jvm);
   }
 }

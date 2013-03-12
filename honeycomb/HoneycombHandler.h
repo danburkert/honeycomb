@@ -8,6 +8,9 @@
 #include "HoneycombShare.h"
 #include "Util.h"
 #include "Row.h"
+#include "TableSchema.h"
+#include "ColumnSchema.h"
+#include "IndexSchema.h"
 
 #include "my_global.h"          /* ulonglong */
 #include "thr_lock.h"           /* THR_LOCK, THR_LOCK_DATA */
@@ -136,6 +139,10 @@ class HoneycombHandler : public handler
 
     void set_autoinc_counter(jlong new_value, jboolean is_truncate);
     void release_auto_increment();
+
+    /* DDL helper methods */
+
+    int pack_column_schema(ColumnSchema* schema, Field* field, TABLE* table);
 
   public:
     HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg,
