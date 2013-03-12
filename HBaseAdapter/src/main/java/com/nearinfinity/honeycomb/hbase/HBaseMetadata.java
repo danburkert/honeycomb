@@ -190,8 +190,8 @@ public class HBaseMetadata {
 
         final long tableId = getTableId(oldTableName);
 
-        List<Delete> deletes = ImmutableList.of(deleteTableId(oldTableName));
-        List<Put> puts = ImmutableList.of(putTableId(newTableName, tableId));
+        List<Delete> deletes = Lists.newArrayList(deleteTableId(oldTableName));
+        List<Put> puts = Lists.newArrayList(putTableId(newTableName, tableId));
 
         performMutations(deletes, puts);
     }
@@ -206,7 +206,7 @@ public class HBaseMetadata {
     }
 
     public void truncateAutoInc(long tableId) throws IOException {
-        performMutations(ImmutableList.<Delete>of(deleteAutoIncCounter(tableId)),
+        performMutations(Lists.<Delete>newArrayList(deleteAutoIncCounter(tableId)),
                 ImmutableList.<Put>of());
     }
 
@@ -219,7 +219,7 @@ public class HBaseMetadata {
     }
 
     public void truncateRowCount(long tableId) throws IOException {
-        performMutations(ImmutableList.<Delete>of(deleteRowsCounter(tableId)),
+        performMutations(Lists.<Delete>newArrayList(deleteRowsCounter(tableId)),
                 ImmutableList.<Put>of());
     }
 
