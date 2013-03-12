@@ -16,7 +16,9 @@
 #include "Logging.h"
 #include "JNICache.h"
 #include "Row.h"
+#include "TableSchema.h"
 #include "IndexSchema.h"
+#include "ColumnSchema.h"
 
 static handler *honeycomb_create_handler(handlerton *hton,
     TABLE_SHARE *table, MEM_ROOT *mem_root);
@@ -73,6 +75,11 @@ static uint honeycomb_alter_table_flags(uint flags)
     HA_INPLACE_ADD_PK_INDEX_NO_WRITE |
     HA_INPLACE_DROP_PK_INDEX_NO_WRITE;
 }
+static jobject handler_proxy_factory;
+static jobject handler_factory(JNIEnv* env)
+{
+  return env->CallObjectMethod(handler_proxy_factory, cache->handler_proxy_factory().createHandlerProxy);
+}
 
 static int honeycomb_init_func(void *p)
 {
@@ -93,7 +100,7 @@ static int honeycomb_init_func(void *p)
   honeycomb_hton->flags = HTON_TEMPORARY_NOT_SUPPORTED;
   honeycomb_hton->alter_table_flags = honeycomb_alter_table_flags;
 
-  initialize_jvm(jvm);
+  handler_proxy_factory = initialize_jvm(jvm);
   cache = new JNICache(jvm);
 
   DBUG_RETURN(0);
@@ -118,8 +125,12 @@ static int honeycomb_done_func(void *p)
 static handler* honeycomb_create_handler(handlerton *hton, TABLE_SHARE *table,
     MEM_ROOT *mem_root)
 {
+  JNIEnv* env;
+  attach_thread(jvm, env);
+  jobject handler_proxy = handler_factory(env);
+  detach_thread(jvm);
   return new (mem_root) HoneycombHandler(hton, table, &honeycomb_mutex,
-      &honeycomb_open_tables, jvm, cache);
+      &honeycomb_open_tables, jvm, cache, handler_proxy);
 }
 
 struct st_mysql_storage_engine honeycomb_storage_engine=

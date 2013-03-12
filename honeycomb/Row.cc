@@ -1,4 +1,5 @@
 #include "Row.h"
+#include "AvroUtil.h"
 #include <stdio.h>
 
 const char ROW_CONTAINER_SCHEMA[] = "{\"type\": \"record\", \"name\": \"RowContainer\", \"namespace\": \"com.nearinfinity.honeycomb.mysql.gen\", \"fields\": [ {\"name\": \"uuid\", \"type\": {\"type\":\"fixed\", \"name\": \"UUIDContainer\", \"size\": 16}}, {\"name\":\"records\",\"type\":{\"type\":\"map\",\"values\":[\"bytes\"],\"avro.java.string\":\"String\"}}]}";
@@ -54,10 +55,6 @@ int Row::set_record(const char* column_name, const char* type, avro_value_t* rec
   union_schema = avro_value_get_schema(&record_union);
   avro_schema_union_branch_by_name(union_schema, &type_disc, type);
 
-  // The return value from avro_value_get_current_branch is not an error
-  // code as far as I can tell.  See test_avro_value.c.  It returns 22 when
-  // there is no current branch, which would be most of the time during a set
-  avro_value_get_current_branch(&record_union, record);
   ret |= avro_value_set_branch(&record_union, type_disc, record);
 
   return ret;
@@ -90,10 +87,20 @@ int Row::reset()
   return avro_value_reset(&row_container);
 }
 
-bool Row::equal(const Row& other)
+bool Row::equals(const Row& other)
 {
   avro_value_t other_row_container = other.row_container;
   return avro_value_equal(&row_container, &other_row_container);
+}
+
+int Row::serialize(const char** buf, size_t* len)
+{
+  return serialize_object(&row_container, buf, len);
+}
+
+int Row::deserialize(const char* buf, int64_t len)
+{
+  return deserialize_object(&row_container, buf, len);
 }
 
 int Row::record_count(size_t* count)
@@ -146,30 +153,5 @@ int Row::set_bytes_record(const char* column_name, char* value, size_t size)
   avro_value_t record;
   ret |= set_record(column_name, "bytes", &record);
   ret |= avro_value_set_bytes(&record, value, size);
-  return ret;
-}
-
-int Row::serialize(const char** buf, size_t* len)
-{
-  int ret = 0;
-  ret |= avro_value_sizeof(&row_container, len);
-  *buf = new char[*len];
-  if(*buf)
-  {
-    avro_writer_t writer = avro_writer_memory(*buf, *len);
-    ret |= avro_value_write(writer, &row_container);
-    avro_writer_free(writer);
-  } else {
-    ret = -1;
-  }
-  return ret;
-}
-
-int Row::deserialize(const char* buf, int64_t len)
-{
-  int ret = 0;
-  avro_reader_t reader = avro_reader_memory(buf, len);
-  ret |= avro_value_read(reader, &row_container);
-  avro_reader_free(reader);
   return ret;
 }

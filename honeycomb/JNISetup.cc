@@ -40,7 +40,7 @@ static void abort_with_fatal_error(const char* message, ...)
  * Initialize HBaseAdapter.  This should only be called once per MySQL Server
  * instance during Handlerton initialization.
  */
-void initialize_adapter(JavaVM* jvm)
+jobject bootstrap(JavaVM* jvm)
 {
   Logging::info("Initializing HBaseAdapter");
   JNIEnv* env;
@@ -52,16 +52,19 @@ void initialize_adapter(JavaVM* jvm)
     abort();
   }
   // TODO: check the result of these JNI calls with macro
-  jclass hbase_adapter = env->FindClass(MYSQLENGINE "HBaseAdapter");
-  jmethodID initialize = env->GetStaticMethodID(hbase_adapter, "initialize", "()V");
-  env->CallStaticVoidMethod(hbase_adapter, initialize);
+  jclass hbase_adapter = env->FindClass("com/nearinfinity/honeycomb/mysql/Bootstrap");
+  jmethodID initialize = env->GetStaticMethodID(hbase_adapter, "startup", "()Lcom/nearinfinity/honeycomb/mysql/HandlerProxyFactory;");
+  jobject handler_proxy_factory = env->CallStaticObjectMethod(hbase_adapter, initialize);
   if (print_java_exception(env))
   {
     abort_with_fatal_error("Initialize failed with an error. Check"
         "HBaseAdapter.log and honeycomb.log for more information.");
   }
+
+  handler_proxy_factory = env->NewGlobalRef(handler_proxy_factory);
   env->DeleteLocalRef(hbase_adapter);
   detach_thread(jvm);
+  return handler_proxy_factory;
 }
 
 
@@ -120,7 +123,7 @@ static void handler(int sig)
  * instance during Handlerton initialization.  Aborts process if a JVM already
  * exists.  After return the current thread is NOT attached.
  */
-void initialize_jvm(JavaVM* &jvm)
+jobject initialize_jvm(JavaVM* &jvm)
 {
   JavaVM* created_vms;
   jsize vm_count;
@@ -155,12 +158,13 @@ void initialize_jvm(JavaVM* &jvm)
     }
 
     free_parser(parser);
-    initialize_adapter(jvm);
+    jobject handler_proxy_factory = bootstrap(jvm);
     log_java_classpath(env);
     detach_thread(jvm);
 #if defined(__APPLE__) || defined(__linux__)
     signal(SIGTERM, handler);
 #endif
+    return handler_proxy_factory;
   }
 }
 

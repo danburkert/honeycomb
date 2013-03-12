@@ -6,13 +6,8 @@ command -v cmake >/dev/null 2>&1 || { echo >&2 "cmake is required to run $0."; e
 command -v make >/dev/null 2>&1 || { echo >&2 "make is required to run $0."; exit 1; }
 
 build_dir=$HONEYCOMB_HOME/build
-unit_test_dir=$HONEYCOMB_HOME/unit-test-build
+unit_test_dir=$HONEYCOMB_HOME/build/storage/honeycomb/unit-test
 
-if [ ! -d $unit_test_dir ]
-then
-  echo "Creating build output directory: $unit_test_dir"
-  mkdir $unit_test_dir
-fi
 
 if [ ! -d $build_dir ]
 then
@@ -32,6 +27,24 @@ fi
 echo "Running make in $build_dir"
 make
 [ $? -ne 0 ] && { echo "Make failed stopping the script."; exit 1; }
+
+if [ ! -d $unit_test_dir ]
+then
+  echo "Creating test build directory: $unit_test_dir"
+  mkdir $unit_test_dir
+fi
+
+cd $unit_test_dir
+if [ ! -e CMakeCache.txt ]
+then
+  cmake $HONEYCOMB_HOME/honeycomb/unit-test -DHONEYCOMB_SOURCE_DIR=$HONEYCOMB_HOME/honeycomb
+  [ $? -ne 0 ] && { "CMake failed on unit tests.\n*** Don't forget to delete CMakeCache.txt in the unit test directory before running again.***"; exit 1; }
+fi
+make
+[ $? -ne 0 ] && { exit 1; }
+echo "Running Honeycomb unit tests"
+make test
+[ $? -ne 0 ] && { echo "Unit test failed. Stopping Build. Execute build/storage/honeycomb/unit-test/runUnitTests for more details."; exit 1; }
 
 if [ ! -d $MYSQL_HOME ]
 then
@@ -72,13 +85,3 @@ then
   echo "Creating a symbolic link from $link to $target"
   sudo ln -s $target $link
 fi
-
-cd $unit_test_dir
-if [ ! -e CMakeCache.txt ]
-then
-  cmake ../honeycomb/unit-test -DHONEYCOMB_SOURCE_DIR=$HONEYCOMB_HOME/honeycomb
-  make
-fi
-echo "Running Honeycomb unit tests"
-make test 
-[ $? -ne 0 ] && { echo "Unit test failed. Stopping Build. Execute build/storage/honeycomb/unit-test/runUnitTests for more details."; exit 1; }

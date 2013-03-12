@@ -4,6 +4,8 @@
 #include <avro.h>
 #include <stdlib.h>
 
+#define INDEX_SCHEMA "{\"type\":\"record\",\"name\":\"IndexSchema\",\"namespace\":\"com.nearinfinity.honeycomb.mysql.gen\",\"fields\":[{\"name\":\"columns\",\"type\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"avro.java.string\":\"String\"}}},{\"name\":\"isUnique\",\"type\":\"boolean\",\"default\":false}]}"
+
 class IndexSchema
 {
   private:
@@ -21,6 +23,12 @@ class IndexSchema
      */
     int reset();
 
+    bool equals(const IndexSchema& other);
+
+    int serialize(const char** buf, size_t* len);
+
+    int deserialize(const char* buf, int64_t len);
+
     bool get_is_unique();
 
     int set_is_unique(bool is_unique);
@@ -33,11 +41,15 @@ class IndexSchema
     /**
      * Return the nth column of the index.
      */
-    int get_column(size_t n, const char** column, size_t* len);
+    const char* get_column(size_t n);
 
     /**
      * Add a column to the index.
      */
     int add_column(const char* column_name);
+
+    avro_value_t* get_avro_value();
+
+    int set_avro_value(avro_value_t*);
 };
 #endif

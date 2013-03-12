@@ -1,7 +1,7 @@
 #include "IndexSchema.h"
+#include "AvroUtil.h"
 #include <stdio.h>
 
-const char INDEX_SCHEMA[] = "{\"type\":\"record\",\"name\":\"IndexSchema\",\"namespace\":\"com.nearinfinity.honeycomb.mysql.gen\",\"fields\":[{\"name\":\"columns\",\"type\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"avro.java.string\":\"String\"}}},{\"name\":\"isUnique\",\"type\":\"boolean\",\"default\":false}]}";
 const char IS_UNIQUE[] = "isUnique";
 
 IndexSchema::IndexSchema()
@@ -36,6 +36,22 @@ int IndexSchema::reset()
   return avro_value_reset(&index_schema);
 }
 
+bool IndexSchema::equals( const IndexSchema& other)
+{
+  avro_value_t other_index_schema = other.index_schema;
+  return avro_value_equal(&index_schema, &other_index_schema);
+};
+
+int IndexSchema::serialize(const char** buf, size_t* len)
+{
+  return serialize_object(&index_schema, buf, len);
+};
+
+int IndexSchema::deserialize(const char* buf, int64_t len)
+{
+  return deserialize_object(&index_schema, buf, len);
+}
+
 bool IndexSchema::get_is_unique() {
   int is_unique;
   avro_value_t avro_bool;
@@ -66,14 +82,14 @@ size_t IndexSchema::size() {
 /**
  * Return the nth column of the index.
  */
-int IndexSchema::get_column(size_t n, const char** column, size_t* len) {
-  int ret = 0;
+const char* IndexSchema::get_column(size_t n) {
+  const char* column;
   avro_value_t column_list;
   avro_value_t column_value;
-  ret |= avro_value_get_by_name(&index_schema, "columns", &column_list, NULL);
-  ret |= avro_value_get_by_index(&index_schema, n, &column_value, NULL);
-  ret |= avro_value_get_string(&column_value, column, len);
-  return ret;
+  avro_value_get_by_name(&index_schema, "columns", &column_list, NULL);
+  avro_value_get_by_index(&column_list, n, &column_value, NULL);
+  avro_value_get_string(&column_value, &column, NULL);
+  return column;
 }
 
 /**
@@ -89,3 +105,13 @@ int IndexSchema::add_column(const char* column_name)
   ret |= avro_value_set_string(&column, column_name);
   return ret;
 }
+
+avro_value_t* IndexSchema::get_avro_value()
+{
+  return &index_schema;
+};
+
+int IndexSchema::set_avro_value(avro_value_t* value)
+{
+  return avro_value_copy(&index_schema, value);
+};

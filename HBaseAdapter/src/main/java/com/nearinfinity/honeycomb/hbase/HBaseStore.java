@@ -4,62 +4,39 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.BiMap;
+import com.google.inject.Inject;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.TableNotFoundException;
-import com.nearinfinity.honeycomb.hbaseclient.Constants;
-import com.nearinfinity.honeycomb.hbaseclient.SqlTableCreator;
-import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
-import com.nearinfinity.honeycomb.mysqlengine.HTableFactory;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.ZooKeeperConnectionException;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.HTablePool;
-import org.apache.log4j.Logger;
-import org.xml.sax.SAXException;
 
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-
-import static java.text.MessageFormat.format;
+import java.util.concurrent.ExecutionException;
 
 public class HBaseStore implements Store {
     private static final String HBASE_TABLE = "nic";
-    private static final String CONFIG_PATH = "/etc/mysql/honeycomb.xml";
-    private static final HBaseStore ourInstance = new HBaseStore();
-    private static volatile boolean isInitialized;
-    private final int DEFAULT_TABLE_POOL_SIZE = 5;
-    private final long DEFAULT_WRITE_BUFFER_SIZE = 5 * 1024 * 1024;
-    private final Logger logger = Logger.getLogger(HBaseStore.class);
+    private final HBaseMetadata metadata;
+    private final HBaseTableFactory tableFactory;
     private LoadingCache<String, Long> tableCache;
     private LoadingCache<Long, BiMap<String, Long>> columnsCache;
     private LoadingCache<Long, Long> rowsCache;
     private LoadingCache<Long, Long> autoIncCache;
     private LoadingCache<Long, TableSchema> schemaCache;
-    private HTablePool hTablePool = null;
 
-    private HBaseStore() {
+    @Inject
+    public HBaseStore(HBaseMetadata metadata, HBaseTableFactory tableFactory) {
+        this.metadata = metadata;
+        this.tableFactory = tableFactory;
+        this.doInitialization();
     }
 
-    public static HBaseStore getInstance() throws IOException, SAXException, ParserConfigurationException {
-        if (!isInitialized) {
-            synchronized (ourInstance) {
-                if (!isInitialized) {
-                    ourInstance.doInitialization();
-                }
-            }
-        }
-
-        return ourInstance;
+    public long getTableId(String tableName) throws ExecutionException {
+        return this.tableCache.get(tableName);
     }
 
     @Override
     public Table openTable(String tableName) throws Exception {
-        return new HBaseTable(getFreshHTable(), tableCache.get(tableName));
+        return this.tableFactory.create(tableName);
     }
 
     @Override
@@ -68,38 +45,33 @@ public class HBaseStore implements Store {
     }
 
     @Override
-    public Table createTable(String tableName, TableSchema schema) throws Exception {
-        HTableInterface hTable = getFreshHTable();
-        getHBaseMetadata(hTable).putSchema(tableName, schema);
-        return new HBaseTable(hTable, tableCache.get(tableName));
+    public void createTable(String tableName, TableSchema schema) throws Exception {
+        getHBaseMetadata().putSchema(tableName, schema);
     }
 
     @Override
     public void deleteTable(String tableName) throws Exception {
-        HTableInterface hTable = getFreshHTable();
-        HBaseMetadata metadata = getHBaseMetadata(hTable);
+        HBaseMetadata metadata = getHBaseMetadata();
         metadata.deleteSchema(tableName);
         invalidateCache(tableName);
-        hTable.close();
+
     }
 
     @Override
     public void alterTable(String tableName, TableSchema schema) throws Exception {
         long tableId = tableCache.get(tableName);
-        HTableInterface hTable = getFreshHTable();
-        HBaseMetadata metadata = getHBaseMetadata(hTable);
+        HBaseMetadata metadata = getHBaseMetadata();
         metadata.updateSchema(tableId, schemaCache.get(tableId), schema);
         invalidateCache(tableName);
-        hTable.close();
+
     }
 
     @Override
     public void renameTable(String curTableName, String newTableName) throws Exception {
-        HTableInterface freshHTable = getFreshHTable();
-        HBaseMetadata metadata = getHBaseMetadata(freshHTable);
+        HBaseMetadata metadata = getHBaseMetadata();
         metadata.renameExistingTable(curTableName, newTableName);
         invalidateCache(curTableName);
-        freshHTable.close();
+
     }
 
     @Override
@@ -110,22 +82,18 @@ public class HBaseStore implements Store {
     @Override
     public long incrementAutoInc(String tableName, long amount) throws Exception {
         long tableId = tableCache.get(tableName);
-        HTableInterface hTable = getFreshHTable();
-        HBaseMetadata metadata = getHBaseMetadata(hTable);
+        HBaseMetadata metadata = getHBaseMetadata();
         long value = metadata.incrementAutoInc(tableId, amount);
         autoIncCache.put(tableId, value);
-        hTable.close();
         return value;
     }
 
     @Override
     public void truncateAutoInc(String tableName) throws Exception {
         long tableId = tableCache.get(tableName);
-        HTableInterface hTable = getFreshHTable();
-        HBaseMetadata metadata = getHBaseMetadata(hTable);
+        HBaseMetadata metadata = getHBaseMetadata();
         metadata.truncateAutoInc(tableId);
         autoIncCache.invalidate(tableId);
-        hTable.close();
     }
 
     @Override
@@ -134,71 +102,27 @@ public class HBaseStore implements Store {
     }
 
     public long incrementRowCount(long tableId, long amount) throws Exception {
-        HTableInterface hTable = getFreshHTable();
-        HBaseMetadata metadata = getHBaseMetadata(hTable);
+        HBaseMetadata metadata = getHBaseMetadata();
         long value = metadata.incrementRowCount(tableId, amount);
         rowsCache.put(tableId, value);
-        hTable.close();
+
         return value;
     }
 
     public void truncateRowCount(long tableId) throws Exception {
-        HTableInterface hTable = getFreshHTable();
-        HBaseMetadata metadata = getHBaseMetadata(hTable);
+        HBaseMetadata metadata = getHBaseMetadata();
         metadata.truncateRowCount(tableId);
         rowsCache.invalidate(tableId);
-        hTable.close();
     }
 
-    private void doInitialization() throws ParserConfigurationException, IOException, SAXException {
-        if (isInitialized) {
-            return;
-        }
-
-        File configFile = new File(CONFIG_PATH);
-        Configuration params;
-        try {
-            if (!(configFile.exists() && configFile.canRead() && configFile.isFile())) {
-                throw new FileNotFoundException(CONFIG_PATH + " doesn't exist or cannot be read.");
-            }
-            params = Util.readConfiguration(configFile);
-            logger.info(format("Read in {0} parameters.", params.size()));
-            String hTableName = params.get(Constants.HBASE_TABLE);
-            String zkQuorum = params.get(Constants.ZK_QUORUM);
-            long writeBufferSize = params.getLong("write_buffer_size", DEFAULT_WRITE_BUFFER_SIZE);
-            int poolSize = params.getInt("honeycomb.pool_size", DEFAULT_TABLE_POOL_SIZE);
-            boolean autoFlush = params.getBoolean("flush_changes_immediately", false);
-
-            Configuration configuration = HBaseConfiguration.create();
-            configuration.set("hbase.zookeeper.quorum", zkQuorum);
-            configuration.set(Constants.HBASE_TABLE, hTableName);
-            SqlTableCreator.initializeSqlTable(configuration);
-            hTablePool = new HTablePool(configuration, poolSize, new HTableFactory(writeBufferSize, autoFlush));
-
-        } catch (ParserConfigurationException e) {
-            logger.fatal("The xml parser was not configured properly.", e);
-            throw e;
-        } catch (SAXException e) {
-            logger.fatal("Exception while trying to parse the config file.", e);
-            throw e;
-        } catch (ZooKeeperConnectionException e) {
-            logger.fatal("Could not connect to zookeeper. ", e);
-            throw e;
-        } catch (IOException e) {
-            logger.fatal("Could not create HBaseStore. Aborting initialization.");
-            throw e;
-        }
-
+    private void doInitialization() {
         tableCache = CacheBuilder
                 .newBuilder()
                 .build(new CacheLoader<String, Long>() {
                     @Override
                     public Long load(String tableName)
                             throws IOException, TableNotFoundException {
-                        HTableInterface hTable = getFreshHTable();
-                        long id = getHBaseMetadata(hTable).getTableId(tableName);
-                        hTable.close();
-                        return id;
+                        return getHBaseMetadata().getTableId(tableName);
                     }
                 }
                 );
@@ -209,11 +133,8 @@ public class HBaseStore implements Store {
                     @Override
                     public BiMap<String, Long> load(Long tableId)
                             throws IOException, TableNotFoundException {
-                        HTableInterface hTable = getFreshHTable();
-                        BiMap<String, Long> columns =
-                                getHBaseMetadata(hTable).getColumnIds(tableId);
-                        hTable.close();
-                        return columns;
+
+                        return getHBaseMetadata().getColumnIds(tableId);
                     }
                 }
                 );
@@ -224,10 +145,7 @@ public class HBaseStore implements Store {
                     @Override
                     public Long load(Long tableId)
                             throws IOException, TableNotFoundException {
-                        HTableInterface hTable = getFreshHTable();
-                        Long columns = getHBaseMetadata(hTable).getAutoInc(tableId);
-                        hTable.close();
-                        return columns;
+                        return getHBaseMetadata().getAutoInc(tableId);
                     }
                 }
                 );
@@ -238,10 +156,7 @@ public class HBaseStore implements Store {
                     @Override
                     public Long load(Long tableId)
                             throws IOException, TableNotFoundException {
-                        HTableInterface hTable = getFreshHTable();
-                        Long columns = getHBaseMetadata(hTable).getRowCount(tableId);
-                        hTable.close();
-                        return columns;
+                        return getHBaseMetadata().getRowCount(tableId);
                     }
                 }
                 );
@@ -252,15 +167,11 @@ public class HBaseStore implements Store {
                     @Override
                     public TableSchema load(Long tableId)
                             throws IOException, TableNotFoundException {
-                        HTableInterface hTable = getFreshHTable();
-                        TableSchema schema =
-                                getHBaseMetadata(hTable).getSchema(tableId);
-                        hTable.close();
-                        return schema;
+                        return getHBaseMetadata().getSchema(tableId);
+
                     }
                 }
                 );
-        isInitialized = true;
     }
 
     private void invalidateCache(String tableName) throws Exception {
@@ -270,11 +181,7 @@ public class HBaseStore implements Store {
         schemaCache.invalidate(tableId);
     }
 
-    private HBaseMetadata getHBaseMetadata(HTableInterface hTable) {
-        return new HBaseMetadata(hTable);
-    }
-
-    private HTableInterface getFreshHTable() {
-        return hTablePool.getTable(HBASE_TABLE);
+    private HBaseMetadata getHBaseMetadata() {
+        return this.metadata;
     }
 }

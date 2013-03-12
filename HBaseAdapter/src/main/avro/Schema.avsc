@@ -15,10 +15,10 @@
                         { "type": "enum",
                           "name": "ColumnType",
                           "symbols": ["STRING", "BINARY", "ULONG", "LONG",
-                                      "DOUBLE", "TIME",   "DATE",  "DATETIME",
-                                      "DECIMAL"]}},
+                                      "DOUBLE", "DECIMAL", "TIME",   "DATE",
+                                        "DATETIME"]}},
                     {"name": "isNullable", "type": "boolean", "default": true},
-                    {"name": "isAutoincrement", "type": "boolean", "default": false},
+                    {"name": "isAutoIncrement", "type": "boolean", "default": false},
                     {"name": "maxLength", "type": ["null", "int"], "default": null},
                     {"name": "scale", "type": ["null", "int"], "default": null},
                     {"name": "precision", "type": ["null", "int"], "default": null}

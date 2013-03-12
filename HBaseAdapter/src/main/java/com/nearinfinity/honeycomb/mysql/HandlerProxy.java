@@ -8,24 +8,27 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class HandlerProxy {
-    private final Store store;
+    private final StoreFactory storeFactory;
+    private Store store;
     private Table table;
     private String tableName;
 
-    public HandlerProxy(Store store) throws Exception {
-        checkNotNull(store);
-        this.store = store;
+    public HandlerProxy(StoreFactory storeFactory) throws Exception {
+        this.storeFactory = storeFactory;
     }
 
-    public void createTable(String tableName, byte[] serializedTableSchema) throws Exception {
+    public void createTable(String databaseName, String tableName, byte[] serializedTableSchema) throws Exception {
         checkTableName(tableName);
+        this.store = this.storeFactory.createStore(databaseName);
         TableSchema tableSchema = Util.deserializeTableSchema(serializedTableSchema);
-        this.table = store.createTable(tableName, tableSchema);
+        store.createTable(tableName, tableSchema);
         this.tableName = tableName;
+        this.table = store.openTable(tableName);
     }
 
     public void openTable(String tableName) throws Exception {
         checkTableName(tableName);
+        this.store = this.storeFactory.createStore(tableName);
         this.tableName = tableName;
         this.table = this.store.openTable(this.tableName);
     }

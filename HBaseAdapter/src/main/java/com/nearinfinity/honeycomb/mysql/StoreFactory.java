@@ -1,21 +1,21 @@
 package com.nearinfinity.honeycomb.mysql;
 
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.nearinfinity.honeycomb.Store;
-import com.nearinfinity.honeycomb.hbase.HBaseStore;
-import org.xml.sax.SAXException;
 
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.IOException;
+import java.util.Map;
 
-/**
- * Simple way to decouple the creation of a Store from the user of the store. (May be subject to change)
- */
 public class StoreFactory {
-    /**
-     * Creates a new HBaseStore
-     * @return HBaseStore
-     */
-    public static Store createHBaseStore() throws ParserConfigurationException, SAXException, IOException {
-        return HBaseStore.getInstance();
+    Map<String, Provider<Store>> storeMap;
+
+    @Inject
+    public StoreFactory(Map<String, Provider<Store>> storeMap) {
+        this.storeMap = storeMap;
+    }
+
+    public Store createStore(String database) {
+        Provider<Store> storeProvider = this.storeMap.get(database);
+        return storeProvider.get();
     }
 }
