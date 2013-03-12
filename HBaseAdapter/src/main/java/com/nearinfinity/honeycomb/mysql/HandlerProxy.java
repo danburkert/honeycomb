@@ -26,9 +26,9 @@ public class HandlerProxy {
         this.table = store.openTable(tableName);
     }
 
-    public void openTable(String tableName) throws Exception {
+    public void openTable(String databaseName, String tableName) throws Exception {
         checkTableName(tableName);
-        this.store = this.storeFactory.createStore(tableName);
+        this.store = this.storeFactory.createStore(databaseName);
         this.tableName = tableName;
         this.table = this.store.openTable(this.tableName);
     }
@@ -60,6 +60,10 @@ public class HandlerProxy {
         }
 
         return store.getAutoInc(tableName);
+    }
+
+    public void dropTable() throws Exception {
+        this.store.deleteTable(this.tableName);
     }
 
     private void checkTableName(String tableName) {

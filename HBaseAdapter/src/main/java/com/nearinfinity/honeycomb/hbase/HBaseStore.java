@@ -51,10 +51,11 @@ public class HBaseStore implements Store {
 
     @Override
     public void deleteTable(String tableName) throws Exception {
+        long tableId = tableCache.get(tableName);
         HBaseMetadata metadata = getHBaseMetadata();
-        metadata.deleteSchema(tableName);
-        invalidateCache(tableName);
 
+        invalidateCache(tableName, tableId);
+        metadata.deleteSchema(tableName);
     }
 
     @Override
@@ -62,16 +63,16 @@ public class HBaseStore implements Store {
         long tableId = tableCache.get(tableName);
         HBaseMetadata metadata = getHBaseMetadata();
         metadata.updateSchema(tableId, schemaCache.get(tableId), schema);
-        invalidateCache(tableName);
+        invalidateCache(tableName, tableId);
 
     }
 
     @Override
     public void renameTable(String curTableName, String newTableName) throws Exception {
+        long tableId = tableCache.get(curTableName);
         HBaseMetadata metadata = getHBaseMetadata();
         metadata.renameExistingTable(curTableName, newTableName);
-        invalidateCache(curTableName);
-
+        invalidateCache(curTableName, tableId);
     }
 
     @Override
@@ -174,8 +175,7 @@ public class HBaseStore implements Store {
                 );
     }
 
-    private void invalidateCache(String tableName) throws Exception {
-        long tableId = tableCache.get(tableName);
+    private void invalidateCache(String tableName, long tableId) throws Exception {
         tableCache.invalidate(tableName);
         columnsCache.invalidate(tableId);
         schemaCache.invalidate(tableId);
