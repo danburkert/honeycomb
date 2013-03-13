@@ -20,6 +20,7 @@ public class HandleProxyIntegrationTest {
     }
 
     public static void testSuccessfulRename() throws Exception {
+        System.out.println("Testing rename");
         final String newTableName = "test2";
         HandlerProxy proxy = factory.createHandlerProxy();
         TableSchema schema = getTableSchema();
@@ -28,12 +29,13 @@ public class HandleProxyIntegrationTest {
         String tableName = "test";
         proxy.createTable(databaseName, tableName, Constants.HBASE_TABLESPACE, Util.serializeTableSchema(schema), 0);
         proxy.openTable(databaseName, tableName, Constants.HBASE_TABLESPACE);
-        proxy.renameTable(newTableName);
+        proxy.renameTable(databaseName, newTableName);
         assert (newTableName.equals(proxy.getTableName()));
         proxy.dropTable();
     }
 
     public static void testSuccessfulAlter() throws Exception {
+        System.out.println("Testing alter");
         HandlerProxy proxy = factory.createHandlerProxy();
         TableSchema schema = getTableSchema();
 

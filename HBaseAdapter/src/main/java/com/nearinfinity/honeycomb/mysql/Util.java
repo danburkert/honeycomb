@@ -23,6 +23,7 @@ import java.util.UUID;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 
 /**
  * Utility class containing helper functions.
@@ -135,5 +136,9 @@ public class Util {
         }
 
         return params;
+    }
+
+    public static String fullyQualifyTable(String databaseName, String tableName) {
+        return format("%s.%s", databaseName, tableName);
     }
 }

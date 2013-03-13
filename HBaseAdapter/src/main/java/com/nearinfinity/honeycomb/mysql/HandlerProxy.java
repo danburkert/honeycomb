@@ -5,6 +5,7 @@ import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static java.lang.String.format;
 
 public class HandlerProxy {
@@ -12,6 +13,7 @@ public class HandlerProxy {
     private Store store;
     private Table table;
     private String tableName;
+    private boolean isTableOpen;
 
     public HandlerProxy(StoreFactory storeFactory) throws Exception {
         this.storeFactory = storeFactory;
@@ -31,9 +33,12 @@ public class HandlerProxy {
     public void createTable(String databaseName, String tableName, String tableSpace,
                             byte[] serializedTableSchema, long autoInc) throws Exception {
         Verify.isNotNullOrEmpty(tableName);
+        Verify.isNotNullOrEmpty(databaseName);
+        checkNotNull(serializedTableSchema);
+
         this.store = this.storeFactory.createStore(tableSpace);
         TableSchema tableSchema = Util.deserializeTableSchema(serializedTableSchema);
-        store.createTable(fullyQualifyTable(databaseName, tableName), tableSchema);
+        store.createTable(Util.fullyQualifyTable(databaseName, tableName), tableSchema);
         if (autoInc > 0) {
             store.incrementAutoInc(tableName, autoInc);
         }
@@ -41,9 +46,11 @@ public class HandlerProxy {
 
     public void openTable(String databaseName, String tableName, String tableSpace) throws Exception {
         Verify.isNotNullOrEmpty(tableName);
+        Verify.isNotNullOrEmpty(databaseName);
         this.store = this.storeFactory.createStore(tableSpace);
-        this.tableName = tableName;
-        this.table = this.store.openTable(fullyQualifyTable(databaseName, tableName));
+        this.tableName = Util.fullyQualifyTable(databaseName, tableName);
+        this.table = this.store.openTable(this.tableName);
+        this.isTableOpen = true;
     }
 
     public String getTableName() {
@@ -54,18 +61,22 @@ public class HandlerProxy {
      * Updates the existing SQL table name representation in the underlying
      * {@link Store} implementation to the specified new table name
      *
-     * @param newName The new table name to represent, not null or empty
+     * @param databaseName Database of the old and new table
+     * @param newName      The new table name to represent, not null or empty
      * @throws Exception
      */
-    public void renameTable(final String newName) throws Exception {
+    public void renameTable(String databaseName, final String newName) throws Exception {
         Verify.isNotNullOrEmpty(newName, "New table name must have value.");
+        checkTableOpen();
 
-        store.renameTable(tableName, newName);
-        tableName = newName;
+        String newTableName = Util.fullyQualifyTable(databaseName, newName);
+        store.renameTable(tableName, newTableName);
+        tableName = newTableName;
     }
 
     public long getAutoIncValue(String columnName)
             throws Exception {
+        checkTableOpen();
         if (!Verify.isAutoIncColumn(columnName, store.getTableMetadata(tableName))) {
             throw new IllegalArgumentException("Column " + columnName +
                     " is not an autoincrement column.");
@@ -75,16 +86,19 @@ public class HandlerProxy {
     }
 
     public void dropTable() throws Exception {
+        checkTableOpen();
         this.store.deleteTable(this.tableName);
+        this.isTableOpen = false;
     }
 
     public void alterTable(byte[] newSchemaSerialized) throws Exception {
         checkNotNull(newSchemaSerialized);
+        checkTableOpen();
         TableSchema newSchema = Util.deserializeTableSchema(newSchemaSerialized);
         this.store.alterTable(this.tableName, newSchema);
     }
 
-    private String fullyQualifyTable(String databaseName, String tableName) {
-        return format("%s.%s", databaseName, tableName);
+    private void checkTableOpen() {
+        checkState(isTableOpen, "Table must be opened before used.");
     }
 }

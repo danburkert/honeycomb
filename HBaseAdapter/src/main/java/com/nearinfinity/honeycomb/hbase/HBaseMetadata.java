@@ -34,6 +34,7 @@ public class HBaseMetadata {
 
     @Inject
     public HBaseMetadata(HTableProvider provider) {
+        checkNotNull(provider);
         this.provider = provider;
     }
 
