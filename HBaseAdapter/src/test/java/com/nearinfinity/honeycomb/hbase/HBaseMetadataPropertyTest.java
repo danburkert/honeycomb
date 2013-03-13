@@ -17,8 +17,8 @@ import org.junit.Test;
 
 import com.nearinfinity.honeycomb.MockHTable;
 import com.nearinfinity.honeycomb.TableNotFoundException;
-import com.nearinfinity.honeycomb.mysql.TableSchemaGenerator;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import com.nearinfinity.honeycomb.mysql.generators.TableSchemaGenerator;
 
 public class HBaseMetadataPropertyTest {
     private static HBaseMetadata hbaseMetadata;

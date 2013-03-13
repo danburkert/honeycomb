@@ -1,4 +1,4 @@
-package com.nearinfinity.hbaseclient;
+package com.nearinfinity.honeycomb.hbaseclient;
 
 import com.nearinfinity.honeycomb.hbaseclient.ColumnMetadata;
 import com.nearinfinity.honeycomb.hbaseclient.ColumnType;
