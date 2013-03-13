@@ -1,8 +1,5 @@
 package com.nearinfinity.honeycomb.hbase;
 
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
-
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -12,6 +9,9 @@ import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.TableNotFoundException;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+
+import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 
 public class HBaseStore implements Store {
     private final HBaseMetadata metadata;
@@ -100,7 +100,9 @@ public class HBaseStore implements Store {
         return rowsCache.get(tableCache.get(tableName));
     }
 
-    public long incrementRowCount(long tableId, long amount) throws Exception {
+    @Override
+    public long incrementRowCount(String tableName, long amount) throws Exception {
+        long tableId = tableCache.get(tableName);
         HBaseMetadata metadata = getHBaseMetadata();
         long value = metadata.incrementRowCount(tableId, amount);
         rowsCache.put(tableId, value);
@@ -108,7 +110,9 @@ public class HBaseStore implements Store {
         return value;
     }
 
-    public void truncateRowCount(long tableId) throws Exception {
+    @Override
+    public void truncateRowCount(String tableName) throws Exception {
+        long tableId = tableCache.get(tableName);
         HBaseMetadata metadata = getHBaseMetadata();
         metadata.truncateRowCount(tableId);
         rowsCache.invalidate(tableId);

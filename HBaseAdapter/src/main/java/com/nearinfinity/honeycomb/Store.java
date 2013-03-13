@@ -1,8 +1,8 @@
 package com.nearinfinity.honeycomb;
 
-import java.io.IOException;
-
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+
+import java.io.IOException;
 
 /**
  * The store is responsible for meta operations on tables: opening, creating,
@@ -39,6 +39,7 @@ public interface Store {
 
     /**
      * Renames the specified existing table to the provided table name
+     *
      * @param curTableName
      * @param newTableName
      * @throws Exception
@@ -47,7 +48,6 @@ public interface Store {
 
     /**
      * Return the table's metadata
-     *
      *
      * @param tableName The table name
      * @return The table's metadata
@@ -59,7 +59,7 @@ public interface Store {
      * Alter the table with the specified name.
      *
      * @param tableName The name of the table to be altered
-     * @param schema The new schema for the table
+     * @param schema    The new schema for the table
      * @throws TableNotFoundException
      * @throws IOException
      */
@@ -78,7 +78,7 @@ public interface Store {
      * Increment the table's auto increment value by amount
      *
      * @param tableName Name of table
-     * @param amount Amount to auto increment by
+     * @param amount    Amount to auto increment by
      * @return
      * @throws Exception
      */
@@ -100,4 +100,20 @@ public interface Store {
      * @throws Exception
      */
     public long getRowCount(String tableName) throws Exception;
+
+    /**
+     * Increment the table's row count by amount.
+     *
+     * @param tableName Name of table
+     * @param amount    Amount to increment by
+     * @return New row count
+     */
+    public long incrementRowCount(String tableName, long amount) throws Exception;
+
+    /**
+     * Truncate the table's row count.
+     * @param tableName Name of table
+     * @throws Exception
+     */
+    public void truncateRowCount(String tableName) throws Exception;
 }

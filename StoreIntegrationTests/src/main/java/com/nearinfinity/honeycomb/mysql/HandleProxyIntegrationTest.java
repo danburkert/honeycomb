@@ -15,59 +15,105 @@ import java.util.HashMap;
 import static org.fest.assertions.Assertions.assertThat;
 
 public class HandleProxyIntegrationTest {
-    private static HandlerProxyFactory factory;
     private static final String tableName = "db/test";
+    private static HandlerProxyFactory factory;
 
     public static void suiteSetup() throws IOException, SAXException, ParserConfigurationException {
         factory = Bootstrap.startup();
     }
 
     public static void testSuccessfulRename() throws Exception {
-        System.out.println("Testing rename");
         final String newTableName = "db2/test2";
-        HandlerProxy proxy = factory.createHandlerProxy();
         TableSchema schema = getTableSchema();
 
-        proxy.createTable(tableName, Constants.HBASE_TABLESPACE, Util.serializeTableSchema(schema), 0);
-        proxy.openTable(tableName, Constants.HBASE_TABLESPACE);
-        proxy.renameTable(newTableName);
-        assertThat(newTableName).isEqualTo(proxy.getTableName());
-        proxy.dropTable();
+        testProxy("Testing rename", schema, new Action() {
+            @Override
+            public void execute(HandlerProxy proxy) throws Exception {
+                proxy.renameTable(newTableName);
+                assertThat(newTableName).isEqualTo(proxy.getTableName());
+            }
+        });
     }
 
     public static void testSuccessfulAlter() throws Exception {
-        System.out.println("Testing alter");
-        HandlerProxy proxy = factory.createHandlerProxy();
-        TableSchema schema = getTableSchema();
-
-        proxy.createTable(tableName, Constants.HBASE_TABLESPACE, Util.serializeTableSchema(schema), 0);
-        proxy.openTable(tableName, Constants.HBASE_TABLESPACE);
-        schema.getColumns().put("c3", new ColumnSchema(ColumnType.LONG, false, false, 8, 0, 0));
-        proxy.alterTable(Util.serializeTableSchema(schema));
-        proxy.dropTable();
+        final TableSchema schema = getTableSchema();
+        testProxy("Testing alter", schema, new Action() {
+            @Override
+            public void execute(HandlerProxy proxy) throws Exception {
+                schema.getColumns().put("c3", new ColumnSchema(ColumnType.LONG, false, false, 8, 0, 0));
+                proxy.alterTable(Util.serializeTableSchema(schema));
+            }
+        });
     }
 
     public static void testGetAutoIncrement() throws Exception {
-        System.out.println("Testing auto increment");
-        HandlerProxy proxy = factory.createHandlerProxy();
         TableSchema schema = getTableSchema();
         schema.getColumns().put("c1", new ColumnSchema(ColumnType.LONG, true, true, 8, 0, 0));
-        proxy.createTable(tableName, Constants.HBASE_TABLESPACE, Util.serializeTableSchema(schema), 1);
-        proxy.openTable(tableName, Constants.HBASE_TABLESPACE);
-        long autoIncValue = proxy.getAutoIncValue();
-        assertThat(autoIncValue).isEqualTo(1);
-        proxy.dropTable();
+        testProxy("Testing auto increment", schema, new Action() {
+            @Override
+            public void execute(HandlerProxy proxy) throws Exception {
+                long autoIncValue = proxy.getAutoIncValue();
+                assertThat(autoIncValue).isEqualTo(1);
+
+            }
+        });
     }
 
     public static void testIncrementAutoIncrement() throws Exception {
-        System.out.println("Testing increment auto increment");
-        HandlerProxy proxy = factory.createHandlerProxy();
         TableSchema schema = getTableSchema();
         schema.getColumns().put("c1", new ColumnSchema(ColumnType.LONG, true, true, 8, 0, 0));
+        testProxy("Testing increment auto increment", schema, new Action() {
+            @Override
+            public void execute(HandlerProxy proxy) throws Exception {
+                long autoIncValue = proxy.incrementAutoIncrementValue(1);
+                assertThat(autoIncValue).isEqualTo(2).isEqualTo(proxy.getAutoIncValue());
+            }
+        });
+    }
+
+    public static void testTruncateAutoInc() throws Exception {
+        TableSchema schema = getTableSchema();
+        schema.getColumns().put("c1", new ColumnSchema(ColumnType.LONG, true, true, 8, 0, 0));
+        testProxy("Testing truncate auto increment", schema, new Action() {
+            @Override
+            public void execute(HandlerProxy proxy) throws Exception {
+                proxy.truncateAutoIncrement();
+                assertThat(proxy.getAutoIncValue()).isEqualTo(0);
+            }
+        });
+    }
+
+    public static void testGetRowCount() throws Exception {
+        testProxy("Testing get row count", new Action() {
+            @Override
+            public void execute(HandlerProxy proxy) throws Exception {
+                proxy.incrementRowCount(2);
+                assertThat(proxy.getRowCount()).isEqualTo(2);
+            }
+        });
+    }
+
+    public static void testTruncateRowCount() throws Exception {
+        testProxy("Testing truncate row count", new Action() {
+            @Override
+            public void execute(HandlerProxy proxy) throws Exception {
+                proxy.incrementRowCount(5);
+                proxy.truncateRowCount();
+                assertThat(proxy.getRowCount()).isEqualTo(0);
+            }
+        });
+    }
+
+    private static void testProxy(String message, Action test) throws Exception {
+        testProxy(message, getTableSchema(), test);
+    }
+
+    private static void testProxy(String message, TableSchema schema, Action test) throws Exception {
+        System.out.println(message);
+        HandlerProxy proxy = factory.createHandlerProxy();
         proxy.createTable(tableName, Constants.HBASE_TABLESPACE, Util.serializeTableSchema(schema), 1);
         proxy.openTable(tableName, Constants.HBASE_TABLESPACE);
-        long autoIncValue = proxy.incrementAutoIncrementValue(1);
-        assertThat(autoIncValue).isEqualTo(2).isEqualTo(proxy.getAutoIncValue());
+        test.execute(proxy);
         proxy.dropTable();
     }
 
@@ -88,9 +134,16 @@ public class HandleProxyIntegrationTest {
             testSuccessfulAlter();
             testGetAutoIncrement();
             testIncrementAutoIncrement();
+            testTruncateAutoInc();
+            testGetRowCount();
+            testTruncateRowCount();
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(1);
         }
+    }
+
+    private interface Action {
+        public void execute(HandlerProxy proxy) throws Exception;
     }
 }
