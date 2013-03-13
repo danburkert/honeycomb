@@ -12,8 +12,10 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   // (dburkert:) I do not recommend editing this section without javap -s,
   // editor macros, and tabular.vim
 
-  handler_proxy_.clazz        = get_class_ref(env, HONEYCOMB "mysql/HandlerProxy");
-  handler_proxy_.create_table = get_method_id(env, handler_proxy_.clazz, "createTable", "(Ljava/lang/String;Ljava/lang/String;[BJ)V");
+  handler_proxy_.clazz         = get_class_ref(env, HONEYCOMB "mysql/HandlerProxy");
+  handler_proxy_.create_table  = get_method_id(env, handler_proxy_.clazz, "createTable", "(Ljava/lang/String;Ljava/lang/String;[BJ)V");
+  handler_proxy_.open_table    = get_method_id(env, handler_proxy_.clazz, "openTable", "(Ljava/lang/String;Ljava/lang/String;)V");
+  handler_proxy_.get_row_count = get_method_id(env, handler_proxy_.clazz, "getRowCount", "()J");
 
   hbase_adapter_.clazz                        = get_class_ref(env, MYSQLENGINE "HBaseAdapter");
   hbase_adapter_.initialize                   = get_static_method_id(env, hbase_adapter_.clazz, "initialize", "()V");
@@ -40,7 +42,6 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   hbase_adapter_.next_index_row               = get_static_method_id(env, hbase_adapter_.clazz, "nextIndexRow", "(J)[B");
   hbase_adapter_.increment_row_count          = get_static_method_id(env, hbase_adapter_.clazz, "incrementRowCount", "(Ljava/lang/String;J)V");
   hbase_adapter_.set_row_count                = get_static_method_id(env, hbase_adapter_.clazz, "setRowCount", "(Ljava/lang/String;J)V");
-  hbase_adapter_.get_row_count                = get_static_method_id(env, hbase_adapter_.clazz, "getRowCount", "(Ljava/lang/String;)J");
   hbase_adapter_.rename_table                 = get_static_method_id(env, hbase_adapter_.clazz, "renameTable", "(Ljava/lang/String;Ljava/lang/String;)V");
   hbase_adapter_.is_nullable                  = get_static_method_id(env, hbase_adapter_.clazz, "isNullable", "(Ljava/lang/String;Ljava/lang/String;)Z");
   hbase_adapter_.add_index                    = get_static_method_id(env, hbase_adapter_.clazz, "addIndex", "(Ljava/lang/String;Lcom/nearinfinity/honeycomb/hbaseclient/TableMultipartKeys;)V");

@@ -59,8 +59,8 @@ int HoneycombHandler::rename_table(const char *from, const char *to)
     JavaFrame frame(env, 2);
     jclass adapter_class = cache->hbase_adapter().clazz;
     jmethodID rename_table_method = cache->hbase_adapter().rename_table;
-    char* from_str = extract_table_name_from_path(from);
-    char* to_str = extract_table_name_from_path(to);
+    const char* from_str = extract_table_name_from_path(from);
+    const char* to_str = extract_table_name_from_path(to);
     jstring current_table_name = string_to_java_string(from_str);
     jstring new_table_name = string_to_java_string(to_str);
     ARRAY_DELETE(from_str);
@@ -705,7 +705,7 @@ int HoneycombHandler::delete_table(const char *path)
   attach_thread(jvm, env);
   { // destruct frame before detaching
     JavaFrame frame(env, 1);
-    char* table = extract_table_name_from_path(path);
+    const char* table = extract_table_name_from_path(path);
     jstring table_name = string_to_java_string(table);
     ARRAY_DELETE(table);
 

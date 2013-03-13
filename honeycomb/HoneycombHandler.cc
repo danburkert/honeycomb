@@ -65,6 +65,23 @@ int HoneycombHandler::open(const char *path, int mode, uint test_if_locked)
 
   thr_lock_data_init(&share->lock, &lock, (void*) this);
 
+  attach_thread(jvm, env);
+  {
+    JavaFrame frame(env, 2);
+    jstring jtable_name =
+      string_to_java_string(extract_table_name_from_path(path));
+    jstring jtablespace = NULL;
+    if (this->table->s->tablespace != NULL)
+    {
+      jtablespace = string_to_java_string(this->table->s->tablespace);
+    }
+
+    this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().open_table,
+        jtable_name, jtablespace);
+    EXCEPTION_CHECK_DBUG_IE("HandlerProxy::create", "calling createTable");
+  }
+  detach_thread(jvm);
+
   DBUG_RETURN(0);
 }
 
@@ -342,11 +359,8 @@ int HoneycombHandler::info(uint flag)
   if (flag & HA_STATUS_VARIABLE)
   {
     JavaFrame frame(env);
-    jclass adapter_class = cache->hbase_adapter().clazz;
-    jmethodID get_count_method = cache->hbase_adapter().get_row_count;
-    jstring table_name = this->table_name();
-    jlong row_count = this->env->CallStaticLongMethod(adapter_class,
-        get_count_method, table_name);
+    jlong row_count = this->env->CallLongMethod(handler_proxy,
+        cache->handler_proxy().get_row_count);
     EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::info", "calling getRowCount");
 
     if (row_count < 0)
@@ -680,14 +694,9 @@ int HoneycombHandler::analyze(THD* thd, HA_CHECK_OPT* check_opt)
 ha_rows HoneycombHandler::estimate_rows_upper_bound()
 {
   DBUG_ENTER("HoneycombHandler::estimate_rows_upper_bound");
-  JavaFrame frame(env, 1);
-
-  jclass adapter_class = cache->hbase_adapter().clazz;
-  jmethodID get_count_method = cache->hbase_adapter().get_row_count;
-  jstring table_name = this->table_name();
-  jlong row_count = this->env->CallStaticLongMethod(adapter_class,
-      get_count_method, table_name);
-  EXCEPTION_CHECK("HonecyombHandler::estimate_rows_upper_bound", "calling getRowCount");
+  jlong row_count = this->env->CallLongMethod(handler_proxy,
+      cache->handler_proxy().get_row_count);
+  EXCEPTION_CHECK("HoneycombHandler::estimate_rows_upper_bound", "calling getRowCount");
 
   // Stupid MySQL and its filesort. This must be large enough to filesort when
   // there are less than 2 records.

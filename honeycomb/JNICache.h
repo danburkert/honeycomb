@@ -13,7 +13,9 @@ class JNICache
     struct HandlerProxy
     {
       jclass clazz;
-      jmethodID create_table;
+      jmethodID create_table,
+                get_row_count,
+                open_table;
     };
     struct HBaseAdapter
     {
@@ -42,7 +44,6 @@ class JNICache
                 next_index_row,
                 increment_row_count,
                 set_row_count,
-                get_row_count,
                 rename_table,
                 is_nullable,
                 add_index,
