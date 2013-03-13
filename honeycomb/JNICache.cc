@@ -13,7 +13,7 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   // editor macros, and tabular.vim
 
   handler_proxy_.clazz        = get_class_ref(env, HONEYCOMB "mysql/HandlerProxy");
-  handler_proxy_.create_table = get_method_id(env, handler_proxy_.clazz, "createTable", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[BJ)V");
+  handler_proxy_.create_table = get_method_id(env, handler_proxy_.clazz, "createTable", "(Ljava/lang/String;Ljava/lang/String;[BJ)V");
 
   hbase_adapter_.clazz                        = get_class_ref(env, MYSQLENGINE "HBaseAdapter");
   hbase_adapter_.initialize                   = get_static_method_id(env, hbase_adapter_.clazz, "initialize", "()V");

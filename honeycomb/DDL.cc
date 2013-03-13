@@ -30,7 +30,8 @@ const char* table_creation_errors[] = {
  * Called by MySQL during CREATE TABLE statements.  Converts the table's
  * schema into a TableSchema object and hands it off to the HandlerProxy.
  *
- * @param path  path to file MySQL assumes we will use.  We don't use it.
+ * @param path  path to file MySQL assumes we will use.  We use it to extract
+ *              the database/tablename.
  * @param table TABLE object associated with this thread and query.  Holds most
  *              of the information we need.  See sql/table.h.
  * @param create_info contains info specified during table creation such as
@@ -82,8 +83,7 @@ int HoneycombHandler::create(const char *path, TABLE *table,
       table_schema.add_index(table->key_info[i].name, &index_schema);
     }
 
-    jstring jtable_name = string_to_java_string(table->s->table_name.str);
-    jstring jdb_name = string_to_java_string(table->s->db.str);
+    jstring jtable_name = string_to_java_string(path + 2);
     jstring jtablespace = NULL;
     if (table->s->tablespace != NULL)
     {
@@ -97,7 +97,7 @@ int HoneycombHandler::create(const char *path, TABLE *table,
     jbyteArray jserialized_schema = convert_value_to_java_bytes((uchar*) buf, buf_len, env);
 
     this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().create_table,
-        jdb_name, jtable_name, jtablespace, jserialized_schema, jauto_inc_value);
+        jtable_name, jtablespace, jserialized_schema, jauto_inc_value);
     EXCEPTION_CHECK_DBUG_IE("HandlerProxy::create", "calling createTable");
   }
   detach_thread(jvm);

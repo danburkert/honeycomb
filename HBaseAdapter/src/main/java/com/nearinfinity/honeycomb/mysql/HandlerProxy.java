@@ -22,7 +22,6 @@ public class HandlerProxy {
     /**
      * Create a table with the given specifications
      *
-     * @param databaseName          Database containing the table
      * @param tableName             Name of the table
      * @param tableSpace            Indicates what store to create the table in.  If null,
      *                              create the table in the default store.
@@ -30,24 +29,21 @@ public class HandlerProxy {
      * @param autoInc               Initial auto increment value
      * @throws Exception
      */
-    public void createTable(String databaseName, String tableName, String tableSpace,
+    public void createTable(String tableName, String tableSpace,
                             byte[] serializedTableSchema, long autoInc) throws Exception {
         Verify.isNotNullOrEmpty(tableName);
-        Verify.isNotNullOrEmpty(databaseName);
         checkNotNull(serializedTableSchema);
 
         this.store = this.storeFactory.createStore(tableSpace);
         TableSchema tableSchema = Util.deserializeTableSchema(serializedTableSchema);
-        String fullTableName = Util.fullyQualifyTable(databaseName, tableName);
-        store.createTable(fullTableName, tableSchema);
-        store.incrementAutoInc(fullTableName, autoInc);
+        store.createTable(tableName, tableSchema);
+        store.incrementAutoInc(tableName, autoInc);
     }
 
-    public void openTable(String databaseName, String tableName, String tableSpace) throws Exception {
+    public void openTable(String tableName, String tableSpace) throws Exception {
         Verify.isNotNullOrEmpty(tableName);
-        Verify.isNotNullOrEmpty(databaseName);
+        this.tableName = tableName;
         this.store = this.storeFactory.createStore(tableSpace);
-        this.tableName = Util.fullyQualifyTable(databaseName, tableName);
         this.table = this.store.openTable(this.tableName);
         this.isTableOpen = true;
     }
@@ -60,17 +56,15 @@ public class HandlerProxy {
      * Updates the existing SQL table name representation in the underlying
      * {@link Store} implementation to the specified new table name
      *
-     * @param databaseName Database of the old and new table
-     * @param newName      The new table name to represent, not null or empty
+     * @param newName   The new table name to represent, not null or empty
      * @throws Exception
      */
-    public void renameTable(String databaseName, final String newName) throws Exception {
+    public void renameTable(final String newName) throws Exception {
         Verify.isNotNullOrEmpty(newName, "New table name must have value.");
         checkTableOpen();
 
-        String newTableName = Util.fullyQualifyTable(databaseName, newName);
-        store.renameTable(tableName, newTableName);
-        tableName = newTableName;
+        store.renameTable(tableName, newName);
+        tableName = newName;
     }
 
     public long getAutoIncValue()

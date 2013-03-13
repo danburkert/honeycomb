@@ -20,8 +20,7 @@ import static org.mockito.Mockito.*;
 @RunWith(PowerMockRunner.class)
 public class HandlerProxyTest {
 
-    private static final String DUMMY_TABLE_NAME = "foo";
-    private static final String DUMMY_DATABASE_NAME = "hbase";
+    private static final String DUMMY_TABLE_NAME = "foo/bar";
     @Mock
     private HBaseStore storageMock;
     @Mock
@@ -39,26 +38,24 @@ public class HandlerProxyTest {
         when(storeFactory.createStore(anyString())).thenReturn(storageMock);
         when(storageMock.openTable(anyString())).thenReturn(tableMock);
 
-        final String renamedTableName = "bar";
+        final String renamedTableName = "bar/baz";
 
         final HandlerProxy proxy = createProxy();
-        proxy.openTable(DUMMY_DATABASE_NAME, DUMMY_TABLE_NAME, "tablespace");
-        proxy.renameTable(DUMMY_DATABASE_NAME, renamedTableName);
+        proxy.openTable(DUMMY_TABLE_NAME, "tablespace");
+        proxy.renameTable(renamedTableName);
 
-        String oldTableName = Util.fullyQualifyTable(DUMMY_DATABASE_NAME, DUMMY_TABLE_NAME);
-        String newTableName = Util.fullyQualifyTable(DUMMY_DATABASE_NAME, renamedTableName);
-        verify(storageMock, times(1)).renameTable(eq(oldTableName), eq(newTableName));
-        assertEquals(proxy.getTableName(), newTableName);
+        verify(storageMock, times(1)).renameTable(eq(DUMMY_TABLE_NAME), eq(renamedTableName));
+        assertEquals(proxy.getTableName(), renamedTableName);
     }
 
     @Test(expected = NullPointerException.class)
     public void testRenameTableNullNewTableName() throws Exception {
-        createProxy().renameTable(DUMMY_DATABASE_NAME, null);
+        createProxy().renameTable(null);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testRenameTableEmptyNewTableName() throws Exception {
-        createProxy().renameTable(DUMMY_DATABASE_NAME, "");
+        createProxy().renameTable("");
     }
 
     private HandlerProxy createProxy() throws Exception {
