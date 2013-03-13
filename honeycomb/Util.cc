@@ -116,15 +116,9 @@ void make_big_endian(uchar *begin, uint length)
   }
 }
 
-char *extract_table_name_from_path(const char *path)
+const char* extract_table_name_from_path(const char *path)
 {
-  char* namespaced_table = new char[strlen(path) - 1];
-  char* ptr = (char*)strchr(path, '/');
-  ptr++;
-  sprintf(namespaced_table, "%s", ptr);
-  char* slash = (char*)strchr(namespaced_table, '/');
-  *slash = '.';
-  return namespaced_table;
+  return path + 2;
 }
 
 // Convert an integral type of count bytes to a little endian long

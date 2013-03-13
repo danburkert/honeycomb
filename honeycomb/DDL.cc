@@ -83,7 +83,7 @@ int HoneycombHandler::create(const char *path, TABLE *table,
       table_schema.add_index(table->key_info[i].name, &index_schema);
     }
 
-    jstring jtable_name = string_to_java_string(path + 2);
+    jstring jtable_name = string_to_java_string(extract_table_name_from_path(path));
     jstring jtablespace = NULL;
     if (table->s->tablespace != NULL)
     {

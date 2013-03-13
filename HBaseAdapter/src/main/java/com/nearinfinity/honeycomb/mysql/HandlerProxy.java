@@ -67,6 +67,10 @@ public class HandlerProxy {
         tableName = newName;
     }
 
+    public long getRowCount() {
+        return 0;
+    }
+
     public long getAutoIncValue()
             throws Exception {
         checkTableOpen();
