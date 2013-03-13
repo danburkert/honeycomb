@@ -63,7 +63,6 @@ public class HBaseStore implements Store {
         HBaseMetadata metadata = getHBaseMetadata();
         metadata.updateSchema(tableId, schemaCache.get(tableId), schema);
         invalidateCache(tableName, tableId);
-
     }
 
     @Override

@@ -285,17 +285,17 @@ public class HBaseMetadata {
 
     private Delete deleteTableId(String tableName) {
         return new Delete(new TablesRow().encode())
-                .deleteColumn(COLUMN_FAMILY, serializeName(tableName));
+                .deleteColumns(COLUMN_FAMILY, serializeName(tableName));
     }
 
     private Delete deleteAutoIncCounter(long tableId) {
         return new Delete(new AutoIncRow().encode())
-                .deleteColumn(COLUMN_FAMILY, serializeId(tableId));
+                .deleteColumns(COLUMN_FAMILY, serializeId(tableId));
     }
 
     private Delete deleteRowsCounter(long tableId) {
         return new Delete(new RowsRow().encode())
-                .deleteColumn(COLUMN_FAMILY, serializeId(tableId));
+                .deleteColumns(COLUMN_FAMILY, serializeId(tableId));
     }
 
     private Put putTableSchema(long tableId, TableSchema schema)
@@ -307,7 +307,7 @@ public class HBaseMetadata {
 
     private Delete deleteTableSchema(long tableId) {
         return new Delete(new SchemaRow().encode())
-                .deleteColumn(COLUMN_FAMILY, serializeId(tableId));
+                .deleteColumns(COLUMN_FAMILY, serializeId(tableId));
     }
 
     private Put putColumnIds(long tableId, Map<String, ColumnSchema> columns)
