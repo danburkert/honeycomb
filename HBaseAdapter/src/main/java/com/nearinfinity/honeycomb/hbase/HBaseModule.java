@@ -21,10 +21,10 @@ public class HBaseModule extends AbstractModule {
     private final MapBinder<String, Store> storeMapBinder;
 
     public HBaseModule(Configuration configuration, MapBinder<String, Store> storeMapBinder) throws IOException {
-        try {
-            this.storeMapBinder = storeMapBinder;
-            hTableProvider = new HTableProvider(configuration);
+        this.storeMapBinder = storeMapBinder;
+        hTableProvider = new HTableProvider(configuration);
 
+        try {
             String hTableName = configuration.get(Constants.HBASE_TABLE);
             String zkQuorum = configuration.get(Constants.ZK_QUORUM);
             Configuration hBaseConfiguration = HBaseConfiguration.create();
