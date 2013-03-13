@@ -1,4 +1,4 @@
-package com.nearinfinity.honeycomb.hbase;
+package com.nearinfinity.honeycomb.hbase.generators;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,6 +14,7 @@ import net.java.quickcheck.generator.PrimitiveGenerators;
 import net.java.quickcheck.generator.support.DefaultFrequencyGenerator;
 import net.java.quickcheck.generator.support.FixedValuesGenerator;
 
+import com.nearinfinity.honeycomb.hbase.RowKey;
 import com.nearinfinity.honeycomb.hbase.rowkey.AscIndexRow;
 import com.nearinfinity.honeycomb.hbase.rowkey.AutoIncRow;
 import com.nearinfinity.honeycomb.hbase.rowkey.ColumnsRow;
@@ -23,7 +24,7 @@ import com.nearinfinity.honeycomb.hbase.rowkey.RowsRow;
 import com.nearinfinity.honeycomb.hbase.rowkey.SchemaRow;
 import com.nearinfinity.honeycomb.hbase.rowkey.TablesRow;
 import com.nearinfinity.honeycomb.hbaseclient.Constants;
-import com.nearinfinity.honeycomb.mysql.UUIDGenerator;
+import com.nearinfinity.honeycomb.mysql.generators.UUIDGenerator;
 
 public class RowKeyGenerator implements Generator<RowKey> {
     private static final Random rand = new Random();

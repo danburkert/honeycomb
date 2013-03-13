@@ -22,10 +22,10 @@ import org.powermock.api.mockito.PowerMockito;
 import com.google.common.collect.ImmutableMap;
 import com.nearinfinity.honeycomb.MockHTable;
 import com.nearinfinity.honeycomb.TableNotFoundException;
-import com.nearinfinity.honeycomb.mysql.ColumnSchemaGenerator;
-import com.nearinfinity.honeycomb.mysql.TableSchemaGenerator;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import com.nearinfinity.honeycomb.mysql.generators.ColumnSchemaGenerator;
+import com.nearinfinity.honeycomb.mysql.generators.TableSchemaGenerator;
 
 public class HBaseMetadataTest {
     private static final Generator<TableSchema> tableSchemaGen = new TableSchemaGenerator();
