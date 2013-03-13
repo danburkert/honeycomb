@@ -6,6 +6,7 @@ import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 
 public class HandlerProxy {
     private final StoreFactory storeFactory;
@@ -19,31 +20,31 @@ public class HandlerProxy {
 
     /**
      * Create a table with the given specifications
-     * @param databaseName Database containing the table
-     * @param tableName Name of the table
-     * @param tableSpace Indicates what store to create the table in.  If null,
-     *                   create the table in the default store.
+     *
+     * @param databaseName          Database containing the table
+     * @param tableName             Name of the table
+     * @param tableSpace            Indicates what store to create the table in.  If null,
+     *                              create the table in the default store.
      * @param serializedTableSchema Serialized TableSchema avro object
-     * @param autoInc Initial auto increment value
+     * @param autoInc               Initial auto increment value
      * @throws Exception
      */
     public void createTable(String databaseName, String tableName, String tableSpace,
                             byte[] serializedTableSchema, long autoInc) throws Exception {
         checkTableName(tableName);
-        this.store = this.storeFactory.createStore(databaseName);
+        this.store = this.storeFactory.createStore(tableSpace);
         TableSchema tableSchema = Util.deserializeTableSchema(serializedTableSchema);
-        store.createTable(tableName, tableSchema);
+        store.createTable(fullyQualifyTable(databaseName, tableName), tableSchema);
         if (autoInc > 0) {
             store.incrementAutoInc(tableName, autoInc);
         }
-        this.store = null;
     }
 
-    public void openTable(String databaseName, String tableName) throws Exception {
+    public void openTable(String databaseName, String tableName, String tableSpace) throws Exception {
         checkTableName(tableName);
-        this.store = this.storeFactory.createStore(databaseName);
+        this.store = this.storeFactory.createStore(tableSpace);
         this.tableName = tableName;
-        this.table = this.store.openTable(this.tableName);
+        this.table = this.store.openTable(fullyQualifyTable(databaseName, tableName));
     }
 
     public String getTableName() {
@@ -83,6 +84,10 @@ public class HandlerProxy {
         checkNotNull(newSchemaSerialized);
         TableSchema newSchema = Util.deserializeTableSchema(newSchemaSerialized);
         this.store.alterTable(this.tableName, newSchema);
+    }
+
+    private String fullyQualifyTable(String databaseName, String tableName) {
+        return format("%s.%s", databaseName, tableName);
     }
 
     private void checkTableName(String tableName) {

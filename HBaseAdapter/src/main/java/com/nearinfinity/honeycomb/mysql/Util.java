@@ -11,19 +11,26 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.UUID;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Utility class containing helper functions.
  */
 public class Util {
-    private static final Logger logger = Logger.getLogger(Util.class);
-
     public static final int UUID_WIDTH = 16;
-
-
+    private static final Logger logger = Logger.getLogger(Util.class);
     private static BinaryDecoder binaryDecoder;
-
 
     /**
      * Returns a byte wide buffer from a {@link UUID}.
@@ -62,7 +69,8 @@ public class Util {
 
     /**
      * Serialize an object to a byte array
-     * @param obj The object to serialize
+     *
+     * @param obj   The object to serialize
      * @param clazz The type of the object being serialized
      * @return Serialized row
      * @throws IOException when serialization fails
@@ -78,8 +86,9 @@ public class Util {
 
     /**
      * Deserialize the provided serialized data into an instance of the specified class type
+     *
      * @param serializedData a buffer containing the serialized data
-     * @param clazz the class type to instantiate to store the deserialized data
+     * @param clazz          the class type to instantiate to store the deserialized data
      * @return A new instance of the specified class representing the deserialized data
      * @throws IOException On deserialization reader failure
      */
@@ -90,7 +99,6 @@ public class Util {
 
         return userDatumReader.read(null, binaryDecoder);
     }
-
 
     public static String generateHexString(final byte[] bytes) {
         StringBuilder sb = new StringBuilder();

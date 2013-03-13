@@ -1,6 +1,7 @@
 package com.nearinfinity.honeycomb.mysql;
 
 import com.google.common.collect.Lists;
+import com.nearinfinity.honeycomb.hbaseclient.Constants;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
@@ -23,7 +24,10 @@ public class HandleProxyIntegrationTest {
         HandlerProxy proxy = factory.createHandlerProxy();
         TableSchema schema = getTableSchema();
 
-        proxy.createTable("hbase", "test", "hbase", Util.serializeTableSchema(schema), 0);
+        String databaseName = "hbase";
+        String tableName = "test";
+        proxy.createTable(databaseName, tableName, Constants.HBASE_TABLESPACE, Util.serializeTableSchema(schema), 0);
+        proxy.openTable(databaseName, tableName, Constants.HBASE_TABLESPACE);
         proxy.renameTable(newTableName);
         assert (newTableName.equals(proxy.getTableName()));
         proxy.dropTable();
@@ -33,7 +37,10 @@ public class HandleProxyIntegrationTest {
         HandlerProxy proxy = factory.createHandlerProxy();
         TableSchema schema = getTableSchema();
 
-        proxy.createTable("hbase", "test", Util.serializeTableSchema(schema));
+        String tableName = "test";
+        String databaseName = "hbase";
+        proxy.createTable(databaseName, tableName, Constants.HBASE_TABLESPACE, Util.serializeTableSchema(schema), 0);
+        proxy.openTable(databaseName, tableName, Constants.HBASE_TABLESPACE);
         schema.getColumns().put("c3", new ColumnSchema(ColumnType.LONG, false, false, 8, 0, 0));
         proxy.alterTable(Util.serializeTableSchema(schema));
         proxy.dropTable();
@@ -55,7 +62,7 @@ public class HandleProxyIntegrationTest {
             testSuccessfulRename();
             testSuccessfulAlter();
         } catch (Exception e) {
-            System.out.println(e);
+            e.printStackTrace();
             System.exit(1);
         }
     }
