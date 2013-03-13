@@ -1,11 +1,14 @@
 package com.nearinfinity.honeycomb.hbase;
 
-import com.google.inject.Provider;
-import com.nearinfinity.honeycomb.hbaseclient.Constants;
-import com.nearinfinity.honeycomb.mysqlengine.HTableFactory;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.HTablePool;
+
+import com.google.inject.Provider;
+import com.nearinfinity.honeycomb.hbaseclient.Constants;
+import com.nearinfinity.honeycomb.mysqlengine.HTableFactory;
 
 public class HTableProvider implements Provider<HTableInterface> {
     private static final int DEFAULT_TABLE_POOL_SIZE = 5;
@@ -18,12 +21,13 @@ public class HTableProvider implements Provider<HTableInterface> {
         long writeBufferSize = configuration.getLong("write_buffer_size", DEFAULT_WRITE_BUFFER_SIZE);
         int poolSize = configuration.getInt("honeycomb.pool_size", DEFAULT_TABLE_POOL_SIZE);
         boolean autoFlush = configuration.getBoolean("flush_changes_immediately", false);
-        this.tablePool = new HTablePool(configuration, poolSize, new HTableFactory(writeBufferSize, autoFlush));
-        this.tableName = hTableName;
+
+        tableName = checkNotNull(hTableName, String.format("The configuration option, %s, was not specified", Constants.HBASE_TABLE));
+        tablePool = new HTablePool(configuration, poolSize, new HTableFactory(writeBufferSize, autoFlush));
     }
 
     @Override
     public HTableInterface get() {
-        return this.tablePool.getTable(this.tableName);
+        return tablePool.getTable(tableName);
     }
 }
