@@ -73,15 +73,23 @@ public class HandlerProxy {
         tableName = newTableName;
     }
 
-    public long getAutoIncValue(String columnName)
+    public long getAutoIncValue()
             throws Exception {
-        Verify.isNotNullOrEmpty(columnName);
         checkTableOpen();
-        if (!Verify.isAutoIncColumn(columnName, store.getTableMetadata(tableName))) {
-            throw new IllegalArgumentException(format("Column %s is not an autoincrement column.", columnName));
+        if (!Verify.hasAutoIncrementColumn(store.getTableMetadata(tableName))) {
+            throw new IllegalArgumentException(format("Table %s is not an autoincrement table.", this.tableName));
         }
 
         return store.getAutoInc(tableName);
+    }
+
+    public long incrementAutoIncrementValue(long amount) throws Exception {
+        checkTableOpen();
+        if (!Verify.hasAutoIncrementColumn(store.getTableMetadata(tableName))) {
+            throw new IllegalArgumentException(format("Column %s is not an autoincrement column.", this.tableName));
+        }
+
+        return this.store.incrementAutoInc(this.getTableName(), amount);
     }
 
     public void dropTable() throws Exception {

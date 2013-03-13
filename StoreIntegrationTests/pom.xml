@@ -46,6 +46,11 @@
             <artifactId>mysqlengine</artifactId>
             <version>0.1</version>
         </dependency>
+        <dependency>
+            <groupId>org.easytesting</groupId>
+            <artifactId>fest-assert</artifactId>
+            <version>1.4</version>
+        </dependency>
     </dependencies>
 
 </project>
