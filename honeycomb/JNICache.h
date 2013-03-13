@@ -10,11 +10,15 @@
 class JNICache
 {
   public:
+    struct HandlerProxy
+    {
+      jclass clazz;
+      jmethodID create_table;
+    };
     struct HBaseAdapter
     {
       jclass clazz;
       jmethodID initialize,
-                create_table,
                 get_autoincrement_value,
                 alter_autoincrement_value,
                 start_write,
@@ -148,6 +152,7 @@ class JNICache
   private:
     JavaVM* jvm;
 
+    HandlerProxy handler_proxy_;
     HBaseAdapter hbase_adapter_;
     IndexReadType index_read_type_;
     Row row_;
@@ -168,6 +173,7 @@ class JNICache
     jfieldID get_static_field_id(JNIEnv* env, jclass clazz, const char* field, const char* type);
 
   public:
+    HandlerProxy handler_proxy()                const {return handler_proxy_;}
     HBaseAdapter hbase_adapter()                const {return hbase_adapter_;}
     IndexReadType index_read_type()             const {return index_read_type_;}
     Row row()                                   const {return row_;}
@@ -182,7 +188,7 @@ class JNICache
     TreeMap tree_map()                          const {return tree_map_;}
     HandlerProxyFactory handler_proxy_factory() const {return handler_proxy_factory_;}
 
-    JNICache(JavaVM* jvm); 
+    JNICache(JavaVM* jvm);
     ~JNICache();
 };
 

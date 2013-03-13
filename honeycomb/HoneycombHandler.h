@@ -8,6 +8,9 @@
 #include "HoneycombShare.h"
 #include "Util.h"
 #include "Row.h"
+#include "TableSchema.h"
+#include "ColumnSchema.h"
+#include "IndexSchema.h"
 
 #include "my_global.h"          /* ulonglong */
 #include "thr_lock.h"           /* THR_LOCK, THR_LOCK_DATA */
@@ -137,6 +140,10 @@ class HoneycombHandler : public handler
     void set_autoinc_counter(jlong new_value, jboolean is_truncate);
     void release_auto_increment();
 
+    /* DDL helper methods */
+    int pack_column_schema(ColumnSchema* schema, Field* field);
+    int pack_index_schema(IndexSchema* schema, KEY* key);
+
   public:
     HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg,
         mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm, JNICache* cache, jobject handler_proxy);
@@ -200,7 +207,7 @@ class HoneycombHandler : public handler
 
     uint max_supported_key_parts() const
     {
-      return 4;
+      return MAX_REF_PARTS;
     }
 
     virtual double scan_time()

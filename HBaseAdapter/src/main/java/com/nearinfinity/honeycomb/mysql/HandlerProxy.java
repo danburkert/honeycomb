@@ -4,33 +4,48 @@ import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static java.lang.String.format;
 
 public class HandlerProxy {
     private final StoreFactory storeFactory;
     private Store store;
     private Table table;
     private String tableName;
+    private boolean isTableOpen;
 
     public HandlerProxy(StoreFactory storeFactory) throws Exception {
         this.storeFactory = storeFactory;
     }
 
-    public void createTable(String databaseName, String tableName, byte[] serializedTableSchema) throws Exception {
-        checkTableName(tableName);
-        this.store = this.storeFactory.createStore(databaseName);
+    /**
+     * Create a table with the given specifications
+     *
+     * @param tableName             Name of the table
+     * @param tableSpace            Indicates what store to create the table in.  If null,
+     *                              create the table in the default store.
+     * @param serializedTableSchema Serialized TableSchema avro object
+     * @param autoInc               Initial auto increment value
+     * @throws Exception
+     */
+    public void createTable(String tableName, String tableSpace,
+                            byte[] serializedTableSchema, long autoInc) throws Exception {
+        Verify.isNotNullOrEmpty(tableName);
+        checkNotNull(serializedTableSchema);
+
+        this.store = this.storeFactory.createStore(tableSpace);
         TableSchema tableSchema = Util.deserializeTableSchema(serializedTableSchema);
         store.createTable(tableName, tableSchema);
-        this.tableName = tableName;
-        this.table = store.openTable(tableName);
+        store.incrementAutoInc(tableName, autoInc);
     }
 
-    public void openTable(String tableName) throws Exception {
-        checkTableName(tableName);
-        this.store = this.storeFactory.createStore(tableName);
+    public void openTable(String tableName, String tableSpace) throws Exception {
+        Verify.isNotNullOrEmpty(tableName);
         this.tableName = tableName;
+        this.store = this.storeFactory.createStore(tableSpace);
         this.table = this.store.openTable(this.tableName);
+        this.isTableOpen = true;
     }
 
     public String getTableName() {
@@ -41,29 +56,50 @@ public class HandlerProxy {
      * Updates the existing SQL table name representation in the underlying
      * {@link Store} implementation to the specified new table name
      *
-     * @param newName The new table name to represent, not null or empty
+     * @param newName   The new table name to represent, not null or empty
      * @throws Exception
      */
     public void renameTable(final String newName) throws Exception {
-        checkNotNull(newName, "The specified table name is invalid");
-        checkArgument(!newName.isEmpty(), "The specified table name cannot be empty");
+        Verify.isNotNullOrEmpty(newName, "New table name must have value.");
+        checkTableOpen();
 
         store.renameTable(tableName, newName);
         tableName = newName;
     }
 
-    public long getAutoIncValue(String columnName)
+    public long getAutoIncValue()
             throws Exception {
-        if (!Verify.isAutoIncColumn(columnName, store.getTableMetadata(tableName))) {
-            throw new IllegalArgumentException("Column " + columnName +
-                    " is not an autoincrement column.");
+        checkTableOpen();
+        if (!Verify.hasAutoIncrementColumn(store.getTableMetadata(tableName))) {
+            throw new IllegalArgumentException(format("Table %s is not an autoincrement table.", this.tableName));
         }
 
         return store.getAutoInc(tableName);
     }
 
-    private void checkTableName(String tableName) {
-        checkNotNull(tableName);
-        checkArgument(!tableName.isEmpty());
+    public long incrementAutoIncrementValue(long amount) throws Exception {
+        checkTableOpen();
+        if (!Verify.hasAutoIncrementColumn(store.getTableMetadata(tableName))) {
+            throw new IllegalArgumentException(format("Column %s is not an autoincrement column.", this.tableName));
+        }
+
+        return this.store.incrementAutoInc(this.getTableName(), amount);
+    }
+
+    public void dropTable() throws Exception {
+        checkTableOpen();
+        this.store.deleteTable(this.tableName);
+        this.isTableOpen = false;
+    }
+
+    public void alterTable(byte[] newSchemaSerialized) throws Exception {
+        checkNotNull(newSchemaSerialized);
+        checkTableOpen();
+        TableSchema newSchema = Util.deserializeTableSchema(newSchemaSerialized);
+        this.store.alterTable(this.tableName, newSchema);
+    }
+
+    private void checkTableOpen() {
+        checkState(isTableOpen, "Table must be opened before used.");
     }
 }

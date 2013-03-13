@@ -42,7 +42,7 @@ public class HBaseModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        storeMapBinder.addBinding(Constants.HBASE_BINDING).to(HBaseStore.class);
+        storeMapBinder.addBinding(Constants.HBASE_TABLESPACE).to(HBaseStore.class);
 
         install(new FactoryModuleBuilder()
                 .implement(Table.class, HBaseTable.class)

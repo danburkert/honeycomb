@@ -20,7 +20,7 @@ import static org.mockito.Mockito.*;
 @RunWith(PowerMockRunner.class)
 public class HandlerProxyTest {
 
-    private static final String DUMMY_TABLE_NAME = "foo";
+    private static final String DUMMY_TABLE_NAME = "foo/bar";
     @Mock
     private HBaseStore storageMock;
     @Mock
@@ -38,14 +38,14 @@ public class HandlerProxyTest {
         when(storeFactory.createStore(anyString())).thenReturn(storageMock);
         when(storageMock.openTable(anyString())).thenReturn(tableMock);
 
-        final String newTableName = "bar";
+        final String renamedTableName = "bar/baz";
 
         final HandlerProxy proxy = createProxy();
-        proxy.openTable(DUMMY_TABLE_NAME);
-        proxy.renameTable(newTableName);
+        proxy.openTable(DUMMY_TABLE_NAME, "tablespace");
+        proxy.renameTable(renamedTableName);
 
-        verify(storageMock, times(1)).renameTable(eq(DUMMY_TABLE_NAME), eq(newTableName));
-        assertEquals(proxy.getTableName(), newTableName);
+        verify(storageMock, times(1)).renameTable(eq(DUMMY_TABLE_NAME), eq(renamedTableName));
+        assertEquals(proxy.getTableName(), renamedTableName);
     }
 
     @Test(expected = NullPointerException.class)

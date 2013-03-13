@@ -29,5 +29,7 @@ public final class Constants {
 
     public static final int KEY_PART_COUNT = 4;
 
-    public static final String HBASE_BINDING = "hbase";
+    public static final String HBASE_TABLESPACE = "hbase";
+
+    public static final String DEFAULT_TABLESPACE = "Default Tablespace";
 }

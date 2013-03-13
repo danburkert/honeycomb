@@ -11,9 +11,12 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
 
   // (dburkert:) I do not recommend editing this section without javap -s,
   // editor macros, and tabular.vim
+
+  handler_proxy_.clazz        = get_class_ref(env, HONEYCOMB "mysql/HandlerProxy");
+  handler_proxy_.create_table = get_method_id(env, handler_proxy_.clazz, "createTable", "(Ljava/lang/String;Ljava/lang/String;[BJ)V");
+
   hbase_adapter_.clazz                        = get_class_ref(env, MYSQLENGINE "HBaseAdapter");
   hbase_adapter_.initialize                   = get_static_method_id(env, hbase_adapter_.clazz, "initialize", "()V");
-  hbase_adapter_.create_table                 = get_static_method_id(env, hbase_adapter_.clazz, "createTable", "(Ljava/lang/String;Ljava/util/Map;Lcom/nearinfinity/honeycomb/hbaseclient/TableMultipartKeys;)Z");
   hbase_adapter_.get_autoincrement_value      = get_static_method_id(env, hbase_adapter_.clazz, "getAutoincrementValue", "(Ljava/lang/String;Ljava/lang/String;)J");
   hbase_adapter_.alter_autoincrement_value    = get_static_method_id(env, hbase_adapter_.clazz, "alterAutoincrementValue", "(Ljava/lang/String;Ljava/lang/String;JZ)Z");
   hbase_adapter_.start_write                  = get_static_method_id(env, hbase_adapter_.clazz, "startWrite", "()J");

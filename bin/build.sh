@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Exit the shell when a command exits with a non-zero value and it has not been checked
+set -e
+
 : ${HONEYCOMB_HOME?"Need to set the HONEYCOMB_HOME environment variable to the top of the project."}
 
 # Set the location of the build scripts
