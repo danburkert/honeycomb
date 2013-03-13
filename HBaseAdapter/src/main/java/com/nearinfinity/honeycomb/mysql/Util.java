@@ -61,10 +61,12 @@ public class Util {
     }
 
     public static byte[] serializeTableSchema(TableSchema schema) throws IOException {
+        checkNotNull(schema, "Schema cannot be null");
         return serializeAvroObject(schema, TableSchema.class);
     }
 
     public static TableSchema deserializeTableSchema(byte[] schema) throws IOException {
+        checkNotNull(schema, "Schema cannot be null");
         return deserializeAvroObject(schema, TableSchema.class);
     }
 

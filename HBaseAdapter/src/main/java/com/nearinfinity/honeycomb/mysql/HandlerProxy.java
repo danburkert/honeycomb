@@ -38,10 +38,9 @@ public class HandlerProxy {
 
         this.store = this.storeFactory.createStore(tableSpace);
         TableSchema tableSchema = Util.deserializeTableSchema(serializedTableSchema);
-        store.createTable(Util.fullyQualifyTable(databaseName, tableName), tableSchema);
-        if (autoInc > 0) {
-            store.incrementAutoInc(tableName, autoInc);
-        }
+        String fullTableName = Util.fullyQualifyTable(databaseName, tableName);
+        store.createTable(fullTableName, tableSchema);
+        store.incrementAutoInc(fullTableName, autoInc);
     }
 
     public void openTable(String databaseName, String tableName, String tableSpace) throws Exception {
@@ -76,10 +75,10 @@ public class HandlerProxy {
 
     public long getAutoIncValue(String columnName)
             throws Exception {
+        Verify.isNotNullOrEmpty(columnName);
         checkTableOpen();
         if (!Verify.isAutoIncColumn(columnName, store.getTableMetadata(tableName))) {
-            throw new IllegalArgumentException("Column " + columnName +
-                    " is not an autoincrement column.");
+            throw new IllegalArgumentException(format("Column %s is not an autoincrement column.", columnName));
         }
 
         return store.getAutoInc(tableName);

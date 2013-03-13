@@ -42,11 +42,11 @@ public class HandlerProxyTest {
         final String renamedTableName = "bar";
 
         final HandlerProxy proxy = createProxy();
-        String oldTableName = Util.fullyQualifyTable(DUMMY_DATABASE_NAME, DUMMY_TABLE_NAME);
-        String newTableName = Util.fullyQualifyTable(DUMMY_DATABASE_NAME, renamedTableName);
         proxy.openTable(DUMMY_DATABASE_NAME, DUMMY_TABLE_NAME, "tablespace");
         proxy.renameTable(DUMMY_DATABASE_NAME, renamedTableName);
 
+        String oldTableName = Util.fullyQualifyTable(DUMMY_DATABASE_NAME, DUMMY_TABLE_NAME);
+        String newTableName = Util.fullyQualifyTable(DUMMY_DATABASE_NAME, renamedTableName);
         verify(storageMock, times(1)).renameTable(eq(oldTableName), eq(newTableName));
         assertEquals(proxy.getTableName(), newTableName);
     }
