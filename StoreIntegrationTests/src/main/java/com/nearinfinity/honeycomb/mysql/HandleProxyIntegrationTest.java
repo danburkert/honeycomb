@@ -23,7 +23,7 @@ public class HandleProxyIntegrationTest {
         HandlerProxy proxy = factory.createHandlerProxy();
         TableSchema schema = getTableSchema();
 
-        proxy.createTable("hbase", "test", Util.serializeTableSchema(schema));
+        proxy.createTable("hbase", "test", "hbase", Util.serializeTableSchema(schema), 0);
         proxy.renameTable(newTableName);
         assert (newTableName.equals(proxy.getTableName()));
         proxy.dropTable();

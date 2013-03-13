@@ -15,9 +15,8 @@ fi
 
 cd $HONEYCOMB_HOME
 
-MAVEN_BUILD_CMD="mvn -V clean install -Dapache"
-echo "Running: $MAVEN_BUILD_CMD"
-$MAVEN_BUILD_CMD
+mvn -V clean install -Dapache
+[ $? -ne 0 ] && { exit 1; }
 
 $HONEYCOMB_HOME/bin/install-honeycomb-jars.sh "$HONEYCOMB_HOME/HBaseAdapter" $honeycomb_lib
 

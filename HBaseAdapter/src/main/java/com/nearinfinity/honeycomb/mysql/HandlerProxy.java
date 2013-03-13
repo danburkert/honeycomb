@@ -17,13 +17,26 @@ public class HandlerProxy {
         this.storeFactory = storeFactory;
     }
 
-    public void createTable(String databaseName, String tableName, byte[] serializedTableSchema) throws Exception {
+    /**
+     * Create a table with the given specifications
+     * @param databaseName Database containing the table
+     * @param tableName Name of the table
+     * @param tableSpace Indicates what store to create the table in.  If null,
+     *                   create the table in the default store.
+     * @param serializedTableSchema Serialized TableSchema avro object
+     * @param autoInc Initial auto increment value
+     * @throws Exception
+     */
+    public void createTable(String databaseName, String tableName, String tableSpace,
+                            byte[] serializedTableSchema, long autoInc) throws Exception {
         checkTableName(tableName);
         this.store = this.storeFactory.createStore(databaseName);
         TableSchema tableSchema = Util.deserializeTableSchema(serializedTableSchema);
         store.createTable(tableName, tableSchema);
-        this.tableName = tableName;
-        this.table = store.openTable(tableName);
+        if (autoInc > 0) {
+            store.incrementAutoInc(tableName, autoInc);
+        }
+        this.store = null;
     }
 
     public void openTable(String databaseName, String tableName) throws Exception {

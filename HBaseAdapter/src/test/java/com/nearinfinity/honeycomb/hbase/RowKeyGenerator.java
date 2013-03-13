@@ -1,8 +1,12 @@
 package com.nearinfinity.honeycomb.hbase;
 
-import com.nearinfinity.honeycomb.hbase.rowkey.*;
-import com.nearinfinity.honeycomb.hbaseclient.Constants;
-import com.nearinfinity.honeycomb.mysql.UUIDGenerator;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.UUID;
+
 import net.java.quickcheck.FrequencyGenerator;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.CombinedGenerators;
@@ -10,7 +14,16 @@ import net.java.quickcheck.generator.PrimitiveGenerators;
 import net.java.quickcheck.generator.support.DefaultFrequencyGenerator;
 import net.java.quickcheck.generator.support.FixedValuesGenerator;
 
-import java.util.*;
+import com.nearinfinity.honeycomb.hbase.rowkey.AscIndexRow;
+import com.nearinfinity.honeycomb.hbase.rowkey.AutoIncRow;
+import com.nearinfinity.honeycomb.hbase.rowkey.ColumnsRow;
+import com.nearinfinity.honeycomb.hbase.rowkey.DataRow;
+import com.nearinfinity.honeycomb.hbase.rowkey.DescIndexRow;
+import com.nearinfinity.honeycomb.hbase.rowkey.RowsRow;
+import com.nearinfinity.honeycomb.hbase.rowkey.SchemaRow;
+import com.nearinfinity.honeycomb.hbase.rowkey.TablesRow;
+import com.nearinfinity.honeycomb.hbaseclient.Constants;
+import com.nearinfinity.honeycomb.mysql.UUIDGenerator;
 
 public class RowKeyGenerator implements Generator<RowKey> {
     private static final Random rand = new Random();
@@ -24,9 +37,9 @@ public class RowKeyGenerator implements Generator<RowKey> {
     private static Generator<byte[]> randValueGen =
             CombinedGenerators.nullsAnd(CombinedGenerators.byteArrays(), 5);
 
-    private Generator<List<Long>> randIdsGen = CombinedGenerators.lists(randIdGen,
+    private final Generator<List<Long>> randIdsGen = CombinedGenerators.lists(randIdGen,
             PrimitiveGenerators.integers(1, Constants.KEY_PART_COUNT));
-    private FrequencyGenerator<RowKey> rowKeyGen;
+    private final FrequencyGenerator<RowKey> rowKeyGen;
 
     public RowKeyGenerator() {
         // The duplicated generator types are testing the sorts of the different
@@ -55,6 +68,7 @@ public class RowKeyGenerator implements Generator<RowKey> {
     }
 
     private class PrefixRowGenerator implements Generator<RowKey> {
+        @Override
         public RowKey next() {
             switch (rand.nextInt(4)) {
                 case 0:
@@ -65,12 +79,15 @@ public class RowKeyGenerator implements Generator<RowKey> {
                     return autoIncRow;
                 case 3:
                     return schemaRow;
+                default:
+                    break;
             }
             throw new RuntimeException("Should never reach me");
         }
     }
 
     private class ColumnsRowGenerator implements Generator<RowKey> {
+        @Override
         public RowKey next() {
             return new ColumnsRow(randIdGen.next());
         }
@@ -94,9 +111,9 @@ public class RowKeyGenerator implements Generator<RowKey> {
     }
 
     private class IndexRowGenerator implements Generator<RowKey> {
-        private Generator<Long> columnIdGen;
-        private Generator<List<Long>> columnsGen;
-        private Generator<byte[]> valueGen;
+        private final Generator<Long> columnIdGen;
+        private final Generator<List<Long>> columnsGen;
+        private final Generator<byte[]> valueGen;
 
         public IndexRowGenerator() {
             columnIdGen = randIdGen;
@@ -136,11 +153,11 @@ public class RowKeyGenerator implements Generator<RowKey> {
 
         private RowKey createIndexRow(Long tableId, UUID uuid, List<Long> columnIds,
                                       Map<Long, byte[]> records) {
-            if (rand.nextBoolean()) {
+            if( rand.nextBoolean() ) {
                 return new AscIndexRow(tableId, columnIds, records, uuid);
-            } else {
-                return new DescIndexRow(tableId, columnIds, records, uuid);
             }
+
+            return new DescIndexRow(tableId, columnIds, records, uuid);
         }
     }
 }

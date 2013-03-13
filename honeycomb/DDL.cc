@@ -30,13 +30,11 @@ const char* table_creation_errors[] = {
  * Called by MySQL during CREATE TABLE statements.  Converts the table's
  * schema into a TableSchema object and hands it off to the HandlerProxy.
  *
- * @param path  path to file MySQL assumes we will use.  In the format of
- *              "./database_name/table_name".
+ * @param path  path to file MySQL assumes we will use.  We don't use it.
  * @param table TABLE object associated with this thread and query.  Holds most
  *              of the information we need.  See sql/table.h.
  * @param create_info contains info specified during table creation such as
- *                    initial auto_increment value and default collation & char
- *                    set
+ *                    initial auto_increment value.
  */
 int HoneycombHandler::create(const char *path, TABLE *table,
     HA_CREATE_INFO *create_info)
@@ -51,10 +49,12 @@ int HoneycombHandler::create(const char *path, TABLE *table,
 
   int rc = 0;
   { // Destruct frame before calling detach_thread
-    JavaFrame frame(env, 3);
+    JavaFrame frame(env, 4);
 
     TableSchema table_schema;
     ColumnSchema column_schema;
+    IndexSchema index_schema;
+
     for (Field **field_ptr = table->field; *field_ptr; field_ptr++)
     {
       Field* field = *field_ptr;
@@ -65,15 +65,31 @@ int HoneycombHandler::create(const char *path, TABLE *table,
       }
 
       column_schema.reset();
-      if (pack_column_schema(&column_schema, field, table))
+      if (pack_column_schema(&column_schema, field))
       {
         ABORT_CREATE("table. Error while creating column schema.");
       }
       table_schema.add_column(field->field_name, &column_schema);
     }
 
+    for (int i = 0; i < table->s->keys; i++)
+    {
+      index_schema.reset();
+      if (pack_index_schema(&index_schema, &table->key_info[i]))
+      {
+        ABORT_CREATE("table.  Error while creating index schema.");
+      }
+      table_schema.add_index(table->key_info[i].name, &index_schema);
+    }
+
     jstring jtable_name = string_to_java_string(table->s->table_name.str);
     jstring jdb_name = string_to_java_string(table->s->db.str);
+    jstring jtablespace = NULL;
+    if (table->s->tablespace != NULL)
+    {
+      jtablespace = string_to_java_string(table->s->tablespace);
+    }
+    jlong jauto_inc_value = create_info->auto_increment_value;
 
     const char* buf;
     size_t buf_len;
@@ -81,7 +97,7 @@ int HoneycombHandler::create(const char *path, TABLE *table,
     jbyteArray jserialized_schema = convert_value_to_java_bytes((uchar*) buf, buf_len, env);
 
     this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().create_table,
-        jdb_name, jtable_name, jserialized_schema);
+        jdb_name, jtable_name, jtablespace, jserialized_schema, jauto_inc_value);
     EXCEPTION_CHECK_DBUG_IE("HandlerProxy::create", "calling createTable");
   }
   detach_thread(jvm);
@@ -125,7 +141,13 @@ bool HoneycombHandler::is_allowed_column(Field* field, int* error_number)
   return allowed;
 }
 
-int HoneycombHandler::pack_column_schema(ColumnSchema* schema, Field* field, TABLE* table)
+/**
+ * Add column to the column schema.
+ *
+ * @param schema  The schema being filled out
+ * @param field   The column that is being added to the schema
+ */
+int HoneycombHandler::pack_column_schema(ColumnSchema* schema, Field* field)
 {
   int ret = 0;
   switch (field->real_type())
@@ -209,9 +231,30 @@ int HoneycombHandler::pack_column_schema(ColumnSchema* schema, Field* field, TAB
     ret |= schema->set_is_nullable(true);
   }
 
-  if(table->found_next_number_field != NULL && field == table->found_next_number_field)
+  if(field->table->found_next_number_field != NULL
+      && field == field->table->found_next_number_field)
   {
     ret |= schema->set_is_auto_increment(true);
+  }
+  return ret;
+};
+
+/**
+ * Add columns in the index to the index schema.
+ *
+ * @param schema  The schema being filled out
+ * @param key   The index whose schema is being copied.
+ */
+int HoneycombHandler::pack_index_schema(IndexSchema* schema, KEY* key)
+{
+  int ret = 0;
+  for (int i = 0; i < key->key_parts; i++)
+  {
+    ret |= schema->add_column(key->key_part[i].field->field_name);
+  }
+  if (key->flags & HA_NOSAME)
+  {
+    ret |= schema->set_is_unique(true);
   }
   return ret;
 };
