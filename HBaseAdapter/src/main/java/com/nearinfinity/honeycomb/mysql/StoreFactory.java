@@ -9,12 +9,17 @@ import com.nearinfinity.honeycomb.hbaseclient.Constants;
 
 import java.util.Map;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class StoreFactory {
     private final String defaultTableSpace;
     private final Map<String, Provider<Store>> storeMap;
 
     @Inject
     public StoreFactory(Map<String, Provider<Store>> storeMap, @Named(Constants.DEFAULT_TABLESPACE) String defaultTableSpace) {
+        checkNotNull(storeMap);
+        Verify.isNotNullOrEmpty(defaultTableSpace);
+
         this.storeMap = storeMap;
         this.defaultTableSpace = defaultTableSpace;
     }

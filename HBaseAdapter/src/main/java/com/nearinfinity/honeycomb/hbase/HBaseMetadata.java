@@ -9,6 +9,7 @@ import com.nearinfinity.honeycomb.TableNotFoundException;
 import com.nearinfinity.honeycomb.hbase.rowkey.*;
 import com.nearinfinity.honeycomb.hbaseclient.Constants;
 import com.nearinfinity.honeycomb.mysql.Util;
+import com.nearinfinity.honeycomb.mysql.Verify;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import org.apache.hadoop.hbase.client.*;
@@ -183,10 +184,8 @@ public class HBaseMetadata {
      * @throws TableNotFoundException Thrown when existing table cannot be found
      */
     public void renameExistingTable(final String oldTableName, final String newTableName) throws IOException, TableNotFoundException {
-        Preconditions.checkNotNull(oldTableName, "The current table name provided is invalid");
-        Preconditions.checkArgument(!oldTableName.isEmpty(), "The current table name provided cannot be empty");
-        Preconditions.checkNotNull(newTableName, "The new table name provided is invalid");
-        Preconditions.checkArgument(!newTableName.isEmpty(), "The new table name provided cannot be empty");
+        Verify.isNotNullOrEmpty(oldTableName, "Old table name must have value");
+        Verify.isNotNullOrEmpty(newTableName, "New table name must have value");
 
         final long tableId = getTableId(oldTableName);
 

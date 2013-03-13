@@ -4,7 +4,6 @@ import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 
@@ -31,7 +30,7 @@ public class HandlerProxy {
      */
     public void createTable(String databaseName, String tableName, String tableSpace,
                             byte[] serializedTableSchema, long autoInc) throws Exception {
-        checkTableName(tableName);
+        Verify.isNotNullOrEmpty(tableName);
         this.store = this.storeFactory.createStore(tableSpace);
         TableSchema tableSchema = Util.deserializeTableSchema(serializedTableSchema);
         store.createTable(fullyQualifyTable(databaseName, tableName), tableSchema);
@@ -41,7 +40,7 @@ public class HandlerProxy {
     }
 
     public void openTable(String databaseName, String tableName, String tableSpace) throws Exception {
-        checkTableName(tableName);
+        Verify.isNotNullOrEmpty(tableName);
         this.store = this.storeFactory.createStore(tableSpace);
         this.tableName = tableName;
         this.table = this.store.openTable(fullyQualifyTable(databaseName, tableName));
@@ -59,8 +58,7 @@ public class HandlerProxy {
      * @throws Exception
      */
     public void renameTable(final String newName) throws Exception {
-        checkNotNull(newName, "The specified table name is invalid");
-        checkArgument(!newName.isEmpty(), "The specified table name cannot be empty");
+        Verify.isNotNullOrEmpty(newName, "New table name must have value.");
 
         store.renameTable(tableName, newName);
         tableName = newName;
@@ -88,10 +86,5 @@ public class HandlerProxy {
 
     private String fullyQualifyTable(String databaseName, String tableName) {
         return format("%s.%s", databaseName, tableName);
-    }
-
-    private void checkTableName(String tableName) {
-        checkNotNull(tableName);
-        checkArgument(!tableName.isEmpty());
     }
 }
