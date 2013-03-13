@@ -22,6 +22,17 @@ public class Bootstrap extends AbstractModule {
     private static final Logger logger = Logger.getLogger(Bootstrap.class);
     private Configuration params;
 
+    private Bootstrap() {
+    }
+
+    /**
+     * The beginning function called by JNI to wire up all of the object graph dependencies.
+     *
+     * @return HandlerProxyFactory with all dependencies setup
+     * @throws ParserConfigurationException Configuration xml was incorrect
+     * @throws SAXException                 if a DocumentBuilder cannot be created which satisfies the configuration requested
+     * @throws IOException                  An IO exception occurred during parsing or the file was not found
+     */
     public static HandlerProxyFactory startup() throws ParserConfigurationException, SAXException, IOException {
         Bootstrap bootstrap = new Bootstrap();
         bootstrap.readConfiguration();
@@ -29,7 +40,18 @@ public class Bootstrap extends AbstractModule {
         return injector.getInstance(HandlerProxyFactory.class);
     }
 
-    public void readConfiguration() throws IOException, ParserConfigurationException, SAXException {
+    @Override
+    protected void configure() {
+        MapBinder<String, Store> stores = MapBinder.newMapBinder(binder(), String.class, Store.class);
+        try {
+            HBaseModule hBaseModule = new HBaseModule(params, stores);
+            install(hBaseModule);
+        } catch (IOException e) {
+            logger.fatal("Failure during HBase initialization.", e);
+        }
+    }
+
+    private void readConfiguration() throws IOException, ParserConfigurationException, SAXException {
         File configFile = new File(CONFIG_PATH);
         try {
             if (!(configFile.exists() && configFile.canRead() && configFile.isFile())) {
@@ -43,17 +65,6 @@ public class Bootstrap extends AbstractModule {
         } catch (SAXException e) {
             logger.fatal("Exception while trying to parse the config file.", e);
             throw e;
-        }
-    }
-
-    @Override
-    protected void configure() {
-        MapBinder<String, Store> stores = MapBinder.newMapBinder(binder(), String.class, Store.class);
-        try {
-            HBaseModule hBaseModule = new HBaseModule(params, stores);
-            install(hBaseModule);
-        } catch (IOException e) {
-            logger.fatal("Failure during HBase initialization.", e);
         }
     }
 }

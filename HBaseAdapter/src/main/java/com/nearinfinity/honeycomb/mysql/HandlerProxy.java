@@ -66,6 +66,12 @@ public class HandlerProxy {
         this.store.deleteTable(this.tableName);
     }
 
+    public void alterTable(byte[] newSchemaSerialized) throws Exception {
+        checkNotNull(newSchemaSerialized);
+        TableSchema newSchema = Util.deserializeTableSchema(newSchemaSerialized);
+        this.store.alterTable(this.tableName, newSchema);
+    }
+
     private void checkTableName(String tableName) {
         checkNotNull(tableName);
         checkArgument(!tableName.isEmpty());

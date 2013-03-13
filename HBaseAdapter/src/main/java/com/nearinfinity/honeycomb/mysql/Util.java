@@ -1,25 +1,7 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.UUID;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.apache.avro.io.BinaryDecoder;
-import org.apache.avro.io.DatumReader;
-import org.apache.avro.io.DatumWriter;
-import org.apache.avro.io.DecoderFactory;
-import org.apache.avro.io.Encoder;
-import org.apache.avro.io.EncoderFactory;
+import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import org.apache.avro.io.*;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.hadoop.conf.Configuration;
@@ -116,6 +98,15 @@ public class Util {
         return sb.toString();
     }
 
+    /**
+     * Read an XML file and extract a {@link Configuration} object from the XML.
+     *
+     * @param source XML file
+     * @return {@link Configuration}
+     * @throws IOException                  if any IO errors occur
+     * @throws ParserConfigurationException if a DocumentBuilder cannot be created which satisfies the configuration requested
+     * @throws SAXException                 If any parse errors occur.
+     */
     public static Configuration readConfiguration(File source)
             throws IOException, ParserConfigurationException, SAXException {
         Configuration params = new Configuration(false);

@@ -27,7 +27,16 @@ public class HandleProxyIntegrationTest {
         proxy.renameTable(newTableName);
         assert (newTableName.equals(proxy.getTableName()));
         proxy.dropTable();
+    }
 
+    public static void testSuccessfulAlter() throws Exception {
+        HandlerProxy proxy = factory.createHandlerProxy();
+        TableSchema schema = getTableSchema();
+
+        proxy.createTable("hbase", "test", Util.serializeTableSchema(schema));
+        schema.getColumns().put("c3", new ColumnSchema(ColumnType.LONG, false, false, 8, 0, 0));
+        proxy.alterTable(Util.serializeTableSchema(schema));
+        proxy.dropTable();
     }
 
     private static TableSchema getTableSchema() {
@@ -44,6 +53,7 @@ public class HandleProxyIntegrationTest {
         try {
             suiteSetup();
             testSuccessfulRename();
+            testSuccessfulAlter();
         } catch (Exception e) {
             System.out.println(e);
             System.exit(1);

@@ -35,14 +35,15 @@ HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg,
 
 HoneycombHandler::~HoneycombHandler()
 {
+  attach_thread(this->jvm, this->env);
   if (this->curr_write_id != -1)
   {
-    attach_thread(this->jvm, this->env);
     this->flush_writes();
     EXCEPTION_CHECK("destructor", "flush_writes");
-    env->DeleteGlobalRef(handler_proxy);
-    detach_thread(this->jvm);
   }
+
+  env->DeleteGlobalRef(handler_proxy);
+  detach_thread(this->jvm);
 }
 
 void HoneycombHandler::release_auto_increment()
