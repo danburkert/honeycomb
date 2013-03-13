@@ -21,6 +21,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * Manages writing and reading table & column schemas, table & column ids, and
  * row & autoincrement counters to and from HBase.
@@ -36,6 +39,7 @@ public class HBaseMetadata {
 
     public long getTableId(String table)
             throws IOException, TableNotFoundException {
+        Verify.isNotNullOrEmpty(table);
         Get get = new Get(new TablesRow().encode());
         byte[] serializedName = serializeName(table);
         get.addColumn(COLUMN_FAMILY, serializedName);
@@ -55,6 +59,7 @@ public class HBaseMetadata {
 
     public BiMap<String, Long> getColumnIds(long tableId)
             throws IOException {
+        checkValidTableId(tableId);
         Get get = new Get(new ColumnsRow(tableId).encode());
         get.addFamily(COLUMN_FAMILY);
         HTableInterface hTable = getHTable();
@@ -78,6 +83,7 @@ public class HBaseMetadata {
 
     public TableSchema getSchema(long tableId)
             throws IOException, TableNotFoundException {
+        checkValidTableId(tableId);
         byte[] serializedTableId = serializeId(tableId);
 
         Get get = new Get(new SchemaRow().encode());
@@ -98,6 +104,8 @@ public class HBaseMetadata {
 
     public void putSchema(String tableName, TableSchema schema)
             throws IOException {
+        Verify.isNotNullOrEmpty(tableName);
+        checkNotNull(schema);
         long tableId = getNextTableId();
         List<Put> puts = new ArrayList<Put>();
         puts.add(putTableId(tableName, tableId));
@@ -109,6 +117,7 @@ public class HBaseMetadata {
 
     public void deleteSchema(String tableName)
             throws TableNotFoundException, IOException {
+        Verify.isNotNullOrEmpty(tableName);
         long tableId = getTableId(tableName);
         byte[] serializedId = serializeId(tableId);
 
@@ -132,6 +141,10 @@ public class HBaseMetadata {
 
     public void updateSchema(long tableId, TableSchema oldSchema, TableSchema newSchema)
             throws IOException {
+        checkValidTableId(tableId);
+        checkNotNull(oldSchema);
+        checkNotNull(newSchema);
+
         if (oldSchema.equals(newSchema)) {
             return;
         }
@@ -196,28 +209,34 @@ public class HBaseMetadata {
     }
 
     public long getAutoInc(long tableId) throws IOException {
+        checkValidTableId(tableId);
         return getCounter(new AutoIncRow().encode(), serializeId(tableId));
     }
 
     public long incrementAutoInc(long tableId, long amount) throws IOException {
+        checkValidTableId(tableId);
         return incrementCounter(new AutoIncRow().encode(),
                 serializeId(tableId), amount);
     }
 
     public void truncateAutoInc(long tableId) throws IOException {
+        checkValidTableId(tableId);
         performMutations(Lists.<Delete>newArrayList(deleteAutoIncCounter(tableId)),
                 ImmutableList.<Put>of());
     }
 
     public long getRowCount(long tableId) throws IOException {
+        checkValidTableId(tableId);
         return getCounter(new RowsRow().encode(), serializeId(tableId));
     }
 
     public long incrementRowCount(long tableId, long amount) throws IOException {
+        checkValidTableId(tableId);
         return incrementCounter(new RowsRow().encode(), serializeId(tableId), amount);
     }
 
     public void truncateRowCount(long tableId) throws IOException {
+        checkValidTableId(tableId);
         performMutations(Lists.<Delete>newArrayList(deleteRowsCounter(tableId)),
                 ImmutableList.<Put>of());
     }
@@ -336,7 +355,7 @@ public class HBaseMetadata {
     private void performMutations(final List<Delete> deletes, final List<Put> puts) throws IOException {
         Preconditions.checkNotNull(deletes, "The delete mutations container is invalid");
         Preconditions.checkNotNull(puts, "The put mutations container is invalid");
-        Preconditions.checkArgument(!deletes.isEmpty() || !puts.isEmpty(), "At least one mutation operation must be specified");
+        checkArgument(!deletes.isEmpty() || !puts.isEmpty(), "At least one mutation operation must be specified");
 
         HTableInterface hTable = getHTable();
         try {
@@ -359,5 +378,9 @@ public class HBaseMetadata {
 
     private HTableInterface getHTable() {
         return this.provider.get();
+    }
+
+    private void checkValidTableId(long tableId) {
+        checkArgument(tableId > 0, "Table id must be greater than zero.");
     }
 }
