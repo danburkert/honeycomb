@@ -16,9 +16,9 @@ const char **HoneycombHandler::bas_ext() const
   return honeycomb_exts;
 }
 
-HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg,
+HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_share,
     mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm, JNICache* cache, jobject handler_proxy)
-: handler(hton, table_arg),
+: handler(hton, table_share),
   honeycomb_mutex(mutex),
   honeycomb_open_tables(open_tables),
   jvm(jvm),
@@ -78,7 +78,7 @@ int HoneycombHandler::open(const char *path, int mode, uint test_if_locked)
 
     this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().open_table,
         jtable_name, jtablespace);
-    EXCEPTION_CHECK_DBUG_IE("HandlerProxy::create", "calling createTable");
+    EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::open", "calling openTable");
   }
   detach_thread(jvm);
 
@@ -88,6 +88,15 @@ int HoneycombHandler::open(const char *path, int mode, uint test_if_locked)
 int HoneycombHandler::close(void)
 {
   DBUG_ENTER("HoneycombHandler::close");
+  attach_thread(jvm, env);
+  {
+    JavaFrame frame(env, 2);
+    this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().close_table);
+    env->DeleteGlobalRef(handler_proxy);
+    handler_proxy = NULL;
+    EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::close", "calling closetTable");
+  }
+  detach_thread(jvm);
   DBUG_RETURN(free_share(share));
 }
 

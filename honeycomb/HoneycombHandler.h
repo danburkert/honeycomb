@@ -51,8 +51,6 @@ class HoneycombHandler : public handler
     int java_to_sql(uchar *buf, Row *row);
     jobject sql_to_java();
     int delete_all_rows();
-    int delete_table(const char *name);
-    void drop_table(const char *name);
     int truncate();
     bool is_key_null(const uchar *key);
     void store_uuid_ref(Row* row);
@@ -145,7 +143,7 @@ class HoneycombHandler : public handler
     int pack_index_schema(IndexSchema* schema, KEY* key);
 
   public:
-    HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg,
+    HoneycombHandler(handlerton *hton, TABLE_SHARE *table_share,
         mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm, JNICache* cache, jobject handler_proxy);
     ~HoneycombHandler();
 
@@ -249,8 +247,6 @@ class HoneycombHandler : public handler
     int info(uint);                                               ///< required
     int external_lock(THD *thd, int lock_type);                   ///< required
 
-    int create(const char *name, TABLE *form, HA_CREATE_INFO *create_info); ///< required
-
     THR_LOCK_DATA **store_lock(THD *thd, THR_LOCK_DATA **to, enum thr_lock_type lock_type);     ///< required
     void update_create_info(HA_CREATE_INFO* create_info);
     int extra(enum ha_extra_function operation);
@@ -263,6 +259,10 @@ class HoneycombHandler : public handler
     void get_auto_increment(ulonglong offset, ulonglong increment, ulonglong nb_desired_values, ulonglong *first_value, ulonglong *nb_reserved_values);
     int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add);
     int prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys);
+
+    /* DDL */
+    int create(const char *name, TABLE *form, HA_CREATE_INFO *create_info); ///< required
+    int delete_table(const char *name);
 };
 
 #endif

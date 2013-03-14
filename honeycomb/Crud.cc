@@ -692,35 +692,6 @@ void HoneycombHandler::set_autoinc_counter(jlong new_value, jboolean is_truncate
   EXCEPTION_CHECK("HoneycombHandler::set_autoinc_counter", "calling alterAutoincrementValue");
 }
 
-void HoneycombHandler::drop_table(const char *path)
-{
-  close();
-  delete_table(path);
-}
-
-int HoneycombHandler::delete_table(const char *path)
-{
-  DBUG_ENTER("HoneycombHandler::delete_table");
-
-  attach_thread(jvm, env);
-  { // destruct frame before detaching
-    JavaFrame frame(env, 1);
-    const char* table = extract_table_name_from_path(path);
-    jstring table_name = string_to_java_string(table);
-    ARRAY_DELETE(table);
-
-    jclass adapter_class = cache->hbase_adapter().clazz;
-    jmethodID drop_table_method = cache->hbase_adapter().drop_table;
-
-    this->env->CallStaticBooleanMethod(adapter_class, drop_table_method,
-        table_name);
-    EXCEPTION_CHECK("HoneycombHandler::delete_table", "calling dropTable");
-  }
-  detach_thread(jvm);
-
-  DBUG_RETURN(0);
-}
-
 void HoneycombHandler::update_create_info(HA_CREATE_INFO* create_info)
 {
   DBUG_ENTER("HoneycombHandler::update_create_info");

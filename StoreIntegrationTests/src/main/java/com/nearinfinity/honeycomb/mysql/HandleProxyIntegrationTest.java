@@ -136,7 +136,8 @@ public class HandleProxyIntegrationTest {
         proxy.createTable(tableName, Constants.HBASE_TABLESPACE, Util.serializeTableSchema(schema), 1);
         proxy.openTable(tableName, Constants.HBASE_TABLESPACE);
         test.execute(proxy);
-        proxy.dropTable();
+        proxy.closeTable();
+        proxy.dropTable(tableName, Constants.HBASE_TABLESPACE);
     }
 
     private static TableSchema getTableSchema() {
