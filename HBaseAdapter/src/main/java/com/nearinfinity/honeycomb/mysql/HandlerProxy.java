@@ -6,10 +6,9 @@ import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 
 import java.io.IOException;
+import java.util.UUID;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 import static java.lang.String.format;
 
 public class HandlerProxy {
@@ -31,7 +30,8 @@ public class HandlerProxy {
      *                              create the table in the default store.
      * @param serializedTableSchema Serialized TableSchema avro object
      * @param autoInc               Initial auto increment value
-     * @throws Exception
+     * @throws IOException
+     * @throws HoneycombException
      */
     public void createTable(String tableName, String tableSpace,
                             byte[] serializedTableSchema, long autoInc) throws IOException, HoneycombException {
@@ -40,6 +40,7 @@ public class HandlerProxy {
 
         this.store = this.storeFactory.createStore(tableSpace);
         TableSchema tableSchema = Util.deserializeTableSchema(serializedTableSchema);
+        Verify.isValidTableSchema(tableSchema);
         store.createTable(tableName, tableSchema);
         store.incrementAutoInc(tableName, autoInc);
     }
@@ -50,11 +51,15 @@ public class HandlerProxy {
      *
      * @param tableName     Name of the table to be dropped
      * @param tableSpace    What store to drop table from.  If null, use default.
-     * @throws Exception
+     * @throws IOException
+     * @throws HoneycombException
      */
     public void dropTable(String tableName, String tableSpace) throws IOException, HoneycombException {
         Verify.isNotNullOrEmpty(tableName);
         Store store = this.storeFactory.createStore(tableSpace);
+        Table table = store.openTable(tableName);
+        table.deleteAllRows();
+        table.close();
         store.deleteTable(tableName);
     }
 
@@ -82,9 +87,10 @@ public class HandlerProxy {
      * is not open when this is called.
      *
      * @param originalName  The existing name of the table, not null or empty
-     * @param tablespace    The store which contains the table
+     * @param tableSpace    The store which contains the table
      * @param newName       The new table name to represent, not null or empty
-     * @throws Exception
+     * @throws IOException
+     * @throws HoneycombException
      */
     public void renameTable(final String originalName, final String tableSpace,
                             final String newName) throws IOException, HoneycombException {
@@ -105,7 +111,7 @@ public class HandlerProxy {
     public long getAutoIncValue()
             throws IOException, HoneycombException {
         checkTableOpen();
-        if (!Verify.hasAutoIncrementColumn(store.getTableMetadata(tableName))) {
+        if (!Verify.hasAutoIncrementColumn(store.getSchema(tableName))) {
             throw new IllegalArgumentException(format("Table %s is not an autoincrement table.", this.tableName));
         }
 
@@ -114,7 +120,7 @@ public class HandlerProxy {
 
     public long incrementAutoIncrementValue(long amount) throws IOException, HoneycombException {
         checkTableOpen();
-        if (!Verify.hasAutoIncrementColumn(store.getTableMetadata(tableName))) {
+        if (!Verify.hasAutoIncrementColumn(store.getSchema(tableName))) {
             throw new IllegalArgumentException(format("Column %s is not an autoincrement column.", this.tableName));
         }
 
@@ -142,6 +148,21 @@ public class HandlerProxy {
     public void truncateRowCount() throws IOException, HoneycombException {
         checkTableOpen();
         this.store.truncateRowCount(this.tableName);
+    }
+
+    public void insert(Row row) {
+        checkTableOpen();
+        this.table.insert(row);
+    }
+
+    public void flush() throws IOException {
+        checkTableOpen();
+        this.table.flush();
+    }
+
+    public Row getRow(UUID uuid) {
+        checkTableOpen();
+        return this.table.get(uuid);
     }
 
     private void checkTableOpen() {

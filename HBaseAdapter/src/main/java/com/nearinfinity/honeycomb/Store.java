@@ -50,14 +50,14 @@ public interface Store {
     public void renameTable(String curTableName, String newTableName) throws IOException, HoneycombException;
 
     /**
-     * Return the table's metadata
+     * Return the table's schema
      *
      * @param tableName The table name
-     * @return The table's metadata
+     * @return The table's schema
      * @throws IOException
      * @throws HoneycombException
      */
-    public TableSchema getTableMetadata(String tableName) throws IOException, HoneycombException;
+    public TableSchema getSchema(String tableName) throws IOException, HoneycombException;
 
     /**
      * Alter the table with the specified name.

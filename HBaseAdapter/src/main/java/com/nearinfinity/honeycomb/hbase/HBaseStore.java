@@ -12,6 +12,7 @@ import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 public class HBaseStore implements Store {
@@ -23,7 +24,7 @@ public class HBaseStore implements Store {
     private LoadingCache<Long, Long> rowsCache;
     private LoadingCache<Long, Long> autoIncCache;
     private LoadingCache<Long, TableSchema> schemaCache;
-
+    private LoadingCache<Long, Map<String, Long>> indicesCache;
 
     @Inject
     public HBaseStore(HBaseMetadata metadata, HBaseTableFactory tableFactory) {
@@ -37,13 +38,30 @@ public class HBaseStore implements Store {
         return tableCacheGet(tableName);
     }
 
-    @Override
-    public Table openTable(String tableName) {
-        return tableFactory.createTable(tableName);
+    public BiMap<String, Long> getColumns(long tableId )
+            throws IOException, TableNotFoundException {
+        return columnsCacheGet(tableId);
+    }
+
+    public Map<String, Long> getIndices(long tableId)
+            throws IOException, TableNotFoundException {
+        return indicesCacheGet(tableId);
+    }
+
+    public TableSchema getSchema(Long tableId)
+            throws IOException, TableNotFoundException {
+        return schemaCacheGet(tableId);
     }
 
     @Override
-    public TableSchema getTableMetadata(String tableName)
+    public Table openTable(String tableName)
+            throws IOException, TableNotFoundException {
+        Long tableId = tableCacheGet(tableName);
+        return tableFactory.createTable(tableId, schemaCacheGet(tableId));
+    }
+
+    @Override
+    public TableSchema getSchema(String tableName)
             throws IOException, TableNotFoundException {
         return schemaCacheGet(tableCacheGet(tableName));
     }
@@ -51,7 +69,7 @@ public class HBaseStore implements Store {
     @Override
     public void createTable(String tableName, TableSchema schema)
             throws IOException {
-        metadata.createSchema(tableName, schema);
+        metadata.createTable(tableName, schema);
     }
 
     @Override
@@ -148,6 +166,16 @@ public class HBaseStore implements Store {
                 }
                 );
 
+        indicesCache = CacheBuilder
+                .newBuilder()
+                .build(new CacheLoader<Long, Map<String, Long>>() {
+                    @Override
+                    public Map<String, Long> load(Long tableId)
+                            throws IOException, TableNotFoundException {
+                        return metadata.getIndexIds(tableId);
+                    }
+                });
+
         autoIncCache = CacheBuilder
                 .newBuilder()
                 .build(new CacheLoader<Long, Long>() {
@@ -177,7 +205,6 @@ public class HBaseStore implements Store {
                     public TableSchema load(Long tableId)
                             throws IOException, TableNotFoundException {
                         return metadata.getSchema(tableId);
-
                     }
                 }
                 );
@@ -197,6 +224,11 @@ public class HBaseStore implements Store {
     private BiMap<String, Long> columnsCacheGet(Long tableId)
             throws IOException, TableNotFoundException {
         return cacheGet(columnsCache, tableId);
+    }
+
+    private Map<String, Long> indicesCacheGet(Long tableId)
+            throws IOException, TableNotFoundException {
+        return cacheGet(indicesCache, tableId);
     }
 
     private Long autoIncCacheGet(Long tableId)

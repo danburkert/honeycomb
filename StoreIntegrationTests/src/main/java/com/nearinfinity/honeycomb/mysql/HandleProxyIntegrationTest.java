@@ -10,11 +10,16 @@ import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 import static org.fest.assertions.Assertions.assertThat;
 
 public class HandleProxyIntegrationTest {
+    public static final String COLUMN1 = "c1";
+    public static final String COLUMN2 = "c2";
     private static final String tableName = "db/test";
     private static HandlerProxyFactory factory;
 
@@ -104,6 +109,23 @@ public class HandleProxyIntegrationTest {
         });
     }
 
+    public static void testInsertRow() throws Exception {
+        testProxy("Testing insert row", new Action() {
+            @Override
+            public void execute(HandlerProxy proxy) throws Exception {
+                Map<String, Object> map = new HashMap<String, Object>();
+                map.put(COLUMN1, ByteBuffer.allocate(8).putLong(5).rewind());
+                map.put(COLUMN2, ByteBuffer.allocate(8).putLong(6).rewind());
+                UUID uuid = UUID.randomUUID();
+                Row row = new Row(map, uuid);
+                proxy.insert(row);
+                proxy.flush();
+                Row result = proxy.getRow(uuid);
+                assertThat(result).isEqualTo(row);
+            }
+        });
+    }
+
     private static void testProxy(String message, Action test) throws Exception {
         testProxy(message, getTableSchema(), test);
     }
@@ -121,9 +143,10 @@ public class HandleProxyIntegrationTest {
     private static TableSchema getTableSchema() {
         HashMap<String, ColumnSchema> columns = new HashMap<String, ColumnSchema>();
         HashMap<String, IndexSchema> indices = new HashMap<String, IndexSchema>();
-        columns.put("c1", new ColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
-        columns.put("c2", new ColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
+        columns.put(COLUMN1, new ColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
+        columns.put(COLUMN2, new ColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
         indices.put("i1", new IndexSchema(Lists.newArrayList("c1"), false));
+        indices.put("i2", new IndexSchema(Lists.newArrayList("c1", "c2"), false));
 
         return new TableSchema(columns, indices);
     }
@@ -138,6 +161,7 @@ public class HandleProxyIntegrationTest {
             testTruncateAutoInc();
             testGetRowCount();
             testTruncateRowCount();
+            testInsertRow();
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(1);

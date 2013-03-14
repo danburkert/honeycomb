@@ -9,7 +9,10 @@ import net.java.quickcheck.generator.iterable.Iterables;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public class RowKeyTest {
 
@@ -31,6 +34,7 @@ public class RowKeyTest {
         for (int i = 0; i < rowKeys.size(); i++) {
             RowKey rowKey = rowKeys.get(i);
             byte[] encodedRowKey = encodedRowKeys.get(i);
+
             Assert.assertArrayEquals(encodedRowKey, rowKey.encode());
         }
     }
@@ -85,12 +89,11 @@ public class RowKeyTest {
             if (compare != 0) {
                 return compare;
             }
-            compare = columnsCompare(row1.getColumnIds(), row2.getColumnIds());
+            compare = Long.signum(row1.getIndexId() - row2.getIndexId());
             if (compare != 0) {
                 return compare;
             }
-            compare = recordsCompare(row1.getColumnIds(), row1.getRecords(),
-                    row2.getRecords(), nullOrder);
+            compare = recordsCompare(row1.getRecords(), row2.getRecords(), nullOrder);
             if (compare != 0) {
                 return compare;
             }
@@ -99,24 +102,14 @@ public class RowKeyTest {
                     Util.UUIDToBytes(row2.getUuid()));
         }
 
-        private int columnsCompare(List<Long> columns1, List<Long> columns2) {
-            int compare;
-            for (int i = 0; i < Math.min(columns1.size(), columns2.size()); i++) {
-                compare = Long.signum(columns1.get(i) - columns2.get(i));
-                if (compare != 0) {
-                    return compare;
-                }
-            }
-            return columns1.size() - columns2.size();
-        }
-
-        private int recordsCompare(List<Long> columnIds, Map<Long, byte[]> records1,
-                                   Map<Long, byte[]> records2, int nullOrder) {
+        private int recordsCompare(List<byte[]> records1, List<byte[]> records2, int nullOrder) {
             byte[] value1, value2;
             int compare;
-            for (Long columnId : columnIds) {
-                value1 = records1.get(columnId);
-                value2 = records2.get(columnId);
+            int record1Size = records1.size();
+            int record2Size = records2.size();
+            for (int i = 0; i < Math.max(record1Size, record2Size); i++) {
+                value1 = i < record1Size ? records1.get(i) : null;
+                value2 = i < record2Size ? records2.get(i) : null;
                 if (value1 == value2) {
                     continue;
                 }
@@ -131,6 +124,7 @@ public class RowKeyTest {
                     return compare;
                 }
             }
+
             return 0;
         }
     }
