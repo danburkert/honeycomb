@@ -6,7 +6,6 @@ import com.nearinfinity.honeycomb.mysql.Util;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -96,12 +95,12 @@ public abstract class IndexRow implements RowKey {
         return uuid;
     }
 
-    public List<Long> getColumnIds() {
-        return null;
+    public long getIndexId() {
+        return indexId;
     }
 
-    public Map<Long, byte[]> getRecords() {
-        return null;
+    public List<byte[]> getRecords() {
+        return records;
     }
 
     @Override
@@ -113,27 +112,18 @@ public abstract class IndexRow implements RowKey {
         sb.append("\t");
         sb.append(indexId);
         sb.append("\t");
-        //sb.append(records == null ? "" : recordValueStrings());
+        sb.append(records == null ? "" : recordValueStrings());
         sb.append("\t");
         sb.append(uuid == null ? "" : Util.generateHexString(Util.UUIDToBytes(uuid)));
         sb.append("]");
         return sb.toString();
     }
 
-    //TODO: Re-implement to string
-//    private List<String> recordValueStrings() {
-//        List<String> strings = new ArrayList<String>();
-//        for (byte[] bytes : recordValues()) {
-//            strings.add((bytes == null) ? "null" : Util.generateHexString(bytes));
-//        }
-//        return strings;
-//    }
-//
-//    private List<byte[]> recordValues() {
-//        List<byte[]> recordValues = new ArrayList<byte[]>();
-//        for (Long columnId : columnIds) {
-//            recordValues.add(records.get(columnId));
-//        }
-//        return recordValues;
-//    }
+    private List<String> recordValueStrings() {
+        List<String> strings = new ArrayList<String>();
+        for (byte[] bytes : records) {
+            strings.add((bytes == null) ? "null" : Util.generateHexString(bytes));
+        }
+        return strings;
+    }
 }

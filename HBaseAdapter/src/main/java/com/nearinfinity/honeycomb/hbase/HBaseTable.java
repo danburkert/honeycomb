@@ -89,6 +89,7 @@ public class HBaseTable implements Table {
                 totalDeleteSize += deleteList.size() * result.getWritableSize();
                 if (totalDeleteSize > writeBufferSize) {
                     hTable.delete(deleteList);
+                    totalDeleteSize = 0;
                 }
             }
 

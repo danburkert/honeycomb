@@ -55,6 +55,9 @@ public class HandlerProxy {
     public void dropTable(String tableName, String tableSpace) throws Exception {
         Verify.isNotNullOrEmpty(tableName);
         Store store = this.storeFactory.createStore(tableSpace);
+        Table table = store.openTable(tableName);
+        table.deleteAllRows();
+        table.close();
         store.deleteTable(tableName);
     }
 
@@ -114,13 +117,6 @@ public class HandlerProxy {
         }
 
         return this.store.incrementAutoInc(this.getTableName(), amount);
-    }
-
-    public void dropTable() throws Exception {
-        checkTableOpen();
-        this.table.deleteAllRows();
-        this.store.deleteTable(this.tableName);
-        this.isTableOpen = false;
     }
 
     public void alterTable(byte[] newSchemaSerialized) throws Exception {

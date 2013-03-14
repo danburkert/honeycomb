@@ -36,6 +36,7 @@ public class HandleProxyIntegrationTest {
             public void execute(HandlerProxy proxy) throws Exception {
                 proxy.renameTable(newTableName);
                 assertThat(newTableName).isEqualTo(proxy.getTableName());
+                proxy.renameTable(tableName);
             }
         });
     }
@@ -154,13 +155,13 @@ public class HandleProxyIntegrationTest {
     public static void main(String[] args) throws Exception {
         try {
             suiteSetup();
-//            testSuccessfulRename();
-//            testSuccessfulAlter();
-//            testGetAutoIncrement();
-//            testIncrementAutoIncrement();
-//            testTruncateAutoInc();
-//            testGetRowCount();
-//            testTruncateRowCount();
+            testSuccessfulRename();
+            testSuccessfulAlter();
+            testGetAutoIncrement();
+            testIncrementAutoIncrement();
+            testTruncateAutoInc();
+            testGetRowCount();
+            testTruncateRowCount();
             testInsertRow();
         } catch (Exception e) {
             e.printStackTrace();
