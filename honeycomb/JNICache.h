@@ -14,9 +14,10 @@ class JNICache
     {
       jclass clazz;
       jmethodID create_table,
-                get_row_count,
+                drop_table,
                 open_table,
-                drop_table;
+                close_table,
+                get_row_count;
     };
     struct HBaseAdapter
     {

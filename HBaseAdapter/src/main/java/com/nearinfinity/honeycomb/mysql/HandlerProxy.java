@@ -4,6 +4,8 @@ import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 
+import java.io.IOException;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.lang.String.format;
@@ -13,7 +15,6 @@ public class HandlerProxy {
     private Store store;
     private Table table;
     private String tableName;
-    private boolean isTableOpen;
 
     public HandlerProxy(StoreFactory storeFactory) throws Exception {
         this.storeFactory = storeFactory;
@@ -60,14 +61,13 @@ public class HandlerProxy {
         this.tableName = tableName;
         this.store = this.storeFactory.createStore(tableSpace);
         this.table = this.store.openTable(this.tableName);
-        this.isTableOpen = true;
     }
 
-    public void closeTable() {
+    public void closeTable() throws IOException {
         this.tableName = null;
         this.store = null;
+        this.table.close();
         this.table = null;
-        this.isTableOpen = false;
     }
 
     public String getTableName() {
@@ -139,6 +139,6 @@ public class HandlerProxy {
     }
 
     private void checkTableOpen() {
-        checkState(isTableOpen, "Table must be opened before used.");
+        checkState(table != null, "Table must be opened before used.");
     }
 }

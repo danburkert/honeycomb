@@ -98,7 +98,7 @@ int HoneycombHandler::create(const char *path, TABLE *table,
 
     this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().create_table,
         jtable_name, jtablespace, jserialized_schema, jauto_inc_value);
-    EXCEPTION_CHECK_DBUG_IE("HandlerProxy::create", "calling createTable");
+    EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::create", "calling createTable");
   }
   detach_thread(jvm);
   DBUG_RETURN(rc);

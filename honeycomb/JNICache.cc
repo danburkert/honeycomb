@@ -16,6 +16,7 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   handler_proxy_.create_table  = get_method_id(env, handler_proxy_.clazz, "createTable", "(Ljava/lang/String;Ljava/lang/String;[BJ)V");
   handler_proxy_.drop_table    = get_method_id(env, handler_proxy_.clazz, "dropTable", "(Ljava/lang/String;Ljava/lang/String;)V");
   handler_proxy_.open_table    = get_method_id(env, handler_proxy_.clazz, "openTable", "(Ljava/lang/String;Ljava/lang/String;)V");
+  handler_proxy_.close_table   = get_method_id(env, handler_proxy_.clazz, "closeTable", "()V");
   handler_proxy_.get_row_count = get_method_id(env, handler_proxy_.clazz, "getRowCount", "()J");
 
   hbase_adapter_.clazz                        = get_class_ref(env, MYSQLENGINE "HBaseAdapter");
