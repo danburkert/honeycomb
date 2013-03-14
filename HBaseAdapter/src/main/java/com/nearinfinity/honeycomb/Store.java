@@ -15,9 +15,10 @@ public interface Store {
      *
      * @param tableName The name of the table
      * @return the table
-     * @throws TableNotFoundException
+     * @throws IOException
+     * @throws HoneycombException
      */
-    public Table openTable(String tableName) throws Exception;
+    public Table openTable(String tableName) throws IOException, HoneycombException;
 
     /**
      * Create a table, or if the table already exists with the same name and
@@ -27,52 +28,56 @@ public interface Store {
      * @param schema
      * @throws IOException
      */
-    public void createTable(String tableName, TableSchema schema) throws Exception;
+    public void createTable(String tableName, TableSchema schema) throws IOException;
 
     /**
      * Delete the specified table
      *
      * @param tableName name of the table
      * @throws IOException
+     * @throws HoneycombException
      */
-    public void deleteTable(String tableName) throws Exception;
+    public void deleteTable(String tableName) throws IOException, HoneycombException;
 
     /**
      * Renames the specified existing table to the provided table name
      *
      * @param curTableName
      * @param newTableName
-     * @throws Exception
+     * @throws IOException
+     * @throws HoneycombException
      */
-    public void renameTable(String curTableName, String newTableName) throws Exception;
+    public void renameTable(String curTableName, String newTableName) throws IOException, HoneycombException;
 
     /**
      * Return the table's metadata
      *
      * @param tableName The table name
      * @return The table's metadata
-     * @throws TableNotFoundException
+     * @throws IOException
+     * @throws HoneycombException
      */
-    public TableSchema getTableMetadata(String tableName) throws Exception;
+    public TableSchema getTableMetadata(String tableName) throws IOException, HoneycombException;
 
     /**
      * Alter the table with the specified name.
      *
      * @param tableName The name of the table to be altered
      * @param schema    The new schema for the table
-     * @throws TableNotFoundException
      * @throws IOException
+     * @throws HoneycombException
      */
-    public void alterTable(String tableName, TableSchema schema) throws Exception;
+    public void alterTable(String tableName, TableSchema schema) throws IOException, HoneycombException;
 
     /**
      * Gets the current value of the auto increment column in the table
      *
      * @param tableName
      * @return
-     * @throws Exception
+     * @throws IOException
+     * @throws HoneycombException
      */
-    public long getAutoInc(String tableName) throws Exception;
+    public long getAutoInc(String tableName) throws IOException, HoneycombException;
 
     /**
      * Increment the table's auto increment value by amount
@@ -80,26 +85,29 @@ public interface Store {
      * @param tableName Name of table
      * @param amount    Amount to auto increment by
      * @return
-     * @throws Exception
+     * @throws IOException
+     * @throws HoneycombException
      */
-    public long incrementAutoInc(String tableName, long amount) throws Exception;
+    public long incrementAutoInc(String tableName, long amount) throws IOException, HoneycombException;
 
     /**
      * Truncate the table's auto increment value.
      *
      * @param tableName Name of table
-     * @throws Exception
+     * @throws IOException
+     * @throws HoneycombException
      */
-    public void truncateAutoInc(String tableName) throws Exception;
+    public void truncateAutoInc(String tableName) throws IOException, HoneycombException;
 
     /**
      * Get the table's row count
      *
      * @param tableName the table
      * @return row count
-     * @throws Exception
+     * @throws IOException
+     * @throws HoneycombException
      */
-    public long getRowCount(String tableName) throws Exception;
+    public long getRowCount(String tableName) throws IOException, HoneycombException;
 
     /**
      * Increment the table's row count by amount.
@@ -107,13 +115,17 @@ public interface Store {
      * @param tableName Name of table
      * @param amount    Amount to increment by
      * @return New row count
+     * @throws IOException
+     * @throws HoneycombException
      */
-    public long incrementRowCount(String tableName, long amount) throws Exception;
+    public long incrementRowCount(String tableName, long amount) throws IOException, HoneycombException;
 
     /**
      * Truncate the table's row count.
+     *
      * @param tableName Name of table
-     * @throws Exception
+     * @throws IOException
+     * @throws HoneycombException
      */
-    public void truncateRowCount(String tableName) throws Exception;
+    public void truncateRowCount(String tableName) throws IOException, HoneycombException;
 }

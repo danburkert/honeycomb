@@ -1,6 +1,6 @@
 package com.nearinfinity.honeycomb;
 
-public class ColumnNotFoundException extends Exception {
+public class ColumnNotFoundException extends HoneycombException {
     String column;
 
     public ColumnNotFoundException(String column) {

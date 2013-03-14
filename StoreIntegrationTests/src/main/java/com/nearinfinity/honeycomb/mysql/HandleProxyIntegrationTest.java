@@ -29,7 +29,7 @@ public class HandleProxyIntegrationTest {
         testProxy("Testing rename", schema, new Action() {
             @Override
             public void execute(HandlerProxy proxy) throws Exception {
-                proxy.renameTable(newTableName);
+                proxy.renameTable(tableName, Constants.HBASE_TABLESPACE, newTableName);
                 assertThat(newTableName).isEqualTo(proxy.getTableName());
             }
         });

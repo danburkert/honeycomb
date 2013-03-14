@@ -9,11 +9,13 @@ import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.TableNotFoundException;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
 public class HBaseStore implements Store {
+    private static final Logger logger = Logger.getLogger(HBaseStore.class);
     private final HBaseMetadata metadata;
     private final HBaseTableFactory tableFactory;
     private LoadingCache<String, Long> tableCache;
@@ -22,6 +24,7 @@ public class HBaseStore implements Store {
     private LoadingCache<Long, Long> autoIncCache;
     private LoadingCache<Long, TableSchema> schemaCache;
 
+
     @Inject
     public HBaseStore(HBaseMetadata metadata, HBaseTableFactory tableFactory) {
         this.metadata = metadata;
@@ -29,91 +32,94 @@ public class HBaseStore implements Store {
         doInitialization();
     }
 
-    public long getTableId(String tableName) throws ExecutionException {
-        return tableCache.get(tableName);
+    public long getTableId(String tableName)
+            throws IOException, TableNotFoundException {
+        return tableCacheGet(tableName);
     }
 
     @Override
-    public Table openTable(String tableName) throws Exception {
+    public Table openTable(String tableName) {
         return tableFactory.createTable(tableName);
     }
 
     @Override
-    public TableSchema getTableMetadata(String tableName) throws Exception {
-        return schemaCache.get(tableCache.get(tableName));
+    public TableSchema getTableMetadata(String tableName)
+            throws IOException, TableNotFoundException {
+        return schemaCacheGet(tableCacheGet(tableName));
     }
 
     @Override
-    public void createTable(String tableName, TableSchema schema) throws Exception {
-        getHBaseMetadata().createSchema(tableName, schema);
+    public void createTable(String tableName, TableSchema schema)
+            throws IOException {
+        metadata.createSchema(tableName, schema);
     }
 
     @Override
-    public void deleteTable(String tableName) throws Exception {
-        long tableId = tableCache.get(tableName);
-        HBaseMetadata metadata = getHBaseMetadata();
-
+    public void deleteTable(String tableName)
+            throws IOException, TableNotFoundException {
+        long tableId = tableCacheGet(tableName);
         invalidateCache(tableName, tableId);
         metadata.deleteSchema(tableName);
     }
 
     @Override
-    public void alterTable(String tableName, TableSchema schema) throws Exception {
-        long tableId = tableCache.get(tableName);
-        HBaseMetadata metadata = getHBaseMetadata();
-        metadata.updateSchema(tableId, schemaCache.get(tableId), schema);
+    public void alterTable(String tableName, TableSchema schema)
+            throws IOException, TableNotFoundException {
+        long tableId = tableCacheGet(tableName);
+        metadata.updateSchema(tableId, schemaCacheGet(tableId), schema);
         invalidateCache(tableName, tableId);
     }
 
     @Override
-    public void renameTable(String curTableName, String newTableName) throws Exception {
-        long tableId = tableCache.get(curTableName);
-        HBaseMetadata metadata = getHBaseMetadata();
+    public void renameTable(String curTableName, String newTableName)
+            throws IOException, TableNotFoundException {
+        long tableId = tableCacheGet(curTableName);
         metadata.renameExistingTable(curTableName, newTableName);
         invalidateCache(curTableName, tableId);
     }
 
     @Override
-    public long getAutoInc(String tableName) throws Exception {
-        return autoIncCache.get(tableCache.get(tableName));
+    public long getAutoInc(String tableName)
+            throws IOException, TableNotFoundException {
+        return autoIncCacheGet(tableCacheGet(tableName));
     }
 
     @Override
-    public long incrementAutoInc(String tableName, long amount) throws Exception {
-        long tableId = tableCache.get(tableName);
-        HBaseMetadata metadata = getHBaseMetadata();
+    public long incrementAutoInc(String tableName, long amount)
+            throws IOException, TableNotFoundException {
+        long tableId = tableCacheGet(tableName);
         long value = metadata.incrementAutoInc(tableId, amount);
         autoIncCache.put(tableId, value);
         return value;
     }
 
     @Override
-    public void truncateAutoInc(String tableName) throws Exception {
-        long tableId = tableCache.get(tableName);
-        HBaseMetadata metadata = getHBaseMetadata();
+    public void truncateAutoInc(String tableName)
+            throws IOException, TableNotFoundException {
+        long tableId = tableCacheGet(tableName);
         metadata.truncateAutoInc(tableId);
         autoIncCache.invalidate(tableId);
     }
 
     @Override
-    public long getRowCount(String tableName) throws Exception {
-        return rowsCache.get(tableCache.get(tableName));
+    public long getRowCount(String tableName)
+            throws IOException, TableNotFoundException {
+        return rowsCacheGet(tableCacheGet(tableName));
     }
 
     @Override
-    public long incrementRowCount(String tableName, long amount) throws Exception {
-        long tableId = tableCache.get(tableName);
-        HBaseMetadata metadata = getHBaseMetadata();
+    public long incrementRowCount(String tableName, long amount)
+            throws IOException, TableNotFoundException {
+        long tableId = tableCacheGet(tableName);
         long value = metadata.incrementRowCount(tableId, amount);
         rowsCache.put(tableId, value);
-
         return value;
     }
 
     @Override
-    public void truncateRowCount(String tableName) throws Exception {
-        long tableId = tableCache.get(tableName);
-        HBaseMetadata metadata = getHBaseMetadata();
+    public void truncateRowCount(String tableName)
+            throws IOException, TableNotFoundException {
+        long tableId = tableCacheGet(tableName);
         metadata.truncateRowCount(tableId);
         rowsCache.invalidate(tableId);
     }
@@ -125,7 +131,7 @@ public class HBaseStore implements Store {
                     @Override
                     public Long load(String tableName)
                             throws IOException, TableNotFoundException {
-                        return getHBaseMetadata().getTableId(tableName);
+                        return metadata.getTableId(tableName);
                     }
                 }
                 );
@@ -137,7 +143,7 @@ public class HBaseStore implements Store {
                     public BiMap<String, Long> load(Long tableId)
                             throws IOException, TableNotFoundException {
 
-                        return getHBaseMetadata().getColumnIds(tableId);
+                        return metadata.getColumnIds(tableId);
                     }
                 }
                 );
@@ -148,7 +154,7 @@ public class HBaseStore implements Store {
                     @Override
                     public Long load(Long tableId)
                             throws IOException, TableNotFoundException {
-                        return getHBaseMetadata().getAutoInc(tableId);
+                        return metadata.getAutoInc(tableId);
                     }
                 }
                 );
@@ -159,7 +165,7 @@ public class HBaseStore implements Store {
                     @Override
                     public Long load(Long tableId)
                             throws IOException, TableNotFoundException {
-                        return getHBaseMetadata().getRowCount(tableId);
+                        return metadata.getRowCount(tableId);
                     }
                 }
                 );
@@ -170,20 +176,58 @@ public class HBaseStore implements Store {
                     @Override
                     public TableSchema load(Long tableId)
                             throws IOException, TableNotFoundException {
-                        return getHBaseMetadata().getSchema(tableId);
+                        return metadata.getSchema(tableId);
 
                     }
                 }
                 );
     }
 
-    private void invalidateCache(String tableName, long tableId) throws Exception {
+    private void invalidateCache(String tableName, long tableId) {
         tableCache.invalidate(tableName);
         columnsCache.invalidate(tableId);
         schemaCache.invalidate(tableId);
     }
 
-    private HBaseMetadata getHBaseMetadata() {
-        return metadata;
+    private Long tableCacheGet(String tableName)
+            throws IOException, TableNotFoundException {
+        return cacheGet(tableCache, tableName);
+    }
+
+    private BiMap<String, Long> columnsCacheGet(Long tableId)
+            throws IOException, TableNotFoundException {
+        return cacheGet(columnsCache, tableId);
+    }
+
+    private Long autoIncCacheGet(Long tableId)
+            throws IOException, TableNotFoundException {
+        return cacheGet(autoIncCache, tableId);
+    }
+
+    private Long rowsCacheGet(Long tableId)
+            throws IOException, TableNotFoundException {
+        return cacheGet(rowsCache, tableId);
+    }
+
+    private TableSchema schemaCacheGet(Long tableId)
+            throws IOException, TableNotFoundException {
+        return cacheGet(schemaCache, tableId);
+    }
+
+    private <K, V> V cacheGet(LoadingCache<K, V> cache, K key)
+            throws IOException, TableNotFoundException {
+        try {
+            return cache.get(key);
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof IOException) {
+                throw (IOException) cause;
+            } else if (cause instanceof TableNotFoundException) {
+                throw (TableNotFoundException) cause;
+            } else {
+                logger.error("Encountered unexpected exception during cache get:", cause);
+                throw new RuntimeException(cause);
+            }
+        }
     }
 }

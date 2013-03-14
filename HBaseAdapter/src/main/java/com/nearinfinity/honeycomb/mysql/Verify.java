@@ -12,15 +12,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Checks that operations are valid.
  */
 public class Verify {
-    public static boolean hasAutoIncrementColumn(TableSchema schema)
-            throws Exception {
+    public static boolean hasAutoIncrementColumn(TableSchema schema) {
         Map<String, ColumnSchema> columns = schema.getColumns();
         for (ColumnSchema column : columns.values()) {
             if (column.getIsAutoIncrement()) {
                 return true;
             }
         }
-
         return false;
     }
 

@@ -17,6 +17,7 @@ class JNICache
                 drop_table,
                 open_table,
                 close_table,
+                rename_table,
                 get_row_count;
     };
     struct HBaseAdapter
@@ -45,7 +46,6 @@ class JNICache
                 next_index_row,
                 increment_row_count,
                 set_row_count,
-                rename_table,
                 is_nullable,
                 add_index,
                 drop_index;

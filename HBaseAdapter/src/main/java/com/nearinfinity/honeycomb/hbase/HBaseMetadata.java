@@ -24,6 +24,7 @@ import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Manages writing and reading table & column schemas, table & column ids, and
@@ -113,8 +114,9 @@ public class HBaseMetadata {
         puts.add(putTableId(tableName, tableId));
         puts.add(putColumnIds(tableId, schema.getColumns()));
         puts.add(putTableSchema(tableId, schema));
-        puts.add(putIndices(tableId, schema.getIndices()));
-
+        if (!schema.getIndices().isEmpty()) {
+            puts.add(putIndices(tableId, schema.getIndices()));
+        }
         performMutations(ImmutableList.<Delete>of(), puts);
     }
 
@@ -335,6 +337,7 @@ public class HBaseMetadata {
     }
 
     private Put putIndices(long tableId, Map<String, IndexSchema> indices) throws IOException {
+        checkState(!indices.isEmpty(), "putIndices requires 1 or more indices.");
         long indexId = getNextIndexId(tableId, indices.size());
         Put put = new Put(new IndicesRow(tableId).encode());
 

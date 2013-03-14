@@ -141,6 +141,7 @@ class HoneycombHandler : public handler
     /* DDL helper methods */
     int pack_column_schema(ColumnSchema* schema, Field* field);
     int pack_index_schema(IndexSchema* schema, KEY* key);
+    int init_table_share(TABLE_SHARE* table_share, const char* path);
 
   public:
     HoneycombHandler(handlerton *hton, TABLE_SHARE *table_share,
@@ -255,7 +256,6 @@ class HoneycombHandler : public handler
     int analyze(THD* thd, HA_CHECK_OPT* check_opt);
     ha_rows estimate_rows_upper_bound();
     bool check_if_incompatible_data(HA_CREATE_INFO *create_info, uint table_changes);
-    int rename_table(const char *from, const char *to);
     void get_auto_increment(ulonglong offset, ulonglong increment, ulonglong nb_desired_values, ulonglong *first_value, ulonglong *nb_reserved_values);
     int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add);
     int prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys);
@@ -263,6 +263,7 @@ class HoneycombHandler : public handler
     /* DDL */
     int create(const char *name, TABLE *form, HA_CREATE_INFO *create_info); ///< required
     int delete_table(const char *name);
+    int rename_table(const char *from, const char *to);
 };
 
 #endif

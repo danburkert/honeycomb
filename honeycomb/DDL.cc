@@ -25,7 +25,6 @@ const char* table_creation_errors[] = {
   "table. Required: character set utf8 collate utf8_bin"
 };
 
-
 /**
  * Called by MySQL during CREATE TABLE statements.  Converts the table's
  * schema into a TableSchema object and hands it off to the HandlerProxy.
@@ -264,32 +263,77 @@ int HoneycombHandler::delete_table(const char *path)
   DBUG_ENTER("HoneycombHandler::delete_table");
   int ret = 0;
 
-  TABLE_SHARE table_share;
-  THD* thd = ha_thd();
-
-  // The table share attached to the handler is not initialized during this
-  // function call, so we must initialize it ourselves with the following calls:
-  init_tmp_table_share(thd, &table_share, "", 0, "", path);
-  ret |= open_table_def(thd, &table_share, 0);
-
   attach_thread(jvm, env);
   { // destruct frame before detaching
     JavaFrame frame(env, 2);
     jstring table_name = string_to_java_string(
         extract_table_name_from_path(path));
+
+    TABLE_SHARE table_share;
+    ret |= init_table_share(&table_share, path);
+
     jstring jtablespace = NULL;
     if (table_share.tablespace != NULL)
     {
       jtablespace = string_to_java_string(table_share.tablespace);
     }
+    free_table_share(&table_share);
 
     this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().drop_table,
         table_name, jtablespace);
-    if (env->ExceptionCheck()) { ret = 1; }
+    if (env->ExceptionCheck()) { ret |= HA_ERR_NO_SUCH_TABLE; }
     EXCEPTION_CHECK("HoneycombHandler::drop_table", "calling dropTable");
   }
   detach_thread(jvm);
-  free_table_share(&table_share);
 
   DBUG_RETURN(ret);
+}
+
+int HoneycombHandler::rename_table(const char *from, const char *to)
+{
+  DBUG_ENTER("HoneycombHandler::rename_table");
+  int ret = 0;
+
+
+  attach_thread(jvm, env);
+  {
+    JavaFrame frame(env, 2);
+
+    jstring old_table_name = string_to_java_string(extract_table_name_from_path(from));
+    jstring new_table_name = string_to_java_string(extract_table_name_from_path(to));
+
+    TABLE_SHARE table_share;
+    ret |= init_table_share(&table_share, from);
+    jstring jtablespace = NULL;
+    if (table_share.tablespace != NULL)
+    {
+      jtablespace = string_to_java_string(table_share.tablespace);
+    }
+    free_table_share(&table_share);
+
+    env->CallVoidMethod(handler_proxy, cache->handler_proxy().rename_table,
+        old_table_name, jtablespace, new_table_name);
+    if (env->ExceptionCheck()) { ret |= HA_ERR_NO_SUCH_TABLE; }
+    EXCEPTION_CHECK("HoneycombHandler::rename_table", "calling renameTable");
+  }
+  detach_thread(jvm);
+
+  DBUG_RETURN(ret);
+}
+
+/**
+ * Initialize table share to table located at path.  This should only be used
+ * when table share access is needed and the table share off of the
+ * HoneycombHandler is uninitialized.  The caller must clean up the returned
+ * TABLE_SHARE by calling free_table_share(&table_share).
+ *
+ * @param table_share pointer to uninitialized table share
+ * @param path  path to table
+ * @return error code
+ */
+int HoneycombHandler::init_table_share(TABLE_SHARE* table_share, const char* path)
+{
+  THD* thd = ha_thd();
+  init_tmp_table_share(thd, table_share, "", 0, "", path);
+  return open_table_def(thd, table_share, 0);
 }

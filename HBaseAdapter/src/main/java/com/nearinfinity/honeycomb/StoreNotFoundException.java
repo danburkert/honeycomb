@@ -1,6 +1,6 @@
 package com.nearinfinity.honeycomb;
 
-public class StoreNotFoundException extends Exception {
+public class StoreNotFoundException extends HoneycombException {
     private final String database;
 
     public StoreNotFoundException(String database) {
