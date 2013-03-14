@@ -20,7 +20,8 @@ public class HandlerProxy {
     }
 
     /**
-     * Create a table with the given specifications
+     * Create a table with the given specifications.  The table is not open when
+     * this is called.
      *
      * @param tableName             Name of the table
      * @param tableSpace            Indicates what store to create the table in.  If null,
@@ -40,12 +41,33 @@ public class HandlerProxy {
         store.incrementAutoInc(tableName, autoInc);
     }
 
+    /**
+     * Drop the table with the given specifications.  The table is not open when
+     * this is called.
+     *
+     * @param tableName     Name of the table to be dropped
+     * @param tableSpace    What store to drop table from.  If null, use default.
+     * @throws Exception
+     */
+    public void dropTable(String tableName, String tableSpace) throws Exception {
+        Verify.isNotNullOrEmpty(tableName);
+        Store store = this.storeFactory.createStore(tableSpace);
+        store.deleteTable(tableName);
+    }
+
     public void openTable(String tableName, String tableSpace) throws Exception {
         Verify.isNotNullOrEmpty(tableName);
         this.tableName = tableName;
         this.store = this.storeFactory.createStore(tableSpace);
         this.table = this.store.openTable(this.tableName);
         this.isTableOpen = true;
+    }
+
+    public void closeTable() {
+        this.tableName = null;
+        this.store = null;
+        this.table = null;
+        this.isTableOpen = false;
     }
 
     public String getTableName() {
@@ -90,11 +112,6 @@ public class HandlerProxy {
         return this.store.incrementAutoInc(this.getTableName(), amount);
     }
 
-    public void dropTable() throws Exception {
-        checkTableOpen();
-        this.store.deleteTable(this.tableName);
-        this.isTableOpen = false;
-    }
 
     public void alterTable(byte[] newSchemaSerialized) throws Exception {
         checkNotNull(newSchemaSerialized);

@@ -16,9 +16,9 @@ const char **HoneycombHandler::bas_ext() const
   return honeycomb_exts;
 }
 
-HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_arg,
+HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_share,
     mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm, JNICache* cache, jobject handler_proxy)
-: handler(hton, table_arg),
+: handler(hton, table_share),
   honeycomb_mutex(mutex),
   honeycomb_open_tables(open_tables),
   jvm(jvm),

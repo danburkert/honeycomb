@@ -258,3 +258,38 @@ int HoneycombHandler::pack_index_schema(IndexSchema* schema, KEY* key)
   }
   return ret;
 };
+
+int HoneycombHandler::delete_table(const char *path)
+{
+  DBUG_ENTER("HoneycombHandler::delete_table");
+  int ret = 0;
+
+  TABLE_SHARE table_share;
+  THD* thd = ha_thd();
+
+  // The table share attached to the handler is not initialized during this
+  // function call, so we must initialize it ourselves with the following calls:
+  init_tmp_table_share(thd, &table_share, "", 0, "", path);
+  ret |= open_table_def(thd, &table_share, 0);
+
+  attach_thread(jvm, env);
+  { // destruct frame before detaching
+    JavaFrame frame(env, 2);
+    jstring table_name = string_to_java_string(
+        extract_table_name_from_path(path));
+    jstring jtablespace = NULL;
+    if (table_share.tablespace != NULL)
+    {
+      jtablespace = string_to_java_string(table_share.tablespace);
+    }
+
+    this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().drop_table,
+        table_name, jtablespace);
+    if (env->ExceptionCheck()) { ret = 1; }
+    EXCEPTION_CHECK("HoneycombHandler::drop_table", "calling dropTable");
+  }
+  detach_thread(jvm);
+  free_table_share(&table_share);
+
+  DBUG_RETURN(ret);
+}

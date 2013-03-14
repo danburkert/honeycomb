@@ -128,14 +128,14 @@ static int honeycomb_done_func(void *p)
   DBUG_RETURN(error);
 }
 
-static handler* honeycomb_create_handler(handlerton *hton, TABLE_SHARE *table,
+static handler* honeycomb_create_handler(handlerton *hton, TABLE_SHARE *table_share,
     MEM_ROOT *mem_root)
 {
   JNIEnv* env;
   attach_thread(jvm, env);
   jobject handler_proxy = handler_factory(env);
   detach_thread(jvm);
-  return new (mem_root) HoneycombHandler(hton, table, &honeycomb_mutex,
+  return new (mem_root) HoneycombHandler(hton, table_share, &honeycomb_mutex,
       &honeycomb_open_tables, jvm, cache, handler_proxy);
 }
 

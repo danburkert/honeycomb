@@ -14,6 +14,7 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
 
   handler_proxy_.clazz         = get_class_ref(env, HONEYCOMB "mysql/HandlerProxy");
   handler_proxy_.create_table  = get_method_id(env, handler_proxy_.clazz, "createTable", "(Ljava/lang/String;Ljava/lang/String;[BJ)V");
+  handler_proxy_.drop_table    = get_method_id(env, handler_proxy_.clazz, "dropTable", "(Ljava/lang/String;Ljava/lang/String;)V");
   handler_proxy_.open_table    = get_method_id(env, handler_proxy_.clazz, "openTable", "(Ljava/lang/String;Ljava/lang/String;)V");
   handler_proxy_.get_row_count = get_method_id(env, handler_proxy_.clazz, "getRowCount", "()J");
 
@@ -31,7 +32,6 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   hbase_adapter_.flush_writes                 = get_static_method_id(env, hbase_adapter_.clazz, "flushWrites", "(J)V");
   hbase_adapter_.delete_row                   = get_static_method_id(env, hbase_adapter_.clazz, "deleteRow", "(Ljava/lang/String;[B)Z");
   hbase_adapter_.delete_all_rows              = get_static_method_id(env, hbase_adapter_.clazz, "deleteAllRows", "(Ljava/lang/String;)I");
-  hbase_adapter_.drop_table                   = get_static_method_id(env, hbase_adapter_.clazz, "dropTable", "(Ljava/lang/String;)Z");
   hbase_adapter_.get_row                      = get_static_method_id(env, hbase_adapter_.clazz, "getRow", "(J[B)[B");
   hbase_adapter_.start_index_scan             = get_static_method_id(env, hbase_adapter_.clazz, "startIndexScan", "(Ljava/lang/String;Ljava/lang/String;)J");
   hbase_adapter_.find_duplicate_key           = get_static_method_id(env, hbase_adapter_.clazz, "findDuplicateKey", "(Ljava/lang/String;Ljava/util/Map;)Ljava/lang/String;");

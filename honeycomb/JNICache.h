@@ -15,7 +15,8 @@ class JNICache
       jclass clazz;
       jmethodID create_table,
                 get_row_count,
-                open_table;
+                open_table,
+                drop_table;
     };
     struct HBaseAdapter
     {
@@ -33,7 +34,6 @@ class JNICache
                 flush_writes,
                 delete_row,
                 delete_all_rows,
-                drop_table,
                 get_row,
                 start_index_scan,
                 find_duplicate_key,

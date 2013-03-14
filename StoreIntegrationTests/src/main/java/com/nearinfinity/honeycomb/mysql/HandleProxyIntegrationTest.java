@@ -32,7 +32,8 @@ public class HandleProxyIntegrationTest {
         proxy.openTable(tableName, Constants.HBASE_TABLESPACE);
         proxy.renameTable(newTableName);
         assertThat(newTableName).isEqualTo(proxy.getTableName());
-        proxy.dropTable();
+        proxy.closeTable();
+        proxy.dropTable(newTableName, Constants.HBASE_TABLESPACE);
     }
 
     public static void testSuccessfulAlter() throws Exception {
@@ -44,7 +45,8 @@ public class HandleProxyIntegrationTest {
         proxy.openTable(tableName, Constants.HBASE_TABLESPACE);
         schema.getColumns().put("c3", new ColumnSchema(ColumnType.LONG, false, false, 8, 0, 0));
         proxy.alterTable(Util.serializeTableSchema(schema));
-        proxy.dropTable();
+        proxy.closeTable();
+        proxy.dropTable(tableName, Constants.HBASE_TABLESPACE);
     }
 
     public static void testGetAutoIncrement() throws Exception {
@@ -56,7 +58,8 @@ public class HandleProxyIntegrationTest {
         proxy.openTable(tableName, Constants.HBASE_TABLESPACE);
         long autoIncValue = proxy.getAutoIncValue();
         assertThat(autoIncValue).isEqualTo(1);
-        proxy.dropTable();
+        proxy.closeTable();
+        proxy.dropTable(tableName, Constants.HBASE_TABLESPACE);
     }
 
     public static void testIncrementAutoIncrement() throws Exception {
@@ -68,7 +71,8 @@ public class HandleProxyIntegrationTest {
         proxy.openTable(tableName, Constants.HBASE_TABLESPACE);
         long autoIncValue = proxy.incrementAutoIncrementValue(1);
         assertThat(autoIncValue).isEqualTo(2).isEqualTo(proxy.getAutoIncValue());
-        proxy.dropTable();
+        proxy.closeTable();
+        proxy.dropTable(tableName, Constants.HBASE_TABLESPACE);
     }
 
     private static TableSchema getTableSchema() {
