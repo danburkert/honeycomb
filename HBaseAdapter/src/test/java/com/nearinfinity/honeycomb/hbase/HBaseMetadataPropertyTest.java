@@ -44,7 +44,7 @@ public class HBaseMetadataPropertyTest {
             TableSchema schema = tableSchemaGen.next();
             final String tableName = TableSchemaGenerator.MYSQL_NAME_GEN.next();
             tableSchemas.put(tableName, schema);
-            hbaseMetadata.putSchema(tableName, schema);
+            hbaseMetadata.createSchema(tableName, schema);
         }
     }
 
@@ -87,7 +87,7 @@ public class HBaseMetadataPropertyTest {
     public void testSchemaDeleteRemovesTable() throws Exception {
         TableSchema schema = tableSchemaGen.next();
         final String tableName = TableSchemaGenerator.MYSQL_NAME_GEN.next();
-        hbaseMetadata.putSchema(tableName, schema);
+        hbaseMetadata.createSchema(tableName, schema);
 
         long tableId = hbaseMetadata.getTableId(tableName);
         Assert.assertEquals(schema, hbaseMetadata.getSchema(tableId));

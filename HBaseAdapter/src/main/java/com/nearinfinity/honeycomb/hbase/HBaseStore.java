@@ -45,7 +45,7 @@ public class HBaseStore implements Store {
 
     @Override
     public void createTable(String tableName, TableSchema schema) throws Exception {
-        getHBaseMetadata().putSchema(tableName, schema);
+        getHBaseMetadata().createSchema(tableName, schema);
     }
 
     @Override

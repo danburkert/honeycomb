@@ -13,7 +13,7 @@ import com.nearinfinity.honeycomb.hbase.VarEncoder;
 import com.nearinfinity.honeycomb.hbaseclient.Constants;
 import com.nearinfinity.honeycomb.mysql.Util;
 
-public class IndexRow implements RowKey {
+public abstract class IndexRow implements RowKey {
     private final byte prefix;
     private final long tableId;
     private UUID uuid;

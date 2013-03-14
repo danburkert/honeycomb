@@ -11,6 +11,7 @@ import com.nearinfinity.honeycomb.hbaseclient.Constants;
 import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.Verify;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -103,7 +104,7 @@ public class HBaseMetadata {
         }
     }
 
-    public void putSchema(String tableName, TableSchema schema)
+    public void createSchema(String tableName, TableSchema schema)
             throws IOException {
         Verify.isNotNullOrEmpty(tableName);
         checkNotNull(schema);
@@ -112,6 +113,7 @@ public class HBaseMetadata {
         puts.add(putTableId(tableName, tableId));
         puts.add(putColumnIds(tableId, schema.getColumns()));
         puts.add(putTableSchema(tableId, schema));
+        puts.add(putIndices(tableId, schema.getIndices()));
 
         performMutations(ImmutableList.<Delete>of(), puts);
     }
@@ -125,14 +127,14 @@ public class HBaseMetadata {
         List<Delete> deletes = new ArrayList<Delete>();
 
         Delete columnIdsDelete = new Delete(new ColumnsRow(tableId).encode());
-        // commented out because MockHTable seems to be broken
-        // columnIdsDelete.deleteFamily(COLUMN_FAMILY);
+        Delete indicesIdsDelete = new Delete(new IndicesRow(tableId).encode());
 
         Delete rowsDelete = new Delete(new RowsRow().encode());
         rowsDelete.deleteColumn(COLUMN_FAMILY, serializedId);
 
         deletes.add(deleteTableId(tableName));
         deletes.add(columnIdsDelete);
+        deletes.add(indicesIdsDelete);
         deletes.add(rowsDelete);
         deletes.add(deleteAutoIncCounter(tableId));
         deletes.add(deleteTableSchema(tableId));
@@ -273,6 +275,16 @@ public class HBaseMetadata {
         }
     }
 
+    private long getNextIndexId(long tableId, int n) throws IOException {
+        HTableInterface hTable = getHTable();
+        try {
+            return hTable.incrementColumnValue(new IndicesRow(tableId).encode(),
+                    COLUMN_FAMILY, new byte[0], n);
+        } finally {
+            hTable.close();
+        }
+    }
+
     private long getNextColumnId(long tableId, int n) throws IOException {
         HTableInterface hTable = getHTable();
         try {
@@ -313,12 +325,22 @@ public class HBaseMetadata {
     private Put putColumnIds(long tableId, Map<String, ColumnSchema> columns)
             throws IOException {
         long columnId = getNextColumnId(tableId, columns.size());
-
         Put put = new Put(new ColumnsRow(tableId).encode());
 
         for (Map.Entry<String, ColumnSchema> columnEntry : columns.entrySet()) {
             put.add(COLUMN_FAMILY, serializeName(columnEntry.getKey()),
                     serializeId(columnId--));
+        }
+        return put;
+    }
+
+    private Put putIndices(long tableId, Map<String, IndexSchema> indices) throws IOException {
+        long indexId = getNextIndexId(tableId, indices.size());
+        Put put = new Put(new IndicesRow(tableId).encode());
+
+        for (Map.Entry<String, IndexSchema> columnEntry : indices.entrySet()) {
+            put.add(COLUMN_FAMILY, serializeName(columnEntry.getKey()),
+                    serializeId(indexId--));
         }
         return put;
     }
