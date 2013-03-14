@@ -78,7 +78,7 @@ public class HandlerProxy {
      * Updates the existing SQL table name representation in the underlying
      * {@link Store} implementation to the specified new table name
      *
-     * @param newName   The new table name to represent, not null or empty
+     * @param newName The new table name to represent, not null or empty
      * @throws Exception
      */
     public void renameTable(final String newName) throws Exception {
@@ -89,8 +89,10 @@ public class HandlerProxy {
         tableName = newName;
     }
 
-    public long getRowCount() {
-        return 0;
+    public long getRowCount() throws Exception {
+        checkTableOpen();
+
+        return this.store.getRowCount(this.tableName);
     }
 
     public long getAutoIncValue()
@@ -118,6 +120,22 @@ public class HandlerProxy {
         checkTableOpen();
         TableSchema newSchema = Util.deserializeTableSchema(newSchemaSerialized);
         this.store.alterTable(this.tableName, newSchema);
+    }
+
+    public void truncateAutoIncrement() throws Exception {
+        checkTableOpen();
+        this.store.truncateAutoInc(this.tableName);
+    }
+
+    public void incrementRowCount(int amount) throws Exception {
+        checkTableOpen();
+
+        this.store.incrementRowCount(this.tableName, amount);
+    }
+
+    public void truncateRowCount() throws Exception {
+        checkTableOpen();
+        this.store.truncateRowCount(this.tableName);
     }
 
     private void checkTableOpen() {

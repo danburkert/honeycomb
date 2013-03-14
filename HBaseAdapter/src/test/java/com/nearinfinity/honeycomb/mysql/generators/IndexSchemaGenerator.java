@@ -1,4 +1,4 @@
-package com.nearinfinity.honeycomb.mysql;
+package com.nearinfinity.honeycomb.mysql.generators;
 
 import java.util.Collections;
 import java.util.List;

@@ -1,5 +1,7 @@
 package com.nearinfinity.honeycomb.hbase;
 
+import com.nearinfinity.honeycomb.Table;
+
 public interface HBaseTableFactory {
-    HBaseTable create(String tableName);
+    Table createTable(String tableName);
 }

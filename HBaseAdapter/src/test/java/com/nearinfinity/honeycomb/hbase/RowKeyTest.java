@@ -1,6 +1,7 @@
 package com.nearinfinity.honeycomb.hbase;
 
 import com.google.common.primitives.UnsignedBytes;
+import com.nearinfinity.honeycomb.hbase.generators.RowKeyGenerator;
 import com.nearinfinity.honeycomb.hbase.rowkey.*;
 import com.nearinfinity.honeycomb.mysql.Util;
 import net.java.quickcheck.Generator;
