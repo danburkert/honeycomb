@@ -18,10 +18,8 @@ import com.nearinfinity.honeycomb.hbaseclient.SqlTableCreator;
 public class HBaseModule extends AbstractModule {
     private static final Logger logger = Logger.getLogger(HBaseModule.class);
     private final HTableProvider hTableProvider;
-    private final MapBinder<String, Store> storeMapBinder;
 
-    public HBaseModule(Configuration configuration, MapBinder<String, Store> storeMapBinder) throws IOException {
-        this.storeMapBinder = storeMapBinder;
+    public HBaseModule(final Configuration configuration) throws IOException {
         hTableProvider = new HTableProvider(configuration);
 
         try {
@@ -39,6 +37,9 @@ public class HBaseModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        final MapBinder<String, Store> storeMapBinder =
+                MapBinder.newMapBinder(binder(), String.class, Store.class);
+
         storeMapBinder.addBinding(Constants.HBASE_TABLESPACE).to(HBaseStore.class);
 
         install(new FactoryModuleBuilder()

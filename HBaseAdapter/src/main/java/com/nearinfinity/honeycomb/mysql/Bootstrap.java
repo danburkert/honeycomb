@@ -16,9 +16,7 @@ import org.xml.sax.SAXException;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Names;
-import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.hbase.HBaseModule;
 import com.nearinfinity.honeycomb.hbaseclient.Constants;
 
@@ -48,11 +46,10 @@ public class Bootstrap extends AbstractModule {
 
     @Override
     protected void configure() {
-        MapBinder<String, Store> stores = MapBinder.newMapBinder(binder(), String.class, Store.class);
         bind(String.class).annotatedWith(Names.named(Constants.DEFAULT_TABLESPACE)).toInstance(Constants.HBASE_TABLESPACE);
 
         try {
-            HBaseModule hBaseModule = new HBaseModule(params, stores);
+            HBaseModule hBaseModule = new HBaseModule(params);
             install(hBaseModule);
         } catch (IOException e) {
             logger.fatal("Failure during HBase initialization.", e);
