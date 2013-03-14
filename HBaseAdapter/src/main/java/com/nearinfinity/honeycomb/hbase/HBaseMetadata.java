@@ -59,28 +59,16 @@ public class HBaseMetadata {
         }
     }
 
+    public Map<String, Long> getIndexIds(long tableId) throws IOException {
+        checkValidTableId(tableId);
+        return getNameToIdMap(new IndicesRow(tableId).encode());
+    }
+
     public BiMap<String, Long> getColumnIds(long tableId)
             throws IOException {
         checkValidTableId(tableId);
-        Get get = new Get(new ColumnsRow(tableId).encode());
-        get.addFamily(COLUMN_FAMILY);
-        HTableInterface hTable = getHTable();
-        try {
-            Result result = hTable.get(get);
-            Map<byte[], byte[]> serializedColumnIds = result.getFamilyMap(COLUMN_FAMILY);
-            Map<String, Long> columnIds = new HashMap<String, Long>(serializedColumnIds.size());
-
-            for (Map.Entry<byte[], byte[]> entry : serializedColumnIds.entrySet()) {
-                if (entry.getKey().length > 0) {
-                    columnIds.put(
-                            deserializeName(entry.getKey()),
-                            deserializeId(entry.getValue()));
-                }
-            }
-            return ImmutableBiMap.copyOf(columnIds);
-        } finally {
-            hTable.close();
-        }
+        Map<String, Long> nameToId = getNameToIdMap(new ColumnsRow(tableId).encode());
+        return ImmutableBiMap.copyOf(nameToId);
     }
 
     public TableSchema getSchema(long tableId)
@@ -104,10 +92,11 @@ public class HBaseMetadata {
         }
     }
 
-    public void createSchema(String tableName, TableSchema schema)
+    public void createTable(String tableName, TableSchema schema)
             throws IOException {
         Verify.isNotNullOrEmpty(tableName);
         checkNotNull(schema);
+        checkIndicesMatchColumns(schema.getIndices(), schema.getColumns());
         long tableId = getNextTableId();
         List<Put> puts = new ArrayList<Put>();
         puts.add(putTableId(tableName, tableId));
@@ -242,6 +231,38 @@ public class HBaseMetadata {
         checkValidTableId(tableId);
         performMutations(Lists.<Delete>newArrayList(deleteRowsCounter(tableId)),
                 ImmutableList.<Put>of());
+    }
+
+    private Map<String, Long> getNameToIdMap(byte[] encodedRow) throws IOException {
+        HTableInterface hTable = getHTable();
+        try {
+            Get get = new Get(encodedRow);
+            get.addFamily(COLUMN_FAMILY);
+            Result result = hTable.get(get);
+            Map<byte[], byte[]> serializedNameIds = result.getFamilyMap(COLUMN_FAMILY);
+            Map<String, Long> nameToId = new HashMap<String, Long>(serializedNameIds.size());
+
+            for (Map.Entry<byte[], byte[]> entry : serializedNameIds.entrySet()) {
+                if (entry.getKey().length > 0) {
+                    nameToId.put(
+                            deserializeName(entry.getKey()),
+                            deserializeId(entry.getValue()));
+                }
+            }
+            return nameToId;
+        } finally {
+            hTable.close();
+        }
+    }
+
+    private void checkIndicesMatchColumns(Map<String, IndexSchema> indices, Map<String, ColumnSchema> columns) {
+        for (IndexSchema index : indices.values()) {
+            for (String column : index.getColumns()) {
+                if (!columns.containsKey(column)) {
+                    throw new IllegalArgumentException("Only columns in the table maybe indexed.");
+                }
+            }
+        }
     }
 
     private long getCounter(byte[] row, byte[] identifier) throws IOException {
@@ -404,6 +425,6 @@ public class HBaseMetadata {
     }
 
     private void checkValidTableId(long tableId) {
-        checkArgument(tableId > 0, "Table id must be greater than zero.");
+        checkArgument(tableId >= 0, "Table id must be greater than zero.");
     }
 }

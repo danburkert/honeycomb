@@ -11,6 +11,7 @@ import com.nearinfinity.honeycomb.TableNotFoundException;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 public class HBaseStore implements Store {
@@ -21,6 +22,7 @@ public class HBaseStore implements Store {
     private LoadingCache<Long, Long> rowsCache;
     private LoadingCache<Long, Long> autoIncCache;
     private LoadingCache<Long, TableSchema> schemaCache;
+    private LoadingCache<Long, Map<String, Long>> indexCache;
 
     @Inject
     public HBaseStore(HBaseMetadata metadata, HBaseTableFactory tableFactory) {
@@ -39,13 +41,13 @@ public class HBaseStore implements Store {
     }
 
     @Override
-    public TableSchema getTableMetadata(String tableName) throws Exception {
+    public TableSchema getSchema(String tableName) throws Exception {
         return schemaCache.get(tableCache.get(tableName));
     }
 
     @Override
     public void createTable(String tableName, TableSchema schema) throws Exception {
-        getHBaseMetadata().createSchema(tableName, schema);
+        getHBaseMetadata().createTable(tableName, schema);
     }
 
     @Override
@@ -118,6 +120,11 @@ public class HBaseStore implements Store {
         rowsCache.invalidate(tableId);
     }
 
+    public Map<String, Long> getIndices(String tableName) throws ExecutionException {
+        long tableId = tableCache.get(tableName);
+        return indexCache.get(tableId);
+    }
+
     private void doInitialization() {
         tableCache = CacheBuilder
                 .newBuilder()
@@ -136,11 +143,19 @@ public class HBaseStore implements Store {
                     @Override
                     public BiMap<String, Long> load(Long tableId)
                             throws IOException, TableNotFoundException {
-
                         return getHBaseMetadata().getColumnIds(tableId);
                     }
                 }
                 );
+        indexCache = CacheBuilder
+                .newBuilder()
+                .build(new CacheLoader<Long, Map<String, Long>>() {
+                    @Override
+                    public Map<String, Long> load(Long tableId)
+                            throws IOException, TableNotFoundException {
+                        return getHBaseMetadata().getIndexIds(tableId);
+                    }
+                });
 
         autoIncCache = CacheBuilder
                 .newBuilder()

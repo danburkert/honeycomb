@@ -64,7 +64,7 @@ public interface Table extends Closeable {
      *
      * @return Scanner over index
      */
-    public Scanner AscIndexScanAt(/* KeyValueContainer keyValues */);
+    public Scanner ascendingIndexScanAt(/* KeyValueContainer keyValues */);
 
     /**
      * Return a scanner over the table's index after the specified key / values
@@ -72,7 +72,7 @@ public interface Table extends Closeable {
      *
      * @return Scanner over index
      */
-    public Scanner AscIndexScanAfter(/* KeyValueContainer keyValues */);
+    public Scanner ascendingIndexScanAfter(/* KeyValueContainer keyValues */);
 
     /**
      * Return a scanner over the table's index at the specified key / values in
@@ -80,7 +80,7 @@ public interface Table extends Closeable {
      *
      * @return Scanner over index
      */
-    public Scanner DescIndexScanAt(/* KeyValueContainer keyValues */);
+    public Scanner descendingIndexScanAt(/* KeyValueContainer keyValues */);
 
     /**
      * Return a scanner over the table's index after the specified key / values
@@ -88,7 +88,7 @@ public interface Table extends Closeable {
      *
      * @return Scanner over index
      */
-    public Scanner DescIndexScanAfter(/* KeyValueContainer keyValues */);
+    public Scanner descendingIndexScanAfter(/* KeyValueContainer keyValues */);
 
     /**
      * Return a scanner over the rows in the table with the specified key /values
@@ -96,4 +96,9 @@ public interface Table extends Closeable {
      * @return Scanner over index
      */
     public Scanner indexScanExact(/* KeyValueContainer keyValues */);
+
+    /**
+     * Remove all rows from the table.
+     */
+    void deleteAllRows() throws IOException;
 }

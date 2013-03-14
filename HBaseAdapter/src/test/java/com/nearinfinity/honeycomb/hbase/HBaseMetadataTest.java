@@ -57,7 +57,7 @@ public class HBaseMetadataTest {
         TableSchema schema = tableSchemaGen.next();
         final String tableName = TableSchemaGenerator.MYSQL_NAME_GEN.next();
 
-        hbaseMetadata.createSchema(tableName, schema);
+        hbaseMetadata.createTable(tableName, schema);
 
         long tableId = hbaseMetadata.getTableId(tableName);
         TableSchema expected = hbaseMetadata.getSchema(tableId);
@@ -81,7 +81,7 @@ public class HBaseMetadataTest {
         HTableInterface hTableSpy = PowerMockito.spy(MockHTable.create());
         Mockito.when(hTableSpy.isAutoFlush()).thenReturn(false);
 
-        hbaseMetadata.createSchema(originalName, origSchema);
+        hbaseMetadata.createTable(originalName, origSchema);
 
         long origId = hbaseMetadata.getTableId(originalName);
         hbaseMetadata.renameExistingTable(originalName, newName);
@@ -132,7 +132,7 @@ public class HBaseMetadataTest {
 
         TableSchema origSchema = new TableSchema(origColumns, newSchema.getIndices());
 
-        hbaseMetadata.createSchema(tableName, origSchema);
+        hbaseMetadata.createTable(tableName, origSchema);
 
         long tableId = hbaseMetadata.getTableId(tableName);
         hbaseMetadata.updateSchema(tableId, origSchema, newSchema);
@@ -157,7 +157,7 @@ public class HBaseMetadataTest {
 
         TableSchema origSchema = new TableSchema(origColumns, newSchema.getIndices());
 
-        hbaseMetadata.createSchema(tableName, origSchema);
+        hbaseMetadata.createTable(tableName, origSchema);
 
         long tableId = hbaseMetadata.getTableId(tableName);
         hbaseMetadata.updateSchema(tableId, origSchema, newSchema);
@@ -175,7 +175,7 @@ public class HBaseMetadataTest {
         TableSchema table = tableSchemaGen.next();
         final String tableName = TableSchemaGenerator.MYSQL_NAME_GEN.next();
 
-        hbaseMetadata.createSchema(tableName, table);
+        hbaseMetadata.createTable(tableName, table);
 
         long tableId = hbaseMetadata.getTableId(tableName);
         long value = longGen.next();
@@ -192,7 +192,7 @@ public class HBaseMetadataTest {
         TableSchema table = tableSchemaGen.next();
         final String tableName = TableSchemaGenerator.MYSQL_NAME_GEN.next();
 
-        hbaseMetadata.createSchema(tableName, table);
+        hbaseMetadata.createTable(tableName, table);
 
         long tableId = hbaseMetadata.getTableId(tableName);
         long value = longGen.next();

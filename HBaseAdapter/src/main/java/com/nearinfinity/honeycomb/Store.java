@@ -53,7 +53,7 @@ public interface Store {
      * @return The table's metadata
      * @throws TableNotFoundException
      */
-    public TableSchema getTableMetadata(String tableName) throws Exception;
+    public TableSchema getSchema(String tableName) throws Exception;
 
     /**
      * Alter the table with the specified name.

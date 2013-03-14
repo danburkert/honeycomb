@@ -2,7 +2,11 @@ package com.nearinfinity.honeycomb.mysql;
 
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
+import com.nearinfinity.honeycomb.hbase.HBaseTableFactory;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+
+import java.io.IOException;
+import java.util.UUID;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -76,7 +80,7 @@ public class HandlerProxy {
     public long getAutoIncValue()
             throws Exception {
         checkTableOpen();
-        if (!Verify.hasAutoIncrementColumn(store.getTableMetadata(tableName))) {
+        if (!Verify.hasAutoIncrementColumn(store.getSchema(tableName))) {
             throw new IllegalArgumentException(format("Table %s is not an autoincrement table.", this.tableName));
         }
 
@@ -85,7 +89,7 @@ public class HandlerProxy {
 
     public long incrementAutoIncrementValue(long amount) throws Exception {
         checkTableOpen();
-        if (!Verify.hasAutoIncrementColumn(store.getTableMetadata(tableName))) {
+        if (!Verify.hasAutoIncrementColumn(store.getSchema(tableName))) {
             throw new IllegalArgumentException(format("Column %s is not an autoincrement column.", this.tableName));
         }
 
@@ -94,6 +98,7 @@ public class HandlerProxy {
 
     public void dropTable() throws Exception {
         checkTableOpen();
+        this.table.deleteAllRows();
         this.store.deleteTable(this.tableName);
         this.isTableOpen = false;
     }
@@ -119,6 +124,21 @@ public class HandlerProxy {
     public void truncateRowCount() throws Exception {
         checkTableOpen();
         this.store.truncateRowCount(this.tableName);
+    }
+
+    public void insert(Row row) {
+        checkTableOpen();
+        this.table.insert(row);
+    }
+
+    public void flush() throws IOException {
+        checkTableOpen();
+        this.table.flush();
+    }
+
+    public Row getRow(UUID uuid) {
+        checkTableOpen();
+        return this.table.get(uuid);
     }
 
     private void checkTableOpen() {

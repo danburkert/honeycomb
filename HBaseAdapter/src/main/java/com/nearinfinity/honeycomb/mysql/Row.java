@@ -17,11 +17,11 @@ import java.util.UUID;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Row {
-    private final RowContainer row;
     private static final DatumWriter<RowContainer> writer =
             new SpecificDatumWriter<RowContainer>(RowContainer.class);
     private static final DatumReader<RowContainer> reader =
             new SpecificDatumReader<RowContainer>(RowContainer.class);
+    private final RowContainer row;
 
     /**
      * Construct a new Row with specified records and UUID.
@@ -42,6 +42,19 @@ public class Row {
      */
     private Row(RowContainer row) {
         this.row = row;
+    }
+
+    /**
+     * Deserialize the provided serialized row buffer to a new {@link Row} instance
+     *
+     * @param serializedRow byte buffer containing serialized Row
+     * @return new Row instance from serializedRow
+     * @throws IOException On deserialization read failure
+     */
+    public static Row deserialize(byte[] serializedRow) throws IOException {
+        ByteArrayInputStream in = new ByteArrayInputStream(serializedRow);
+        Decoder decoder = DecoderFactory.get().binaryDecoder(in, null);
+        return new Row(reader.read(null, decoder));
     }
 
     /**
@@ -71,6 +84,7 @@ public class Row {
         for (Map.Entry<String, Object> entry : row.getRecords().entrySet()) {
             retMap.put(entry.getKey(), (entry.getValue() == null) ? null : ((ByteBuffer) entry.getValue()).array());
         }
+
         return retMap;
     }
 
@@ -86,19 +100,6 @@ public class Row {
         writer.write(row, encoder);
         encoder.flush();
         return out.toByteArray();
-    }
-
-    /**
-     * Deserialize the provided serialized row buffer to a new {@link Row} instance
-     *
-     * @param serializedRow byte buffer containing serialized Row
-     * @return new Row instance from serializedRow
-     * @throws IOException On deserialization read failure
-     */
-    public static Row deserialize(byte[] serializedRow) throws IOException {
-        ByteArrayInputStream in = new ByteArrayInputStream(serializedRow);
-        Decoder decoder = DecoderFactory.get().binaryDecoder(in, null);
-        return new Row(reader.read(null, decoder));
     }
 
     @Override

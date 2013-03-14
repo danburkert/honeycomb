@@ -1,12 +1,9 @@
 package com.nearinfinity.honeycomb.hbase.generators;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.UUID;
-
+import com.nearinfinity.honeycomb.hbase.RowKey;
+import com.nearinfinity.honeycomb.hbase.rowkey.*;
+import com.nearinfinity.honeycomb.hbaseclient.Constants;
+import com.nearinfinity.honeycomb.mysql.generators.UUIDGenerator;
 import net.java.quickcheck.FrequencyGenerator;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.CombinedGenerators;
@@ -14,17 +11,7 @@ import net.java.quickcheck.generator.PrimitiveGenerators;
 import net.java.quickcheck.generator.support.DefaultFrequencyGenerator;
 import net.java.quickcheck.generator.support.FixedValuesGenerator;
 
-import com.nearinfinity.honeycomb.hbase.RowKey;
-import com.nearinfinity.honeycomb.hbase.rowkey.AscIndexRow;
-import com.nearinfinity.honeycomb.hbase.rowkey.AutoIncRow;
-import com.nearinfinity.honeycomb.hbase.rowkey.ColumnsRow;
-import com.nearinfinity.honeycomb.hbase.rowkey.DataRow;
-import com.nearinfinity.honeycomb.hbase.rowkey.DescIndexRow;
-import com.nearinfinity.honeycomb.hbase.rowkey.RowsRow;
-import com.nearinfinity.honeycomb.hbase.rowkey.SchemaRow;
-import com.nearinfinity.honeycomb.hbase.rowkey.TablesRow;
-import com.nearinfinity.honeycomb.hbaseclient.Constants;
-import com.nearinfinity.honeycomb.mysql.generators.UUIDGenerator;
+import java.util.*;
 
 public class RowKeyGenerator implements Generator<RowKey> {
     private static final Random rand = new Random();
@@ -32,12 +19,10 @@ public class RowKeyGenerator implements Generator<RowKey> {
     private static final RowsRow rowsRow = new RowsRow();
     private static final AutoIncRow autoIncRow = new AutoIncRow();
     private static final SchemaRow schemaRow = new SchemaRow();
-
     private static Generator<Long> randIdGen = PrimitiveGenerators.longs(0, Long.MAX_VALUE);
     private static Generator<UUID> uuidGen = new UUIDGenerator();
     private static Generator<byte[]> randValueGen =
             CombinedGenerators.nullsAnd(CombinedGenerators.byteArrays(), 5);
-
     private final Generator<List<Long>> randIdsGen = CombinedGenerators.lists(randIdGen,
             PrimitiveGenerators.integers(1, Constants.KEY_PART_COUNT));
     private final FrequencyGenerator<RowKey> rowKeyGen;
@@ -113,17 +98,20 @@ public class RowKeyGenerator implements Generator<RowKey> {
 
     private class IndexRowGenerator implements Generator<RowKey> {
         private final Generator<Long> columnIdGen;
+        private final Generator<Long> indexIdGen;
         private final Generator<List<Long>> columnsGen;
         private final Generator<byte[]> valueGen;
 
         public IndexRowGenerator() {
             columnIdGen = randIdGen;
+            indexIdGen = randIdGen;
             columnsGen = randIdsGen;
             valueGen = randValueGen;
         }
 
         public IndexRowGenerator(Long tableId) {
             columnIdGen = new FixedValuesGenerator<Long>(tableId);
+            indexIdGen = new FixedValuesGenerator<Long>(tableId);
             columnsGen = CombinedGenerators.lists(randIdGen,
                     PrimitiveGenerators.integers(1, 4));
             valueGen = randValueGen;
@@ -131,34 +119,37 @@ public class RowKeyGenerator implements Generator<RowKey> {
 
         public IndexRowGenerator(Long tableId, List<Long> tableIds) {
             columnIdGen = new FixedValuesGenerator<Long>(tableId);
+            indexIdGen = new FixedValuesGenerator<Long>(tableId);
             columnsGen = new FixedValuesGenerator<List<Long>>(tableIds);
             valueGen = randValueGen;
         }
 
         public IndexRowGenerator(Long tableId, List<Long> tableIds, List<byte[]> values) {
             columnIdGen = new FixedValuesGenerator<Long>(tableId);
+            indexIdGen = new FixedValuesGenerator<Long>(tableId);
             columnsGen = new FixedValuesGenerator<List<Long>>(tableIds);
             valueGen = new FixedValuesGenerator<byte[]>(values);
         }
 
         @Override
         public RowKey next() {
+            long indexId = indexIdGen.next();
             List<Long> columnIds = columnsGen.next();
-            Map<Long, byte[]> records = new HashMap<Long, byte[]>();
+            List<byte[]> records = new LinkedList<byte[]>();
             for (Long columnId : columnIds) {
-                records.put(columnId, valueGen.next());
+                records.add(valueGen.next());
             }
             return createIndexRow(columnIdGen.next(), uuidGen.next(),
-                    columnIds, records);
+                    indexId, records);
         }
 
-        private RowKey createIndexRow(Long tableId, UUID uuid, List<Long> columnIds,
-                                      Map<Long, byte[]> records) {
-            if( rand.nextBoolean() ) {
-                return new AscIndexRow(tableId, columnIds, records, uuid);
+        private RowKey createIndexRow(Long tableId, UUID uuid, Long indexId,
+                                      List<byte[]> records) {
+            if (rand.nextBoolean()) {
+                return new AscIndexRow(tableId, indexId, records, uuid);
             }
 
-            return new DescIndexRow(tableId, columnIds, records, uuid);
+            return new DescIndexRow(tableId, indexId, records, uuid);
         }
     }
 }
