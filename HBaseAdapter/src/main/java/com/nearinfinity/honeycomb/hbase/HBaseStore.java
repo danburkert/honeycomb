@@ -35,7 +35,7 @@ public class HBaseStore implements Store {
 
     @Override
     public Table openTable(String tableName) throws Exception {
-        return tableFactory.create(tableName);
+        return tableFactory.createTable(tableName);
     }
 
     @Override
