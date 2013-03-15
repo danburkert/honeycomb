@@ -1,6 +1,7 @@
 package com.nearinfinity.honeycomb.mysql;
 
 import com.nearinfinity.honeycomb.*;
+import com.nearinfinity.honeycomb.mysql.gen.RowContainer;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 
 import java.io.IOException;
@@ -47,8 +48,8 @@ public class HandlerProxy {
      * Drop the table with the given specifications.  The table is not open when
      * this is called.
      *
-     * @param tableName     Name of the table to be dropped
-     * @param tableSpace    What store to drop table from.  If null, use default.
+     * @param tableName  Name of the table to be dropped
+     * @param tableSpace What store to drop table from.  If null, use default.
      * @throws IOException
      * @throws HoneycombException
      */
@@ -84,9 +85,9 @@ public class HandlerProxy {
      * {@link Store} implementation to the specified new table name.  The table
      * is not open when this is called.
      *
-     * @param originalName  The existing name of the table, not null or empty
-     * @param tableSpace    The store which contains the table
-     * @param newName       The new table name to represent, not null or empty
+     * @param originalName The existing name of the table, not null or empty
+     * @param tableSpace   The store which contains the table
+     * @param newName      The new table name to represent, not null or empty
      * @throws IOException
      * @throws HoneycombException
      */
@@ -149,8 +150,9 @@ public class HandlerProxy {
         this.store.truncateRowCount(this.tableName);
     }
 
-    public void insert(Row row) throws IOException, TableNotFoundException {
+    public void insert(byte[] rowBytes) throws IOException {
         checkTableOpen();
+        Row row = Row.deserialize(rowBytes);
         this.table.insert(row);
     }
 
@@ -164,7 +166,19 @@ public class HandlerProxy {
         return this.table.get(uuid);
     }
 
+    public void deleteRow(UUID uuid) throws IOException, RowNotFoundException {
+        checkTableOpen();
+        this.table.delete(uuid);
+    }
+
     private void checkTableOpen() {
         checkState(table != null, "Table must be opened before used.");
+    }
+
+    public void updateRow(byte[] newRowBytes) throws IOException, RowNotFoundException {
+        checkTableOpen();
+        checkNotNull(newRowBytes);
+        Row newRow = Row.deserialize(newRowBytes);
+        this.table.update(newRow);
     }
 }

@@ -17,7 +17,10 @@ import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import org.apache.hadoop.hbase.client.*;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 public class HBaseTable implements Table {
     private final HTableInterface hTable;
@@ -35,45 +38,57 @@ public class HBaseTable implements Table {
     }
 
     @Override
-    public void insert(Row row) throws IOException, TableNotFoundException {
-        byte[] serializeRow = row.serialize();
-        UUID uuid = row.getUUID();
-        Map<String, Long> indexIds = this.store.getIndices(this.tableId);
-        Map<String, byte[]> records = row.getRecords();
+    public void insert(Row row) throws IOException {
+        final byte[] serializeRow = row.serialize();
+        final UUID uuid = row.getUUID();
         hTable.put(createEmptyQualifierPut(new DataRow(this.tableId, uuid), serializeRow));
-
-        for (Map.Entry<String, IndexSchema> index : schema.getIndices().entrySet()) {
-            long indexId = indexIds.get(index.getKey());
-            List<byte[]> sortedRecords = getValuesInColumnOrder(records, index.getValue().getColumns());
-            hTable.put(createEmptyQualifierPut(new DescIndexRow(this.tableId, indexId, sortedRecords, uuid), serializeRow));
-            hTable.put(createEmptyQualifierPut(new AscIndexRow(this.tableId, indexId, sortedRecords, uuid), serializeRow));
-        }
+        doToIndices(row, new IndexAction() {
+            @Override
+            public void execute(long indexId, List<byte[]> sortedRecords) throws IOException {
+                hTable.put(createEmptyQualifierPut(new DescIndexRow(tableId, indexId, sortedRecords, uuid), serializeRow));
+                hTable.put(createEmptyQualifierPut(new AscIndexRow(tableId, indexId, sortedRecords, uuid), serializeRow));
+            }
+        });
     }
 
     @Override
     public void update(Row row) throws IOException, RowNotFoundException {
+        delete(row.getUUID());
+        insert(row);
     }
 
     @Override
-    public void delete(UUID uuid) throws IOException, RowNotFoundException {
+    public void delete(final UUID uuid) throws IOException, RowNotFoundException {
+        Row row = get(uuid);
+        final List<Delete> deleteList = Lists.newLinkedList();
+        deleteList.add(new Delete(new DataRow(this.tableId, uuid).encode()));
+        doToIndices(row, new IndexAction() {
+            @Override
+            public void execute(long indexId, List<byte[]> sortedRecords) throws IOException {
+                deleteList.add(createEmptyQualifierDelete(new DescIndexRow(tableId, indexId, sortedRecords, uuid)));
+                deleteList.add(createEmptyQualifierDelete(new AscIndexRow(tableId, indexId, sortedRecords, uuid)));
+            }
+        });
+
+        hTable.delete(deleteList);
     }
 
     @Override
-    public void deleteAllRows() throws IOException, TableNotFoundException {
+    public void deleteAllRows() throws IOException {
         long totalDeleteSize = 0, writeBufferSize = 50000; // TODO: retrieve write buffer size from configuration
-        Map<String, Long> indexIds = this.store.getIndices(this.tableId);
-        List<Delete> deleteList = Lists.newLinkedList();
+        final List<Delete> deleteList = Lists.newLinkedList();
         Scanner rows = this.tableScan();
         for (Row row : rows) {
-            UUID uuid = row.getUUID();
+            final UUID uuid = row.getUUID();
             deleteList.add(new Delete(new DataRow(this.tableId, uuid).encode()));
-            Map<String, byte[]> records = row.getRecords();
-            for (Map.Entry<String, IndexSchema> index : schema.getIndices().entrySet()) {
-                long indexId = indexIds.get(index.getKey());
-                List<byte[]> sortedRecords = getValuesInColumnOrder(records, index.getValue().getColumns());
-                deleteList.add(createEmptyQualifierDelete(new DescIndexRow(this.tableId, indexId, sortedRecords, uuid)));
-                deleteList.add(createEmptyQualifierDelete(new AscIndexRow(this.tableId, indexId, sortedRecords, uuid)));
-            }
+            doToIndices(row, new IndexAction() {
+                @Override
+                public void execute(long indexId, List<byte[]> sortedRecords) throws IOException {
+                    deleteList.add(createEmptyQualifierDelete(new DescIndexRow(tableId, indexId, sortedRecords, uuid)));
+                    deleteList.add(createEmptyQualifierDelete(new AscIndexRow(tableId, indexId, sortedRecords, uuid)));
+                }
+            });
+
             totalDeleteSize += deleteList.size() * row.serialize().length;
             if (totalDeleteSize > writeBufferSize) {
                 hTable.delete(deleteList);
@@ -141,6 +156,22 @@ public class HBaseTable implements Table {
         this.hTable.close();
     }
 
+    private void doToIndices(Row row, IndexAction action) throws IOException {
+        Map<String, byte[]> records = row.getRecords();
+        Map<String, Long> indexIds;
+        try {
+            indexIds = this.store.getIndices(this.tableId);
+        } catch (TableNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
+        for (Map.Entry<String, IndexSchema> index : schema.getIndices().entrySet()) {
+            long indexId = indexIds.get(index.getKey());
+            List<byte[]> sortedRecords = getValuesInColumnOrder(records, index.getValue().getColumns());
+            action.execute(indexId, sortedRecords);
+        }
+    }
+
     private List<byte[]> getValuesInColumnOrder(Map<String, byte[]> records, List<String> columns) {
         List<byte[]> sortedRecords = new LinkedList<byte[]>();
         for (String column : columns) {
@@ -155,5 +186,9 @@ public class HBaseTable implements Table {
 
     private Delete createEmptyQualifierDelete(RowKey row) {
         return new Delete(row.encode());
+    }
+
+    private interface IndexAction {
+        public void execute(long indexId, List<byte[]> sortedRecords) throws IOException;
     }
 }

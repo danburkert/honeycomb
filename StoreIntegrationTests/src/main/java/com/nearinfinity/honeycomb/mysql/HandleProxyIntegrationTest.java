@@ -1,6 +1,7 @@
 package com.nearinfinity.honeycomb.mysql;
 
 import com.google.common.collect.Lists;
+import com.nearinfinity.honeycomb.RowNotFoundException;
 import com.nearinfinity.honeycomb.hbaseclient.Constants;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
@@ -119,10 +120,56 @@ public class HandleProxyIntegrationTest {
                 map.put(COLUMN2, ByteBuffer.allocate(8).putLong(6).rewind());
                 UUID uuid = UUID.randomUUID();
                 Row row = new Row(map, uuid);
-                proxy.insert(row);
+                proxy.insert(row.serialize());
                 proxy.flush();
                 Row result = proxy.getRow(uuid);
                 assertThat(result).isEqualTo(row);
+            }
+        });
+    }
+
+    public static void testDeleteRow() throws Exception {
+        testProxy("Testing delete row", new Action() {
+            @Override
+            public void execute(HandlerProxy proxy) throws Exception {
+                Map<String, Object> map = new HashMap<String, Object>();
+                map.put(COLUMN1, ByteBuffer.allocate(8).putLong(5).rewind());
+                map.put(COLUMN2, ByteBuffer.allocate(8).putLong(6).rewind());
+                UUID uuid = UUID.randomUUID();
+                Row row = new Row(map, uuid);
+                proxy.insert(row.serialize());
+                proxy.flush();
+                proxy.deleteRow(uuid);
+                proxy.flush();
+                try {
+                    proxy.getRow(uuid);
+                } catch (RowNotFoundException e) {
+                    return;
+                }
+
+                throw new AssertionError("Row was not deleted");
+            }
+        });
+    }
+
+    public static void testUpdateRow() throws Exception {
+        testProxy("Testing delete row", new Action() {
+            @Override
+            public void execute(HandlerProxy proxy) throws Exception {
+                UUID uuid = UUID.randomUUID();
+                Map<String, Object> map = new HashMap<String, Object>();
+                map.put(COLUMN1, ByteBuffer.allocate(8).putLong(5).rewind());
+                map.put(COLUMN2, ByteBuffer.allocate(8).putLong(6).rewind());
+                Row row = new Row(map, uuid);
+                proxy.insert(row.serialize());
+                proxy.flush();
+
+                map.put(COLUMN1, ByteBuffer.allocate(8).putLong(3).rewind());
+                Row newRow = new Row(map, uuid);
+                proxy.updateRow(newRow.serialize());
+                proxy.flush();
+                Row result = proxy.getRow(uuid);
+                assertThat(result).isEqualTo(newRow);
             }
         });
     }
@@ -163,6 +210,8 @@ public class HandleProxyIntegrationTest {
             testGetRowCount();
             testTruncateRowCount();
             testInsertRow();
+            testDeleteRow();
+            testUpdateRow();
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(1);

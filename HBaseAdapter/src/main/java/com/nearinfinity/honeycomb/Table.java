@@ -16,7 +16,7 @@ public interface Table extends Closeable {
      *
      * @param row Row to be inserted
      */
-    public void insert(Row row) throws IOException, TableNotFoundException;
+    public void insert(Row row) throws IOException;
 
     /**
      * Update row in table
