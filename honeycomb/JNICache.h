@@ -18,7 +18,8 @@ class JNICache
                 open_table,
                 close_table,
                 rename_table,
-                get_row_count;
+                get_row_count,
+                flush;
     };
     struct HBaseAdapter
     {
@@ -33,7 +34,6 @@ class JNICache
                 end_scan,
                 write_row,
                 update_row,
-                flush_writes,
                 delete_row,
                 delete_all_rows,
                 get_row,

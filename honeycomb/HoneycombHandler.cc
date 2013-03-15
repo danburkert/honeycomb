@@ -9,6 +9,7 @@
 #include <string.h>
 #include "Logging.h"
 #include "Macros.h"
+#include "Java.h"
 
 const char **HoneycombHandler::bas_ext() const
 {
@@ -36,12 +37,7 @@ HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_share,
 HoneycombHandler::~HoneycombHandler()
 {
   attach_thread(this->jvm, this->env);
-  if (this->curr_write_id != -1)
-  {
-    this->flush_writes();
-    EXCEPTION_CHECK("destructor", "flush_writes");
-  }
-
+  this->flush();
   env->DeleteGlobalRef(handler_proxy);
   detach_thread(this->jvm);
 }
@@ -50,8 +46,7 @@ void HoneycombHandler::release_auto_increment()
 {
   // Stored functions call this last. Hack to get around MySQL not calling
   // start/end bulk insert on insert in a stored function.
-  this->flush_writes();
-  EXCEPTION_CHECK("release_auto_increment", "flush_writes");
+  this->flush();
 }
 
 int HoneycombHandler::open(const char *path, int mode, uint test_if_locked)
@@ -227,44 +222,11 @@ int HoneycombHandler::java_to_sql(uchar* buf, Row* row)
 int HoneycombHandler::external_lock(THD *thd, int lock_type)
 {
   DBUG_ENTER("HoneycombHandler::external_lock");
-  JNICache::HBaseAdapter hbase_adapter = cache->hbase_adapter();
-  if (lock_type == F_WRLCK || lock_type == F_RDLCK)
-  {
-    attach_thread(jvm, env);
-    if (lock_type == F_WRLCK)
-    {
-      jlong write_id = this->env->CallStaticLongMethod(hbase_adapter.clazz,
-          hbase_adapter.start_write);
-      EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::external_lock",
-          "calling startWrite");
-      this->curr_write_id = write_id;
-    }
-  }
-
+  int ret = 0;
   if (lock_type == F_UNLCK)
   {
-    { // Destruct frame before detaching
-      JavaFrame frame(env, 1);
-      jstring table_name = this->table_name();
-      if (this->rows_written > 0)
-      {
-        this->env->CallStaticVoidMethod(hbase_adapter.clazz,
-            hbase_adapter.increment_row_count, table_name,
-            (jlong) this->rows_written);
-        EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::external_lock",
-            "calling incrementRowCount");
-        this->rows_written = 0;
-      }
-
-      if (this->curr_write_id != -1)
-      {
-        this->env->CallStaticVoidMethod(hbase_adapter.clazz, hbase_adapter.end_write,
-            (jlong)this->curr_write_id);
-        EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::external_lock",
-            "calling endWrite");
-        this->curr_write_id = -1;
-      }
-    }
+    attach_thread(jvm, env);
+    ret |= this->flush();
     detach_thread(jvm);
   }
   DBUG_RETURN(0);
@@ -713,28 +675,10 @@ ha_rows HoneycombHandler::estimate_rows_upper_bound()
 }
 
 /**
- * Tell HBase to flush writes to the regionservers.
+ * Flush writes and deletes.  Must be called from an attached thread.
  */
-void HoneycombHandler::flush_writes()
+int HoneycombHandler::flush()
 {
-  jclass adapter_class = cache->hbase_adapter().clazz;
-  jmethodID end_write_method = cache->hbase_adapter().flush_writes;
-  env->CallStaticVoidMethod(adapter_class, end_write_method, curr_write_id);
-}
-
-/**
- * @brief Retrieve the database and table name of the current table in format: database.tablename
- * @todo We should only be calling out to JNI once and caching the result,
- * probably in HoneycombHandler constructor.
- *
- * @return database.tablename
- */
-jstring HoneycombHandler::table_name()
-{
-  char* database_name = this->table->s->db.str;
-  char* table_name = this->table->s->table_name.str;
-  char namespaced_table[strlen(database_name) + strlen(table_name) + 2];
-  sprintf(namespaced_table, "%s.%s", database_name, table_name);
-  jstring jtable_name = string_to_java_string(namespaced_table);
-  return jtable_name;
+  this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().flush);
+  return check_exceptions(env, cache, "HoneycombHandler::flush");
 }
