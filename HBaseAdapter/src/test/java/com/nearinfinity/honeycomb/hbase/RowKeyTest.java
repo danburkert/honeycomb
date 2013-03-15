@@ -105,11 +105,12 @@ public class RowKeyTest {
         private int recordsCompare(List<byte[]> records1, List<byte[]> records2, int nullOrder) {
             byte[] value1, value2;
             int compare;
-            int record1Size = records1.size();
-            int record2Size = records2.size();
-            for (int i = 0; i < Math.max(record1Size, record2Size); i++) {
-                value1 = i < record1Size ? records1.get(i) : null;
-                value2 = i < record2Size ? records2.get(i) : null;
+            if (records1.size() != records2.size()) {
+                throw new IllegalArgumentException("Number of records in indices must match.");
+            }
+            for (int i = 0; i < records1.size(); i++) {
+                value1 = records1.get(i);
+                value2 = records2.get(i);
                 if (value1 == value2) {
                     continue;
                 }
@@ -124,7 +125,6 @@ public class RowKeyTest {
                     return compare;
                 }
             }
-
             return 0;
         }
     }

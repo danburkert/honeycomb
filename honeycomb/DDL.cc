@@ -12,7 +12,7 @@
  */
 #define ABORT_CREATE(message) \
   do { \
-    my_error(ER_CREATE_FILEGROUP_FAILED, MYF(0), message); \
+    my_error(ER_CANT_CREATE_TABLE, MYF(0), message); \
     DBUG_RETURN(HA_WRONG_CREATE_OPTION); \
   } while(0)
 
@@ -20,9 +20,9 @@ const int YEAR2_NOT_SUPPORTED = 0;
 const int ODD_TYPES_NOT_SUPPORTED = 1;
 const int UTF_REQUIRED = 2;
 const char* table_creation_errors[] = {
-  "table. YEAR(2) is not supported.",
-  "table. Bit, set and geometry are not supported.",
-  "table. Required: character set utf8 collate utf8_bin"
+  "YEAR(2) is not supported.",
+  "Bit, set and geometry are not supported.",
+  "Required: character set utf8 collate utf8_bin"
 };
 
 /**
@@ -47,7 +47,7 @@ int HoneycombHandler::create(const char *path, TABLE *table,
     ABORT_CREATE("Partitions are not supported.");
   }
 
-  int rc = 0;
+  int ret = 0;
   { // Destruct frame before calling detach_thread
     JavaFrame frame(env, 4);
 
@@ -67,7 +67,7 @@ int HoneycombHandler::create(const char *path, TABLE *table,
       column_schema.reset();
       if (pack_column_schema(&column_schema, field))
       {
-        ABORT_CREATE("table. Error while creating column schema.");
+        ABORT_CREATE("Error while creating column schema.");
       }
       table_schema.add_column(field->field_name, &column_schema);
     }
@@ -77,7 +77,7 @@ int HoneycombHandler::create(const char *path, TABLE *table,
       index_schema.reset();
       if (pack_index_schema(&index_schema, &table->key_info[i]))
       {
-        ABORT_CREATE("table.  Error while creating index schema.");
+        ABORT_CREATE("Error while creating index schema.");
       }
       table_schema.add_index(table->key_info[i].name, &index_schema);
     }
@@ -97,10 +97,10 @@ int HoneycombHandler::create(const char *path, TABLE *table,
 
     this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().create_table,
         jtable_name, jtablespace, jserialized_schema, jauto_inc_value);
-    EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::create", "calling createTable");
+    ret |= check_exceptions(env, cache, "HoneycombHandler::create_table");
   }
   detach_thread(jvm);
-  DBUG_RETURN(rc);
+  DBUG_RETURN(ret);
 }
 
 /**
@@ -281,8 +281,7 @@ int HoneycombHandler::delete_table(const char *path)
 
     this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().drop_table,
         table_name, jtablespace);
-    if (env->ExceptionCheck()) { ret |= HA_ERR_NO_SUCH_TABLE; }
-    EXCEPTION_CHECK("HoneycombHandler::drop_table", "calling dropTable");
+    ret |= check_exceptions(env, cache, "HoneycombHandler::drop_table");
   }
   detach_thread(jvm);
 
@@ -293,7 +292,6 @@ int HoneycombHandler::rename_table(const char *from, const char *to)
 {
   DBUG_ENTER("HoneycombHandler::rename_table");
   int ret = 0;
-
 
   attach_thread(jvm, env);
   {
@@ -313,8 +311,7 @@ int HoneycombHandler::rename_table(const char *from, const char *to)
 
     env->CallVoidMethod(handler_proxy, cache->handler_proxy().rename_table,
         old_table_name, jtablespace, new_table_name);
-    if (env->ExceptionCheck()) { ret |= HA_ERR_NO_SUCH_TABLE; }
-    EXCEPTION_CHECK("HoneycombHandler::rename_table", "calling renameTable");
+    ret |= check_exceptions(env, cache, "HoneycombHandler::rename_table");
   }
   detach_thread(jvm);
 

@@ -1,3 +1,4 @@
+#include "HoneycombHandler.h"
 #include "Java.h"
 #include "Macros.h"
 #include "Logging.h"
@@ -89,3 +90,36 @@ char *char_array_from_java_bytes(jbyteArray java_bytes, JNIEnv* env)
   EXCEPTION_CHECK_ABORT("Java::char_array_from_java_bytes: ArrayIndexOutOfBoundsException while calling GetByteArrayRegion");
   return ret;
 }
+
+int check_exceptions(JNIEnv* env, JNICache* cache, const char* location)
+{
+  int ret = 0;
+  const char* reason;
+  jthrowable e = env->ExceptionOccurred();
+  if (e)
+  {
+    if (env->IsInstanceOf(e, cache->TableNotFoundException))
+    {
+      ret = HA_ERR_NO_SUCH_TABLE;
+    } else if (env->IsInstanceOf(e, cache->TableExistsException))
+    {
+      ret = HA_ERR_TABLE_EXIST;
+    } else if (env->IsInstanceOf(e, cache->RowNotFoundException))
+    {
+      ret = HA_ERR_KEY_NOT_FOUND;
+    } else if (env->IsInstanceOf(e, cache->StoreNotFoundException))
+    {
+      my_printf_error(ER_ILLEGAL_HA, "Unable to open tablespace.", MYF(0));
+      ret = HA_ERR_INTERNAL_ERROR;
+    } else if (env->IsInstanceOf(e, cache->IOException))
+    {
+      ret = HA_ERR_INTERNAL_ERROR;
+    } else {
+      ret = HA_ERR_GENERIC;
+    }
+    Logging::error("Exception thrown during JNI call in ", location);
+    env->ExceptionDescribe();
+  }
+  env->DeleteLocalRef(e);
+  return ret;
+};
