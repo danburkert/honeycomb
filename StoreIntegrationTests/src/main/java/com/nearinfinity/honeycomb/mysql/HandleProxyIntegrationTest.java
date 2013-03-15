@@ -36,6 +36,7 @@ public class HandleProxyIntegrationTest {
             public void execute(HandlerProxy proxy) throws Exception {
                 proxy.renameTable(tableName, Constants.HBASE_TABLESPACE, newTableName);
                 assertThat(newTableName).isEqualTo(proxy.getTableName());
+                proxy.renameTable(newTableName, Constants.HBASE_TABLESPACE, tableName);
             }
         });
     }

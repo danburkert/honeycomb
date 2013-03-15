@@ -1,8 +1,6 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import com.nearinfinity.honeycomb.HoneycombException;
-import com.nearinfinity.honeycomb.Store;
-import com.nearinfinity.honeycomb.Table;
+import com.nearinfinity.honeycomb.*;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 
 import java.io.IOException;
@@ -100,6 +98,7 @@ public class HandlerProxy {
 
         Store store = this.storeFactory.createStore(tableSpace);
         store.renameTable(originalName, newName);
+        this.tableName = newName;
     }
 
     public long getRowCount() throws IOException, HoneycombException {
@@ -150,7 +149,7 @@ public class HandlerProxy {
         this.store.truncateRowCount(this.tableName);
     }
 
-    public void insert(Row row) {
+    public void insert(Row row) throws IOException, TableNotFoundException {
         checkTableOpen();
         this.table.insert(row);
     }
@@ -160,7 +159,7 @@ public class HandlerProxy {
         this.table.flush();
     }
 
-    public Row getRow(UUID uuid) {
+    public Row getRow(UUID uuid) throws RowNotFoundException, IOException {
         checkTableOpen();
         return this.table.get(uuid);
     }

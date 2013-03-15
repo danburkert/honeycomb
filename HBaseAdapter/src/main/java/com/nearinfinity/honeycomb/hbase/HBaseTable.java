@@ -6,6 +6,7 @@ import com.google.inject.assistedinject.Assisted;
 import com.nearinfinity.honeycomb.RowNotFoundException;
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Table;
+import com.nearinfinity.honeycomb.TableNotFoundException;
 import com.nearinfinity.honeycomb.hbase.rowkey.AscIndexRow;
 import com.nearinfinity.honeycomb.hbase.rowkey.DataRow;
 import com.nearinfinity.honeycomb.hbase.rowkey.DescIndexRow;
@@ -16,10 +17,7 @@ import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import org.apache.hadoop.hbase.client.*;
 
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class HBaseTable implements Table {
     private final HTableInterface hTable;
@@ -37,22 +35,18 @@ public class HBaseTable implements Table {
     }
 
     @Override
-    public void insert(Row row) {
-        try {
-            byte[] serializeRow = row.serialize();
-            UUID uuid = row.getUUID();
-            Map<String, Long> indexIds = this.store.getIndices(this.tableId);
-            Map<String, byte[]> records = row.getRecords();
-            hTable.put(createEmptyQualifierPut(new DataRow(this.tableId, uuid), serializeRow));
+    public void insert(Row row) throws IOException, TableNotFoundException {
+        byte[] serializeRow = row.serialize();
+        UUID uuid = row.getUUID();
+        Map<String, Long> indexIds = this.store.getIndices(this.tableId);
+        Map<String, byte[]> records = row.getRecords();
+        hTable.put(createEmptyQualifierPut(new DataRow(this.tableId, uuid), serializeRow));
 
-            for (Map.Entry<String, IndexSchema> index : schema.getIndices().entrySet()) {
-                long indexId = indexIds.get(index.getKey());
-                List<byte[]> sortedRecords = getValuesInColumnOrder(records, index.getValue().getColumns());
-                hTable.put(createEmptyQualifierPut(new DescIndexRow(this.tableId, indexId, sortedRecords, uuid), serializeRow));
-                hTable.put(createEmptyQualifierPut(new AscIndexRow(this.tableId, indexId, sortedRecords, uuid), serializeRow));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        for (Map.Entry<String, IndexSchema> index : schema.getIndices().entrySet()) {
+            long indexId = indexIds.get(index.getKey());
+            List<byte[]> sortedRecords = getValuesInColumnOrder(records, index.getValue().getColumns());
+            hTable.put(createEmptyQualifierPut(new DescIndexRow(this.tableId, indexId, sortedRecords, uuid), serializeRow));
+            hTable.put(createEmptyQualifierPut(new AscIndexRow(this.tableId, indexId, sortedRecords, uuid), serializeRow));
         }
     }
 
@@ -65,37 +59,30 @@ public class HBaseTable implements Table {
     }
 
     @Override
-    public void deleteAllRows() throws IOException {
-        try {
-            long totalDeleteSize = 0, writeBufferSize = 50000; // TODO: retrieve write buffer size from configuration
-            Map<String, Long> indexIds = this.store.getIndices(this.tableId);
-            DataRow startRow = new DataRow(this.tableId);
-            DataRow endRow = new DataRow(this.tableId + 1);
-            Scan scan = new Scan(startRow.encode(), endRow.encode());
-            ResultScanner scanner = hTable.getScanner(scan);
-            List<Delete> deleteList = Lists.newLinkedList();
-            for (Result result : scanner) {
-                Row row = Row.deserialize(result.getValue(Constants.NIC, new byte[0]));
-                UUID uuid = row.getUUID();
-                deleteList.add(new Delete(new DataRow(this.tableId, uuid).encode()));
-                Map<String, byte[]> records = row.getRecords();
-                for (Map.Entry<String, IndexSchema> index : schema.getIndices().entrySet()) {
-                    long indexId = indexIds.get(index.getKey());
-                    List<byte[]> sortedRecords = getValuesInColumnOrder(records, index.getValue().getColumns());
-                    deleteList.add(createEmptyQualifierDelete(new DescIndexRow(this.tableId, indexId, sortedRecords, uuid)));
-                    deleteList.add(createEmptyQualifierDelete(new AscIndexRow(this.tableId, indexId, sortedRecords, uuid)));
-                }
-                totalDeleteSize += deleteList.size() * result.getWritableSize();
-                if (totalDeleteSize > writeBufferSize) {
-                    hTable.delete(deleteList);
-                    totalDeleteSize = 0;
-                }
+    public void deleteAllRows() throws IOException, TableNotFoundException {
+        long totalDeleteSize = 0, writeBufferSize = 50000; // TODO: retrieve write buffer size from configuration
+        Map<String, Long> indexIds = this.store.getIndices(this.tableId);
+        List<Delete> deleteList = Lists.newLinkedList();
+        Scanner rows = this.tableScan();
+        for (Row row : rows) {
+            UUID uuid = row.getUUID();
+            deleteList.add(new Delete(new DataRow(this.tableId, uuid).encode()));
+            Map<String, byte[]> records = row.getRecords();
+            for (Map.Entry<String, IndexSchema> index : schema.getIndices().entrySet()) {
+                long indexId = indexIds.get(index.getKey());
+                List<byte[]> sortedRecords = getValuesInColumnOrder(records, index.getValue().getColumns());
+                deleteList.add(createEmptyQualifierDelete(new DescIndexRow(this.tableId, indexId, sortedRecords, uuid)));
+                deleteList.add(createEmptyQualifierDelete(new AscIndexRow(this.tableId, indexId, sortedRecords, uuid)));
             }
-
-            hTable.delete(deleteList);
-        } catch (Exception e) {
-            e.printStackTrace();
+            totalDeleteSize += deleteList.size() * row.serialize().length;
+            if (totalDeleteSize > writeBufferSize) {
+                hTable.delete(deleteList);
+                totalDeleteSize = 0;
+            }
         }
+
+        rows.close();
+        hTable.delete(deleteList);
     }
 
     @Override
@@ -104,21 +91,24 @@ public class HBaseTable implements Table {
     }
 
     @Override
-    public Row get(UUID uuid) {
+    public Row get(UUID uuid) throws RowNotFoundException, IOException {
         DataRow dataRow = new DataRow(this.tableId, uuid);
         Get get = new Get(dataRow.encode());
-        try {
-            Result result = this.hTable.get(get);
-            return Row.deserialize(result.getValue(Constants.NIC, new byte[0]));
-        } catch (IOException e) {
-            e.printStackTrace(); //TODO: Implement error handling
-            throw new RuntimeException(e);
+        Result result = this.hTable.get(get);
+        if (result.isEmpty()) {
+            throw new RowNotFoundException(uuid);
         }
+
+        return Row.deserialize(result.getValue(Constants.NIC, new byte[0]));
     }
 
     @Override
-    public Scanner tableScan() {
-        return null;
+    public Scanner tableScan() throws IOException {
+        DataRow startRow = new DataRow(this.tableId);
+        DataRow endRow = new DataRow(this.tableId + 1);
+        Scan scan = new Scan(startRow.encode(), endRow.encode());
+        final ResultScanner scanner = this.hTable.getScanner(scan);
+        return new HBaseScanner(scanner);
     }
 
     @Override

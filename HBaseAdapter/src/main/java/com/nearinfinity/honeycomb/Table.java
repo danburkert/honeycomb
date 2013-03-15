@@ -16,7 +16,7 @@ public interface Table extends Closeable {
      *
      * @param row Row to be inserted
      */
-    public void insert(Row row);
+    public void insert(Row row) throws IOException, TableNotFoundException;
 
     /**
      * Update row in table
@@ -49,14 +49,14 @@ public interface Table extends Closeable {
      * @param uuid UUID of requested row
      * @return Row with given UUID
      */
-    public Row get(UUID uuid);
+    public Row get(UUID uuid) throws RowNotFoundException, IOException;
 
     /**
      * Create a scanner for an unordered full table scan
      *
      * @return Scanner over table
      */
-    public Scanner tableScan();
+    public Scanner tableScan() throws IOException;
 
     /**
      * Return a scanner over the table's index at the specified key / values in
@@ -100,5 +100,5 @@ public interface Table extends Closeable {
     /**
      * Remove all rows from the table.
      */
-    void deleteAllRows() throws IOException;
+    void deleteAllRows() throws IOException, TableNotFoundException;
 }
