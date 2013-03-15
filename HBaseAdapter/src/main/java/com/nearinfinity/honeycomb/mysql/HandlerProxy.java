@@ -25,15 +25,16 @@ public class HandlerProxy {
      * this is called.
      *
      * @param tableName             Name of the table
-     * @param tableSpace            Indicates what store to create the table in.  If null,
-     *                              create the table in the default store.
+     * @param tableSpace            Indicates what store to create the table in.
+     *                              If null, create the table in the default store.
      * @param serializedTableSchema Serialized TableSchema avro object
      * @param autoInc               Initial auto increment value
      * @throws IOException
      * @throws HoneycombException
      */
     public void createTable(String tableName, String tableSpace,
-                            byte[] serializedTableSchema, long autoInc) throws IOException, HoneycombException {
+                            byte[] serializedTableSchema, long autoInc)
+            throws IOException, HoneycombException {
         Verify.isNotNullOrEmpty(tableName);
         checkNotNull(serializedTableSchema);
 

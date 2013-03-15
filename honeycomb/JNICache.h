@@ -190,6 +190,13 @@ class JNICache
     TreeMap tree_map()                          const {return tree_map_;}
     HandlerProxyFactory handler_proxy_factory() const {return handler_proxy_factory_;}
 
+    jclass HoneycombException;
+    jclass TableNotFoundException;
+    jclass TableExistsException;
+    jclass RowNotFoundException;
+    jclass StoreNotFoundException;
+    jclass IOException;
+
     JNICache(JavaVM* jvm);
     ~JNICache();
 };

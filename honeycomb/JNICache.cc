@@ -20,6 +20,14 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   handler_proxy_.close_table   = get_method_id(env, handler_proxy_.clazz, "closeTable", "()V");
   handler_proxy_.get_row_count = get_method_id(env, handler_proxy_.clazz, "getRowCount", "()J");
 
+  HoneycombException     = get_class_ref(env, HONEYCOMB "HoneycombException");
+  TableNotFoundException = get_class_ref(env, HONEYCOMB "TableNotFoundException");
+  TableExistsException   = get_class_ref(env, HONEYCOMB "TableExistsException");
+  TableNotFoundException = get_class_ref(env, HONEYCOMB "TableNotFoundException");
+  RowNotFoundException   = get_class_ref(env, HONEYCOMB "RowNotFoundException");
+  StoreNotFoundException = get_class_ref(env, HONEYCOMB "StoreNotFoundException");
+  IOException            = get_class_ref(env, "java/io/IOException");
+
   hbase_adapter_.clazz                        = get_class_ref(env, MYSQLENGINE "HBaseAdapter");
   hbase_adapter_.initialize                   = get_static_method_id(env, hbase_adapter_.clazz, "initialize", "()V");
   hbase_adapter_.get_autoincrement_value      = get_static_method_id(env, hbase_adapter_.clazz, "getAutoincrementValue", "(Ljava/lang/String;Ljava/lang/String;)J");
@@ -126,6 +134,7 @@ JNICache::~JNICache()
   jint attach_result = attach_thread(jvm, env);
   CHECK_JNI_ABORT(attach_result, "JNICache Destructor: Failure while attaching thread to JVM.");
 
+  env->DeleteGlobalRef(handler_proxy_.clazz);
   env->DeleteGlobalRef(hbase_adapter_.clazz);
   env->DeleteGlobalRef(index_read_type_.clazz);
   env->DeleteGlobalRef(row_.clazz);
@@ -138,6 +147,14 @@ JNICache::~JNICache()
   env->DeleteGlobalRef(string_writer_.clazz);
   env->DeleteGlobalRef(linked_list_.clazz);
   env->DeleteGlobalRef(tree_map_.clazz);
+
+  env->DeleteGlobalRef(HoneycombException);
+  env->DeleteGlobalRef(TableNotFoundException);
+  env->DeleteGlobalRef(TableExistsException);
+  env->DeleteGlobalRef(TableNotFoundException);
+  env->DeleteGlobalRef(RowNotFoundException);
+  env->DeleteGlobalRef(StoreNotFoundException);
+  env->DeleteGlobalRef(IOException);
 
   detach_thread(jvm);
 }
