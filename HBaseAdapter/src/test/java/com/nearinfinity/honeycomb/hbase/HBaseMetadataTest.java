@@ -22,10 +22,10 @@ import org.powermock.api.mockito.PowerMockito;
 import com.google.common.collect.ImmutableMap;
 import com.nearinfinity.honeycomb.MockHTable;
 import com.nearinfinity.honeycomb.TableNotFoundException;
-import com.nearinfinity.honeycomb.mysql.ColumnSchemaGenerator;
-import com.nearinfinity.honeycomb.mysql.TableSchemaGenerator;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import com.nearinfinity.honeycomb.mysql.generators.ColumnSchemaGenerator;
+import com.nearinfinity.honeycomb.mysql.generators.TableSchemaGenerator;
 
 public class HBaseMetadataTest {
     private static final Generator<TableSchema> tableSchemaGen = new TableSchemaGenerator();
@@ -57,7 +57,7 @@ public class HBaseMetadataTest {
         TableSchema schema = tableSchemaGen.next();
         final String tableName = TableSchemaGenerator.MYSQL_NAME_GEN.next();
 
-        hbaseMetadata.putSchema(tableName, schema);
+        hbaseMetadata.createTable(tableName, schema);
 
         long tableId = hbaseMetadata.getTableId(tableName);
         TableSchema expected = hbaseMetadata.getSchema(tableId);
@@ -81,7 +81,7 @@ public class HBaseMetadataTest {
         HTableInterface hTableSpy = PowerMockito.spy(MockHTable.create());
         Mockito.when(hTableSpy.isAutoFlush()).thenReturn(false);
 
-        hbaseMetadata.putSchema(originalName, origSchema);
+        hbaseMetadata.createTable(originalName, origSchema);
 
         long origId = hbaseMetadata.getTableId(originalName);
         hbaseMetadata.renameExistingTable(originalName, newName);
@@ -132,7 +132,7 @@ public class HBaseMetadataTest {
 
         TableSchema origSchema = new TableSchema(origColumns, newSchema.getIndices());
 
-        hbaseMetadata.putSchema(tableName, origSchema);
+        hbaseMetadata.createTable(tableName, origSchema);
 
         long tableId = hbaseMetadata.getTableId(tableName);
         hbaseMetadata.updateSchema(tableId, origSchema, newSchema);
@@ -157,7 +157,7 @@ public class HBaseMetadataTest {
 
         TableSchema origSchema = new TableSchema(origColumns, newSchema.getIndices());
 
-        hbaseMetadata.putSchema(tableName, origSchema);
+        hbaseMetadata.createTable(tableName, origSchema);
 
         long tableId = hbaseMetadata.getTableId(tableName);
         hbaseMetadata.updateSchema(tableId, origSchema, newSchema);
@@ -175,7 +175,7 @@ public class HBaseMetadataTest {
         TableSchema table = tableSchemaGen.next();
         final String tableName = TableSchemaGenerator.MYSQL_NAME_GEN.next();
 
-        hbaseMetadata.putSchema(tableName, table);
+        hbaseMetadata.createTable(tableName, table);
 
         long tableId = hbaseMetadata.getTableId(tableName);
         long value = longGen.next();
@@ -192,7 +192,7 @@ public class HBaseMetadataTest {
         TableSchema table = tableSchemaGen.next();
         final String tableName = TableSchemaGenerator.MYSQL_NAME_GEN.next();
 
-        hbaseMetadata.putSchema(tableName, table);
+        hbaseMetadata.createTable(tableName, table);
 
         long tableId = hbaseMetadata.getTableId(tableName);
         long value = longGen.next();

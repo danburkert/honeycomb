@@ -1,6 +1,6 @@
 package com.nearinfinity.honeycomb;
 
-public class TableNotFoundException extends Exception {
+public class TableNotFoundException extends RuntimeException {
     private String name;
     private long id;
 

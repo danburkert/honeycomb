@@ -1,9 +1,9 @@
 package com.nearinfinity.honeycomb;
 
+import com.nearinfinity.honeycomb.mysql.IndexKey;
 import com.nearinfinity.honeycomb.mysql.Row;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.UUID;
 
 /**
@@ -23,25 +23,25 @@ public interface Table extends Closeable {
      *
      * @param row Row containing UUID of row to be updated, as well as updated
      *            record values.
-     * @throws IOException
      * @throws RowNotFoundException
+     * @
      */
-    public void update(Row row) throws IOException, RowNotFoundException;
+    public void update(Row row);
 
     /**
      * Remove row with given UUID from the table
      *
      * @param uuid UUID of row to be deleted
-     * @throws IOException
      * @throws RowNotFoundException
+     * @
      */
-    public void delete(UUID uuid) throws IOException, RowNotFoundException;
+    public void delete(UUID uuid);
 
     /**
      * Flush all inserts, updates, and deletes to the table.  IUD operations are
      * not guaranteed to be visible in subsequent accesses until explicitly flushed.
      */
-    public void flush() throws IOException;
+    public void flush();
 
     /**
      * Get row with uuid from table
@@ -64,7 +64,7 @@ public interface Table extends Closeable {
      *
      * @return Scanner over index
      */
-    public Scanner AscIndexScanAt(/* KeyValueContainer keyValues */);
+    public Scanner ascendingIndexScanAt(/* KeyValueContainer keyValues */);
 
     /**
      * Return a scanner over the table's index after the specified key / values
@@ -72,7 +72,7 @@ public interface Table extends Closeable {
      *
      * @return Scanner over index
      */
-    public Scanner AscIndexScanAfter(/* KeyValueContainer keyValues */);
+    public Scanner ascendingIndexScanAfter(/* KeyValueContainer keyValues */);
 
     /**
      * Return a scanner over the table's index at the specified key / values in
@@ -80,7 +80,7 @@ public interface Table extends Closeable {
      *
      * @return Scanner over index
      */
-    public Scanner DescIndexScanAt(/* KeyValueContainer keyValues */);
+    public Scanner descendingIndexScanAt(/* KeyValueContainer keyValues */);
 
     /**
      * Return a scanner over the table's index after the specified key / values
@@ -88,12 +88,17 @@ public interface Table extends Closeable {
      *
      * @return Scanner over index
      */
-    public Scanner DescIndexScanAfter(/* KeyValueContainer keyValues */);
+    public Scanner descendingIndexScanAfter(/* KeyValueContainer keyValues */);
 
     /**
      * Return a scanner over the rows in the table with the specified key /values
      *
      * @return Scanner over index
      */
-    public Scanner indexScanExact(/* KeyValueContainer keyValues */);
+    public Scanner indexScanExact(IndexKey key);
+
+    /**
+     * Remove all rows from the table.
+     */
+    void deleteAllRows();
 }

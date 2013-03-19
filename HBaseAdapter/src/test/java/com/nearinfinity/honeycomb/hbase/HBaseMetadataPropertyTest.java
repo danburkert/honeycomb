@@ -17,8 +17,8 @@ import org.junit.Test;
 
 import com.nearinfinity.honeycomb.MockHTable;
 import com.nearinfinity.honeycomb.TableNotFoundException;
-import com.nearinfinity.honeycomb.mysql.TableSchemaGenerator;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import com.nearinfinity.honeycomb.mysql.generators.TableSchemaGenerator;
 
 public class HBaseMetadataPropertyTest {
     private static HBaseMetadata hbaseMetadata;
@@ -44,7 +44,7 @@ public class HBaseMetadataPropertyTest {
             TableSchema schema = tableSchemaGen.next();
             final String tableName = TableSchemaGenerator.MYSQL_NAME_GEN.next();
             tableSchemas.put(tableName, schema);
-            hbaseMetadata.putSchema(tableName, schema);
+            hbaseMetadata.createTable(tableName, schema);
         }
     }
 
@@ -87,7 +87,7 @@ public class HBaseMetadataPropertyTest {
     public void testSchemaDeleteRemovesTable() throws Exception {
         TableSchema schema = tableSchemaGen.next();
         final String tableName = TableSchemaGenerator.MYSQL_NAME_GEN.next();
-        hbaseMetadata.putSchema(tableName, schema);
+        hbaseMetadata.createTable(tableName, schema);
 
         long tableId = hbaseMetadata.getTableId(tableName);
         Assert.assertEquals(schema, hbaseMetadata.getSchema(tableId));

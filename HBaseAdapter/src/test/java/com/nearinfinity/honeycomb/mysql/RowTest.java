@@ -4,6 +4,8 @@ import net.java.quickcheck.generator.iterable.Iterables;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.nearinfinity.honeycomb.mysql.generators.RowGenerator;
+
 public class RowTest {
 
     /**

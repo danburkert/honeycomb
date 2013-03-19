@@ -3,8 +3,8 @@ package com.nearinfinity.honeycomb.mysql;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
+import com.nearinfinity.honeycomb.HoneycombException;
 import com.nearinfinity.honeycomb.Store;
-import com.nearinfinity.honeycomb.StoreNotFoundException;
 import com.nearinfinity.honeycomb.hbaseclient.Constants;
 
 import java.util.Map;
@@ -24,14 +24,14 @@ public class StoreFactory {
         this.defaultTableSpace = defaultTableSpace;
     }
 
-    public Store createStore(String tablespace) throws StoreNotFoundException {
+    public Store createStore(String tablespace) {
         if (tablespace == null) {
             tablespace = defaultTableSpace;
         }
 
         Provider<Store> storeProvider = this.storeMap.get(tablespace);
         if (storeProvider == null) {
-            throw new StoreNotFoundException(tablespace);
+            throw new HoneycombException("Could not find store for " + tablespace);
         }
         return storeProvider.get();
     }

@@ -51,28 +51,6 @@ jobject HoneycombHandler::create_multipart_key(KEY* key, KEY_PART_INFO* key_part
   return java_keys;
 }
 
-int HoneycombHandler::rename_table(const char *from, const char *to)
-{
-  DBUG_ENTER("HoneycombHandler::rename_table");
-  attach_thread(jvm, env);
-  {
-    JavaFrame frame(env, 2);
-    jclass adapter_class = cache->hbase_adapter().clazz;
-    jmethodID rename_table_method = cache->hbase_adapter().rename_table;
-    char* from_str = extract_table_name_from_path(from);
-    char* to_str = extract_table_name_from_path(to);
-    jstring current_table_name = string_to_java_string(from_str);
-    jstring new_table_name = string_to_java_string(to_str);
-    ARRAY_DELETE(from_str);
-    ARRAY_DELETE(to_str);
-    env->CallStaticVoidMethod(adapter_class, rename_table_method,
-        current_table_name, new_table_name);
-    EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::rename_table", "calling renameTable");
-  }
-  detach_thread(jvm);
-  DBUG_RETURN(0);
-}
-
 int HoneycombHandler::write_row(uchar *buf)
 {
   DBUG_ENTER("HoneycombHandler::write_row");
@@ -690,35 +668,6 @@ void HoneycombHandler::set_autoinc_counter(jlong new_value, jboolean is_truncate
     stats.auto_increment_value = (ulonglong) new_value;
   }
   EXCEPTION_CHECK("HoneycombHandler::set_autoinc_counter", "calling alterAutoincrementValue");
-}
-
-void HoneycombHandler::drop_table(const char *path)
-{
-  close();
-  delete_table(path);
-}
-
-int HoneycombHandler::delete_table(const char *path)
-{
-  DBUG_ENTER("HoneycombHandler::delete_table");
-
-  attach_thread(jvm, env);
-  { // destruct frame before detaching
-    JavaFrame frame(env, 1);
-    char* table = extract_table_name_from_path(path);
-    jstring table_name = string_to_java_string(table);
-    ARRAY_DELETE(table);
-
-    jclass adapter_class = cache->hbase_adapter().clazz;
-    jmethodID drop_table_method = cache->hbase_adapter().drop_table;
-
-    this->env->CallStaticBooleanMethod(adapter_class, drop_table_method,
-        table_name);
-    EXCEPTION_CHECK("HoneycombHandler::delete_table", "calling dropTable");
-  }
-  detach_thread(jvm);
-
-  DBUG_RETURN(0);
 }
 
 void HoneycombHandler::update_create_info(HA_CREATE_INFO* create_info)

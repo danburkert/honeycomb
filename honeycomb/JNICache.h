@@ -13,7 +13,12 @@ class JNICache
     struct HandlerProxy
     {
       jclass clazz;
-      jmethodID create_table;
+      jmethodID create_table,
+                drop_table,
+                open_table,
+                close_table,
+                rename_table,
+                get_row_count;
     };
     struct HBaseAdapter
     {
@@ -31,7 +36,6 @@ class JNICache
                 flush_writes,
                 delete_row,
                 delete_all_rows,
-                drop_table,
                 get_row,
                 start_index_scan,
                 find_duplicate_key,
@@ -42,8 +46,6 @@ class JNICache
                 next_index_row,
                 increment_row_count,
                 set_row_count,
-                get_row_count,
-                rename_table,
                 is_nullable,
                 add_index,
                 drop_index;
@@ -187,6 +189,13 @@ class JNICache
     LinkedList linked_list()                    const {return linked_list_;}
     TreeMap tree_map()                          const {return tree_map_;}
     HandlerProxyFactory handler_proxy_factory() const {return handler_proxy_factory_;}
+
+    jclass HoneycombException;
+    jclass TableNotFoundException;
+    jclass TableExistsException;
+    jclass RowNotFoundException;
+    jclass StoreNotFoundException;
+    jclass IOException;
 
     JNICache(JavaVM* jvm);
     ~JNICache();

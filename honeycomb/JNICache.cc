@@ -12,8 +12,21 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   // (dburkert:) I do not recommend editing this section without javap -s,
   // editor macros, and tabular.vim
 
-  handler_proxy_.clazz        = get_class_ref(env, HONEYCOMB "mysql/HandlerProxy");
-  handler_proxy_.create_table = get_method_id(env, handler_proxy_.clazz, "createTable", "(Ljava/lang/String;Ljava/lang/String;[BJ)V");
+  handler_proxy_.clazz         = get_class_ref(env, HONEYCOMB "mysql/HandlerProxy");
+  handler_proxy_.create_table  = get_method_id(env, handler_proxy_.clazz, "createTable", "(Ljava/lang/String;Ljava/lang/String;[BJ)V");
+  handler_proxy_.drop_table    = get_method_id(env, handler_proxy_.clazz, "dropTable", "(Ljava/lang/String;Ljava/lang/String;)V");
+  handler_proxy_.rename_table  = get_method_id(env, handler_proxy_.clazz, "renameTable", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
+  handler_proxy_.open_table    = get_method_id(env, handler_proxy_.clazz, "openTable", "(Ljava/lang/String;Ljava/lang/String;)V");
+  handler_proxy_.close_table   = get_method_id(env, handler_proxy_.clazz, "closeTable", "()V");
+  handler_proxy_.get_row_count = get_method_id(env, handler_proxy_.clazz, "getRowCount", "()J");
+
+  HoneycombException     = get_class_ref(env, HONEYCOMB "HoneycombException");
+  TableNotFoundException = get_class_ref(env, HONEYCOMB "TableNotFoundException");
+  TableExistsException   = get_class_ref(env, HONEYCOMB "TableExistsException");
+  TableNotFoundException = get_class_ref(env, HONEYCOMB "TableNotFoundException");
+  RowNotFoundException   = get_class_ref(env, HONEYCOMB "RowNotFoundException");
+  StoreNotFoundException = get_class_ref(env, HONEYCOMB "StoreNotFoundException");
+  IOException            = get_class_ref(env, "java/io/IOException");
 
   hbase_adapter_.clazz                        = get_class_ref(env, MYSQLENGINE "HBaseAdapter");
   hbase_adapter_.initialize                   = get_static_method_id(env, hbase_adapter_.clazz, "initialize", "()V");
@@ -29,7 +42,6 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   hbase_adapter_.flush_writes                 = get_static_method_id(env, hbase_adapter_.clazz, "flushWrites", "(J)V");
   hbase_adapter_.delete_row                   = get_static_method_id(env, hbase_adapter_.clazz, "deleteRow", "(Ljava/lang/String;[B)Z");
   hbase_adapter_.delete_all_rows              = get_static_method_id(env, hbase_adapter_.clazz, "deleteAllRows", "(Ljava/lang/String;)I");
-  hbase_adapter_.drop_table                   = get_static_method_id(env, hbase_adapter_.clazz, "dropTable", "(Ljava/lang/String;)Z");
   hbase_adapter_.get_row                      = get_static_method_id(env, hbase_adapter_.clazz, "getRow", "(J[B)[B");
   hbase_adapter_.start_index_scan             = get_static_method_id(env, hbase_adapter_.clazz, "startIndexScan", "(Ljava/lang/String;Ljava/lang/String;)J");
   hbase_adapter_.find_duplicate_key           = get_static_method_id(env, hbase_adapter_.clazz, "findDuplicateKey", "(Ljava/lang/String;Ljava/util/Map;)Ljava/lang/String;");
@@ -40,8 +52,6 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   hbase_adapter_.next_index_row               = get_static_method_id(env, hbase_adapter_.clazz, "nextIndexRow", "(J)[B");
   hbase_adapter_.increment_row_count          = get_static_method_id(env, hbase_adapter_.clazz, "incrementRowCount", "(Ljava/lang/String;J)V");
   hbase_adapter_.set_row_count                = get_static_method_id(env, hbase_adapter_.clazz, "setRowCount", "(Ljava/lang/String;J)V");
-  hbase_adapter_.get_row_count                = get_static_method_id(env, hbase_adapter_.clazz, "getRowCount", "(Ljava/lang/String;)J");
-  hbase_adapter_.rename_table                 = get_static_method_id(env, hbase_adapter_.clazz, "renameTable", "(Ljava/lang/String;Ljava/lang/String;)V");
   hbase_adapter_.is_nullable                  = get_static_method_id(env, hbase_adapter_.clazz, "isNullable", "(Ljava/lang/String;Ljava/lang/String;)Z");
   hbase_adapter_.add_index                    = get_static_method_id(env, hbase_adapter_.clazz, "addIndex", "(Ljava/lang/String;Lcom/nearinfinity/honeycomb/hbaseclient/TableMultipartKeys;)V");
   hbase_adapter_.drop_index                   = get_static_method_id(env, hbase_adapter_.clazz, "dropIndex", "(Ljava/lang/String;Ljava/lang/String;)V");
@@ -124,6 +134,7 @@ JNICache::~JNICache()
   jint attach_result = attach_thread(jvm, env);
   CHECK_JNI_ABORT(attach_result, "JNICache Destructor: Failure while attaching thread to JVM.");
 
+  env->DeleteGlobalRef(handler_proxy_.clazz);
   env->DeleteGlobalRef(hbase_adapter_.clazz);
   env->DeleteGlobalRef(index_read_type_.clazz);
   env->DeleteGlobalRef(row_.clazz);
@@ -136,6 +147,14 @@ JNICache::~JNICache()
   env->DeleteGlobalRef(string_writer_.clazz);
   env->DeleteGlobalRef(linked_list_.clazz);
   env->DeleteGlobalRef(tree_map_.clazz);
+
+  env->DeleteGlobalRef(HoneycombException);
+  env->DeleteGlobalRef(TableNotFoundException);
+  env->DeleteGlobalRef(TableExistsException);
+  env->DeleteGlobalRef(TableNotFoundException);
+  env->DeleteGlobalRef(RowNotFoundException);
+  env->DeleteGlobalRef(StoreNotFoundException);
+  env->DeleteGlobalRef(IOException);
 
   detach_thread(jvm);
 }

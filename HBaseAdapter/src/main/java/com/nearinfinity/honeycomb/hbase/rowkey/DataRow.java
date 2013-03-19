@@ -8,7 +8,7 @@ import com.nearinfinity.honeycomb.hbase.VarEncoder;
 import com.nearinfinity.honeycomb.mysql.Util;
 
 public class DataRow implements RowKey {
-    private static final byte PREFIX = 0x05;
+    private static final byte PREFIX = 0x06;
     private final long tableId;
     private UUID uuid;
 

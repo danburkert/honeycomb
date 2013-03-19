@@ -10,7 +10,7 @@ public class HandlerProxyFactory {
         this.storeFactory = storeFactory;
     }
 
-    public HandlerProxy createHandlerProxy() throws Exception {
+    public HandlerProxy createHandlerProxy() {
         return new HandlerProxy(storeFactory);
     }
 }
