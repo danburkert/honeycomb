@@ -7,8 +7,8 @@ import java.io.IOException;
 import java.util.UUID;
 
 /**
- * A Table handles operations for a single MySQL table.  It must support insert,
- * update, delete and get operations on rows, as well as table and index scans
+ * A Table handles operations for a single MySQL table.  It must support "insert",
+ * "update", "delete" and "get" operations on rows, as well as table and index scans
  */
 public interface Table extends Closeable {
     /**
