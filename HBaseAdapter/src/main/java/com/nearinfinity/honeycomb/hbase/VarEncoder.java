@@ -61,9 +61,7 @@ public class VarEncoder {
         int start = bytes[0] + 1;
         int length = bytes.length - start;
         byte[] decodedBytes = new byte[length];
-        for (int i = 0; i < length; i++) {
-            decodedBytes[i] = bytes[start + i];
-        }
+        System.arraycopy(bytes, start, decodedBytes, 0, length);
         return decodedBytes;
     }
 

@@ -113,8 +113,7 @@ public class HandlerProxy {
         return this.store.getRowCount(this.tableName);
     }
 
-    public long getAutoIncValue()
-            throws IOException, HoneycombException {
+    public long getAutoIncValue() {
         checkTableOpen();
         if (!Verify.hasAutoIncrementColumn(store.getSchema(tableName))) {
             throw new IllegalArgumentException(format("Table %s is not an autoincrement table.", this.tableName));

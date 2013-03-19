@@ -31,13 +31,13 @@ public class HandleProxyIntegrationTest {
         factory = Bootstrap.startup();
     }
 
-    public static void testSuccessfulRename() throws Exception {
+    public static void testSuccessfulRename()  {
         final String newTableName = "db2/test2";
         TableSchema schema = getTableSchema();
 
         testProxy("Testing rename", schema, new Action() {
             @Override
-            public void execute(HandlerProxy proxy) throws Exception {
+            public void execute(HandlerProxy proxy)  {
                 proxy.renameTable(tableName, Constants.HBASE_TABLESPACE, newTableName);
                 assertThat(newTableName).isEqualTo(proxy.getTableName());
                 proxy.renameTable(newTableName, Constants.HBASE_TABLESPACE, tableName);
@@ -45,23 +45,23 @@ public class HandleProxyIntegrationTest {
         });
     }
 
-    public static void testSuccessfulAlter() throws Exception {
+    public static void testSuccessfulAlter()  {
         final TableSchema schema = getTableSchema();
         testProxy("Testing alter", schema, new Action() {
             @Override
-            public void execute(HandlerProxy proxy) throws Exception {
+            public void execute(HandlerProxy proxy)  {
                 schema.getColumns().put("c3", new ColumnSchema(ColumnType.LONG, false, false, 8, 0, 0));
                 proxy.alterTable(Util.serializeTableSchema(schema));
             }
         });
     }
 
-    public static void testGetAutoIncrement() throws Exception {
+    public static void testGetAutoIncrement()  {
         TableSchema schema = getTableSchema();
         schema.getColumns().put("c1", new ColumnSchema(ColumnType.LONG, true, true, 8, 0, 0));
         testProxy("Testing auto increment", schema, new Action() {
             @Override
-            public void execute(HandlerProxy proxy) throws Exception {
+            public void execute(HandlerProxy proxy)  {
                 long autoIncValue = proxy.getAutoIncValue();
                 assertThat(autoIncValue).isEqualTo(1);
 
@@ -69,44 +69,44 @@ public class HandleProxyIntegrationTest {
         });
     }
 
-    public static void testIncrementAutoIncrement() throws Exception {
+    public static void testIncrementAutoIncrement()  {
         TableSchema schema = getTableSchema();
         schema.getColumns().put("c1", new ColumnSchema(ColumnType.LONG, true, true, 8, 0, 0));
         testProxy("Testing increment auto increment", schema, new Action() {
             @Override
-            public void execute(HandlerProxy proxy) throws Exception {
+            public void execute(HandlerProxy proxy)  {
                 long autoIncValue = proxy.incrementAutoIncrementValue(1);
                 assertThat(autoIncValue).isEqualTo(2).isEqualTo(proxy.getAutoIncValue());
             }
         });
     }
 
-    public static void testTruncateAutoInc() throws Exception {
+    public static void testTruncateAutoInc()  {
         TableSchema schema = getTableSchema();
         schema.getColumns().put("c1", new ColumnSchema(ColumnType.LONG, true, true, 8, 0, 0));
         testProxy("Testing truncate auto increment", schema, new Action() {
             @Override
-            public void execute(HandlerProxy proxy) throws Exception {
+            public void execute(HandlerProxy proxy)  {
                 proxy.truncateAutoIncrement();
                 assertThat(proxy.getAutoIncValue()).isEqualTo(0);
             }
         });
     }
 
-    public static void testGetRowCount() throws Exception {
+    public static void testGetRowCount()  {
         testProxy("Testing get row count", new Action() {
             @Override
-            public void execute(HandlerProxy proxy) throws Exception {
+            public void execute(HandlerProxy proxy)  {
                 proxy.incrementRowCount(2);
                 assertThat(proxy.getRowCount()).isEqualTo(2);
             }
         });
     }
 
-    public static void testTruncateRowCount() throws Exception {
+    public static void testTruncateRowCount()  {
         testProxy("Testing truncate row count", new Action() {
             @Override
-            public void execute(HandlerProxy proxy) throws Exception {
+            public void execute(HandlerProxy proxy)  {
                 proxy.incrementRowCount(5);
                 proxy.truncateRowCount();
                 assertThat(proxy.getRowCount()).isEqualTo(0);
@@ -114,10 +114,10 @@ public class HandleProxyIntegrationTest {
         });
     }
 
-    public static void testInsertRow() throws Exception {
+    public static void testInsertRow()  {
         testProxy("Testing insert row", new Action() {
             @Override
-            public void execute(HandlerProxy proxy) throws Exception {
+            public void execute(HandlerProxy proxy)  {
                 Map<String, Object> map = new HashMap<String, Object>();
                 map.put(COLUMN1, ByteBuffer.allocate(8).putLong(5).rewind());
                 map.put(COLUMN2, ByteBuffer.allocate(8).putLong(6).rewind());
@@ -131,10 +131,10 @@ public class HandleProxyIntegrationTest {
         });
     }
 
-    public static void testDeleteRow() throws Exception {
+    public static void testDeleteRow()  {
         testProxy("Testing delete row", new Action() {
             @Override
-            public void execute(HandlerProxy proxy) throws Exception {
+            public void execute(HandlerProxy proxy)  {
                 Map<String, Object> map = new HashMap<String, Object>();
                 map.put(COLUMN1, ByteBuffer.allocate(8).putLong(5).rewind());
                 map.put(COLUMN2, ByteBuffer.allocate(8).putLong(6).rewind());
@@ -155,10 +155,10 @@ public class HandleProxyIntegrationTest {
         });
     }
 
-    public static void testUpdateRow() throws Exception {
+    public static void testUpdateRow()  {
         testProxy("Testing update row", new Action() {
             @Override
-            public void execute(HandlerProxy proxy) throws Exception {
+            public void execute(HandlerProxy proxy)  {
                 UUID uuid = UUID.randomUUID();
                 Map<String, Object> map = new HashMap<String, Object>();
                 map.put(COLUMN1, ByteBuffer.allocate(8).putLong(5).rewind());
@@ -177,10 +177,10 @@ public class HandleProxyIntegrationTest {
         });
     }
 
-    public static void testIndexExactScan() throws Exception {
+    public static void testIndexExactScan()  {
         testProxy("Testing index exact scan", new Action() {
             @Override
-            public void execute(HandlerProxy proxy) throws Exception {
+            public void execute(HandlerProxy proxy)  {
                 Map<String, Object> map = new HashMap<String, Object>();
                 long keyColumnValue = 5;
                 int rows = 1;
@@ -219,11 +219,11 @@ public class HandleProxyIntegrationTest {
         return ByteBuffer.allocate(8).putLong(value).rewind();
     }
 
-    private static void testProxy(String message, Action test) throws Exception {
+    private static void testProxy(String message, Action test)  {
         testProxy(message, getTableSchema(), test);
     }
 
-    private static void testProxy(String message, TableSchema schema, Action test) throws Exception {
+    private static void testProxy(String message, TableSchema schema, Action test)  {
         System.out.println(message);
         HandlerProxy proxy = factory.createHandlerProxy();
         proxy.createTable(tableName, Constants.HBASE_TABLESPACE, Util.serializeTableSchema(schema), 1);
@@ -244,7 +244,7 @@ public class HandleProxyIntegrationTest {
         return new TableSchema(columns, indices);
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args)  {
         try {
             suiteSetup();
             testSuccessfulRename();
@@ -265,6 +265,6 @@ public class HandleProxyIntegrationTest {
     }
 
     private interface Action {
-        public void execute(HandlerProxy proxy) throws Exception;
+        public void execute(HandlerProxy proxy) ;
     }
 }
