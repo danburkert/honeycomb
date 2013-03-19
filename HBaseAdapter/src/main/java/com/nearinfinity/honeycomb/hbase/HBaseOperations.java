@@ -2,15 +2,19 @@ package com.nearinfinity.honeycomb.hbase;
 
 import com.nearinfinity.honeycomb.HoneycombException;
 import org.apache.hadoop.hbase.client.*;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.List;
 
 public class HBaseOperations {
+    private static final Logger logger = Logger.getLogger(HBaseOperations.class);
+
     public static void performPut(HTableInterface hTable, List<Put> puts) {
         try {
             hTable.put(puts);
         } catch (IOException e) {
+            logger.error(e);
             throw new HoneycombException("HBase table put list failed", e);
         }
     }
@@ -19,6 +23,7 @@ public class HBaseOperations {
         try {
             hTable.put(put);
         } catch (IOException e) {
+            logger.error(e);
             throw new HoneycombException("HBase table put failed", e);
         }
     }
@@ -27,6 +32,7 @@ public class HBaseOperations {
         try {
             hTable.delete(deletes);
         } catch (IOException e) {
+            logger.error(e);
             throw new HoneycombException("HBase table delete failed", e);
         }
     }
@@ -35,6 +41,7 @@ public class HBaseOperations {
         try {
             hTable.flushCommits();
         } catch (IOException e) {
+            logger.error(e);
             throw new HoneycombException("HBase table flush failed", e);
         }
     }
@@ -43,6 +50,7 @@ public class HBaseOperations {
         try {
             hTable.close();
         } catch (IOException e) {
+            logger.error(e);
             throw new HoneycombException("Close table failed", e);
         }
     }
@@ -51,6 +59,7 @@ public class HBaseOperations {
         try {
             return hTable.get(get);
         } catch (IOException e) {
+            logger.error(e);
             throw new HoneycombException("HBase table get failed", e);
         }
     }
@@ -59,6 +68,7 @@ public class HBaseOperations {
         try {
             return hTable.incrementColumnValue(row, columnFamily, identifier, amount);
         } catch (IOException e) {
+            logger.error(e);
             throw new HoneycombException("HBase table increment column failed", e);
         }
     }
@@ -67,6 +77,7 @@ public class HBaseOperations {
         try {
             return hTable.getScanner(scan);
         } catch (IOException e) {
+            logger.error(e);
             throw new HoneycombException("HBase table get scanner failed", e);
         }
     }

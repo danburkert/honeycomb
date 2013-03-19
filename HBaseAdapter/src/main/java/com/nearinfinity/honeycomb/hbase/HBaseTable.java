@@ -14,6 +14,7 @@ import com.nearinfinity.honeycomb.hbase.rowkey.SortOrder;
 import com.nearinfinity.honeycomb.hbaseclient.Constants;
 import com.nearinfinity.honeycomb.mysql.IndexKey;
 import com.nearinfinity.honeycomb.mysql.Row;
+import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
@@ -21,8 +22,6 @@ import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -103,7 +102,7 @@ public class HBaseTable implements Table {
             }
         }
 
-        closeQuietly(rows);
+        Util.closeQuietly(rows);
         HBaseOperations.performDelete(hTable, deleteList);
     }
 
@@ -172,7 +171,7 @@ public class HBaseTable implements Table {
 
     @Override
     public void close() {
-        closeQuietly(hTable);
+        Util.closeQuietly(hTable);
     }
 
     private void doToIndices(Row row, IndexAction action) {
@@ -204,13 +203,6 @@ public class HBaseTable implements Table {
 
     private Delete createEmptyQualifierDelete(RowKey row) {
         return new Delete(row.encode());
-    }
-
-    private void closeQuietly(Closeable closeable) {
-        try {
-            closeable.close();
-        } catch (IOException e) {
-        }
     }
 
     private interface IndexAction {
