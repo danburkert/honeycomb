@@ -1,6 +1,9 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import com.nearinfinity.honeycomb.*;
+import com.nearinfinity.honeycomb.HoneycombException;
+import com.nearinfinity.honeycomb.Scanner;
+import com.nearinfinity.honeycomb.Store;
+import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 
 import java.io.IOException;
@@ -16,7 +19,7 @@ public class HandlerProxy {
     private String tableName;
     private Scanner currentScanner;
 
-    public HandlerProxy(StoreFactory storeFactory) throws IOException, HoneycombException {
+    public HandlerProxy(StoreFactory storeFactory) {
         this.storeFactory = storeFactory;
     }
 
@@ -33,8 +36,7 @@ public class HandlerProxy {
      * @throws HoneycombException
      */
     public void createTable(String tableName, String tableSpace,
-                            byte[] serializedTableSchema, long autoInc)
-            throws IOException, HoneycombException {
+                            byte[] serializedTableSchema, long autoInc) {
         Verify.isNotNullOrEmpty(tableName);
         checkNotNull(serializedTableSchema);
 
@@ -51,29 +53,33 @@ public class HandlerProxy {
      *
      * @param tableName  Name of the table to be dropped
      * @param tableSpace What store to drop table from.  If null, use default.
-     * @throws IOException
-     * @throws HoneycombException
      */
-    public void dropTable(String tableName, String tableSpace) throws IOException, HoneycombException {
+    public void dropTable(String tableName, String tableSpace) {
         Verify.isNotNullOrEmpty(tableName);
         Store store = this.storeFactory.createStore(tableSpace);
         Table table = store.openTable(tableName);
         table.deleteAllRows();
-        table.close();
+        try {
+            table.close();
+        } catch (IOException e) {
+        }
         store.deleteTable(tableName);
     }
 
-    public void openTable(String tableName, String tableSpace) throws IOException, HoneycombException {
+    public void openTable(String tableName, String tableSpace) {
         Verify.isNotNullOrEmpty(tableName);
         this.tableName = tableName;
         this.store = this.storeFactory.createStore(tableSpace);
         this.table = this.store.openTable(this.tableName);
     }
 
-    public void closeTable() throws IOException {
+    public void closeTable() {
         this.tableName = null;
         this.store = null;
-        this.table.close();
+        try {
+            this.table.close();
+        } catch (IOException e) {
+        }
         this.table = null;
     }
 
@@ -89,11 +95,9 @@ public class HandlerProxy {
      * @param originalName The existing name of the table, not null or empty
      * @param tableSpace   The store which contains the table
      * @param newName      The new table name to represent, not null or empty
-     * @throws IOException
-     * @throws HoneycombException
      */
     public void renameTable(final String originalName, final String tableSpace,
-                            final String newName) throws IOException, HoneycombException {
+                            final String newName) {
         Verify.isNotNullOrEmpty(originalName, "Original table name must have value.");
         Verify.isNotNullOrEmpty(newName, "New table name must have value.");
         checkArgument(!originalName.equals(newName), "New table name must be different than original.");
@@ -103,7 +107,7 @@ public class HandlerProxy {
         this.tableName = newName;
     }
 
-    public long getRowCount() throws IOException, HoneycombException {
+    public long getRowCount() {
         checkTableOpen();
 
         return this.store.getRowCount(this.tableName);
@@ -119,7 +123,7 @@ public class HandlerProxy {
         return store.getAutoInc(tableName);
     }
 
-    public long incrementAutoIncrementValue(long amount) throws IOException, HoneycombException {
+    public long incrementAutoIncrementValue(long amount) {
         checkTableOpen();
         if (!Verify.hasAutoIncrementColumn(store.getSchema(tableName))) {
             throw new IllegalArgumentException(format("Column %s is not an autoincrement column.", this.tableName));
@@ -128,58 +132,58 @@ public class HandlerProxy {
         return this.store.incrementAutoInc(this.getTableName(), amount);
     }
 
-    public void alterTable(byte[] newSchemaSerialized) throws IOException, HoneycombException {
+    public void alterTable(byte[] newSchemaSerialized) {
         checkNotNull(newSchemaSerialized);
         checkTableOpen();
         TableSchema newSchema = Util.deserializeTableSchema(newSchemaSerialized);
         this.store.alterTable(this.tableName, newSchema);
     }
 
-    public void truncateAutoIncrement() throws IOException, HoneycombException {
+    public void truncateAutoIncrement() {
         checkTableOpen();
         this.store.truncateAutoInc(this.tableName);
     }
 
-    public void incrementRowCount(int amount) throws IOException, HoneycombException {
+    public void incrementRowCount(int amount) {
         checkTableOpen();
 
         this.store.incrementRowCount(this.tableName, amount);
     }
 
-    public void truncateRowCount() throws IOException, HoneycombException {
+    public void truncateRowCount() {
         checkTableOpen();
         this.store.truncateRowCount(this.tableName);
     }
 
-    public void insert(byte[] rowBytes) throws IOException {
+    public void insert(byte[] rowBytes) {
         checkTableOpen();
         Row row = Row.deserialize(rowBytes);
         this.table.insert(row);
     }
 
-    public void flush() throws IOException {
+    public void flush() {
         checkTableOpen();
         this.table.flush();
     }
 
-    public Row getRow(UUID uuid) throws RowNotFoundException, IOException {
+    public Row getRow(UUID uuid) {
         checkTableOpen();
         return this.table.get(uuid);
     }
 
-    public void deleteRow(UUID uuid) throws IOException, RowNotFoundException {
+    public void deleteRow(UUID uuid) {
         checkTableOpen();
         this.table.delete(uuid);
     }
 
-    public void updateRow(byte[] newRowBytes) throws IOException, RowNotFoundException {
+    public void updateRow(byte[] newRowBytes) {
         checkTableOpen();
         checkNotNull(newRowBytes);
         Row newRow = Row.deserialize(newRowBytes);
         this.table.update(newRow);
     }
 
-    public void startIndexScan(byte[] indexKeys) throws IOException {
+    public void startIndexScan(byte[] indexKeys) {
         checkTableOpen();
         IndexKey key = IndexKey.deserialize(indexKeys);
         this.currentScanner = this.table.indexScanExact(key);

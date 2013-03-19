@@ -16,15 +16,12 @@ import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 
 /**
  * Manages writing and reading table & column schemas, table & column ids, and
@@ -40,15 +37,14 @@ public class HBaseMetadata {
         this.provider = provider;
     }
 
-    public long getTableId(String table)
-            throws IOException, TableNotFoundException {
+    public long getTableId(String table) {
         Verify.isNotNullOrEmpty(table);
         Get get = new Get(new TablesRow().encode());
         byte[] serializedName = serializeName(table);
         get.addColumn(COLUMN_FAMILY, serializedName);
         HTableInterface hTable = getHTable();
         try {
-            Result result = hTable.get(get);
+            Result result = HBaseOperations.performGet(hTable, get);
 
             byte[] tableIdBytes = result.getValue(COLUMN_FAMILY, serializedName);
             if (tableIdBytes == null) {
@@ -56,24 +52,22 @@ public class HBaseMetadata {
             }
             return deserializeId(tableIdBytes);
         } finally {
-            hTable.close();
+            HBaseOperations.closeTable(hTable);
         }
     }
 
-    public Map<String, Long> getIndexIds(long tableId) throws IOException {
+    public Map<String, Long> getIndexIds(long tableId) {
         checkValidTableId(tableId);
         return getNameToIdMap(new IndicesRow(tableId).encode());
     }
 
-    public BiMap<String, Long> getColumnIds(long tableId)
-            throws IOException {
+    public BiMap<String, Long> getColumnIds(long tableId) {
         checkValidTableId(tableId);
         Map<String, Long> nameToId = getNameToIdMap(new ColumnsRow(tableId).encode());
         return ImmutableBiMap.copyOf(nameToId);
     }
 
-    public TableSchema getSchema(long tableId)
-            throws IOException, TableNotFoundException {
+    public TableSchema getSchema(long tableId) {
         checkValidTableId(tableId);
         byte[] serializedTableId = serializeId(tableId);
 
@@ -81,7 +75,7 @@ public class HBaseMetadata {
         get.addColumn(COLUMN_FAMILY, serializedTableId);
         HTableInterface hTable = getHTable();
         try {
-            Result result = hTable.get(get);
+            Result result = HBaseOperations.performGet(hTable, get);
 
             byte[] serializedSchema = result.getValue(COLUMN_FAMILY, serializedTableId);
             if (serializedSchema == null) {
@@ -89,12 +83,11 @@ public class HBaseMetadata {
             }
             return Util.deserializeTableSchema(serializedSchema);
         } finally {
-            hTable.close();
+            HBaseOperations.closeTable(hTable);
         }
     }
 
-    public void createTable(String tableName, TableSchema schema)
-            throws IOException {
+    public void createTable(String tableName, TableSchema schema) {
         Verify.isNotNullOrEmpty(tableName);
         checkNotNull(schema);
         long tableId = getNextTableId();
@@ -108,8 +101,7 @@ public class HBaseMetadata {
         performMutations(ImmutableList.<Delete>of(), puts);
     }
 
-    public void deleteSchema(String tableName)
-            throws TableNotFoundException, IOException {
+    public void deleteSchema(String tableName) {
         Verify.isNotNullOrEmpty(tableName);
         long tableId = getTableId(tableName);
         byte[] serializedId = serializeId(tableId);
@@ -132,8 +124,7 @@ public class HBaseMetadata {
         performMutations(deletes, ImmutableList.<Put>of());
     }
 
-    public void updateSchema(long tableId, TableSchema oldSchema, TableSchema newSchema)
-            throws IOException {
+    public void updateSchema(long tableId, TableSchema oldSchema, TableSchema newSchema) {
         checkValidTableId(tableId);
         checkNotNull(oldSchema);
         checkNotNull(newSchema);
@@ -186,10 +177,10 @@ public class HBaseMetadata {
      *
      * @param oldTableName The name of the existing table
      * @param newTableName The new name to use for this table
-     * @throws IOException            Thrown on HBase mutation failure
      * @throws TableNotFoundException Thrown when existing table cannot be found
+     * @ Thrown on HBase mutation failure
      */
-    public void renameExistingTable(final String oldTableName, final String newTableName) throws IOException, TableNotFoundException {
+    public void renameExistingTable(final String oldTableName, final String newTableName) {
         Verify.isNotNullOrEmpty(oldTableName, "Old table name must have value");
         Verify.isNotNullOrEmpty(newTableName, "New table name must have value");
 
@@ -201,45 +192,45 @@ public class HBaseMetadata {
         performMutations(deletes, puts);
     }
 
-    public long getAutoInc(long tableId) throws IOException {
+    public long getAutoInc(long tableId) {
         checkValidTableId(tableId);
         return getCounter(new AutoIncRow().encode(), serializeId(tableId));
     }
 
-    public long incrementAutoInc(long tableId, long amount) throws IOException {
+    public long incrementAutoInc(long tableId, long amount) {
         checkValidTableId(tableId);
         return incrementCounter(new AutoIncRow().encode(),
                 serializeId(tableId), amount);
     }
 
-    public void truncateAutoInc(long tableId) throws IOException {
+    public void truncateAutoInc(long tableId) {
         checkValidTableId(tableId);
         performMutations(Lists.<Delete>newArrayList(deleteAutoIncCounter(tableId)),
                 ImmutableList.<Put>of());
     }
 
-    public long getRowCount(long tableId) throws IOException {
+    public long getRowCount(long tableId) {
         checkValidTableId(tableId);
         return getCounter(new RowsRow().encode(), serializeId(tableId));
     }
 
-    public long incrementRowCount(long tableId, long amount) throws IOException {
+    public long incrementRowCount(long tableId, long amount) {
         checkValidTableId(tableId);
         return incrementCounter(new RowsRow().encode(), serializeId(tableId), amount);
     }
 
-    public void truncateRowCount(long tableId) throws IOException {
+    public void truncateRowCount(long tableId) {
         checkValidTableId(tableId);
         performMutations(Lists.<Delete>newArrayList(deleteRowsCounter(tableId)),
                 ImmutableList.<Put>of());
     }
 
-    private Map<String, Long> getNameToIdMap(byte[] encodedRow) throws IOException {
+    private Map<String, Long> getNameToIdMap(byte[] encodedRow) {
         HTableInterface hTable = getHTable();
         try {
             Get get = new Get(encodedRow);
             get.addFamily(COLUMN_FAMILY);
-            Result result = hTable.get(get);
+            Result result = HBaseOperations.performGet(hTable, get);
             Map<byte[], byte[]> serializedNameIds = result.getFamilyMap(COLUMN_FAMILY);
             Map<String, Long> nameToId = new HashMap<String, Long>(serializedNameIds.size());
 
@@ -252,58 +243,57 @@ public class HBaseMetadata {
             }
             return nameToId;
         } finally {
-            hTable.close();
+            HBaseOperations.closeTable(hTable);
         }
     }
 
-    private long getCounter(byte[] row, byte[] identifier) throws IOException {
+    private long getCounter(byte[] row, byte[] identifier) {
         Get get = new Get(row).addColumn(COLUMN_FAMILY, identifier);
         HTableInterface hTable = getHTable();
         try {
-            byte[] value = hTable.get(get).getValue(COLUMN_FAMILY, identifier);
+            byte[] value = HBaseOperations.performGet(hTable, get).getValue(COLUMN_FAMILY, identifier);
             return value == null ? 0 : Bytes.toLong(value);
         } finally {
-            hTable.close();
+            HBaseOperations.closeTable(hTable);
         }
     }
 
-    private long incrementCounter(byte[] row, byte[] identifier, long amount)
-            throws IOException {
+    private long incrementCounter(byte[] row, byte[] identifier, long amount) {
         HTableInterface hTable = getHTable();
         try {
-            return hTable.incrementColumnValue(row, COLUMN_FAMILY, identifier, amount);
+            return HBaseOperations.performIncrementColumnValue(hTable, row, COLUMN_FAMILY, identifier, amount);
         } finally {
-            hTable.close();
+            HBaseOperations.closeTable(hTable);
         }
     }
 
-    private long getNextTableId() throws IOException {
+    private long getNextTableId() {
         HTableInterface hTable = getHTable();
         try {
-            return hTable.incrementColumnValue(new TablesRow().encode(),
+            return HBaseOperations.performIncrementColumnValue(hTable, new TablesRow().encode(),
                     COLUMN_FAMILY, new byte[0], 1);
         } finally {
-            hTable.close();
+            HBaseOperations.closeTable(hTable);
         }
     }
 
-    private long getNextIndexId(long tableId, int n) throws IOException {
+    private long getNextIndexId(long tableId, int n) {
         HTableInterface hTable = getHTable();
         try {
-            return hTable.incrementColumnValue(new IndicesRow(tableId).encode(),
+            return HBaseOperations.performIncrementColumnValue(hTable, new IndicesRow(tableId).encode(),
                     COLUMN_FAMILY, new byte[0], n);
         } finally {
-            hTable.close();
+            HBaseOperations.closeTable(hTable);
         }
     }
 
-    private long getNextColumnId(long tableId, int n) throws IOException {
+    private long getNextColumnId(long tableId, int n) {
         HTableInterface hTable = getHTable();
         try {
-            return hTable.incrementColumnValue(new ColumnsRow(tableId).encode(),
+            return HBaseOperations.performIncrementColumnValue(hTable, new ColumnsRow(tableId).encode(),
                     COLUMN_FAMILY, new byte[0], n);
         } finally {
-            hTable.close();
+            HBaseOperations.closeTable(hTable);
         }
     }
 
@@ -322,8 +312,7 @@ public class HBaseMetadata {
                 .deleteColumns(COLUMN_FAMILY, serializeId(tableId));
     }
 
-    private Put putTableSchema(long tableId, TableSchema schema)
-            throws IOException {
+    private Put putTableSchema(long tableId, TableSchema schema) {
         return new Put(new SchemaRow().encode())
                 .add(COLUMN_FAMILY, serializeId(tableId),
                         Util.serializeTableSchema(schema));
@@ -334,8 +323,7 @@ public class HBaseMetadata {
                 .deleteColumns(COLUMN_FAMILY, serializeId(tableId));
     }
 
-    private Put putColumnIds(long tableId, Map<String, ColumnSchema> columns)
-            throws IOException {
+    private Put putColumnIds(long tableId, Map<String, ColumnSchema> columns) {
         long columnId = getNextColumnId(tableId, columns.size());
         Put put = new Put(new ColumnsRow(tableId).encode());
 
@@ -346,7 +334,7 @@ public class HBaseMetadata {
         return put;
     }
 
-    private Put putIndices(long tableId, Map<String, IndexSchema> indices) throws IOException {
+    private Put putIndices(long tableId, Map<String, IndexSchema> indices) {
         checkState(!indices.isEmpty(), "putIndices requires 1 or more indices.");
         long indexId = getNextIndexId(tableId, indices.size());
         Put put = new Put(new IndicesRow(tableId).encode());
@@ -386,9 +374,9 @@ public class HBaseMetadata {
      *
      * @param deletes A list of {@link Delete} operations to execute, not null
      * @param puts    A list of  {@link Put} operations to execute, not null
-     * @throws IOException Thrown on mutation commit failure
+     * @ Thrown on mutation commit failure
      */
-    private void performMutations(final List<Delete> deletes, final List<Put> puts) throws IOException {
+    private void performMutations(final List<Delete> deletes, final List<Put> puts) {
         Preconditions.checkNotNull(deletes, "The delete mutations container is invalid");
         Preconditions.checkNotNull(puts, "The put mutations container is invalid");
         checkArgument(!deletes.isEmpty() || !puts.isEmpty(), "At least one mutation operation must be specified");
@@ -396,19 +384,19 @@ public class HBaseMetadata {
         HTableInterface hTable = getHTable();
         try {
             if (!deletes.isEmpty()) {
-                hTable.delete(deletes);
+                HBaseOperations.performDelete(hTable, deletes);
             }
 
             if (!puts.isEmpty()) {
-                hTable.put(puts);
+                HBaseOperations.performPut(hTable, puts);
             }
 
             // Only flush if the table is not configured to auto flush
             if (!hTable.isAutoFlush()) {
-                hTable.flushCommits();
+                HBaseOperations.performFlush(hTable);
             }
         } finally {
-            hTable.close();
+            HBaseOperations.closeTable(hTable);
         }
     }
 

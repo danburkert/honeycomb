@@ -1,5 +1,6 @@
 package com.nearinfinity.honeycomb.mysql;
 
+import com.nearinfinity.honeycomb.HoneycombException;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import org.apache.avro.io.*;
 import org.apache.avro.specific.SpecificDatumReader;
@@ -59,12 +60,12 @@ public class Util {
         return new UUID(buffer.getLong(), buffer.getLong());
     }
 
-    public static byte[] serializeTableSchema(TableSchema schema) throws IOException {
+    public static byte[] serializeTableSchema(TableSchema schema) {
         checkNotNull(schema, "Schema cannot be null");
         return serializeAvroObject(schema, TableSchema.class);
     }
 
-    public static TableSchema deserializeTableSchema(byte[] schema) throws IOException {
+    public static TableSchema deserializeTableSchema(byte[] schema) {
         checkNotNull(schema, "Schema cannot be null");
         return deserializeAvroObject(schema, TableSchema.class);
     }
@@ -75,30 +76,40 @@ public class Util {
      * @param obj   The object to serialize
      * @param clazz The type of the object being serialized
      * @return Serialized row
-     * @throws IOException when serialization fails
      */
-    public static <T> byte[] serializeAvroObject(T obj, Class<T> clazz) throws IOException {
+    public static <T> byte[] serializeAvroObject(T obj, Class<T> clazz) {
         DatumWriter<T> writer = new SpecificDatumWriter<T>(clazz);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Encoder encoder = EncoderFactory.get().binaryEncoder(out, null);
-        writer.write(obj, encoder);
-        encoder.flush();
+        try {
+            writer.write(obj, encoder);
+            encoder.flush();
+        } catch (IOException e) {
+            logger.error("Serialization failed", e);
+            throw new HoneycombException("Serialization failed", e);
+        }
+
         return out.toByteArray();
     }
 
     /**
      * Serialize an object to a byte array
      *
-     * @param obj   The object to serialize
+     * @param obj    The object to serialize
      * @param writer The datum writer for the class
      * @return Serialized row
-     * @throws IOException when serialization fails
      */
-    public static <T> byte[] serializeAvroObject(T obj, DatumWriter<T> writer) throws IOException {
+    public static <T> byte[] serializeAvroObject(T obj, DatumWriter<T> writer) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Encoder encoder = EncoderFactory.get().binaryEncoder(out, null);
-        writer.write(obj, encoder);
-        encoder.flush();
+        try {
+            writer.write(obj, encoder);
+            encoder.flush();
+        } catch (IOException e) {
+            logger.error("Serialization failed", e);
+            throw new HoneycombException("Serialization failed", e);
+        }
+
         return out.toByteArray();
     }
 
@@ -108,14 +119,17 @@ public class Util {
      * @param serializedData a buffer containing the serialized data
      * @param clazz          the class type to instantiate to store the deserialized data
      * @return A new instance of the specified class representing the deserialized data
-     * @throws IOException On deserialization reader failure
      */
-    public static <T> T deserializeAvroObject(byte[] serializedData, Class<T> clazz) throws IOException {
+    public static <T> T deserializeAvroObject(byte[] serializedData, Class<T> clazz) {
         final DatumReader<T> userDatumReader = new SpecificDatumReader<T>(clazz);
         final ByteArrayInputStream in = new ByteArrayInputStream(serializedData);
         binaryDecoder = DecoderFactory.get().binaryDecoder(in, binaryDecoder);
 
-        return userDatumReader.read(null, binaryDecoder);
+        try {
+            return userDatumReader.read(null, binaryDecoder);
+        } catch (IOException e) {
+            throw new HoneycombException("Deserialization failed", e);
+        }
     }
 
     /**
@@ -124,13 +138,17 @@ public class Util {
      * @param serializedData a buffer containing the serialized data
      * @param reader         the datum reader for the class
      * @return A new instance of the specified class representing the deserialized data
-     * @throws IOException On deserialization reader failure
      */
-    public static <T> T deserializeAvroObject(byte[] serializedData, DatumReader<T> reader) throws IOException {
+    public static <T> T deserializeAvroObject(byte[] serializedData, DatumReader<T> reader) {
         final ByteArrayInputStream in = new ByteArrayInputStream(serializedData);
         binaryDecoder = DecoderFactory.get().binaryDecoder(in, binaryDecoder);
 
-        return reader.read(null, binaryDecoder);
+
+        try {
+            return reader.read(null, binaryDecoder);
+        } catch (IOException e) {
+            throw new HoneycombException("Deserialization failed", e);
+        }
     }
 
     public static String generateHexString(final byte[] bytes) {

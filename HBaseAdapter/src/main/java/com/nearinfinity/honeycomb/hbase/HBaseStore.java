@@ -7,11 +7,9 @@ import com.google.common.collect.BiMap;
 import com.google.inject.Inject;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
-import com.nearinfinity.honeycomb.TableNotFoundException;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import org.apache.log4j.Logger;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -33,78 +31,66 @@ public class HBaseStore implements Store {
         doInitialization();
     }
 
-    public long getTableId(String tableName)
-            throws IOException, TableNotFoundException {
+    public long getTableId(String tableName) {
         return tableCacheGet(tableName);
     }
 
-    public BiMap<String, Long> getColumns(long tableId )
-            throws IOException, TableNotFoundException {
+    public BiMap<String, Long> getColumns(long tableId) {
         return columnsCacheGet(tableId);
     }
 
-    public Map<String, Long> getIndices(long tableId)
-            throws IOException, TableNotFoundException {
+    public Map<String, Long> getIndices(long tableId) {
         return indicesCacheGet(tableId);
     }
 
-    public TableSchema getSchema(Long tableId)
-            throws IOException, TableNotFoundException {
+    public TableSchema getSchema(Long tableId) {
         return schemaCacheGet(tableId);
     }
 
     @Override
-    public Table openTable(String tableName)
-            throws IOException, TableNotFoundException {
+    public Table openTable(String tableName) {
         Long tableId = tableCacheGet(tableName);
         return tableFactory.createTable(tableId, schemaCacheGet(tableId));
     }
 
     @Override
-    public TableSchema getSchema(String tableName)
-            throws IOException, TableNotFoundException {
+    public TableSchema getSchema(String tableName) {
         return schemaCacheGet(tableCacheGet(tableName));
     }
 
     @Override
-    public void createTable(String tableName, TableSchema schema)
-            throws IOException {
+    public void createTable(String tableName, TableSchema schema) {
         metadata.createTable(tableName, schema);
     }
 
     @Override
-    public void deleteTable(String tableName)
-            throws IOException, TableNotFoundException {
+    public void deleteTable(String tableName) {
         long tableId = tableCacheGet(tableName);
         invalidateCache(tableName, tableId);
         metadata.deleteSchema(tableName);
     }
 
     @Override
-    public void alterTable(String tableName, TableSchema schema)
-            throws IOException, TableNotFoundException {
+    public void alterTable(String tableName, TableSchema schema) {
         long tableId = tableCacheGet(tableName);
         metadata.updateSchema(tableId, schemaCacheGet(tableId), schema);
         invalidateCache(tableName, tableId);
     }
 
     @Override
-    public void renameTable(String curTableName, String newTableName)
-            throws IOException, TableNotFoundException {
+    public void renameTable(String curTableName, String newTableName) {
         long tableId = tableCacheGet(curTableName);
         metadata.renameExistingTable(curTableName, newTableName);
         invalidateCache(curTableName, tableId);
     }
 
     @Override
-    public long getAutoInc(String tableName)
-            throws IOException, TableNotFoundException {
+    public long getAutoInc(String tableName) {
         return autoIncCacheGet(tableCacheGet(tableName));
     }
 
     @Override
-    public long incrementAutoInc(String tableName, long amount)
-            throws IOException, TableNotFoundException {
+    public long incrementAutoInc(String tableName, long amount) {
         long tableId = tableCacheGet(tableName);
         long value = metadata.incrementAutoInc(tableId, amount);
         autoIncCache.put(tableId, value);
@@ -112,22 +98,19 @@ public class HBaseStore implements Store {
     }
 
     @Override
-    public void truncateAutoInc(String tableName)
-            throws IOException, TableNotFoundException {
+    public void truncateAutoInc(String tableName) {
         long tableId = tableCacheGet(tableName);
         metadata.truncateAutoInc(tableId);
         autoIncCache.invalidate(tableId);
     }
 
     @Override
-    public long getRowCount(String tableName)
-            throws IOException, TableNotFoundException {
+    public long getRowCount(String tableName) {
         return rowsCacheGet(tableCacheGet(tableName));
     }
 
     @Override
-    public long incrementRowCount(String tableName, long amount)
-            throws IOException, TableNotFoundException {
+    public long incrementRowCount(String tableName, long amount) {
         long tableId = tableCacheGet(tableName);
         long value = metadata.incrementRowCount(tableId, amount);
         rowsCache.put(tableId, value);
@@ -135,8 +118,7 @@ public class HBaseStore implements Store {
     }
 
     @Override
-    public void truncateRowCount(String tableName)
-            throws IOException, TableNotFoundException {
+    public void truncateRowCount(String tableName) {
         long tableId = tableCacheGet(tableName);
         metadata.truncateRowCount(tableId);
         rowsCache.invalidate(tableId);
@@ -147,8 +129,7 @@ public class HBaseStore implements Store {
                 .newBuilder()
                 .build(new CacheLoader<String, Long>() {
                     @Override
-                    public Long load(String tableName)
-                            throws IOException, TableNotFoundException {
+                    public Long load(String tableName) {
                         return metadata.getTableId(tableName);
                     }
                 }
@@ -158,9 +139,7 @@ public class HBaseStore implements Store {
                 .newBuilder()
                 .build(new CacheLoader<Long, BiMap<String, Long>>() {
                     @Override
-                    public BiMap<String, Long> load(Long tableId)
-                            throws IOException, TableNotFoundException {
-
+                    public BiMap<String, Long> load(Long tableId) {
                         return metadata.getColumnIds(tableId);
                     }
                 }
@@ -170,8 +149,7 @@ public class HBaseStore implements Store {
                 .newBuilder()
                 .build(new CacheLoader<Long, Map<String, Long>>() {
                     @Override
-                    public Map<String, Long> load(Long tableId)
-                            throws IOException, TableNotFoundException {
+                    public Map<String, Long> load(Long tableId) {
                         return metadata.getIndexIds(tableId);
                     }
                 });
@@ -180,8 +158,7 @@ public class HBaseStore implements Store {
                 .newBuilder()
                 .build(new CacheLoader<Long, Long>() {
                     @Override
-                    public Long load(Long tableId)
-                            throws IOException, TableNotFoundException {
+                    public Long load(Long tableId) {
                         return metadata.getAutoInc(tableId);
                     }
                 }
@@ -191,8 +168,7 @@ public class HBaseStore implements Store {
                 .newBuilder()
                 .build(new CacheLoader<Long, Long>() {
                     @Override
-                    public Long load(Long tableId)
-                            throws IOException, TableNotFoundException {
+                    public Long load(Long tableId) {
                         return metadata.getRowCount(tableId);
                     }
                 }
@@ -202,8 +178,7 @@ public class HBaseStore implements Store {
                 .newBuilder()
                 .build(new CacheLoader<Long, TableSchema>() {
                     @Override
-                    public TableSchema load(Long tableId)
-                            throws IOException, TableNotFoundException {
+                    public TableSchema load(Long tableId) {
                         return metadata.getSchema(tableId);
                     }
                 }
@@ -216,50 +191,37 @@ public class HBaseStore implements Store {
         schemaCache.invalidate(tableId);
     }
 
-    private Long tableCacheGet(String tableName)
-            throws IOException, TableNotFoundException {
+    private Long tableCacheGet(String tableName) {
         return cacheGet(tableCache, tableName);
     }
 
-    private BiMap<String, Long> columnsCacheGet(Long tableId)
-            throws IOException, TableNotFoundException {
+    private BiMap<String, Long> columnsCacheGet(Long tableId) {
         return cacheGet(columnsCache, tableId);
     }
 
-    private Map<String, Long> indicesCacheGet(Long tableId)
-            throws IOException, TableNotFoundException {
+    private Map<String, Long> indicesCacheGet(Long tableId) {
         return cacheGet(indicesCache, tableId);
     }
 
-    private Long autoIncCacheGet(Long tableId)
-            throws IOException, TableNotFoundException {
+    private Long autoIncCacheGet(Long tableId) {
         return cacheGet(autoIncCache, tableId);
     }
 
-    private Long rowsCacheGet(Long tableId)
-            throws IOException, TableNotFoundException {
+    private Long rowsCacheGet(Long tableId) {
         return cacheGet(rowsCache, tableId);
     }
 
-    private TableSchema schemaCacheGet(Long tableId)
-            throws IOException, TableNotFoundException {
+    private TableSchema schemaCacheGet(Long tableId) {
         return cacheGet(schemaCache, tableId);
     }
 
-    private <K, V> V cacheGet(LoadingCache<K, V> cache, K key)
-            throws IOException, TableNotFoundException {
+    private <K, V> V cacheGet(LoadingCache<K, V> cache, K key) {
         try {
             return cache.get(key);
         } catch (ExecutionException e) {
             Throwable cause = e.getCause();
-            if (cause instanceof IOException) {
-                throw (IOException) cause;
-            } else if (cause instanceof TableNotFoundException) {
-                throw (TableNotFoundException) cause;
-            } else {
-                logger.error("Encountered unexpected exception during cache get:", cause);
-                throw new RuntimeException(cause);
-            }
+            logger.error("Encountered unexpected exception during cache get:", cause);
+            throw new RuntimeException(cause);
         }
     }
 }

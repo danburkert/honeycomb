@@ -26,11 +26,11 @@ public class IndexKey {
         this.indexContainer = indexContainer;
     }
 
-    public static IndexKey deserialize(byte[] serializedIndexKey) throws IOException {
+    public static IndexKey deserialize(byte[] serializedIndexKey) {
         return new IndexKey(Util.deserializeAvroObject(serializedIndexKey, reader));
     }
 
-    public byte[] serialize() throws IOException {
+    public byte[] serialize() {
         return Util.serializeAvroObject(indexContainer, writer);
     }
 

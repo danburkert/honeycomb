@@ -30,11 +30,7 @@ public class HBaseScanner implements Scanner {
 
     @Override
     public Row next() {
-        try {
-            return Row.deserialize(resultIterator.next().getValue(Constants.NIC, new byte[0]));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return Row.deserialize(resultIterator.next().getValue(Constants.NIC, new byte[0]));
     }
 
     @Override

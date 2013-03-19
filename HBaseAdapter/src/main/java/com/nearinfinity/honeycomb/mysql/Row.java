@@ -48,9 +48,8 @@ public class Row {
      *
      * @param serializedRow byte buffer containing serialized Row
      * @return new Row instance from serializedRow
-     * @throws IOException On deserialization read failure
      */
-    public static Row deserialize(byte[] serializedRow) throws IOException {
+    public static Row deserialize(byte[] serializedRow) {
         return new Row(Util.deserializeAvroObject(serializedRow, reader));
     }
 
@@ -91,7 +90,7 @@ public class Row {
      * @return Serialized row
      * @throws IOException when serialization fails
      */
-    public byte[] serialize() throws IOException {
+    public byte[] serialize() {
         return Util.serializeAvroObject(row, writer);
     }
 
