@@ -7,7 +7,6 @@ import com.google.inject.assistedinject.Assisted;
 import com.nearinfinity.honeycomb.RowNotFoundException;
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Table;
-import com.nearinfinity.honeycomb.TableNotFoundException;
 import com.nearinfinity.honeycomb.hbase.rowkey.DataRow;
 import com.nearinfinity.honeycomb.hbase.rowkey.IndexRow;
 import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowBuilder;
@@ -178,12 +177,7 @@ public class HBaseTable implements Table {
 
     private void doToIndices(Row row, IndexAction action) {
         Map<String, byte[]> records = row.getRecords();
-        Map<String, Long> indexIds;
-        try {
-            indexIds = this.store.getIndices(this.tableId);
-        } catch (TableNotFoundException e) {
-            throw new RuntimeException(e);
-        }
+        Map<String, Long> indexIds = this.store.getIndices(this.tableId);
 
         for (Map.Entry<String, IndexSchema> index : schema.getIndices().entrySet()) {
             long indexId = indexIds.get(index.getKey());

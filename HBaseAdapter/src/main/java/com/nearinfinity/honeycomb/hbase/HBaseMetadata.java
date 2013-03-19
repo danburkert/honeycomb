@@ -377,8 +377,8 @@ public class HBaseMetadata {
      * @ Thrown on mutation commit failure
      */
     private void performMutations(final List<Delete> deletes, final List<Put> puts) {
-        Preconditions.checkNotNull(deletes, "The delete mutations container is invalid");
-        Preconditions.checkNotNull(puts, "The put mutations container is invalid");
+        checkNotNull(deletes, "The delete mutations container is invalid");
+        checkNotNull(puts, "The put mutations container is invalid");
         checkArgument(!deletes.isEmpty() || !puts.isEmpty(), "At least one mutation operation must be specified");
 
         HTableInterface hTable = getHTable();
