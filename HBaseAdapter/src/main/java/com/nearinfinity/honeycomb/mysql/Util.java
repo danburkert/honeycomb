@@ -87,6 +87,22 @@ public class Util {
     }
 
     /**
+     * Serialize an object to a byte array
+     *
+     * @param obj   The object to serialize
+     * @param writer The datum writer for the class
+     * @return Serialized row
+     * @throws IOException when serialization fails
+     */
+    public static <T> byte[] serializeAvroObject(T obj, DatumWriter<T> writer) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        Encoder encoder = EncoderFactory.get().binaryEncoder(out, null);
+        writer.write(obj, encoder);
+        encoder.flush();
+        return out.toByteArray();
+    }
+
+    /**
      * Deserialize the provided serialized data into an instance of the specified class type
      *
      * @param serializedData a buffer containing the serialized data
@@ -100,6 +116,21 @@ public class Util {
         binaryDecoder = DecoderFactory.get().binaryDecoder(in, binaryDecoder);
 
         return userDatumReader.read(null, binaryDecoder);
+    }
+
+    /**
+     * Deserialize the provided serialized data into an instance of the specified class type
+     *
+     * @param serializedData a buffer containing the serialized data
+     * @param reader         the datum reader for the class
+     * @return A new instance of the specified class representing the deserialized data
+     * @throws IOException On deserialization reader failure
+     */
+    public static <T> T deserializeAvroObject(byte[] serializedData, DatumReader<T> reader) throws IOException {
+        final ByteArrayInputStream in = new ByteArrayInputStream(serializedData);
+        binaryDecoder = DecoderFactory.get().binaryDecoder(in, binaryDecoder);
+
+        return reader.read(null, binaryDecoder);
     }
 
     public static String generateHexString(final byte[] bytes) {

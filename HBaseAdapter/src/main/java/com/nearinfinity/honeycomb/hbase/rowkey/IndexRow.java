@@ -103,6 +103,8 @@ public abstract class IndexRow implements RowKey {
         return records;
     }
 
+    public abstract SortOrder getSortOrder();
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("[");

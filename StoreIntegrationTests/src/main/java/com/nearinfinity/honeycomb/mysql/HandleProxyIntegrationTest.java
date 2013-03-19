@@ -11,6 +11,7 @@ import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,6 +22,8 @@ import static org.fest.assertions.Assertions.assertThat;
 public class HandleProxyIntegrationTest {
     public static final String COLUMN1 = "c1";
     public static final String COLUMN2 = "c2";
+    public static final String INDEX2 = "i2";
+    public static final String INDEX1 = "i1";
     private static final String tableName = "db/test";
     private static HandlerProxyFactory factory;
 
@@ -153,7 +156,7 @@ public class HandleProxyIntegrationTest {
     }
 
     public static void testUpdateRow() throws Exception {
-        testProxy("Testing delete row", new Action() {
+        testProxy("Testing update row", new Action() {
             @Override
             public void execute(HandlerProxy proxy) throws Exception {
                 UUID uuid = UUID.randomUUID();
@@ -172,6 +175,48 @@ public class HandleProxyIntegrationTest {
                 assertThat(result).isEqualTo(newRow);
             }
         });
+    }
+
+    public static void testIndexExactScan() throws Exception {
+        testProxy("Testing index exact scan", new Action() {
+            @Override
+            public void execute(HandlerProxy proxy) throws Exception {
+                Map<String, Object> map = new HashMap<String, Object>();
+                long keyColumnValue = 5;
+                int rows = 1;
+                map.put(COLUMN1, encodeValue(keyColumnValue));
+                for (int x = 0; x < rows; x++) {
+                    map.put(COLUMN2, encodeValue(x));
+                    Row row = new Row(map, Constants.FULL_UUID);
+                    proxy.insert(row.serialize());
+                }
+                map.clear();
+                map.put(COLUMN1, encodeValue(keyColumnValue + 1));
+                map.put(COLUMN2, encodeValue(0));
+                proxy.insert(new Row(map, UUID.randomUUID()).serialize());
+                proxy.flush();
+
+                IndexKey key = new IndexKey(INDEX1, new HashMap<String, ByteBuffer>() {
+                    {
+                        put(COLUMN1, (ByteBuffer) encodeValue(5));
+                    }
+                });
+                proxy.startIndexScan(key.serialize());
+                Row previous = null;
+                for (int x = 0; x < rows; x++) {
+                    Row current = proxy.getNextScannerRow();
+                    assertThat(current).isNotEqualTo(previous);
+                    previous = current;
+                }
+
+                Row end = proxy.getNextScannerRow();
+                assertThat(end).isNull();
+            }
+        });
+    }
+
+    private static Buffer encodeValue(long value) {
+        return ByteBuffer.allocate(8).putLong(value).rewind();
     }
 
     private static void testProxy(String message, Action test) throws Exception {
@@ -193,8 +238,8 @@ public class HandleProxyIntegrationTest {
         HashMap<String, IndexSchema> indices = new HashMap<String, IndexSchema>();
         columns.put(COLUMN1, new ColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
         columns.put(COLUMN2, new ColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
-        indices.put("i1", new IndexSchema(Lists.newArrayList("c1"), false));
-        indices.put("i2", new IndexSchema(Lists.newArrayList("c1", "c2"), false));
+        indices.put(INDEX1, new IndexSchema(Lists.newArrayList(COLUMN1), false));
+        indices.put(INDEX2, new IndexSchema(Lists.newArrayList(COLUMN1, COLUMN2), false));
 
         return new TableSchema(columns, indices);
     }
@@ -212,6 +257,7 @@ public class HandleProxyIntegrationTest {
             testInsertRow();
             testDeleteRow();
             testUpdateRow();
+            testIndexExactScan();
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(1);

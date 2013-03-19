@@ -1,7 +1,6 @@
 package com.nearinfinity.honeycomb.mysql;
 
 import com.nearinfinity.honeycomb.*;
-import com.nearinfinity.honeycomb.mysql.gen.RowContainer;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 
 import java.io.IOException;
@@ -15,6 +14,7 @@ public class HandlerProxy {
     private Store store;
     private Table table;
     private String tableName;
+    private Scanner currentScanner;
 
     public HandlerProxy(StoreFactory storeFactory) throws IOException, HoneycombException {
         this.storeFactory = storeFactory;
@@ -172,14 +172,28 @@ public class HandlerProxy {
         this.table.delete(uuid);
     }
 
-    private void checkTableOpen() {
-        checkState(table != null, "Table must be opened before used.");
-    }
-
     public void updateRow(byte[] newRowBytes) throws IOException, RowNotFoundException {
         checkTableOpen();
         checkNotNull(newRowBytes);
         Row newRow = Row.deserialize(newRowBytes);
         this.table.update(newRow);
+    }
+
+    public void startIndexScan(byte[] indexKeys) throws IOException {
+        checkTableOpen();
+        IndexKey key = IndexKey.deserialize(indexKeys);
+        this.currentScanner = this.table.indexScanExact(key);
+    }
+
+    public Row getNextScannerRow() {
+        if (!this.currentScanner.hasNext()) {
+            return null;
+        }
+
+        return this.currentScanner.next();
+    }
+
+    private void checkTableOpen() {
+        checkState(table != null, "Table must be opened before used.");
     }
 }

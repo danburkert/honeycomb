@@ -1,5 +1,6 @@
 package com.nearinfinity.honeycomb.hbase;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
@@ -7,17 +8,21 @@ import com.nearinfinity.honeycomb.RowNotFoundException;
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.TableNotFoundException;
-import com.nearinfinity.honeycomb.hbase.rowkey.AscIndexRow;
 import com.nearinfinity.honeycomb.hbase.rowkey.DataRow;
-import com.nearinfinity.honeycomb.hbase.rowkey.DescIndexRow;
+import com.nearinfinity.honeycomb.hbase.rowkey.IndexRow;
+import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowBuilder;
+import com.nearinfinity.honeycomb.hbase.rowkey.SortOrder;
 import com.nearinfinity.honeycomb.hbaseclient.Constants;
+import com.nearinfinity.honeycomb.mysql.IndexKey;
 import com.nearinfinity.honeycomb.mysql.Row;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -41,32 +46,33 @@ public class HBaseTable implements Table {
     public void insert(Row row) throws IOException {
         final byte[] serializeRow = row.serialize();
         final UUID uuid = row.getUUID();
+
         hTable.put(createEmptyQualifierPut(new DataRow(this.tableId, uuid), serializeRow));
         doToIndices(row, new IndexAction() {
             @Override
-            public void execute(long indexId, List<byte[]> sortedRecords) throws IOException {
-                hTable.put(createEmptyQualifierPut(new DescIndexRow(tableId, indexId, sortedRecords, uuid), serializeRow));
-                hTable.put(createEmptyQualifierPut(new AscIndexRow(tableId, indexId, sortedRecords, uuid), serializeRow));
+            public void execute(IndexRowBuilder builder) throws IOException {
+                hTable.put(createEmptyQualifierPut(builder.withSortOrder(SortOrder.Ascending).build(), serializeRow));
+                hTable.put(createEmptyQualifierPut(builder.withSortOrder(SortOrder.Descending).build(), serializeRow));
             }
         });
     }
 
     @Override
     public void update(Row row) throws IOException, RowNotFoundException {
-        delete(row.getUUID());
-        insert(row);
+        this.delete(row.getUUID());
+        this.insert(row);
     }
 
     @Override
     public void delete(final UUID uuid) throws IOException, RowNotFoundException {
-        Row row = get(uuid);
+        Row row = this.get(uuid);
         final List<Delete> deleteList = Lists.newLinkedList();
         deleteList.add(new Delete(new DataRow(this.tableId, uuid).encode()));
         doToIndices(row, new IndexAction() {
             @Override
-            public void execute(long indexId, List<byte[]> sortedRecords) throws IOException {
-                deleteList.add(createEmptyQualifierDelete(new DescIndexRow(tableId, indexId, sortedRecords, uuid)));
-                deleteList.add(createEmptyQualifierDelete(new AscIndexRow(tableId, indexId, sortedRecords, uuid)));
+            public void execute(IndexRowBuilder builder) throws IOException {
+                deleteList.add(createEmptyQualifierDelete(builder.withSortOrder(SortOrder.Descending).build()));
+                deleteList.add(createEmptyQualifierDelete(builder.withSortOrder(SortOrder.Ascending).build()));
             }
         });
 
@@ -78,14 +84,15 @@ public class HBaseTable implements Table {
         long totalDeleteSize = 0, writeBufferSize = 50000; // TODO: retrieve write buffer size from configuration
         final List<Delete> deleteList = Lists.newLinkedList();
         Scanner rows = this.tableScan();
-        for (Row row : rows) {
+        while (rows.hasNext()) {
+            Row row = rows.next();
             final UUID uuid = row.getUUID();
             deleteList.add(new Delete(new DataRow(this.tableId, uuid).encode()));
             doToIndices(row, new IndexAction() {
                 @Override
-                public void execute(long indexId, List<byte[]> sortedRecords) throws IOException {
-                    deleteList.add(createEmptyQualifierDelete(new DescIndexRow(tableId, indexId, sortedRecords, uuid)));
-                    deleteList.add(createEmptyQualifierDelete(new AscIndexRow(tableId, indexId, sortedRecords, uuid)));
+                public void execute(IndexRowBuilder builder) throws IOException {
+                    deleteList.add(createEmptyQualifierDelete(builder.withSortOrder(SortOrder.Ascending).build()));
+                    deleteList.add(createEmptyQualifierDelete(builder.withSortOrder(SortOrder.Descending).build()));
                 }
             });
 
@@ -147,8 +154,27 @@ public class HBaseTable implements Table {
     }
 
     @Override
-    public Scanner indexScanExact() {
-        return null;
+    public Scanner indexScanExact(IndexKey key) throws IOException {
+        long indexId;
+
+        try {
+            Map<String, Long> indices = this.store.getIndices(this.tableId);
+            indexId = indices.get(key.getIndexName());
+        } catch (TableNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
+        IndexSchema indexSchema = schema.getIndices().get(key.getIndexName());
+        IndexRowBuilder builder = IndexRowBuilder
+                .newBuilder(tableId, indexId)
+                .withSortOrder(SortOrder.Ascending)
+                .withRecords(key.getKeys(), getColumnTypesForSchema(schema), indexSchema.getColumns());
+        IndexRow startRow = builder.withUUID(Constants.ZERO_UUID).build();
+        IndexRow endRow = builder.withUUID(Constants.FULL_UUID).build();
+        // Scan is [start, end) : add a zero to put the end key after an all 0xFF UUID
+        Scan scan = new Scan(startRow.encode(), Bytes.padTail(endRow.encode(), 1));
+        ResultScanner scanner = this.hTable.getScanner(scan);
+        return new HBaseScanner(scanner);
     }
 
     @Override
@@ -167,17 +193,21 @@ public class HBaseTable implements Table {
 
         for (Map.Entry<String, IndexSchema> index : schema.getIndices().entrySet()) {
             long indexId = indexIds.get(index.getKey());
-            List<byte[]> sortedRecords = getValuesInColumnOrder(records, index.getValue().getColumns());
-            action.execute(indexId, sortedRecords);
+            IndexRowBuilder builder = IndexRowBuilder
+                    .newBuilder(tableId, indexId)
+                    .withUUID(row.getUUID())
+                    .withRecords(records, getColumnTypesForSchema(schema), index.getValue().getColumns());
+            action.execute(builder);
         }
     }
 
-    private List<byte[]> getValuesInColumnOrder(Map<String, byte[]> records, List<String> columns) {
-        List<byte[]> sortedRecords = new LinkedList<byte[]>();
-        for (String column : columns) {
-            sortedRecords.add(records.get(column));
+    private Map<String, ColumnType> getColumnTypesForSchema(TableSchema schema) {
+        final ImmutableMap.Builder<String, ColumnType> result = ImmutableMap.builder();
+        for (Map.Entry<String, ColumnSchema> entry : schema.getColumns().entrySet()) {
+            result.put(entry.getKey(), entry.getValue().getType());
         }
-        return sortedRecords;
+
+        return result.build();
     }
 
     private Put createEmptyQualifierPut(RowKey row, byte[] serializedRow) {
@@ -189,6 +219,6 @@ public class HBaseTable implements Table {
     }
 
     private interface IndexAction {
-        public void execute(long indexId, List<byte[]> sortedRecords) throws IOException;
+        public void execute(IndexRowBuilder builder) throws IOException;
     }
 }

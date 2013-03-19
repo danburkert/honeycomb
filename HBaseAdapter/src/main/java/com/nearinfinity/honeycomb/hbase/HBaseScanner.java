@@ -24,25 +24,21 @@ public class HBaseScanner implements Scanner {
     }
 
     @Override
-    public Iterator<Row> iterator() {
-        return new Iterator<Row>() {
-            @Override
-            public boolean hasNext() {
-                return resultIterator.hasNext();
-            }
+    public boolean hasNext() {
+        return resultIterator.hasNext();
+    }
 
-            @Override
-            public Row next() {
-                try {
-                    return Row.deserialize(resultIterator.next().getValue(Constants.NIC, new byte[0]));
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
+    @Override
+    public Row next() {
+        try {
+            return Row.deserialize(resultIterator.next().getValue(Constants.NIC, new byte[0]));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-            @Override
-            public void remove() {
-            }
-        };
+    @Override
+    public void remove() {
+        throw new UnsupportedOperationException();
     }
 }

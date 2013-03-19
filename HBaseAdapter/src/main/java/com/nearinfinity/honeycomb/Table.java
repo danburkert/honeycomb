@@ -1,5 +1,6 @@
 package com.nearinfinity.honeycomb;
 
+import com.nearinfinity.honeycomb.mysql.IndexKey;
 import com.nearinfinity.honeycomb.mysql.Row;
 
 import java.io.Closeable;
@@ -95,7 +96,7 @@ public interface Table extends Closeable {
      *
      * @return Scanner over index
      */
-    public Scanner indexScanExact(/* KeyValueContainer keyValues */);
+    public Scanner indexScanExact(IndexKey key) throws IOException;
 
     /**
      * Remove all rows from the table.
