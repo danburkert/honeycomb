@@ -4,6 +4,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.BiMap;
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import org.apache.log4j.Logger;
@@ -21,6 +22,7 @@ public class MetadataCache {
     private final LoadingCache<Long, TableSchema> schemaCache;
     private final LoadingCache<Long, Map<String, Long>> indicesCache;
 
+    @Inject
     public MetadataCache(final HBaseMetadata metadata) {
         tableCache = CacheBuilder
                 .newBuilder()

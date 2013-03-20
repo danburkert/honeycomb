@@ -192,7 +192,7 @@ public class Util {
     public static void closeQuietly(Closeable closeable) {
         try {
             closeable.close();
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
     }
 }
