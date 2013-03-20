@@ -98,7 +98,10 @@ int check_exceptions(JNIEnv* env, JNICache* cache, const char* location)
   jthrowable e = env->ExceptionOccurred();
   if (e)
   {
-    if (env->IsInstanceOf(e, cache->TableNotFoundException))
+    if (env->IsInstanceOf(e, cache->HoneycombException))
+    {
+      ret = HA_ERR_INTERNAL_ERROR;
+    } else if (env->IsInstanceOf(e, cache->TableNotFoundException))
     {
       ret = HA_ERR_NO_SUCH_TABLE;
     } else if (env->IsInstanceOf(e, cache->TableExistsException))
