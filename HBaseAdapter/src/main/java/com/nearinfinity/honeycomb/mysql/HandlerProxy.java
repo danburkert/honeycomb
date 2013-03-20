@@ -1,12 +1,11 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import com.nearinfinity.honeycomb.HoneycombException;
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
+import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 
-import java.io.IOException;
 import java.util.UUID;
 
 import static com.google.common.base.Preconditions.*;
@@ -32,8 +31,6 @@ public class HandlerProxy {
      *                              If null, create the table in the default store.
      * @param serializedTableSchema Serialized TableSchema avro object
      * @param autoInc               Initial auto increment value
-     * @throws IOException
-     * @throws HoneycombException
      */
     public void createTable(String tableName, String tableSpace,
                             byte[] serializedTableSchema, long autoInc) {
@@ -59,10 +56,8 @@ public class HandlerProxy {
         Store store = this.storeFactory.createStore(tableSpace);
         Table table = store.openTable(tableName);
         table.deleteAllRows();
-        try {
-            table.close();
-        } catch (IOException e) {
-        }
+
+        Util.closeQuietly(table);
         store.deleteTable(tableName);
     }
 
@@ -76,10 +71,7 @@ public class HandlerProxy {
     public void closeTable() {
         this.tableName = null;
         this.store = null;
-        try {
-            this.table.close();
-        } catch (IOException e) {
-        }
+        Util.closeQuietly(table);
         this.table = null;
     }
 
@@ -185,7 +177,22 @@ public class HandlerProxy {
     public void startIndexScan(byte[] indexKeys) {
         checkTableOpen();
         IndexKey key = IndexKey.deserialize(indexKeys);
-        this.currentScanner = this.table.indexScanExact(key);
+        QueryType queryType = key.getQueryType();
+        switch (queryType) {
+            case EXACT_KEY:
+                this.currentScanner = this.table.indexScanExact(key);
+                break;
+            case AFTER_KEY:
+                this.currentScanner = this.table.ascendingIndexScanAfter(key);
+                break;
+            case BEFORE_KEY:
+            case INDEX_FIRST:
+            case INDEX_LAST:
+            case KEY_OR_NEXT:
+            case KEY_OR_PREVIOUS:
+                break;
+        }
+
     }
 
     public Row getNextScannerRow() {

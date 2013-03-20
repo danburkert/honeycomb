@@ -28,6 +28,41 @@ public class IndexRowBuilder {
         return builder;
     }
 
+    public IndexRowBuilder withSortOrder(SortOrder sortOrder) {
+        this.order = sortOrder;
+        return this;
+    }
+
+    public IndexRowBuilder withUUID(UUID uuid) {
+        this.uuid = uuid;
+        return this;
+    }
+
+    public IndexRowBuilder withRecords(Map<String, byte[]> records, Map<String, ColumnType> columnTypes, Collection<String> columnOrder) {
+        this.records = records;
+        this.columnTypes = columnTypes;
+        this.columnOrder = columnOrder;
+        return this;
+    }
+
+    public IndexRow build() {
+        List<byte[]> sortedRecords = null;
+        if (this.records != null) {
+            Map<String, byte[]> encodedRow = encodeRow(this.records, this.columnTypes);
+            if (order == SortOrder.Descending) {
+                encodedRow = reverseRowValues(encodedRow);
+            }
+
+            sortedRecords = getValuesInColumnOrder(encodedRow, this.columnOrder);
+        }
+
+        if (order == SortOrder.Ascending) {
+            return new AscIndexRow(this.tableId, this.indexId, sortedRecords, this.uuid);
+        }
+
+        return new DescIndexRow(this.tableId, this.indexId, sortedRecords, this.uuid);
+    }
+
     private static List<byte[]> getValuesInColumnOrder(Map<String, byte[]> records, Collection<String> columns) {
         List<byte[]> sortedRecords = new LinkedList<byte[]>();
         for (String column : columns) {
@@ -84,41 +119,6 @@ public class IndexRowBuilder {
             default:
                 return value;
         }
-    }
-
-    public IndexRowBuilder withSortOrder(SortOrder sortOrder) {
-        this.order = sortOrder;
-        return this;
-    }
-
-    public IndexRowBuilder withUUID(UUID uuid) {
-        this.uuid = uuid;
-        return this;
-    }
-
-    public IndexRowBuilder withRecords(Map<String, byte[]> records, Map<String, ColumnType> columnTypes, Collection<String> columnOrder) {
-        this.records = records;
-        this.columnTypes = columnTypes;
-        this.columnOrder = columnOrder;
-        return this;
-    }
-
-    public IndexRow build() {
-        List<byte[]> sortedRecords = null;
-        if (this.records != null) {
-            Map<String, byte[]> encodedRow = encodeRow(this.records, this.columnTypes);
-            if (order == SortOrder.Descending) {
-                encodedRow = reverseRowValues(encodedRow);
-            }
-
-            sortedRecords = getValuesInColumnOrder(encodedRow, this.columnOrder);
-        }
-
-        if (order == SortOrder.Ascending) {
-            return new AscIndexRow(this.tableId, this.indexId, sortedRecords, this.uuid);
-        }
-
-        return new DescIndexRow(this.tableId, this.indexId, sortedRecords, this.uuid);
     }
 
     private static class DescIndexRow extends IndexRow {

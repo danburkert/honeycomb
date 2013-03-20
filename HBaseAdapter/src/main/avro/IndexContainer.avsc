@@ -5,6 +5,11 @@
     "fields":
     [
         {"name": "indexName", "type": "string"},
+        {"name": "queryType", "type":
+            { "type": "enum",
+              "name": "QueryType",
+              "symbols": ["EXACT_KEY", "AFTER_KEY", "KEY_OR_NEXT",
+                          "KEY_OR_PREVIOUS", "BEFORE_KEY", "INDEX_FIRST", "INDEX_LAST"]}},
         {"name": "records", "type": {"type": "map", "values": "bytes"}}
     ]
 }

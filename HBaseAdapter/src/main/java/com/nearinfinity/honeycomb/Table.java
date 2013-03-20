@@ -71,8 +71,9 @@ public interface Table extends Closeable {
      * in ascending sort.
      *
      * @return Scanner over index
+     * @param key
      */
-    public Scanner ascendingIndexScanAfter(/* KeyValueContainer keyValues */);
+    public Scanner ascendingIndexScanAfter(IndexKey key);
 
     /**
      * Return a scanner over the table's index at the specified key / values in

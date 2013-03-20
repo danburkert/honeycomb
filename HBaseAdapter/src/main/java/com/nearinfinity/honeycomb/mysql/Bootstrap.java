@@ -1,24 +1,22 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import static java.text.MessageFormat.format;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.log4j.Logger;
-import org.xml.sax.SAXException;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.name.Names;
 import com.nearinfinity.honeycomb.hbase.HBaseModule;
 import com.nearinfinity.honeycomb.hbaseclient.Constants;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.log4j.Logger;
+import org.xml.sax.SAXException;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+
+import static java.text.MessageFormat.format;
 
 public class Bootstrap extends AbstractModule {
     private static final String CONFIG_PATH = "/etc/mysql/honeycomb.xml";
@@ -53,6 +51,7 @@ public class Bootstrap extends AbstractModule {
             install(hBaseModule);
         } catch (IOException e) {
             logger.fatal("Failure during HBase initialization.", e);
+            throw new RuntimeException(e);
         }
     }
 

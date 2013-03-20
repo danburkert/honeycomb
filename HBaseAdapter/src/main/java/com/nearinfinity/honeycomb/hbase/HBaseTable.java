@@ -14,6 +14,7 @@ import com.nearinfinity.honeycomb.hbase.rowkey.SortOrder;
 import com.nearinfinity.honeycomb.hbaseclient.Constants;
 import com.nearinfinity.honeycomb.mysql.IndexKey;
 import com.nearinfinity.honeycomb.mysql.Row;
+import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
@@ -21,8 +22,6 @@ import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -103,7 +102,7 @@ public class HBaseTable implements Table {
             }
         }
 
-        closeQuietly(rows);
+        Util.closeQuietly(rows);
         HBaseOperations.performDelete(hTable, deleteList);
     }
 
@@ -139,8 +138,16 @@ public class HBaseTable implements Table {
     }
 
     @Override
-    public Scanner ascendingIndexScanAfter() {
-        return null;
+    public Scanner ascendingIndexScanAfter(IndexKey key) {
+        IndexRow startRow = indexPrefixedForTable(key)
+                .withSortOrder(SortOrder.Ascending)
+                .withUUID(Constants.FULL_UUID)
+                .build();
+
+        IndexRow endRow = IndexRowBuilder.newBuilder(tableId, startRow.getIndexId() + 1).build();
+        Scan scan = new Scan(padKeyForSorting(startRow.encode()), endRow.encode());
+        ResultScanner scanner = HBaseOperations.getScanner(hTable, scan);
+        return new HBaseScanner(scanner);
     }
 
     @Override
@@ -155,24 +162,18 @@ public class HBaseTable implements Table {
 
     @Override
     public Scanner indexScanExact(IndexKey key) {
-        Map<String, Long> indices = this.store.getIndices(this.tableId);
-        long indexId = indices.get(key.getIndexName());
-        IndexSchema indexSchema = schema.getIndices().get(key.getIndexName());
-        IndexRowBuilder builder = IndexRowBuilder
-                .newBuilder(tableId, indexId)
-                .withSortOrder(SortOrder.Ascending)
-                .withRecords(key.getKeys(), getColumnTypesForSchema(schema), indexSchema.getColumns());
+        IndexRowBuilder builder = indexPrefixedForTable(key).withSortOrder(SortOrder.Ascending);
         IndexRow startRow = builder.withUUID(Constants.ZERO_UUID).build();
         IndexRow endRow = builder.withUUID(Constants.FULL_UUID).build();
         // Scan is [start, end) : add a zero to put the end key after an all 0xFF UUID
-        Scan scan = new Scan(startRow.encode(), Bytes.padTail(endRow.encode(), 1));
+        Scan scan = new Scan(startRow.encode(), padKeyForSorting(endRow.encode()));
         ResultScanner scanner = HBaseOperations.getScanner(hTable, scan);
         return new HBaseScanner(scanner);
     }
 
     @Override
     public void close() {
-        closeQuietly(hTable);
+        Util.closeQuietly(hTable);
     }
 
     private void doToIndices(Row row, IndexAction action) {
@@ -206,11 +207,17 @@ public class HBaseTable implements Table {
         return new Delete(row.encode());
     }
 
-    private void closeQuietly(Closeable closeable) {
-        try {
-            closeable.close();
-        } catch (IOException e) {
-        }
+    private byte[] padKeyForSorting(byte[] key) {
+        return Bytes.padTail(key, 1);
+    }
+
+    private IndexRowBuilder indexPrefixedForTable(IndexKey key) {
+        Map<String, Long> indices = this.store.getIndices(this.tableId);
+        long indexId = indices.get(key.getIndexName());
+        IndexSchema indexSchema = schema.getIndices().get(key.getIndexName());
+        return IndexRowBuilder
+                .newBuilder(tableId, indexId)
+                .withRecords(key.getKeys(), getColumnTypesForSchema(schema), indexSchema.getColumns());
     }
 
     private interface IndexAction {

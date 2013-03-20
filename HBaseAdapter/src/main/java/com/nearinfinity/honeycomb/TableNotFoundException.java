@@ -9,6 +9,6 @@ public class TableNotFoundException extends RuntimeException {
     }
 
     public TableNotFoundException(Long tableId) {
-        this.id = id;
+        this.id = tableId;
     }
 }
