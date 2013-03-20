@@ -127,14 +127,20 @@ public class HBaseTable implements Table {
     public Scanner tableScan() {
         DataRow startRow = new DataRow(this.tableId);
         DataRow endRow = new DataRow(this.tableId + 1);
-        Scan scan = new Scan(startRow.encode(), endRow.encode());
-        final ResultScanner scanner = HBaseOperations.getScanner(hTable, scan);
-        return new HBaseScanner(scanner);
+        return createScannerForRange(startRow.encode(), endRow.encode());
     }
 
     @Override
-    public Scanner ascendingIndexScanAt() {
-        return null;
+    public Scanner ascendingIndexScanAt(IndexKey key) {
+        IndexRow startRow = indexPrefixedForTable(key)
+                .withSortOrder(SortOrder.Ascending)
+                .build();
+
+        IndexRow endRow = IndexRowBuilder
+                .newBuilder(tableId, startRow.getIndexId() + 1)
+                .withSortOrder(SortOrder.Ascending)
+                .build();
+        return createScannerForRange(startRow.encode(), endRow.encode());
     }
 
     @Override
@@ -144,20 +150,38 @@ public class HBaseTable implements Table {
                 .withUUID(Constants.FULL_UUID)
                 .build();
 
-        IndexRow endRow = IndexRowBuilder.newBuilder(tableId, startRow.getIndexId() + 1).build();
-        Scan scan = new Scan(padKeyForSorting(startRow.encode()), endRow.encode());
-        ResultScanner scanner = HBaseOperations.getScanner(hTable, scan);
-        return new HBaseScanner(scanner);
+        IndexRow endRow = IndexRowBuilder
+                .newBuilder(tableId, startRow.getIndexId() + 1)
+                .withSortOrder(SortOrder.Ascending)
+                .build();
+        return createScannerForRange(padKeyForSorting(startRow.encode()), endRow.encode());
     }
 
     @Override
-    public Scanner descendingIndexScanAt() {
-        return null;
+    public Scanner descendingIndexScanAt(IndexKey key) {
+        IndexRow startRow = indexPrefixedForTable(key)
+                .withSortOrder(SortOrder.Descending)
+                .build();
+
+        IndexRow endRow = IndexRowBuilder
+                .newBuilder(tableId, startRow.getIndexId() + 1)
+                .withSortOrder(SortOrder.Descending)
+                .build();
+        return createScannerForRange(startRow.encode(), endRow.encode());
     }
 
     @Override
-    public Scanner descendingIndexScanAfter() {
-        return null;
+    public Scanner descendingIndexScanAfter(IndexKey key) {
+        IndexRow startRow = indexPrefixedForTable(key)
+                .withSortOrder(SortOrder.Descending)
+                .withUUID(Constants.FULL_UUID)
+                .build();
+
+        IndexRow endRow = IndexRowBuilder
+                .newBuilder(tableId, startRow.getIndexId() + 1)
+                .withSortOrder(SortOrder.Descending)
+                .build();
+        return createScannerForRange(padKeyForSorting(startRow.encode()), endRow.encode());
     }
 
     @Override
@@ -166,9 +190,7 @@ public class HBaseTable implements Table {
         IndexRow startRow = builder.withUUID(Constants.ZERO_UUID).build();
         IndexRow endRow = builder.withUUID(Constants.FULL_UUID).build();
         // Scan is [start, end) : add a zero to put the end key after an all 0xFF UUID
-        Scan scan = new Scan(startRow.encode(), padKeyForSorting(endRow.encode()));
-        ResultScanner scanner = HBaseOperations.getScanner(hTable, scan);
-        return new HBaseScanner(scanner);
+        return createScannerForRange(startRow.encode(), padKeyForSorting(endRow.encode()));
     }
 
     @Override
@@ -218,6 +240,12 @@ public class HBaseTable implements Table {
         return IndexRowBuilder
                 .newBuilder(tableId, indexId)
                 .withRecords(key.getKeys(), getColumnTypesForSchema(schema), indexSchema.getColumns());
+    }
+
+    private Scanner createScannerForRange(byte[] start, byte[] end) {
+        Scan scan = new Scan(start, end);
+        ResultScanner scanner = HBaseOperations.getScanner(hTable, scan);
+        return new HBaseScanner(scanner);
     }
 
     private interface IndexAction {

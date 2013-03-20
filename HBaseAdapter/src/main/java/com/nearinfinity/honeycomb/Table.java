@@ -63,8 +63,9 @@ public interface Table extends Closeable {
      * ascending sort.
      *
      * @return Scanner over index
+     * @param key
      */
-    public Scanner ascendingIndexScanAt(/* KeyValueContainer keyValues */);
+    public Scanner ascendingIndexScanAt(/* KeyValueContainer keyValues */IndexKey key);
 
     /**
      * Return a scanner over the table's index after the specified key / values
@@ -80,16 +81,18 @@ public interface Table extends Closeable {
      * descending sort.
      *
      * @return Scanner over index
+     * @param key
      */
-    public Scanner descendingIndexScanAt(/* KeyValueContainer keyValues */);
+    public Scanner descendingIndexScanAt(/* KeyValueContainer keyValues */IndexKey key);
 
     /**
      * Return a scanner over the table's index after the specified key / values
      * in descending sort.
      *
      * @return Scanner over index
+     * @param key
      */
-    public Scanner descendingIndexScanAfter(/* KeyValueContainer keyValues */);
+    public Scanner descendingIndexScanAfter(/* KeyValueContainer keyValues */IndexKey key);
 
     /**
      * Return a scanner over the rows in the table with the specified key /values
