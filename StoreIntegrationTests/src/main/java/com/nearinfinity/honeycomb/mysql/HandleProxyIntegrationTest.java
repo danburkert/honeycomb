@@ -222,7 +222,6 @@ public class HandleProxyIntegrationTest {
             public void execute(HandlerProxy proxy) {
                 int rows = 3;
                 int keyValue = 5;
-                insertNullData(proxy, 1, keyValue);
                 insertData(proxy, 1, keyValue, Constants.FULL_UUID);
                 insertData(proxy, 1, keyValue - 1, Constants.ZERO_UUID);
                 insertData(proxy, rows, keyValue - 1);
@@ -318,17 +317,6 @@ public class HandleProxyIntegrationTest {
         indices.put(INDEX2, new IndexSchema(Lists.newArrayList(COLUMN1, COLUMN2), false));
 
         return new TableSchema(columns, indices);
-    }
-
-    private static void insertNullData(HandlerProxy proxy, int rows, long keyColumnValue) {
-        Map<String, Object> map = new HashMap<String, Object>();
-        map.put(COLUMN1, encodeValue(keyColumnValue));
-        for (int x = 0; x < rows; x++) {
-            map.put(COLUMN2, null);
-            Row row = new Row(map, UUID.randomUUID());
-            proxy.insert(row.serialize());
-        }
-        proxy.flush();
     }
 
     private static void insertData(HandlerProxy proxy, int rows, long keyColumnValue, UUID uuid) {
