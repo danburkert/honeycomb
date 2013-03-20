@@ -186,6 +186,22 @@ public class HandleProxyIntegrationTest {
         });
     }
 
+    public static void testIndexFirstScan() {
+        testProxy("Testing index first scan", new Action() {
+            @Override
+            public void execute(HandlerProxy proxy) {
+                int rows = 3;
+                int keyValue = 5;
+                insertNullData(proxy, 1);
+                insertData(proxy, 1, keyValue, Constants.FULL_UUID);
+                insertData(proxy, 1, keyValue + 1, Constants.ZERO_UUID);
+                insertData(proxy, rows, keyValue + 1);
+                IndexKey key = new IndexKey(INDEX1, QueryType.INDEX_FIRST, null);
+                assertReceivingDifferentRows(proxy, key, rows + 3);
+            }
+        });
+    }
+
     public static void testAfterKeyScan() {
         testProxy("Testing after key scan", new Action() {
             @Override
@@ -196,7 +212,7 @@ public class HandleProxyIntegrationTest {
                 insertData(proxy, 1, keyValue + 1, Constants.ZERO_UUID);
                 insertData(proxy, rows, keyValue + 1);
                 IndexKey key = createKey(keyValue, QueryType.AFTER_KEY);
-                assertReceivingDifferentRows(proxy, key, rows + 2);
+                assertReceivingDifferentRows(proxy, key, rows + 1);
             }
         });
     }
@@ -211,7 +227,7 @@ public class HandleProxyIntegrationTest {
                 insertData(proxy, 1, keyValue + 1, Constants.ZERO_UUID);
                 insertData(proxy, rows, keyValue + 1);
                 IndexKey key = createKey(keyValue, QueryType.KEY_OR_NEXT);
-                assertReceivingDifferentRows(proxy, key, rows + 3);
+                assertReceivingDifferentRows(proxy, key, rows + 2);
             }
         });
     }
@@ -226,10 +242,25 @@ public class HandleProxyIntegrationTest {
                 insertData(proxy, 1, keyValue - 1, Constants.ZERO_UUID);
                 insertData(proxy, rows, keyValue - 1);
                 IndexKey key = createKey(keyValue, QueryType.BEFORE_KEY);
-                assertReceivingDifferentRows(proxy, key, rows + 2);
+                assertReceivingDifferentRows(proxy, key, rows + 1);
             }
         });
 
+    }
+
+    public static void testIndexLastScan() {
+        testProxy("Testing index last scan", new Action() {
+            @Override
+            public void execute(HandlerProxy proxy) {
+                int rows = 3;
+                int keyValue = 5;
+                insertData(proxy, 1, keyValue, Constants.FULL_UUID);
+                insertData(proxy, 1, keyValue - 1, Constants.ZERO_UUID);
+                insertData(proxy, rows, keyValue - 1);
+                IndexKey key = new IndexKey(INDEX1, QueryType.INDEX_LAST, null);
+                assertReceivingDifferentRows(proxy, key, rows + 2);
+            }
+        });
     }
 
     public static void testKeyOrPreviousScan() {
@@ -242,7 +273,7 @@ public class HandleProxyIntegrationTest {
                 insertData(proxy, 1, keyValue - 1, Constants.ZERO_UUID);
                 insertData(proxy, rows, keyValue - 1);
                 IndexKey key = createKey(keyValue, QueryType.KEY_OR_PREVIOUS);
-                assertReceivingDifferentRows(proxy, key, rows + 3);
+                assertReceivingDifferentRows(proxy, key, rows + 2);
             }
         });
     }
@@ -265,6 +296,8 @@ public class HandleProxyIntegrationTest {
             testBeforeKeyScan();
             testKeyOrNextScan();
             testKeyOrPreviousScan();
+            testIndexLastScan();
+            testIndexFirstScan();
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(1);
@@ -276,7 +309,7 @@ public class HandleProxyIntegrationTest {
         Row previous = null;
         for (int x = 0; x < rows; x++) {
             Row current = proxy.getNextScannerRow();
-            assertThat(current).isNotEqualTo(previous);
+            assertThat(current).isNotEqualTo(previous).isNotNull();
             previous = current;
         }
 
@@ -333,6 +366,16 @@ public class HandleProxyIntegrationTest {
     private static void insertData(HandlerProxy proxy, int rows, long keyColumnValue) {
         Map<String, Object> map = new HashMap<String, Object>();
         map.put(COLUMN1, encodeValue(keyColumnValue));
+        for (int x = 0; x < rows; x++) {
+            map.put(COLUMN2, encodeValue(x));
+            Row row = new Row(map, UUID.randomUUID());
+            proxy.insert(row.serialize());
+        }
+        proxy.flush();
+    }
+
+    private static void insertNullData(HandlerProxy proxy, int rows) {
+        Map<String, Object> map = new HashMap<String, Object>();
         for (int x = 0; x < rows; x++) {
             map.put(COLUMN2, encodeValue(x));
             Row row = new Row(map, UUID.randomUUID());

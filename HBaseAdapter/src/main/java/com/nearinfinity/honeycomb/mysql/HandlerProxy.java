@@ -189,7 +189,11 @@ public class HandlerProxy {
                 this.currentScanner = this.table.descendingIndexScanAfter(key);
                 break;
             case INDEX_FIRST:
+                this.currentScanner = this.table.ascendingIndexScanAt(key);
+                break;
             case INDEX_LAST:
+                this.currentScanner = this.table.descendingIndexScanAt(key);
+                break;
             case KEY_OR_NEXT:
                 this.currentScanner = this.table.ascendingIndexScanAt(key);
                 break;

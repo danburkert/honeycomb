@@ -16,7 +16,7 @@ public interface Table extends Closeable {
      *
      * @param row Row to be inserted
      */
-    public void insert(Row row);
+    void insert(Row row);
 
     /**
      * Update row in table
@@ -26,7 +26,7 @@ public interface Table extends Closeable {
      * @throws RowNotFoundException
      * @
      */
-    public void update(Row row);
+    void update(Row row);
 
     /**
      * Remove row with given UUID from the table
@@ -35,13 +35,13 @@ public interface Table extends Closeable {
      * @throws RowNotFoundException
      * @
      */
-    public void delete(UUID uuid);
+    void delete(UUID uuid);
 
     /**
      * Flush all inserts, updates, and deletes to the table.  IUD operations are
      * not guaranteed to be visible in subsequent accesses until explicitly flushed.
      */
-    public void flush();
+    void flush();
 
     /**
      * Get row with uuid from table
@@ -49,14 +49,14 @@ public interface Table extends Closeable {
      * @param uuid UUID of requested row
      * @return Row with given UUID
      */
-    public Row get(UUID uuid);
+    Row get(UUID uuid);
 
     /**
      * Create a scanner for an unordered full table scan
      *
      * @return Scanner over table
      */
-    public Scanner tableScan();
+    Scanner tableScan();
 
     /**
      * Return a scanner over the table's index at the specified key / values in
@@ -65,7 +65,7 @@ public interface Table extends Closeable {
      * @return Scanner over index
      * @param key
      */
-    public Scanner ascendingIndexScanAt(/* KeyValueContainer keyValues */IndexKey key);
+    Scanner ascendingIndexScanAt(/* KeyValueContainer keyValues */IndexKey key);
 
     /**
      * Return a scanner over the table's index after the specified key / values
@@ -74,7 +74,7 @@ public interface Table extends Closeable {
      * @return Scanner over index
      * @param key
      */
-    public Scanner ascendingIndexScanAfter(IndexKey key);
+    Scanner ascendingIndexScanAfter(IndexKey key);
 
     /**
      * Return a scanner over the table's index at the specified key / values in
@@ -83,7 +83,7 @@ public interface Table extends Closeable {
      * @return Scanner over index
      * @param key
      */
-    public Scanner descendingIndexScanAt(/* KeyValueContainer keyValues */IndexKey key);
+    Scanner descendingIndexScanAt(/* KeyValueContainer keyValues */IndexKey key);
 
     /**
      * Return a scanner over the table's index after the specified key / values
@@ -92,14 +92,14 @@ public interface Table extends Closeable {
      * @return Scanner over index
      * @param key
      */
-    public Scanner descendingIndexScanAfter(/* KeyValueContainer keyValues */IndexKey key);
+    Scanner descendingIndexScanAfter(/* KeyValueContainer keyValues */IndexKey key);
 
     /**
      * Return a scanner over the rows in the table with the specified key /values
      *
      * @return Scanner over index
      */
-    public Scanner indexScanExact(IndexKey key);
+    Scanner indexScanExact(IndexKey key);
 
     /**
      * Remove all rows from the table.

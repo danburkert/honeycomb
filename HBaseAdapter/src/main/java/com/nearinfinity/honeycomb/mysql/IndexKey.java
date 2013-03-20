@@ -35,6 +35,10 @@ public class IndexKey {
     }
 
     public Map<String, byte[]> getKeys() {
+        if (this.indexContainer.getRecords() == null) {
+            return null;
+        }
+
         Map<String, byte[]> result = Maps.newHashMap();
         for (Map.Entry<String, ByteBuffer> entry : this.indexContainer.getRecords().entrySet()) {
             result.put(entry.getKey(), entry.getValue().array());
