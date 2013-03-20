@@ -8,12 +8,8 @@ import com.nearinfinity.honeycomb.hbase.HBaseModule;
 import com.nearinfinity.honeycomb.hbaseclient.Constants;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.log4j.Logger;
-import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import static java.text.MessageFormat.format;
@@ -30,11 +26,8 @@ public class Bootstrap extends AbstractModule {
      * The initial function called by JNI to wire-up the required object graph dependencies
      *
      * @return {@link HandlerProxyFactory} with all dependencies setup
-     * @throws ParserConfigurationException If the XML parser could not be configured correctly
-     * @throws SAXException                 If a {@link DocumentBuilder} cannot be created which satisfies the configuration requested
-     * @throws IOException                  An IO exception occurred during parsing or the file was not found
      */
-    public static HandlerProxyFactory startup() throws ParserConfigurationException, SAXException, IOException {
+    public static HandlerProxyFactory startup() {
         Bootstrap bootstrap = new Bootstrap();
         bootstrap.readConfiguration();
 
@@ -55,20 +48,12 @@ public class Bootstrap extends AbstractModule {
         }
     }
 
-    private void readConfiguration() throws IOException, ParserConfigurationException, SAXException {
+    private void readConfiguration() {
         File configFile = new File(CONFIG_PATH);
-        try {
-            if (!(configFile.exists() && configFile.canRead() && configFile.isFile())) {
-                throw new FileNotFoundException(CONFIG_PATH + " doesn't exist or cannot be read.");
-            }
-            params = Util.readConfiguration(configFile);
-            logger.info(format("Read in {0} parameters.", params.size()));
-        } catch (ParserConfigurationException e) {
-            logger.fatal("The XML parser was not configured properly.", e);
-            throw e;
-        } catch (SAXException e) {
-            logger.fatal("Exception while trying to parse the config file.", e);
-            throw e;
+        if (!(configFile.exists() && configFile.canRead() && configFile.isFile())) {
+            throw new RuntimeException(CONFIG_PATH + " doesn't exist or cannot be read.");
         }
+        params = Util.readConfiguration(configFile);
+        logger.info(format("Read in {0} parameters.", params.size()));
     }
 }

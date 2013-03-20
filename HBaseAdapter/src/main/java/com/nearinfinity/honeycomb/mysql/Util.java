@@ -162,16 +162,23 @@ public class Util {
      *
      * @param source XML file
      * @return {@link Configuration}
-     * @throws IOException                  if any IO errors occur
-     * @throws ParserConfigurationException if a DocumentBuilder cannot be created which satisfies the configuration requested
-     * @throws SAXException                 If any parse errors occur.
      */
-    public static Configuration readConfiguration(File source)
-            throws IOException, ParserConfigurationException, SAXException {
+    public static Configuration readConfiguration(File source) {
         Configuration params = new Configuration(false);
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        Document doc = builder.parse(source);
+        DocumentBuilder builder;
+        Document doc;
+        try {
+            builder = factory.newDocumentBuilder();
+            doc = builder.parse(source);
+        } catch (ParserConfigurationException e) {
+            throw new HoneycombException("XML parser could not be configure correctly.", e);
+        } catch (SAXException e) {
+            throw new HoneycombException("The configuration file appears to be invalid xml.", e);
+        } catch (IOException e) {
+            throw new HoneycombException("Error trying to read from the configuration file.", e);
+        }
+
         NodeList options = doc.getElementsByTagName("adapteroption");
         logger.info(String.format("Number of options %d", options.getLength()));
         for (int i = 0; i < options.getLength(); i++) {
@@ -187,6 +194,7 @@ public class Util {
 
     /**
      * Quietly close a {@link Closeable} suppressing the IOException thrown
+     *
      * @param closeable Closeable
      */
     public static void closeQuietly(Closeable closeable) {
