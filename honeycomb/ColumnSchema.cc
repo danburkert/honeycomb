@@ -9,17 +9,16 @@ const char SCALE[] = "scale";
 const char PRECISION[] = "precision";
 
 bool ColumnSchema::get_bool_field(const char name[]) {
-  bool bool_val;
+  int bool_val;
   avro_value_t avro_bool;
   avro_value_get_by_name(&column_schema, name, &avro_bool, NULL);
-  avro_value_get_boolean(&avro_bool, (int *) &bool_val);
-  return bool_val;
+  avro_value_get_boolean(&avro_bool, &bool_val);
+  return static_cast<bool> (bool_val);
 }
 
 int ColumnSchema::set_bool_field(const char name[], bool bool_val) {
-  int ret = 0;
   avro_value_t avro_bool;
-  ret |= avro_value_get_by_name(&column_schema, name, &avro_bool, NULL);
+  int ret = avro_value_get_by_name(&column_schema, name, &avro_bool, NULL);
   ret |= avro_value_set_boolean(&avro_bool, bool_val);
   return ret;
 }
@@ -28,14 +27,13 @@ int ColumnSchema::get_int_field(const char name[]) {
   int val;
   int null_disc;
   int disc;
-  int ret = 0;
 
   avro_schema_t union_schema;
   avro_value_t avro_union;
   avro_value_t avro_val;
 
 
-  ret |= avro_value_get_by_name(&column_schema, name, &avro_union, NULL);
+  int ret = avro_value_get_by_name(&column_schema, name, &avro_union, NULL);
 
   union_schema = avro_value_get_schema(&avro_union);
 
@@ -49,13 +47,12 @@ int ColumnSchema::get_int_field(const char name[]) {
 }
 
 int ColumnSchema::set_int_field(const char name[], int val) {
-  int ret = 0;
   int disc;
   avro_schema_t union_schema;
   avro_value_t avro_union;
   avro_value_t branch;
 
-  ret |= avro_value_get_by_name(&column_schema, name, &avro_union, NULL);
+  int ret = avro_value_get_by_name(&column_schema, name, &avro_union, NULL);
 
   union_schema = avro_value_get_schema(&avro_union);
 
@@ -67,13 +64,12 @@ int ColumnSchema::set_int_field(const char name[], int val) {
 }
 
 int ColumnSchema::set_null_field(const char name[]) {
-  int ret = 0;
   int disc;
   avro_schema_t union_schema;
   avro_value_t avro_union;
   avro_value_t branch;
 
-  ret |= avro_value_get_by_name(&column_schema, name, &avro_union, NULL);
+  int ret = avro_value_get_by_name(&column_schema, name, &avro_union, NULL);
 
   union_schema = avro_value_get_schema(&avro_union);
 
@@ -84,10 +80,7 @@ int ColumnSchema::set_null_field(const char name[]) {
 }
 
 int ColumnSchema::set_defaults() {
-  set_is_nullable(true);
-  set_null_field(MAX_LENGTH);
-  set_null_field(SCALE);
-  set_null_field(PRECISION);
+  return set_is_nullable(true) | set_null_field(MAX_LENGTH) | set_null_field(SCALE) | set_null_field(PRECISION);
 }
 
 ColumnSchema::ColumnSchema()
@@ -96,7 +89,7 @@ ColumnSchema::ColumnSchema()
   {
     printf("Unable to create ColumnSchema schema.  Exiting.\n");
     abort();
-  };
+  }
   avro_value_iface_t* rc_class = avro_generic_class_from_schema(column_schema_schema);
   if (avro_generic_value_new(rc_class, &column_schema))
   {
@@ -122,12 +115,12 @@ bool ColumnSchema::equals( const ColumnSchema& other)
 {
   avro_value_t other_column_schema = other.column_schema;
   return avro_value_equal(&column_schema, &other_column_schema);
-};
+}
 
 int ColumnSchema::serialize(const char** buf, size_t* len)
 {
   return serialize_object(&column_schema, buf, len);
-};
+}
 
 int ColumnSchema::deserialize(const char* buf, int64_t len)
 {
@@ -145,11 +138,9 @@ ColumnSchema::ColumnType ColumnSchema::get_type()
 
 int ColumnSchema::set_type(ColumnType type)
 {
-  int ret = 0;
   avro_value_t avro_enum;
-  ret |= avro_value_get_by_name(&column_schema, TYPE, &avro_enum, NULL);
-  ret |= avro_value_set_enum(&avro_enum, type);
-  return ret;
+  return avro_value_get_by_name(&column_schema, TYPE, &avro_enum, NULL) |
+         avro_value_set_enum(&avro_enum, type);
 }
 
 bool ColumnSchema::get_is_nullable() {
@@ -173,8 +164,7 @@ int ColumnSchema::set_is_auto_increment(bool is_auto_increment)
 
 int ColumnSchema::get_max_length()
 {
-  int ret = get_int_field(MAX_LENGTH);
-  return ret;
+  return get_int_field(MAX_LENGTH);
 }
 
 int ColumnSchema::set_max_length(int length)
@@ -205,9 +195,9 @@ int ColumnSchema::set_precision(int precision)
 avro_value_t* ColumnSchema::get_avro_value()
 {
   return &column_schema;
-};
+}
 
 int ColumnSchema::set_avro_value(avro_value_t* value)
 {
   return avro_value_copy(&column_schema, value);
-};
+}
