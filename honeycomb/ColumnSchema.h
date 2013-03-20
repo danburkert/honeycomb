@@ -17,10 +17,10 @@ class ColumnSchema
 
     /**
      * Gets the value of the integer fields associated with the ColumnSchema.
-     * All of these fields are unions of null or the integer.  This function
+     * All of these fields are unions of null or the integer. This function
      * returns a negative integer to indicate a null value (the range of the
-     * valid integers is non-negative).  This function is only intended to be
-     * used for testing, if we end up needing to check the value on the c++
+     * valid integers is non-negative). This function is only intended to be
+     * used for testing, if we end up needing to check the value on the C++
      * side we should probably come up with something more robust, such as
      * bool is_auto_increment_null().
      */
@@ -51,7 +51,7 @@ class ColumnSchema
     ~ColumnSchema();
 
     /**
-     * @brief Resets the ColumnSchema to a fresh state.  Reseting an existing Row
+     * @brief Resets the ColumnSchema to a fresh state. Resetting an existing Row
      * is much faster than creating a new one.
      * @return Error code
      */

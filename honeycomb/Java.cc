@@ -4,9 +4,6 @@
 #include "Logging.h"
 #include <string.h>
 
-#define MAP_CLASS "java/util/TreeMap"
-#define LIST_CLASS "java/util/LinkedList"
-
 jfieldID find_flag_to_java(enum ha_rkey_function find_flag, JNICache* cache)
 {
   if (find_flag == HA_READ_KEY_EXACT)

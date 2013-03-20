@@ -68,7 +68,7 @@ jobject bootstrap(JavaVM* jvm)
 }
 
 
-static void print_java_classpath(JNIEnv* env)
+static void log_java_classpath(JNIEnv* env)
 {
   Logging::info("Java classpath:");
   jclass classloader_class = env->FindClass("java/lang/ClassLoader");
@@ -159,7 +159,7 @@ jobject initialize_jvm(JavaVM* &jvm)
 
     free_parser(parser);
     jobject handler_proxy_factory = bootstrap(jvm);
-    print_java_classpath(env);
+    log_java_classpath(env);
     detach_thread(jvm);
 #if defined(__APPLE__) || defined(__linux__)
     signal(SIGTERM, handler);

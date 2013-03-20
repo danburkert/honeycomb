@@ -1,7 +1,7 @@
 if (DEFINED ENV{JAVA_HOME})
   MESSAGE( "JAVA HOME: $ENV{JAVA_HOME}" )
 else()
-  MESSAGE( "******** ERROR: JAVA_HOME not defined.  If running cmake with sudo consider using the -E flag" )
+  MESSAGE( FATAL_ERROR  "******** ERROR: JAVA_HOME not defined.  If running cmake with sudo consider using the -E flag" )
 endif()
 
 INCLUDE_DIRECTORIES("$ENV{JAVA_HOME}/include")
