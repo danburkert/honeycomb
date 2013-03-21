@@ -8,6 +8,8 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.nearinfinity.honeycomb.mysql.Verify;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import net.jcip.annotations.GuardedBy;
+import net.jcip.annotations.ThreadSafe;
 import org.apache.log4j.Logger;
 
 import java.util.Map;
@@ -15,15 +17,17 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 @Singleton
+@ThreadSafe
 public class MetadataCache {
     private static final Logger logger = Logger.getLogger(MetadataCache.class);
+    @GuardedBy("readWriteLock")
     private final LoadingCache<String, Long> tableCache;
+    @GuardedBy("readWriteLock")
     private final LoadingCache<Long, BiMap<String, Long>> columnsCache;
     private final LoadingCache<Long, Long> rowsCache;
     private final LoadingCache<Long, Long> autoIncCache;
+    @GuardedBy("readWriteLock")
     private final LoadingCache<Long, TableSchema> schemaCache;
     private final LoadingCache<Long, Map<String, Long>> indicesCache;
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
