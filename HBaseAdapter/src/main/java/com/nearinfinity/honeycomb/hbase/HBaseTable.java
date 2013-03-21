@@ -237,8 +237,11 @@ public class HBaseTable implements Table {
         Map<String, Long> indices = this.store.getIndices(this.tableId);
         long indexId = indices.get(key.getIndexName());
         IndexSchema indexSchema = schema.getIndices().get(key.getIndexName());
-        return IndexRowBuilder
-                .newBuilder(tableId, indexId)
+        IndexRowBuilder indexRowBuilder = IndexRowBuilder.newBuilder(tableId, indexId);
+        if (key.getKeys() == null) {
+            return indexRowBuilder;
+        }
+        return indexRowBuilder
                 .withRecords(key.getKeys(), getColumnTypesForSchema(schema), indexSchema.getColumns());
     }
 

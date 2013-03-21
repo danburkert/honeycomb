@@ -1,6 +1,7 @@
 package com.nearinfinity.honeycomb.mysql;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.nearinfinity.honeycomb.RowNotFoundException;
 import com.nearinfinity.honeycomb.hbaseclient.Constants;
 import com.nearinfinity.honeycomb.mysql.gen.*;
@@ -202,6 +203,23 @@ public class HandleProxyIntegrationTest {
         });
     }
 
+    public static void testAfterKeyWithNullScan() {
+        testProxy("Testing after key with null scan", new Action() {
+            @Override
+            public void execute(HandlerProxy proxy) {
+                int rows = 3;
+                int keyValue = 5;
+                insertNullData(proxy, rows, COLUMN1);
+                insertData(proxy, rows, keyValue);
+                insertData(proxy, rows, keyValue + 1);
+                Map<String, ByteBuffer> keyValues = Maps.newHashMap();
+                keyValues.put(COLUMN1, encodeValue(2));
+                IndexKey key = new IndexKey(INDEX2, QueryType.AFTER_KEY, keyValues);
+                assertReceivingDifferentRows(proxy, key, rows + rows);
+            }
+        });
+    }
+
     public static void testAfterKeyScan() {
         testProxy("Testing after key scan", new Action() {
             @Override
@@ -298,6 +316,7 @@ public class HandleProxyIntegrationTest {
             testKeyOrPreviousScan();
             testIndexLastScan();
             testIndexFirstScan();
+            testAfterKeyWithNullScan();
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(1);
@@ -374,14 +393,18 @@ public class HandleProxyIntegrationTest {
         proxy.flush();
     }
 
-    private static void insertNullData(HandlerProxy proxy, int rows) {
+    private static void insertNullData(HandlerProxy proxy, int rows, String column) {
         Map<String, Object> map = new HashMap<String, Object>();
         for (int x = 0; x < rows; x++) {
-            map.put(COLUMN2, encodeValue(x));
+            map.put(column, encodeValue(x));
             Row row = new Row(map, UUID.randomUUID());
             proxy.insert(row.serialize());
         }
         proxy.flush();
+    }
+
+    private static void insertNullData(HandlerProxy proxy, int rows) {
+        insertNullData(proxy, rows, COLUMN2);
     }
 
     private interface Action {
