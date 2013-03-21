@@ -6,6 +6,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.BiMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.nearinfinity.honeycomb.mysql.Verify;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import org.apache.log4j.Logger;
 
@@ -13,6 +14,8 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 @Singleton
 public class MetadataCache {
@@ -89,10 +92,11 @@ public class MetadataCache {
     /**
      * Retrieve a table ID from the cache based on the table name.
      *
-     * @param tableName Name of the table
+     * @param tableName Name of the table (cannot be null/empty)
      * @return Table ID
      */
     public long tableCacheGet(final String tableName) {
+        Verify.isNotNullOrEmpty(tableName);
         this.readWriteLock.readLock().lock();
         try {
             return cacheGet(tableCache, tableName);
@@ -108,6 +112,7 @@ public class MetadataCache {
      * @return BiMap of column name to column ID
      */
     public BiMap<String, Long> columnsCacheGet(final long tableId) {
+        Verify.isValidTableId(tableId);
         this.readWriteLock.readLock().lock();
         try {
             return cacheGet(columnsCache, tableId);
@@ -123,6 +128,7 @@ public class MetadataCache {
      * @return Table schema
      */
     public TableSchema schemaCacheGet(final long tableId) {
+        Verify.isValidTableId(tableId);
         this.readWriteLock.readLock().lock();
         try {
             return cacheGet(schemaCache, tableId);
@@ -138,6 +144,7 @@ public class MetadataCache {
      * @return Map of index name to index ID
      */
     public Map<String, Long> indicesCacheGet(Long tableId) {
+        Verify.isValidTableId(tableId);
         return cacheGet(indicesCache, tableId);
     }
 
@@ -148,6 +155,7 @@ public class MetadataCache {
      * @return Auto increment count
      */
     public Long autoIncCacheGet(Long tableId) {
+        Verify.isValidTableId(tableId);
         return cacheGet(autoIncCache, tableId);
     }
 
@@ -157,7 +165,8 @@ public class MetadataCache {
      * @param tableId Table ID
      * @return Table row count
      */
-    public Long rowsCacheGet(Long tableId) {
+    public Long rowsCacheGet(final long tableId) {
+        Verify.isValidTableId(tableId);
         return cacheGet(rowsCache, tableId);
     }
 
@@ -167,7 +176,8 @@ public class MetadataCache {
      * @param tableId Table ID
      * @param value   New row count
      */
-    public void updateRowCache(long tableId, long value) {
+    public void updateRowCache(final long tableId, long value) {
+        Verify.isValidTableId(tableId);
         rowsCache.put(tableId, value);
     }
 
@@ -177,6 +187,7 @@ public class MetadataCache {
      * @param tableId Table ID
      */
     public void invalidateRowCache(long tableId) {
+        Verify.isValidTableId(tableId);
         rowsCache.invalidate(tableId);
     }
 
@@ -187,6 +198,8 @@ public class MetadataCache {
      * @param tableId   Table ID
      */
     public void invalidateCache(String tableName, long tableId) {
+        Verify.isNotNullOrEmpty(tableName);
+        Verify.isValidTableId(tableId);
         this.readWriteLock.writeLock().lock();
         try {
             tableCache.invalidate(tableName);
@@ -203,6 +216,7 @@ public class MetadataCache {
      * @param tableId Table ID
      */
     public void invalidateAutoIncCache(long tableId) {
+        Verify.isValidTableId(tableId);
         autoIncCache.invalidate(tableId);
     }
 
@@ -213,6 +227,7 @@ public class MetadataCache {
      * @param value   New auto increment value
      */
     public void updateAutoIncCache(long tableId, long value) {
+        Verify.isValidTableId(tableId);
         autoIncCache.put(tableId, value);
     }
 

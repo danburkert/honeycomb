@@ -15,6 +15,7 @@ import com.nearinfinity.honeycomb.hbaseclient.Constants;
 import com.nearinfinity.honeycomb.mysql.IndexKey;
 import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.mysql.Util;
+import com.nearinfinity.honeycomb.mysql.Verify;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
@@ -35,6 +36,8 @@ public class HBaseTable implements Table {
     @Inject
     public HBaseTable(HTableInterface hTable, HBaseStore store,
                       @Assisted Long tableId, @Assisted TableSchema schema) {
+        Verify.isValidTableId(tableId);
+        Verify.isValidTableSchema(schema);
         this.hTable = hTable;
         this.store = store;
         this.tableId = tableId;
