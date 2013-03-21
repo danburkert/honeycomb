@@ -1,26 +1,27 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import com.nearinfinity.honeycomb.HoneycombException;
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
-import org.apache.avro.io.*;
-import org.apache.avro.specific.SpecificDatumReader;
-import org.apache.avro.specific.SpecificDatumWriter;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.log4j.Logger;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import org.apache.avro.io.BinaryDecoder;
+import org.apache.avro.io.DatumReader;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.io.DecoderFactory;
+import org.apache.avro.io.Encoder;
+import org.apache.avro.io.EncoderFactory;
+import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.avro.specific.SpecificDatumWriter;
+import org.apache.log4j.Logger;
+
+import com.nearinfinity.honeycomb.HoneycombException;
+import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 
 /**
  * Utility class containing helper functions.
@@ -155,41 +156,6 @@ public class Util {
         }
 
         return sb.toString();
-    }
-
-    /**
-     * Read an XML file and extract a {@link Configuration} object from the XML.
-     *
-     * @param source XML file
-     * @return {@link Configuration}
-     */
-    public static Configuration readConfiguration(File source) {
-        Configuration params = new Configuration(false);
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder;
-        Document doc;
-        try {
-            builder = factory.newDocumentBuilder();
-            doc = builder.parse(source);
-        } catch (ParserConfigurationException e) {
-            throw new HoneycombException("XML parser could not be configure correctly.", e);
-        } catch (SAXException e) {
-            throw new HoneycombException("The configuration file appears to be invalid xml.", e);
-        } catch (IOException e) {
-            throw new HoneycombException("Error trying to read from the configuration file.", e);
-        }
-
-        NodeList options = doc.getElementsByTagName("adapteroption");
-        logger.info(String.format("Number of options %d", options.getLength()));
-        for (int i = 0; i < options.getLength(); i++) {
-            Element node = (Element) options.item(i);
-            String name = node.getAttribute("name");
-            String nodeValue = node.getTextContent();
-            logger.info(String.format("Node %s = %s", name, nodeValue));
-            params.set(name, nodeValue);
-        }
-
-        return params;
     }
 
     /**

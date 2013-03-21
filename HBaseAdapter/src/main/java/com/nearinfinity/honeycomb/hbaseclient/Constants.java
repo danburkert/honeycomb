@@ -3,10 +3,6 @@ package com.nearinfinity.honeycomb.hbaseclient;
 import java.util.UUID;
 
 public final class Constants {
-    public static final String HBASE_TABLE = "hbase_table_name";
-
-    public static final String ZK_QUORUM = "zk_quorum";
-
     public static final byte[] NIC = "nic".getBytes();
 
     public static final byte[] VALUE_MAP = "valueMap".getBytes();
