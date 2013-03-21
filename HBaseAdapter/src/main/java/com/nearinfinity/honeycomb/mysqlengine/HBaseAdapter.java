@@ -1,12 +1,18 @@
 package com.nearinfinity.honeycomb.mysqlengine;
 
-import com.google.common.collect.Iterables;
-import com.nearinfinity.honeycomb.hbase.ResultReader;
-import com.nearinfinity.honeycomb.hbaseclient.*;
-import com.nearinfinity.honeycomb.hbaseclient.strategy.*;
-import com.nearinfinity.honeycomb.mysql.Row;
-import com.nearinfinity.honeycomb.mysql.Util;
-import org.apache.hadoop.conf.Configuration;
+import static java.text.MessageFormat.format;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.HTableInterface;
@@ -16,17 +22,25 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.metrics2.util.MBeans;
 import org.apache.log4j.Logger;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-
-import static java.text.MessageFormat.format;
+import com.google.common.collect.Iterables;
+import com.nearinfinity.honeycomb.config.ConfigurationHolder;
+import com.nearinfinity.honeycomb.config.ConfigurationParser;
+import com.nearinfinity.honeycomb.hbase.ResultReader;
+import com.nearinfinity.honeycomb.hbaseclient.ColumnMetadata;
+import com.nearinfinity.honeycomb.hbaseclient.HBaseReader;
+import com.nearinfinity.honeycomb.hbaseclient.HBaseWriter;
+import com.nearinfinity.honeycomb.hbaseclient.KeyValue;
+import com.nearinfinity.honeycomb.hbaseclient.Metrics;
+import com.nearinfinity.honeycomb.hbaseclient.SqlTableCreator;
+import com.nearinfinity.honeycomb.hbaseclient.TableMultipartKeys;
+import com.nearinfinity.honeycomb.hbaseclient.strategy.FullTableScanStrategy;
+import com.nearinfinity.honeycomb.hbaseclient.strategy.OrderedScanStrategy;
+import com.nearinfinity.honeycomb.hbaseclient.strategy.PrefixScanStrategy;
+import com.nearinfinity.honeycomb.hbaseclient.strategy.ReverseScanStrategy;
+import com.nearinfinity.honeycomb.hbaseclient.strategy.ScanStrategy;
+import com.nearinfinity.honeycomb.hbaseclient.strategy.ScanStrategyInfo;
+import com.nearinfinity.honeycomb.mysql.Row;
+import com.nearinfinity.honeycomb.mysql.Util;
 
 public class HBaseAdapter {
     private static final AtomicLong
@@ -37,15 +51,14 @@ public class HBaseAdapter {
     private static final Map<Long, ActiveScan> activeScanLookup = new ConcurrentHashMap<Long, ActiveScan>();
     private static final Map<Long, HBaseWriter> activeWriterLookup = new ConcurrentHashMap<Long, HBaseWriter>();
     private static final Logger logger = Logger.getLogger(HBaseAdapter.class);
-    private static final int DEFAULT_NUM_CACHED_ROWS = 2500;
-    private static final long DEFAULT_WRITE_BUFFER_SIZE = 5 * 1024 * 1024;
-    private static final int DEFAULT_TABLE_POOL_SIZE = 5;
-    private static final String CONFIG_PATH = "/etc/mysql/honeycomb.xml";
+    private static final String CONFIG_PATH = "/etc/mysql";
+    private static final String CONFIG_FILENAME = "honeycomb.xml";
+    private static final String CONFIG_SCHEMA_FILENAME = "honeycomb.xsd";
     private static final Object initializationLock = new Object();
     private static HBaseReader reader;
     private static HTablePool tablePool;
     private static boolean isInitialized = false;
-    private static Configuration params;
+    private static ConfigurationHolder configHolder;
     private static long writeBufferSize;
 
     /**
@@ -216,9 +229,8 @@ public class HBaseAdapter {
             if (row == null) // No more results
             {
                 return null;
-            } else {
-                return row.serialize();
             }
+            return row.serialize();
         } catch (Throwable e) {
             logger.error("Exception:", e);
             throw new HBaseAdapterException("nextRow", e);
@@ -464,8 +476,7 @@ public class HBaseAdapter {
         }
     }
 
-    public static boolean containsDuplicateRecord(String tableName, Row row)
-            throws HBaseAdapterException {
+    public static boolean containsDuplicateRecord(String tableName, Row row) {
         return false;
     }
 
@@ -817,26 +828,35 @@ public class HBaseAdapter {
 
         logger.info("Begin");
 
-        File configFile = new File(CONFIG_PATH);
-        if (!(configFile.exists() && configFile.canRead() && configFile.isFile())) {
-            throw new FileNotFoundException(CONFIG_PATH + " doesn't exist or cannot be read.");
+        final File configFile = new File(CONFIG_PATH, CONFIG_FILENAME);
+        final File configSchemaFile = new File(CONFIG_PATH, CONFIG_SCHEMA_FILENAME);
+
+        if( isFileAvailable(configFile) && isFileAvailable(configSchemaFile) ) {
+            if( ConfigurationParser.validateConfigFile(configSchemaFile, configFile) ) {
+                try {
+                    final ConfigurationParser configParser = new ConfigurationParser();
+                    configHolder = configParser.parseConfig(configFile, HBaseConfiguration.create());
+
+                    logger.info(String.format("Read %d configuration properties ",
+                            configHolder.getConfiguration().size()));
+
+                } catch (ParserConfigurationException e) {
+                    logger.fatal("The XML parser was not configured properly.", e);
+                }
+            } else {
+                logger.error("Configuration file validation failed");
+            }
         }
 
-        params = Util.readConfiguration(configFile);
-        logger.info(format("Read in {0} parameters.", params.size()));
-
         try {
-            String tableName = params.get(Constants.HBASE_TABLE),
-                    zkQuorum = params.get("zk_quorum");
-            writeBufferSize = params.getLong("write_buffer_size", DEFAULT_WRITE_BUFFER_SIZE);
-            int poolSize = params.getInt("honeycomb.pool_size", DEFAULT_TABLE_POOL_SIZE);
-            boolean autoFlush = params.getBoolean("flush_changes_immediately", false);
+            String tableName = configHolder.getStorageTableName(),
+                    zkQuorum = configHolder.getZookeeperQuorum();
+            writeBufferSize = configHolder.getStorageWriteBufferSize();
+            int poolSize = configHolder.getStorageTablePoolSize();
+            boolean autoFlush = configHolder.getStorageAutoFlushChanges();
 
-            Configuration configuration = HBaseConfiguration.create();
-            configuration.set("hbase.zookeeper.quorum", zkQuorum);
-            configuration.set(Constants.HBASE_TABLE, tableName);
-            SqlTableCreator.initializeSqlTable(configuration);
-            tablePool = new HTablePool(configuration, poolSize, new HTableFactory(writeBufferSize, autoFlush));
+            SqlTableCreator.initializeSqlTable(configHolder);
+            tablePool = new HTablePool(configHolder.getConfiguration(), poolSize, new HTableFactory(writeBufferSize, autoFlush));
             HTableInterface readerTable = tablePool.getTable(tableName);
             reader = new HBaseReader(readerTable);
         } catch (ZooKeeperConnectionException e) {
@@ -847,7 +867,7 @@ public class HBaseAdapter {
             throw e;
         }
 
-        reader.setCacheSize(params.getInt("table_scan_cache_rows", DEFAULT_NUM_CACHED_ROWS));
+        reader.setCacheSize(configHolder.getStorageTableScanCacheSize());
 
         MBeans.register("Honeycomb", "Statistics", Metrics.getInstance());
 
@@ -857,7 +877,7 @@ public class HBaseAdapter {
 
     private static HBaseWriter createWriter() {
         long start = System.currentTimeMillis();
-        HTableInterface table = tablePool.getTable(params.get(Constants.HBASE_TABLE));
+        HTableInterface table = tablePool.getTable(configHolder.getStorageTableName());
         HBaseWriter w = new HBaseWriter(table);
         w.setWriteBufferSize(writeBufferSize);
         long end = System.currentTimeMillis();
@@ -879,5 +899,15 @@ public class HBaseAdapter {
             throw new HBaseAdapterException("No connection for scanId: " + scanId, null);
         }
         return conn;
+    }
+
+    private static boolean isFileAvailable(final File file) {
+        if( !(file.exists() && file.canRead() && file.isFile()) ) {
+            final String errorMsg = String.format("File is not available: %s", file.getAbsolutePath());
+            logger.error(errorMsg);
+            throw new RuntimeException(errorMsg);
+        }
+
+        return true;
     }
 }

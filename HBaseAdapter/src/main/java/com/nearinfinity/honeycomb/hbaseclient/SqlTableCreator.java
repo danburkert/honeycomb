@@ -1,12 +1,13 @@
 package com.nearinfinity.honeycomb.hbaseclient;
 
-import org.apache.hadoop.conf.Configuration;
+import java.io.IOException;
+
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.log4j.Logger;
 
-import java.io.IOException;
+import com.nearinfinity.honeycomb.config.ConfigurationHolder;
 
 public class SqlTableCreator {
     private static final Logger logger = Logger.getLogger(SqlTableCreator.class);
@@ -17,11 +18,11 @@ public class SqlTableCreator {
      * @param configuration Configuration of the HTable
      * @throws IOException
      */
-    public static void initializeSqlTable(Configuration configuration) throws IOException {
+    public static void initializeSqlTable(ConfigurationHolder configuration) throws IOException {
         HTableDescriptor sqlTableDescriptor;
         HColumnDescriptor nicColumn = new HColumnDescriptor(Constants.NIC);
-        HBaseAdmin admin = new HBaseAdmin(configuration);
-        byte[] tableName = configuration.get(Constants.HBASE_TABLE).getBytes();
+        HBaseAdmin admin = new HBaseAdmin(configuration.getConfiguration());
+        byte[] tableName = configuration.getStorageTableName().getBytes();
 
         if (!admin.tableExists(tableName)) {
             logger.info("Creating sql table");
