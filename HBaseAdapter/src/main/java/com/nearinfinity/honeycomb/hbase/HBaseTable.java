@@ -16,10 +16,7 @@ import com.nearinfinity.honeycomb.mysql.IndexKey;
 import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.Verify;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
-import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import com.nearinfinity.honeycomb.mysql.gen.*;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -241,7 +238,7 @@ public class HBaseTable implements Table {
         long indexId = indices.get(key.getIndexName());
         IndexSchema indexSchema = schema.getIndices().get(key.getIndexName());
         IndexRowBuilder indexRowBuilder = IndexRowBuilder.newBuilder(tableId, indexId);
-        if (key.getKeys() == null) {
+        if (key.getQueryType() == QueryType.INDEX_LAST || key.getQueryType() == QueryType.INDEX_FIRST) {
             return indexRowBuilder;
         }
         return indexRowBuilder

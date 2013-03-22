@@ -11,6 +11,8 @@ import org.apache.avro.specific.SpecificDatumWriter;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class IndexKey {
     private static final DatumWriter<IndexContainer> writer =
             new SpecificDatumWriter<IndexContainer>(IndexContainer.class);
@@ -19,6 +21,7 @@ public class IndexKey {
     private final IndexContainer indexContainer;
 
     public IndexKey(String indexName, QueryType queryType, Map<String, ByteBuffer> keys) {
+        checkNotNull(keys);
         this.indexContainer = new IndexContainer(indexName, queryType, keys);
     }
 

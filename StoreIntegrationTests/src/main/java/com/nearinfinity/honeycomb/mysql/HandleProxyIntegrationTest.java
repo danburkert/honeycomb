@@ -193,12 +193,12 @@ public class HandleProxyIntegrationTest {
             public void execute(HandlerProxy proxy) {
                 int rows = 3;
                 int keyValue = 5;
-                insertNullData(proxy, 1);
+                insertNullData(proxy, 2);
                 insertData(proxy, 1, keyValue, Constants.FULL_UUID);
                 insertData(proxy, 1, keyValue + 1, Constants.ZERO_UUID);
                 insertData(proxy, rows, keyValue + 1);
-                IndexKey key = new IndexKey(INDEX1, QueryType.INDEX_FIRST, null);
-                assertReceivingDifferentRows(proxy, key, rows + 3);
+                IndexKey key = new IndexKey(INDEX1, QueryType.INDEX_FIRST, Maps.<String, ByteBuffer>newHashMap());
+                assertReceivingDifferentRows(proxy, key, rows + 4);
             }
         });
     }
@@ -263,7 +263,6 @@ public class HandleProxyIntegrationTest {
                 assertReceivingDifferentRows(proxy, key, rows + 1);
             }
         });
-
     }
 
     public static void testIndexLastScan() {
@@ -275,7 +274,7 @@ public class HandleProxyIntegrationTest {
                 insertData(proxy, 1, keyValue, Constants.FULL_UUID);
                 insertData(proxy, 1, keyValue - 1, Constants.ZERO_UUID);
                 insertData(proxy, rows, keyValue - 1);
-                IndexKey key = new IndexKey(INDEX1, QueryType.INDEX_LAST, null);
+                IndexKey key = new IndexKey(INDEX1, QueryType.INDEX_LAST, Maps.<String, ByteBuffer>newHashMap());
                 assertReceivingDifferentRows(proxy, key, rows + 2);
             }
         });
