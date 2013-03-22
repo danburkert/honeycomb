@@ -63,7 +63,8 @@ int ColumnSchema::set_int_field(const char name[], int val) {
   return ret;
 }
 
-int ColumnSchema::set_null_field(const char name[]) {
+int ColumnSchema::set_null_field(const char name[]) 
+{
   int disc;
   avro_schema_t union_schema;
   avro_value_t avro_union;

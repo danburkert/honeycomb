@@ -22,7 +22,6 @@ void rand_record_map(Row* row)
 {
   ASSERT_FALSE(row->reset());
   int num_records = rand() % 100; // [0, 100) records
-  int val_len;
   int key_len;
   char** keys = new char*[num_records];
   char** vals = new char*[num_records];
