@@ -148,7 +148,7 @@ jobject initialize_jvm(JavaVM* &jvm)
     vm_args.version = JNI_VERSION_1_6;
     thread_attach_count++; // roundabout to attach_thread
     jint result = JNI_CreateJavaVM(&jvm, (void**)&env, &vm_args);
-    if (result != 0)
+    if (result != JNI_OK)
     {
       abort_with_fatal_error("Failed to create JVM. Check the Java classpath.");
     }
@@ -178,8 +178,14 @@ jobject initialize_jvm(JavaVM* &jvm)
  */
 jint attach_thread(JavaVM *jvm, JNIEnv* &env)
 {
-  thread_attach_count++;
-  return jvm->AttachCurrentThread((void**) &env, &attach_args);
+  jint result = jvm->AttachCurrentThread((void**) &env, &attach_args);
+
+  if ( result == JNI_OK )
+  {
+    thread_attach_count++;
+  }
+
+  return result;
 }
 
 /**
