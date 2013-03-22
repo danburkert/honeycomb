@@ -13,7 +13,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <hadoop.artifactId>hadoop-core</hadoop.artifactId>
         <hadoop.version>1.0.4</hadoop.version>
-        <hbase.version>0.94.1</hbase.version>
+        <hbase.version>0.94.2</hbase.version>
         <powermock.version>1.5</powermock.version>
     </properties>
 
