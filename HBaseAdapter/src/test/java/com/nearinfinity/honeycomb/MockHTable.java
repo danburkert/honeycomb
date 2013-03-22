@@ -613,6 +613,26 @@ public class MockHTable implements HTableInterface {
     }
 
     @Override
+    public void setAutoFlush(boolean b) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void setAutoFlush(boolean b, boolean b2) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public long getWriteBufferSize() {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void setWriteBufferSize(long l) throws IOException {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
     public <T extends CoprocessorProtocol, R> Map<byte[], R> coprocessorExec(Class<T> protocol, byte[] startKey, byte[] endKey, Batch.Call<T, R> callable) throws IOException, Throwable {
         return null;
     }

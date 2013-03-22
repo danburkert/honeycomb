@@ -178,11 +178,6 @@ public class HandlerProxy {
         checkTableOpen();
         IndexKey key = IndexKey.deserialize(indexKeys);
         QueryType queryType = key.getQueryType();
-        if (queryType == QueryType.INDEX_LAST || queryType == QueryType.INDEX_FIRST) {
-            checkArgument(key.getKeys() == null, "Keys on an index first must be null");
-        } else {
-            checkArgument(key.getKeys() != null, "Keys cannot be null");
-        }
         switch (queryType) {
             case EXACT_KEY:
                 this.currentScanner = this.table.indexScanExact(key);

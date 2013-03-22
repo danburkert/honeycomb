@@ -18,6 +18,8 @@ import com.nearinfinity.honeycomb.config.ConfigurationParser;
 import com.nearinfinity.honeycomb.hbase.HBaseModule;
 import com.nearinfinity.honeycomb.hbaseclient.Constants;
 
+import static java.lang.String.format;
+
 
 public final class Bootstrap extends AbstractModule {
     private static final String CONFIG_PATH = "/etc/mysql";
@@ -73,14 +75,14 @@ public final class Bootstrap extends AbstractModule {
                     final ConfigurationParser configParser = new ConfigurationParser();
                     configHolder = configParser.parseConfig(configFile, new Configuration());
 
-                    logger.debug(String.format("Read %d configuration properties ",
+                    logger.debug(format("Read %d configuration properties ",
                             configHolder.getConfiguration().size()));
                 } catch (ParserConfigurationException e) {
                     logger.fatal("The XML parser was not configured properly.", e);
                     throw new HoneycombException("XML parser could not be configured correctly.", e);
                 }
             } else {
-                final String errorMsg = "Configuration file validation failed";
+                final String errorMsg = format("Configuration file validation failed. Check %s for correctness.", configFile.getPath());
                 logger.fatal(errorMsg);
                 throw new RuntimeException(errorMsg);
             }
@@ -94,7 +96,7 @@ public final class Bootstrap extends AbstractModule {
      */
     private static boolean isFileAvailable(final File file) {
         if( !(file.exists() && file.canRead() && file.isFile()) ) {
-            final String errorMsg = String.format("File is not available: %s", file.getAbsolutePath());
+            final String errorMsg = format("File is not available: %s", file.getAbsolutePath());
             logger.fatal(errorMsg);
             throw new RuntimeException(errorMsg);
         }
