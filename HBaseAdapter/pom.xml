@@ -26,7 +26,6 @@
                         <phase>generate-sources</phase>
                         <goals>
                             <goal>schema</goal>
-                            <goal>idl-protocol</goal>
                         </goals>
                         <configuration>
                             <sourceDirectory>${project.basedir}/src/main/avro/
@@ -59,6 +58,27 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <argLine>-Xmx512m</argLine>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>cobertura-maven-plugin</artifactId>
+                <configuration>
+                    <instrumentation>
+                        <ignores>
+                            <ignore>com.nearinfinity.honeycomb.mysql.gen.*</ignore>
+                        </ignores>
+                        <excludes>
+                            <exclude>com/nearinfinity/honeycomb/mysql/gen/**/*.class</exclude>
+                            
+                            <!-- 
+                            Excluded due to Java 6 bug: http://bugs.sun.com/view_bug.do?bug_id=6889255
+                            The usage of the @Named annotation in the StoreFactory constructor is at fault
+                             -->
+                            <exclude>com/nearinfinity/honeycomb/mysql/StoreFactory.class</exclude>
+                            <exclude>com/nearinfinity/honeycomb/mysql/StoreFactoryTest.class</exclude>
+                        </excludes>
+                    </instrumentation>
                 </configuration>
             </plugin>
         </plugins>
@@ -139,6 +159,11 @@
             <artifactId>guava</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
+            <version>3.0</version>
+        </dependency>
+        <dependency>
             <groupId>com.google.inject.extensions</groupId>
             <artifactId>guice-multibindings</artifactId>
             <version>3.0</version>
@@ -163,7 +188,6 @@
         <dependency>
             <groupId>net.java.quickcheck</groupId>
             <artifactId>quickcheck</artifactId>
-            <version>0.6</version>
             <scope>test</scope>
         </dependency>
         <dependency>
