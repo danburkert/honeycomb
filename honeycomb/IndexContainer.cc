@@ -86,7 +86,13 @@ int IndexContainer::get_bytes_record(const char* column_name, const char** value
   avro_value_t* rec_ptr = &record;
 
   ret |= get_record(column_name, &rec_ptr);
-  ret |= avro_value_get_bytes(rec_ptr, (const void**) value, size);
+  if (rec_ptr->self == NULL)
+  {
+    *value = NULL;
+  }else
+  {
+    ret |= avro_value_get_bytes(rec_ptr, (const void**) value, size);
+  }
   return ret;
 }
 
