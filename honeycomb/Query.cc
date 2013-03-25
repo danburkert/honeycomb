@@ -7,6 +7,13 @@
 
 IndexContainer::QueryType retrieve_query_flag(enum ha_rkey_function find_flag);
 
+int HoneycombHandler::index_init(uint idx, bool sorted)
+{
+  DBUG_ENTER("HoneycombHandler::index_init");
+  this->active_index = idx;
+  DBUG_RETURN(0);
+}
+
 int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
     key_part_map keypart_map, enum ha_rkey_function find_flag)
 {
@@ -35,7 +42,7 @@ int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
     }
 
     key_copy = create_key_copy(field, key_ptr, &key_length, table->in_use);
-    index_key.set_bytes_record(field->field_name, key_copy, key_length);
+    index_key.set_bytes_record(field->field_name, (char*)key_copy, key_length);
     ARRAY_DELETE(key_copy);
     key_ptr += key_part->store_length;
     index++;
