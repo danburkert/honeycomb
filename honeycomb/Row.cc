@@ -75,12 +75,12 @@ int Row::set_UUID(char* uuid_buf)
   return ret;
 }
 
-int Row::get_bytes_record(const char* column_name, const unsigned char** value, size_t* size)
+int Row::get_bytes_record(const char* column_name, const char** value, size_t* size)
 {
   return get_map_value(&row_container, column_name, "records", value, size);
 }
 
-int Row::set_bytes_record(const char* column_name, unsigned char* value, size_t size)
+int Row::set_bytes_record(const char* column_name, char* value, size_t size)
 {
   return set_map_value(&row_container, column_name, "records", value, size);
 }

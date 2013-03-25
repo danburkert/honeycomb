@@ -47,12 +47,12 @@ int IndexContainer::deserialize(const char* buf, int64_t len)
   return deserialize_object(&container_schema, buf, len);
 }
 
-int IndexContainer::set_bytes_record(const char* column_name, unsigned char* value, size_t size)
+int IndexContainer::set_bytes_record(const char* column_name, char* value, size_t size)
 {
   return set_map_value(&container_schema, column_name, RECORDS, value, size);
 }
 
-int IndexContainer::get_bytes_record(const char* column_name, const unsigned char** value, size_t* size)
+int IndexContainer::get_bytes_record(const char* column_name, const char** value, size_t* size)
 {
   return get_map_value(&container_schema, column_name, RECORDS, value, size);
 }

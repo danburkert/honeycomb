@@ -68,7 +68,7 @@ class HoneycombHandler : public handler
     jbyteArray find_duplicate_column_values(char* columns);
     bool row_has_duplicate_values(jobject value_map, jobject changedColumns);
     int get_failed_key_index(const char *key_name);
-    void store_field_value(Field *field, const unsigned char* val, int length);
+    void store_field_value(Field *field, const char* val, int length);
     jobject create_multipart_keys(TABLE* table_arg);
     jobject create_multipart_key(KEY* key, KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts);
     char* index_name(KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts);

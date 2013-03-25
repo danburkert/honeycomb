@@ -74,10 +74,9 @@ int HoneycombHandler::pack_row(uchar *buf, TABLE* table, Row* row)
     table->timestamp_field->set_time();
   }
   if(table->next_number_field && buf == table->record[0])
-
   {
-    int res;
-    if(res = update_auto_increment())
+    int res = update_auto_increment();
+    if(res)
     {
       return res;
     }
@@ -181,7 +180,7 @@ int HoneycombHandler::pack_row(uchar *buf, TABLE* table, Row* row)
       memcpy(byte_val, field->ptr, actualFieldSize);
       break;
     }
-    row->set_bytes_record(field_name, (uchar*)byte_val, actualFieldSize);
+    row->set_bytes_record(field_name, byte_val, actualFieldSize);
     MY_FREE(byte_val);
   }
 
@@ -536,7 +535,7 @@ int HoneycombHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_key
       {
         int length = (int)this->env->GetArrayLength(duplicate_value);
         char *value_key = char_array_from_java_bytes(duplicate_value, this->env);
-        this->store_field_value(field_being_indexed, (uchar*)value_key, length);
+        this->store_field_value(field_being_indexed, value_key, length);
         ARRAY_DELETE(value_key);
         ARRAY_DELETE(index_columns);
         this->failed_key_index = this->get_failed_key_index(key_part->field->field_name);

@@ -65,7 +65,7 @@ class Row : public Serializable
    * @param size  A pointer to the size of the result byte buffer
    * @return  Error code
    */
-  int get_bytes_record(const char* column_name, const unsigned char** value, size_t* size);
+  int get_bytes_record(const char* column_name, const char** value, size_t* size);
 
   /**
    * @brief Set record in Row to given value and size.
@@ -76,6 +76,6 @@ class Row : public Serializable
    *
    * @return Error code
    */
-  int set_bytes_record(const char* column_name, unsigned char* value, size_t size);
+  int set_bytes_record(const char* column_name, char* value, size_t size);
 };
 #endif

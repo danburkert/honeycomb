@@ -9,6 +9,7 @@
 #include <string.h>
 #include "Logging.h"
 #include "Macros.h"
+#include "Java.h"
 
 const char **HoneycombHandler::bas_ext() const
 {
@@ -107,7 +108,7 @@ int HoneycombHandler::close(void)
  * @param val HBase value
  * @param val_length Length of the HBase value
  */
-void HoneycombHandler::store_field_value(Field *field, const unsigned char *val, int val_length)
+void HoneycombHandler::store_field_value(Field *field, const char *val, int val_length)
 {
   enum_field_types type = field->real_type();
 
@@ -196,7 +197,7 @@ int HoneycombHandler::java_to_sql(uchar* buf, Row* row)
 {
   my_bitmap_map *orig_bitmap;
   orig_bitmap = dbug_tmp_use_all_columns(table, table->write_set);
-  const unsigned char* value;
+  const char* value;
   size_t size;
 
   for (uint i = 0; i < table->s->fields; i++)
