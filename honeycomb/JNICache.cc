@@ -23,11 +23,9 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   handler_proxy_.get_auto_inc_value = get_method_id(env, handler_proxy_.clazz, "getAutoIncValue", "()J");
 
   HoneycombException     = get_class_ref(env, HONEYCOMB "HoneycombException");
-  TableNotFoundException = get_class_ref(env, HONEYCOMB "TableNotFoundException");
   TableExistsException   = get_class_ref(env, HONEYCOMB "TableExistsException");
   TableNotFoundException = get_class_ref(env, HONEYCOMB "TableNotFoundException");
   RowNotFoundException   = get_class_ref(env, HONEYCOMB "RowNotFoundException");
-  StoreNotFoundException = get_class_ref(env, HONEYCOMB "StoreNotFoundException");
   IOException            = get_class_ref(env, "java/io/IOException");
 
   hbase_adapter_.clazz                        = get_class_ref(env, MYSQLENGINE "HBaseAdapter");
@@ -135,6 +133,7 @@ JNICache::~JNICache()
   CHECK_JNI_ABORT(attach_result, "JNICache Destructor: Failure while attaching thread to JVM.");
 
   env->DeleteGlobalRef(handler_proxy_.clazz);
+  env->DeleteGlobalRef(handler_proxy_factory_.clazz);
   env->DeleteGlobalRef(hbase_adapter_.clazz);
   env->DeleteGlobalRef(index_read_type_.clazz);
   env->DeleteGlobalRef(row_.clazz);
@@ -151,9 +150,7 @@ JNICache::~JNICache()
   env->DeleteGlobalRef(HoneycombException);
   env->DeleteGlobalRef(TableNotFoundException);
   env->DeleteGlobalRef(TableExistsException);
-  env->DeleteGlobalRef(TableNotFoundException);
   env->DeleteGlobalRef(RowNotFoundException);
-  env->DeleteGlobalRef(StoreNotFoundException);
   env->DeleteGlobalRef(IOException);
 
   detach_thread(jvm);

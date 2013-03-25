@@ -22,40 +22,23 @@ public abstract class IndexRow implements RowKey {
 
     protected IndexRow(long tableId,
                        long indexId,
-                       byte prefix,
-                       byte[] notNullBytes,
-                       byte[] nullBytes) {
-        checkArgument(tableId >= 0, "Table ID must be non-zero.");
-        this.tableId = tableId;
-        this.indexId = indexId;
-        records = null;
-        uuid = null;
-        this.prefix = prefix;
-        this.notNullBytes = notNullBytes;
-        this.nullBytes = nullBytes;
-    }
-
-    protected IndexRow(long tableId,
-                       long indexId,
-                       List<byte[]> records,
-                       byte prefix,
-                       byte[] notNullBytes,
-                       byte[] nullBytes) {
-        this(tableId, indexId, prefix, notNullBytes, nullBytes);
-        checkNotNull(records, "Records may not be null.");
-        this.records = records;
-    }
-
-    protected IndexRow(long tableId,
-                       long indexId,
                        List<byte[]> records,
                        UUID uuid,
                        byte prefix,
                        byte[] notNullBytes,
                        byte[] nullBytes) {
-        this(tableId, indexId, records, prefix, notNullBytes, nullBytes);
-        checkNotNull(uuid, "UUID may not be null.");
+        checkArgument(tableId >= 0, "Table ID must be non-zero.");
+        checkArgument(indexId >= 0, "Index ID must be non-zero.");
+        checkNotNull(prefix, "Prefix cannot be null");
+        checkNotNull(notNullBytes, "Not null bytes cannot be null");
+        checkNotNull(nullBytes, "Null bytes cannot be null");
         this.uuid = uuid;
+        this.tableId = tableId;
+        this.indexId = indexId;
+        this.prefix = prefix;
+        this.notNullBytes = notNullBytes;
+        this.nullBytes = nullBytes;
+        this.records = records;
     }
 
     @Override
@@ -102,6 +85,8 @@ public abstract class IndexRow implements RowKey {
     public List<byte[]> getRecords() {
         return records;
     }
+
+    public abstract SortOrder getSortOrder();
 
     @Override
     public String toString() {

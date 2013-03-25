@@ -68,7 +68,7 @@ jobject bootstrap(JavaVM* jvm)
 }
 
 
-static void print_java_classpath(JNIEnv* env)
+static void log_java_classpath(JNIEnv* env)
 {
   Logging::info("Java classpath:");
   jclass classloader_class = env->FindClass("java/lang/ClassLoader");
@@ -148,7 +148,7 @@ jobject initialize_jvm(JavaVM* &jvm)
     vm_args.version = JNI_VERSION_1_6;
     thread_attach_count++; // roundabout to attach_thread
     jint result = JNI_CreateJavaVM(&jvm, (void**)&env, &vm_args);
-    if (result != 0)
+    if (result != JNI_OK)
     {
       abort_with_fatal_error("Failed to create JVM. Check the Java classpath.");
     }
@@ -159,7 +159,7 @@ jobject initialize_jvm(JavaVM* &jvm)
 
     free_parser(parser);
     jobject handler_proxy_factory = bootstrap(jvm);
-    print_java_classpath(env);
+    log_java_classpath(env);
     detach_thread(jvm);
 #if defined(__APPLE__) || defined(__linux__)
     signal(SIGTERM, handler);
@@ -178,8 +178,14 @@ jobject initialize_jvm(JavaVM* &jvm)
  */
 jint attach_thread(JavaVM *jvm, JNIEnv* &env)
 {
-  thread_attach_count++;
-  return jvm->AttachCurrentThread((void**) &env, &attach_args);
+  jint result = jvm->AttachCurrentThread((void**) &env, &attach_args);
+
+  if ( result == JNI_OK )
+  {
+    thread_attach_count++;
+  }
+
+  return result;
 }
 
 /**

@@ -12,6 +12,7 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
+import com.nearinfinity.honeycomb.config.ConfigurationHolder;
 import com.nearinfinity.honeycomb.hbaseclient.Constants;
 import com.nearinfinity.honeycomb.hbaseclient.SqlTableCreator;
 
@@ -19,16 +20,15 @@ public class HBaseModule extends AbstractModule {
     private static final Logger logger = Logger.getLogger(HBaseModule.class);
     private final HTableProvider hTableProvider;
 
-    public HBaseModule(final Configuration configuration) throws IOException {
-        hTableProvider = new HTableProvider(configuration);
+    public HBaseModule(final ConfigurationHolder configuration) throws IOException {
+        // Add the HBase resources to the core application configuration
+        Configuration hBaseConfiguration = HBaseConfiguration.addHbaseResources(configuration.getConfiguration());
+        ConfigurationHolder holder = new ConfigurationHolder(hBaseConfiguration);
+
+        hTableProvider = new HTableProvider(holder);
 
         try {
-            String hTableName = configuration.get(Constants.HBASE_TABLE);
-            String zkQuorum = configuration.get(Constants.ZK_QUORUM);
-            Configuration hBaseConfiguration = HBaseConfiguration.create();
-            hBaseConfiguration.set("hbase.zookeeper.quorum", zkQuorum);
-            hBaseConfiguration.set(Constants.HBASE_TABLE, hTableName);
-            SqlTableCreator.initializeSqlTable(hBaseConfiguration);
+            SqlTableCreator.initializeSqlTable(holder);
         } catch (IOException e) {
             logger.fatal("Could not create HBaseStore. Aborting initialization.");
             throw e;

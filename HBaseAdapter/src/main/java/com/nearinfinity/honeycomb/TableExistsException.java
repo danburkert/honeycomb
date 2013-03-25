@@ -1,4 +1,4 @@
 package com.nearinfinity.honeycomb;
 
-public class TableExistsException extends HoneycombException {
+public class TableExistsException extends RuntimeException {
 }

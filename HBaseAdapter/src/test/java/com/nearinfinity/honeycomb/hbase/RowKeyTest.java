@@ -15,9 +15,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public class RowKeyTest {
-
     Generator<RowKey> rowKeyGen = new RowKeyGenerator();
-
     @Test
     public void testRowKeyEncSort() {
         List<RowKey> rowKeys = new ArrayList<RowKey>();
@@ -54,11 +52,16 @@ public class RowKeyTest {
                 return ColumnsRowCompare((ColumnsRow) row1, (ColumnsRow) row2);
             } else if (row1Class == DataRow.class) {
                 return dataRowCompare((DataRow) row1, (DataRow) row2);
-            } else if (row1Class == AscIndexRow.class) {
-                return ascIndexRowCompare((AscIndexRow) row1, (AscIndexRow) row2);
-            } else {
-                return descIndexRowCompare((DescIndexRow) row1, (DescIndexRow) row2);
+            } else if (row1 instanceof IndexRow) {
+                IndexRow indexRow = (IndexRow) row1;
+                IndexRow indexRow2 = (IndexRow) row2;
+                if (indexRow.getSortOrder() == SortOrder.Ascending) {
+                    return indexCompare(indexRow, indexRow2, -1);
+                }
+                return indexCompare(indexRow, indexRow2, 1);
             }
+
+            throw new IllegalArgumentException("Not a valid row key");
         }
 
         private int ColumnsRowCompare(ColumnsRow row1, ColumnsRow row2) {
@@ -73,14 +76,6 @@ public class RowKeyTest {
             return UnsignedBytes.lexicographicalComparator().compare(
                     Util.UUIDToBytes(row1.getUuid()),
                     Util.UUIDToBytes(row2.getUuid()));
-        }
-
-        private int ascIndexRowCompare(AscIndexRow row1, AscIndexRow row2) {
-            return indexCompare(row1, row2, -1);
-        }
-
-        private int descIndexRowCompare(DescIndexRow row1, DescIndexRow row2) {
-            return indexCompare(row1, row2, 1);
         }
 
         private int indexCompare(IndexRow row1, IndexRow row2, int nullOrder) {

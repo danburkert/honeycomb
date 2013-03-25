@@ -2,12 +2,11 @@ package com.nearinfinity.honeycomb.mysql;
 
 import com.nearinfinity.honeycomb.mysql.gen.RowContainer;
 import com.nearinfinity.honeycomb.mysql.gen.UUIDContainer;
-import org.apache.avro.io.*;
+import org.apache.avro.io.DatumReader;
+import org.apache.avro.io.DatumWriter;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -49,12 +48,9 @@ public class Row {
      *
      * @param serializedRow byte buffer containing serialized Row
      * @return new Row instance from serializedRow
-     * @throws IOException On deserialization read failure
      */
-    public static Row deserialize(byte[] serializedRow) throws IOException {
-        ByteArrayInputStream in = new ByteArrayInputStream(serializedRow);
-        Decoder decoder = DecoderFactory.get().binaryDecoder(in, null);
-        return new Row(reader.read(null, decoder));
+    public static Row deserialize(byte[] serializedRow) {
+        return new Row(Util.deserializeAvroObject(serializedRow, reader));
     }
 
     /**
@@ -94,12 +90,8 @@ public class Row {
      * @return Serialized row
      * @throws IOException when serialization fails
      */
-    public byte[] serialize() throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        Encoder encoder = EncoderFactory.get().binaryEncoder(out, null);
-        writer.write(row, encoder);
-        encoder.flush();
-        return out.toByteArray();
+    public byte[] serialize() {
+        return Util.serializeAvroObject(row, writer);
     }
 
     @Override

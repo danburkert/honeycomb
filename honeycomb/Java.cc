@@ -4,9 +4,6 @@
 #include "Logging.h"
 #include <string.h>
 
-#define MAP_CLASS "java/util/TreeMap"
-#define LIST_CLASS "java/util/LinkedList"
-
 jfieldID find_flag_to_java(enum ha_rkey_function find_flag, JNICache* cache)
 {
   if (find_flag == HA_READ_KEY_EXACT)
@@ -98,7 +95,10 @@ int check_exceptions(JNIEnv* env, JNICache* cache, const char* location)
   jthrowable e = env->ExceptionOccurred();
   if (e)
   {
-    if (env->IsInstanceOf(e, cache->TableNotFoundException))
+    if (env->IsInstanceOf(e, cache->HoneycombException))
+    {
+      ret = HA_ERR_INTERNAL_ERROR;
+    } else if (env->IsInstanceOf(e, cache->TableNotFoundException))
     {
       ret = HA_ERR_NO_SUCH_TABLE;
     } else if (env->IsInstanceOf(e, cache->TableExistsException))

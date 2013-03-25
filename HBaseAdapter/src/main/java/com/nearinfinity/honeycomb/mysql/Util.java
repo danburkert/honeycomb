@@ -1,28 +1,27 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
-import org.apache.avro.io.*;
-import org.apache.avro.specific.SpecificDatumReader;
-import org.apache.avro.specific.SpecificDatumWriter;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.log4j.Logger;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import org.apache.avro.io.BinaryDecoder;
+import org.apache.avro.io.DatumReader;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.io.DecoderFactory;
+import org.apache.avro.io.Encoder;
+import org.apache.avro.io.EncoderFactory;
+import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.avro.specific.SpecificDatumWriter;
+import org.apache.log4j.Logger;
+
+import com.nearinfinity.honeycomb.HoneycombException;
+import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 
 /**
  * Utility class containing helper functions.
@@ -59,12 +58,12 @@ public class Util {
         return new UUID(buffer.getLong(), buffer.getLong());
     }
 
-    public static byte[] serializeTableSchema(TableSchema schema) throws IOException {
+    public static byte[] serializeTableSchema(TableSchema schema) {
         checkNotNull(schema, "Schema cannot be null");
         return serializeAvroObject(schema, TableSchema.class);
     }
 
-    public static TableSchema deserializeTableSchema(byte[] schema) throws IOException {
+    public static TableSchema deserializeTableSchema(byte[] schema) {
         checkNotNull(schema, "Schema cannot be null");
         return deserializeAvroObject(schema, TableSchema.class);
     }
@@ -75,14 +74,40 @@ public class Util {
      * @param obj   The object to serialize
      * @param clazz The type of the object being serialized
      * @return Serialized row
-     * @throws IOException when serialization fails
      */
-    public static <T> byte[] serializeAvroObject(T obj, Class<T> clazz) throws IOException {
+    public static <T> byte[] serializeAvroObject(T obj, Class<T> clazz) {
         DatumWriter<T> writer = new SpecificDatumWriter<T>(clazz);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Encoder encoder = EncoderFactory.get().binaryEncoder(out, null);
-        writer.write(obj, encoder);
-        encoder.flush();
+        try {
+            writer.write(obj, encoder);
+            encoder.flush();
+        } catch (IOException e) {
+            logger.error("Serialization failed", e);
+            throw new HoneycombException("Serialization failed", e);
+        }
+
+        return out.toByteArray();
+    }
+
+    /**
+     * Serialize an object to a byte array
+     *
+     * @param obj    The object to serialize
+     * @param writer The datum writer for the class
+     * @return Serialized row
+     */
+    public static <T> byte[] serializeAvroObject(T obj, DatumWriter<T> writer) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        Encoder encoder = EncoderFactory.get().binaryEncoder(out, null);
+        try {
+            writer.write(obj, encoder);
+            encoder.flush();
+        } catch (IOException e) {
+            logger.error("Serialization failed", e);
+            throw new HoneycombException("Serialization failed", e);
+        }
+
         return out.toByteArray();
     }
 
@@ -92,14 +117,36 @@ public class Util {
      * @param serializedData a buffer containing the serialized data
      * @param clazz          the class type to instantiate to store the deserialized data
      * @return A new instance of the specified class representing the deserialized data
-     * @throws IOException On deserialization reader failure
      */
-    public static <T> T deserializeAvroObject(byte[] serializedData, Class<T> clazz) throws IOException {
+    public static <T> T deserializeAvroObject(byte[] serializedData, Class<T> clazz) {
         final DatumReader<T> userDatumReader = new SpecificDatumReader<T>(clazz);
         final ByteArrayInputStream in = new ByteArrayInputStream(serializedData);
         binaryDecoder = DecoderFactory.get().binaryDecoder(in, binaryDecoder);
 
-        return userDatumReader.read(null, binaryDecoder);
+        try {
+            return userDatumReader.read(null, binaryDecoder);
+        } catch (IOException e) {
+            throw new HoneycombException("Deserialization failed", e);
+        }
+    }
+
+    /**
+     * Deserialize the provided serialized data into an instance of the specified class type
+     *
+     * @param serializedData a buffer containing the serialized data
+     * @param reader         the datum reader for the class
+     * @return A new instance of the specified class representing the deserialized data
+     */
+    public static <T> T deserializeAvroObject(byte[] serializedData, DatumReader<T> reader) {
+        final ByteArrayInputStream in = new ByteArrayInputStream(serializedData);
+        binaryDecoder = DecoderFactory.get().binaryDecoder(in, binaryDecoder);
+
+
+        try {
+            return reader.read(null, binaryDecoder);
+        } catch (IOException e) {
+            throw new HoneycombException("Deserialization failed", e);
+        }
     }
 
     public static String generateHexString(final byte[] bytes) {
@@ -112,30 +159,14 @@ public class Util {
     }
 
     /**
-     * Read an XML file and extract a {@link Configuration} object from the XML.
+     * Quietly close a {@link Closeable} suppressing the IOException thrown
      *
-     * @param source XML file
-     * @return {@link Configuration}
-     * @throws IOException                  if any IO errors occur
-     * @throws ParserConfigurationException if a DocumentBuilder cannot be created which satisfies the configuration requested
-     * @throws SAXException                 If any parse errors occur.
+     * @param closeable Closeable
      */
-    public static Configuration readConfiguration(File source)
-            throws IOException, ParserConfigurationException, SAXException {
-        Configuration params = new Configuration(false);
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        Document doc = builder.parse(source);
-        NodeList options = doc.getElementsByTagName("adapteroption");
-        logger.info(String.format("Number of options %d", options.getLength()));
-        for (int i = 0; i < options.getLength(); i++) {
-            Element node = (Element) options.item(i);
-            String name = node.getAttribute("name");
-            String nodeValue = node.getTextContent();
-            logger.info(String.format("Node %s = %s", name, nodeValue));
-            params.set(name, nodeValue);
+    public static void closeQuietly(Closeable closeable) {
+        try {
+            closeable.close();
+        } catch (IOException ignored) {
         }
-
-        return params;
     }
 }

@@ -1,11 +1,11 @@
 package com.nearinfinity.honeycomb.hbase;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * Helper functions for variable length encoding data in a binary-sort safe
@@ -60,9 +60,7 @@ public class VarEncoder {
         int start = bytes[0] + 1;
         int length = bytes.length - start;
         byte[] decodedBytes = new byte[length];
-        for (int i = 0; i < length; i++) {
-            decodedBytes[i] = bytes[start + i];
-        }
+        System.arraycopy(bytes, start, decodedBytes, 0, length);
         return decodedBytes;
     }
 

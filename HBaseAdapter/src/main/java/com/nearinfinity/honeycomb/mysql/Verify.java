@@ -4,6 +4,7 @@ import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 
+import java.util.Arrays;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -23,17 +24,26 @@ public class Verify {
         return false;
     }
 
+    public static void isValidTableId(final long tableId, String... message) {
+        checkArgument(tableId >= 0, "Table id must be greater than or equal to zero. " + Arrays.toString(message));
+    }
+
     public static void isNotNullOrEmpty(String value, String... message) {
         checkNotNull(value, message);
         checkArgument(!value.isEmpty(), message);
     }
 
+    /**
+     * Verifies that the table schema and its constituent parts are valid. (Warning: expensive check).
+     * @param schema Table schema to validate.
+     */
     public static void isValidTableSchema(TableSchema schema) {
+        checkNotNull(schema);
         isValidIndexSchema(schema.getIndices(), schema.getColumns());
     }
 
-    public static void isValidIndexSchema(Map<String, IndexSchema> indices,
-                                           Map<String, ColumnSchema> columns) {
+    private static void isValidIndexSchema(Map<String, IndexSchema> indices,
+                                          Map<String, ColumnSchema> columns) {
         for (IndexSchema index : indices.values()) {
             for (String column : index.getColumns()) {
                 if (!columns.containsKey(column)) {
