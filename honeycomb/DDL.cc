@@ -436,21 +436,18 @@ int HoneycombHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_key
   DBUG_RETURN(ret);
 }
 
-int HoneycombHandler::prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys)
+int HoneycombHandler::prepare_drop_index(TABLE *table, uint *key_num, uint num_of_keys)
 {
-  //JavaFrame frame(env, num_of_keys + 1);
-  //jclass adapter = cache->hbase_adapter().clazz;
-  //jmethodID drop_index_method = cache->hbase_adapter().drop_index;
-  //jstring table_name = this->table_name();
-  //for (uint key = 0; key < num_of_keys; key++)
-  //{
-    //char* name = index_name(table_arg, key_num[key]);
-    //jstring jname = string_to_java_string(name);
-    //this->env->CallStaticVoidMethod(adapter, drop_index_method, table_name, jname);
-    //EXCEPTION_CHECK_IE("HoneycombHandler::prepare_drop_index", "calling dropIndex");
-    //ARRAY_DELETE(name);
-  //}
-  return 0;
+  DBUG_ENTER("HoneycombHandler::prepare_drop_index");
+  attach_thread(jvm, env);
+  int ret = 0;
+  for (int i = 0; i < num_of_keys; i++) {
+    JavaFrame frame(env, 1);
+    jstring index_name = string_to_java_string((table->key_info + key_num[i])->name);
+    this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().drop_index,
+        index_name);
+    ret |= check_exceptions(env, cache, "HoneycombHandler::prepare_drop_index");
+  }
+  detach_thread(jvm);
+  DBUG_RETURN(ret);
 }
-
-
