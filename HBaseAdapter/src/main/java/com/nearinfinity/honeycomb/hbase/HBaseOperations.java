@@ -1,6 +1,6 @@
 package com.nearinfinity.honeycomb.hbase;
 
-import com.nearinfinity.honeycomb.HoneycombException;
+import com.nearinfinity.honeycomb.RuntimeIOException;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.log4j.Logger;
 
@@ -14,8 +14,8 @@ public class HBaseOperations {
         try {
             hTable.put(puts);
         } catch (IOException e) {
-            logger.error(e);
-            throw new HoneycombException("HBase table put list failed", e);
+            logger.error("HBase table put list failed", e);
+            throw new RuntimeIOException(e);
         }
     }
 
@@ -23,8 +23,8 @@ public class HBaseOperations {
         try {
             hTable.put(put);
         } catch (IOException e) {
-            logger.error(e);
-            throw new HoneycombException("HBase table put failed", e);
+            logger.error("HBase table put failed", e);
+            throw new RuntimeIOException(e);
         }
     }
 
@@ -32,8 +32,8 @@ public class HBaseOperations {
         try {
             hTable.delete(deletes);
         } catch (IOException e) {
-            logger.error(e);
-            throw new HoneycombException("HBase table delete failed", e);
+            logger.error("HBase table delete failed", e);
+            throw new RuntimeIOException(e);
         }
     }
 
@@ -41,8 +41,8 @@ public class HBaseOperations {
         try {
             hTable.flushCommits();
         } catch (IOException e) {
-            logger.error(e);
-            throw new HoneycombException("HBase table flush failed", e);
+            logger.error("HBase table flush failed", e);
+            throw new RuntimeIOException(e);
         }
     }
 
@@ -50,8 +50,8 @@ public class HBaseOperations {
         try {
             hTable.close();
         } catch (IOException e) {
-            logger.error(e);
-            throw new HoneycombException("Close table failed", e);
+            logger.error("HBase close table failed", e);
+            throw new RuntimeIOException(e);
         }
     }
 
@@ -59,8 +59,8 @@ public class HBaseOperations {
         try {
             return hTable.get(get);
         } catch (IOException e) {
-            logger.error(e);
-            throw new HoneycombException("HBase table get failed", e);
+            logger.error("HBase table get failed", e);
+            throw new RuntimeIOException(e);
         }
     }
 
@@ -68,8 +68,8 @@ public class HBaseOperations {
         try {
             return hTable.incrementColumnValue(row, columnFamily, identifier, amount);
         } catch (IOException e) {
-            logger.error(e);
-            throw new HoneycombException("HBase table increment column failed", e);
+            logger.error("HBase table increment column failed", e);
+            throw new RuntimeIOException(e);
         }
     }
 
@@ -77,8 +77,8 @@ public class HBaseOperations {
         try {
             return hTable.getScanner(scan);
         } catch (IOException e) {
-            logger.error(e);
-            throw new HoneycombException("HBase table get scanner failed", e);
+            logger.error("HBase table get scanner failed", e);
+            throw new RuntimeIOException(e);
         }
     }
 }
