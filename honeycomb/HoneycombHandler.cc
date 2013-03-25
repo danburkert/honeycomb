@@ -232,53 +232,6 @@ int HoneycombHandler::external_lock(THD *thd, int lock_type)
   DBUG_RETURN(0);
 }
 
-char* HoneycombHandler::index_name(TABLE* table, uint key)
-{
-  KEY *pos = table->key_info + key;
-  KEY_PART_INFO *key_part = pos->key_part;
-  KEY_PART_INFO *key_part_end = key_part + pos->key_parts;
-  return this->index_name(key_part, key_part_end, pos->key_parts);
-}
-
-/**
- * @brief Extracts the columns used in a table index.
- * For example:
- * create table example (x int, y int, index(x,y)) => "x,y"
- *
- * @param key_part Index keys
- * @param key_part_end End of index keys
- * @param key_parts Number of columns in index
- *
- * @return Columns in index
- */
-char* HoneycombHandler::index_name(KEY_PART_INFO* key_part,
-    KEY_PART_INFO* key_part_end, uint key_parts)
-{
-  size_t size = 0;
-
-  KEY_PART_INFO* start = key_part;
-  for (; key_part != key_part_end; key_part++)
-  {
-    Field *field = key_part->field;
-    size += strlen(field->field_name);
-  }
-
-  key_part = start;
-  char* name = new char[size + key_parts];
-  memset(name, 0, size + key_parts);
-  for (; key_part != key_part_end; key_part++)
-  {
-    Field *field = key_part->field;
-    strcat(name, field->field_name);
-    if ((key_part+1) != key_part_end)
-    {
-      strcat(name, ",");
-    }
-  }
-
-  return name;
-}
-
 THR_LOCK_DATA **HoneycombHandler::store_lock(THD *thd, THR_LOCK_DATA **to,
     enum thr_lock_type lock_type)
 {
@@ -332,7 +285,7 @@ int HoneycombHandler::info(uint flag)
     JavaFrame frame(env);
     jlong row_count = this->env->CallLongMethod(handler_proxy,
         cache->handler_proxy().get_row_count);
-    EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::info", "calling getRowCount");
+    check_exceptions(env, cache, "HoneycombHandler::info get_row_count");
 
     if (row_count < 0)
       row_count = 0;
@@ -393,15 +346,10 @@ int HoneycombHandler::info(uint flag)
     this->failed_key_index = -1;
   }
   if ((flag & HA_STATUS_AUTO) && table->found_next_number_field) {
-    JavaFrame frame(env, 2);
-    jclass adapter_class = cache->hbase_adapter().clazz;
-    jstring table_name = this->table_name();
-    jstring field_name = string_to_java_string(table->found_next_number_field->field_name);
-    jmethodID get_autoincrement_value_method = cache->hbase_adapter().get_autoincrement_value;
-    jlong autoincrement_value = env->CallStaticLongMethod(adapter_class,
-        get_autoincrement_value_method, table_name, field_name);
-    EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::info", "calling getAutoincrementValue");
-    stats.auto_increment_value = (ulonglong) autoincrement_value;
+    jlong auto_inc_value = env->CallLongMethod(handler_proxy,
+        cache->handler_proxy().get_auto_inc_value);
+    check_exceptions(env, cache, "HoneycombHandler::info getAutoIncValue");
+    stats.auto_increment_value = (ulonglong) auto_inc_value;
   }
 
   detach_thread(jvm);
@@ -460,81 +408,21 @@ int HoneycombHandler::extra(enum ha_extra_function operation)
   DBUG_RETURN(0);
 }
 
-bool HoneycombHandler::check_if_incompatible_data(HA_CREATE_INFO *create_info,
-    uint table_changes)
-{
-  if (table_changes != IS_EQUAL_YES)
-  {
 
-    return (COMPATIBLE_DATA_NO);
-  }
-
-  if (this->check_for_renamed_column(table, NULL))
-  {
-    return COMPATIBLE_DATA_NO;
-  }
-
-  /* Check that row format didn't change */
-  if ((create_info->used_fields & HA_CREATE_USED_ROW_FORMAT)
-      && create_info->row_type != ROW_TYPE_DEFAULT
-      && create_info->row_type != get_row_type())
-  {
-
-    return (COMPATIBLE_DATA_NO);
-  }
-
-  /* Specifying KEY_BLOCK_SIZE requests a rebuild of the table. */
-  if (create_info->used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE)
-  {
-    return (COMPATIBLE_DATA_NO);
-  }
-
-  return (COMPATIBLE_DATA_YES);
-}
-
-bool HoneycombHandler::check_for_renamed_column(const TABLE* table,
-    const char* col_name)
-{
-  uint k;
-  Field* field;
-
-  for (k = 0; k < table->s->fields; k++)
-  {
-    field = table->field[k];
-
-    if (field->flags & FIELD_IS_RENAMED)
-    {
-
-      // If col_name is not provided, return if the field is marked as being renamed.
-      if (!col_name)
-      {
-        return (true);
-      }
-
-      // If col_name is provided, return only if names match
-      if (my_strcasecmp(system_charset_info, field->field_name, col_name) == 0)
-      {
-        return (true);
-      }
-    }
-  }
-
-  return (false);
-}
-
+/**
+ * TODO: We are not implementing this method correctly.  It is asking for us to
+ * block off a section of auto increment values so that the optimizer can hand
+ * them out.  It is more akin to increment_auto_increment.
+ */
 void HoneycombHandler::get_auto_increment(ulonglong offset, ulonglong increment,
                                  ulonglong nb_desired_values,
                                  ulonglong *first_value,
                                  ulonglong *nb_reserved_values)
 {
   DBUG_ENTER("HoneycombHandler::get_auto_increment");
-  jclass adapter_class = cache->hbase_adapter().clazz;
-  jmethodID get_auto_increment_method = cache->hbase_adapter().get_next_autoincrement_value;
-  jlong increment_value = (jlong) this->env->CallStaticObjectMethod(adapter_class,
-      get_auto_increment_method, this->table_name(),
-      string_to_java_string(table->next_number_field->field_name));
-  EXCEPTION_CHECK("HoneycombHandler::get_auto_increment", "calling getNextAutoincrementValue");
-  *first_value = (ulonglong)increment_value;
+  jlong value = env->CallLongMethod(handler_proxy, cache->handler_proxy().get_auto_inc_value);
+  check_exceptions(env, cache, "HoneycombHandler::get_auto_increment");
+  *first_value = (ulonglong) value;
   *nb_reserved_values = ULONGLONG_MAX;
   DBUG_VOID_RETURN;
 }
@@ -682,3 +570,30 @@ int HoneycombHandler::flush()
   this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().flush);
   return check_exceptions(env, cache, "HoneycombHandler::flush");
 }
+
+/**
+ * Remove this function.
+ */
+jstring HoneycombHandler::table_name()
+{
+  return NULL;
+}
+
+/**
+ * Remove this function.
+ */
+char* HoneycombHandler::index_name(KEY_PART_INFO* key_part,
+    KEY_PART_INFO* key_part_end, uint key_parts)
+{
+  return "";
+}
+
+/**
+ * Remove this function.
+ */
+char* HoneycombHandler::index_name(TABLE* table, uint key)
+{
+  return "";
+}
+
+

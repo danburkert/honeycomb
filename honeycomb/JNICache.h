@@ -19,13 +19,13 @@ class JNICache
                 close_table,
                 rename_table,
                 get_row_count,
-                flush;
+                flush,
+                get_auto_inc_value;
     };
     struct HBaseAdapter
     {
       jclass clazz;
       jmethodID initialize,
-                get_autoincrement_value,
                 alter_autoincrement_value,
                 start_write,
                 end_write,

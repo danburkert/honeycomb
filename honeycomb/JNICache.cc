@@ -12,14 +12,15 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   // (dburkert:) I do not recommend editing this section without javap -s,
   // editor macros, and tabular.vim
 
-  handler_proxy_.clazz         = get_class_ref(env, HONEYCOMB "mysql/HandlerProxy");
-  handler_proxy_.create_table  = get_method_id(env, handler_proxy_.clazz, "createTable", "(Ljava/lang/String;Ljava/lang/String;[BJ)V");
-  handler_proxy_.drop_table    = get_method_id(env, handler_proxy_.clazz, "dropTable", "(Ljava/lang/String;Ljava/lang/String;)V");
-  handler_proxy_.rename_table  = get_method_id(env, handler_proxy_.clazz, "renameTable", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
-  handler_proxy_.open_table    = get_method_id(env, handler_proxy_.clazz, "openTable", "(Ljava/lang/String;Ljava/lang/String;)V");
-  handler_proxy_.close_table   = get_method_id(env, handler_proxy_.clazz, "closeTable", "()V");
-  handler_proxy_.get_row_count = get_method_id(env, handler_proxy_.clazz, "getRowCount", "()J");
-  handler_proxy_.flush         = get_method_id(env, handler_proxy_.clazz, "flush", "()J");
+  handler_proxy_.clazz              = get_class_ref(env, HONEYCOMB "mysql/HandlerProxy");
+  handler_proxy_.create_table       = get_method_id(env, handler_proxy_.clazz, "createTable", "(Ljava/lang/String;Ljava/lang/String;[BJ)V");
+  handler_proxy_.drop_table         = get_method_id(env, handler_proxy_.clazz, "dropTable", "(Ljava/lang/String;Ljava/lang/String;)V");
+  handler_proxy_.rename_table       = get_method_id(env, handler_proxy_.clazz, "renameTable", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
+  handler_proxy_.open_table         = get_method_id(env, handler_proxy_.clazz, "openTable", "(Ljava/lang/String;Ljava/lang/String;)V");
+  handler_proxy_.close_table        = get_method_id(env, handler_proxy_.clazz, "closeTable", "()V");
+  handler_proxy_.get_row_count      = get_method_id(env, handler_proxy_.clazz, "getRowCount", "()J");
+  handler_proxy_.flush              = get_method_id(env, handler_proxy_.clazz, "flush", "()V");
+  handler_proxy_.get_auto_inc_value = get_method_id(env, handler_proxy_.clazz, "getAutoIncValue", "()J");
 
   HoneycombException     = get_class_ref(env, HONEYCOMB "HoneycombException");
   TableNotFoundException = get_class_ref(env, HONEYCOMB "TableNotFoundException");
@@ -31,7 +32,6 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
 
   hbase_adapter_.clazz                        = get_class_ref(env, MYSQLENGINE "HBaseAdapter");
   hbase_adapter_.initialize                   = get_static_method_id(env, hbase_adapter_.clazz, "initialize", "()V");
-  hbase_adapter_.get_autoincrement_value      = get_static_method_id(env, hbase_adapter_.clazz, "getAutoincrementValue", "(Ljava/lang/String;Ljava/lang/String;)J");
   hbase_adapter_.alter_autoincrement_value    = get_static_method_id(env, hbase_adapter_.clazz, "alterAutoincrementValue", "(Ljava/lang/String;Ljava/lang/String;JZ)Z");
   hbase_adapter_.start_write                  = get_static_method_id(env, hbase_adapter_.clazz, "startWrite", "()J");
   hbase_adapter_.end_write                    = get_static_method_id(env, hbase_adapter_.clazz, "endWrite", "(J)V");
