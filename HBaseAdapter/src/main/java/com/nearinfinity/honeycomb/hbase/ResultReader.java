@@ -1,5 +1,6 @@
 package com.nearinfinity.honeycomb.hbase;
 
+import com.google.common.collect.Maps;
 import com.nearinfinity.honeycomb.hbaseclient.Constants;
 import com.nearinfinity.honeycomb.hbaseclient.TableInfo;
 import com.nearinfinity.honeycomb.mysql.Row;
@@ -30,7 +31,7 @@ public class ResultReader {
      * @return
      */
     public static Row readDataRow(Result result, TableInfo info) {
-        Map<String, Object> records = new HashMap<String, Object>();
+        Map<String, ByteBuffer> records = Maps.newHashMap();
         Map<byte[], byte[]> returnedColumns = result.getNoVersionMap().get(Constants.NIC);
 
         UUID uuid = parseUUID(result);

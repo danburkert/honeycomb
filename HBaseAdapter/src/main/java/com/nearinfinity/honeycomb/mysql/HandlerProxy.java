@@ -204,12 +204,12 @@ public class HandlerProxy {
 
     }
 
-    public Row getNextScannerRow() {
+    public byte[] getNextRow() {
         if (!this.currentScanner.hasNext()) {
             return null;
         }
 
-        return this.currentScanner.next();
+        return this.currentScanner.next().serialize();
     }
 
     private void checkTableOpen() {
