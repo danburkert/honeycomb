@@ -19,6 +19,8 @@ class JNICache
                 close_table,
                 rename_table,
                 get_row_count,
+                start_index_scan,
+                get_next_row,
                 flush,
                 get_auto_inc_value,
                 add_index,

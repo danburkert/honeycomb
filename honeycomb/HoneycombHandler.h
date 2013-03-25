@@ -11,6 +11,7 @@
 #include "TableSchema.h"
 #include "ColumnSchema.h"
 #include "IndexSchema.h"
+#include "IndexContainer.h"
 
 #include "my_global.h"          /* ulonglong */
 #include "thr_lock.h"           /* THR_LOCK, THR_LOCK_DATA */
@@ -18,6 +19,7 @@
 #include "my_base.h"            /* ha_rows */
 #include <jni.h>
 #include "probes_mysql.h"
+#include "Serializable.h"
 
 class JNICache;
 
@@ -31,6 +33,8 @@ class HoneycombHandler : public handler
     bool performing_scan;
     HoneycombShare *get_share(const char *table_name, TABLE *table);
     uint32 max_row_length();
+    jbyteArray serialize_to_java(Serializable& serializable);
+    void deserialized_from_java(jbyteArray bytes, Serializable& serializable);
 
     long long curr_scan_id, curr_write_id;
     ulonglong rows_written;
@@ -54,6 +58,7 @@ class HoneycombHandler : public handler
     int truncate();
     bool is_key_null(const uchar *key);
     void store_uuid_ref(Row* row);
+    int full_index_scan(uchar* buf, IndexContainer::QueryType query);
     void bytes_to_long(const uchar* buff, unsigned int buff_length, bool is_signed, uchar* long_buff);
     int read_row(uchar* buf, Row* row);
     int get_index_row(jfieldID field_id, uchar* buf);

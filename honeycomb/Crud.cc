@@ -74,10 +74,9 @@ int HoneycombHandler::pack_row(uchar *buf, TABLE* table, Row* row)
     table->timestamp_field->set_time();
   }
   if(table->next_number_field && buf == table->record[0])
-
   {
-    int res;
-    if(res = update_auto_increment())
+    int res = update_auto_increment();
+    if(res)
     {
       return res;
     }
@@ -231,7 +230,7 @@ int HoneycombHandler::write_row(uchar* buf, jobject updated_fields)
     jstring field_name = string_to_java_string(field->field_name);
 
     const bool is_null = field->is_null();
-    uchar* byte_val;
+    unsigned char* byte_val;
 
     if (is_null)
     {
@@ -261,7 +260,7 @@ int HoneycombHandler::write_row(uchar* buf, jobject updated_fields)
         integral_value = bswap64(integral_value);
       }
       actualFieldSize = sizeof integral_value;
-      byte_val = (uchar*) my_malloc(actualFieldSize, MYF(MY_WME));
+      byte_val = (unsigned char*) my_malloc(actualFieldSize, MYF(MY_WME));
       memcpy(byte_val, &integral_value, actualFieldSize);
       break;
     }

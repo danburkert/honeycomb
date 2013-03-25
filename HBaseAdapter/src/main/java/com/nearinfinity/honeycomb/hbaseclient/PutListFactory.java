@@ -1,5 +1,6 @@
 package com.nearinfinity.honeycomb.hbaseclient;
 
+import com.google.common.collect.Maps;
 import com.nearinfinity.honeycomb.mysql.Row;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -62,7 +63,7 @@ public class PutListFactory {
      * @return HBase index rows
      */
     public static List<Put> createIndexForColumns(Map<String, byte[]> values, TableInfo info, List<List<String>> indexedKeys, UUID rowId) throws IOException {
-        Map<String, Object> records = new HashMap<String, Object>();
+        Map<String, ByteBuffer> records = Maps.newHashMap();
         for (Map.Entry<String, byte[]> entry : values.entrySet()) {
             if (entry.getValue() != null) {
                 records.put(entry.getKey(), ByteBuffer.wrap(entry.getValue()));

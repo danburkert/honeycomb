@@ -1,5 +1,16 @@
 package com.nearinfinity.honeycomb.mysql;
 
+import static java.lang.String.format;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.log4j.Logger;
+
+import com.google.common.io.Files;
+import com.google.common.io.InputSupplier;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -8,14 +19,6 @@ import com.nearinfinity.honeycomb.config.ConfigurationHolder;
 import com.nearinfinity.honeycomb.config.ConfigurationParser;
 import com.nearinfinity.honeycomb.hbase.HBaseModule;
 import com.nearinfinity.honeycomb.hbaseclient.Constants;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.log4j.Logger;
-
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.File;
-import java.io.IOException;
-
-import static java.lang.String.format;
 
 
 public final class Bootstrap extends AbstractModule {
@@ -67,17 +70,16 @@ public final class Bootstrap extends AbstractModule {
         final File configSchemaFile = new File(CONFIG_PATH, CONFIG_SCHEMA_FILENAME);
 
         if( isFileAvailable(configFile) && isFileAvailable(configSchemaFile) ) {
-            if( ConfigurationParser.validateConfigFile(configSchemaFile, configFile) ) {
-                try {
-                    final ConfigurationParser configParser = new ConfigurationParser();
-                    configHolder = configParser.parseConfig(configFile, new Configuration());
 
-                    logger.debug(format("Read %d configuration properties ",
-                            configHolder.getConfiguration().size()));
-                } catch (ParserConfigurationException e) {
-                    logger.fatal("The XML parser was not configured properly.", e);
-                    throw new RuntimeException("XML parser could not be configured correctly.", e);
-                }
+            final InputSupplier<FileInputStream> schemaSupplier = Files.newInputStreamSupplier(configSchemaFile);
+            final InputSupplier<FileInputStream> configSupplier = Files.newInputStreamSupplier(configFile);
+
+            if( ConfigurationParser.validateConfiguration(schemaSupplier, configSupplier) ) {
+                final ConfigurationParser configParser = new ConfigurationParser();
+                configHolder = configParser.parseConfiguration(configSupplier, new Configuration());
+
+                logger.debug(format("Read %d configuration properties ",
+                    configHolder.getConfiguration().size()));
             } else {
                 final String errorMsg = format("Configuration file validation failed. Check %s for correctness.", configFile.getPath());
                 logger.fatal(errorMsg);

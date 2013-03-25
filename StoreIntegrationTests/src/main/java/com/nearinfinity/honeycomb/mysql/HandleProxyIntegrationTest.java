@@ -124,9 +124,9 @@ public class HandleProxyIntegrationTest {
         testProxy("Testing insert row", new Action() {
             @Override
             public void execute(HandlerProxy proxy) {
-                Map<String, Object> map = new HashMap<String, Object>();
-                map.put(COLUMN1, ByteBuffer.allocate(8).putLong(5).rewind());
-                map.put(COLUMN2, ByteBuffer.allocate(8).putLong(6).rewind());
+                Map<String, ByteBuffer> map = Maps.newHashMap();
+                map.put(COLUMN1, encodeValue(5));
+                map.put(COLUMN2, encodeValue(6));
                 UUID uuid = UUID.randomUUID();
                 Row row = new Row(map, uuid);
                 proxy.insert(row.serialize());
@@ -141,9 +141,9 @@ public class HandleProxyIntegrationTest {
         testProxy("Testing delete row", new Action() {
             @Override
             public void execute(HandlerProxy proxy) {
-                Map<String, Object> map = new HashMap<String, Object>();
-                map.put(COLUMN1, ByteBuffer.allocate(8).putLong(5).rewind());
-                map.put(COLUMN2, ByteBuffer.allocate(8).putLong(6).rewind());
+                Map<String, ByteBuffer> map = Maps.newHashMap();
+                map.put(COLUMN1, encodeValue(5));
+                map.put(COLUMN2, encodeValue(6));
                 UUID uuid = UUID.randomUUID();
                 Row row = new Row(map, uuid);
                 proxy.insert(row.serialize());
@@ -166,14 +166,14 @@ public class HandleProxyIntegrationTest {
             @Override
             public void execute(HandlerProxy proxy) {
                 UUID uuid = UUID.randomUUID();
-                Map<String, Object> map = new HashMap<String, Object>();
-                map.put(COLUMN1, ByteBuffer.allocate(8).putLong(5).rewind());
-                map.put(COLUMN2, ByteBuffer.allocate(8).putLong(6).rewind());
+                Map<String, ByteBuffer> map = Maps.newHashMap();
+                map.put(COLUMN1, encodeValue(5));
+                map.put(COLUMN2, encodeValue(6));
                 Row row = new Row(map, uuid);
                 proxy.insert(row.serialize());
                 proxy.flush();
 
-                map.put(COLUMN1, ByteBuffer.allocate(8).putLong(3).rewind());
+                map.put(COLUMN1, encodeValue(3));
                 Row newRow = new Row(map, uuid);
                 proxy.updateRow(newRow.serialize());
                 proxy.flush();
@@ -334,14 +334,14 @@ public class HandleProxyIntegrationTest {
 
     private static void assertReceivingDifferentRows(HandlerProxy proxy, IndexKey key, int rows) {
         proxy.startIndexScan(key.serialize());
-        Row previous = null;
+        byte[] previous = null;
         for (int x = 0; x < rows; x++) {
-            Row current = proxy.getNextScannerRow();
+            byte[] current = proxy.getNextRow();
             assertThat(current).isNotEqualTo(previous).isNotNull();
             previous = current;
         }
 
-        Row end = proxy.getNextScannerRow();
+        byte[] end = proxy.getNextRow();
         assertThat(end).isNull();
     }
 
@@ -381,7 +381,7 @@ public class HandleProxyIntegrationTest {
     }
 
     private static void insertData(HandlerProxy proxy, int rows, long keyColumnValue, UUID uuid) {
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, ByteBuffer> map = Maps.newHashMap();
         map.put(COLUMN1, encodeValue(keyColumnValue));
         for (int x = 0; x < rows; x++) {
             map.put(COLUMN2, encodeValue(x));
@@ -392,7 +392,7 @@ public class HandleProxyIntegrationTest {
     }
 
     private static void insertData(HandlerProxy proxy, int rows, long keyColumnValue) {
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, ByteBuffer> map = Maps.newHashMap();
         map.put(COLUMN1, encodeValue(keyColumnValue));
         for (int x = 0; x < rows; x++) {
             map.put(COLUMN2, encodeValue(x));
@@ -403,7 +403,7 @@ public class HandleProxyIntegrationTest {
     }
 
     private static void insertNullData(HandlerProxy proxy, int rows, String column) {
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, ByteBuffer> map = Maps.newHashMap();
         for (int x = 0; x < rows; x++) {
             map.put(column, encodeValue(x));
             Row row = new Row(map, UUID.randomUUID());

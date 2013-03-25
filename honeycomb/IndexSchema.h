@@ -3,10 +3,11 @@
 
 #include <avro.h>
 #include <stdlib.h>
+#include "Serializable.h"
 
 #define INDEX_SCHEMA "{\"type\":\"record\",\"name\":\"IndexSchema\",\"namespace\":\"com.nearinfinity.honeycomb.mysql.gen\",\"fields\":[{\"name\":\"columns\",\"type\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"avro.java.string\":\"String\"}}},{\"name\":\"isUnique\",\"type\":\"boolean\",\"default\":false}]}"
 
-class IndexSchema
+class IndexSchema : public Serializable
 {
   private:
     avro_schema_t index_schema_schema;
