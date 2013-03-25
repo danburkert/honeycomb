@@ -20,13 +20,14 @@ class JNICache
                 rename_table,
                 get_row_count,
                 start_index_scan,
-                get_next_row;
+                get_next_row,
+                flush,
+                get_auto_inc_value;
     };
     struct HBaseAdapter
     {
       jclass clazz;
       jmethodID initialize,
-                get_autoincrement_value,
                 alter_autoincrement_value,
                 start_write,
                 end_write,
@@ -35,7 +36,6 @@ class JNICache
                 end_scan,
                 write_row,
                 update_row,
-                flush_writes,
                 delete_row,
                 delete_all_rows,
                 get_row,
@@ -192,12 +192,11 @@ class JNICache
     TreeMap tree_map()                          const {return tree_map_;}
     HandlerProxyFactory handler_proxy_factory() const {return handler_proxy_factory_;}
 
-    jclass HoneycombException;
     jclass TableNotFoundException;
     jclass TableExistsException;
     jclass RowNotFoundException;
     jclass StoreNotFoundException;
-    jclass IOException;
+    jclass RuntimeIOException;
 
     JNICache(JavaVM* jvm);
     ~JNICache();

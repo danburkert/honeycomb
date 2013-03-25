@@ -63,7 +63,7 @@ class HoneycombHandler : public handler
     int read_row(uchar* buf, Row* row);
     int get_index_row(jfieldID field_id, uchar* buf);
     int get_next_index_row(uchar* buf);
-    void flush_writes();
+    int flush();
     void end_scan();
     bool check_for_renamed_column(const TABLE*  table, const char* col_name);
     bool field_has_unique_index(Field *field);

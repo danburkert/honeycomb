@@ -1,22 +1,19 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import java.io.File;
-import java.io.IOException;
-
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.log4j.Logger;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.name.Names;
-import com.nearinfinity.honeycomb.HoneycombException;
 import com.nearinfinity.honeycomb.config.ConfigurationHolder;
 import com.nearinfinity.honeycomb.config.ConfigurationParser;
 import com.nearinfinity.honeycomb.hbase.HBaseModule;
 import com.nearinfinity.honeycomb.hbaseclient.Constants;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.log4j.Logger;
+
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.File;
+import java.io.IOException;
 
 import static java.lang.String.format;
 
@@ -79,7 +76,7 @@ public final class Bootstrap extends AbstractModule {
                             configHolder.getConfiguration().size()));
                 } catch (ParserConfigurationException e) {
                     logger.fatal("The XML parser was not configured properly.", e);
-                    throw new HoneycombException("XML parser could not be configured correctly.", e);
+                    throw new RuntimeException("XML parser could not be configured correctly.", e);
                 }
             } else {
                 final String errorMsg = format("Configuration file validation failed. Check %s for correctness.", configFile.getPath());

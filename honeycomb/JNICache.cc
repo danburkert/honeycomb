@@ -21,16 +21,17 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   handler_proxy_.get_row_count    = get_method_id(env, handler_proxy_.clazz, "getRowCount", "()J");
   handler_proxy_.start_index_scan = get_method_id(env, handler_proxy_.clazz, "startIndexScan", "([B)V");
   handler_proxy_.get_next_row     = get_method_id(env, handler_proxy_.clazz, "getNextRow", "()[B");
+  handler_proxy_.flush              = get_method_id(env, handler_proxy_.clazz, "flush", "()V");
+  handler_proxy_.get_auto_inc_value = get_method_id(env, handler_proxy_.clazz, "getAutoIncValue", "()J");
 
-  HoneycombException     = get_class_ref(env, HONEYCOMB "HoneycombException");
   TableExistsException   = get_class_ref(env, HONEYCOMB "TableExistsException");
   TableNotFoundException = get_class_ref(env, HONEYCOMB "TableNotFoundException");
   RowNotFoundException   = get_class_ref(env, HONEYCOMB "RowNotFoundException");
-  IOException            = get_class_ref(env, "java/io/IOException");
+  StoreNotFoundException = get_class_ref(env, HONEYCOMB "StoreNotFoundException");
+  RuntimeIOException   = get_class_ref(env, HONEYCOMB "RuntimeIOException");
 
   hbase_adapter_.clazz                        = get_class_ref(env, MYSQLENGINE "HBaseAdapter");
   hbase_adapter_.initialize                   = get_static_method_id(env, hbase_adapter_.clazz, "initialize", "()V");
-  hbase_adapter_.get_autoincrement_value      = get_static_method_id(env, hbase_adapter_.clazz, "getAutoincrementValue", "(Ljava/lang/String;Ljava/lang/String;)J");
   hbase_adapter_.alter_autoincrement_value    = get_static_method_id(env, hbase_adapter_.clazz, "alterAutoincrementValue", "(Ljava/lang/String;Ljava/lang/String;JZ)Z");
   hbase_adapter_.start_write                  = get_static_method_id(env, hbase_adapter_.clazz, "startWrite", "()J");
   hbase_adapter_.end_write                    = get_static_method_id(env, hbase_adapter_.clazz, "endWrite", "(J)V");
@@ -39,7 +40,6 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   hbase_adapter_.end_scan                     = get_static_method_id(env, hbase_adapter_.clazz, "endScan", "(J)V");
   hbase_adapter_.write_row                    = get_static_method_id(env, hbase_adapter_.clazz, "writeRow", "(JLjava/lang/String;Ljava/util/Map;)Z");
   hbase_adapter_.update_row                   = get_static_method_id(env, hbase_adapter_.clazz, "updateRow", "(J[BLjava/util/List;Ljava/lang/String;Ljava/util/Map;)V");
-  hbase_adapter_.flush_writes                 = get_static_method_id(env, hbase_adapter_.clazz, "flushWrites", "(J)V");
   hbase_adapter_.delete_row                   = get_static_method_id(env, hbase_adapter_.clazz, "deleteRow", "(Ljava/lang/String;[B)Z");
   hbase_adapter_.delete_all_rows              = get_static_method_id(env, hbase_adapter_.clazz, "deleteAllRows", "(Ljava/lang/String;)I");
   hbase_adapter_.get_row                      = get_static_method_id(env, hbase_adapter_.clazz, "getRow", "(J[B)[B");
@@ -149,11 +149,11 @@ JNICache::~JNICache()
   env->DeleteGlobalRef(linked_list_.clazz);
   env->DeleteGlobalRef(tree_map_.clazz);
 
-  env->DeleteGlobalRef(HoneycombException);
   env->DeleteGlobalRef(TableNotFoundException);
   env->DeleteGlobalRef(TableExistsException);
   env->DeleteGlobalRef(RowNotFoundException);
-  env->DeleteGlobalRef(IOException);
+  env->DeleteGlobalRef(RuntimeIOException);
+  env->DeleteGlobalRef(StoreNotFoundException);
 
   detach_thread(jvm);
 }

@@ -393,8 +393,8 @@ int HoneycombHandler::write_row(uchar* buf, jobject updated_fields)
 bool HoneycombHandler::row_has_duplicate_values(jobject value_map,
     jobject changedColumns)
 {
-  this->flush_writes(); // Flush before checking for duplicates to make sure the changes are in HBase.
-  EXCEPTION_CHECK("row_has_duplicate_values", "flush_writes");
+  this->flush(); // Flush before checking for duplicates to make sure the changes are in HBase.
+  EXCEPTION_CHECK("row_has_duplicate_values", "flush");
   JavaFrame frame(env, 1);
   jclass adapter_class = cache->hbase_adapter().clazz;
   jmethodID has_duplicates_method;
@@ -455,8 +455,8 @@ int HoneycombHandler::update_row(const uchar *old_row, uchar *new_row)
   old_map = dbug_tmp_use_all_columns(table, table->read_set);
   int rc = write_row(new_row, updated_fieldnames);
   dbug_tmp_restore_column_map(table->read_set, old_map);
-  this->flush_writes();
-  EXCEPTION_CHECK("update_row", "flush_writes");
+  this->flush();
+  EXCEPTION_CHECK("update_row", "flush");
   DBUG_RETURN(rc);
 }
 
@@ -632,8 +632,8 @@ int HoneycombHandler::delete_all_rows()
   EXCEPTION_CHECK_IE("HoneycombHandler::delete_all_rows", "calling deleteAllRows");
   this->env->CallStaticVoidMethod(adapter_class, set_row_count, table_name, 0);
   EXCEPTION_CHECK_IE("HoneycombHandler::delete_all_rows", "calling setRowCount");
-  this->flush_writes();
-  EXCEPTION_CHECK("delete_all_rows", "flush_writes");
+  this->flush();
+  EXCEPTION_CHECK("delete_all_rows", "flush");
 
   DBUG_RETURN(0);
 }
@@ -669,19 +669,3 @@ void HoneycombHandler::set_autoinc_counter(jlong new_value, jboolean is_truncate
   EXCEPTION_CHECK("HoneycombHandler::set_autoinc_counter", "calling alterAutoincrementValue");
 }
 
-void HoneycombHandler::update_create_info(HA_CREATE_INFO* create_info)
-{
-  DBUG_ENTER("HoneycombHandler::update_create_info");
-
-  //show create table
-  if (!(create_info->used_fields & HA_CREATE_USED_AUTO)) {
-    HoneycombHandler::info(HA_STATUS_AUTO);
-    create_info->auto_increment_value = stats.auto_increment_value;
-  }
-  //alter table
-  else if (create_info->used_fields == 1) {
-    set_autoinc_counter(create_info->auto_increment_value, JNI_FALSE);
-  }
-
-  DBUG_VOID_RETURN;
-}

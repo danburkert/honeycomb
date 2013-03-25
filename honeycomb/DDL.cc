@@ -331,3 +331,87 @@ int HoneycombHandler::init_table_share(TABLE_SHARE* table_share, const char* pat
   init_tmp_table_share(thd, table_share, "", 0, "", path);
   return open_table_def(thd, table_share, 0);
 }
+
+/**
+ * Called during alter table statements:
+ *  * Renaming a column: 'alter table t1 change c1 c2;'
+ *
+ */
+void HoneycombHandler::update_create_info(HA_CREATE_INFO* create_info)
+{
+  DBUG_ENTER("HoneycombHandler::update_create_info");
+
+  //show create table
+  if (!(create_info->used_fields & HA_CREATE_USED_AUTO)) {
+    HoneycombHandler::info(HA_STATUS_AUTO);
+    create_info->auto_increment_value = stats.auto_increment_value;
+  }
+  //alter table
+  else if (create_info->used_fields == 1) {
+    set_autoinc_counter(create_info->auto_increment_value, JNI_FALSE);
+  }
+
+  DBUG_VOID_RETURN;
+}
+
+bool HoneycombHandler::check_if_incompatible_data(HA_CREATE_INFO *create_info,
+    uint table_changes)
+{
+  if (table_changes != IS_EQUAL_YES)
+  {
+
+    return (COMPATIBLE_DATA_NO);
+  }
+
+  if (this->check_for_renamed_column(table, NULL))
+  {
+    return COMPATIBLE_DATA_NO;
+  }
+
+  /* Check that row format didn't change */
+  if ((create_info->used_fields & HA_CREATE_USED_ROW_FORMAT)
+      && create_info->row_type != ROW_TYPE_DEFAULT
+      && create_info->row_type != get_row_type())
+  {
+
+    return (COMPATIBLE_DATA_NO);
+  }
+
+  /* Specifying KEY_BLOCK_SIZE requests a rebuild of the table. */
+  if (create_info->used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE)
+  {
+    return (COMPATIBLE_DATA_NO);
+  }
+
+  return (COMPATIBLE_DATA_YES);
+}
+
+bool HoneycombHandler::check_for_renamed_column(const TABLE* table,
+    const char* col_name)
+{
+  uint k;
+  Field* field;
+
+  for (k = 0; k < table->s->fields; k++)
+  {
+    field = table->field[k];
+
+    if (field->flags & FIELD_IS_RENAMED)
+    {
+
+      // If col_name is not provided, return if the field is marked as being renamed.
+      if (!col_name)
+      {
+        return (true);
+      }
+
+      // If col_name is provided, return only if names match
+      if (my_strcasecmp(system_charset_info, field->field_name, col_name) == 0)
+      {
+        return (true);
+      }
+    }
+  }
+
+  return (false);
+}

@@ -1,7 +1,10 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import org.apache.avro.io.*;
+import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.avro.specific.SpecificDatumWriter;
+import org.apache.log4j.Logger;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -10,18 +13,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
-import org.apache.avro.io.BinaryDecoder;
-import org.apache.avro.io.DatumReader;
-import org.apache.avro.io.DatumWriter;
-import org.apache.avro.io.DecoderFactory;
-import org.apache.avro.io.Encoder;
-import org.apache.avro.io.EncoderFactory;
-import org.apache.avro.specific.SpecificDatumReader;
-import org.apache.avro.specific.SpecificDatumWriter;
-import org.apache.log4j.Logger;
-
-import com.nearinfinity.honeycomb.HoneycombException;
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Utility class containing helper functions.
@@ -84,7 +77,7 @@ public class Util {
             encoder.flush();
         } catch (IOException e) {
             logger.error("Serialization failed", e);
-            throw new HoneycombException("Serialization failed", e);
+            throw new RuntimeException("Serialization failed", e);
         }
 
         return out.toByteArray();
@@ -105,7 +98,7 @@ public class Util {
             encoder.flush();
         } catch (IOException e) {
             logger.error("Serialization failed", e);
-            throw new HoneycombException("Serialization failed", e);
+            throw new RuntimeException("Serialization failed", e);
         }
 
         return out.toByteArray();
@@ -126,7 +119,7 @@ public class Util {
         try {
             return userDatumReader.read(null, binaryDecoder);
         } catch (IOException e) {
-            throw new HoneycombException("Deserialization failed", e);
+            throw new RuntimeException("Deserialization failed", e);
         }
     }
 
@@ -145,7 +138,7 @@ public class Util {
         try {
             return reader.read(null, binaryDecoder);
         } catch (IOException e) {
-            throw new HoneycombException("Deserialization failed", e);
+            throw new RuntimeException("Deserialization failed", e);
         }
     }
 
