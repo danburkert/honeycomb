@@ -135,6 +135,7 @@ JNICache::~JNICache()
   CHECK_JNI_ABORT(attach_result, "JNICache Destructor: Failure while attaching thread to JVM.");
 
   env->DeleteGlobalRef(handler_proxy_.clazz);
+  env->DeleteGlobalRef(handler_proxy_factory_.clazz);
   env->DeleteGlobalRef(hbase_adapter_.clazz);
   env->DeleteGlobalRef(index_read_type_.clazz);
   env->DeleteGlobalRef(row_.clazz);

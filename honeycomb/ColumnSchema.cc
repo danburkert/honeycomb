@@ -32,17 +32,16 @@ int ColumnSchema::get_int_field(const char name[]) {
   avro_value_t avro_union;
   avro_value_t avro_val;
 
-
-  int ret = avro_value_get_by_name(&column_schema, name, &avro_union, NULL);
+  avro_value_get_by_name(&column_schema, name, &avro_union, NULL);
 
   union_schema = avro_value_get_schema(&avro_union);
 
-  ret |= avro_value_get_discriminant(&avro_union, &disc);
+  avro_value_get_discriminant(&avro_union, &disc);
   avro_schema_union_branch_by_name(union_schema, &null_disc, "null");
 
   if (disc == null_disc) { return -1; }
-  ret |= avro_value_get_current_branch(&avro_union, &avro_val);
-  ret |= avro_value_get_int(&avro_val, &val);
+  avro_value_get_current_branch(&avro_union, &avro_val);
+  avro_value_get_int(&avro_val, &val);
   return val;
 }
 
