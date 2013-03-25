@@ -60,7 +60,6 @@ class HoneycombHandler : public handler
     int get_next_index_row(uchar* buf);
     int flush();
     void end_scan();
-    bool check_for_renamed_column(const TABLE*  table, const char* col_name);
     bool field_has_unique_index(Field *field);
     jbyteArray find_duplicate_column_values(char* columns);
     bool row_has_duplicate_values(jobject value_map, jobject changedColumns);
@@ -255,7 +254,6 @@ class HoneycombHandler : public handler
     ha_rows records_in_range(uint inx, key_range *min_key, key_range *max_key);
     int analyze(THD* thd, HA_CHECK_OPT* check_opt);
     ha_rows estimate_rows_upper_bound();
-    bool check_if_incompatible_data(HA_CREATE_INFO *create_info, uint table_changes);
     void get_auto_increment(ulonglong offset, ulonglong increment, ulonglong nb_desired_values, ulonglong *first_value, ulonglong *nb_reserved_values);
     int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add);
     int prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys);
@@ -264,6 +262,8 @@ class HoneycombHandler : public handler
     int create(const char *name, TABLE *form, HA_CREATE_INFO *create_info); ///< required
     int delete_table(const char *name);
     int rename_table(const char *from, const char *to);
+    bool check_if_incompatible_data(HA_CREATE_INFO *create_info, uint table_changes);
+    bool check_column_being_renamed(const TABLE*  table);
 };
 
 #endif

@@ -336,9 +336,7 @@ int HoneycombHandler::init_table_share(TABLE_SHARE* table_share, const char* pat
 }
 
 /**
- * Called during alter table statements:
- *  * Renaming a column: 'alter table t1 change c1 c2;'
- *
+ * Called during alter table statements by the optimizer.
  */
 void HoneycombHandler::update_create_info(HA_CREATE_INFO* create_info)
 {
@@ -357,16 +355,23 @@ void HoneycombHandler::update_create_info(HA_CREATE_INFO* create_info)
   DBUG_VOID_RETURN;
 }
 
+/**
+ * Called by MySQL to determine if an alter table command requires a full table
+ * rebuild.  Return COMPATIBLE_DATA_NO to require a rebuild.
+ */
 bool HoneycombHandler::check_if_incompatible_data(HA_CREATE_INFO *create_info,
     uint table_changes)
 {
+  // unclear what table_changes means.  When in doubt, copy inno.
   if (table_changes != IS_EQUAL_YES)
   {
-
-    return (COMPATIBLE_DATA_NO);
+    return COMPATIBLE_DATA_NO;
   }
 
-  if (this->check_for_renamed_column(table, NULL))
+  // If a column is renamed we are forced to rebuild, because we are not given
+  // enough information to simply rename the column (AFAIK we are not given the
+  // new name).
+  if (this->check_column_being_renamed(table))
   {
     return COMPATIBLE_DATA_NO;
   }
@@ -376,45 +381,68 @@ bool HoneycombHandler::check_if_incompatible_data(HA_CREATE_INFO *create_info,
       && create_info->row_type != ROW_TYPE_DEFAULT
       && create_info->row_type != get_row_type())
   {
-
-    return (COMPATIBLE_DATA_NO);
+    return COMPATIBLE_DATA_NO;
   }
 
-  /* Specifying KEY_BLOCK_SIZE requests a rebuild of the table. */
-  if (create_info->used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE)
-  {
-    return (COMPATIBLE_DATA_NO);
-  }
-
-  return (COMPATIBLE_DATA_YES);
+  return COMPATIBLE_DATA_YES;
 }
 
-bool HoneycombHandler::check_for_renamed_column(const TABLE* table,
-    const char* col_name)
+bool HoneycombHandler::check_column_being_renamed(const TABLE* table)
 {
-  uint k;
-  Field* field;
-
-  for (k = 0; k < table->s->fields; k++)
+  const Field* field;
+  for (int i = 0; i < table->s->fields; i++)
   {
-    field = table->field[k];
-
+    field = table->field[i];
     if (field->flags & FIELD_IS_RENAMED)
     {
-
-      // If col_name is not provided, return if the field is marked as being renamed.
-      if (!col_name)
-      {
-        return (true);
-      }
-
-      // If col_name is provided, return only if names match
-      if (my_strcasecmp(system_charset_info, field->field_name, col_name) == 0)
-      {
-        return (true);
-      }
+      return true;
     }
   }
-
-  return (false);
+  return false;
 }
+
+int HoneycombHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys,
+    handler_add_index **add)
+{
+  JavaFrame frame(env, 3*num_of_keys);
+  for(uint key = 0; key < num_of_keys; key++)
+  {
+    KEY* pos = key_info + key;
+    KEY_PART_INFO *key_part = pos->key_part;
+    KEY_PART_INFO *end_key_part = key_part + key_info->key_parts;
+    char* index_columns = this->index_name(key_part, end_key_part,
+        key_info->key_parts);
+
+    Field *field_being_indexed = key_info->key_part->field;
+    if (pos->flags & HA_NOSAME)
+    {
+      jbyteArray duplicate_value = this->find_duplicate_column_values(index_columns);
+
+      int error = duplicate_value != NULL ? HA_ERR_FOUND_DUPP_KEY : 0;
+
+      if (error == HA_ERR_FOUND_DUPP_KEY)
+      {
+        int length = (int)this->env->GetArrayLength(duplicate_value);
+        char *value_key = char_array_from_java_bytes(duplicate_value, this->env);
+        this->store_field_value(field_being_indexed, value_key, length);
+        ARRAY_DELETE(value_key);
+        ARRAY_DELETE(index_columns);
+        this->failed_key_index = this->get_failed_key_index(key_part->field->field_name);
+
+        return error;
+      }
+    }
+
+    jclass adapter = cache->hbase_adapter().clazz;
+    jobject java_keys = this->create_multipart_key(pos, key_part, end_key_part,
+        key_info->key_parts);
+    jmethodID add_index_method = cache->hbase_adapter().add_index;
+    jstring table_name = this->table_name();
+    this->env->CallStaticVoidMethod(adapter, add_index_method, table_name, java_keys);
+    EXCEPTION_CHECK_IE("HoneycombHandler::add_index", "calling addIndex");
+    ARRAY_DELETE(index_columns);
+  }
+
+  return 0;
+}
+
