@@ -20,7 +20,9 @@ class JNICache
                 rename_table,
                 get_row_count,
                 flush,
-                get_auto_inc_value;
+                get_auto_inc_value,
+                add_index,
+                drop_index;
     };
     struct HBaseAdapter
     {
@@ -46,9 +48,7 @@ class JNICache
                 next_index_row,
                 increment_row_count,
                 set_row_count,
-                is_nullable,
-                add_index,
-                drop_index;
+                is_nullable;
     };
     struct IndexReadType
     {

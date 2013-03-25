@@ -1,6 +1,5 @@
 package com.nearinfinity.honeycomb.hbaseclient;
 
-import com.nearinfinity.honeycomb.hbase.ResultReader;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Result;
 

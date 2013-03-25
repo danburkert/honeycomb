@@ -1,6 +1,7 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import com.google.common.collect.ImmutableMap;
+import com.nearinfinity.honeycomb.RuntimeIOException;
+import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import org.apache.avro.io.*;
 import org.apache.avro.specific.SpecificDatumReader;
@@ -12,8 +13,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -63,6 +62,17 @@ public class Util {
         checkNotNull(schema, "Schema cannot be null");
         return deserializeAvroObject(schema, TableSchema.class);
     }
+
+    public static byte[] serializeIndexSchema(IndexSchema schema) {
+        checkNotNull(schema, "Schema cannot be null");
+        return serializeAvroObject(schema, IndexSchema.class);
+    }
+
+    public static IndexSchema deserializeIndexSchema(byte[] schema) {
+        checkNotNull(schema, "Schema cannot be null");
+        return deserializeAvroObject(schema, IndexSchema.class);
+    }
+
 
     /**
      * Serialize an object to a byte array
@@ -162,22 +172,9 @@ public class Util {
     public static void closeQuietly(Closeable closeable) {
         try {
             closeable.close();
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            logger.error("IOException thrown while closing resource.", e);
+            throw new RuntimeIOException(e);
         }
-    }
-
-    /**
-     * returns an immutable view of the passed in map containing only the
-     * specified keys.
-     */
-    public static <K, V> Map<K, V> selectKeys(Map<K, V> map, Iterable<K> keys)
-    {
-        Map<K, V> selectedEntries = new HashMap<K, V>();
-        for (K key : keys) {
-            if (map.containsKey(key)) {
-                selectedEntries.put(key, map.get(key));
-            }
-        }
-        return ImmutableMap.copyOf(selectedEntries);
     }
 }

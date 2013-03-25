@@ -3,6 +3,7 @@ package com.nearinfinity.honeycomb.mysql;
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
+import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 
@@ -123,11 +124,19 @@ public class HandlerProxy {
         return this.store.incrementAutoInc(this.getTableName(), amount);
     }
 
-    public void alterTable(byte[] newSchemaSerialized) {
-        checkNotNull(newSchemaSerialized);
-        checkTableOpen();
-        TableSchema newSchema = Util.deserializeTableSchema(newSchemaSerialized);
-        this.store.alterTable(this.tableName, newSchema);
+    public void addIndex(String indexName, byte[] serializedSchema) {
+        checkNotNull(indexName);
+        checkNotNull(serializedSchema);
+
+        IndexSchema schema = Util.deserializeIndexSchema(serializedSchema);
+        checkArgument(!schema.getIsUnique(), "Honeycomb does not support adding unique indices.");
+        this.store.addIndex(this.tableName, indexName, schema);
+    }
+
+    public void dropIndex(String indexName) {
+        checkNotNull(indexName);
+
+        this.store.dropIndex(this.tableName, indexName);
     }
 
     public void truncateAutoIncrement() {
@@ -153,8 +162,11 @@ public class HandlerProxy {
     }
 
     public void flush() {
-        checkTableOpen();
-        this.table.flush();
+        // MySQL will call flush on the handler without an open table, which is
+        // a no-op
+        if (this.table != null) {
+            this.table.flush();
+        }
     }
 
     public Row getRow(UUID uuid) {

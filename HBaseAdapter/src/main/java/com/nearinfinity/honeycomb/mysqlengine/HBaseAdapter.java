@@ -25,7 +25,7 @@ import org.apache.log4j.Logger;
 import com.google.common.collect.Iterables;
 import com.nearinfinity.honeycomb.config.ConfigurationHolder;
 import com.nearinfinity.honeycomb.config.ConfigurationParser;
-import com.nearinfinity.honeycomb.hbase.ResultReader;
+import com.nearinfinity.honeycomb.hbaseclient.ResultReader;
 import com.nearinfinity.honeycomb.hbaseclient.ColumnMetadata;
 import com.nearinfinity.honeycomb.hbaseclient.HBaseReader;
 import com.nearinfinity.honeycomb.hbaseclient.HBaseWriter;

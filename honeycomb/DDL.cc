@@ -74,7 +74,6 @@ int HoneycombHandler::create(const char *path, TABLE *table,
 
     for (int i = 0; i < table->s->keys; i++)
     {
-      index_schema.reset();
       if (pack_index_schema(&index_schema, &table->key_info[i]))
       {
         ABORT_CREATE("Error while creating index schema.");
@@ -93,7 +92,8 @@ int HoneycombHandler::create(const char *path, TABLE *table,
     const char* buf;
     size_t buf_len;
     table_schema.serialize(&buf, &buf_len);
-    jbyteArray jserialized_schema = convert_value_to_java_bytes((uchar*) buf, buf_len, env);
+    jbyteArray jserialized_schema =
+      convert_value_to_java_bytes((uchar*) buf, buf_len, env);
 
     this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().create_table,
         jtable_name, jtablespace, jserialized_schema, jauto_inc_value);
@@ -247,6 +247,7 @@ int HoneycombHandler::pack_column_schema(ColumnSchema* schema, Field* field)
 int HoneycombHandler::pack_index_schema(IndexSchema* schema, KEY* key)
 {
   int ret = 0;
+  ret |= schema->reset();
   for (int i = 0; i < key->key_parts; i++)
   {
     ret |= schema->add_column(key->key_part[i].field->field_name);
@@ -404,45 +405,52 @@ bool HoneycombHandler::check_column_being_renamed(const TABLE* table)
 int HoneycombHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys,
     handler_add_index **add)
 {
-  JavaFrame frame(env, 3*num_of_keys);
-  for(uint key = 0; key < num_of_keys; key++)
+  DBUG_ENTER("HoneycombHandler::add_index");
+  attach_thread(jvm, env);
+  int ret = 0;
+  IndexSchema schema;
+  for(uint k = 0; k < num_of_keys; k++)
   {
-    KEY* pos = key_info + key;
-    KEY_PART_INFO *key_part = pos->key_part;
-    KEY_PART_INFO *end_key_part = key_part + key_info->key_parts;
-    char* index_columns = this->index_name(key_part, end_key_part,
-        key_info->key_parts);
+    JavaFrame frame(env, 2);
+    KEY* key = key_info + k;
+    jstring index_name = string_to_java_string(key->name);
+    pack_index_schema(&schema, key);
 
-    Field *field_being_indexed = key_info->key_part->field;
-    if (pos->flags & HA_NOSAME)
+    if (key->flags & HA_NOSAME)
     {
-      jbyteArray duplicate_value = this->find_duplicate_column_values(index_columns);
-
-      int error = duplicate_value != NULL ? HA_ERR_FOUND_DUPP_KEY : 0;
-
-      if (error == HA_ERR_FOUND_DUPP_KEY)
-      {
-        int length = (int)this->env->GetArrayLength(duplicate_value);
-        char *value_key = char_array_from_java_bytes(duplicate_value, this->env);
-        this->store_field_value(field_being_indexed, value_key, length);
-        ARRAY_DELETE(value_key);
-        ARRAY_DELETE(index_columns);
-        this->failed_key_index = this->get_failed_key_index(key_part->field->field_name);
-
-        return error;
-      }
+      // We don't support adding unique indices without a table rebuild
+      DBUG_RETURN(HA_ERR_WRONG_COMMAND);
     }
 
-    jclass adapter = cache->hbase_adapter().clazz;
-    jobject java_keys = this->create_multipart_key(pos, key_part, end_key_part,
-        key_info->key_parts);
-    jmethodID add_index_method = cache->hbase_adapter().add_index;
-    jstring table_name = this->table_name();
-    this->env->CallStaticVoidMethod(adapter, add_index_method, table_name, java_keys);
-    EXCEPTION_CHECK_IE("HoneycombHandler::add_index", "calling addIndex");
-    ARRAY_DELETE(index_columns);
-  }
+    const char* buf;
+    size_t buf_len;
+    schema.serialize(&buf, &buf_len);
+    jbyteArray serialized_schema =
+      convert_value_to_java_bytes((uchar*) buf, buf_len, env);
 
+    this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().add_index,
+        index_name, serialized_schema);
+    ret |= check_exceptions(env, cache, "HoneycombHandler::add_index");
+  }
+  detach_thread(jvm);
+  DBUG_RETURN(ret);
+}
+
+int HoneycombHandler::prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys)
+{
+  //JavaFrame frame(env, num_of_keys + 1);
+  //jclass adapter = cache->hbase_adapter().clazz;
+  //jmethodID drop_index_method = cache->hbase_adapter().drop_index;
+  //jstring table_name = this->table_name();
+  //for (uint key = 0; key < num_of_keys; key++)
+  //{
+    //char* name = index_name(table_arg, key_num[key]);
+    //jstring jname = string_to_java_string(name);
+    //this->env->CallStaticVoidMethod(adapter, drop_index_method, table_name, jname);
+    //EXCEPTION_CHECK_IE("HoneycombHandler::prepare_drop_index", "calling dropIndex");
+    //ARRAY_DELETE(name);
+  //}
   return 0;
 }
+
 

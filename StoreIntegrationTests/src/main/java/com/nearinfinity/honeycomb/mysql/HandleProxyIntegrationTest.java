@@ -42,13 +42,22 @@ public class HandleProxyIntegrationTest {
         });
     }
 
-    public static void testSuccessfulAlter() {
-        final TableSchema schema = getTableSchema();
-        testProxy("Testing alter", schema, new Action() {
+    public static void testSuccessfulIndexAdd() {
+        final String indexName = "i3";
+        final IndexSchema indexSchema = new IndexSchema(Lists.newArrayList(COLUMN2), false);
+        testProxy("Testing add index", new Action() {
             @Override
             public void execute(HandlerProxy proxy) {
-                schema.getColumns().put("c3", new ColumnSchema(ColumnType.LONG, false, false, 8, 0, 0));
-                proxy.alterTable(Util.serializeTableSchema(schema));
+                proxy.addIndex(indexName, Util.serializeIndexSchema(indexSchema));
+            }
+        });
+    }
+
+    public static void testSuccessfulIndexDrop() {
+        testProxy("Testing drop index", new Action() {
+            @Override
+            public void execute(HandlerProxy proxy) {
+                proxy.dropIndex(INDEX1);
             }
         });
     }
@@ -299,7 +308,8 @@ public class HandleProxyIntegrationTest {
         try {
             suiteSetup();
             testSuccessfulRename();
-            testSuccessfulAlter();
+            testSuccessfulIndexAdd();
+            testSuccessfulIndexDrop();
             testGetAutoIncrement();
             testIncrementAutoIncrement();
             testTruncateAutoInc();

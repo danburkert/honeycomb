@@ -3,13 +3,14 @@ package com.nearinfinity.honeycomb;
 import com.nearinfinity.honeycomb.mysql.IndexKey;
 import com.nearinfinity.honeycomb.mysql.Row;
 
+import java.io.Closeable;
 import java.util.UUID;
 
 /**
  * A Table handles operations for a single MySQL table.  It must support "insert",
  * "update", "delete" and "get" operations on rows, as well as table and index scans
  */
-public interface Table {
+public interface Table extends Closeable {
     /**
      * Insert row into table
      *
@@ -104,9 +105,4 @@ public interface Table {
      * Remove all rows from the table.
      */
     void deleteAllRows();
-
-    /**
-     * Close the table.
-     */
-    void close();
 }
