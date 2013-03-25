@@ -3,6 +3,7 @@
 
 const char TYPE[] = "queryType";
 const char RECORDS[] = "records";
+const char INDEX_NAME[] = "indexName";
 
 IndexContainer::IndexContainer()
 {
@@ -80,4 +81,22 @@ int IndexContainer::record_count(size_t* count)
   ret |= avro_value_get_by_name(&container_schema, RECORDS, &map, NULL);
   ret |= avro_value_get_size(&map, count);
   return ret;
+}
+
+int IndexContainer::set_name(const char* index_name)
+{
+  int ret = 0;
+  avro_value_t record;
+  ret |= avro_value_get_by_name(&container_schema, INDEX_NAME, &record, NULL);
+  ret |= avro_value_set_string(&record, index_name);
+  return ret;
+}
+
+const char* IndexContainer::get_name()
+{
+  const char* result;
+  avro_value_t record;
+  avro_value_get_by_name(&container_schema, INDEX_NAME, &record, NULL);
+  avro_value_get_string(&record, &result, NULL);
+  return result;
 }

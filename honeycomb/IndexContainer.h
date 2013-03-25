@@ -1,4 +1,3 @@
-#include <avro.h>
 #ifndef INDEXCONTAINER_H
 #define INDEXCONTAINER_H
 
@@ -42,6 +41,10 @@ class IndexContainer : public Serializable
     QueryType get_type();
 
     int record_count(size_t* count);
+
+    int set_name(const char* index_name);
+
+    const char* get_name();
 };
 
 #endif 
