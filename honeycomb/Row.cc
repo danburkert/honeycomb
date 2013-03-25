@@ -2,63 +2,7 @@
 #include "AvroUtil.h"
 #include <stdio.h>
 
-const char ROW_CONTAINER_SCHEMA[] = "{\"type\": \"record\", \"name\": \"RowContainer\", \"namespace\": \"com.nearinfinity.honeycomb.mysql.gen\", \"fields\": [ {\"name\": \"uuid\", \"type\": {\"type\":\"fixed\", \"name\": \"UUIDContainer\", \"size\": 16}}, {\"name\":\"records\",\"type\":{\"type\":\"map\",\"values\":[\"bytes\"],\"avro.java.string\":\"String\"}}]}";
-
-int Row::get_record(const char* column_name, const char* type, avro_value_t** record)
-{
-  int ret = 0;
-  int type_disc;
-  int null_disc;
-  int disc;
-  avro_value_t records_map;
-  avro_value_t record_union;
-  avro_schema_t union_schema;
-
-  // Get the records map and find the record belonging to the column
-  ret |= avro_value_get_by_name(&row_container, "records", &records_map, NULL);
-  ret |= avro_value_get_by_name(&records_map, column_name, &record_union, NULL);
-  if (record_union.self == NULL) {*record = NULL; return 0;} // Not found
-
-  union_schema = avro_value_get_schema(&record_union);
-
-  // Get the discriminant (union offset) of the actual record, as well as
-  // the expected type and null type discriminants
-  ret |= avro_value_get_discriminant(&record_union, &disc);
-  avro_schema_union_branch_by_name(union_schema, &type_disc, type);
-  avro_schema_union_branch_by_name(union_schema, &null_disc, "null");
-
-  if (!ret)
-  {
-    if (disc == type_disc)
-    {
-      ret |= avro_value_get_current_branch(&record_union, *record);
-    } else if (disc == null_disc) {
-      *record = NULL;
-    } else {
-      ret = -1;
-    }
-  }
-  return ret;
-}
-
-int Row::set_record(const char* column_name, const char* type, avro_value_t* record)
-{
-  int ret = 0;
-  int type_disc;
-  avro_value_t records_map;
-  avro_value_t record_union;
-  avro_schema_t union_schema;
-
-  ret |= avro_value_get_by_name(&row_container, "records", &records_map, NULL);
-  ret |= avro_value_add(&records_map, column_name, &record_union, NULL, NULL);
-
-  union_schema = avro_value_get_schema(&record_union);
-  avro_schema_union_branch_by_name(union_schema, &type_disc, type);
-
-  ret |= avro_value_set_branch(&record_union, type_disc, record);
-
-  return ret;
-}
+#define ROW_CONTAINER_SCHEMA "{\"type\":\"record\",\"name\":\"RowContainer\",\"namespace\":\"com.nearinfinity.honeycomb.mysql.gen\",\"fields\":[{\"name\":\"uuid\",\"type\":{\"type\":\"fixed\",\"name\":\"UUIDContainer\",\"size\":16}},{\"name\":\"records\",\"type\":{\"type\":\"map\",\"values\":\"bytes\",\"avro.java.string\":\"String\"}}]}"
 
 Row::Row()
 {
@@ -131,27 +75,12 @@ int Row::set_UUID(char* uuid_buf)
   return ret;
 }
 
-int Row::get_bytes_record(const char* column_name, const char** value, size_t* size)
+int Row::get_bytes_record(const char* column_name, const unsigned char** value, size_t* size)
 {
-  int ret;
-  avro_value_t record;
-  avro_value_t* rec_ptr = &record;
-
-  ret = get_record(column_name, "bytes", &rec_ptr);
-  if (!ret && (rec_ptr == NULL))
-  {
-    *value = NULL;
-  } else {
-    ret |= avro_value_get_bytes(rec_ptr, (const void**) value, size);
-  }
-  return ret;
+  return get_map_value(&row_container, column_name, "records", value, size);
 }
 
-int Row::set_bytes_record(const char* column_name, char* value, size_t size)
+int Row::set_bytes_record(const char* column_name, unsigned char* value, size_t size)
 {
-  int ret = 0;
-  avro_value_t record;
-  ret |= set_record(column_name, "bytes", &record);
-  ret |= avro_value_set_bytes(&record, value, size);
-  return ret;
+  return set_map_value(&row_container, column_name, "records", value, size);
 }

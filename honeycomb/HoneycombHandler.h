@@ -18,6 +18,7 @@
 #include "my_base.h"            /* ha_rows */
 #include <jni.h>
 #include "probes_mysql.h"
+#include "Serializable.h"
 
 class JNICache;
 
@@ -31,6 +32,8 @@ class HoneycombHandler : public handler
     bool performing_scan;
     HoneycombShare *get_share(const char *table_name, TABLE *table);
     uint32 max_row_length();
+    jbyteArray serialize_to_java(Serializable& serializable);
+    void deserialized_from_java(jbyteArray bytes, Serializable& serializable);
 
     long long curr_scan_id, curr_write_id;
     ulonglong rows_written;
@@ -65,7 +68,7 @@ class HoneycombHandler : public handler
     jbyteArray find_duplicate_column_values(char* columns);
     bool row_has_duplicate_values(jobject value_map, jobject changedColumns);
     int get_failed_key_index(const char *key_name);
-    void store_field_value(Field *field, const char* val, int length);
+    void store_field_value(Field *field, const unsigned char* val, int length);
     jobject create_multipart_keys(TABLE* table_arg);
     jobject create_multipart_key(KEY* key, KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts);
     char* index_name(KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts);

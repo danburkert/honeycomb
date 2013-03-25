@@ -107,7 +107,7 @@ int HoneycombHandler::close(void)
  * @param val HBase value
  * @param val_length Length of the HBase value
  */
-void HoneycombHandler::store_field_value(Field *field, const char *val, int val_length)
+void HoneycombHandler::store_field_value(Field *field, const unsigned char *val, int val_length)
 {
   enum_field_types type = field->real_type();
 
@@ -136,7 +136,7 @@ void HoneycombHandler::store_field_value(Field *field, const char *val, int val_
     }
     else if (is_byte_field(type))
     {
-      field->store(val, val_length, &my_charset_bin);
+      field->store((char*)val, val_length, &my_charset_bin);
     }
     else if (is_date_or_time_field(type))
     {
@@ -153,7 +153,7 @@ void HoneycombHandler::store_field_value(Field *field, const char *val, int val_
       {
         MYSQL_TIME mysql_time;
         int was_cut;
-        str_to_datetime(val, val_length, &mysql_time, TIME_FUZZY_DATE, &was_cut);
+        str_to_datetime((char*)val, val_length, &mysql_time, TIME_FUZZY_DATE, &was_cut);
         field->store_time(&mysql_time, mysql_time.time_type);
       }
     }
@@ -194,10 +194,9 @@ void HoneycombHandler::store_field_value(Field *field, const char *val, int val_
  */
 int HoneycombHandler::java_to_sql(uchar* buf, Row* row)
 {
-  jboolean is_copy = JNI_FALSE;
   my_bitmap_map *orig_bitmap;
   orig_bitmap = dbug_tmp_use_all_columns(table, table->write_set);
-  const char* value;
+  const unsigned char* value;
   size_t size;
 
   for (uint i = 0; i < table->s->fields; i++)
@@ -737,4 +736,21 @@ jstring HoneycombHandler::table_name()
   sprintf(namespaced_table, "%s.%s", database_name, table_name);
   jstring jtable_name = string_to_java_string(namespaced_table);
   return jtable_name;
+}
+
+void HoneycombHandler::deserialized_from_java(jbyteArray bytes, Serializable& serializable)
+{
+  jbyte* buf = this->env->GetByteArrayElements(bytes, JNI_FALSE);
+  serializable.deserialize((const char*) buf, this->env->GetArrayLength(bytes));
+  this->env->ReleaseByteArrayElements(bytes, buf, 0);
+}
+
+jbyteArray HoneycombHandler::serialize_to_java(Serializable& serializable)
+{
+  const char* serialized_buf;
+  size_t buf_len;
+  serializable.serialize(&serialized_buf, &buf_len);
+  jbyteArray jserialized_key = convert_value_to_java_bytes((uchar*) serialized_buf, buf_len, env);
+  delete[] serialized_buf;
+  return jserialized_key;
 }

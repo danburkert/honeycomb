@@ -72,7 +72,7 @@ int HoneycombHandler::create(const char *path, TABLE *table,
       table_schema.add_column(field->field_name, &column_schema);
     }
 
-    for (int i = 0; i < table->s->keys; i++)
+    for (uint i = 0; i < table->s->keys; i++)
     {
       index_schema.reset();
       if (pack_index_schema(&index_schema, &table->key_info[i]))
@@ -247,7 +247,7 @@ int HoneycombHandler::pack_column_schema(ColumnSchema* schema, Field* field)
 int HoneycombHandler::pack_index_schema(IndexSchema* schema, KEY* key)
 {
   int ret = 0;
-  for (int i = 0; i < key->key_parts; i++)
+  for (uint i = 0; i < key->key_parts; i++)
   {
     ret |= schema->add_column(key->key_part[i].field->field_name);
   }

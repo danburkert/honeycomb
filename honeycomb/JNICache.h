@@ -18,7 +18,9 @@ class JNICache
                 open_table,
                 close_table,
                 rename_table,
-                get_row_count;
+                get_row_count,
+                start_index_scan,
+                get_next_row;
     };
     struct HBaseAdapter
     {

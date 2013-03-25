@@ -4,29 +4,6 @@
 const char TYPE[] = "queryType";
 const char RECORDS[] = "records";
 
-int IndexContainer::get_record(const char* column_name, avro_value_t** record)
-{
-  int ret = 0;
-  avro_value_t map;
-
-  // Retrieve map
-  ret |= avro_value_get_by_name(&container_schema, RECORDS, &map, NULL);
-  // Retrieve value from map
-  ret |= avro_value_get_by_name(&map, column_name, *record, NULL);
-  return ret;
-}
-
-int IndexContainer::set_record(const char* column_name, const char* type, avro_value_t* record)
-{
-  int ret = 0;
-  avro_value_t record_map;
-  // Retrieve map
-  ret |= avro_value_get_by_name(&container_schema, RECORDS, &record_map, NULL);
-  // Add value to map
-  ret |= avro_value_add(&record_map, column_name, record, NULL, NULL);
-  return ret;
-}
-
 IndexContainer::IndexContainer()
 {
   if (avro_schema_from_json_literal(INDEX_CONTAINER_SCHEMA, &container_schema_schema))
@@ -70,30 +47,14 @@ int IndexContainer::deserialize(const char* buf, int64_t len)
   return deserialize_object(&container_schema, buf, len);
 }
 
-int IndexContainer::set_bytes_record(const char* column_name, char* value, size_t size)
+int IndexContainer::set_bytes_record(const char* column_name, unsigned char* value, size_t size)
 {
-  int ret = 0;
-  avro_value_t record;
-  ret |= set_record(column_name, "bytes", &record);
-  ret |= avro_value_set_bytes(&record, value, size);
-  return ret;
+  return set_map_value(&container_schema, column_name, RECORDS, value, size);
 }
 
-int IndexContainer::get_bytes_record(const char* column_name, const char** value, size_t* size)
+int IndexContainer::get_bytes_record(const char* column_name, const unsigned char** value, size_t* size)
 {
-  int ret = 0;
-  avro_value_t record;
-  avro_value_t* rec_ptr = &record;
-
-  ret |= get_record(column_name, &rec_ptr);
-  if (rec_ptr->self == NULL)
-  {
-    *value = NULL;
-  }else
-  {
-    ret |= avro_value_get_bytes(rec_ptr, (const void**) value, size);
-  }
-  return ret;
+  return get_map_value(&container_schema, column_name, RECORDS, value, size);
 }
 
 IndexContainer::QueryType IndexContainer::get_type()

@@ -181,7 +181,7 @@ int HoneycombHandler::pack_row(uchar *buf, TABLE* table, Row* row)
       memcpy(byte_val, field->ptr, actualFieldSize);
       break;
     }
-    row->set_bytes_record(field_name, byte_val, actualFieldSize);
+    row->set_bytes_record(field_name, (uchar*)byte_val, actualFieldSize);
     MY_FREE(byte_val);
   }
 
@@ -231,7 +231,7 @@ int HoneycombHandler::write_row(uchar* buf, jobject updated_fields)
     jstring field_name = string_to_java_string(field->field_name);
 
     const bool is_null = field->is_null();
-    uchar* byte_val;
+    unsigned char* byte_val;
 
     if (is_null)
     {
@@ -261,7 +261,7 @@ int HoneycombHandler::write_row(uchar* buf, jobject updated_fields)
         integral_value = bswap64(integral_value);
       }
       actualFieldSize = sizeof integral_value;
-      byte_val = (uchar*) my_malloc(actualFieldSize, MYF(MY_WME));
+      byte_val = (unsigned char*) my_malloc(actualFieldSize, MYF(MY_WME));
       memcpy(byte_val, &integral_value, actualFieldSize);
       break;
     }
@@ -536,7 +536,7 @@ int HoneycombHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_key
       {
         int length = (int)this->env->GetArrayLength(duplicate_value);
         char *value_key = char_array_from_java_bytes(duplicate_value, this->env);
-        this->store_field_value(field_being_indexed, value_key, length);
+        this->store_field_value(field_being_indexed, (uchar*)value_key, length);
         ARRAY_DELETE(value_key);
         ARRAY_DELETE(index_columns);
         this->failed_key_index = this->get_failed_key_index(key_part->field->field_name);

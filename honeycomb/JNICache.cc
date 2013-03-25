@@ -12,13 +12,15 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   // (dburkert:) I do not recommend editing this section without javap -s,
   // editor macros, and tabular.vim
 
-  handler_proxy_.clazz         = get_class_ref(env, HONEYCOMB "mysql/HandlerProxy");
-  handler_proxy_.create_table  = get_method_id(env, handler_proxy_.clazz, "createTable", "(Ljava/lang/String;Ljava/lang/String;[BJ)V");
-  handler_proxy_.drop_table    = get_method_id(env, handler_proxy_.clazz, "dropTable", "(Ljava/lang/String;Ljava/lang/String;)V");
-  handler_proxy_.rename_table  = get_method_id(env, handler_proxy_.clazz, "renameTable", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
-  handler_proxy_.open_table    = get_method_id(env, handler_proxy_.clazz, "openTable", "(Ljava/lang/String;Ljava/lang/String;)V");
-  handler_proxy_.close_table   = get_method_id(env, handler_proxy_.clazz, "closeTable", "()V");
-  handler_proxy_.get_row_count = get_method_id(env, handler_proxy_.clazz, "getRowCount", "()J");
+  handler_proxy_.clazz            = get_class_ref(env, HONEYCOMB "mysql/HandlerProxy");
+  handler_proxy_.create_table     = get_method_id(env, handler_proxy_.clazz, "createTable", "(Ljava/lang/String;Ljava/lang/String;[BJ)V");
+  handler_proxy_.drop_table       = get_method_id(env, handler_proxy_.clazz, "dropTable", "(Ljava/lang/String;Ljava/lang/String;)V");
+  handler_proxy_.rename_table     = get_method_id(env, handler_proxy_.clazz, "renameTable", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
+  handler_proxy_.open_table       = get_method_id(env, handler_proxy_.clazz, "openTable", "(Ljava/lang/String;Ljava/lang/String;)V");
+  handler_proxy_.close_table      = get_method_id(env, handler_proxy_.clazz, "closeTable", "()V");
+  handler_proxy_.get_row_count    = get_method_id(env, handler_proxy_.clazz, "getRowCount", "()J");
+  handler_proxy_.start_index_scan = get_method_id(env, handler_proxy_.clazz, "startIndexScan", "([B)V");
+  handler_proxy_.get_next_row     = get_method_id(env, handler_proxy_.clazz, "getNextRow", "()[B");
 
   HoneycombException     = get_class_ref(env, HONEYCOMB "HoneycombException");
   TableExistsException   = get_class_ref(env, HONEYCOMB "TableExistsException");

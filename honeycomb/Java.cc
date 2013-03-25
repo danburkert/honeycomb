@@ -91,7 +91,6 @@ char *char_array_from_java_bytes(jbyteArray java_bytes, JNIEnv* env)
 int check_exceptions(JNIEnv* env, JNICache* cache, const char* location)
 {
   int ret = 0;
-  const char* reason;
   jthrowable e = env->ExceptionOccurred();
   if (e)
   {
