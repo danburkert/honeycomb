@@ -260,8 +260,6 @@ class HoneycombHandler : public handler
     int analyze(THD* thd, HA_CHECK_OPT* check_opt);
     ha_rows estimate_rows_upper_bound();
     void get_auto_increment(ulonglong offset, ulonglong increment, ulonglong nb_desired_values, ulonglong *first_value, ulonglong *nb_reserved_values);
-    int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add);
-    int prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys);
 
     /* DDL */
     int create(const char *name, TABLE *form, HA_CREATE_INFO *create_info); ///< required
@@ -269,6 +267,8 @@ class HoneycombHandler : public handler
     int rename_table(const char *from, const char *to);
     bool check_if_incompatible_data(HA_CREATE_INFO *create_info, uint table_changes);
     bool check_column_being_renamed(const TABLE*  table);
+    int prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys);
+    int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add);
 };
 
 #endif
