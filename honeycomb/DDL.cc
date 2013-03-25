@@ -90,10 +90,7 @@ int HoneycombHandler::create(const char *path, TABLE *table,
     }
     jlong jauto_inc_value = create_info->auto_increment_value;
 
-    const char* buf;
-    size_t buf_len;
-    table_schema.serialize(&buf, &buf_len);
-    jbyteArray jserialized_schema = convert_value_to_java_bytes((uchar*) buf, buf_len, env);
+    jbyteArray jserialized_schema = serialize_to_java(table_schema);
 
     this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().create_table,
         jtable_name, jtablespace, jserialized_schema, jauto_inc_value);

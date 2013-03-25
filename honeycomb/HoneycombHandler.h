@@ -11,6 +11,7 @@
 #include "TableSchema.h"
 #include "ColumnSchema.h"
 #include "IndexSchema.h"
+#include "IndexContainer.h"
 
 #include "my_global.h"          /* ulonglong */
 #include "thr_lock.h"           /* THR_LOCK, THR_LOCK_DATA */
@@ -57,6 +58,7 @@ class HoneycombHandler : public handler
     int truncate();
     bool is_key_null(const uchar *key);
     void store_uuid_ref(Row* row);
+    int full_index_scan(uchar* buf, IndexContainer::QueryType query);
     void bytes_to_long(const uchar* buff, unsigned int buff_length, bool is_signed, uchar* long_buff);
     int read_row(uchar* buf, Row* row);
     int get_index_row(jfieldID field_id, uchar* buf);
