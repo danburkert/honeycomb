@@ -3,6 +3,7 @@ package com.nearinfinity.honeycomb.mysqlengine;
 import static java.text.MessageFormat.format;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -10,8 +11,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
@@ -23,6 +22,8 @@ import org.apache.hadoop.metrics2.util.MBeans;
 import org.apache.log4j.Logger;
 
 import com.google.common.collect.Iterables;
+import com.google.common.io.Files;
+import com.google.common.io.InputSupplier;
 import com.nearinfinity.honeycomb.config.ConfigurationHolder;
 import com.nearinfinity.honeycomb.config.ConfigurationParser;
 import com.nearinfinity.honeycomb.hbase.ResultReader;
@@ -832,17 +833,15 @@ public class HBaseAdapter {
         final File configSchemaFile = new File(CONFIG_PATH, CONFIG_SCHEMA_FILENAME);
 
         if( isFileAvailable(configFile) && isFileAvailable(configSchemaFile) ) {
-            if( ConfigurationParser.validateConfigFile(configSchemaFile, configFile) ) {
-                try {
+            final InputSupplier<FileInputStream> schemaSupplier = Files.newInputStreamSupplier(configSchemaFile);
+            final InputSupplier<FileInputStream> configSupplier = Files.newInputStreamSupplier(configFile);
+
+            if( ConfigurationParser.validateConfiguration(schemaSupplier, configSupplier) ) {
                     final ConfigurationParser configParser = new ConfigurationParser();
-                    configHolder = configParser.parseConfig(configFile, HBaseConfiguration.create());
+                    configHolder = configParser.parseConfiguration(configSupplier, HBaseConfiguration.create());
 
                     logger.info(String.format("Read %d configuration properties ",
                             configHolder.getConfiguration().size()));
-
-                } catch (ParserConfigurationException e) {
-                    logger.fatal("The XML parser was not configured properly.", e);
-                }
             } else {
                 logger.error("Configuration file validation failed");
             }
