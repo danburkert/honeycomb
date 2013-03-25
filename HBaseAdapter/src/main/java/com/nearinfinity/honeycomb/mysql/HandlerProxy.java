@@ -212,6 +212,10 @@ public class HandlerProxy {
         return this.currentScanner.next().serialize();
     }
 
+    public void endIndexScan() {
+        Util.closeQuietly(this.currentScanner);
+    }
+
     private void checkTableOpen() {
         checkState(table != null, "Table must be opened before used.");
     }
