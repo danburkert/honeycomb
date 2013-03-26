@@ -35,6 +35,7 @@ class HoneycombHandler : public handler
     uint32 max_row_length();
     jbyteArray serialize_to_java(Serializable& serializable);
     void deserialized_from_java(jbyteArray bytes, Serializable& serializable);
+    int start_index_scan(Serializable& index_key, uchar* buf);
 
     long long curr_scan_id, curr_write_id;
     ulonglong rows_written;

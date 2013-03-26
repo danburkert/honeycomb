@@ -49,11 +49,19 @@ int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
     key_part++;
   }
 
-  jbyteArray jserialized_key = serialize_to_java(index_key);
-  this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().start_index_scan, jserialized_key);
-  rc = get_next_index_row(buf);
+  rc = start_index_scan(index_key, buf);
 
   DBUG_RETURN(rc);
+}
+
+int HoneycombHandler::start_index_scan(Serializable& index_key, uchar* buf)
+{
+  jbyteArray jserialized_key = serialize_to_java(index_key);
+  this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().start_index_scan, jserialized_key);
+  int rc = check_exceptions(env, cache, "HoneycombHandler::start_index_scan");
+  if (rc != 0)
+    return rc;
+  return get_next_index_row(buf);
 }
 
 int HoneycombHandler::index_first(uchar *buf)
@@ -76,9 +84,7 @@ int HoneycombHandler::full_index_scan(uchar* buf, IndexContainer::QueryType quer
   KEY *key_info = table->s->key_info + this->active_index;
   index_key.set_type(query);
   index_key.set_name(key_info->name);
-  jbyteArray jserialized_key = serialize_to_java(index_key);
-  this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().start_index_scan, jserialized_key);
-  return get_next_index_row(buf);
+  return start_index_scan(index_key, buf);
 }
 
 int HoneycombHandler::index_next(uchar *buf)
@@ -122,6 +128,10 @@ int HoneycombHandler::get_next_index_row(uchar* buf)
   JavaFrame frame(env, 1);
   jbyteArray row_bytes = static_cast<jbyteArray>(this->env->CallObjectMethod(handler_proxy, 
         cache->handler_proxy().get_next_row));
+  int rc = check_exceptions(env, cache, "HoneycombHandler::get_next_index_row");
+  if (rc != 0)
+    return rc;
+
   if (row_bytes == NULL)
   {
     this->table->status = STATUS_NOT_FOUND;
