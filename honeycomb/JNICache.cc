@@ -19,8 +19,10 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   handler_proxy_.open_table               = get_method_id(env, handler_proxy_.clazz, "openTable", "(Ljava/lang/String;Ljava/lang/String;)V");
   handler_proxy_.close_table              = get_method_id(env, handler_proxy_.clazz, "closeTable", "()V");
   handler_proxy_.get_row_count            = get_method_id(env, handler_proxy_.clazz, "getRowCount", "()J");
+  handler_proxy_.get_row                  = get_method_id(env, handler_proxy_.clazz, "getRow", "([B)[B");
   handler_proxy_.start_index_scan         = get_method_id(env, handler_proxy_.clazz, "startIndexScan", "([B)V");
-  handler_proxy_.end_index_scan           = get_method_id(env, handler_proxy_.clazz, "endIndexScan", "()V");
+  handler_proxy_.start_table_scan         = get_method_id(env, handler_proxy_.clazz, "startTableScan", "()V");
+  handler_proxy_.end_scan                 = get_method_id(env, handler_proxy_.clazz, "endScan", "()V");
   handler_proxy_.get_next_row             = get_method_id(env, handler_proxy_.clazz, "getNextRow", "()[B");
   handler_proxy_.flush                    = get_method_id(env, handler_proxy_.clazz, "flush", "()V");
   handler_proxy_.get_auto_inc_value       = get_method_id(env, handler_proxy_.clazz, "getAutoIncValue", "()J");

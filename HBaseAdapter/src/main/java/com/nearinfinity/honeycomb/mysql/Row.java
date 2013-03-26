@@ -59,7 +59,7 @@ public class Row {
      * @return UUID of this Row.
      */
     public UUID getUUID() {
-        return Util.BytesToUUID(row.getUuid().bytes());
+        return Util.bytesToUUID(row.getUuid().bytes());
     }
 
     /**

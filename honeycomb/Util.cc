@@ -151,10 +151,10 @@ uchar* create_key_copy(Field* index_field, const uchar* key, uint* key_len, THD*
     case MYSQL_TYPE_ENUM:
     case MYSQL_TYPE_TIME:
       {
+        *key_len = sizeof(long long);
         key_copy = new uchar[sizeof(long long)];
         const bool is_signed = !is_unsigned_field(index_field);
         bytes_to_long(key, *key_len, is_signed, key_copy);
-        *key_len = sizeof(long long);
         make_big_endian(key_copy, *key_len);
         break;
       }

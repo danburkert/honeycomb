@@ -302,7 +302,7 @@ public class HBaseAdapter {
             throws HBaseAdapterException {
         try {
             long start = System.currentTimeMillis();
-            UUID uuid = Util.BytesToUUID(uuidBuff);
+            UUID uuid = Util.bytesToUUID(uuidBuff);
             HBaseWriter writer = getHBaseWriterForId(writeId);
             writer.updateRow(uuid, changedFields, tableName, values);
             rowCountUpdate.set(true);
@@ -347,7 +347,7 @@ public class HBaseAdapter {
     public static boolean deleteRow(String tableName, byte[] uuidBuffer) throws HBaseAdapterException {
         try {
             long start = System.currentTimeMillis();
-            UUID uuid = Util.BytesToUUID(uuidBuffer);
+            UUID uuid = Util.bytesToUUID(uuidBuffer);
             HBaseWriter writer = createWriter();
             boolean success = writer.deleteRow(tableName, uuid);
             writer.close();
@@ -417,7 +417,7 @@ public class HBaseAdapter {
             long start = System.currentTimeMillis();
             ActiveScan activeScan = getActiveScanForId(scanId);
             String tableName = activeScan.getTableName();
-            UUID rowUuid = Util.BytesToUUID(uuid);
+            UUID rowUuid = Util.bytesToUUID(uuid);
 
             Row row = reader.getDataRow(rowUuid, tableName);
             long end = System.currentTimeMillis();

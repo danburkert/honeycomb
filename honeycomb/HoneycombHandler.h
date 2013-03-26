@@ -62,10 +62,9 @@ class HoneycombHandler : public handler
     int full_index_scan(uchar* buf, IndexContainer::QueryType query);
     void bytes_to_long(const uchar* buff, unsigned int buff_length, bool is_signed, uchar* long_buff);
     int read_row(uchar* buf, Row* row);
-    int get_index_row(jfieldID field_id, uchar* buf);
-    int get_next_index_row(uchar* buf);
+    int get_next_row(uchar* buf);
+    int read_bytes_into_mysql(jbyteArray row_bytes, uchar* buf);
     int flush();
-    void end_scan();
     bool field_has_unique_index(Field *field);
     jbyteArray find_duplicate_column_values(char* columns);
     bool row_has_duplicate_values(jobject value_map, jobject changedColumns);
@@ -81,7 +80,6 @@ class HoneycombHandler : public handler
     int retrieve_value_from_index(uchar* buf);
     int write_row(uchar* buf, jobject updated_fields);
     void collect_changed_fields(jobject updated_fields, const uchar* old_row, uchar* new_row);
-    void terminate_scan();
 
     bool is_integral_field(enum_field_types field_type)
     {

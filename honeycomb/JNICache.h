@@ -23,11 +23,13 @@ class JNICache
                 get_next_row,
                 flush,
                 get_auto_inc_value,
-                end_index_scan,
+                end_scan,
                 add_index,
                 drop_index,
                 index_contains_duplicate,
-                insert_row;
+                insert_row,
+                start_table_scan,
+                get_row;
     };
     struct HBaseAdapter
     {
