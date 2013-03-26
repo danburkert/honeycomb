@@ -34,14 +34,14 @@ int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
   while (key_part < end_key_part && keypart_map)
   {
     Field* field = key_part->field;
-    if (this->is_field_nullable(this->table_name(), field->field_name)
-        && key_ptr[0] == 1) // Key is null
+    bool is_null_field = field->is_null();
+    if (is_null_field && key_ptr[0] == 1) // Key is null
     {
       key_ptr += key_part->store_length;
       continue;
     }
 
-    key_copy = create_key_copy(field, key_ptr, &key_length, table->in_use);
+    key_copy = create_key_copy(field, is_null_field ? key_ptr + 1 : key_ptr, &key_length, table->in_use);
     index_key.set_bytes_record(field->field_name, (char*)key_copy, key_length);
     ARRAY_DELETE(key_copy);
     key_ptr += key_part->store_length;
