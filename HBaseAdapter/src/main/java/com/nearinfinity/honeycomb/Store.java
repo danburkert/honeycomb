@@ -1,5 +1,6 @@
 package com.nearinfinity.honeycomb;
 
+import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 
 /**
@@ -50,12 +51,21 @@ public interface Store {
     public TableSchema getSchema(String tableName);
 
     /**
-     * Alter the table with the specified name.
+     * Add index to the table specified by tableName
      *
      * @param tableName The name of the table to be altered
-     * @param schema    The new schema for the table
+     * @param indexName The name of the new index
+     * @param schema    The schema of the index
      */
-    public void alterTable(String tableName, TableSchema schema);
+    public void addIndex(String tableName, String indexName, IndexSchema schema);
+
+    /**
+     * Drop index from the table
+     *
+     * @param tableName The name of the table to be altered
+     * @param indexName The name of the index to be dropped
+     */
+    public void dropIndex(String tableName, String indexName);
 
     /**
      * Gets the current value of the auto increment column in the table

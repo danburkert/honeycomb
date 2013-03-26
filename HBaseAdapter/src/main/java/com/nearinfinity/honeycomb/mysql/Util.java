@@ -1,5 +1,7 @@
 package com.nearinfinity.honeycomb.mysql;
 
+import com.nearinfinity.honeycomb.RuntimeIOException;
+import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import org.apache.avro.io.*;
 import org.apache.avro.specific.SpecificDatumReader;
@@ -60,6 +62,17 @@ public class Util {
         checkNotNull(schema, "Schema cannot be null");
         return deserializeAvroObject(schema, TableSchema.class);
     }
+
+    public static byte[] serializeIndexSchema(IndexSchema schema) {
+        checkNotNull(schema, "Schema cannot be null");
+        return serializeAvroObject(schema, IndexSchema.class);
+    }
+
+    public static IndexSchema deserializeIndexSchema(byte[] schema) {
+        checkNotNull(schema, "Schema cannot be null");
+        return deserializeAvroObject(schema, IndexSchema.class);
+    }
+
 
     /**
      * Serialize an object to a byte array
@@ -159,7 +172,9 @@ public class Util {
     public static void closeQuietly(Closeable closeable) {
         try {
             closeable.close();
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            logger.error("IOException thrown while closing resource.", e);
+            throw new RuntimeIOException(e);
         }
     }
 }

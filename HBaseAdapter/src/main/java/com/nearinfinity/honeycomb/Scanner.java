@@ -5,5 +5,5 @@ import com.nearinfinity.honeycomb.mysql.Row;
 import java.io.Closeable;
 import java.util.Iterator;
 
-public interface Scanner extends Closeable, Iterator<Row> {
+public interface Scanner extends Iterator<Row>, Closeable {
 }

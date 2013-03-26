@@ -1,6 +1,6 @@
 package com.nearinfinity.honeycomb.mysqlengine;
 
-import com.nearinfinity.honeycomb.hbase.ResultReader;
+import com.nearinfinity.honeycomb.hbaseclient.ResultReader;
 import com.nearinfinity.honeycomb.hbaseclient.Metrics;
 import com.nearinfinity.honeycomb.mysql.Row;
 import org.apache.hadoop.hbase.client.Result;

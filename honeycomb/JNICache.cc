@@ -24,6 +24,8 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   handler_proxy_.get_next_row       = get_method_id(env, handler_proxy_.clazz, "getNextRow", "()[B");
   handler_proxy_.flush              = get_method_id(env, handler_proxy_.clazz, "flush", "()V");
   handler_proxy_.get_auto_inc_value = get_method_id(env, handler_proxy_.clazz, "getAutoIncValue", "()J");
+  handler_proxy_.add_index          = get_method_id(env, handler_proxy_.clazz, "addIndex", "(Ljava/lang/String;[B)V");
+  handler_proxy_.drop_index         = get_method_id(env, handler_proxy_.clazz, "dropIndex", "(Ljava/lang/String;)V");
 
   TableExistsException   = get_class_ref(env, HONEYCOMB "TableExistsException");
   TableNotFoundException = get_class_ref(env, HONEYCOMB "TableNotFoundException");
@@ -54,8 +56,6 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   hbase_adapter_.increment_row_count          = get_static_method_id(env, hbase_adapter_.clazz, "incrementRowCount", "(Ljava/lang/String;J)V");
   hbase_adapter_.set_row_count                = get_static_method_id(env, hbase_adapter_.clazz, "setRowCount", "(Ljava/lang/String;J)V");
   hbase_adapter_.is_nullable                  = get_static_method_id(env, hbase_adapter_.clazz, "isNullable", "(Ljava/lang/String;Ljava/lang/String;)Z");
-  hbase_adapter_.add_index                    = get_static_method_id(env, hbase_adapter_.clazz, "addIndex", "(Ljava/lang/String;Lcom/nearinfinity/honeycomb/hbaseclient/TableMultipartKeys;)V");
-  hbase_adapter_.drop_index                   = get_static_method_id(env, hbase_adapter_.clazz, "dropIndex", "(Ljava/lang/String;Ljava/lang/String;)V");
 
   index_read_type_.clazz            = get_class_ref(env, MYSQLENGINE "IndexReadType");
   index_read_type_.READ_KEY_EXACT   = get_static_field_id(env, index_read_type_.clazz, "HA_READ_KEY_EXACT", "L" MYSQLENGINE "IndexReadType;");

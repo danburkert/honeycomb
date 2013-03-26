@@ -4,6 +4,7 @@ import com.google.common.collect.BiMap;
 import com.google.inject.Inject;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
+import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 
 import java.util.Map;
@@ -60,10 +61,11 @@ public class HBaseStore implements Store {
     }
 
     @Override
-    public void alterTable(String tableName, TableSchema schema) {
-        long tableId = cache.tableCacheGet(tableName);
-        metadata.updateSchema(tableId, cache.schemaCacheGet(tableId), schema);
-        cache.invalidateCache(tableName, tableId);
+    public void addIndex(String tableName, String indexName, IndexSchema schema) {
+    }
+
+    @Override
+    public void dropIndex(String tableName, String indexName) {
     }
 
     @Override
