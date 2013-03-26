@@ -185,12 +185,15 @@ public class HandlerProxy {
 
     public void startTableScan() {
         checkTableOpen();
+        checkState(currentScanner == null, "Previous scan should have ended before starting a new one.");
         this.currentScanner = this.table.tableScan();
     }
 
     public void startIndexScan(byte[] indexKeys) {
         checkTableOpen();
+        checkState(currentScanner == null, "Previous scan should have ended before starting a new one.");
         checkNotNull(indexKeys, "Index scan requires non-null key");
+
         IndexKey key = IndexKey.deserialize(indexKeys);
         QueryType queryType = key.getQueryType();
         switch (queryType) {
@@ -238,6 +241,7 @@ public class HandlerProxy {
 
     public void endScan() {
         Util.closeQuietly(currentScanner);
+        currentScanner = null;
     }
 
     private void checkTableOpen() {

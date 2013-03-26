@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class HBaseTable implements Table {
     private final HTableInterface hTable;
     private final HBaseStore store;
@@ -35,6 +37,7 @@ public class HBaseTable implements Table {
                       @Assisted Long tableId, @Assisted TableSchema schema) {
         Verify.isValidTableId(tableId);
         Verify.isValidTableSchema(schema);
+        Verify.isValidIndexSchema(schema.getIndices(), schema.getColumns());
         this.hTable = hTable;
         this.store = store;
         this.tableId = tableId;
@@ -43,6 +46,7 @@ public class HBaseTable implements Table {
 
     @Override
     public void insert(Row row) {
+        checkNotNull(row);
         final byte[] serializeRow = row.serialize();
         final UUID uuid = row.getUUID();
 
@@ -58,12 +62,14 @@ public class HBaseTable implements Table {
 
     @Override
     public void update(Row row) {
+        checkNotNull(row);
         this.delete(row.getUUID());
         this.insert(row);
     }
 
     @Override
     public void delete(final UUID uuid) {
+        checkNotNull(uuid);
         Row row = this.get(uuid);
         final List<Delete> deleteList = Lists.newLinkedList();
         deleteList.add(new Delete(new DataRow(this.tableId, uuid).encode()));

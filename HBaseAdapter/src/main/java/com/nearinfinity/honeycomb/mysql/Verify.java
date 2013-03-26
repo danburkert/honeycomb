@@ -42,10 +42,9 @@ public class Verify {
      */
     public static void isValidTableSchema(TableSchema schema) {
         checkNotNull(schema);
-        isValidIndexSchema(schema.getIndices(), schema.getColumns());
     }
 
-    private static void isValidIndexSchema(Map<String, IndexSchema> indices,
+    public static void isValidIndexSchema(Map<String, IndexSchema> indices,
                                           Map<String, ColumnSchema> columns) {
         for (IndexSchema index : indices.values()) {
             for (String column : index.getColumns()) {
