@@ -5,7 +5,7 @@
 #include "Macros.h"
 #include "IndexContainer.h"
 
-IndexContainer::QueryType retrieve_query_flag(enum ha_rkey_function find_flag);
+static IndexContainer::QueryType retrieve_query_flag(enum ha_rkey_function find_flag);
 
 int HoneycombHandler::index_init(uint idx, bool sorted)
 {
@@ -78,8 +78,7 @@ int HoneycombHandler::full_index_scan(uchar* buf, IndexContainer::QueryType quer
   index_key.set_name(key_info->name);
   jbyteArray jserialized_key = serialize_to_java(index_key);
   this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().start_index_scan, jserialized_key);
-  int rc = get_next_index_row(buf);
-  return rc;
+  return get_next_index_row(buf);
 }
 
 int HoneycombHandler::index_next(uchar *buf)
@@ -92,6 +91,15 @@ int HoneycombHandler::index_prev(uchar *buf)
 {
   DBUG_ENTER("HoneycombHandler::index_prev");
   DBUG_RETURN(this->retrieve_value_from_index(buf));
+}
+
+int HoneycombHandler::index_end()
+{
+  DBUG_ENTER("HoneycombHandler::index_end");
+
+  this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().end_index_scan);
+
+  DBUG_RETURN(0);
 }
 
 int HoneycombHandler::retrieve_value_from_index(uchar* buf)
@@ -133,11 +141,12 @@ int HoneycombHandler::read_row(uchar *buf, Row* row)
     this->table->status = STATUS_NOT_READ;
     return HA_ERR_INTERNAL_ERROR;
   }
+
   this->table->status = 0;
   return 0;
 }
 
-IndexContainer::QueryType retrieve_query_flag(enum ha_rkey_function find_flag)
+static IndexContainer::QueryType retrieve_query_flag(enum ha_rkey_function find_flag)
 {
   switch(find_flag)
   {

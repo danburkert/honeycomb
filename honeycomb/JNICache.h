@@ -22,7 +22,8 @@ class JNICache
                 start_index_scan,
                 get_next_row,
                 flush,
-                get_auto_inc_value;
+                get_auto_inc_value,
+                end_index_scan;
     };
     struct HBaseAdapter
     {

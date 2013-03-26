@@ -4,15 +4,6 @@
 #include "Logging.h"
 #include "Macros.h"
 
-int HoneycombHandler::index_end()
-{
-  DBUG_ENTER("HoneycombHandler::index_end");
-
-  this->end_scan();
-
-  DBUG_RETURN(0);
-}
-
 int HoneycombHandler::get_index_row(jfieldID field_id, uchar* buf)
 {
   JavaFrame frame(env, 2);
