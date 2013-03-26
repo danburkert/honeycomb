@@ -1,20 +1,21 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.nearinfinity.honeycomb.RowNotFoundException;
-import com.nearinfinity.honeycomb.hbaseclient.Constants;
-import com.nearinfinity.honeycomb.mysql.gen.*;
-import org.xml.sax.SAXException;
+import static org.fest.assertions.Assertions.assertThat;
 
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.fest.assertions.Assertions.assertThat;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.nearinfinity.honeycomb.RowNotFoundException;
+import com.nearinfinity.honeycomb.hbaseclient.Constants;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
+import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.gen.QueryType;
+import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 
 public class HandleProxyIntegrationTest {
     public static final String COLUMN1 = "c1";
@@ -24,7 +25,7 @@ public class HandleProxyIntegrationTest {
     private static final String tableName = "db/test";
     private static HandlerProxyFactory factory;
 
-    public static void suiteSetup() throws IOException, SAXException, ParserConfigurationException {
+    public static void suiteSetup() {
         factory = Bootstrap.startup();
     }
 
