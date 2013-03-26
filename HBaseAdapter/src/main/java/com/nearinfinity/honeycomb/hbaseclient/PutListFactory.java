@@ -11,7 +11,7 @@ import java.util.*;
 
 public class PutListFactory {
     /**
-     * Takes a MySQL row and turns it into a collection of HBase rows for insert/update.
+     * Takes a MySQL row and turns it into a collection of HBase rows for insertRow/update.
      *
      * @param values      A MySQL row
      * @param info        Metadata about the HBase sql table
@@ -54,7 +54,7 @@ public class PutListFactory {
     }
 
     /**
-     * Creates HBase index rows for all SQL indexes for insert/update.
+     * Creates HBase index rows for all SQL indexes for insertRow/update.
      *
      * @param values      A MySQL row
      * @param info        Metadata about the HBase sql table

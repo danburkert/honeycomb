@@ -1,5 +1,7 @@
 package com.nearinfinity.honeycomb.mysql;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.nearinfinity.honeycomb.RuntimeIOException;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
@@ -13,6 +15,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -176,5 +180,20 @@ public class Util {
             logger.error("IOException thrown while closing resource.", e);
             throw new RuntimeIOException(e);
         }
+    }
+
+    /**
+     * Return the set of names of unique indices in the table.
+     * @param schema
+     * @return
+     */
+    public static Set<String> uniqueIndices(TableSchema schema) {
+        Set<String> indices = Sets.newHashSet();
+        for (Map.Entry<String, IndexSchema> entry : schema.getIndices().entrySet()) {
+            if (entry.getValue().getIsUnique()) {
+                indices.add(entry.getKey());
+            }
+        }
+        return ImmutableSet.copyOf(indices);
     }
 }

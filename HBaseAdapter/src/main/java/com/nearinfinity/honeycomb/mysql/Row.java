@@ -63,25 +63,31 @@ public class Row {
     }
 
     /**
-     * Returns the a map of column names to records of this Row.
-     *
-     * @return Map of column names to records
+     * Set UUID to a new random UUID
      */
-    public Map<String, byte[]> getRecords() {
-        // Currently the record is always either null or a byte array.  We
-        // should move to more specific data types in the future in order to
-        // take advantage of more efficient Avro encoding.
+    public void setRandomUUID() {
+        row.setUuid(new UUIDContainer(Util.UUIDToBytes(UUID.randomUUID())));
+    }
 
-        // We should move away from explicitly using a TreeMap when we have
-        // access to the Avro container in C++.  At this point the stuff below
-        // will be unnecessary, and we can replace it with
-        // return row.getRecords();
+    /**
+     * Remove me
+     */
+    public Map<String, byte[]> getRecordsLegacy() {
         Map<String, byte[]> retMap = new TreeMap<String, byte[]>();
         for (Map.Entry<String, ByteBuffer> entry : row.getRecords().entrySet()) {
             retMap.put(entry.getKey(), (entry.getValue() == null) ? null : entry.getValue().array());
         }
 
         return retMap;
+    }
+
+    /**
+     * Returns the a map of column names to records of this Row.
+     *
+     * @return Map of column names to records
+     */
+    public Map<String, ByteBuffer> getRecords() {
+        return row.getRecords();
     }
 
     /**
@@ -136,11 +142,11 @@ public class Row {
     }
 
     public Map<String, byte[]> getRowMap() {
-        return new TreeMap<String, byte[]>(getRecords());
+        return new TreeMap<String, byte[]>(getRecordsLegacy());
     }
 
     public byte[][] getValues() {
-        Map<String, byte[]> records = getRecords();
+        Map<String, byte[]> records = getRecordsLegacy();
         return records.values().toArray(new byte[records.size()][]);
     }
 

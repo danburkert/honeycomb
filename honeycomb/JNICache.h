@@ -25,7 +25,9 @@ class JNICache
                 get_auto_inc_value,
                 end_index_scan,
                 add_index,
-                drop_index;
+                drop_index,
+                index_contains_duplicate,
+                insert_row;
     };
     struct HBaseAdapter
     {

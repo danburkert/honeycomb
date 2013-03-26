@@ -20,7 +20,7 @@ public class DeleteListFactory {
         List<Delete> deleteList = new LinkedList<Delete>();
         deleteList.add(new Delete(dataRowKey));
 
-        Map<String, byte[]> values = ResultReader.readDataRow(result, info).getRecords();
+        Map<String, byte[]> values = ResultReader.readDataRow(result, info).getRecordsLegacy();
         Set<String> columnNames = info.getColumnNames();
         for (String columnName : columnNames) {
             if (!values.containsKey(columnName)) {

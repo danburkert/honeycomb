@@ -20,6 +20,7 @@ import com.nearinfinity.honeycomb.mysql.gen.*;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -199,7 +200,7 @@ public class HBaseTable implements Table {
     }
 
     private void doToIndices(Row row, IndexAction action) {
-        Map<String, byte[]> records = row.getRecords();
+        Map<String, ByteBuffer> records = row.getRecords();
         Map<String, Long> indexIds = this.store.getIndices(this.tableId);
 
         for (Map.Entry<String, IndexSchema> index : schema.getIndices().entrySet()) {

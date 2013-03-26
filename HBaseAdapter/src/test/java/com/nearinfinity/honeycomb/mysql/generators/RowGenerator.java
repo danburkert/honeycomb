@@ -13,7 +13,7 @@ public class RowGenerator implements Generator<Row> {
     private static Generator<Map<String, ByteBuffer>> records =
             CombinedGenerators.maps(
                     PrimitiveGenerators.strings(),
-                    new ByteBufferGenerator<ByteBuffer>());
+                    new ByteBufferGenerator());
     Generator<UUID> uuids = new UUIDGenerator();
 
     @Override

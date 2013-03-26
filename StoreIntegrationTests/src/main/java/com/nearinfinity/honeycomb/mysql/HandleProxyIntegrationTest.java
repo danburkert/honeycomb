@@ -121,7 +121,7 @@ public class HandleProxyIntegrationTest {
     }
 
     public static void testInsertRow() {
-        testProxy("Testing insert row", new Action() {
+        testProxy("Testing insertRow row", new Action() {
             @Override
             public void execute(HandlerProxy proxy) {
                 Map<String, ByteBuffer> map = Maps.newHashMap();
@@ -129,7 +129,7 @@ public class HandleProxyIntegrationTest {
                 map.put(COLUMN2, encodeValue(6));
                 UUID uuid = UUID.randomUUID();
                 Row row = new Row(map, uuid);
-                proxy.insert(row.serialize());
+                proxy.insertRow(row.serialize());
                 proxy.flush();
                 Row result = proxy.getRow(uuid);
                 assertThat(result).isEqualTo(row);
@@ -146,7 +146,7 @@ public class HandleProxyIntegrationTest {
                 map.put(COLUMN2, encodeValue(6));
                 UUID uuid = UUID.randomUUID();
                 Row row = new Row(map, uuid);
-                proxy.insert(row.serialize());
+                proxy.insertRow(row.serialize());
                 proxy.flush();
                 proxy.deleteRow(uuid);
                 proxy.flush();
@@ -170,7 +170,7 @@ public class HandleProxyIntegrationTest {
                 map.put(COLUMN1, encodeValue(5));
                 map.put(COLUMN2, encodeValue(6));
                 Row row = new Row(map, uuid);
-                proxy.insert(row.serialize());
+                proxy.insertRow(row.serialize());
                 proxy.flush();
 
                 map.put(COLUMN1, encodeValue(3));
@@ -386,7 +386,7 @@ public class HandleProxyIntegrationTest {
         for (int x = 0; x < rows; x++) {
             map.put(COLUMN2, encodeValue(x));
             Row row = new Row(map, uuid);
-            proxy.insert(row.serialize());
+            proxy.insertRow(row.serialize());
         }
         proxy.flush();
     }
@@ -397,7 +397,7 @@ public class HandleProxyIntegrationTest {
         for (int x = 0; x < rows; x++) {
             map.put(COLUMN2, encodeValue(x));
             Row row = new Row(map, UUID.randomUUID());
-            proxy.insert(row.serialize());
+            proxy.insertRow(row.serialize());
         }
         proxy.flush();
     }
@@ -407,7 +407,7 @@ public class HandleProxyIntegrationTest {
         for (int x = 0; x < rows; x++) {
             map.put(column, encodeValue(x));
             Row row = new Row(map, UUID.randomUUID());
-            proxy.insert(row.serialize());
+            proxy.insertRow(row.serialize());
         }
         proxy.flush();
     }

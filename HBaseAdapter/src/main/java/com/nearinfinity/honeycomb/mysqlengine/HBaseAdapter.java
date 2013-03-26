@@ -456,7 +456,7 @@ public class HBaseAdapter {
     }
 
     /**
-     * Checks that the SQL row would not violate a unique index on insert.
+     * Checks that the SQL row would not violate a unique index on insertRow.
      *
      * @param tableName SQL table name
      * @param values    SQL row to check
@@ -469,7 +469,7 @@ public class HBaseAdapter {
             long start = System.currentTimeMillis();
             String r = reader.findDuplicateKey(tableName, values);
             long end = System.currentTimeMillis();
-            Metrics.getInstance().addStat("find dup key insert", end - start);
+            Metrics.getInstance().addStat("find dup key insertRow", end - start);
             return r;
         } catch (Throwable e) {
             logger.error("Exception:", e);

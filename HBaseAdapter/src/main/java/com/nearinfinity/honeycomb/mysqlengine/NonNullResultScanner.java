@@ -40,7 +40,7 @@ public class NonNullResultScanner implements HBaseResultScanner {
                 return null;
             }
             row = ResultReader.readIndexRow(result);
-            rowMap = row.getRecords();
+            rowMap = row.getRecordsLegacy();
             value = rowMap.get(this.columnName);
 
 

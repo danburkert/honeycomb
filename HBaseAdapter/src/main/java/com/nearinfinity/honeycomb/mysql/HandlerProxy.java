@@ -109,7 +109,7 @@ public class HandlerProxy {
     public long getAutoIncValue() {
         checkTableOpen();
         if (!Verify.hasAutoIncrementColumn(store.getSchema(tableName))) {
-            throw new IllegalArgumentException(format("Table %s is not an autoincrement table.", this.tableName));
+            throw new IllegalArgumentException(format("Table %s does not contain an auto increment column.", this.tableName));
         }
 
         return store.getAutoInc(tableName);
@@ -118,7 +118,7 @@ public class HandlerProxy {
     public long incrementAutoIncrementValue(long amount) {
         checkTableOpen();
         if (!Verify.hasAutoIncrementColumn(store.getSchema(tableName))) {
-            throw new IllegalArgumentException(format("Column %s is not an autoincrement column.", this.tableName));
+            throw new IllegalArgumentException(format("Table %s does not contain an auto increment column.", this.tableName));
         }
 
         return this.store.incrementAutoInc(this.getTableName(), amount);
@@ -129,7 +129,7 @@ public class HandlerProxy {
         checkNotNull(serializedSchema);
 
         IndexSchema schema = Util.deserializeIndexSchema(serializedSchema);
-        checkArgument(!schema.getIsUnique(), "Honeycomb does not support adding unique indices.");
+        checkArgument(!schema.getIsUnique(), "Honeycomb does not support adding unique indices without a table rebuild.");
         this.store.addIndex(this.tableName, indexName, schema);
     }
 
@@ -155,9 +155,47 @@ public class HandlerProxy {
         this.store.truncateRowCount(this.tableName);
     }
 
-    public void insert(byte[] rowBytes) {
+    /**
+     * Check whether the index contains a row with the same field values and a
+     * distinct UUID.
+     * @param indexName
+     * @param serializedRow
+     */
+    public boolean indexContainsDuplicate(String indexName, byte[] serializedRow) {
+        // This method must get its own table, because it may be called during
+        // a full table scan.
+        checkNotNull(indexName);
+        checkNotNull(serializedRow);
+
+        Row row = Row.deserialize(serializedRow);
+        Table t = store.openTable(tableName);
+
+        IndexKey key = new IndexKey(indexName, null, row.getRecords());
+        Scanner scanner = t.indexScanExact(key);
+
+        try {
+            while (scanner.hasNext()) {
+                if (scanner.next().getUUID() != row.getUUID()) {
+                    return true;
+                }
+            }
+            return false;
+        } finally {
+            Util.closeQuietly(scanner);
+            Util.closeQuietly(t);
+        }
+    }
+
+    /**
+     * Insert row into table.
+     * @param rowBytes Serialized row to be written
+     * @return true if the write succeeds, or false if a uniqueness constraint
+     *         is violated.
+     */
+    public void insertRow(byte[] rowBytes) {
         checkTableOpen();
         Row row = Row.deserialize(rowBytes);
+        row.setRandomUUID();
         this.table.insert(row);
     }
 
