@@ -46,7 +46,7 @@ public class Util {
      * @param bytes A byte array that must be {@value #UUID_WIDTH} bytes wide, not null
      * @return A {@link UUID} representation
      */
-    public static UUID BytesToUUID(byte[] bytes) {
+    public static UUID bytesToUUID(byte[] bytes) {
         checkNotNull(bytes, "bytes must not be null.");
         checkArgument(bytes.length == UUID_WIDTH, "bytes must be of length " + UUID_WIDTH + ".");
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
