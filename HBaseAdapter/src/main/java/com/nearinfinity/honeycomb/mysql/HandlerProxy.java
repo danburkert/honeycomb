@@ -1,16 +1,18 @@
 package com.nearinfinity.honeycomb.mysql;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static java.lang.String.format;
+
+import java.util.UUID;
+
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
-
-import java.util.UUID;
-
-import static com.google.common.base.Preconditions.*;
-import static java.lang.String.format;
 
 public class HandlerProxy {
     private final StoreFactory storeFactory;
@@ -38,7 +40,7 @@ public class HandlerProxy {
         Verify.isNotNullOrEmpty(tableName);
         checkNotNull(serializedTableSchema);
 
-        this.store = this.storeFactory.createStore(tableSpace);
+        store = storeFactory.createStore(tableSpace);
         TableSchema tableSchema = Util.deserializeTableSchema(serializedTableSchema);
         Verify.isValidTableSchema(tableSchema);
         store.createTable(tableName, tableSchema);
@@ -54,7 +56,7 @@ public class HandlerProxy {
      */
     public void dropTable(String tableName, String tableSpace) {
         Verify.isNotNullOrEmpty(tableName);
-        Store store = this.storeFactory.createStore(tableSpace);
+        Store store = storeFactory.createStore(tableSpace);
         Table table = store.openTable(tableName);
         table.deleteAllRows();
 
@@ -65,15 +67,15 @@ public class HandlerProxy {
     public void openTable(String tableName, String tableSpace) {
         Verify.isNotNullOrEmpty(tableName);
         this.tableName = tableName;
-        this.store = this.storeFactory.createStore(tableSpace);
-        this.table = this.store.openTable(this.tableName);
+        store = storeFactory.createStore(tableSpace);
+        table = store.openTable(this.tableName);
     }
 
     public void closeTable() {
-        this.tableName = null;
-        this.store = null;
+        tableName = null;
+        store = null;
         Util.closeQuietly(table);
-        this.table = null;
+        table = null;
     }
 
     public String getTableName() {
@@ -95,21 +97,21 @@ public class HandlerProxy {
         Verify.isNotNullOrEmpty(newName, "New table name must have value.");
         checkArgument(!originalName.equals(newName), "New table name must be different than original.");
 
-        Store store = this.storeFactory.createStore(tableSpace);
+        Store store = storeFactory.createStore(tableSpace);
         store.renameTable(originalName, newName);
-        this.tableName = newName;
+        tableName = newName;
     }
 
     public long getRowCount() {
         checkTableOpen();
 
-        return this.store.getRowCount(this.tableName);
+        return store.getRowCount(tableName);
     }
 
     public long getAutoIncValue() {
         checkTableOpen();
         if (!Verify.hasAutoIncrementColumn(store.getSchema(tableName))) {
-            throw new IllegalArgumentException(format("Table %s is not an autoincrement table.", this.tableName));
+            throw new IllegalArgumentException(format("Table %s is not an autoincrement table.", tableName));
         }
 
         return store.getAutoInc(tableName);
@@ -118,72 +120,74 @@ public class HandlerProxy {
     public long incrementAutoIncrementValue(long amount) {
         checkTableOpen();
         if (!Verify.hasAutoIncrementColumn(store.getSchema(tableName))) {
-            throw new IllegalArgumentException(format("Column %s is not an autoincrement column.", this.tableName));
+            throw new IllegalArgumentException(format("Column %s is not an autoincrement column.", tableName));
         }
 
-        return this.store.incrementAutoInc(this.getTableName(), amount);
+        return store.incrementAutoInc(getTableName(), amount);
     }
 
     public void addIndex(String indexName, byte[] serializedSchema) {
         checkNotNull(indexName);
         checkNotNull(serializedSchema);
+        checkTableOpen();
 
         IndexSchema schema = Util.deserializeIndexSchema(serializedSchema);
         checkArgument(!schema.getIsUnique(), "Honeycomb does not support adding unique indices.");
-        this.store.addIndex(this.tableName, indexName, schema);
+        store.addIndex(tableName, indexName, schema);
     }
 
     public void dropIndex(String indexName) {
         checkNotNull(indexName);
+        checkTableOpen();
 
-        this.store.dropIndex(this.tableName, indexName);
+        store.dropIndex(tableName, indexName);
     }
 
     public void truncateAutoIncrement() {
         checkTableOpen();
-        this.store.truncateAutoInc(this.tableName);
+        store.truncateAutoInc(tableName);
     }
 
     public void incrementRowCount(int amount) {
         checkTableOpen();
 
-        this.store.incrementRowCount(this.tableName, amount);
+        store.incrementRowCount(tableName, amount);
     }
 
     public void truncateRowCount() {
         checkTableOpen();
-        this.store.truncateRowCount(this.tableName);
+        store.truncateRowCount(tableName);
     }
 
     public void insert(byte[] rowBytes) {
         checkTableOpen();
         Row row = Row.deserialize(rowBytes);
-        this.table.insert(row);
+        table.insert(row);
     }
 
     public void flush() {
         // MySQL will call flush on the handler without an open table, which is
         // a no-op
-        if (this.table != null) {
-            this.table.flush();
+        if (table != null) {
+            table.flush();
         }
     }
 
     public Row getRow(UUID uuid) {
         checkTableOpen();
-        return this.table.get(uuid);
+        return table.get(uuid);
     }
 
     public void deleteRow(UUID uuid) {
         checkTableOpen();
-        this.table.delete(uuid);
+        table.delete(uuid);
     }
 
     public void updateRow(byte[] newRowBytes) {
         checkTableOpen();
         checkNotNull(newRowBytes);
         Row newRow = Row.deserialize(newRowBytes);
-        this.table.update(newRow);
+        table.update(newRow);
     }
 
     public void startIndexScan(byte[] indexKeys) {
@@ -192,40 +196,40 @@ public class HandlerProxy {
         QueryType queryType = key.getQueryType();
         switch (queryType) {
             case EXACT_KEY:
-                this.currentScanner = this.table.indexScanExact(key);
+                currentScanner = table.indexScanExact(key);
                 break;
             case AFTER_KEY:
-                this.currentScanner = this.table.ascendingIndexScanAfter(key);
+                currentScanner = table.ascendingIndexScanAfter(key);
                 break;
             case BEFORE_KEY:
-                this.currentScanner = this.table.descendingIndexScanAfter(key);
+                currentScanner = table.descendingIndexScanAfter(key);
                 break;
             case INDEX_FIRST:
-                this.currentScanner = this.table.ascendingIndexScanAt(key);
+                currentScanner = table.ascendingIndexScanAt(key);
                 break;
             case INDEX_LAST:
-                this.currentScanner = this.table.descendingIndexScanAt(key);
+                currentScanner = table.descendingIndexScanAt(key);
                 break;
             case KEY_OR_NEXT:
-                this.currentScanner = this.table.ascendingIndexScanAt(key);
+                currentScanner = table.ascendingIndexScanAt(key);
                 break;
             case KEY_OR_PREVIOUS:
-                this.currentScanner = this.table.descendingIndexScanAt(key);
+                currentScanner = table.descendingIndexScanAt(key);
                 break;
         }
 
     }
 
     public byte[] getNextRow() {
-        if (!this.currentScanner.hasNext()) {
+        if (!currentScanner.hasNext()) {
             return null;
         }
 
-        return this.currentScanner.next().serialize();
+        return currentScanner.next().serialize();
     }
 
     public void endIndexScan() {
-        Util.closeQuietly(this.currentScanner);
+        Util.closeQuietly(currentScanner);
     }
 
     private void checkTableOpen() {
