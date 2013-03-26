@@ -43,7 +43,7 @@ else()
 endif()
 
 SET(HONEYCOMB_PLUGIN_DYNAMIC "ha_honeycomb")
-SET(HONEYCOMB_SOURCES HoneycombHandler.cc Search.cc Crud.cc DDL.cc ha_honeycomb.cc
+SET(HONEYCOMB_SOURCES HoneycombHandler.cc Crud.cc DDL.cc ha_honeycomb.cc
   Util.cc JNISetup.cc Logging.cc Java.cc OptionParser.cc FieldMetadata.cc
   JNICache.cc JavaFrame.cc AvroUtil.cc Row.cc TableSchema.cc IndexSchema.cc ColumnSchema.cc
   IndexContainer.cc Query.cc)

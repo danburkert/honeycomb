@@ -186,6 +186,11 @@ public class HandlerProxy {
         this.table.update(newRow);
     }
 
+    public void startTableScan() {
+        checkTableOpen();
+        this.currentScanner = this.table.tableScan();
+    }
+
     public void startIndexScan(byte[] indexKeys) {
         checkTableOpen();
         IndexKey key = IndexKey.deserialize(indexKeys);
@@ -224,7 +229,12 @@ public class HandlerProxy {
         return this.currentScanner.next().serialize();
     }
 
-    public void endIndexScan() {
+    public byte[] getRow(byte[] uuid) {
+        checkTableOpen();
+        return this.table.get(Util.bytesToUUID(uuid)).serialize();
+    }
+
+    public void endScan() {
         Util.closeQuietly(this.currentScanner);
     }
 

@@ -222,9 +222,14 @@ int HoneycombHandler::external_lock(THD *thd, int lock_type)
 {
   DBUG_ENTER("HoneycombHandler::external_lock");
   int ret = 0;
-  if (lock_type == F_UNLCK)
+
+  if (lock_type == F_WRLCK || lock_type == F_RDLCK)
   {
     attach_thread(jvm, env);
+  }
+
+  if (lock_type == F_UNLCK)
+  {
     ret |= this->flush();
     detach_thread(jvm);
   }
