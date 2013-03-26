@@ -1,18 +1,16 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-import static java.lang.String.format;
-
-import java.util.UUID;
-
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+
+import java.util.UUID;
+
+import static com.google.common.base.Preconditions.*;
+import static java.lang.String.format;
 
 public class HandlerProxy {
     private final StoreFactory storeFactory;
@@ -197,6 +195,7 @@ public class HandlerProxy {
 
     public void startIndexScan(byte[] indexKeys) {
         checkTableOpen();
+        checkNotNull(indexKeys, "Index scan requires non-null key");
         IndexKey key = IndexKey.deserialize(indexKeys);
         QueryType queryType = key.getQueryType();
         switch (queryType) {
@@ -221,11 +220,14 @@ public class HandlerProxy {
             case KEY_OR_PREVIOUS:
                 currentScanner = table.descendingIndexScanAt(key);
                 break;
+            default:
+                throw new IllegalArgumentException(format("Not a supported type of query %s", queryType));
         }
 
     }
 
     public byte[] getNextRow() {
+        checkNotNull(currentScanner, "Scanner cannot be null to get next row.");
         if (!currentScanner.hasNext()) {
             return null;
         }
@@ -235,6 +237,7 @@ public class HandlerProxy {
 
     public byte[] getRow(byte[] uuid) {
         checkTableOpen();
+        checkNotNull(uuid, "Get row cannot have a null UUID.");
         return this.table.get(Util.bytesToUUID(uuid)).serialize();
     }
 
