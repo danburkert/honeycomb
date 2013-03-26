@@ -128,8 +128,8 @@ public class HandleProxyIntegrationTest {
                 Row row = new Row(map, uuid);
                 proxy.insert(row.serialize());
                 proxy.flush();
-                Row result = proxy.getRow(uuid);
-                assertThat(result).isEqualTo(row);
+                byte[] result = proxy.getRow(Util.UUIDToBytes(uuid));
+                assertThat(Row.deserialize(result)).isEqualTo(row);
             }
         });
     }
@@ -148,7 +148,7 @@ public class HandleProxyIntegrationTest {
                 proxy.deleteRow(uuid);
                 proxy.flush();
                 try {
-                    proxy.getRow(uuid);
+                    proxy.getRow(Util.UUIDToBytes(uuid));
                 } catch (RowNotFoundException e) {
                     return;
                 }
@@ -174,8 +174,8 @@ public class HandleProxyIntegrationTest {
                 Row newRow = new Row(map, uuid);
                 proxy.updateRow(newRow.serialize());
                 proxy.flush();
-                Row result = proxy.getRow(uuid);
-                assertThat(result).isEqualTo(newRow);
+                byte[] result = proxy.getRow(Util.UUIDToBytes(uuid));
+                assertThat(Row.deserialize(result)).isEqualTo(newRow);
             }
         });
     }
@@ -319,9 +319,9 @@ public class HandleProxyIntegrationTest {
             public void execute(HandlerProxy proxy) {
                 UUID uuid = UUID.randomUUID();
                 insertData(proxy, 1, 1, uuid);
-                Row result = proxy.getRow(uuid);
+                byte[] result = proxy.getRow(Util.UUIDToBytes(uuid));
                 assertThat(result).isNotNull();
-                assertThat(result.getUUID()).isEqualTo(uuid);
+                assertThat(Row.deserialize(result).getUUID()).isEqualTo(uuid);
             }
         });
     }

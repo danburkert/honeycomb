@@ -171,11 +171,6 @@ public class HandlerProxy {
         }
     }
 
-    public Row getRow(UUID uuid) {
-        checkTableOpen();
-        return table.get(uuid);
-    }
-
     public void deleteRow(UUID uuid) {
         checkTableOpen();
         table.delete(uuid);
