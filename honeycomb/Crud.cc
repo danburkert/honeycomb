@@ -6,51 +6,6 @@
 #include "Macros.h"
 #include "JNISetup.h"
 
-/**
- * @brief Create the Java object for the multi-column index.
- *
- * @param table_arg SQL Table
- *
- * @return Multi-column index object
- */
-jobject HoneycombHandler::create_multipart_keys(TABLE* table_arg)
-{
-  uint keys = table_arg->s->keys;
-  jobject java_keys = env->NewObject(cache->table_multipart_keys().clazz,
-      cache->table_multipart_keys().init);
-  NULL_CHECK_ABORT(java_keys, "HoneycombHandler::create_multipart_keys: OutOfMemoryError while calling NewObject");
-  JavaFrame frame(env, keys);
-  for (uint key = 0; key < keys; key++)
-  {
-    char* name = index_name(table_arg, key);
-    jboolean is_unique = (table_arg->key_info + key)->flags & HA_NOSAME;
-    jstring jname = string_to_java_string(name);
-    this->env->CallVoidMethod(java_keys,
-        cache->table_multipart_keys().add_multipart_key, jname, is_unique);
-    EXCEPTION_CHECK("HoneycombHandler::create_multipart_keys", "calling addMultipartKey");
-    ARRAY_DELETE(name);
-  }
-  return java_keys;
-}
-
-/**
- * Returned jobject is a local ref that must be deleted by caller.
- */
-jobject HoneycombHandler::create_multipart_key(KEY* key, KEY_PART_INFO* key_part,
-    KEY_PART_INFO* key_part_end, uint key_parts)
-{
-  jobject java_keys = env->NewObject(cache->table_multipart_keys().clazz,
-      cache->table_multipart_keys().init);
-  NULL_CHECK_ABORT(java_keys, "HoneycombHandler::create_multipart_key: OutOfMemoryError while calling NewObject");
-  char* name = index_name(key_part, key_part_end, key_parts);
-  jboolean is_unique = key->flags & HA_NOSAME;
-  this->env->CallVoidMethod(java_keys, cache->table_multipart_keys().add_multipart_key,
-      string_to_java_string(name), is_unique);
-  EXCEPTION_CHECK("HoneycombHandler::create_multipart_key", "calling addMultipartKey");
-  ARRAY_DELETE(name);
-  return java_keys;
-}
-
 int HoneycombHandler::write_row(uchar* buf, jobject updated_fields)
 {
   if (share->crashed)

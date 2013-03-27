@@ -139,7 +139,7 @@ int HoneycombHandler::pack_row(uchar *buf, TABLE* table, Row* row)
 bool HoneycombHandler::violates_uniqueness(jbyteArray serialized_row)
 {
   JavaFrame frame(env, table->s->keys);
-  for (int i = 0; i < table->s->keys; i++) // for all indices
+  for (uint i = 0; i < table->s->keys; i++) // for all indices
   {
     if (table->key_info[i].flags & HA_NOSAME) // filter on uniqueness
     {
