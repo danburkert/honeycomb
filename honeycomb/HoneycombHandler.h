@@ -57,7 +57,6 @@ class HoneycombHandler : public handler
     jobject sql_to_java();
     int delete_all_rows();
     int truncate();
-    bool is_key_null(const uchar *key);
     void store_uuid_ref(Row* row);
     int full_index_scan(uchar* buf, IndexContainer::QueryType query);
     void bytes_to_long(const uchar* buff, unsigned int buff_length, bool is_signed, uchar* long_buff);
@@ -70,8 +69,6 @@ class HoneycombHandler : public handler
     bool row_has_duplicate_values(jobject value_map, jobject changedColumns);
     int get_failed_key_index(const char *key_name);
     void store_field_value(Field *field, const char* val, int length);
-    jobject create_multipart_keys(TABLE* table_arg);
-    jobject create_multipart_key(KEY* key, KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts);
     char* index_name(KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts);
     char* index_name(TABLE* table, uint key);
     jobject create_key_value_list(int index, uint* key_sizes, uchar** key_copies, const char** key_names, jboolean* key_null_bits, jboolean* key_is_null);

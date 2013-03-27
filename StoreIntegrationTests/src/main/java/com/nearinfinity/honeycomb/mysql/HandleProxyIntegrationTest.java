@@ -2,7 +2,6 @@ package com.nearinfinity.honeycomb.mysql;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.nearinfinity.honeycomb.RowNotFoundException;
 import com.nearinfinity.honeycomb.hbaseclient.Constants;
 import com.nearinfinity.honeycomb.mysql.gen.*;
 
@@ -128,8 +127,8 @@ public class HandleProxyIntegrationTest {
                 Row row = new Row(map, uuid);
                 proxy.insertRow(row.serialize());
                 proxy.flush();
-                byte[] result = proxy.getRow(Util.UUIDToBytes(uuid));
-                assertThat(Row.deserialize(result)).isEqualTo(row);
+                IndexKey key = createKey(5, QueryType.EXACT_KEY);
+                assertReceivingDifferentRows(proxy, key, 1);
             }
         });
     }
@@ -145,15 +144,11 @@ public class HandleProxyIntegrationTest {
                 Row row = new Row(map, uuid);
                 proxy.insertRow(row.serialize());
                 proxy.flush();
-                proxy.deleteRow(uuid);
+                IndexKey key = createKey(5, QueryType.EXACT_KEY);
+                proxy.startIndexScan(key.serialize());
+                Row r = Row.deserialize(proxy.getNextRow());
+                proxy.deleteRow(r.getUUID());
                 proxy.flush();
-                try {
-                    proxy.getRow(Util.UUIDToBytes(uuid));
-                } catch (RowNotFoundException e) {
-                    return;
-                }
-
-                throw new AssertionError("Row was not deleted");
             }
         });
     }
@@ -167,14 +162,18 @@ public class HandleProxyIntegrationTest {
                 map.put(COLUMN1, encodeValue(5));
                 map.put(COLUMN2, encodeValue(6));
                 Row row = new Row(map, uuid);
-                proxy.insertRow(row.serialize());
+                byte[] serialize = row.serialize();
+                proxy.insertRow(serialize);
                 proxy.flush();
+                IndexKey key = createKey(5, QueryType.EXACT_KEY);
+                proxy.startIndexScan(key.serialize());
+                Row r = Row.deserialize(proxy.getNextRow());
 
                 map.put(COLUMN1, encodeValue(3));
-                Row newRow = new Row(map, uuid);
+                Row newRow = new Row(map, r.getUUID());
                 proxy.updateRow(newRow.serialize());
                 proxy.flush();
-                byte[] result = proxy.getRow(Util.UUIDToBytes(uuid));
+                byte[] result = proxy.getRow(Util.UUIDToBytes(r.getUUID()));
                 assertThat(Row.deserialize(result)).isEqualTo(newRow);
             }
         });
@@ -317,11 +316,13 @@ public class HandleProxyIntegrationTest {
         testProxy("Testing get row", new Action() {
             @Override
             public void execute(HandlerProxy proxy) {
-                UUID uuid = UUID.randomUUID();
-                insertData(proxy, 1, 1, uuid);
-                byte[] result = proxy.getRow(Util.UUIDToBytes(uuid));
+                insertData(proxy, 1, 1);
+                IndexKey key = createKey(1, QueryType.EXACT_KEY);
+                proxy.startIndexScan(key.serialize());
+                Row r = Row.deserialize(proxy.getNextRow());
+                byte[] result = proxy.getRow(Util.UUIDToBytes(r.getUUID()));
                 assertThat(result).isNotNull();
-                assertThat(Row.deserialize(result).getUUID()).isEqualTo(uuid);
+                assertThat(Row.deserialize(result).getUUID()).isEqualTo(r.getUUID());
             }
         });
     }
