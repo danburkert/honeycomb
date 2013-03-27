@@ -9,11 +9,14 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 import java.io.IOException;
 import java.util.Iterator;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class HBaseScanner implements Scanner {
     private final ResultScanner scanner;
     private final Iterator<Result> resultIterator;
 
     public HBaseScanner(ResultScanner scanner) {
+        checkNotNull(scanner, "Result scanner cannot be null.");
         this.scanner = scanner;
         this.resultIterator = this.scanner.iterator();
     }
