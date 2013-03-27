@@ -25,18 +25,19 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   handler_proxy_.end_scan                 = get_method_id(env, handler_proxy_.clazz, "endScan", "()V");
   handler_proxy_.get_next_row             = get_method_id(env, handler_proxy_.clazz, "getNextRow", "()[B");
   handler_proxy_.flush                    = get_method_id(env, handler_proxy_.clazz, "flush", "()V");
-  handler_proxy_.get_auto_inc_value       = get_method_id(env, handler_proxy_.clazz, "getAutoIncValue", "()J");
   handler_proxy_.add_index                = get_method_id(env, handler_proxy_.clazz, "addIndex", "(Ljava/lang/String;[B)V");
   handler_proxy_.drop_index               = get_method_id(env, handler_proxy_.clazz, "dropIndex", "(Ljava/lang/String;)V");
   handler_proxy_.index_contains_duplicate = get_method_id(env, handler_proxy_.clazz, "indexContainsDuplicate", "(Ljava/lang/String;[B)Z");
   handler_proxy_.insert_row               = get_method_id(env, handler_proxy_.clazz, "insertRow", "([B)V");
   handler_proxy_.increment_row_count      = get_method_id(env, handler_proxy_.clazz, "incrementRowCount", "(J)V");
+  handler_proxy_.increment_auto_increment = get_method_id(env, handler_proxy_.clazz, "incrementAutoIncrement", "(J)J");
+  handler_proxy_.get_auto_increment       = get_method_id(env, handler_proxy_.clazz, "getAutoIncrement", "()J");
 
   TableExistsException   = get_class_ref(env, HONEYCOMB "TableExistsException");
   TableNotFoundException = get_class_ref(env, HONEYCOMB "TableNotFoundException");
   RowNotFoundException   = get_class_ref(env, HONEYCOMB "RowNotFoundException");
   StoreNotFoundException = get_class_ref(env, HONEYCOMB "StoreNotFoundException");
-  RuntimeIOException   = get_class_ref(env, HONEYCOMB "RuntimeIOException");
+  RuntimeIOException     = get_class_ref(env, HONEYCOMB "RuntimeIOException");
 
   hbase_adapter_.clazz                        = get_class_ref(env, MYSQLENGINE "HBaseAdapter");
   hbase_adapter_.initialize                   = get_static_method_id(env, hbase_adapter_.clazz, "initialize", "()V");

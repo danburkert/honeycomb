@@ -42,13 +42,6 @@ HoneycombHandler::~HoneycombHandler()
   detach_thread(this->jvm);
 }
 
-void HoneycombHandler::release_auto_increment()
-{
-  // Stored functions call this last. Hack to get around MySQL not calling
-  // start/end bulk insert on insert in a stored function.
-  this->flush();
-}
-
 int HoneycombHandler::open(const char *path, int mode, uint test_if_locked)
 {
   DBUG_ENTER("HoneycombHandler::open");
@@ -358,7 +351,7 @@ int HoneycombHandler::info(uint flag)
   }
   if ((flag & HA_STATUS_AUTO) && table->found_next_number_field) {
     jlong auto_inc_value = env->CallLongMethod(handler_proxy,
-        cache->handler_proxy().get_auto_inc_value);
+        cache->handler_proxy().get_auto_increment);
     check_exceptions(env, cache, "HoneycombHandler::info getAutoIncValue");
     stats.auto_increment_value = (ulonglong) auto_inc_value;
   }
@@ -421,9 +414,11 @@ int HoneycombHandler::extra(enum ha_extra_function operation)
 
 
 /**
- * TODO: We are not implementing this method correctly.  It is asking for us to
- * block off a section of auto increment values so that the optimizer can hand
- * them out.  It is more akin to increment_auto_increment.
+ * Reserve auto increment values for use by the optimizer.  See the following
+ * for more details:
+ *    handler.cc#2394
+ *    handler.cc#2669
+ * note: `nb` seems to stand for `number`
  */
 void HoneycombHandler::get_auto_increment(ulonglong offset, ulonglong increment,
                                  ulonglong nb_desired_values,
@@ -431,19 +426,30 @@ void HoneycombHandler::get_auto_increment(ulonglong offset, ulonglong increment,
                                  ulonglong *nb_reserved_values)
 {
   DBUG_ENTER("HoneycombHandler::get_auto_increment");
-  jlong value = env->CallLongMethod(handler_proxy, cache->handler_proxy().get_auto_inc_value);
-  check_exceptions(env, cache, "HoneycombHandler::get_auto_increment");
+  ulonglong inc_amount = offset - 1 + increment * nb_desired_values;
+
+  jlong value = env->CallLongMethod(handler_proxy,
+      cache->handler_proxy().increment_auto_increment, inc_amount);
+  if (check_exceptions(env, cache, "HoneycombHandler::get_auto_increment"))
+  { // exception thrown, return error code
+    *first_value = ~(ulonglong) 0;
+    DBUG_VOID_RETURN;
+  }
+
   *first_value = (ulonglong) value;
-  *nb_reserved_values = ULONGLONG_MAX;
+  *nb_reserved_values = nb_desired_values;
   DBUG_VOID_RETURN;
 }
 
+void HoneycombHandler::release_auto_increment()
+{
+  // Stored functions call this last. Hack to get around MySQL not calling
+  // start/end bulk insert on insert in a stored function.
+  this->flush();
+}
+
 /**
- * @brief Retrieves the index of the column that produced the duplicate key on insert/update.
- *
- * @param key_name Name of column with duplicates
- *
- * @return Column index
+ * Delete this function
  */
 int HoneycombHandler::get_failed_key_index(const char *key_name)
 {
@@ -466,6 +472,9 @@ int HoneycombHandler::get_failed_key_index(const char *key_name)
   return -1;
 }
 
+/**
+ * Delete this function
+ */
 bool HoneycombHandler::field_has_unique_index(Field *field)
 {
   for (uint i = 0; i < table->s->keys; i++)

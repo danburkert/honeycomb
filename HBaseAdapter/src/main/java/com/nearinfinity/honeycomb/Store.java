@@ -78,7 +78,8 @@ public interface Store {
     public long getAutoInc(String tableName);
 
     /**
-     * Increment the table's auto increment value by amount
+     * Increment the table's auto increment value by amount, and return the new
+     * value (post increment).
      *
      * @param tableName Name of table
      * @param amount    Amount to auto increment by
