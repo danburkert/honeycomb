@@ -2,13 +2,9 @@ package com.nearinfinity.honeycomb.mysql;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.nearinfinity.honeycomb.RowNotFoundException;
 import com.nearinfinity.honeycomb.hbaseclient.Constants;
 import com.nearinfinity.honeycomb.mysql.gen.*;
-import org.xml.sax.SAXException;
 
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,7 +20,7 @@ public class HandleProxyIntegrationTest {
     private static final String tableName = "db/test";
     private static HandlerProxyFactory factory;
 
-    public static void suiteSetup() throws IOException, SAXException, ParserConfigurationException {
+    public static void suiteSetup() {
         factory = Bootstrap.startup();
     }
 
@@ -42,13 +38,22 @@ public class HandleProxyIntegrationTest {
         });
     }
 
-    public static void testSuccessfulAlter() {
-        final TableSchema schema = getTableSchema();
-        testProxy("Testing alter", schema, new Action() {
+    public static void testSuccessfulIndexAdd() {
+        final String indexName = "i3";
+        final IndexSchema indexSchema = new IndexSchema(Lists.newArrayList(COLUMN2), false);
+        testProxy("Testing add index", new Action() {
             @Override
             public void execute(HandlerProxy proxy) {
-                schema.getColumns().put("c3", new ColumnSchema(ColumnType.LONG, false, false, 8, 0, 0));
-                proxy.alterTable(Util.serializeTableSchema(schema));
+                proxy.addIndex(indexName, Util.serializeIndexSchema(indexSchema));
+            }
+        });
+    }
+
+    public static void testSuccessfulIndexDrop() {
+        testProxy("Testing drop index", new Action() {
+            @Override
+            public void execute(HandlerProxy proxy) {
+                proxy.dropIndex(INDEX1);
             }
         });
     }
@@ -59,7 +64,7 @@ public class HandleProxyIntegrationTest {
         testProxy("Testing auto increment", schema, new Action() {
             @Override
             public void execute(HandlerProxy proxy) {
-                long autoIncValue = proxy.getAutoIncValue();
+                long autoIncValue = proxy.getAutoIncrement();
                 assertThat(autoIncValue).isEqualTo(1);
 
             }
@@ -72,8 +77,8 @@ public class HandleProxyIntegrationTest {
         testProxy("Testing increment auto increment", schema, new Action() {
             @Override
             public void execute(HandlerProxy proxy) {
-                long autoIncValue = proxy.incrementAutoIncrementValue(1);
-                assertThat(autoIncValue).isEqualTo(2).isEqualTo(proxy.getAutoIncValue());
+                long autoIncValue = proxy.incrementAutoIncrement(1);
+                assertThat(autoIncValue).isEqualTo(2).isEqualTo(proxy.getAutoIncrement());
             }
         });
     }
@@ -85,7 +90,7 @@ public class HandleProxyIntegrationTest {
             @Override
             public void execute(HandlerProxy proxy) {
                 proxy.truncateAutoIncrement();
-                assertThat(proxy.getAutoIncValue()).isEqualTo(0);
+                assertThat(proxy.getAutoIncrement()).isEqualTo(0);
             }
         });
     }
@@ -112,18 +117,18 @@ public class HandleProxyIntegrationTest {
     }
 
     public static void testInsertRow() {
-        testProxy("Testing insert row", new Action() {
+        testProxy("Testing insertRow row", new Action() {
             @Override
             public void execute(HandlerProxy proxy) {
-                Map<String, Object> map = new HashMap<String, Object>();
-                map.put(COLUMN1, ByteBuffer.allocate(8).putLong(5).rewind());
-                map.put(COLUMN2, ByteBuffer.allocate(8).putLong(6).rewind());
+                Map<String, ByteBuffer> map = Maps.newHashMap();
+                map.put(COLUMN1, encodeValue(5));
+                map.put(COLUMN2, encodeValue(6));
                 UUID uuid = UUID.randomUUID();
                 Row row = new Row(map, uuid);
-                proxy.insert(row.serialize());
+                proxy.insertRow(row.serialize());
                 proxy.flush();
-                Row result = proxy.getRow(uuid);
-                assertThat(result).isEqualTo(row);
+                IndexKey key = createKey(5, QueryType.EXACT_KEY);
+                assertReceivingDifferentRows(proxy, key, 1);
             }
         });
     }
@@ -132,22 +137,18 @@ public class HandleProxyIntegrationTest {
         testProxy("Testing delete row", new Action() {
             @Override
             public void execute(HandlerProxy proxy) {
-                Map<String, Object> map = new HashMap<String, Object>();
-                map.put(COLUMN1, ByteBuffer.allocate(8).putLong(5).rewind());
-                map.put(COLUMN2, ByteBuffer.allocate(8).putLong(6).rewind());
+                Map<String, ByteBuffer> map = Maps.newHashMap();
+                map.put(COLUMN1, encodeValue(5));
+                map.put(COLUMN2, encodeValue(6));
                 UUID uuid = UUID.randomUUID();
                 Row row = new Row(map, uuid);
-                proxy.insert(row.serialize());
+                proxy.insertRow(row.serialize());
                 proxy.flush();
-                proxy.deleteRow(uuid);
+                IndexKey key = createKey(5, QueryType.EXACT_KEY);
+                proxy.startIndexScan(key.serialize());
+                Row r = Row.deserialize(proxy.getNextRow());
+                proxy.deleteRow(r.getUUID());
                 proxy.flush();
-                try {
-                    proxy.getRow(uuid);
-                } catch (RowNotFoundException e) {
-                    return;
-                }
-
-                throw new AssertionError("Row was not deleted");
             }
         });
     }
@@ -157,19 +158,23 @@ public class HandleProxyIntegrationTest {
             @Override
             public void execute(HandlerProxy proxy) {
                 UUID uuid = UUID.randomUUID();
-                Map<String, Object> map = new HashMap<String, Object>();
-                map.put(COLUMN1, ByteBuffer.allocate(8).putLong(5).rewind());
-                map.put(COLUMN2, ByteBuffer.allocate(8).putLong(6).rewind());
+                Map<String, ByteBuffer> map = Maps.newHashMap();
+                map.put(COLUMN1, encodeValue(5));
+                map.put(COLUMN2, encodeValue(6));
                 Row row = new Row(map, uuid);
-                proxy.insert(row.serialize());
+                byte[] serialize = row.serialize();
+                proxy.insertRow(serialize);
                 proxy.flush();
+                IndexKey key = createKey(5, QueryType.EXACT_KEY);
+                proxy.startIndexScan(key.serialize());
+                Row r = Row.deserialize(proxy.getNextRow());
 
-                map.put(COLUMN1, ByteBuffer.allocate(8).putLong(3).rewind());
-                Row newRow = new Row(map, uuid);
+                map.put(COLUMN1, encodeValue(3));
+                Row newRow = new Row(map, r.getUUID());
                 proxy.updateRow(newRow.serialize());
                 proxy.flush();
-                Row result = proxy.getRow(uuid);
-                assertThat(result).isEqualTo(newRow);
+                byte[] result = proxy.getRow(Util.UUIDToBytes(r.getUUID()));
+                assertThat(Row.deserialize(result)).isEqualTo(newRow);
             }
         });
     }
@@ -295,11 +300,39 @@ public class HandleProxyIntegrationTest {
         });
     }
 
+    public static void testFullTableScan() {
+        testProxy("Testing full table scan", new Action() {
+            @Override
+            public void execute(HandlerProxy proxy) {
+                int rows = 3;
+                int keyValue = 5;
+                insertData(proxy, rows, keyValue);
+                assertReceivingDifferentRows(proxy, rows);
+            }
+        });
+    }
+
+    public static void testGetRow() {
+        testProxy("Testing get row", new Action() {
+            @Override
+            public void execute(HandlerProxy proxy) {
+                insertData(proxy, 1, 1);
+                IndexKey key = createKey(1, QueryType.EXACT_KEY);
+                proxy.startIndexScan(key.serialize());
+                Row r = Row.deserialize(proxy.getNextRow());
+                byte[] result = proxy.getRow(Util.UUIDToBytes(r.getUUID()));
+                assertThat(result).isNotNull();
+                assertThat(Row.deserialize(result).getUUID()).isEqualTo(r.getUUID());
+            }
+        });
+    }
+
     public static void main(String[] args) {
         try {
             suiteSetup();
             testSuccessfulRename();
-            testSuccessfulAlter();
+            testSuccessfulIndexAdd();
+            testSuccessfulIndexDrop();
             testGetAutoIncrement();
             testIncrementAutoIncrement();
             testTruncateAutoInc();
@@ -316,6 +349,8 @@ public class HandleProxyIntegrationTest {
             testIndexLastScan();
             testIndexFirstScan();
             testAfterKeyWithNullScan();
+            testFullTableScan();
+            testGetRow();
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(1);
@@ -324,15 +359,30 @@ public class HandleProxyIntegrationTest {
 
     private static void assertReceivingDifferentRows(HandlerProxy proxy, IndexKey key, int rows) {
         proxy.startIndexScan(key.serialize());
-        Row previous = null;
+        byte[] previous = null;
         for (int x = 0; x < rows; x++) {
-            Row current = proxy.getNextScannerRow();
+            byte[] current = proxy.getNextRow();
             assertThat(current).isNotEqualTo(previous).isNotNull();
             previous = current;
         }
 
-        Row end = proxy.getNextScannerRow();
+        byte[] end = proxy.getNextRow();
         assertThat(end).isNull();
+        proxy.endScan();
+    }
+
+    private static void assertReceivingDifferentRows(HandlerProxy proxy, int rows) {
+        proxy.startTableScan();
+        byte[] previous = null;
+        for (int x = 0; x < rows; x++) {
+            byte[] current = proxy.getNextRow();
+            assertThat(current).isNotEqualTo(previous).isNotNull();
+            previous = current;
+        }
+
+        byte[] end = proxy.getNextRow();
+        assertThat(end).isNull();
+        proxy.endScan();
     }
 
     private static IndexKey createKey(int keyValue, QueryType queryType) {
@@ -371,33 +421,33 @@ public class HandleProxyIntegrationTest {
     }
 
     private static void insertData(HandlerProxy proxy, int rows, long keyColumnValue, UUID uuid) {
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, ByteBuffer> map = Maps.newHashMap();
         map.put(COLUMN1, encodeValue(keyColumnValue));
         for (int x = 0; x < rows; x++) {
             map.put(COLUMN2, encodeValue(x));
             Row row = new Row(map, uuid);
-            proxy.insert(row.serialize());
+            proxy.insertRow(row.serialize());
         }
         proxy.flush();
     }
 
     private static void insertData(HandlerProxy proxy, int rows, long keyColumnValue) {
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, ByteBuffer> map = Maps.newHashMap();
         map.put(COLUMN1, encodeValue(keyColumnValue));
         for (int x = 0; x < rows; x++) {
             map.put(COLUMN2, encodeValue(x));
             Row row = new Row(map, UUID.randomUUID());
-            proxy.insert(row.serialize());
+            proxy.insertRow(row.serialize());
         }
         proxy.flush();
     }
 
     private static void insertNullData(HandlerProxy proxy, int rows, String column) {
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, ByteBuffer> map = Maps.newHashMap();
         for (int x = 0; x < rows; x++) {
             map.put(column, encodeValue(x));
             Row row = new Row(map, UUID.randomUUID());
-            proxy.insert(row.serialize());
+            proxy.insertRow(row.serialize());
         }
         proxy.flush();
     }

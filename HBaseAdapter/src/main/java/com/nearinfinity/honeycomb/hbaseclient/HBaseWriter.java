@@ -2,7 +2,6 @@ package com.nearinfinity.honeycomb.hbaseclient;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
-import com.nearinfinity.honeycomb.hbase.ResultReader;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
@@ -446,7 +445,7 @@ public class HBaseWriter implements Closeable {
         ResultScanner scanner = table.getScanner(scan);
         Result result;
         while ((result = scanner.next()) != null) {
-            Map<String, byte[]> values = ResultReader.readDataRow(result, info).getRecords();
+            Map<String, byte[]> values = ResultReader.readDataRow(result, info).getRecordsLegacy();
             UUID rowId = ResultParser.parseUUID(result);
             function.apply(values, rowId);
         }
@@ -463,7 +462,7 @@ public class HBaseWriter implements Closeable {
         byte[] dataRowKey = RowKeyFactory.buildDataKey(tableId, uuid);
         Get get = new Get(dataRowKey);
         Result result = table.get(get);
-        Map<String, byte[]> oldRow = ResultReader.readDataRow(result, info).getRecords();
+        Map<String, byte[]> oldRow = ResultReader.readDataRow(result, info).getRecordsLegacy();
         if (logger.isDebugEnabled()) {
             logger.debug(format("Deleting row in table %s / Table ID %d", tableName, tableId));
             logger.debug(format("Old row %s", oldRow));

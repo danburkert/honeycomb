@@ -3,6 +3,7 @@ package com.nearinfinity.honeycomb.mysql;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import org.apache.log4j.Logger;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -14,6 +15,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Checks that operations are valid.
  */
 public class Verify {
+    private static final Logger logger = Logger.getLogger(Verify.class);
+
     public static boolean hasAutoIncrementColumn(TableSchema schema) {
         Map<String, ColumnSchema> columns = schema.getColumns();
         for (ColumnSchema column : columns.values()) {
@@ -39,10 +42,9 @@ public class Verify {
      */
     public static void isValidTableSchema(TableSchema schema) {
         checkNotNull(schema);
-        isValidIndexSchema(schema.getIndices(), schema.getColumns());
     }
 
-    private static void isValidIndexSchema(Map<String, IndexSchema> indices,
+    public static void isValidIndexSchema(Map<String, IndexSchema> indices,
                                           Map<String, ColumnSchema> columns) {
         for (IndexSchema index : indices.values()) {
             for (String column : index.getColumns()) {

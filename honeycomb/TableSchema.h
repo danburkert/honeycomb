@@ -2,12 +2,13 @@
 #define TABLE_SCHEMA_H
 
 #include <avro.h>
+#include "Serializable.h"
 #include "ColumnSchema.h"
 #include "IndexSchema.h"
 
 #define TABLE_SCHEMA "{\"type\":\"record\",\"name\":\"TableSchema\",\"namespace\":\"com.nearinfinity.honeycomb.mysql.gen\",\"fields\":[{\"name\":\"columns\",\"type\":{\"type\":\"map\",\"values\":" COLUMN_SCHEMA ",\"avro.java.string\":\"String\"}},{\"name\":\"indices\",\"type\":{\"type\":\"map\",\"values\":" INDEX_SCHEMA ",\"avro.java.string\":\"String\"}}]}"
 
-class TableSchema
+class TableSchema : public Serializable
 {
   private:
     avro_schema_t table_schema_schema;

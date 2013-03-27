@@ -11,6 +11,7 @@
 #include "TableSchema.h"
 #include "ColumnSchema.h"
 #include "IndexSchema.h"
+#include "IndexContainer.h"
 
 #include "my_global.h"          /* ulonglong */
 #include "thr_lock.h"           /* THR_LOCK, THR_LOCK_DATA */
@@ -18,6 +19,7 @@
 #include "my_base.h"            /* ha_rows */
 #include <jni.h>
 #include "probes_mysql.h"
+#include "Serializable.h"
 
 class JNICache;
 
@@ -31,6 +33,9 @@ class HoneycombHandler : public handler
     bool performing_scan;
     HoneycombShare *get_share(const char *table_name, TABLE *table);
     uint32 max_row_length();
+    jbyteArray serialize_to_java(Serializable& serializable);
+    void deserialized_from_java(jbyteArray bytes, Serializable& serializable);
+    int start_index_scan(Serializable& index_key, uchar* buf);
 
     long long curr_scan_id, curr_write_id;
     ulonglong rows_written;
@@ -52,22 +57,18 @@ class HoneycombHandler : public handler
     jobject sql_to_java();
     int delete_all_rows();
     int truncate();
-    bool is_key_null(const uchar *key);
     void store_uuid_ref(Row* row);
+    int full_index_scan(uchar* buf, IndexContainer::QueryType query);
     void bytes_to_long(const uchar* buff, unsigned int buff_length, bool is_signed, uchar* long_buff);
-    int read_row(uchar* buf, Row* row);
-    int get_index_row(jfieldID field_id, uchar* buf);
-    int get_next_index_row(uchar* buf);
-    void flush_writes();
-    void end_scan();
-    bool check_for_renamed_column(const TABLE*  table, const char* col_name);
+    int read_row(uchar* buf);
+    int get_next_row(uchar* buf);
+    int read_bytes_into_mysql(jbyteArray row_bytes, uchar* buf);
+    int flush();
     bool field_has_unique_index(Field *field);
     jbyteArray find_duplicate_column_values(char* columns);
     bool row_has_duplicate_values(jobject value_map, jobject changedColumns);
     int get_failed_key_index(const char *key_name);
     void store_field_value(Field *field, const char* val, int length);
-    jobject create_multipart_keys(TABLE* table_arg);
-    jobject create_multipart_key(KEY* key, KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts);
     char* index_name(KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts);
     char* index_name(TABLE* table, uint key);
     jobject create_key_value_list(int index, uint* key_sizes, uchar** key_copies, const char** key_names, jboolean* key_null_bits, jboolean* key_is_null);
@@ -76,7 +77,6 @@ class HoneycombHandler : public handler
     int retrieve_value_from_index(uchar* buf);
     int write_row(uchar* buf, jobject updated_fields);
     void collect_changed_fields(jobject updated_fields, const uchar* old_row, uchar* new_row);
-    void terminate_scan();
 
     bool is_integral_field(enum_field_types field_type)
     {
@@ -136,12 +136,15 @@ class HoneycombHandler : public handler
     int index_last(uchar *buf);
 
     void set_autoinc_counter(jlong new_value, jboolean is_truncate);
-    void release_auto_increment();
 
     /* DDL helper methods */
     int pack_column_schema(ColumnSchema* schema, Field* field);
     int pack_index_schema(IndexSchema* schema, KEY* key);
     int init_table_share(TABLE_SHARE* table_share, const char* path);
+
+    /* IUD helper methods*/
+    bool violates_uniqueness(jbyteArray serialized_row);
+
 
   public:
     HoneycombHandler(handlerton *hton, TABLE_SHARE *table_share,
@@ -240,10 +243,6 @@ class HoneycombHandler : public handler
 
     int index_read_map(uchar * buf, const uchar * key, key_part_map keypart_map, enum ha_rkey_function find_flag);
 
-    int update_row(const uchar *old_data, uchar *new_data);
-    int write_row(uchar *buf);
-    int delete_row(const uchar *buf);
-
     void position(const uchar *record);                           ///< required
     int info(uint);                                               ///< required
     int external_lock(THD *thd, int lock_type);                   ///< required
@@ -255,15 +254,24 @@ class HoneycombHandler : public handler
     ha_rows records_in_range(uint inx, key_range *min_key, key_range *max_key);
     int analyze(THD* thd, HA_CHECK_OPT* check_opt);
     ha_rows estimate_rows_upper_bound();
-    bool check_if_incompatible_data(HA_CREATE_INFO *create_info, uint table_changes);
+
+    /* HoneycombHandler */
     void get_auto_increment(ulonglong offset, ulonglong increment, ulonglong nb_desired_values, ulonglong *first_value, ulonglong *nb_reserved_values);
-    int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add);
-    int prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys);
+    void release_auto_increment();
 
     /* DDL */
     int create(const char *name, TABLE *form, HA_CREATE_INFO *create_info); ///< required
     int delete_table(const char *name);
     int rename_table(const char *from, const char *to);
+    bool check_if_incompatible_data(HA_CREATE_INFO *create_info, uint table_changes);
+    bool check_column_being_renamed(const TABLE*  table);
+    int prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys);
+    int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add);
+
+    /* IUD */
+    int update_row(const uchar *old_data, uchar *new_data);
+    int write_row(uchar *buf);
+    int delete_row(const uchar *buf);
 };
 
 #endif

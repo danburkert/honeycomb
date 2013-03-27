@@ -1,6 +1,6 @@
 package com.nearinfinity.honeycomb.mysqlengine;
 
-import com.nearinfinity.honeycomb.hbase.ResultReader;
+import com.nearinfinity.honeycomb.hbaseclient.ResultReader;
 import com.nearinfinity.honeycomb.hbaseclient.Metrics;
 import com.nearinfinity.honeycomb.mysql.Row;
 import org.apache.hadoop.hbase.client.Result;
@@ -44,7 +44,7 @@ public class SingleResultScanner implements HBaseResultScanner {
                     return null;
                 }
                 row = ResultReader.readIndexRow(result);
-                rowMap = row.getRecords();
+                rowMap = row.getRecordsLegacy();
                 value = rowMap.get(this.columnName);
             } while (Arrays.equals(value, valueToSkip));
 

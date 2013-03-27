@@ -20,9 +20,12 @@ import com.nearinfinity.honeycomb.mysql.gen.*;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class HBaseTable implements Table {
     private final HTableInterface hTable;
@@ -35,14 +38,16 @@ public class HBaseTable implements Table {
                       @Assisted Long tableId, @Assisted TableSchema schema) {
         Verify.isValidTableId(tableId);
         Verify.isValidTableSchema(schema);
-        this.hTable = hTable;
-        this.store = store;
+        Verify.isValidIndexSchema(schema.getIndices(), schema.getColumns());
+        this.hTable = checkNotNull(hTable);
+        this.store = checkNotNull(store);
         this.tableId = tableId;
         this.schema = schema;
     }
 
     @Override
     public void insert(Row row) {
+        checkNotNull(row);
         final byte[] serializeRow = row.serialize();
         final UUID uuid = row.getUUID();
 
@@ -58,12 +63,14 @@ public class HBaseTable implements Table {
 
     @Override
     public void update(Row row) {
+        checkNotNull(row);
         this.delete(row.getUUID());
         this.insert(row);
     }
 
     @Override
     public void delete(final UUID uuid) {
+        checkNotNull(uuid);
         Row row = this.get(uuid);
         final List<Delete> deleteList = Lists.newLinkedList();
         deleteList.add(new Delete(new DataRow(this.tableId, uuid).encode()));
@@ -199,7 +206,7 @@ public class HBaseTable implements Table {
     }
 
     private void doToIndices(Row row, IndexAction action) {
-        Map<String, byte[]> records = row.getRecords();
+        Map<String, ByteBuffer> records = row.getRecords();
         Map<String, Long> indexIds = this.store.getIndices(this.tableId);
 
         for (Map.Entry<String, IndexSchema> index : schema.getIndices().entrySet()) {

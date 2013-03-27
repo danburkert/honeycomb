@@ -91,11 +91,10 @@ char *char_array_from_java_bytes(jbyteArray java_bytes, JNIEnv* env)
 int check_exceptions(JNIEnv* env, JNICache* cache, const char* location)
 {
   int ret = 0;
-  const char* reason;
   jthrowable e = env->ExceptionOccurred();
   if (e)
   {
-    if (env->IsInstanceOf(e, cache->HoneycombException))
+    if (env->IsInstanceOf(e, cache->RuntimeIOException))
     {
       ret = HA_ERR_INTERNAL_ERROR;
     } else if (env->IsInstanceOf(e, cache->TableNotFoundException))
@@ -110,9 +109,6 @@ int check_exceptions(JNIEnv* env, JNICache* cache, const char* location)
     } else if (env->IsInstanceOf(e, cache->StoreNotFoundException))
     {
       my_printf_error(ER_ILLEGAL_HA, "Unable to open tablespace.", MYF(0));
-      ret = HA_ERR_INTERNAL_ERROR;
-    } else if (env->IsInstanceOf(e, cache->IOException))
-    {
       ret = HA_ERR_INTERNAL_ERROR;
     } else {
       ret = HA_ERR_GENERIC;

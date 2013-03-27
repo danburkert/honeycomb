@@ -3,6 +3,7 @@ package com.nearinfinity.honeycomb.mysqlengine;
 import static java.text.MessageFormat.format;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -10,8 +11,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
@@ -23,9 +22,11 @@ import org.apache.hadoop.metrics2.util.MBeans;
 import org.apache.log4j.Logger;
 
 import com.google.common.collect.Iterables;
+import com.google.common.io.Files;
+import com.google.common.io.InputSupplier;
 import com.nearinfinity.honeycomb.config.ConfigurationHolder;
 import com.nearinfinity.honeycomb.config.ConfigurationParser;
-import com.nearinfinity.honeycomb.hbase.ResultReader;
+import com.nearinfinity.honeycomb.hbaseclient.ResultReader;
 import com.nearinfinity.honeycomb.hbaseclient.ColumnMetadata;
 import com.nearinfinity.honeycomb.hbaseclient.HBaseReader;
 import com.nearinfinity.honeycomb.hbaseclient.HBaseWriter;
@@ -301,7 +302,7 @@ public class HBaseAdapter {
             throws HBaseAdapterException {
         try {
             long start = System.currentTimeMillis();
-            UUID uuid = Util.BytesToUUID(uuidBuff);
+            UUID uuid = Util.bytesToUUID(uuidBuff);
             HBaseWriter writer = getHBaseWriterForId(writeId);
             writer.updateRow(uuid, changedFields, tableName, values);
             rowCountUpdate.set(true);
@@ -346,7 +347,7 @@ public class HBaseAdapter {
     public static boolean deleteRow(String tableName, byte[] uuidBuffer) throws HBaseAdapterException {
         try {
             long start = System.currentTimeMillis();
-            UUID uuid = Util.BytesToUUID(uuidBuffer);
+            UUID uuid = Util.bytesToUUID(uuidBuffer);
             HBaseWriter writer = createWriter();
             boolean success = writer.deleteRow(tableName, uuid);
             writer.close();
@@ -416,7 +417,7 @@ public class HBaseAdapter {
             long start = System.currentTimeMillis();
             ActiveScan activeScan = getActiveScanForId(scanId);
             String tableName = activeScan.getTableName();
-            UUID rowUuid = Util.BytesToUUID(uuid);
+            UUID rowUuid = Util.bytesToUUID(uuid);
 
             Row row = reader.getDataRow(rowUuid, tableName);
             long end = System.currentTimeMillis();
@@ -455,7 +456,7 @@ public class HBaseAdapter {
     }
 
     /**
-     * Checks that the SQL row would not violate a unique index on insert.
+     * Checks that the SQL row would not violate a unique index on insertRow.
      *
      * @param tableName SQL table name
      * @param values    SQL row to check
@@ -468,7 +469,7 @@ public class HBaseAdapter {
             long start = System.currentTimeMillis();
             String r = reader.findDuplicateKey(tableName, values);
             long end = System.currentTimeMillis();
-            Metrics.getInstance().addStat("find dup key insert", end - start);
+            Metrics.getInstance().addStat("find dup key insertRow", end - start);
             return r;
         } catch (Throwable e) {
             logger.error("Exception:", e);
@@ -832,17 +833,15 @@ public class HBaseAdapter {
         final File configSchemaFile = new File(CONFIG_PATH, CONFIG_SCHEMA_FILENAME);
 
         if( isFileAvailable(configFile) && isFileAvailable(configSchemaFile) ) {
-            if( ConfigurationParser.validateConfigFile(configSchemaFile, configFile) ) {
-                try {
+            final InputSupplier<FileInputStream> schemaSupplier = Files.newInputStreamSupplier(configSchemaFile);
+            final InputSupplier<FileInputStream> configSupplier = Files.newInputStreamSupplier(configFile);
+
+            if( ConfigurationParser.validateConfiguration(schemaSupplier, configSupplier) ) {
                     final ConfigurationParser configParser = new ConfigurationParser();
-                    configHolder = configParser.parseConfig(configFile, HBaseConfiguration.create());
+                    configHolder = configParser.parseConfiguration(configSupplier, HBaseConfiguration.create());
 
                     logger.info(String.format("Read %d configuration properties ",
                             configHolder.getConfiguration().size()));
-
-                } catch (ParserConfigurationException e) {
-                    logger.fatal("The XML parser was not configured properly.", e);
-                }
             } else {
                 logger.error("Configuration file validation failed");
             }

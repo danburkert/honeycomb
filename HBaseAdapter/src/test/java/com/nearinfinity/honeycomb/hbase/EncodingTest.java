@@ -51,7 +51,7 @@ public class EncodingTest {
         Set<Long> numbers = Sets.newHashSet();
         List<Pair<Long, byte[]>> rows = Lists.newArrayList();
         Generator<Long> longs = PrimitiveGenerators.longs();
-        Map<String, byte[]> records = Maps.newHashMap();
+        Map<String, ByteBuffer> records = Maps.newHashMap();
         Map<String, ColumnType> columnTypeMap = Maps.newHashMap();
         columnTypeMap.put("c1", ColumnType.LONG);
         List<String> columnOrder = Lists.newArrayList();
@@ -61,10 +61,9 @@ public class EncodingTest {
             numbers.add(longs.next());
         }
 
-        byte[] buffer = new byte[8];
         for (long number : numbers) {
-            ByteBuffer.wrap(buffer).putLong(number);
-            records.put("c1", buffer);
+            records.put("c1",
+                    (ByteBuffer) ByteBuffer.allocate(Long.SIZE / 8).putLong(number).rewind());
             rows.add(new Pair<Long, byte[]>(number, builder
                     .withUUID(UUID.randomUUID())
                     .withRecords(records, columnTypeMap, columnOrder)

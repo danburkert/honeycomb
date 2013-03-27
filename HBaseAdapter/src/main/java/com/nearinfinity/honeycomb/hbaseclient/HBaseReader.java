@@ -2,7 +2,6 @@ package com.nearinfinity.honeycomb.hbaseclient;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
-import com.nearinfinity.honeycomb.hbase.ResultReader;
 import com.nearinfinity.honeycomb.hbaseclient.strategy.PrefixScanStrategy;
 import com.nearinfinity.honeycomb.hbaseclient.strategy.ScanStrategy;
 import com.nearinfinity.honeycomb.hbaseclient.strategy.ScanStrategyInfo;
@@ -84,7 +83,7 @@ public class HBaseReader {
     }
 
     /**
-     * Checks that the SQL row would not violate a unique index on insert.
+     * Checks that the SQL row would not violate a unique index on insertRow.
      *
      * @param tableName SQL table name
      * @param values    SQL row to check

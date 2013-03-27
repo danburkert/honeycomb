@@ -6,188 +6,6 @@
 #include "Macros.h"
 #include "JNISetup.h"
 
-/**
- * @brief Create the Java object for the multi-column index.
- *
- * @param table_arg SQL Table
- *
- * @return Multi-column index object
- */
-jobject HoneycombHandler::create_multipart_keys(TABLE* table_arg)
-{
-  uint keys = table_arg->s->keys;
-  jobject java_keys = env->NewObject(cache->table_multipart_keys().clazz,
-      cache->table_multipart_keys().init);
-  NULL_CHECK_ABORT(java_keys, "HoneycombHandler::create_multipart_keys: OutOfMemoryError while calling NewObject");
-  JavaFrame frame(env, keys);
-  for (uint key = 0; key < keys; key++)
-  {
-    char* name = index_name(table_arg, key);
-    jboolean is_unique = (table_arg->key_info + key)->flags & HA_NOSAME;
-    jstring jname = string_to_java_string(name);
-    this->env->CallVoidMethod(java_keys,
-        cache->table_multipart_keys().add_multipart_key, jname, is_unique);
-    EXCEPTION_CHECK("HoneycombHandler::create_multipart_keys", "calling addMultipartKey");
-    ARRAY_DELETE(name);
-  }
-  return java_keys;
-}
-
-/**
- * Returned jobject is a local ref that must be deleted by caller.
- */
-jobject HoneycombHandler::create_multipart_key(KEY* key, KEY_PART_INFO* key_part,
-    KEY_PART_INFO* key_part_end, uint key_parts)
-{
-  jobject java_keys = env->NewObject(cache->table_multipart_keys().clazz,
-      cache->table_multipart_keys().init);
-  NULL_CHECK_ABORT(java_keys, "HoneycombHandler::create_multipart_key: OutOfMemoryError while calling NewObject");
-  char* name = index_name(key_part, key_part_end, key_parts);
-  jboolean is_unique = key->flags & HA_NOSAME;
-  this->env->CallVoidMethod(java_keys, cache->table_multipart_keys().add_multipart_key,
-      string_to_java_string(name), is_unique);
-  EXCEPTION_CHECK("HoneycombHandler::create_multipart_key", "calling addMultipartKey");
-  ARRAY_DELETE(name);
-  return java_keys;
-}
-
-int HoneycombHandler::write_row(uchar *buf)
-{
-  DBUG_ENTER("HoneycombHandler::write_row");
-  my_bitmap_map *old_map = dbug_tmp_use_all_columns(table, table->read_set);
-  int rc = write_row(buf, NULL);
-  dbug_tmp_restore_column_map(table->read_set, old_map);
-  DBUG_RETURN(rc);
-}
-
-/**
- * Pack the MySQL formatted row contained in buf and table into the Avro format.
- * @param buf MySQL row in buffer format
- * @param table MySQL TABLE object holding fields to be packed
- * @param row Row object to be packed
- */
-int HoneycombHandler::pack_row(uchar *buf, TABLE* table, Row* row)
-{
-  row->reset();
-  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
-  {
-    table->timestamp_field->set_time();
-  }
-  if(table->next_number_field && buf == table->record[0])
-
-  {
-    int res;
-    if(res = update_auto_increment())
-    {
-      return res;
-    }
-  }
-
-  size_t actualFieldSize;
-  char* byte_val;
-
-  for (Field **field_ptr = table->field; *field_ptr; field_ptr++)
-  {
-    Field * field = *field_ptr;
-    const char* field_name = field->field_name;
-
-    if (field->is_null()) { continue; }
-
-    switch (field->real_type())
-    {
-    case MYSQL_TYPE_TINY:
-    case MYSQL_TYPE_SHORT:
-    case MYSQL_TYPE_LONG:
-    case MYSQL_TYPE_LONGLONG:
-    case MYSQL_TYPE_INT24:
-    case MYSQL_TYPE_YEAR:
-    case MYSQL_TYPE_ENUM:
-    case MYSQL_TYPE_TIME: // Time is a special case for sorting
-    {
-      long long integral_value = field->val_int();
-      if (is_little_endian())
-      {
-        integral_value = bswap64(integral_value);
-      }
-      actualFieldSize = sizeof integral_value;
-      byte_val = (char*) my_malloc(actualFieldSize, MYF(MY_WME));
-      memcpy(byte_val, &integral_value, actualFieldSize);
-      break;
-    }
-    case MYSQL_TYPE_FLOAT:
-    case MYSQL_TYPE_DOUBLE:
-    {
-      double fp_value = field->val_real();
-      long long* fp_ptr = (long long*) &fp_value;
-      if (is_little_endian())
-      {
-        *fp_ptr = bswap64(*fp_ptr);
-      }
-      actualFieldSize = sizeof fp_value;
-      byte_val = (char*) my_malloc(actualFieldSize, MYF(MY_WME));
-      memcpy(byte_val, fp_ptr, actualFieldSize);
-      break;
-    }
-    case MYSQL_TYPE_DECIMAL:
-    case MYSQL_TYPE_NEWDECIMAL:
-      actualFieldSize = field->key_length();
-      byte_val = (char*) my_malloc(actualFieldSize, MYF(MY_WME));
-      memcpy(byte_val, field->ptr, actualFieldSize);
-      break;
-    case MYSQL_TYPE_DATE:
-    case MYSQL_TYPE_NEWDATE:
-    case MYSQL_TYPE_DATETIME:
-    case MYSQL_TYPE_TIMESTAMP:
-    {
-      MYSQL_TIME mysql_time;
-      char temporal_value[MAX_DATE_STRING_REP_LENGTH];
-      field->get_time(&mysql_time);
-      my_TIME_to_str(&mysql_time, temporal_value);
-      actualFieldSize = strlen(temporal_value);
-      byte_val = (char*) my_malloc(actualFieldSize, MYF(MY_WME));
-      memcpy(byte_val, temporal_value, actualFieldSize);
-      break;
-    }
-    case MYSQL_TYPE_BLOB:
-    case MYSQL_TYPE_TINY_BLOB:
-    case MYSQL_TYPE_MEDIUM_BLOB:
-    case MYSQL_TYPE_LONG_BLOB:
-    {
-      String string_value;
-      field->val_str(&string_value);
-      actualFieldSize = string_value.length();
-      byte_val = (char*) my_malloc(actualFieldSize, MYF(MY_WME));
-      memcpy(byte_val, string_value.ptr(), actualFieldSize);
-      break;
-    }
-    case MYSQL_TYPE_VARCHAR:
-    case MYSQL_TYPE_VAR_STRING:
-    {
-      char string_value_buff[field->field_length];
-      String string_value(string_value_buff, sizeof(string_value_buff),&my_charset_bin);
-      field->val_str(&string_value);
-      actualFieldSize = string_value.length();
-      byte_val = (char*) my_malloc(actualFieldSize, MYF(MY_WME));
-      memcpy(byte_val, string_value.ptr(), actualFieldSize);
-      break;
-    }
-    case MYSQL_TYPE_NULL:
-    case MYSQL_TYPE_BIT:
-    case MYSQL_TYPE_SET:
-    case MYSQL_TYPE_GEOMETRY:
-    default:
-      actualFieldSize = field->key_length();
-      byte_val = (char*) my_malloc(actualFieldSize, MYF(MY_WME));
-      memcpy(byte_val, field->ptr, actualFieldSize);
-      break;
-    }
-    row->set_bytes_record(field_name, byte_val, actualFieldSize);
-    MY_FREE(byte_val);
-  }
-
-  return 0;
-}
-
 int HoneycombHandler::write_row(uchar* buf, jobject updated_fields)
 {
   if (share->crashed)
@@ -231,7 +49,7 @@ int HoneycombHandler::write_row(uchar* buf, jobject updated_fields)
     jstring field_name = string_to_java_string(field->field_name);
 
     const bool is_null = field->is_null();
-    uchar* byte_val;
+    unsigned char* byte_val;
 
     if (is_null)
     {
@@ -261,7 +79,7 @@ int HoneycombHandler::write_row(uchar* buf, jobject updated_fields)
         integral_value = bswap64(integral_value);
       }
       actualFieldSize = sizeof integral_value;
-      byte_val = (uchar*) my_malloc(actualFieldSize, MYF(MY_WME));
+      byte_val = (unsigned char*) my_malloc(actualFieldSize, MYF(MY_WME));
       memcpy(byte_val, &integral_value, actualFieldSize);
       break;
     }
@@ -394,8 +212,8 @@ int HoneycombHandler::write_row(uchar* buf, jobject updated_fields)
 bool HoneycombHandler::row_has_duplicate_values(jobject value_map,
     jobject changedColumns)
 {
-  this->flush_writes(); // Flush before checking for duplicates to make sure the changes are in HBase.
-  EXCEPTION_CHECK("row_has_duplicate_values", "flush_writes");
+  this->flush(); // Flush before checking for duplicates to make sure the changes are in HBase.
+  EXCEPTION_CHECK("row_has_duplicate_values", "flush");
   JavaFrame frame(env, 1);
   jclass adapter_class = cache->hbase_adapter().clazz;
   jmethodID has_duplicates_method;
@@ -456,8 +274,8 @@ int HoneycombHandler::update_row(const uchar *old_row, uchar *new_row)
   old_map = dbug_tmp_use_all_columns(table, table->read_set);
   int rc = write_row(new_row, updated_fieldnames);
   dbug_tmp_restore_column_map(table->read_set, old_map);
-  this->flush_writes();
-  EXCEPTION_CHECK("update_row", "flush_writes");
+  this->flush();
+  EXCEPTION_CHECK("update_row", "flush");
   DBUG_RETURN(rc);
 }
 
@@ -513,51 +331,6 @@ void HoneycombHandler::collect_changed_fields(jobject updated_fields,
   }
 }
 
-int HoneycombHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys,
-    handler_add_index **add)
-{
-  JavaFrame frame(env, 3*num_of_keys);
-  for(uint key = 0; key < num_of_keys; key++)
-  {
-    KEY* pos = key_info + key;
-    KEY_PART_INFO *key_part = pos->key_part;
-    KEY_PART_INFO *end_key_part = key_part + key_info->key_parts;
-    char* index_columns = this->index_name(key_part, end_key_part,
-        key_info->key_parts);
-
-    Field *field_being_indexed = key_info->key_part->field;
-    if (pos->flags & HA_NOSAME)
-    {
-      jbyteArray duplicate_value = this->find_duplicate_column_values(index_columns);
-
-      int error = duplicate_value != NULL ? HA_ERR_FOUND_DUPP_KEY : 0;
-
-      if (error == HA_ERR_FOUND_DUPP_KEY)
-      {
-        int length = (int)this->env->GetArrayLength(duplicate_value);
-        char *value_key = char_array_from_java_bytes(duplicate_value, this->env);
-        this->store_field_value(field_being_indexed, value_key, length);
-        ARRAY_DELETE(value_key);
-        ARRAY_DELETE(index_columns);
-        this->failed_key_index = this->get_failed_key_index(key_part->field->field_name);
-
-        return error;
-      }
-    }
-
-    jclass adapter = cache->hbase_adapter().clazz;
-    jobject java_keys = this->create_multipart_key(pos, key_part, end_key_part,
-        key_info->key_parts);
-    jmethodID add_index_method = cache->hbase_adapter().add_index;
-    jstring table_name = this->table_name();
-    this->env->CallStaticVoidMethod(adapter, add_index_method, table_name, java_keys);
-    EXCEPTION_CHECK_IE("HoneycombHandler::add_index", "calling addIndex");
-    ARRAY_DELETE(index_columns);
-  }
-
-  return 0;
-}
-
 /**
  * Returned jbyteArray is a local reference which must be deleted by the caller.
  */
@@ -578,24 +351,6 @@ jbyteArray HoneycombHandler::find_duplicate_column_values(char* columns)
   env->DeleteLocalRef(jcolumns);
   env->DeleteLocalRef(jtable_name);
   return duplicate_value;
-}
-
-
-int HoneycombHandler::prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys)
-{
-  JavaFrame frame(env, num_of_keys + 1);
-  jclass adapter = cache->hbase_adapter().clazz;
-  jmethodID drop_index_method = cache->hbase_adapter().drop_index;
-  jstring table_name = this->table_name();
-  for (uint key = 0; key < num_of_keys; key++)
-  {
-    char* name = index_name(table_arg, key_num[key]);
-    jstring jname = string_to_java_string(name);
-    this->env->CallStaticVoidMethod(adapter, drop_index_method, table_name, jname);
-    EXCEPTION_CHECK_IE("HoneycombHandler::prepare_drop_index", "calling dropIndex");
-    ARRAY_DELETE(name);
-  }
-  return 0;
 }
 
 
@@ -633,8 +388,8 @@ int HoneycombHandler::delete_all_rows()
   EXCEPTION_CHECK_IE("HoneycombHandler::delete_all_rows", "calling deleteAllRows");
   this->env->CallStaticVoidMethod(adapter_class, set_row_count, table_name, 0);
   EXCEPTION_CHECK_IE("HoneycombHandler::delete_all_rows", "calling setRowCount");
-  this->flush_writes();
-  EXCEPTION_CHECK("delete_all_rows", "flush_writes");
+  this->flush();
+  EXCEPTION_CHECK("delete_all_rows", "flush");
 
   DBUG_RETURN(0);
 }
@@ -670,19 +425,3 @@ void HoneycombHandler::set_autoinc_counter(jlong new_value, jboolean is_truncate
   EXCEPTION_CHECK("HoneycombHandler::set_autoinc_counter", "calling alterAutoincrementValue");
 }
 
-void HoneycombHandler::update_create_info(HA_CREATE_INFO* create_info)
-{
-  DBUG_ENTER("HoneycombHandler::update_create_info");
-
-  //show create table
-  if (!(create_info->used_fields & HA_CREATE_USED_AUTO)) {
-    HoneycombHandler::info(HA_STATUS_AUTO);
-    create_info->auto_increment_value = stats.auto_increment_value;
-  }
-  //alter table
-  else if (create_info->used_fields == 1) {
-    set_autoinc_counter(create_info->auto_increment_value, JNI_FALSE);
-  }
-
-  DBUG_VOID_RETURN;
-}

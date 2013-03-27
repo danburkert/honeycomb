@@ -1,5 +1,6 @@
-package com.nearinfinity.honeycomb.hbase;
+package com.nearinfinity.honeycomb.hbaseclient;
 
+import com.google.common.collect.Maps;
 import com.nearinfinity.honeycomb.hbaseclient.Constants;
 import com.nearinfinity.honeycomb.hbaseclient.TableInfo;
 import com.nearinfinity.honeycomb.mysql.Row;
@@ -24,13 +25,12 @@ public class ResultReader {
 
     /**
      * Read the result of a scan of a Data row, and return a Row object.
-     *
      * @param result Result object of Data row scan
-     * @param info   TableInfo of scanned (MySQL) table
+     * @param info TableInfo of scanned (MySQL) table
      * @return
      */
     public static Row readDataRow(Result result, TableInfo info) {
-        Map<String, Object> records = new HashMap<String, Object>();
+        Map<String, ByteBuffer> records = Maps.newHashMap();
         Map<byte[], byte[]> returnedColumns = result.getNoVersionMap().get(Constants.NIC);
 
         UUID uuid = parseUUID(result);
@@ -58,13 +58,12 @@ public class ResultReader {
 
     /**
      * Read the result of scan of an Index row, and return a Row object.
-     *
      * @param result
      * @return Row object
      * @throws IOException Thrown if the result cannot be deserialized into a Row
      */
     public static Row readIndexRow(Result result) throws IOException {
-        assert (result != null);
+        assert(result != null);
         byte[] serializedRow = result.getValue(Constants.NIC, Constants.VALUE_MAP);
         return Row.deserialize(serializedRow);
     }
@@ -80,7 +79,7 @@ public class ResultReader {
         if (logger.isDebugEnabled()) {
             logger.debug("UUID parse: " + Bytes.toStringBinary(rowKey));
         }
-        assert (rowKey.length >= UUID_WIDTH);
+        assert(rowKey.length >= UUID_WIDTH);
         ByteBuffer uuidBytes = ByteBuffer.wrap(rowKey, rowKey.length - UUID_WIDTH, UUID_WIDTH);
         return new UUID(uuidBytes.getLong(), uuidBytes.getLong());
     }

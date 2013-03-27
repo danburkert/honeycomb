@@ -72,9 +72,8 @@ int HoneycombHandler::create(const char *path, TABLE *table,
       table_schema.add_column(field->field_name, &column_schema);
     }
 
-    for (int i = 0; i < table->s->keys; i++)
+    for (uint i = 0; i < table->s->keys; i++)
     {
-      index_schema.reset();
       if (pack_index_schema(&index_schema, &table->key_info[i]))
       {
         ABORT_CREATE("Error while creating index schema.");
@@ -93,7 +92,8 @@ int HoneycombHandler::create(const char *path, TABLE *table,
     const char* buf;
     size_t buf_len;
     table_schema.serialize(&buf, &buf_len);
-    jbyteArray jserialized_schema = convert_value_to_java_bytes((uchar*) buf, buf_len, env);
+    jbyteArray jserialized_schema =
+      convert_value_to_java_bytes((uchar*) buf, buf_len, env);
 
     this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().create_table,
         jtable_name, jtablespace, jserialized_schema, jauto_inc_value);
@@ -247,7 +247,8 @@ int HoneycombHandler::pack_column_schema(ColumnSchema* schema, Field* field)
 int HoneycombHandler::pack_index_schema(IndexSchema* schema, KEY* key)
 {
   int ret = 0;
-  for (int i = 0; i < key->key_parts; i++)
+  ret |= schema->reset();
+  for (uint i = 0; i < key->key_parts; i++)
   {
     ret |= schema->add_column(key->key_part[i].field->field_name);
   }
@@ -333,4 +334,120 @@ int HoneycombHandler::init_table_share(TABLE_SHARE* table_share, const char* pat
   THD* thd = ha_thd();
   init_tmp_table_share(thd, table_share, "", 0, "", path);
   return open_table_def(thd, table_share, 0);
+}
+
+/**
+ * Called during alter table statements by the optimizer.
+ */
+void HoneycombHandler::update_create_info(HA_CREATE_INFO* create_info)
+{
+  DBUG_ENTER("HoneycombHandler::update_create_info");
+
+  //show create table
+  if (!(create_info->used_fields & HA_CREATE_USED_AUTO)) {
+    HoneycombHandler::info(HA_STATUS_AUTO);
+    create_info->auto_increment_value = stats.auto_increment_value;
+  }
+  //alter table
+  else if (create_info->used_fields == 1) {
+    set_autoinc_counter(create_info->auto_increment_value, JNI_FALSE);
+  }
+
+  DBUG_VOID_RETURN;
+}
+
+/**
+ * Called by MySQL to determine if an alter table command requires a full table
+ * rebuild.  Return COMPATIBLE_DATA_NO to require a rebuild.
+ */
+bool HoneycombHandler::check_if_incompatible_data(HA_CREATE_INFO *create_info,
+    uint table_changes)
+{
+  // unclear what table_changes means.  When in doubt, copy inno.
+  if (table_changes != IS_EQUAL_YES)
+  {
+    return COMPATIBLE_DATA_NO;
+  }
+
+  // If a column is renamed we are forced to rebuild, because we are not given
+  // enough information to simply rename the column (AFAIK we are not given the
+  // new name).
+  if (this->check_column_being_renamed(table))
+  {
+    return COMPATIBLE_DATA_NO;
+  }
+
+  /* Check that row format didn't change */
+  if ((create_info->used_fields & HA_CREATE_USED_ROW_FORMAT)
+      && create_info->row_type != ROW_TYPE_DEFAULT
+      && create_info->row_type != get_row_type())
+  {
+    return COMPATIBLE_DATA_NO;
+  }
+
+  return COMPATIBLE_DATA_YES;
+}
+
+bool HoneycombHandler::check_column_being_renamed(const TABLE* table)
+{
+  const Field* field;
+  for (uint i = 0; i < table->s->fields; i++)
+  {
+    field = table->field[i];
+    if (field->flags & FIELD_IS_RENAMED)
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
+int HoneycombHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys,
+    handler_add_index **add)
+{
+  DBUG_ENTER("HoneycombHandler::add_index");
+  attach_thread(jvm, env);
+  int ret = 0;
+  IndexSchema schema;
+  for(uint k = 0; k < num_of_keys; k++)
+  {
+    JavaFrame frame(env, 2);
+    KEY* key = key_info + k;
+    jstring index_name = string_to_java_string(key->name);
+    pack_index_schema(&schema, key);
+
+    if (key->flags & HA_NOSAME)
+    {
+      // We don't support adding unique indices without a table rebuild
+      DBUG_RETURN(HA_ERR_WRONG_COMMAND);
+    }
+
+    const char* buf;
+    size_t buf_len;
+    schema.serialize(&buf, &buf_len);
+    jbyteArray serialized_schema =
+      convert_value_to_java_bytes((uchar*) buf, buf_len, env);
+
+    this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().add_index,
+        index_name, serialized_schema);
+    ret |= check_exceptions(env, cache, "HoneycombHandler::add_index");
+  }
+  detach_thread(jvm);
+  DBUG_RETURN(ret);
+}
+
+int HoneycombHandler::prepare_drop_index(TABLE *table, uint *key_num, uint num_of_keys)
+{
+  DBUG_ENTER("HoneycombHandler::prepare_drop_index");
+  attach_thread(jvm, env);
+  int ret = 0;
+  for (uint i = 0; i < num_of_keys; i++) {
+    JavaFrame frame(env, 1);
+    jstring index_name = string_to_java_string((table->key_info + key_num[i])->name);
+    this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().drop_index,
+        index_name);
+    ret |= check_exceptions(env, cache, "HoneycombHandler::prepare_drop_index");
+  }
+  detach_thread(jvm);
+  DBUG_RETURN(ret);
 }

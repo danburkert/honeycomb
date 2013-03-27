@@ -1,27 +1,26 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
+import com.nearinfinity.honeycomb.RuntimeIOException;
+import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import org.apache.avro.io.*;
+import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.avro.specific.SpecificDatumWriter;
+import org.apache.log4j.Logger;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
-import org.apache.avro.io.BinaryDecoder;
-import org.apache.avro.io.DatumReader;
-import org.apache.avro.io.DatumWriter;
-import org.apache.avro.io.DecoderFactory;
-import org.apache.avro.io.Encoder;
-import org.apache.avro.io.EncoderFactory;
-import org.apache.avro.specific.SpecificDatumReader;
-import org.apache.avro.specific.SpecificDatumWriter;
-import org.apache.log4j.Logger;
-
-import com.nearinfinity.honeycomb.HoneycombException;
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Utility class containing helper functions.
@@ -51,7 +50,7 @@ public class Util {
      * @param bytes A byte array that must be {@value #UUID_WIDTH} bytes wide, not null
      * @return A {@link UUID} representation
      */
-    public static UUID BytesToUUID(byte[] bytes) {
+    public static UUID bytesToUUID(byte[] bytes) {
         checkNotNull(bytes, "bytes must not be null.");
         checkArgument(bytes.length == UUID_WIDTH, "bytes must be of length " + UUID_WIDTH + ".");
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
@@ -67,6 +66,17 @@ public class Util {
         checkNotNull(schema, "Schema cannot be null");
         return deserializeAvroObject(schema, TableSchema.class);
     }
+
+    public static byte[] serializeIndexSchema(IndexSchema schema) {
+        checkNotNull(schema, "Schema cannot be null");
+        return serializeAvroObject(schema, IndexSchema.class);
+    }
+
+    public static IndexSchema deserializeIndexSchema(byte[] schema) {
+        checkNotNull(schema, "Schema cannot be null");
+        return deserializeAvroObject(schema, IndexSchema.class);
+    }
+
 
     /**
      * Serialize an object to a byte array
@@ -84,7 +94,7 @@ public class Util {
             encoder.flush();
         } catch (IOException e) {
             logger.error("Serialization failed", e);
-            throw new HoneycombException("Serialization failed", e);
+            throw new RuntimeException("Serialization failed", e);
         }
 
         return out.toByteArray();
@@ -105,7 +115,7 @@ public class Util {
             encoder.flush();
         } catch (IOException e) {
             logger.error("Serialization failed", e);
-            throw new HoneycombException("Serialization failed", e);
+            throw new RuntimeException("Serialization failed", e);
         }
 
         return out.toByteArray();
@@ -126,7 +136,7 @@ public class Util {
         try {
             return userDatumReader.read(null, binaryDecoder);
         } catch (IOException e) {
-            throw new HoneycombException("Deserialization failed", e);
+            throw new RuntimeException("Deserialization failed", e);
         }
     }
 
@@ -145,7 +155,7 @@ public class Util {
         try {
             return reader.read(null, binaryDecoder);
         } catch (IOException e) {
-            throw new HoneycombException("Deserialization failed", e);
+            throw new RuntimeException("Deserialization failed", e);
         }
     }
 
@@ -166,7 +176,24 @@ public class Util {
     public static void closeQuietly(Closeable closeable) {
         try {
             closeable.close();
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            logger.error("IOException thrown while closing resource.", e);
+            throw new RuntimeIOException(e);
         }
+    }
+
+    /**
+     * Return the set of names of unique indices in the table.
+     * @param schema
+     * @return
+     */
+    public static Set<String> uniqueIndices(TableSchema schema) {
+        Set<String> indices = Sets.newHashSet();
+        for (Map.Entry<String, IndexSchema> entry : schema.getIndices().entrySet()) {
+            if (entry.getValue().getIsUnique()) {
+                indices.add(entry.getKey());
+            }
+        }
+        return ImmutableSet.copyOf(indices);
     }
 }

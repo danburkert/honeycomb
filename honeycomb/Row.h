@@ -3,38 +3,13 @@
 
 #include <avro.h>
 #include <stdlib.h>
+#include "Serializable.h"
 
-class Row
+class Row : public Serializable
 {
   private:
     avro_schema_t row_container_schema;
     avro_value_t row_container;
-
-    /**
-     * @brief Gets the record of the column in the Row, and checks the type.
-     * Sets the passed in value pointer to the value of the record, or NULL if
-     * not found.
-     * @param column_name   The column of the requested record
-     * @param type  The expected type of the record.
-     * @param record Pointer to the contained record, or NULL.
-     *
-     * @return Error code
-     */
-    int get_record(const char* column_name, const char* type, avro_value_t** record);
-
-    /**
-     * @brief Adds record to the records map.  The value of record must not be
-     * set until after this function returns.  If the row already contains a
-     * record in the column the new value will replace the old.
-     *
-     * @param column_name Column name of the record
-     * @param type Type of the record
-     * @param record Record to be added to the Row
-     *
-     * @return Error code
-     */
-    int set_record(const char* column_name, const char* type, avro_value_t* record);
-
   public:
 
   Row();
@@ -83,11 +58,12 @@ class Row
 
   /**
    * @brief Get the bytes of a record in the Row.  The value byte buffer will
-   * be set to NULL if the record is not in the Row, or if the value of the
-   * record is NULL.
+   * be set to NULL if the record is not in the Row.
+   *
    * @param column_name   The column of the requested record
    * @param value   A pointer to the result byte buffer
    * @param size  A pointer to the size of the result byte buffer
+   *
    * @return  Error code
    */
   int get_bytes_record(const char* column_name, const char** value, size_t* size);
@@ -101,6 +77,6 @@ class Row
    *
    * @return Error code
    */
-  int set_bytes_record(const char* column_name, char* value, size_t size);
+  int set_record(const char* column_name, char* value, size_t size);
 };
 #endif

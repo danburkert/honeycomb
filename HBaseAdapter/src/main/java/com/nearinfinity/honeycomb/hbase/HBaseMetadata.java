@@ -230,6 +230,10 @@ public class HBaseMetadata {
             Get get = new Get(encodedRow);
             get.addFamily(COLUMN_FAMILY);
             Result result = HBaseOperations.performGet(hTable, get);
+            if (result.isEmpty()) {
+                return Maps.newHashMap();
+            }
+
             Map<byte[], byte[]> serializedNameIds = result.getFamilyMap(COLUMN_FAMILY);
             Map<String, Long> nameToId = new HashMap<String, Long>(serializedNameIds.size());
 

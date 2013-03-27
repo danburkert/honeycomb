@@ -52,3 +52,19 @@ TEST_F(IndexContainerTest, BytesRecord)
     bytes_record(index);
   }
 }
+
+TEST_F(IndexContainerTest, Name)
+{
+  int i;
+  char name[256];
+  const char* name_cmp;
+  memset(name, 0, 256);
+  index.reset();
+  for (i = 0; i < ITERATIONS; i++) 
+  {
+    snprintf(name, 256, "%s%d", "i", i);
+    index.set_name(name);
+    name_cmp = index.get_name();
+    ASSERT_TRUE(strcmp(name, name_cmp) == 0);
+  }
+}

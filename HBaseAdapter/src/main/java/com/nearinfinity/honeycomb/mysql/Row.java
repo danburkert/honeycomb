@@ -28,7 +28,7 @@ public class Row {
      * @param records Map of column name to record value
      * @param uuid    UUID representing the unique position of the Row
      */
-    public Row(Map<String, Object> records, UUID uuid) {
+    public Row(Map<String, ByteBuffer> records, UUID uuid) {
         checkNotNull(records, "records must not be null.");
         // uuid nullity will be checked by UUIDToBytes
         row = new RowContainer(new UUIDContainer(Util.UUIDToBytes(uuid)), records);
@@ -59,7 +59,26 @@ public class Row {
      * @return UUID of this Row.
      */
     public UUID getUUID() {
-        return Util.BytesToUUID(row.getUuid().bytes());
+        return Util.bytesToUUID(row.getUuid().bytes());
+    }
+
+    /**
+     * Set UUID to a new random UUID
+     */
+    public void setRandomUUID() {
+        row.setUuid(new UUIDContainer(Util.UUIDToBytes(UUID.randomUUID())));
+    }
+
+    /**
+     * Remove me
+     */
+    public Map<String, byte[]> getRecordsLegacy() {
+        Map<String, byte[]> retMap = new TreeMap<String, byte[]>();
+        for (Map.Entry<String, ByteBuffer> entry : row.getRecords().entrySet()) {
+            retMap.put(entry.getKey(), (entry.getValue() == null) ? null : entry.getValue().array());
+        }
+
+        return retMap;
     }
 
     /**
@@ -67,21 +86,8 @@ public class Row {
      *
      * @return Map of column names to records
      */
-    public Map<String, byte[]> getRecords() {
-        // Currently the record is always either null or a byte array.  We
-        // should move to more specific data types in the future in order to
-        // take advantage of more efficient Avro encoding.
-
-        // We should move away from explicitly using a TreeMap when we have
-        // access to the Avro container in C++.  At this point the stuff below
-        // will be unnecessary, and we can replace it with
-        // return row.getRecords();
-        Map<String, byte[]> retMap = new TreeMap<String, byte[]>();
-        for (Map.Entry<String, Object> entry : row.getRecords().entrySet()) {
-            retMap.put(entry.getKey(), (entry.getValue() == null) ? null : ((ByteBuffer) entry.getValue()).array());
-        }
-
-        return retMap;
+    public Map<String, ByteBuffer> getRecords() {
+        return row.getRecords();
     }
 
     /**
@@ -136,16 +142,16 @@ public class Row {
     }
 
     public Map<String, byte[]> getRowMap() {
-        return new TreeMap<String, byte[]>(getRecords());
+        return new TreeMap<String, byte[]>(getRecordsLegacy());
     }
 
     public byte[][] getValues() {
-        Map<String, byte[]> records = getRecords();
+        Map<String, byte[]> records = getRecordsLegacy();
         return records.values().toArray(new byte[records.size()][]);
     }
 
     public String[] getKeys() {
-        Map<String, Object> records = row.getRecords();
+        Map<String, ByteBuffer> records = row.getRecords();
         return records.keySet().toArray(new String[records.size()]);
     }
 }

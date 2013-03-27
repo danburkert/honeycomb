@@ -3,6 +3,7 @@ package com.nearinfinity.honeycomb.mysql;
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
+import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 
@@ -37,7 +38,7 @@ public class HandlerProxy {
         Verify.isNotNullOrEmpty(tableName);
         checkNotNull(serializedTableSchema);
 
-        this.store = this.storeFactory.createStore(tableSpace);
+        store = storeFactory.createStore(tableSpace);
         TableSchema tableSchema = Util.deserializeTableSchema(serializedTableSchema);
         Verify.isValidTableSchema(tableSchema);
         store.createTable(tableName, tableSchema);
@@ -53,7 +54,7 @@ public class HandlerProxy {
      */
     public void dropTable(String tableName, String tableSpace) {
         Verify.isNotNullOrEmpty(tableName);
-        Store store = this.storeFactory.createStore(tableSpace);
+        Store store = storeFactory.createStore(tableSpace);
         Table table = store.openTable(tableName);
         table.deleteAllRows();
 
@@ -64,15 +65,15 @@ public class HandlerProxy {
     public void openTable(String tableName, String tableSpace) {
         Verify.isNotNullOrEmpty(tableName);
         this.tableName = tableName;
-        this.store = this.storeFactory.createStore(tableSpace);
-        this.table = this.store.openTable(this.tableName);
+        store = storeFactory.createStore(tableSpace);
+        table = store.openTable(this.tableName);
     }
 
     public void closeTable() {
-        this.tableName = null;
-        this.store = null;
+        tableName = null;
+        store = null;
         Util.closeQuietly(table);
-        this.table = null;
+        table = null;
     }
 
     public String getTableName() {
@@ -94,122 +95,198 @@ public class HandlerProxy {
         Verify.isNotNullOrEmpty(newName, "New table name must have value.");
         checkArgument(!originalName.equals(newName), "New table name must be different than original.");
 
-        Store store = this.storeFactory.createStore(tableSpace);
+        Store store = storeFactory.createStore(tableSpace);
         store.renameTable(originalName, newName);
-        this.tableName = newName;
+        tableName = newName;
     }
 
     public long getRowCount() {
         checkTableOpen();
 
-        return this.store.getRowCount(this.tableName);
+        return store.getRowCount(tableName);
     }
 
-    public long getAutoIncValue() {
+    public void incrementRowCount(long amount) {
+        checkTableOpen();
+
+        store.incrementRowCount(tableName, amount);
+    }
+
+    public void truncateRowCount() {
+        checkTableOpen();
+        store.truncateRowCount(tableName);
+    }
+
+    public long getAutoIncrement() {
         checkTableOpen();
         if (!Verify.hasAutoIncrementColumn(store.getSchema(tableName))) {
-            throw new IllegalArgumentException(format("Table %s is not an autoincrement table.", this.tableName));
+            throw new IllegalArgumentException(format("Table %s does not contain an auto increment column.", tableName));
         }
 
         return store.getAutoInc(tableName);
     }
 
-    public long incrementAutoIncrementValue(long amount) {
+    /**
+     * Increment the auto increment value of the table by amount, and return the
+     * next auto increment value.  The next value will be the current value + 1,
+     * not the incremented value (equivalently, the incremented value - amount).
+     * @param amount
+     * @return
+     */
+    public long incrementAutoIncrement(long amount) {
         checkTableOpen();
         if (!Verify.hasAutoIncrementColumn(store.getSchema(tableName))) {
-            throw new IllegalArgumentException(format("Column %s is not an autoincrement column.", this.tableName));
+            throw new IllegalArgumentException(format("Table %s does not contain an auto increment column.", tableName));
         }
 
-        return this.store.incrementAutoInc(this.getTableName(), amount);
-    }
-
-    public void alterTable(byte[] newSchemaSerialized) {
-        checkNotNull(newSchemaSerialized);
-        checkTableOpen();
-        TableSchema newSchema = Util.deserializeTableSchema(newSchemaSerialized);
-        this.store.alterTable(this.tableName, newSchema);
+        return store.incrementAutoInc(getTableName(), amount) - amount;
     }
 
     public void truncateAutoIncrement() {
         checkTableOpen();
-        this.store.truncateAutoInc(this.tableName);
+        store.truncateAutoInc(tableName);
     }
 
-    public void incrementRowCount(int amount) {
+    public void addIndex(String indexName, byte[] serializedSchema) {
+        checkNotNull(indexName);
+        checkNotNull(serializedSchema);
         checkTableOpen();
 
-        this.store.incrementRowCount(this.tableName, amount);
+        IndexSchema schema = Util.deserializeIndexSchema(serializedSchema);
+        checkArgument(!schema.getIsUnique(), "Honeycomb does not support adding unique indices without a table rebuild.");
+        store.addIndex(tableName, indexName, schema);
     }
 
-    public void truncateRowCount() {
+    public void dropIndex(String indexName) {
+        checkNotNull(indexName);
         checkTableOpen();
-        this.store.truncateRowCount(this.tableName);
+
+        store.dropIndex(tableName, indexName);
     }
 
-    public void insert(byte[] rowBytes) {
+    /**
+     * Check whether the index contains a row with the same field values and a
+     * distinct UUID.
+     * @param indexName
+     * @param serializedRow
+     */
+    public boolean indexContainsDuplicate(String indexName, byte[] serializedRow) {
+        // This method must get its own table because it may be called during
+        // a full table scan.
+        checkNotNull(indexName);
+        checkNotNull(serializedRow);
+
+        Row row = Row.deserialize(serializedRow);
+        Table t = store.openTable(tableName);
+
+        IndexKey key = new IndexKey(indexName, null, row.getRecords());
+        Scanner scanner = t.indexScanExact(key);
+
+        try {
+            while (scanner.hasNext()) {
+                if (scanner.next().getUUID() != row.getUUID()) {
+                    return true;
+                }
+            }
+            return false;
+        } finally {
+            Util.closeQuietly(scanner);
+            Util.closeQuietly(t);
+        }
+    }
+
+    /**
+     * Insert row into table.
+     * @param rowBytes Serialized row to be written
+     * @return true if the write succeeds, or false if a uniqueness constraint
+     *         is violated.
+     */
+    public void insertRow(byte[] rowBytes) {
         checkTableOpen();
         Row row = Row.deserialize(rowBytes);
-        this.table.insert(row);
-    }
-
-    public void flush() {
-        checkTableOpen();
-        this.table.flush();
-    }
-
-    public Row getRow(UUID uuid) {
-        checkTableOpen();
-        return this.table.get(uuid);
+        row.setRandomUUID();
+        table.insert(row);
     }
 
     public void deleteRow(UUID uuid) {
         checkTableOpen();
-        this.table.delete(uuid);
+        table.delete(uuid);
     }
 
     public void updateRow(byte[] newRowBytes) {
         checkTableOpen();
         checkNotNull(newRowBytes);
         Row newRow = Row.deserialize(newRowBytes);
-        this.table.update(newRow);
+        table.update(newRow);
+    }
+
+    public void flush() {
+        // MySQL will call flush on the handler without an open table, which is
+        // a no-op
+        if (table != null) {
+            table.flush();
+        }
+    }
+
+    public void startTableScan() {
+        checkTableOpen();
+        checkState(currentScanner == null, "Previous scan should have ended before starting a new one.");
+        this.currentScanner = this.table.tableScan();
     }
 
     public void startIndexScan(byte[] indexKeys) {
         checkTableOpen();
+        checkState(currentScanner == null, "Previous scan should have ended before starting a new one.");
+        checkNotNull(indexKeys, "Index scan requires non-null key");
+
         IndexKey key = IndexKey.deserialize(indexKeys);
         QueryType queryType = key.getQueryType();
         switch (queryType) {
             case EXACT_KEY:
-                this.currentScanner = this.table.indexScanExact(key);
+                currentScanner = table.indexScanExact(key);
                 break;
             case AFTER_KEY:
-                this.currentScanner = this.table.ascendingIndexScanAfter(key);
+                currentScanner = table.ascendingIndexScanAfter(key);
                 break;
             case BEFORE_KEY:
-                this.currentScanner = this.table.descendingIndexScanAfter(key);
+                currentScanner = table.descendingIndexScanAfter(key);
                 break;
             case INDEX_FIRST:
-                this.currentScanner = this.table.ascendingIndexScanAt(key);
+                currentScanner = table.ascendingIndexScanAt(key);
                 break;
             case INDEX_LAST:
-                this.currentScanner = this.table.descendingIndexScanAt(key);
+                currentScanner = table.descendingIndexScanAt(key);
                 break;
             case KEY_OR_NEXT:
-                this.currentScanner = this.table.ascendingIndexScanAt(key);
+                currentScanner = table.ascendingIndexScanAt(key);
                 break;
             case KEY_OR_PREVIOUS:
-                this.currentScanner = this.table.descendingIndexScanAt(key);
+                currentScanner = table.descendingIndexScanAt(key);
                 break;
+            default:
+                throw new IllegalArgumentException(format("Not a supported type of query %s", queryType));
         }
 
     }
 
-    public Row getNextScannerRow() {
-        if (!this.currentScanner.hasNext()) {
+    public byte[] getNextRow() {
+        checkNotNull(currentScanner, "Scanner cannot be null to get next row.");
+        if (!currentScanner.hasNext()) {
             return null;
         }
 
-        return this.currentScanner.next();
+        return currentScanner.next().serialize();
+    }
+
+    public byte[] getRow(byte[] uuid) {
+        checkTableOpen();
+        checkNotNull(uuid, "Get row cannot have a null UUID.");
+        return this.table.get(Util.bytesToUUID(uuid)).serialize();
+    }
+
+    public void endScan() {
+        Util.closeQuietly(currentScanner);
+        currentScanner = null;
     }
 
     private void checkTableOpen() {
