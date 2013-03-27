@@ -1,10 +1,10 @@
 package com.nearinfinity.honeycomb;
 
-import com.nearinfinity.honeycomb.mysql.IndexKey;
-import com.nearinfinity.honeycomb.mysql.Row;
-
 import java.io.Closeable;
 import java.util.UUID;
+
+import com.nearinfinity.honeycomb.mysql.IndexKey;
+import com.nearinfinity.honeycomb.mysql.Row;
 
 /**
  * A Table handles operations for a single MySQL table.  It must support "insertRow",
@@ -24,7 +24,6 @@ public interface Table extends Closeable {
      * @param row Row containing UUID of row to be updated, as well as updated
      *            record values.
      * @throws RowNotFoundException
-     * @
      */
     void update(Row row);
 
@@ -33,7 +32,6 @@ public interface Table extends Closeable {
      *
      * @param uuid UUID of row to be deleted
      * @throws RowNotFoundException
-     * @
      */
     void delete(UUID uuid);
 
@@ -62,17 +60,17 @@ public interface Table extends Closeable {
      * Return a scanner over the table's index at the specified key / values in
      * ascending sort.
      *
-     * @return Scanner over index
      * @param key
+     * @return Scanner over index
      */
-    Scanner ascendingIndexScanAt(/* KeyValueContainer keyValues */IndexKey key);
+    Scanner ascendingIndexScanAt(IndexKey key);
 
     /**
      * Return a scanner over the table's index after the specified key / values
      * in ascending sort.
      *
-     * @return Scanner over index
      * @param key
+     * @return Scanner over index
      */
     Scanner ascendingIndexScanAfter(IndexKey key);
 
@@ -80,23 +78,24 @@ public interface Table extends Closeable {
      * Return a scanner over the table's index at the specified key / values in
      * descending sort.
      *
-     * @return Scanner over index
      * @param key
+     * @return Scanner over index
      */
-    Scanner descendingIndexScanAt(/* KeyValueContainer keyValues */IndexKey key);
+    Scanner descendingIndexScanAt(IndexKey key);
 
     /**
      * Return a scanner over the table's index after the specified key / values
      * in descending sort.
      *
-     * @return Scanner over index
      * @param key
+     * @return Scanner over index
      */
-    Scanner descendingIndexScanAfter(/* KeyValueContainer keyValues */IndexKey key);
+    Scanner descendingIndexScanAfter(IndexKey key);
 
     /**
      * Return a scanner over the rows in the table with the specified key /values
      *
+     * @param key
      * @return Scanner over index
      */
     Scanner indexScanExact(IndexKey key);
