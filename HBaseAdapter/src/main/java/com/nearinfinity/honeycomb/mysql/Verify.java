@@ -18,13 +18,7 @@ public class Verify {
     private static final Logger logger = Logger.getLogger(Verify.class);
 
     public static boolean hasAutoIncrementColumn(TableSchema schema) {
-        Map<String, ColumnSchema> columns = schema.getColumns();
-        for (ColumnSchema column : columns.values()) {
-            if (column.getIsAutoIncrement()) {
-                return true;
-            }
-        }
-        return false;
+        return Util.getAutoIncrementColumn(schema) != null;
     }
 
     public static void isValidTableId(final long tableId, String... message) {
