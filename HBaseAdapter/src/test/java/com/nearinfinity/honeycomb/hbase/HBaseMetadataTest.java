@@ -1,13 +1,13 @@
 package com.nearinfinity.honeycomb.hbase;
 
-import static org.mockito.Mockito.when;
-
-import java.io.IOException;
-import java.util.Map;
-
+import com.nearinfinity.honeycomb.MockHTable;
+import com.nearinfinity.honeycomb.TableNotFoundException;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import com.nearinfinity.honeycomb.mysql.generators.ColumnSchemaGenerator;
+import com.nearinfinity.honeycomb.mysql.generators.TableSchemaGenerator;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.PrimitiveGenerators;
-
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
@@ -19,13 +19,9 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.powermock.api.mockito.PowerMockito;
 
-import com.google.common.collect.ImmutableMap;
-import com.nearinfinity.honeycomb.MockHTable;
-import com.nearinfinity.honeycomb.TableNotFoundException;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
-import com.nearinfinity.honeycomb.mysql.generators.ColumnSchemaGenerator;
-import com.nearinfinity.honeycomb.mysql.generators.TableSchemaGenerator;
+import java.io.IOException;
+
+import static org.mockito.Mockito.when;
 
 public class HBaseMetadataTest {
     private static final Generator<TableSchema> tableSchemaGen = new TableSchemaGenerator();
@@ -63,7 +59,7 @@ public class HBaseMetadataTest {
         TableSchema expected = hbaseMetadata.getSchema(tableId);
         Assert.assertEquals(schema, expected);
 
-        hbaseMetadata.deleteSchema(tableName);
+        hbaseMetadata.deleteTable(tableName);
         ResultScanner results = table.getScanner(new Scan());
         Assert.assertTrue(results.next().getNoVersionMap().size() == 1); // Table id counter
         Assert.assertNull(results.next());
@@ -118,59 +114,6 @@ public class HBaseMetadataTest {
     }
 
     @Test
-    public void testUpdateSchemaDropColumn() throws Exception {
-        TableSchema newSchema = tableSchemaGen.next();
-        final String tableName = TableSchemaGenerator.MYSQL_NAME_GEN.next();
-
-        Map<String, ColumnSchema> origColumns =
-                ImmutableMap.copyOf(newSchema.getColumns());
-        Map<String, ColumnSchema> newColumns = newSchema.getColumns();
-        Map.Entry<String, ColumnSchema> removedColumn =
-                newColumns.entrySet().iterator().next();
-
-        newColumns.entrySet().remove(removedColumn);
-
-        TableSchema origSchema = new TableSchema(origColumns, newSchema.getIndices());
-
-        hbaseMetadata.createTable(tableName, origSchema);
-
-        long tableId = hbaseMetadata.getTableId(tableName);
-        hbaseMetadata.updateSchema(tableId, origSchema, newSchema);
-
-        TableSchema returnedSchema = hbaseMetadata.getSchema(tableId);
-
-        Assert.assertEquals(newSchema, returnedSchema);
-        Assert.assertEquals(origSchema.getColumns().size() - 1,
-                returnedSchema.getColumns().size());
-        Assert.assertNull(returnedSchema.getColumns().get(removedColumn.getKey()));
-    }
-
-    @Test
-    public void testUpdateSchemaAddColumn() throws Exception {
-        TableSchema newSchema = tableSchemaGen.next();
-        ColumnSchema newColumn = columnSchemaGen.next();
-        String columnName = PrimitiveGenerators.strings().next();
-        final String tableName = TableSchemaGenerator.MYSQL_NAME_GEN.next();
-        Map<String, ColumnSchema> origColumns = ImmutableMap.copyOf(newSchema.getColumns());
-
-        newSchema.getColumns().put(columnName, newColumn);
-
-        TableSchema origSchema = new TableSchema(origColumns, newSchema.getIndices());
-
-        hbaseMetadata.createTable(tableName, origSchema);
-
-        long tableId = hbaseMetadata.getTableId(tableName);
-        hbaseMetadata.updateSchema(tableId, origSchema, newSchema);
-
-        TableSchema returnedSchema = hbaseMetadata.getSchema(tableId);
-
-        Assert.assertEquals(newSchema, returnedSchema);
-        Assert.assertEquals(origSchema.getColumns().size() + 1,
-                returnedSchema.getColumns().size());
-        Assert.assertEquals(newColumn, returnedSchema.getColumns().get(columnName));
-    }
-
-    @Test
     public void testAutoInc() throws Exception {
         TableSchema table = tableSchemaGen.next();
         final String tableName = TableSchemaGenerator.MYSQL_NAME_GEN.next();
@@ -183,8 +126,8 @@ public class HBaseMetadataTest {
         Assert.assertEquals(hbaseMetadata.incrementAutoInc(tableId, value), value);
         Assert.assertEquals(hbaseMetadata.getAutoInc(tableId), value);
 
-        hbaseMetadata.truncateAutoInc(tableId);
-        Assert.assertEquals(hbaseMetadata.getAutoInc(tableId), 0);
+        hbaseMetadata.setAutoInc(tableId, 13);
+        Assert.assertEquals(hbaseMetadata.getAutoInc(tableId), 13);
     }
 
     @Test

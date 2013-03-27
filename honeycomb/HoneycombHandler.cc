@@ -426,10 +426,9 @@ void HoneycombHandler::get_auto_increment(ulonglong offset, ulonglong increment,
                                  ulonglong *nb_reserved_values)
 {
   DBUG_ENTER("HoneycombHandler::get_auto_increment");
-  ulonglong inc_amount = offset - 1 + increment * nb_desired_values;
 
   jlong value = env->CallLongMethod(handler_proxy,
-      cache->handler_proxy().increment_auto_increment, inc_amount);
+      cache->handler_proxy().increment_auto_increment, nb_desired_values);
   if (check_exceptions(env, cache, "HoneycombHandler::get_auto_increment"))
   { // exception thrown, return error code
     *first_value = ~(ulonglong) 0;

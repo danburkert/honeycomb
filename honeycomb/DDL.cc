@@ -87,7 +87,7 @@ int HoneycombHandler::create(const char *path, TABLE *table,
     {
       jtablespace = string_to_java_string(table->s->tablespace);
     }
-    jlong jauto_inc_value = create_info->auto_increment_value;
+    jlong jauto_inc_value = max(1, create_info->auto_increment_value);
 
     const char* buf;
     size_t buf_len;

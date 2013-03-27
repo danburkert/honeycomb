@@ -7,6 +7,7 @@ import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 
+import java.nio.ByteBuffer;
 import java.util.UUID;
 
 import static com.google.common.base.Preconditions.*;
@@ -203,8 +204,16 @@ public class HandlerProxy {
      */
     public void insertRow(byte[] rowBytes) {
         checkTableOpen();
+        TableSchema schema = store.getSchema(tableName);
         Row row = Row.deserialize(rowBytes);
         row.setRandomUUID();
+        String auto_inc_col = Util.getAutoIncrementColumn(schema);
+        if (auto_inc_col != null) {
+            ByteBuffer bb = row.getRecords().get(auto_inc_col);
+            long auto_inc = bb.getLong();
+            bb.rewind();
+            store.setAutoInc(tableName, auto_inc + 1);
+        }
         table.insert(row);
     }
 

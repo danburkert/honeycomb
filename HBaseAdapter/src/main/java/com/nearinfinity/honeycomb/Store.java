@@ -72,10 +72,18 @@ public interface Store {
      *
      * @param tableName
      * @return
-     * @throws HoneycombException
-     * @
      */
     public long getAutoInc(String tableName);
+
+    /**
+     * Set the table's auto increment value to the greater of value and the
+     * table's current auto increment value.
+     *
+     * @param tableName
+     * @param value
+     * @return
+     */
+    public void setAutoInc(String tableName, long value);
 
     /**
      * Increment the table's auto increment value by amount, and return the new
@@ -84,13 +92,11 @@ public interface Store {
      * @param tableName Name of table
      * @param amount    Amount to auto increment by
      * @return
-     * @throws HoneycombException
-     * @
      */
     public long incrementAutoInc(String tableName, long amount);
 
     /**
-     * Truncate the table's auto increment value.
+     * Reset the table's auto increment value to 1.
      *
      * @param tableName Name of table
      */

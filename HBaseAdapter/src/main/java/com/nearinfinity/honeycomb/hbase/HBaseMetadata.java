@@ -100,7 +100,7 @@ public class HBaseMetadata {
         performMutations(ImmutableList.<Delete>of(), puts);
     }
 
-    public void deleteSchema(String tableName) {
+    public void deleteTable(String tableName) {
         Verify.isNotNullOrEmpty(tableName);
         long tableId = getTableId(tableName);
         byte[] serializedId = serializeId(tableId);
@@ -121,54 +121,6 @@ public class HBaseMetadata {
         deletes.add(deleteTableSchema(tableId));
 
         performMutations(deletes, ImmutableList.<Put>of());
-    }
-
-    public void updateSchema(long tableId, TableSchema oldSchema, TableSchema newSchema) {
-        Verify.isValidTableId(tableId);
-        checkNotNull(oldSchema);
-        checkNotNull(newSchema);
-
-        if (oldSchema.equals(newSchema)) {
-            return;
-        }
-
-        List<Put> puts = new ArrayList<Put>();
-        List<Delete> deletes = new ArrayList<Delete>();
-
-        MapDifference<String, ColumnSchema> diff = Maps.difference(oldSchema.getColumns(),
-                newSchema.getColumns());
-
-        for (Map.Entry<String, ColumnSchema> deletedColumn :
-                diff.entriesOnlyOnLeft().entrySet()) {
-            String columnName = deletedColumn.getKey();
-            ColumnSchema schema = deletedColumn.getValue();
-
-            Delete columnIdDelete = new Delete(new ColumnsRow(tableId).encode());
-            columnIdDelete.deleteColumn(COLUMN_FAMILY, serializeName(columnName));
-            deletes.add(columnIdDelete);
-
-            if (schema.getIsAutoIncrement()) {
-                deletes.add(deleteAutoIncCounter(tableId));
-            }
-        }
-
-        puts.add(putColumnIds(tableId, diff.entriesOnlyOnRight())); // New columns
-
-        for (Map.Entry<String, MapDifference.ValueDifference<ColumnSchema>> changedColumn :
-                diff.entriesDiffering().entrySet()) {
-            if (changedColumn.getValue().leftValue().getIsAutoIncrement()
-                    && !changedColumn.getValue().rightValue().getIsAutoIncrement()) {
-                deletes.add(deleteAutoIncCounter(tableId));
-            }
-        }
-
-        if (diff.entriesInCommon().size() == 0) {
-            // All columns have been changed.  Perhaps we should truncate.
-        }
-
-        puts.add(putTableSchema(tableId, newSchema));
-
-        performMutations(deletes, puts);
     }
 
     /**
@@ -202,10 +154,16 @@ public class HBaseMetadata {
                 serializeId(tableId), amount);
     }
 
-    public void truncateAutoInc(long tableId) {
+    public void setAutoInc(long tableId, long value) {
         Verify.isValidTableId(tableId);
-        performMutations(Lists.<Delete>newArrayList(deleteAutoIncCounter(tableId)),
-                ImmutableList.<Put>of());
+        Put put = new Put(new AutoIncRow().encode());
+        put.add(COLUMN_FAMILY, serializeId(tableId), Bytes.toBytes(value));
+        HTableInterface hTable = getHTable();
+        try {
+            HBaseOperations.performPut(hTable, put);
+        } finally {
+            HBaseOperations.closeTable(hTable);
+        }
     }
 
     public long getRowCount(long tableId) {

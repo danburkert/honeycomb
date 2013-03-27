@@ -1,24 +1,22 @@
 package com.nearinfinity.honeycomb.hbase;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import com.nearinfinity.honeycomb.MockHTable;
+import com.nearinfinity.honeycomb.TableNotFoundException;
+import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import com.nearinfinity.honeycomb.mysql.generators.TableSchemaGenerator;
+import net.java.quickcheck.Generator;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import net.java.quickcheck.Generator;
-
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import com.nearinfinity.honeycomb.MockHTable;
-import com.nearinfinity.honeycomb.TableNotFoundException;
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
-import com.nearinfinity.honeycomb.mysql.generators.TableSchemaGenerator;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class HBaseMetadataPropertyTest {
     private static HBaseMetadata hbaseMetadata;
@@ -92,7 +90,7 @@ public class HBaseMetadataPropertyTest {
         long tableId = hbaseMetadata.getTableId(tableName);
         Assert.assertEquals(schema, hbaseMetadata.getSchema(tableId));
 
-        hbaseMetadata.deleteSchema(tableName);
+        hbaseMetadata.deleteTable(tableName);
         hbaseMetadata.getSchema(tableId);
     }
 }
