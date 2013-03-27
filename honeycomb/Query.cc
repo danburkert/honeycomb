@@ -5,7 +5,7 @@
 #include "Macros.h"
 #include "IndexContainer.h"
 
-static IndexContainer::QueryType retrieve_query_flag(enum ha_rkey_function find_flag);
+static int retrieve_query_flag(enum ha_rkey_function find_flag, IndexContainer::QueryType* query_type);
 
 // Index scanning
 int HoneycombHandler::index_init(uint idx, bool sorted)
@@ -20,14 +20,18 @@ int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
 {
   DBUG_ENTER("HoneycombHandler::index_read_map");
   IndexContainer index_key;
+  IndexContainer::QueryType query_type;
+  int rc = retrieve_query_flag(find_flag, &query_type);
+  if (rc) { DBUG_RETURN(rc); }
+
   uchar* key_ptr = (uchar*)key;
 
   KEY *key_info = table->s->key_info + this->active_index;
   KEY_PART_INFO *key_part = key_info->key_part;
   KEY_PART_INFO *end_key_part = key_part + key_info->key_parts;
 
+  index_key.set_type(query_type);
   index_key.set_name(key_info->name);
-  index_key.set_type(retrieve_query_flag(find_flag));
   while (key_part < end_key_part && keypart_map)
   {
     uint key_length;
@@ -127,13 +131,12 @@ int HoneycombHandler::rnd_init(bool scan)
 
 int HoneycombHandler::rnd_next(uchar *buf)
 {
-  int rc = 0;
+  DBUG_ENTER("HoneycombHandler::rnd_next");
 
   ha_statistic_increment(&SSV::ha_read_rnd_next_count);
-  DBUG_ENTER("HoneycombHandler::rnd_next");
   MYSQL_READ_ROW_START(table_share->db.str, table_share->table_name.str, TRUE);
 
-  rc = get_next_row(buf);
+  int rc = get_next_row(buf);
 
   MYSQL_READ_ROW_DONE(rc);
   DBUG_RETURN(rc);
@@ -228,22 +231,24 @@ int HoneycombHandler::read_row(uchar *buf)
   return 0;
 }
 
-static IndexContainer::QueryType retrieve_query_flag(enum ha_rkey_function find_flag)
+static int retrieve_query_flag(enum ha_rkey_function find_flag, IndexContainer::QueryType* query_type)
 {
   switch(find_flag)
   {
     case HA_READ_KEY_EXACT:
-      return IndexContainer::EXACT_KEY;
+      *query_type = IndexContainer::EXACT_KEY;
     case HA_READ_KEY_OR_NEXT:
-      return IndexContainer::KEY_OR_NEXT;
+      *query_type = IndexContainer::KEY_OR_NEXT;
     case HA_READ_KEY_OR_PREV:            
     case HA_READ_PREFIX_LAST_OR_PREV:
-      return IndexContainer::KEY_OR_PREVIOUS;
+      *query_type = IndexContainer::KEY_OR_PREVIOUS;
     case HA_READ_AFTER_KEY:             
-      return IndexContainer::AFTER_KEY;
+      *query_type = IndexContainer::AFTER_KEY;
     case HA_READ_BEFORE_KEY:           
-      return IndexContainer::BEFORE_KEY;
+      *query_type = IndexContainer::BEFORE_KEY;
     default:
-      return (IndexContainer::QueryType)-1;
+      return HA_ERR_GENERIC;
   }
+
+  return 0;
 }
