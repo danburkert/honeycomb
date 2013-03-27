@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import com.nearinfinity.honeycomb.mysql.IndexKey;
 import com.nearinfinity.honeycomb.mysql.Row;
+import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 
 /**
  * A Table handles operations for a single MySQL table.  It must support "insertRow",
@@ -17,6 +18,14 @@ public interface Table extends Closeable {
      * @param row Row to be inserted
      */
     void insert(Row row);
+
+    /**
+     * Inserts an index on the table
+     *
+     * @param indexName The identifying name of the index
+     * @param indexSchema The {@link IndexSchema} representing the index details
+     */
+    void insertTableIndex(final String indexName, final IndexSchema indexSchema);
 
     /**
      * Update row in table

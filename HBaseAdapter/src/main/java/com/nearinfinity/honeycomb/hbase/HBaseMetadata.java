@@ -1,26 +1,43 @@
 package com.nearinfinity.honeycomb.hbase;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.*;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.nearinfinity.honeycomb.TableNotFoundException;
-import com.nearinfinity.honeycomb.hbase.rowkey.*;
-import com.nearinfinity.honeycomb.hbaseclient.Constants;
-import com.nearinfinity.honeycomb.mysql.Util;
-import com.nearinfinity.honeycomb.mysql.Verify;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
-import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
-import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.util.Bytes;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.*;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.util.Bytes;
+
+import com.google.common.base.Charsets;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.ImmutableBiMap;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.nearinfinity.honeycomb.TableNotFoundException;
+import com.nearinfinity.honeycomb.hbase.rowkey.AutoIncRow;
+import com.nearinfinity.honeycomb.hbase.rowkey.ColumnsRow;
+import com.nearinfinity.honeycomb.hbase.rowkey.IndicesRow;
+import com.nearinfinity.honeycomb.hbase.rowkey.RowsRow;
+import com.nearinfinity.honeycomb.hbase.rowkey.SchemaRow;
+import com.nearinfinity.honeycomb.hbase.rowkey.TablesRow;
+import com.nearinfinity.honeycomb.hbaseclient.Constants;
+import com.nearinfinity.honeycomb.mysql.Util;
+import com.nearinfinity.honeycomb.mysql.Verify;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 
 /**
  * Manages writing and reading table & column schemas, table & column ids, and
@@ -98,6 +115,37 @@ public class HBaseMetadata {
             puts.add(putIndices(tableId, schema.getIndices()));
         }
         performMutations(ImmutableList.<Delete>of(), puts);
+    }
+
+    /**
+     * Performs all metadata operations necessary to create a table index
+     * @param tableId The id of the table to create the index
+     * @param indexName The identifying name of the index, not null or empty
+     * @param indexSchema The {@link IndexSchema} representing the index details, not null
+     */
+    public void createTableIndex(final long tableId, final String indexName,
+            final IndexSchema indexSchema) {
+        Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
+        checkNotNull(indexSchema, "The index schema is invalid");
+
+        final List<Put> puts = Lists.newArrayList();
+        final List<Delete> deletes = Lists.newArrayList();
+
+        final Map<String, IndexSchema> indexDetailMap = ImmutableMap.<String, IndexSchema>of(indexName, indexSchema);
+
+        // Update the table schema to store the new index schema details
+        final TableSchema existingSchema = getSchema(tableId);
+        final TableSchema updatedSchema = TableSchema.newBuilder(existingSchema).build();
+        updatedSchema.getIndices().putAll(indexDetailMap);
+
+        // Delete the previous table schema
+        deletes.add(deleteTableSchema(tableId));
+
+        // Write the updated table schema and created index
+        puts.add(putTableSchema(tableId, updatedSchema));
+        puts.add(putIndices(tableId, indexDetailMap));
+
+        performMutations(deletes, puts);
     }
 
     public void deleteTable(String tableName) {
@@ -362,6 +410,6 @@ public class HBaseMetadata {
     }
 
     private HTableInterface getHTable() {
-        return this.provider.get();
+        return provider.get();
     }
 }

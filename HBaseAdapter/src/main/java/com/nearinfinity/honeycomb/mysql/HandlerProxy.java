@@ -1,17 +1,19 @@
 package com.nearinfinity.honeycomb.mysql;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static java.lang.String.format;
+
+import java.nio.ByteBuffer;
+import java.util.UUID;
+
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
-
-import java.nio.ByteBuffer;
-import java.util.UUID;
-
-import static com.google.common.base.Preconditions.*;
-import static java.lang.String.format;
 
 public class HandlerProxy {
     private final StoreFactory storeFactory;
@@ -156,6 +158,8 @@ public class HandlerProxy {
         IndexSchema schema = Util.deserializeIndexSchema(serializedSchema);
         checkArgument(!schema.getIsUnique(), "Honeycomb does not support adding unique indices without a table rebuild.");
         store.addIndex(tableName, indexName, schema);
+
+        table.insertTableIndex(indexName, schema);
     }
 
     public void dropIndex(String indexName) {
@@ -240,7 +244,7 @@ public class HandlerProxy {
     public void startTableScan() {
         checkTableOpen();
         checkState(currentScanner == null, "Previous scan should have ended before starting a new one.");
-        this.currentScanner = this.table.tableScan();
+        currentScanner = table.tableScan();
     }
 
     public void startIndexScan(byte[] indexKeys) {
@@ -290,7 +294,7 @@ public class HandlerProxy {
     public byte[] getRow(byte[] uuid) {
         checkTableOpen();
         checkNotNull(uuid, "Get row cannot have a null UUID.");
-        return this.table.get(Util.bytesToUUID(uuid)).serialize();
+        return table.get(Util.bytesToUUID(uuid)).serialize();
     }
 
     public void endScan() {

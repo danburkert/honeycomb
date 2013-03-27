@@ -1,13 +1,13 @@
 package com.nearinfinity.honeycomb.hbase;
 
+import java.util.Map;
+
 import com.google.common.collect.BiMap;
 import com.google.inject.Inject;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
-
-import java.util.Map;
 
 public class HBaseStore implements Store {
     private final HBaseMetadata metadata;
@@ -62,6 +62,11 @@ public class HBaseStore implements Store {
 
     @Override
     public void addIndex(String tableName, String indexName, IndexSchema schema) {
+        final long tableId = cache.tableCacheGet(tableName);
+
+        metadata.createTableIndex(tableId, indexName, schema);
+        cache.invalidateSchemaCache(tableId);
+        cache.invalidateIndicesCache(tableId);
     }
 
     @Override
