@@ -83,7 +83,7 @@ public class HBaseReader {
     }
 
     /**
-     * Checks that the SQL row would not violate a unique index on insert.
+     * Checks that the SQL row would not violate a unique index on insertRow.
      *
      * @param tableName SQL table name
      * @param values    SQL row to check

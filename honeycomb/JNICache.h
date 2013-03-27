@@ -26,6 +26,8 @@ class JNICache
                 end_scan,
                 add_index,
                 drop_index,
+                index_contains_duplicate,
+                insert_row,
                 start_table_scan,
                 get_row;
     };

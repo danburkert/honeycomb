@@ -20,7 +20,7 @@ void rand_record_map(TEntity& entity)
     vals[i] = new char[val_lens[i]];
     gen_random_string(keys[i], key_len);
     gen_random_bytes(vals[i], val_lens[i]);
-    ASSERT_FALSE(entity.set_bytes_record(keys[i], vals[i], val_lens[i]));
+    ASSERT_FALSE(entity.set_record(keys[i], vals[i], val_lens[i]));
   }
 
   size_t count;
@@ -66,7 +66,7 @@ void bytes_record(TEntity& entity)
 
   for (int i = 0; i < 6; i++)
   {
-    ASSERT_FALSE(entity.set_bytes_record(keys[i], vals[i], 4));
+    ASSERT_FALSE(entity.set_record(keys[i], vals[i], 4));
   }
 
   size_t count;
@@ -84,7 +84,7 @@ void bytes_record(TEntity& entity)
 
   // Test that puts to existing entity keys inserts the new value
   const char* get_val;
-  ASSERT_FALSE(entity.set_bytes_record(keys[0], vals[1], 4));
+  ASSERT_FALSE(entity.set_record(keys[0], vals[1], 4));
   ASSERT_FALSE(entity.get_bytes_record(keys[0], &get_val, NULL));
   ASSERT_EQ(0, memcmp(vals[1], get_val, 4));
 

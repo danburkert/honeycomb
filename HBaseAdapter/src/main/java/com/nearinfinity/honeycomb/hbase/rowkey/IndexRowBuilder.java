@@ -12,7 +12,7 @@ public class IndexRowBuilder {
     private long tableId;
     private long indexId;
     private SortOrder order;
-    private Map<String, byte[]> records;
+    private Map<String, ByteBuffer> records;
     private Map<String, ColumnType> columnTypes;
     private Collection<String> columnOrder;
     private UUID uuid;
@@ -38,7 +38,7 @@ public class IndexRowBuilder {
         return this;
     }
 
-    public IndexRowBuilder withRecords(Map<String, byte[]> records, Map<String, ColumnType> columnTypes, Collection<String> columnOrder) {
+    public IndexRowBuilder withRecords(Map<String, ByteBuffer> records, Map<String, ColumnType> columnTypes, Collection<String> columnOrder) {
         this.records = records;
         this.columnTypes = columnTypes;
         this.columnOrder = columnOrder;
@@ -89,9 +89,9 @@ public class IndexRowBuilder {
         return buffer.array();
     }
 
-    private static Map<String, byte[]> encodeRow(Map<String, byte[]> rows, Map<String, ColumnType> columnTypes) {
+    private static Map<String, byte[]> encodeRow(Map<String, ByteBuffer> rows, Map<String, ColumnType> columnTypes) {
         final ImmutableMap.Builder<String, byte[]> result = ImmutableMap.builder();
-        for (Map.Entry<String, byte[]> entry : rows.entrySet()) {
+        for (Map.Entry<String, ByteBuffer> entry : rows.entrySet()) {
             byte[] encodedValue = encodeValue(entry.getValue(), columnTypes.get(entry.getKey()));
             result.put(entry.getKey(), encodedValue);
         }
@@ -99,16 +99,16 @@ public class IndexRowBuilder {
         return result.build();
     }
 
-    private static byte[] encodeValue(final byte[] value, final ColumnType columnType) {
+    private static byte[] encodeValue(final ByteBuffer value, final ColumnType columnType) {
         switch (columnType) {
             case LONG:
             case ULONG:
             case TIME: {
-                long longValue = ByteBuffer.wrap(value).getLong();
+                long longValue = value.getLong();
                 return Bytes.toBytes(longValue ^ INVERT_SIGN_MASK);
             }
             case DOUBLE: {
-                double doubleValue = ByteBuffer.wrap(value).getDouble();
+                double doubleValue = value.getDouble();
                 long longValue = Double.doubleToLongBits(doubleValue);
                 if (doubleValue < 0.0) {
                     return Bytes.toBytes(~longValue);
@@ -117,7 +117,7 @@ public class IndexRowBuilder {
                 return Bytes.toBytes(longValue ^ INVERT_SIGN_MASK);
             }
             default:
-                return value;
+                return value.array();
         }
     }
 

@@ -5,11 +5,11 @@ import net.java.quickcheck.generator.CombinedGenerators;
 
 import java.nio.ByteBuffer;
 
-public class ByteBufferGenerator<T> implements Generator<T> {
+public class ByteBufferGenerator implements Generator<ByteBuffer> {
     Generator<byte[]> bytes = CombinedGenerators.byteArrays();
 
     @Override
-    public T next() {
-        return (T) ByteBuffer.wrap(bytes.next());
+    public ByteBuffer next() {
+        return ByteBuffer.wrap(bytes.next());
     }
 }

@@ -38,7 +38,7 @@ bool IndexContainer::equals(const IndexContainer& other)
   return avro_value_equal(&container_schema, &other_schema);
 }
 
-int IndexContainer::serialize(const char** buf, size_t* len)    
+int IndexContainer::serialize(const char** buf, size_t* len)
 {
   return serialize_object(&container_schema, buf, len);
 }
@@ -48,7 +48,7 @@ int IndexContainer::deserialize(const char* buf, int64_t len)
   return deserialize_object(&container_schema, buf, len);
 }
 
-int IndexContainer::set_bytes_record(const char* column_name, char* value, size_t size)
+int IndexContainer::set_record(const char* column_name, char* value, size_t size)
 {
   return set_map_value(&container_schema, column_name, RECORDS, value, size);
 }

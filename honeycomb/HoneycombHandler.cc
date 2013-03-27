@@ -615,5 +615,3 @@ char* HoneycombHandler::index_name(TABLE* table, uint key)
 {
   return "";
 }
-
-

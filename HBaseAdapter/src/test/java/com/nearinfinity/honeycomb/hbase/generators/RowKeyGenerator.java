@@ -4,6 +4,7 @@ import com.google.common.collect.Maps;
 import com.nearinfinity.honeycomb.hbase.RowKey;
 import com.nearinfinity.honeycomb.hbase.rowkey.*;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
+import com.nearinfinity.honeycomb.mysql.generators.ByteBufferGenerator;
 import com.nearinfinity.honeycomb.mysql.generators.UUIDGenerator;
 import net.java.quickcheck.FrequencyGenerator;
 import net.java.quickcheck.Generator;
@@ -12,7 +13,6 @@ import net.java.quickcheck.generator.PrimitiveGenerators;
 import net.java.quickcheck.generator.distribution.Distribution;
 import net.java.quickcheck.generator.support.DefaultFrequencyGenerator;
 import net.java.quickcheck.generator.support.FixedValuesGenerator;
-import org.apache.hadoop.hbase.util.Bytes;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -25,8 +25,8 @@ public class RowKeyGenerator implements Generator<RowKey> {
     private static final RowsRow rowsRow = new RowsRow();
     private static final AutoIncRow autoIncRow = new AutoIncRow();
     private static final SchemaRow schemaRow = new SchemaRow();
-    private static final Generator<Map<String, byte[]>> recordGen =
-            CombinedGenerators.maps(PrimitiveGenerators.strings(), CombinedGenerators.byteArrays(),
+    private static final Generator<Map<String, ByteBuffer>> recordGen =
+            CombinedGenerators.maps(PrimitiveGenerators.strings(), new ByteBufferGenerator(),
                     PrimitiveGenerators.integers(4, 4, Distribution.UNIFORM));
     private static Generator<Long> randIdGen = PrimitiveGenerators.longs(0, Long.MAX_VALUE);
     private static Generator<UUID> uuidGen = new UUIDGenerator();
@@ -48,8 +48,8 @@ public class RowKeyGenerator implements Generator<RowKey> {
         rowKeyGen.add(new IndexRowGenerator(fixedLong(), fixedLong(), fixedRecord()), 8);
     }
 
-    private FixedValuesGenerator<Map<String, byte[]>> fixedRecord() {
-        return new FixedValuesGenerator<Map<String, byte[]>>(recordGen.next());
+    private FixedValuesGenerator<Map<String, ByteBuffer>> fixedRecord() {
+        return new FixedValuesGenerator<Map<String, ByteBuffer>>(recordGen.next());
     }
 
     private FixedValuesGenerator<Long> fixedLong() {
@@ -109,13 +109,13 @@ public class RowKeyGenerator implements Generator<RowKey> {
     private class IndexRowGenerator implements Generator<RowKey> {
         private final Generator<Long> tableIdGen;
         private final Generator<Long> indexIdGen;
-        private final Generator<Map<String, byte[]>> recordsGen;
+        private final Generator<Map<String, ByteBuffer>> recordsGen;
         private final Generator<ColumnType> columnTypeGenerator = PrimitiveGenerators.enumValues(ColumnType.class);
 
         public IndexRowGenerator(
                 Generator<Long> tableIdGen,
                 Generator<Long> indexIdGen,
-                Generator<Map<String, byte[]>> recordsGen) {
+                Generator<Map<String, ByteBuffer>> recordsGen) {
             this.tableIdGen = tableIdGen;
             this.indexIdGen = indexIdGen;
             this.recordsGen = recordsGen;
@@ -124,18 +124,20 @@ public class RowKeyGenerator implements Generator<RowKey> {
         @Override
         public RowKey next() {
             Map<String, ColumnType> columnTypeMap = Maps.newHashMap();
-            Map<String, byte[]> records = recordGen.next();
-            for (Map.Entry<String, byte[]> entry : records.entrySet()) {
+            Map<String, ByteBuffer> records = recordGen.next();
+            for (Map.Entry<String, ByteBuffer> entry : records.entrySet()) {
                 ColumnType next = columnTypeGenerator.next();
                 columnTypeMap.put(entry.getKey(), next);
                 switch (next) {
                     case LONG:
                     case ULONG:
                     case TIME: {
-                        records.put(entry.getKey(), Bytes.getBytes((ByteBuffer) ByteBuffer.allocate(8).putLong(RAND.nextLong()).rewind()));
+                        records.put(entry.getKey(),
+                                (ByteBuffer) ByteBuffer.allocate(8).putLong(RAND.nextLong()).rewind());
                     }
                     case DOUBLE: {
-                        records.put(entry.getKey(), Bytes.getBytes((ByteBuffer) ByteBuffer.allocate(8).putDouble(RAND.nextDouble()).rewind()));
+                        records.put(entry.getKey(),
+                                (ByteBuffer) ByteBuffer.allocate(8).putDouble(RAND.nextDouble()).rewind());
                     }
                 }
             }

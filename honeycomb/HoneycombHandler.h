@@ -146,6 +146,10 @@ class HoneycombHandler : public handler
     int pack_index_schema(IndexSchema* schema, KEY* key);
     int init_table_share(TABLE_SHARE* table_share, const char* path);
 
+    /* IUD helper methods*/
+    bool violates_uniqueness(jbyteArray serialized_row);
+
+
   public:
     HoneycombHandler(handlerton *hton, TABLE_SHARE *table_share,
         mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm, JNICache* cache, jobject handler_proxy);

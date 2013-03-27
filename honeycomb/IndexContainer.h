@@ -32,7 +32,7 @@ class IndexContainer : public Serializable
 
     int deserialize(const char* buf, int64_t len);
 
-    int set_bytes_record(const char* column_name, char* value, size_t size);
+    int set_record(const char* column_name, char* value, size_t size);
 
     int get_bytes_record(const char* column_name, const char** value, size_t* size);
 

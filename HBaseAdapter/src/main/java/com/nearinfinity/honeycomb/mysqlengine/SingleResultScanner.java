@@ -44,7 +44,7 @@ public class SingleResultScanner implements HBaseResultScanner {
                     return null;
                 }
                 row = ResultReader.readIndexRow(result);
-                rowMap = row.getRecords();
+                rowMap = row.getRecordsLegacy();
                 value = rowMap.get(this.columnName);
             } while (Arrays.equals(value, valueToSkip));
 

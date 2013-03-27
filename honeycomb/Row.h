@@ -58,11 +58,12 @@ class Row : public Serializable
 
   /**
    * @brief Get the bytes of a record in the Row.  The value byte buffer will
-   * be set to NULL if the record is not in the Row, or if the value of the
-   * record is NULL.
+   * be set to NULL if the record is not in the Row.
+   *
    * @param column_name   The column of the requested record
    * @param value   A pointer to the result byte buffer
    * @param size  A pointer to the size of the result byte buffer
+   *
    * @return  Error code
    */
   int get_bytes_record(const char* column_name, const char** value, size_t* size);
@@ -76,6 +77,6 @@ class Row : public Serializable
    *
    * @return Error code
    */
-  int set_bytes_record(const char* column_name, char* value, size_t size);
+  int set_record(const char* column_name, char* value, size_t size);
 };
 #endif

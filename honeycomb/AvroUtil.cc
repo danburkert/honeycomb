@@ -43,14 +43,15 @@ int get_map_value(avro_value_t* schema, const char* entry_key, const char* map_n
   }
   else
   {
-    // Retrive the entry's value 
+    // Retrive the entry's value
     ret |= avro_value_get_bytes(&entry, (const void**) value, size);
   }
 
   return ret;
 }
 
-int set_map_value(avro_value_t* schema, const char* entry_key, const char* map_name, char* value, size_t size)
+int set_map_value(avro_value_t* schema, const char* entry_key,
+    const char* map_name, char* value, size_t size)
 {
   int ret = 0;
   avro_value_t entry;

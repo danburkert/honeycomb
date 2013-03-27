@@ -7,7 +7,7 @@ import java.io.Closeable;
 import java.util.UUID;
 
 /**
- * A Table handles operations for a single MySQL table.  It must support "insert",
+ * A Table handles operations for a single MySQL table.  It must support "insertRow",
  * "update", "delete" and "get" operations on rows, as well as table and index scans
  */
 public interface Table extends Closeable {

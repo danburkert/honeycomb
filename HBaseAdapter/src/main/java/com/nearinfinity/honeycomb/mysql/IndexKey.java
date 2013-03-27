@@ -1,6 +1,5 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import com.google.common.collect.Maps;
 import com.nearinfinity.honeycomb.mysql.gen.IndexContainer;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import org.apache.avro.io.DatumReader;
@@ -37,17 +36,8 @@ public class IndexKey {
         return Util.serializeAvroObject(indexContainer, writer);
     }
 
-    public Map<String, byte[]> getKeys() {
-        if (this.indexContainer.getRecords() == null) {
-            return null;
-        }
-
-        Map<String, byte[]> result = Maps.newHashMap();
-        for (Map.Entry<String, ByteBuffer> entry : this.indexContainer.getRecords().entrySet()) {
-            result.put(entry.getKey(), entry.getValue().array());
-        }
-
-        return result;
+    public Map<String, ByteBuffer> getKeys() {
+        return this.indexContainer.getRecords();
     }
 
     public String getIndexName() {
