@@ -100,24 +100,28 @@ public class IndexRowBuilder {
     }
 
     private static byte[] encodeValue(final ByteBuffer value, final ColumnType columnType) {
-        switch (columnType) {
-            case LONG:
-            case ULONG:
-            case TIME: {
-                long longValue = value.getLong();
-                return Bytes.toBytes(longValue ^ INVERT_SIGN_MASK);
-            }
-            case DOUBLE: {
-                double doubleValue = value.getDouble();
-                long longValue = Double.doubleToLongBits(doubleValue);
-                if (doubleValue < 0.0) {
-                    return Bytes.toBytes(~longValue);
+        try {
+            switch (columnType) {
+                case LONG:
+                case ULONG:
+                case TIME: {
+                    long longValue = value.getLong();
+                    return Bytes.toBytes(longValue ^ INVERT_SIGN_MASK);
                 }
+                case DOUBLE: {
+                    double doubleValue = value.getDouble();
+                    long longValue = Double.doubleToLongBits(doubleValue);
+                    if (doubleValue < 0.0) {
+                        return Bytes.toBytes(~longValue);
+                    }
 
-                return Bytes.toBytes(longValue ^ INVERT_SIGN_MASK);
+                    return Bytes.toBytes(longValue ^ INVERT_SIGN_MASK);
+                }
+                default:
+                    return value.array();
             }
-            default:
-                return value.array();
+        } finally {
+            value.rewind(); // rewind the ByteBuffer's index pointer
         }
     }
 

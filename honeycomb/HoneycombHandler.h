@@ -139,7 +139,6 @@ class HoneycombHandler : public handler
     int index_last(uchar *buf);
 
     void set_autoinc_counter(jlong new_value, jboolean is_truncate);
-    void release_auto_increment();
 
     /* DDL helper methods */
     int pack_column_schema(ColumnSchema* schema, Field* field);
@@ -247,10 +246,6 @@ class HoneycombHandler : public handler
 
     int index_read_map(uchar * buf, const uchar * key, key_part_map keypart_map, enum ha_rkey_function find_flag);
 
-    int update_row(const uchar *old_data, uchar *new_data);
-    int write_row(uchar *buf);
-    int delete_row(const uchar *buf);
-
     void position(const uchar *record);                           ///< required
     int info(uint);                                               ///< required
     int external_lock(THD *thd, int lock_type);                   ///< required
@@ -263,6 +258,7 @@ class HoneycombHandler : public handler
     int analyze(THD* thd, HA_CHECK_OPT* check_opt);
     ha_rows estimate_rows_upper_bound();
     void get_auto_increment(ulonglong offset, ulonglong increment, ulonglong nb_desired_values, ulonglong *first_value, ulonglong *nb_reserved_values);
+    void release_auto_increment();
 
     /* DDL */
     int create(const char *name, TABLE *form, HA_CREATE_INFO *create_info); ///< required
@@ -272,6 +268,12 @@ class HoneycombHandler : public handler
     bool check_column_being_renamed(const TABLE*  table);
     int prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys);
     int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add);
+
+    /* IUD */
+
+    int update_row(const uchar *old_data, uchar *new_data);
+    int write_row(uchar *buf);
+    int delete_row(const uchar *buf);
 };
 
 #endif

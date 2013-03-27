@@ -29,7 +29,8 @@ class JNICache
                 index_contains_duplicate,
                 insert_row,
                 start_table_scan,
-                get_row;
+                get_row,
+                increment_row_count;
     };
     struct HBaseAdapter
     {
@@ -53,7 +54,6 @@ class JNICache
                 get_next_autoincrement_value,
                 index_read,
                 next_index_row,
-                increment_row_count,
                 set_row_count,
                 is_nullable;
     };

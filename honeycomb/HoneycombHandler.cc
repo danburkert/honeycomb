@@ -230,6 +230,13 @@ int HoneycombHandler::external_lock(THD *thd, int lock_type)
 
   if (lock_type == F_UNLCK)
   {
+    if (this->rows_written > 0)
+    {
+      this->env->CallVoidMethod(handler_proxy,
+          cache->handler_proxy().increment_row_count, this->rows_written);
+      check_exceptions(env, cache, "HoneycombHandler::external_lock");
+      this->rows_written = 0;
+    }
     ret |= this->flush();
     detach_thread(jvm);
   }

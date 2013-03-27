@@ -106,6 +106,17 @@ public class HandlerProxy {
         return store.getRowCount(tableName);
     }
 
+    public void incrementRowCount(long amount) {
+        checkTableOpen();
+
+        store.incrementRowCount(tableName, amount);
+    }
+
+    public void truncateRowCount() {
+        checkTableOpen();
+        store.truncateRowCount(tableName);
+    }
+
     public long getAutoIncValue() {
         checkTableOpen();
         if (!Verify.hasAutoIncrementColumn(store.getSchema(tableName))) {
@@ -122,6 +133,11 @@ public class HandlerProxy {
         }
 
         return store.incrementAutoInc(getTableName(), amount);
+    }
+
+    public void truncateAutoIncrement() {
+        checkTableOpen();
+        store.truncateAutoInc(tableName);
     }
 
     public void addIndex(String indexName, byte[] serializedSchema) {
@@ -141,22 +157,6 @@ public class HandlerProxy {
         store.dropIndex(tableName, indexName);
     }
 
-    public void truncateAutoIncrement() {
-        checkTableOpen();
-        store.truncateAutoInc(tableName);
-    }
-
-    public void incrementRowCount(int amount) {
-        checkTableOpen();
-
-        store.incrementRowCount(tableName, amount);
-    }
-
-    public void truncateRowCount() {
-        checkTableOpen();
-        store.truncateRowCount(tableName);
-    }
-
     /**
      * Check whether the index contains a row with the same field values and a
      * distinct UUID.
@@ -164,7 +164,7 @@ public class HandlerProxy {
      * @param serializedRow
      */
     public boolean indexContainsDuplicate(String indexName, byte[] serializedRow) {
-        // This method must get its own table, because it may be called during
+        // This method must get its own table because it may be called during
         // a full table scan.
         checkNotNull(indexName);
         checkNotNull(serializedRow);
@@ -201,14 +201,6 @@ public class HandlerProxy {
         table.insert(row);
     }
 
-    public void flush() {
-        // MySQL will call flush on the handler without an open table, which is
-        // a no-op
-        if (table != null) {
-            table.flush();
-        }
-    }
-
     public void deleteRow(UUID uuid) {
         checkTableOpen();
         table.delete(uuid);
@@ -219,6 +211,14 @@ public class HandlerProxy {
         checkNotNull(newRowBytes);
         Row newRow = Row.deserialize(newRowBytes);
         table.update(newRow);
+    }
+
+    public void flush() {
+        // MySQL will call flush on the handler without an open table, which is
+        // a no-op
+        if (table != null) {
+            table.flush();
+        }
     }
 
     public void startTableScan() {
