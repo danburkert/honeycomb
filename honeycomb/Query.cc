@@ -231,6 +231,15 @@ int HoneycombHandler::read_row(uchar *buf)
   return 0;
 }
 
+/**
+ * @brief Turns a MySQL index flag into an avro flag. If the index flag is not supported
+ * it will return generic error code.
+ *
+ * @param find_flag MySQL index search flag
+ * @param query_type Corresponding avro flag [out]
+ *
+ * @return Success 0 otherwise HA_ERR_GENERIC 
+ */
 static int retrieve_query_flag(enum ha_rkey_function find_flag, IndexContainer::QueryType* query_type)
 {
   switch(find_flag)
