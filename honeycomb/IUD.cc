@@ -145,8 +145,9 @@ bool HoneycombHandler::violates_uniqueness(jbyteArray serialized_row)
     {
       jstring index_name = string_to_java_string(table->key_info[i].name);
       bool contains_duplicate = env->CallBooleanMethod(handler_proxy,
-          cache->handler_proxy().index_contains_duplicate, serialized_row);
-        check_exceptions(env, cache, "HoneycombHandler::create_table");
+          cache->handler_proxy().index_contains_duplicate, index_name,
+          serialized_row);
+        check_exceptions(env, cache, "HoneycombHandler::violates_uniqueness");
       if (contains_duplicate)
       {
         this->failed_key_index = i;
@@ -181,10 +182,17 @@ int HoneycombHandler::write_row(uchar *buf)
 
   if (violates_uniqueness(serialized_row))
   {
-    DBUG_RETURN(HA_ERR_FOUND_DUPP_KEY);
+    rc = HA_ERR_FOUND_DUPP_KEY;
   } else {
     env->CallVoidMethod(handler_proxy, cache->handler_proxy().insert_row,
         serialized_row);
-    DBUG_RETURN(check_exceptions(env, cache, "HoneycombHandler::create_table"));
+    rc |= check_exceptions(env, cache, "HoneycombHandler::write_row");
+  }
+  if (rc) {
+    DBUG_RETURN(rc);
+  }
+  else {
+    this->rows_written++;
+    DBUG_RETURN(rc);
   }
 }
