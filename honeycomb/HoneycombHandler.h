@@ -61,7 +61,7 @@ class HoneycombHandler : public handler
     void store_uuid_ref(Row* row);
     int full_index_scan(uchar* buf, IndexContainer::QueryType query);
     void bytes_to_long(const uchar* buff, unsigned int buff_length, bool is_signed, uchar* long_buff);
-    int read_row(uchar* buf, Row* row);
+    int read_row(uchar* buf);
     int get_next_row(uchar* buf);
     int read_bytes_into_mysql(jbyteArray row_bytes, uchar* buf);
     int flush();

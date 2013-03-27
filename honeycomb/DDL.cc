@@ -72,7 +72,7 @@ int HoneycombHandler::create(const char *path, TABLE *table,
       table_schema.add_column(field->field_name, &column_schema);
     }
 
-    for (int i = 0; i < table->s->keys; i++)
+    for (uint i = 0; i < table->s->keys; i++)
     {
       if (pack_index_schema(&index_schema, &table->key_info[i]))
       {
@@ -248,7 +248,7 @@ int HoneycombHandler::pack_index_schema(IndexSchema* schema, KEY* key)
 {
   int ret = 0;
   ret |= schema->reset();
-  for (int i = 0; i < key->key_parts; i++)
+  for (uint i = 0; i < key->key_parts; i++)
   {
     ret |= schema->add_column(key->key_part[i].field->field_name);
   }
@@ -391,7 +391,7 @@ bool HoneycombHandler::check_if_incompatible_data(HA_CREATE_INFO *create_info,
 bool HoneycombHandler::check_column_being_renamed(const TABLE* table)
 {
   const Field* field;
-  for (int i = 0; i < table->s->fields; i++)
+  for (uint i = 0; i < table->s->fields; i++)
   {
     field = table->field[i];
     if (field->flags & FIELD_IS_RENAMED)
@@ -441,7 +441,7 @@ int HoneycombHandler::prepare_drop_index(TABLE *table, uint *key_num, uint num_o
   DBUG_ENTER("HoneycombHandler::prepare_drop_index");
   attach_thread(jvm, env);
   int ret = 0;
-  for (int i = 0; i < num_of_keys; i++) {
+  for (uint i = 0; i < num_of_keys; i++) {
     JavaFrame frame(env, 1);
     jstring index_name = string_to_java_string((table->key_info + key_num[i])->name);
     this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().drop_index,

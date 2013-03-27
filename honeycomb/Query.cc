@@ -211,10 +211,10 @@ int HoneycombHandler::read_bytes_into_mysql(jbyteArray row_bytes, uchar* buf)
   }
 
   deserialized_from_java(row_bytes, *this->row);
-  return read_row(buf, this->row);
+  return read_row(buf);
 }
 
-int HoneycombHandler::read_row(uchar *buf, Row* row)
+int HoneycombHandler::read_row(uchar *buf)
 {
   store_uuid_ref(this->row);
 
