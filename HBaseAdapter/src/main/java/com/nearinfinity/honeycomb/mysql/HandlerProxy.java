@@ -117,7 +117,7 @@ public class HandlerProxy {
         store.truncateRowCount(tableName);
     }
 
-    public long getAutoIncValue() {
+    public long getAutoIncrement() {
         checkTableOpen();
         if (!Verify.hasAutoIncrementColumn(store.getSchema(tableName))) {
             throw new IllegalArgumentException(format("Table %s does not contain an auto increment column.", tableName));
@@ -126,13 +126,20 @@ public class HandlerProxy {
         return store.getAutoInc(tableName);
     }
 
-    public long incrementAutoIncrementValue(long amount) {
+    /**
+     * Increment the auto increment value of the table by amount, and return the
+     * next auto increment value.  The next value will be the current value + 1,
+     * not the incremented value (equivalently, the incremented value - amount).
+     * @param amount
+     * @return
+     */
+    public long incrementAutoIncrement(long amount) {
         checkTableOpen();
         if (!Verify.hasAutoIncrementColumn(store.getSchema(tableName))) {
             throw new IllegalArgumentException(format("Table %s does not contain an auto increment column.", tableName));
         }
 
-        return store.incrementAutoInc(getTableName(), amount);
+        return store.incrementAutoInc(getTableName(), amount) - amount;
     }
 
     public void truncateAutoIncrement() {

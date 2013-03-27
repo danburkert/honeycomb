@@ -20,10 +20,10 @@ int HoneycombHandler::pack_row(uchar *buf, TABLE* table, Row* row)
   }
   if(table->next_number_field && buf == table->record[0])
   {
-    int res = update_auto_increment();
-    if(res)
+    ret |= update_auto_increment();
+    if(ret)
     {
-      return res;
+      return ret;
     }
   }
 
@@ -171,7 +171,7 @@ int HoneycombHandler::write_row(uchar *buf)
   }
 
   my_bitmap_map *old_map = dbug_tmp_use_all_columns(table, table->read_set);
-  pack_row(buf, table, &row);
+  rc |= pack_row(buf, table, &row);
   dbug_tmp_restore_column_map(table->read_set, old_map);
 
   const char* row_buf;
@@ -180,7 +180,7 @@ int HoneycombHandler::write_row(uchar *buf)
   jbyteArray serialized_row =
     convert_value_to_java_bytes((uchar*) row_buf, buf_len, env);
 
-  if (violates_uniqueness(serialized_row))
+  if (!rc && violates_uniqueness(serialized_row))
   {
     rc = HA_ERR_FOUND_DUPP_KEY;
   } else {

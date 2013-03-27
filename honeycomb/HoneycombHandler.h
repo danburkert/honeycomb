@@ -257,6 +257,8 @@ class HoneycombHandler : public handler
     ha_rows records_in_range(uint inx, key_range *min_key, key_range *max_key);
     int analyze(THD* thd, HA_CHECK_OPT* check_opt);
     ha_rows estimate_rows_upper_bound();
+
+    /* HoneycombHandler */
     void get_auto_increment(ulonglong offset, ulonglong increment, ulonglong nb_desired_values, ulonglong *first_value, ulonglong *nb_reserved_values);
     void release_auto_increment();
 
@@ -270,7 +272,6 @@ class HoneycombHandler : public handler
     int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add);
 
     /* IUD */
-
     int update_row(const uchar *old_data, uchar *new_data);
     int write_row(uchar *buf);
     int delete_row(const uchar *buf);

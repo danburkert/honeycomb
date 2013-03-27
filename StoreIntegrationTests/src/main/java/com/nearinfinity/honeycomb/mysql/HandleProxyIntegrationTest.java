@@ -65,7 +65,7 @@ public class HandleProxyIntegrationTest {
         testProxy("Testing auto increment", schema, new Action() {
             @Override
             public void execute(HandlerProxy proxy) {
-                long autoIncValue = proxy.getAutoIncValue();
+                long autoIncValue = proxy.getAutoIncrement();
                 assertThat(autoIncValue).isEqualTo(1);
 
             }
@@ -78,8 +78,8 @@ public class HandleProxyIntegrationTest {
         testProxy("Testing increment auto increment", schema, new Action() {
             @Override
             public void execute(HandlerProxy proxy) {
-                long autoIncValue = proxy.incrementAutoIncrementValue(1);
-                assertThat(autoIncValue).isEqualTo(2).isEqualTo(proxy.getAutoIncValue());
+                long autoIncValue = proxy.incrementAutoIncrement(1);
+                assertThat(autoIncValue).isEqualTo(2).isEqualTo(proxy.getAutoIncrement());
             }
         });
     }
@@ -91,7 +91,7 @@ public class HandleProxyIntegrationTest {
             @Override
             public void execute(HandlerProxy proxy) {
                 proxy.truncateAutoIncrement();
-                assertThat(proxy.getAutoIncValue()).isEqualTo(0);
+                assertThat(proxy.getAutoIncrement()).isEqualTo(0);
             }
         });
     }
