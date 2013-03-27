@@ -35,7 +35,7 @@ HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_share,
 
 HoneycombHandler::~HoneycombHandler()
 {
-  attach_thread(this->jvm, this->env);
+  attach_thread(this->jvm, &(this->env));
   if (this->curr_write_id != -1)
   {
     this->flush_writes();
@@ -65,7 +65,7 @@ int HoneycombHandler::open(const char *path, int mode, uint test_if_locked)
 
   thr_lock_data_init(&share->lock, &lock, (void*) this);
 
-  attach_thread(jvm, env);
+  attach_thread(jvm, &env);
   {
     JavaFrame frame(env, 2);
     jstring jtable_name =
@@ -88,7 +88,7 @@ int HoneycombHandler::open(const char *path, int mode, uint test_if_locked)
 int HoneycombHandler::close(void)
 {
   DBUG_ENTER("HoneycombHandler::close");
-  attach_thread(jvm, env);
+  attach_thread(jvm, &env);
   {
     JavaFrame frame(env, 2);
     this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().close_table);
@@ -230,7 +230,7 @@ int HoneycombHandler::external_lock(THD *thd, int lock_type)
   JNICache::HBaseAdapter hbase_adapter = cache->hbase_adapter();
   if (lock_type == F_WRLCK || lock_type == F_RDLCK)
   {
-    attach_thread(jvm, env);
+    attach_thread(jvm, &env);
     if (lock_type == F_WRLCK)
     {
       jlong write_id = this->env->CallStaticLongMethod(hbase_adapter.clazz,
@@ -362,7 +362,7 @@ int HoneycombHandler::info(uint flag)
   // TODO: Update this function to take into account the flag being passed in,
   // like the other engines
   ha_rows rec_per_key;
-  attach_thread(jvm, env);
+  attach_thread(jvm, &env);
 
   DBUG_ENTER("HoneycombHandler::info");
   if (flag & HA_STATUS_VARIABLE)

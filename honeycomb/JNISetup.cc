@@ -37,33 +37,38 @@ static void abort_with_fatal_error(const char* message, ...)
 }
 
 /**
- * Initialize HBaseAdapter.  This should only be called once per MySQL Server
+ * Initialize Bootstrap class. This should only be called once per MySQL Server
  * instance during Handlerton initialization.
  */
 jobject bootstrap(JavaVM* jvm)
 {
-  Logging::info("Initializing HBaseAdapter");
+  Logging::info("Starting bootstrap()");
   JNIEnv* env;
-  jint attach_result = attach_thread(jvm, env);
+  jint attach_result = attach_thread(jvm, &env);
+
   if(attach_result != JNI_OK)
   {
-    Logging::fatal("Thread could not be attached in initialize_adapter");
-    perror("Failed to initalize adapter. Check honeycomb.log for details.");
+    Logging::fatal("Thread could not be attached in bootstrap()");
+    perror("Failed to startup Bootstrap. Check honeycomb.log for details.");
     abort();
   }
+  
   // TODO: check the result of these JNI calls with macro
-  jclass hbase_adapter = env->FindClass("com/nearinfinity/honeycomb/mysql/Bootstrap");
-  jmethodID initialize = env->GetStaticMethodID(hbase_adapter, "startup", "()Lcom/nearinfinity/honeycomb/mysql/HandlerProxyFactory;");
-  jobject handler_proxy_factory = env->CallStaticObjectMethod(hbase_adapter, initialize);
+  jclass bootstrap_class = env->FindClass("com/nearinfinity/honeycomb/mysql/Bootstrap");
+  jmethodID startup = env->GetStaticMethodID(bootstrap_class, "startup", "()Lcom/nearinfinity/honeycomb/mysql/HandlerProxyFactory;");
+  jobject handler_proxy_factory_local = env->CallStaticObjectMethod(bootstrap_class, startup);
+
   if (print_java_exception(env))
   {
-    abort_with_fatal_error("Initialize failed with an error. Check"
+    abort_with_fatal_error("Startup failed with an error. Check"
         "HBaseAdapter.log and honeycomb.log for more information.");
   }
 
-  handler_proxy_factory = env->NewGlobalRef(handler_proxy_factory);
-  env->DeleteLocalRef(hbase_adapter);
+  jobject handler_proxy_factory = env->NewGlobalRef(handler_proxy_factory_local);
+  env->DeleteLocalRef(bootstrap_class);
+  env->DeleteLocalRef(handler_proxy_factory_local);
   detach_thread(jvm);
+
   return handler_proxy_factory;
 }
 
@@ -95,7 +100,7 @@ static void log_java_classpath(JNIEnv* env)
 }
 
 /**
- *  Allows MySQL to stop during normal shutdown.  Restores signal handlers to
+ *  Allows MySQL to stop during normal shutdown. Restores signal handlers to
  *  MySQL process that were hijacked by the JVM.
  */
 extern bool volatile abort_loop;
@@ -118,19 +123,19 @@ static void handler(int sig)
 #endif
 
 /**
- * Create an embedded JVM through the JNI Invocation API and calls
- * initialize_adapter. This should only be called once per MySQL Server
- * instance during Handlerton initialization.  Aborts process if a JVM already
- * exists.  After return the current thread is NOT attached.
+ * Creates an embedded JVM through the JNI Invocation API and calls
+ * bootstrap(). This should only be called once per MySQL Server
+ * instance during Handlerton initialization. Aborts process if a JVM already
+ * exists. After return the current thread is NOT attached.
  */
-jobject initialize_jvm(JavaVM* &jvm)
+jobject initialize_jvm(JavaVM** jvm)
 {
   JavaVM* created_vms;
   jsize vm_count;
   jint result = JNI_GetCreatedJavaVMs(&created_vms, sizeof(created_vms), &vm_count);
   if (result == 0 && vm_count > 0) // There is an existing VM
   {
-    abort_with_fatal_error("JVM already created.  Aborting.");
+    abort_with_fatal_error("JVM already created. Aborting.");
   }
   else
   {
@@ -147,7 +152,7 @@ jobject initialize_jvm(JavaVM* &jvm)
     vm_args.nOptions = get_optioncount(parser);
     vm_args.version = JNI_VERSION_1_6;
     thread_attach_count++; // roundabout to attach_thread
-    jint result = JNI_CreateJavaVM(&jvm, (void**)&env, &vm_args);
+    jint result = JNI_CreateJavaVM(jvm, (void**) &env, &vm_args);
     if (result != JNI_OK)
     {
       abort_with_fatal_error("Failed to create JVM. Check the Java classpath.");
@@ -158,9 +163,9 @@ jobject initialize_jvm(JavaVM* &jvm)
     }
 
     free_parser(parser);
-    jobject handler_proxy_factory = bootstrap(jvm);
+    jobject handler_proxy_factory = bootstrap(*jvm);
     log_java_classpath(env);
-    detach_thread(jvm);
+    detach_thread(*jvm);
 #if defined(__APPLE__) || defined(__linux__)
     signal(SIGTERM, handler);
 #endif
@@ -169,16 +174,16 @@ jobject initialize_jvm(JavaVM* &jvm)
 }
 
 /**
- * Attach current thread to the JVM.  Assign current environment to env.  Keeps
+ * Attach current thread to the JVM. Assign current environment to env. Keeps
  * track of how often the current thread has attached, and will not detach
  * until the number of calls to detach is the same as the number of calls to
  * attach.
  *
  * Returns JNI_OK if successful, or a negative number on failure.
  */
-jint attach_thread(JavaVM *jvm, JNIEnv* &env)
+jint attach_thread(JavaVM *jvm, JNIEnv** env)
 {
-  jint result = jvm->AttachCurrentThread((void**) &env, &attach_args);
+  jint result = jvm->AttachCurrentThread((void**) env, &attach_args);
 
   if ( result == JNI_OK )
   {
@@ -189,7 +194,7 @@ jint attach_thread(JavaVM *jvm, JNIEnv* &env)
 }
 
 /**
- * Detach thread from JVM.  Will not detach unless the number of calls to
+ * Detach thread from JVM. Will not detach unless the number of calls to
  * detach is the same as the number of calls to attach.
  *
  * Returns JNI_OK if successful, or a negative number on failure.
