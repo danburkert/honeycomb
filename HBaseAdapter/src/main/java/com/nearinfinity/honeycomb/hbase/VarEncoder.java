@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Helper functions for variable length encoding data in a binary-sort safe
@@ -25,18 +26,8 @@ public class VarEncoder {
         return encodedValue;
     }
 
-    private static int varLongSize(final long value) {
-        if ((value & (0xffffffffffffffffL << 8)) == 0) return 1;
-        if ((value & (0xffffffffffffffffL << 16)) == 0) return 2;
-        if ((value & (0xffffffffffffffffL << 24)) == 0) return 3;
-        if ((value & (0xffffffffffffffffL << 32)) == 0) return 4;
-        if ((value & (0xffffffffffffffffL << 40)) == 0) return 5;
-        if ((value & (0xffffffffffffffffL << 48)) == 0) return 6;
-        if ((value & (0xffffffffffffffffL << 56)) == 0) return 7;
-        return 8;
-    }
-
-    public static long decodeULong(byte[] encodedValue) {
+    public static long decodeULong(final byte[] encodedValue) {
+        checkNotNull(encodedValue);
         long value = 0;
         long mask;
         for (int i = 1; i < encodedValue.length; i++) {
@@ -48,6 +39,7 @@ public class VarEncoder {
     }
 
     public static byte[] encodeBytes(final byte[] value) {
+        checkNotNull(value);
         byte[] length = encodeULong(value.length);
         return ByteBuffer
                 .allocate(length.length + value.length)
@@ -57,6 +49,8 @@ public class VarEncoder {
     }
 
     public static byte[] decodeBytes(final byte[] bytes) {
+        checkNotNull(bytes);
+        checkArgument(bytes.length > 0);
         int start = bytes[0] + 1;
         int length = bytes.length - start;
         byte[] decodedBytes = new byte[length];
@@ -65,6 +59,7 @@ public class VarEncoder {
     }
 
     public static byte[] appendByteArrays(List<byte[]> arrays) {
+        checkNotNull(arrays);
         int size = 0;
         for (byte[] array : arrays) {
             size += array.length;
@@ -77,10 +72,22 @@ public class VarEncoder {
     }
 
     public static byte[] appendByteArraysWithPrefix(byte prefix, byte[]... arrays) {
+        checkNotNull(prefix);
         List<byte[]> elements = new ArrayList<byte[]>();
         byte[] prefixBytes = {prefix};
         elements.add(prefixBytes);
         elements.addAll(Arrays.asList(arrays));
         return appendByteArrays(elements);
+    }
+
+    private static int varLongSize(final long value) {
+        if ((value & (0xffffffffffffffffL << 8)) == 0) return 1;
+        if ((value & (0xffffffffffffffffL << 16)) == 0) return 2;
+        if ((value & (0xffffffffffffffffL << 24)) == 0) return 3;
+        if ((value & (0xffffffffffffffffL << 32)) == 0) return 4;
+        if ((value & (0xffffffffffffffffL << 40)) == 0) return 5;
+        if ((value & (0xffffffffffffffffL << 48)) == 0) return 6;
+        if ((value & (0xffffffffffffffffL << 56)) == 0) return 7;
+        return 8;
     }
 }

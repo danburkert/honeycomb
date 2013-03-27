@@ -39,8 +39,8 @@ public class HBaseTable implements Table {
         Verify.isValidTableId(tableId);
         Verify.isValidTableSchema(schema);
         Verify.isValidIndexSchema(schema.getIndices(), schema.getColumns());
-        this.hTable = hTable;
-        this.store = store;
+        this.hTable = checkNotNull(hTable);
+        this.store = checkNotNull(store);
         this.tableId = tableId;
         this.schema = schema;
     }
