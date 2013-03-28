@@ -1,19 +1,19 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import com.nearinfinity.honeycomb.mysql.gen.RowContainer;
-import com.nearinfinity.honeycomb.mysql.gen.UUIDContainer;
-import org.apache.avro.io.DatumReader;
-import org.apache.avro.io.DatumWriter;
-import org.apache.avro.specific.SpecificDatumReader;
-import org.apache.avro.specific.SpecificDatumWriter;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import org.apache.avro.io.DatumReader;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.avro.specific.SpecificDatumWriter;
+
+import com.nearinfinity.honeycomb.mysql.gen.RowContainer;
+import com.nearinfinity.honeycomb.mysql.gen.UUIDContainer;
 
 public class Row {
     private static final DatumWriter<RowContainer> writer =
@@ -94,7 +94,6 @@ public class Row {
      * Serialize this {@link Row} instance to a byte array.
      *
      * @return Serialized row
-     * @throws IOException when serialization fails
      */
     public byte[] serialize() {
         return Util.serializeAvroObject(row, writer);

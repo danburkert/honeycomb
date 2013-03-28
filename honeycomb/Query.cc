@@ -36,7 +36,7 @@ int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
   {
     uint key_length;
     Field* field = key_part->field;
-    bool is_null_field = field->is_null();
+    bool is_null_field = field->is_real_null();
     if (is_null_field && key_ptr[0] == 1) // Key is nullable and is actually null
     {
       // Absence is the indicator of null on index key

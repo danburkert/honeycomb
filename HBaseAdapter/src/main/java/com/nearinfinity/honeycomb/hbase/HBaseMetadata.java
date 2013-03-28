@@ -177,7 +177,6 @@ public class HBaseMetadata {
      * @param oldTableName The name of the existing table
      * @param newTableName The new name to use for this table
      * @throws TableNotFoundException Thrown when existing table cannot be found
-     * @ Thrown on HBase mutation failure
      */
     public void renameExistingTable(final String oldTableName, final String newTableName) {
         Verify.isNotNullOrEmpty(oldTableName, "Old table name must have value");
@@ -383,7 +382,6 @@ public class HBaseMetadata {
      *
      * @param deletes A list of {@link Delete} operations to execute, not null
      * @param puts    A list of  {@link Put} operations to execute, not null
-     * @ Thrown on mutation commit failure
      */
     private void performMutations(final List<Delete> deletes, final List<Put> puts) {
         checkNotNull(deletes, "The delete mutations container is invalid");
