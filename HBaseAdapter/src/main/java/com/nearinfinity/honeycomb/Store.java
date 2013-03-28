@@ -23,7 +23,6 @@ public interface Store {
      *
      * @param tableName
      * @param schema
-     * @
      */
     public void createTable(String tableName, TableSchema schema);
 
@@ -71,7 +70,7 @@ public interface Store {
      * Gets the current value of the auto increment column in the table
      *
      * @param tableName
-     * @return
+     * @return The current auto-increment value
      */
     public long getAutoInc(String tableName);
 
@@ -81,7 +80,6 @@ public interface Store {
      *
      * @param tableName
      * @param value
-     * @return
      */
     public void setAutoInc(String tableName, long value);
 
@@ -91,7 +89,7 @@ public interface Store {
      *
      * @param tableName Name of table
      * @param amount    Amount to auto increment by
-     * @return
+     * @return The post-incremented value
      */
     public long incrementAutoInc(String tableName, long amount);
 

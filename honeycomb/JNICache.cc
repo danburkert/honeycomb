@@ -31,9 +31,12 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   handler_proxy_.insert_row               = get_method_id(env, handler_proxy_.clazz, "insertRow", "([B)V");
   handler_proxy_.update_row               = get_method_id(env, handler_proxy_.clazz, "updateRow", "([B)V");
   handler_proxy_.delete_row               = get_method_id(env, handler_proxy_.clazz, "deleteRow", "([B)V");
+  handler_proxy_.delete_all_rows          = get_method_id(env, handler_proxy_.clazz, "deleteAllRows", "()V");
+  handler_proxy_.truncate_table           = get_method_id(env, handler_proxy_.clazz, "truncateTable", "()V");
   handler_proxy_.increment_row_count      = get_method_id(env, handler_proxy_.clazz, "incrementRowCount", "(J)V");
   handler_proxy_.increment_auto_increment = get_method_id(env, handler_proxy_.clazz, "incrementAutoIncrement", "(J)J");
   handler_proxy_.get_auto_increment       = get_method_id(env, handler_proxy_.clazz, "getAutoIncrement", "()J");
+  handler_proxy_.set_auto_increment       = get_method_id(env, handler_proxy_.clazz, "setAutoIncrement", "(J)V");
 
   TableExistsException   = get_class_ref(env, HONEYCOMB "TableExistsException");
   TableNotFoundException = get_class_ref(env, HONEYCOMB "TableNotFoundException");
@@ -52,7 +55,6 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   hbase_adapter_.write_row                    = get_static_method_id(env, hbase_adapter_.clazz, "writeRow", "(JLjava/lang/String;Ljava/util/Map;)Z");
   hbase_adapter_.update_row                   = get_static_method_id(env, hbase_adapter_.clazz, "updateRow", "(J[BLjava/util/List;Ljava/lang/String;Ljava/util/Map;)V");
   hbase_adapter_.delete_row                   = get_static_method_id(env, hbase_adapter_.clazz, "deleteRow", "(Ljava/lang/String;[B)Z");
-  hbase_adapter_.delete_all_rows              = get_static_method_id(env, hbase_adapter_.clazz, "deleteAllRows", "(Ljava/lang/String;)I");
   hbase_adapter_.get_row                      = get_static_method_id(env, hbase_adapter_.clazz, "getRow", "(J[B)[B");
   hbase_adapter_.start_index_scan             = get_static_method_id(env, hbase_adapter_.clazz, "startIndexScan", "(Ljava/lang/String;Ljava/lang/String;)J");
   hbase_adapter_.find_duplicate_key           = get_static_method_id(env, hbase_adapter_.clazz, "findDuplicateKey", "(Ljava/lang/String;Ljava/util/Map;)Ljava/lang/String;");

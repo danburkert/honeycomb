@@ -29,10 +29,13 @@ class JNICache
                 insert_row,
                 update_row,
                 delete_row,
+                delete_all_rows,
+                truncate_table,
                 start_table_scan,
                 get_row,
                 increment_row_count,
                 get_auto_increment,
+                set_auto_increment,
                 increment_auto_increment;
     };
     struct HBaseAdapter
@@ -48,7 +51,6 @@ class JNICache
                 write_row,
                 update_row,
                 delete_row,
-                delete_all_rows,
                 get_row,
                 start_index_scan,
                 find_duplicate_key,

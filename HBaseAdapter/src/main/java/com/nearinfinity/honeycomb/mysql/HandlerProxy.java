@@ -126,15 +126,27 @@ public class HandlerProxy {
     public long getAutoIncrement() {
         checkTableOpen();
         if (!Verify.hasAutoIncrementColumn(store.getSchema(tableName))) {
-            throw new IllegalArgumentException(format("Table %s does not contain an auto increment column.", tableName));
+            throw new IllegalArgumentException(format("Table %s does not" +
+                    " contain an auto increment column.", tableName));
         }
 
         return store.getAutoInc(tableName);
     }
 
     /**
+     * Set the auto increment value of the table to the max of value and the
+     * current value.
+     * @param value
+     * @return
+     */
+    public void setAutoIncrement(long value) {
+        checkTableOpen();
+        store.setAutoInc(tableName, value);
+    }
+
+    /**
      * Increment the auto increment value of the table by amount, and return the
-     * next auto increment value.  The next value will be the current value + 1,
+     * next auto increment value.  The next value will be the current value,
      * not the incremented value (equivalently, the incremented value - amount).
      *
      * @param amount
@@ -238,6 +250,24 @@ public class HandlerProxy {
         checkNotNull(rowBytes);
         Row updatedRow = Row.deserialize(rowBytes);
         table.update(updatedRow);
+    }
+
+    /**
+     * Delete all rows in the table.
+     */
+    public void deleteAllRows() {
+        checkTableOpen();
+        store.truncateRowCount(tableName);
+        table.deleteAllRows();
+    }
+
+    /**
+     * Delete all rows in the table, and reset the auto increment value.
+     */
+    public void truncateTable() {
+        checkTableOpen();
+        deleteAllRows();
+        store.truncateAutoInc(tableName);
     }
 
     public void flush() {

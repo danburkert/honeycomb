@@ -258,3 +258,16 @@ int HoneycombHandler::delete_row(const uchar *buf)
   DBUG_RETURN(check_exceptions(env, cache, "HoneycombHandler::delete_row"));
 }
 
+int HoneycombHandler::delete_all_rows()
+{
+  DBUG_ENTER("HoneycombHandler::delete_all_rows");
+  env->CallVoidMethod(handler_proxy, cache->handler_proxy().delete_all_rows);
+  DBUG_RETURN(check_exceptions(env, cache, "HoneycombHandler::delete_all_rows"));
+}
+
+int HoneycombHandler::truncate()
+{
+  DBUG_ENTER("HoneycombHandler::truncate");
+  env->CallVoidMethod(handler_proxy, cache->handler_proxy().truncate_table);
+  DBUG_RETURN(check_exceptions(env, cache, "HoneycombHandler::truncate"));
+}
