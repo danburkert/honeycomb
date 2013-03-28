@@ -8,6 +8,7 @@ import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import org.apache.avro.io.*;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
 
 import java.io.ByteArrayInputStream;
@@ -77,7 +78,6 @@ public class Util {
         return deserializeAvroObject(schema, IndexSchema.class);
     }
 
-
     /**
      * Serialize an object to a byte array
      *
@@ -93,8 +93,7 @@ public class Util {
             writer.write(obj, encoder);
             encoder.flush();
         } catch (IOException e) {
-            logger.error("Serialization failed", e);
-            throw new RuntimeException("Serialization failed", e);
+            throw serializationError(obj, e);
         }
 
         return out.toByteArray();
@@ -114,8 +113,7 @@ public class Util {
             writer.write(obj, encoder);
             encoder.flush();
         } catch (IOException e) {
-            logger.error("Serialization failed", e);
-            throw new RuntimeException("Serialization failed", e);
+            throw serializationError(obj, e);
         }
 
         return out.toByteArray();
@@ -129,6 +127,8 @@ public class Util {
      * @return A new instance of the specified class representing the deserialized data
      */
     public static <T> T deserializeAvroObject(byte[] serializedData, Class<T> clazz) {
+        checkNotNull(serializedData);
+        checkNotNull(clazz);
         final DatumReader<T> userDatumReader = new SpecificDatumReader<T>(clazz);
         final ByteArrayInputStream in = new ByteArrayInputStream(serializedData);
         binaryDecoder = DecoderFactory.get().binaryDecoder(in, binaryDecoder);
@@ -136,7 +136,7 @@ public class Util {
         try {
             return userDatumReader.read(null, binaryDecoder);
         } catch (IOException e) {
-            throw new RuntimeException("Deserialization failed", e);
+            throw deserializationError(serializedData, e, clazz);
         }
     }
 
@@ -148,14 +148,14 @@ public class Util {
      * @return A new instance of the specified class representing the deserialized data
      */
     public static <T> T deserializeAvroObject(byte[] serializedData, DatumReader<T> reader) {
+        checkNotNull(serializedData);
+        checkNotNull(reader);
         final ByteArrayInputStream in = new ByteArrayInputStream(serializedData);
         binaryDecoder = DecoderFactory.get().binaryDecoder(in, binaryDecoder);
-
-
         try {
             return reader.read(null, binaryDecoder);
         } catch (IOException e) {
-            throw new RuntimeException("Deserialization failed", e);
+            throw deserializationError(serializedData, e, null);
         }
     }
 
@@ -184,6 +184,7 @@ public class Util {
 
     /**
      * Return the set of names of unique indices in the table.
+     *
      * @param schema
      * @return
      */
@@ -195,5 +196,20 @@ public class Util {
             }
         }
         return ImmutableSet.copyOf(indices);
+    }
+
+    private static <T> RuntimeException deserializationError(byte[] serializedData, IOException e, Class<T> clazz) {
+        String clazzMessage = clazz == null ? "" : "of class type " + clazz.getName();
+        String format = String.format("Deserialization failed for data (%s) " + clazzMessage,
+                Bytes.toStringBinary(serializedData));
+        logger.error(format, e);
+        return new RuntimeException(format, e);
+    }
+
+    private static <T> RuntimeException serializationError(T obj, IOException e) {
+        String format = String.format("Serialization failed for data (%s) of class type %s",
+                obj.toString(), obj.getClass().getName());
+        logger.error(format, e);
+        return new RuntimeException(format, e);
     }
 }
