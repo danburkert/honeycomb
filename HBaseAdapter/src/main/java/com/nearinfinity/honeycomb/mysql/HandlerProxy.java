@@ -231,6 +231,24 @@ public class HandlerProxy {
         table.update(updatedRow);
     }
 
+    /**
+     * Delete all rows in the table.
+     */
+    public void deleteAllRows() {
+        checkTableOpen();
+        store.truncateRowCount(tableName);
+        table.deleteAllRows();
+    }
+
+    /**
+     * Delete all rows in the table, and reset the auto increment value.
+     */
+    public void truncateTable() {
+        checkTableOpen();
+        deleteAllRows();
+        store.truncateAutoInc(tableName);
+    }
+
     public void flush() {
         // MySQL will call flush on the handler without an open table, which is
         // a no-op

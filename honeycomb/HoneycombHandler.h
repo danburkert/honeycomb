@@ -55,8 +55,6 @@ class HoneycombHandler : public handler
     jstring string_to_java_string(const char *string);
     int java_to_sql(uchar *buf, Row *row);
     jobject sql_to_java();
-    int delete_all_rows();
-    int truncate();
     void store_uuid_ref(Row* row);
     int full_index_scan(uchar* buf, IndexContainer::QueryType query);
     void bytes_to_long(const uchar* buff, unsigned int buff_length, bool is_signed, uchar* long_buff);
@@ -269,9 +267,11 @@ class HoneycombHandler : public handler
     int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add);
 
     /* IUD */
-    int update_row(const uchar *old_data, uchar *new_data);
     int write_row(uchar *buf);
+    int update_row(const uchar *old_data, uchar *new_data);
     int delete_row(const uchar *buf);
+    int delete_all_rows();
+    int truncate();
 };
 
 #endif

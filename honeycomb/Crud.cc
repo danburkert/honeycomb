@@ -320,35 +320,6 @@ jbyteArray HoneycombHandler::find_duplicate_column_values(char* columns)
 }
 
 
-int HoneycombHandler::delete_all_rows()
-{
-  DBUG_ENTER("HoneycombHandler::delete_all_rows");
-
-  JavaFrame frame(env);
-  jstring table_name = this->table_name();
-  jclass adapter_class = cache->hbase_adapter().clazz;
-  jmethodID delete_all_rows = cache->hbase_adapter().delete_all_rows;
-  jmethodID set_row_count = cache->hbase_adapter().set_row_count;
-
-  this->env->CallStaticIntMethod(adapter_class, delete_all_rows, table_name);
-  EXCEPTION_CHECK_IE("HoneycombHandler::delete_all_rows", "calling deleteAllRows");
-  this->env->CallStaticVoidMethod(adapter_class, set_row_count, table_name, 0);
-  EXCEPTION_CHECK_IE("HoneycombHandler::delete_all_rows", "calling setRowCount");
-  this->flush();
-  EXCEPTION_CHECK("delete_all_rows", "flush");
-
-  DBUG_RETURN(0);
-}
-
-int HoneycombHandler::truncate()
-{
-  DBUG_ENTER("HoneycombHandler::truncate");
-
-  set_autoinc_counter(1, JNI_TRUE);
-  int returnValue = delete_all_rows();
-
-  DBUG_RETURN(returnValue);
-}
 
 void HoneycombHandler::set_autoinc_counter(jlong new_value, jboolean is_truncate)
 {
