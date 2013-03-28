@@ -119,6 +119,7 @@ public class HBaseMetadata {
 
     /**
      * Performs all metadata operations necessary to create a table index
+     *
      * @param tableId The id of the table to create the index
      * @param indexName The identifying name of the index, not null or empty
      * @param indexSchema The {@link IndexSchema} representing the index details, not null
