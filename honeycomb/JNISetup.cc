@@ -44,16 +44,8 @@ jobject bootstrap(JavaVM* jvm)
 {
   Logging::info("Starting bootstrap()");
   JNIEnv* env;
-  jint attach_result = attach_thread(jvm, &env);
+  attach_thread(jvm, &env, "JNISetup::bootstrap");
 
-  if(attach_result != JNI_OK)
-  {
-    Logging::fatal("Thread could not be attached in bootstrap()");
-    perror("Failed to startup Bootstrap. Check honeycomb.log for details.");
-    abort();
-  }
-  
-  // TODO: check the result of these JNI calls with macro
   jclass bootstrap_class = env->FindClass("com/nearinfinity/honeycomb/mysql/Bootstrap");
   jmethodID startup = env->GetStaticMethodID(bootstrap_class, "startup", "()Lcom/nearinfinity/honeycomb/mysql/HandlerProxyFactory;");
   jobject handler_proxy_factory_local = env->CallStaticObjectMethod(bootstrap_class, startup);
@@ -177,20 +169,22 @@ jobject initialize_jvm(JavaVM** jvm)
  * Attach current thread to the JVM. Assign current environment to env. Keeps
  * track of how often the current thread has attached, and will not detach
  * until the number of calls to detach is the same as the number of calls to
- * attach.
- *
- * Returns JNI_OK if successful, or a negative number on failure.
+ * attach.  If attach fails, does its best to log the error and aborts.  Not
+ * being able to attach to the JNI is an unrecoverable error.
  */
-jint attach_thread(JavaVM *jvm, JNIEnv** env)
+void attach_thread(JavaVM *jvm, JNIEnv** env, const char* location)
 {
   jint result = jvm->AttachCurrentThread((void**) env, &attach_args);
 
   if ( result == JNI_OK )
   {
     thread_attach_count++;
+  } else {
+    const char* msg = "Unable to attach thread to JVM.  Aborting.";
+    perror(msg);
+    Logging::fatal(msg);
+    abort_with_fatal_error(msg, " Error occurred in: ", location);
   }
-
-  return result;
 }
 
 /**
