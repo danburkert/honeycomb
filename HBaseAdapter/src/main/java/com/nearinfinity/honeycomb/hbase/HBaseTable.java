@@ -22,9 +22,11 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import com.google.inject.name.Named;
 import com.nearinfinity.honeycomb.RowNotFoundException;
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Table;
+import com.nearinfinity.honeycomb.config.ConfigConstants;
 import com.nearinfinity.honeycomb.hbase.rowkey.DataRow;
 import com.nearinfinity.honeycomb.hbase.rowkey.IndexRow;
 import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowBuilder;
@@ -46,6 +48,7 @@ public class HBaseTable implements Table {
     private final HTableInterface hTable;
     private final HBaseStore store;
     private final long tableId;
+    private long writeBufferSize = ConfigConstants.DEFAULT_WRITE_BUFFER_SIZE;
 
     @Inject
     public HBaseTable(HTableInterface hTable, HBaseStore store, @Assisted Long tableId) {
@@ -53,6 +56,11 @@ public class HBaseTable implements Table {
         this.hTable = checkNotNull(hTable);
         this.store = checkNotNull(store);
         this.tableId = tableId;
+    }
+
+    @Inject
+    public void setWriterBufferSize(final @Named(ConfigConstants.PROP_WRITE_BUFFER_SIZE) Long bufferSize) {
+        writeBufferSize = bufferSize;
     }
 
     @Override
@@ -124,11 +132,12 @@ public class HBaseTable implements Table {
 
     @Override
     public void deleteAllRows() {
-        long totalDeleteSize = 0, writeBufferSize = 50000; // TODO: retrieve write buffer size from configuration
+        long totalDeleteSize = 0;
         final List<Delete> deleteList = Lists.newLinkedList();
-        Scanner rows = tableScan();
+        final Scanner rows = tableScan();
+
         while (rows.hasNext()) {
-            Row row = rows.next();
+            final Row row = rows.next();
             final UUID uuid = row.getUUID();
             deleteList.add(new Delete(new DataRow(tableId, uuid).encode()));
             doToIndices(row, getTableIndices(tableId), new IndexAction() {

@@ -1,17 +1,21 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.nearinfinity.honeycomb.hbaseclient.Constants;
-import com.nearinfinity.honeycomb.mysql.gen.*;
+import static org.fest.assertions.Assertions.assertThat;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.fest.assertions.Assertions.assertThat;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.nearinfinity.honeycomb.hbaseclient.Constants;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
+import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.gen.QueryType;
+import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 
 public class HandleProxyIntegrationTest {
     public static final String COLUMN1 = "c1";
@@ -92,8 +96,10 @@ public class HandleProxyIntegrationTest {
         testProxy("Testing increment auto increment", schema, new Action() {
             @Override
             public void execute(HandlerProxy proxy) {
-                long autoIncValue = proxy.incrementAutoIncrement(1);
-                assertThat(autoIncValue).isEqualTo(2).isEqualTo(proxy.getAutoIncrement());
+                long autoIncValue = proxy.incrementAutoIncrement(3);
+                assertThat(autoIncValue).isEqualTo(1).isEqualTo(proxy.getAutoIncrement());
+                long autoIncValue2 = proxy.incrementAutoIncrement(1);
+                assertThat(autoIncValue2).isEqualTo(4).isEqualTo(proxy.getAutoIncrement());
             }
         });
     }
@@ -105,7 +111,7 @@ public class HandleProxyIntegrationTest {
             @Override
             public void execute(HandlerProxy proxy) {
                 proxy.truncateAutoIncrement();
-                assertThat(proxy.getAutoIncrement()).isEqualTo(0);
+                assertThat(proxy.getAutoIncrement()).isEqualTo(1);
             }
         });
     }
