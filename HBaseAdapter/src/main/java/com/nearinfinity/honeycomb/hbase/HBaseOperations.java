@@ -1,7 +1,9 @@
 package com.nearinfinity.honeycomb.hbase;
 
 import com.nearinfinity.honeycomb.RuntimeIOException;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -14,8 +16,7 @@ public class HBaseOperations {
         try {
             hTable.put(puts);
         } catch (IOException e) {
-            logger.error("HBase table put list failed", e);
-            throw new RuntimeIOException(e);
+            throw createException("HBase table put list failed", e, hTable);
         }
     }
 
@@ -23,8 +24,9 @@ public class HBaseOperations {
         try {
             hTable.put(put);
         } catch (IOException e) {
-            logger.error("HBase table put failed", e);
-            throw new RuntimeIOException(e);
+            String msg = String.format("HBase table put failed for put %s", put.toString());
+            throw createException(msg, e, hTable);
+
         }
     }
 
@@ -32,8 +34,7 @@ public class HBaseOperations {
         try {
             hTable.delete(deletes);
         } catch (IOException e) {
-            logger.error("HBase table delete failed", e);
-            throw new RuntimeIOException(e);
+            throw createException("HBase table delete failed", e, hTable);
         }
     }
 
@@ -41,8 +42,7 @@ public class HBaseOperations {
         try {
             hTable.flushCommits();
         } catch (IOException e) {
-            logger.error("HBase table flush failed", e);
-            throw new RuntimeIOException(e);
+            throw createException("HBase table flush failed", e, hTable);
         }
     }
 
@@ -50,8 +50,7 @@ public class HBaseOperations {
         try {
             hTable.close();
         } catch (IOException e) {
-            logger.error("HBase close table failed", e);
-            throw new RuntimeIOException(e);
+            throw createException("HBase close table failed", e, hTable);
         }
     }
 
@@ -59,8 +58,8 @@ public class HBaseOperations {
         try {
             return hTable.get(get);
         } catch (IOException e) {
-            logger.error("HBase table get failed", e);
-            throw new RuntimeIOException(e);
+            String msg = String.format("HBase table get failed for get %s", get.toString());
+            throw createException(msg, e, hTable);
         }
     }
 
@@ -68,8 +67,12 @@ public class HBaseOperations {
         try {
             return hTable.incrementColumnValue(row, columnFamily, identifier, amount);
         } catch (IOException e) {
-            logger.error("HBase table increment column failed", e);
-            throw new RuntimeIOException(e);
+            String msg = String.format("HBase table increment column threw exception. Row (%s) / Column Family (%s) / Identifier (%s) / Amount (%d)",
+                    Bytes.toStringBinary(row),
+                    Bytes.toStringBinary(columnFamily),
+                    Bytes.toStringBinary(identifier),
+                    amount);
+            throw createException(msg, e, hTable);
         }
     }
 
@@ -77,8 +80,13 @@ public class HBaseOperations {
         try {
             return hTable.getScanner(scan);
         } catch (IOException e) {
-            logger.error("HBase table get scanner failed", e);
-            throw new RuntimeIOException(e);
+            throw createException("HBase table get scanner failed", e, hTable);
         }
+    }
+
+    private static RuntimeException createException(String errorMessage, IOException e, HTableInterface hTable) {
+        Configuration configuration = hTable.getConfiguration();
+        logger.error(errorMessage, e);
+        return new RuntimeIOException(errorMessage, e);
     }
 }
