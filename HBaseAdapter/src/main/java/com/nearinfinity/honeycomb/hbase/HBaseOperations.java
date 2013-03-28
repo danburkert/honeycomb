@@ -1,13 +1,17 @@
 package com.nearinfinity.honeycomb.hbase;
 
+import com.google.common.base.Objects;
 import com.nearinfinity.honeycomb.RuntimeIOException;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.List;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class HBaseOperations {
     private static final Logger logger = Logger.getLogger(HBaseOperations.class);
@@ -86,7 +90,10 @@ public class HBaseOperations {
 
     private static RuntimeException createException(String errorMessage, IOException e, HTableInterface hTable) {
         Configuration configuration = hTable.getConfiguration();
-        logger.error(errorMessage, e);
+        String configSettings = Objects.toStringHelper(configuration)
+                .add(HConstants.ZOOKEEPER_QUORUM, configuration.get(HConstants.ZOOKEEPER_QUORUM))
+                .toString();
+        logger.error(errorMessage + " " + configSettings, e);
         return new RuntimeIOException(errorMessage, e);
     }
 }
