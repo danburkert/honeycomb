@@ -3,6 +3,7 @@ package com.nearinfinity.honeycomb.mysql;
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
+import com.nearinfinity.honeycomb.TableNotFoundException;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
@@ -55,9 +56,14 @@ public class HandlerProxy {
     public void dropTable(String tableName, String tableSpace) {
         Verify.isNotNullOrEmpty(tableName);
         Store store = storeFactory.createStore(tableSpace);
-        Table table = store.openTable(tableName);
-        table.deleteAllRows();
+        Table table;
+        try {
+            table = store.openTable(tableName);
+        } catch (TableNotFoundException ignored) {
+            return;
+        }
 
+        table.deleteAllRows();
         Util.closeQuietly(table);
         store.deleteTable(tableName);
     }
@@ -130,6 +136,7 @@ public class HandlerProxy {
      * Increment the auto increment value of the table by amount, and return the
      * next auto increment value.  The next value will be the current value + 1,
      * not the incremented value (equivalently, the incremented value - amount).
+     *
      * @param amount
      * @return
      */
@@ -169,6 +176,7 @@ public class HandlerProxy {
     /**
      * Check whether the index contains a row with the same field values and a
      * distinct UUID.
+     *
      * @param indexName
      * @param serializedRow
      */
@@ -199,6 +207,7 @@ public class HandlerProxy {
 
     /**
      * Insert row into table.
+     *
      * @param rowBytes Serialized row to be written
      * @return true if the write succeeds, or false if a uniqueness constraint
      *         is violated.

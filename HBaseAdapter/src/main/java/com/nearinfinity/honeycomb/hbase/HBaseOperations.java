@@ -11,8 +11,6 @@ import org.apache.log4j.Logger;
 import java.io.IOException;
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 public class HBaseOperations {
     private static final Logger logger = Logger.getLogger(HBaseOperations.class);
 
