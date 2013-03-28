@@ -39,9 +39,9 @@ TEST_F(RowTest, BytesRecord)
 void rand_uuid(Row& row)
 {
   ASSERT_FALSE(row.reset());
-  char* uuid_buf = new char[16];
+  unsigned char* uuid_buf = new unsigned char[16];
   const char* out_buf;
-  gen_random_bytes(uuid_buf, 16);
+  gen_random_bytes((char *) uuid_buf, 16);
 
   ASSERT_FALSE(row.set_UUID(uuid_buf));
   ASSERT_FALSE(row.get_UUID(&out_buf));
@@ -63,8 +63,8 @@ void rand_ser_de(Row& row_se)
 
   // Setup row with random records & UUID
   rand_record_map(row_se);
-  char* uuid_buf = new char[16];
-  gen_random_bytes(uuid_buf, 16);
+  unsigned char* uuid_buf = new unsigned char[16];
+  gen_random_bytes((char*) uuid_buf, 16);
   ASSERT_FALSE(row_se.set_UUID(uuid_buf));
 
   const char* serialized;

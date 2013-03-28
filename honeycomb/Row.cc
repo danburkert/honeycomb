@@ -66,7 +66,7 @@ int Row::get_UUID(const char** buf)
   return ret;
 }
 
-int Row::set_UUID(char* uuid_buf)
+int Row::set_UUID(unsigned char* uuid_buf)
 {
   int ret = 0;
   avro_value_t uuid;

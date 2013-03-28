@@ -40,7 +40,7 @@ public class HBaseStore implements Store {
     @Override
     public Table openTable(String tableName) {
         Long tableId = cache.tableCacheGet(tableName);
-        return tableFactory.createTable(tableId, cache.schemaCacheGet(tableId));
+        return tableFactory.createTable(tableId);
     }
 
     @Override

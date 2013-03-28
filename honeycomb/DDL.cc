@@ -406,7 +406,7 @@ int HoneycombHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_key
     handler_add_index **add)
 {
   DBUG_ENTER("HoneycombHandler::add_index");
-  attach_thread(jvm, env);
+  attach_thread(jvm, &env);
   int ret = 0;
   IndexSchema schema;
   for(uint k = 0; k < num_of_keys; k++)
@@ -439,7 +439,7 @@ int HoneycombHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_key
 int HoneycombHandler::prepare_drop_index(TABLE *table, uint *key_num, uint num_of_keys)
 {
   DBUG_ENTER("HoneycombHandler::prepare_drop_index");
-  attach_thread(jvm, env);
+  attach_thread(jvm, &env);
   int ret = 0;
   for (uint i = 0; i < num_of_keys; i++) {
     JavaFrame frame(env, 1);

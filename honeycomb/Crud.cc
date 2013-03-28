@@ -245,40 +245,6 @@ bool HoneycombHandler::row_has_duplicate_values(jobject value_map,
   return error;
 }
 
-/*
- This will be called in a table scan right before the previous ::rnd_next()
- call.
- */
-int HoneycombHandler::update_row(const uchar *old_row, uchar *new_row)
-{
-  DBUG_ENTER("HoneycombHandler::update_row");
-  ha_statistic_increment(&SSV::ha_update_count);
-  my_bitmap_map *old_map;
-  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
-  {
-    table->timestamp_field->set_time();
-  }
-
-  JavaFrame frame(env, 1);
-  jobject updated_fieldnames = env->NewObject(cache->linked_list().clazz,
-      cache->linked_list().init);
-  this->collect_changed_fields(updated_fieldnames, old_row, new_row);
-  jlong size = env->CallLongMethod(updated_fieldnames, cache->linked_list().size);
-
-  if(size == 0)
-  {
-    // No fields have actually changed. Don't write a new row.
-    DBUG_RETURN(0);
-  }
-
-  old_map = dbug_tmp_use_all_columns(table, table->read_set);
-  int rc = write_row(new_row, updated_fieldnames);
-  dbug_tmp_restore_column_map(table->read_set, old_map);
-  this->flush();
-  EXCEPTION_CHECK("update_row", "flush");
-  DBUG_RETURN(rc);
-}
-
 /**
  * @brief Determines what fields have changed in a MySQL row on update.
  *
@@ -353,26 +319,6 @@ jbyteArray HoneycombHandler::find_duplicate_column_values(char* columns)
   return duplicate_value;
 }
 
-
-/**
- * Called by MySQL when the last scanned row should be deleted.
- */
-int HoneycombHandler::delete_row(const uchar *buf)
-{
-  DBUG_ENTER("HoneycombHandler::delete_row");
-  ha_statistic_increment(&SSV::ha_delete_count);
-
-  JavaFrame frame(env, 2);
-  jstring table_name = this->table_name();
-  jbyteArray pos = convert_value_to_java_bytes(this->ref, 16, this->env);
-
-  jclass adapter_class = cache->hbase_adapter().clazz;
-  jmethodID delete_row_method = cache->hbase_adapter().delete_row;
-  this->env->CallStaticBooleanMethod(adapter_class, delete_row_method, table_name, pos);
-  EXCEPTION_CHECK_IE("HoneycombHandler::delete_row", "calling deleteRow");
-
-  DBUG_RETURN(0);
-}
 
 int HoneycombHandler::delete_all_rows()
 {

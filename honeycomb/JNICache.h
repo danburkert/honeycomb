@@ -27,6 +27,8 @@ class JNICache
                 drop_index,
                 index_contains_duplicate,
                 insert_row,
+                update_row,
+                delete_row,
                 start_table_scan,
                 get_row,
                 increment_row_count,
