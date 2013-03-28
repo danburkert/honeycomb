@@ -37,11 +37,11 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   handler_proxy_.get_auto_increment       = get_method_id(env, handler_proxy_.clazz, "getAutoIncrement", "()J");
   handler_proxy_.set_auto_increment       = get_method_id(env, handler_proxy_.clazz, "setAutoIncrement", "(J)V");
 
-  TableExistsException   = get_class_ref(env, HONEYCOMB "TableExistsException");
-  TableNotFoundException = get_class_ref(env, HONEYCOMB "TableNotFoundException");
-  RowNotFoundException   = get_class_ref(env, HONEYCOMB "RowNotFoundException");
-  StoreNotFoundException = get_class_ref(env, HONEYCOMB "StoreNotFoundException");
-  RuntimeIOException     = get_class_ref(env, HONEYCOMB "RuntimeIOException");
+  TableExistsException   = get_class_ref(env, HONEYCOMB "exceptions/TableExistsException");
+  TableNotFoundException = get_class_ref(env, HONEYCOMB "exceptions/TableNotFoundException");
+  RowNotFoundException   = get_class_ref(env, HONEYCOMB "exceptions/RowNotFoundException");
+  StoreNotFoundException = get_class_ref(env, HONEYCOMB "exceptions/StoreNotFoundException");
+  RuntimeIOException     = get_class_ref(env, HONEYCOMB "exceptions/RuntimeIOException");
 
   throwable_.clazz             = get_class_ref(env, "java/lang/Throwable");
   throwable_.print_stack_trace = get_method_id(env, throwable_.clazz, "printStackTrace", "(Ljava/io/PrintWriter;)V");

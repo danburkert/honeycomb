@@ -1,24 +1,26 @@
-package com.nearinfinity.honeycomb.hbaseclient;
+package com.nearinfinity.honeycomb.hbase;
 
-import java.io.IOException;
-
+import com.nearinfinity.honeycomb.config.ConfigurationHolder;
+import com.nearinfinity.honeycomb.config.Constants;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.log4j.Logger;
 
-import com.nearinfinity.honeycomb.config.ConfigurationHolder;
+import java.io.IOException;
 
-public class SqlTableCreator {
-    private static final Logger logger = Logger.getLogger(SqlTableCreator.class);
+public class TableCreator {
+    private static final Logger logger = Logger.getLogger(TableCreator.class);
 
     /**
-     * Creates an HTable, with the correct column family, in HBase that will store all of the SQL tables.
+     * Creates an HTable, with the correct column family, in HBase that will
+     * store all of the SQL tables.
      *
      * @param configuration Configuration of the HTable
      * @throws IOException
      */
-    public static void initializeSqlTable(ConfigurationHolder configuration) throws IOException {
+    public static void createTable(ConfigurationHolder configuration)
+            throws IOException {
         HTableDescriptor sqlTableDescriptor;
         HColumnDescriptor nicColumn = new HColumnDescriptor(Constants.NIC);
         HBaseAdmin admin = new HBaseAdmin(configuration.getConfiguration());

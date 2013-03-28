@@ -1,7 +1,5 @@
 package com.nearinfinity.honeycomb.config;
 
-import com.nearinfinity.honeycomb.hbaseclient.Constants;
-
 /**
  * Stores the configuration constants represented by {@link ConfigurationHolder}
  *

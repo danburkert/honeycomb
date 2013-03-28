@@ -1,4 +1,4 @@
-package com.nearinfinity.honeycomb.hbaseclient;
+package com.nearinfinity.honeycomb.config;
 
 import org.apache.log4j.Logger;
 

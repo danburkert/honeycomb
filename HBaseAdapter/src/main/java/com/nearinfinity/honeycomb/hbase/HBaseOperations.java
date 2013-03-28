@@ -1,7 +1,7 @@
 package com.nearinfinity.honeycomb.hbase;
 
 import com.google.common.base.Objects;
-import com.nearinfinity.honeycomb.RuntimeIOException;
+import com.nearinfinity.honeycomb.exceptions.RuntimeIOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.*;

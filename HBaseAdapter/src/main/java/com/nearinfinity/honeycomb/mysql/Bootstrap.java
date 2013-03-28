@@ -9,7 +9,7 @@ import com.google.inject.name.Names;
 import com.nearinfinity.honeycomb.config.ConfigurationHolder;
 import com.nearinfinity.honeycomb.config.ConfigurationParser;
 import com.nearinfinity.honeycomb.hbase.HBaseModule;
-import com.nearinfinity.honeycomb.hbaseclient.Constants;
+import com.nearinfinity.honeycomb.config.Constants;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.log4j.Logger;
 

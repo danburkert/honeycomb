@@ -3,7 +3,7 @@ package com.nearinfinity.honeycomb.mysql;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.nearinfinity.honeycomb.hbaseclient.Constants;
+import com.nearinfinity.honeycomb.config.Constants;
 import com.nearinfinity.honeycomb.mysql.gen.*;
 
 import java.nio.ByteBuffer;

@@ -1,4 +1,4 @@
-package com.nearinfinity.honeycomb;
+package com.nearinfinity.honeycomb.exceptions;
 
 public class StoreNotFoundException extends RuntimeException {
     public StoreNotFoundException(String tablespace) {

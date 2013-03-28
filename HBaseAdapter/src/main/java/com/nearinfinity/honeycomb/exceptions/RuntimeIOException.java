@@ -1,4 +1,4 @@
-package com.nearinfinity.honeycomb;
+package com.nearinfinity.honeycomb.exceptions;
 
 public class RuntimeIOException extends RuntimeException {
     public RuntimeIOException(Throwable cause) {

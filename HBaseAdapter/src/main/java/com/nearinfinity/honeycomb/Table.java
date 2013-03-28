@@ -32,7 +32,7 @@ public interface Table extends Closeable {
      *
      * @param row Row containing UUID of row to be updated, as well as updated
      *            record values.
-     * @throws RowNotFoundException
+     * @throws com.nearinfinity.honeycomb.exceptions.RowNotFoundException
      */
     void update(Row row);
 
@@ -40,7 +40,7 @@ public interface Table extends Closeable {
      * Remove row with given UUID from the table
      *
      * @param uuid UUID of row to be deleted
-     * @throws RowNotFoundException
+     * @throws com.nearinfinity.honeycomb.exceptions.RowNotFoundException
      */
     void delete(UUID uuid);
 

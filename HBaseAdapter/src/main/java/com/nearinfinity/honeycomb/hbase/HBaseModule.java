@@ -1,12 +1,5 @@
 package com.nearinfinity.honeycomb.hbase;
 
-import java.io.IOException;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.log4j.Logger;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
@@ -15,8 +8,13 @@ import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.config.ConfigConstants;
 import com.nearinfinity.honeycomb.config.ConfigurationHolder;
-import com.nearinfinity.honeycomb.hbaseclient.Constants;
-import com.nearinfinity.honeycomb.hbaseclient.SqlTableCreator;
+import com.nearinfinity.honeycomb.config.Constants;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.log4j.Logger;
+
+import java.io.IOException;
 
 public class HBaseModule extends AbstractModule {
     private static final Logger logger = Logger.getLogger(HBaseModule.class);
@@ -31,7 +29,7 @@ public class HBaseModule extends AbstractModule {
         hTableProvider = new HTableProvider(configHolder);
 
         try {
-            SqlTableCreator.initializeSqlTable(configHolder);
+            TableCreator.createTable(configHolder);
         } catch (IOException e) {
             logger.fatal("Could not create HBaseStore. Aborting initialization.");
             throw e;
