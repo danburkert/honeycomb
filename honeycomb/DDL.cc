@@ -40,7 +40,7 @@ int HoneycombHandler::create(const char *path, TABLE *table,
     HA_CREATE_INFO *create_info)
 {
   DBUG_ENTER("HoneycombHandler::create");
-  attach_thread(jvm, env);
+  attach_thread(jvm, &env);
 
   if(table->part_info != NULL)
   {
@@ -87,7 +87,7 @@ int HoneycombHandler::create(const char *path, TABLE *table,
     {
       jtablespace = string_to_java_string(table->s->tablespace);
     }
-    jlong jauto_inc_value = create_info->auto_increment_value;
+    jlong jauto_inc_value = max(1, create_info->auto_increment_value);
 
     const char* buf;
     size_t buf_len;
@@ -264,7 +264,7 @@ int HoneycombHandler::delete_table(const char *path)
   DBUG_ENTER("HoneycombHandler::delete_table");
   int ret = 0;
 
-  attach_thread(jvm, env);
+  attach_thread(jvm, &env);
   { // destruct frame before detaching
     JavaFrame frame(env, 2);
     jstring table_name = string_to_java_string(
@@ -294,7 +294,7 @@ int HoneycombHandler::rename_table(const char *from, const char *to)
   DBUG_ENTER("HoneycombHandler::rename_table");
   int ret = 0;
 
-  attach_thread(jvm, env);
+  attach_thread(jvm, &env);
   {
     JavaFrame frame(env, 2);
 

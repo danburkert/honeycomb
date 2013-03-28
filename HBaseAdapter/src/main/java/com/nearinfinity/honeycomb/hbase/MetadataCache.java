@@ -1,5 +1,15 @@
 package com.nearinfinity.honeycomb.hbase;
 
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import net.jcip.annotations.GuardedBy;
+import net.jcip.annotations.ThreadSafe;
+
+import org.apache.log4j.Logger;
+
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -8,14 +18,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.nearinfinity.honeycomb.mysql.Verify;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
-import net.jcip.annotations.GuardedBy;
-import net.jcip.annotations.ThreadSafe;
-import org.apache.log4j.Logger;
-
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @Singleton
 @ThreadSafe
@@ -101,11 +103,11 @@ public class MetadataCache {
      */
     public long tableCacheGet(final String tableName) {
         Verify.isNotNullOrEmpty(tableName);
-        this.readWriteLock.readLock().lock();
+        readWriteLock.readLock().lock();
         try {
             return cacheGet(tableCache, tableName);
         } finally {
-            this.readWriteLock.readLock().unlock();
+            readWriteLock.readLock().unlock();
         }
     }
 
@@ -117,11 +119,11 @@ public class MetadataCache {
      */
     public BiMap<String, Long> columnsCacheGet(final long tableId) {
         Verify.isValidTableId(tableId);
-        this.readWriteLock.readLock().lock();
+        readWriteLock.readLock().lock();
         try {
             return cacheGet(columnsCache, tableId);
         } finally {
-            this.readWriteLock.readLock().unlock();
+            readWriteLock.readLock().unlock();
         }
     }
 
@@ -133,11 +135,11 @@ public class MetadataCache {
      */
     public TableSchema schemaCacheGet(final long tableId) {
         Verify.isValidTableId(tableId);
-        this.readWriteLock.readLock().lock();
+        readWriteLock.readLock().lock();
         try {
             return cacheGet(schemaCache, tableId);
         } finally {
-            this.readWriteLock.readLock().unlock();
+            readWriteLock.readLock().unlock();
         }
     }
 
@@ -195,6 +197,29 @@ public class MetadataCache {
         rowsCache.invalidate(tableId);
     }
 
+
+    /**
+     * Evict the index mapping from the cache for the specified table id
+     *
+     * @param tableId Table ID
+     */
+    public void invalidateIndicesCache(long tableId) {
+        Verify.isValidTableId(tableId);
+        indicesCache.invalidate(tableId);
+    }
+
+
+    /**
+     * Evict the {@link TableSchema} from the cache for the specified table id
+     *
+     * @param tableId Table ID
+     */
+    public void invalidateSchemaCache(long tableId) {
+        Verify.isValidTableId(tableId);
+        schemaCache.invalidate(tableId);
+    }
+
+
     /**
      * Evict a table's metadata from the cache.
      *
@@ -204,13 +229,13 @@ public class MetadataCache {
     public void invalidateCache(String tableName, long tableId) {
         Verify.isNotNullOrEmpty(tableName);
         Verify.isValidTableId(tableId);
-        this.readWriteLock.writeLock().lock();
+        readWriteLock.writeLock().lock();
         try {
             tableCache.invalidate(tableName);
             columnsCache.invalidate(tableId);
             schemaCache.invalidate(tableId);
         } finally {
-            this.readWriteLock.writeLock().unlock();
+            readWriteLock.writeLock().unlock();
         }
     }
 
@@ -235,7 +260,7 @@ public class MetadataCache {
         autoIncCache.put(tableId, value);
     }
 
-    private <K, V> V cacheGet(LoadingCache<K, V> cache, K key) {
+    private static <K, V> V cacheGet(LoadingCache<K, V> cache, K key) {
         try {
             return cache.get(key);
         } catch (ExecutionException e) {

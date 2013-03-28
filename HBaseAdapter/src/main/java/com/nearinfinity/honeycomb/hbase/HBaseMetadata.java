@@ -1,34 +1,49 @@
 package com.nearinfinity.honeycomb.hbase;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.*;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.nearinfinity.honeycomb.TableNotFoundException;
-import com.nearinfinity.honeycomb.hbase.rowkey.*;
-import com.nearinfinity.honeycomb.hbaseclient.Constants;
-import com.nearinfinity.honeycomb.mysql.Util;
-import com.nearinfinity.honeycomb.mysql.Verify;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
-import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
-import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.log4j.Logger;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.*;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.util.Bytes;
+
+import com.google.common.base.Charsets;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.ImmutableBiMap;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.nearinfinity.honeycomb.TableNotFoundException;
+import com.nearinfinity.honeycomb.hbase.rowkey.AutoIncRow;
+import com.nearinfinity.honeycomb.hbase.rowkey.ColumnsRow;
+import com.nearinfinity.honeycomb.hbase.rowkey.IndicesRow;
+import com.nearinfinity.honeycomb.hbase.rowkey.RowsRow;
+import com.nearinfinity.honeycomb.hbase.rowkey.SchemaRow;
+import com.nearinfinity.honeycomb.hbase.rowkey.TablesRow;
+import com.nearinfinity.honeycomb.hbaseclient.Constants;
+import com.nearinfinity.honeycomb.mysql.Util;
+import com.nearinfinity.honeycomb.mysql.Verify;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 
 /**
  * Manages writing and reading table & column schemas, table & column ids, and
  * row & autoincrement counters to and from HBase.
  */
 public class HBaseMetadata {
-    private static final Logger logger = Logger.getLogger(HBaseMetadata.class);
     private static final byte[] COLUMN_FAMILY = Constants.NIC;
     private final Provider<HTableInterface> provider;
 
@@ -49,7 +64,6 @@ public class HBaseMetadata {
 
             byte[] tableIdBytes = result.getValue(COLUMN_FAMILY, serializedName);
             if (tableIdBytes == null) {
-                logger.info(String.format("Could not get the table id for %s", table));
                 throw new TableNotFoundException(table);
             }
             return deserializeId(tableIdBytes);
@@ -81,7 +95,6 @@ public class HBaseMetadata {
 
             byte[] serializedSchema = result.getValue(COLUMN_FAMILY, serializedTableId);
             if (serializedSchema == null) {
-                logger.info("Couldn't get the schema for table id " + tableId);
                 throw new TableNotFoundException(tableId);
             }
             return Util.deserializeTableSchema(serializedSchema);
@@ -104,7 +117,38 @@ public class HBaseMetadata {
         performMutations(ImmutableList.<Delete>of(), puts);
     }
 
-    public void deleteSchema(String tableName) {
+    /**
+     * Performs all metadata operations necessary to create a table index
+     * @param tableId The id of the table to create the index
+     * @param indexName The identifying name of the index, not null or empty
+     * @param indexSchema The {@link IndexSchema} representing the index details, not null
+     */
+    public void createTableIndex(final long tableId, final String indexName,
+            final IndexSchema indexSchema) {
+        Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
+        checkNotNull(indexSchema, "The index schema is invalid");
+
+        final List<Put> puts = Lists.newArrayList();
+        final List<Delete> deletes = Lists.newArrayList();
+
+        final Map<String, IndexSchema> indexDetailMap = ImmutableMap.<String, IndexSchema>of(indexName, indexSchema);
+
+        // Update the table schema to store the new index schema details
+        final TableSchema existingSchema = getSchema(tableId);
+        final TableSchema updatedSchema = TableSchema.newBuilder(existingSchema).build();
+        updatedSchema.getIndices().putAll(indexDetailMap);
+
+        // Delete the previous table schema
+        deletes.add(deleteTableSchema(tableId));
+
+        // Write the updated table schema and created index
+        puts.add(putTableSchema(tableId, updatedSchema));
+        puts.add(putIndices(tableId, indexDetailMap));
+
+        performMutations(deletes, puts);
+    }
+
+    public void deleteTable(String tableName) {
         Verify.isNotNullOrEmpty(tableName);
         long tableId = getTableId(tableName);
         byte[] serializedId = serializeId(tableId);
@@ -125,54 +169,6 @@ public class HBaseMetadata {
         deletes.add(deleteTableSchema(tableId));
 
         performMutations(deletes, ImmutableList.<Put>of());
-    }
-
-    public void updateSchema(long tableId, TableSchema oldSchema, TableSchema newSchema) {
-        Verify.isValidTableId(tableId);
-        checkNotNull(oldSchema);
-        checkNotNull(newSchema);
-
-        if (oldSchema.equals(newSchema)) {
-            return;
-        }
-
-        List<Put> puts = new ArrayList<Put>();
-        List<Delete> deletes = new ArrayList<Delete>();
-
-        MapDifference<String, ColumnSchema> diff = Maps.difference(oldSchema.getColumns(),
-                newSchema.getColumns());
-
-        for (Map.Entry<String, ColumnSchema> deletedColumn :
-                diff.entriesOnlyOnLeft().entrySet()) {
-            String columnName = deletedColumn.getKey();
-            ColumnSchema schema = deletedColumn.getValue();
-
-            Delete columnIdDelete = new Delete(new ColumnsRow(tableId).encode());
-            columnIdDelete.deleteColumn(COLUMN_FAMILY, serializeName(columnName));
-            deletes.add(columnIdDelete);
-
-            if (schema.getIsAutoIncrement()) {
-                deletes.add(deleteAutoIncCounter(tableId));
-            }
-        }
-
-        puts.add(putColumnIds(tableId, diff.entriesOnlyOnRight())); // New columns
-
-        for (Map.Entry<String, MapDifference.ValueDifference<ColumnSchema>> changedColumn :
-                diff.entriesDiffering().entrySet()) {
-            if (changedColumn.getValue().leftValue().getIsAutoIncrement()
-                    && !changedColumn.getValue().rightValue().getIsAutoIncrement()) {
-                deletes.add(deleteAutoIncCounter(tableId));
-            }
-        }
-
-        if (diff.entriesInCommon().size() == 0) {
-            // All columns have been changed.  Perhaps we should truncate.
-        }
-
-        puts.add(putTableSchema(tableId, newSchema));
-
-        performMutations(deletes, puts);
     }
 
     /**
@@ -206,10 +202,16 @@ public class HBaseMetadata {
                 serializeId(tableId), amount);
     }
 
-    public void truncateAutoInc(long tableId) {
+    public void setAutoInc(long tableId, long value) {
         Verify.isValidTableId(tableId);
-        performMutations(Lists.<Delete>newArrayList(deleteAutoIncCounter(tableId)),
-                ImmutableList.<Put>of());
+        Put put = new Put(new AutoIncRow().encode());
+        put.add(COLUMN_FAMILY, serializeId(tableId), Bytes.toBytes(value));
+        HTableInterface hTable = getHTable();
+        try {
+            HBaseOperations.performPut(hTable, put);
+        } finally {
+            HBaseOperations.closeTable(hTable);
+        }
     }
 
     public long getRowCount(long tableId) {
@@ -408,6 +410,6 @@ public class HBaseMetadata {
     }
 
     private HTableInterface getHTable() {
-        return this.provider.get();
+        return provider.get();
     }
 }

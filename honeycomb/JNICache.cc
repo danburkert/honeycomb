@@ -6,7 +6,7 @@
 JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
 {
   JNIEnv* env;
-  jint attach_result = attach_thread(jvm, env);
+  jint attach_result = attach_thread(jvm, &env);
   CHECK_JNI_ABORT(attach_result, "JNICache: Failure while attaching thread to JVM.");
 
   // (dburkert:) I do not recommend editing this section without javap -s,
@@ -137,7 +137,7 @@ JNICache::~JNICache()
 {
   // Setup env
   JNIEnv* env;
-  jint attach_result = attach_thread(jvm, env);
+  jint attach_result = attach_thread(jvm, &env);
   CHECK_JNI_ABORT(attach_result, "JNICache Destructor: Failure while attaching thread to JVM.");
 
   env->DeleteGlobalRef(handler_proxy_.clazz);

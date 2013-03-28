@@ -102,7 +102,7 @@ static int honeycomb_init_func(void *p)
   honeycomb_hton->flags = HTON_TEMPORARY_NOT_SUPPORTED;
   honeycomb_hton->alter_table_flags = honeycomb_alter_table_flags;
 
-  handler_proxy_factory = initialize_jvm(jvm);
+  handler_proxy_factory = initialize_jvm(&jvm);
   cache = new JNICache(jvm);
 
   DBUG_RETURN(0);
@@ -128,7 +128,7 @@ static handler* honeycomb_create_handler(handlerton *hton, TABLE_SHARE *table_sh
     MEM_ROOT *mem_root)
 {
   JNIEnv* env;
-  attach_thread(jvm, env);
+  attach_thread(jvm, &env);
   jobject handler_proxy = handler_factory(env);
   detach_thread(jvm);
   return new (mem_root) HoneycombHandler(hton, table_share, &honeycomb_mutex,

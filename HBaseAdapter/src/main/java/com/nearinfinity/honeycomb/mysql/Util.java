@@ -3,6 +3,7 @@ package com.nearinfinity.honeycomb.mysql;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.nearinfinity.honeycomb.RuntimeIOException;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import org.apache.avro.io.*;
@@ -188,7 +189,7 @@ public class Util {
      * @param schema
      * @return
      */
-    public static Set<String> uniqueIndices(TableSchema schema) {
+    public static Set<String> getUniqueIndices(TableSchema schema) {
         Set<String> indices = Sets.newHashSet();
         for (Map.Entry<String, IndexSchema> entry : schema.getIndices().entrySet()) {
             if (entry.getValue().getIsUnique()) {
@@ -211,5 +212,19 @@ public class Util {
                 obj.toString(), obj.getClass().getName());
         logger.error(format, e);
         return new RuntimeException(format, e);
+	}
+    /**
+     * Return the name of the auto increment column in the table, or null.
+     * @param schema
+     * @return
+     */
+    public static String getAutoIncrementColumn(TableSchema schema) {
+        Map<String, ColumnSchema> columns = schema.getColumns();
+        for (Map.Entry<String, ColumnSchema> entry : columns.entrySet()) {
+            if (entry.getValue().getIsAutoIncrement()) {
+                return entry.getKey();
+            }
+        }
+        return null;
     }
 }

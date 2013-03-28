@@ -36,7 +36,7 @@ HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_share,
 
 HoneycombHandler::~HoneycombHandler()
 {
-  attach_thread(this->jvm, this->env);
+  attach_thread(this->jvm, &(this->env));
   this->flush();
   env->DeleteGlobalRef(handler_proxy);
   detach_thread(this->jvm);
@@ -53,7 +53,7 @@ int HoneycombHandler::open(const char *path, int mode, uint test_if_locked)
 
   thr_lock_data_init(&share->lock, &lock, (void*) this);
 
-  attach_thread(jvm, env);
+  attach_thread(jvm, &env);
   {
     JavaFrame frame(env, 2);
     jstring jtable_name =
@@ -76,7 +76,7 @@ int HoneycombHandler::open(const char *path, int mode, uint test_if_locked)
 int HoneycombHandler::close(void)
 {
   DBUG_ENTER("HoneycombHandler::close");
-  attach_thread(jvm, env);
+  attach_thread(jvm, &env);
   {
     JavaFrame frame(env, 2);
     this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().close_table);
@@ -218,7 +218,7 @@ int HoneycombHandler::external_lock(THD *thd, int lock_type)
 
   if (lock_type == F_WRLCK || lock_type == F_RDLCK)
   {
-    attach_thread(jvm, env);
+    attach_thread(jvm, &env);
   }
 
   if (lock_type == F_UNLCK)
@@ -281,7 +281,7 @@ int HoneycombHandler::info(uint flag)
   // TODO: Update this function to take into account the flag being passed in,
   // like the other engines
   ha_rows rec_per_key;
-  attach_thread(jvm, env);
+  attach_thread(jvm, &env);
 
   DBUG_ENTER("HoneycombHandler::info");
   if (flag & HA_STATUS_VARIABLE)
@@ -426,10 +426,9 @@ void HoneycombHandler::get_auto_increment(ulonglong offset, ulonglong increment,
                                  ulonglong *nb_reserved_values)
 {
   DBUG_ENTER("HoneycombHandler::get_auto_increment");
-  ulonglong inc_amount = offset - 1 + increment * nb_desired_values;
 
   jlong value = env->CallLongMethod(handler_proxy,
-      cache->handler_proxy().increment_auto_increment, inc_amount);
+      cache->handler_proxy().increment_auto_increment, nb_desired_values);
   if (check_exceptions(env, cache, "HoneycombHandler::get_auto_increment"))
   { // exception thrown, return error code
     *first_value = ~(ulonglong) 0;
