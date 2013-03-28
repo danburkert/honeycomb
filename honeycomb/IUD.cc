@@ -196,3 +196,49 @@ int HoneycombHandler::write_row(uchar *buf)
     DBUG_RETURN(rc);
   }
 }
+
+int HoneycombHandler::update_row(const uchar *old_row, uchar *new_row)
+{
+  DBUG_ENTER("HoneycombHandler::update_row");
+  int rc = 0;
+  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
+  {
+    table->timestamp_field->set_time();
+  }
+
+  row->reset();
+  my_bitmap_map *old_map = dbug_tmp_use_all_columns(table, table->read_set);
+  rc |= pack_row(new_row, table, row);
+  dbug_tmp_restore_column_map(table->read_set, old_map);
+  rc |= row->set_UUID(this->ref);
+  if (rc)
+  {
+    DBUG_RETURN(HA_ERR_INTERNAL_ERROR);
+  }
+
+  JavaFrame frame(env, 1);
+  const char* row_buf;
+  size_t buf_len;
+  row->serialize(&row_buf, &buf_len);
+  jbyteArray serialized_row =
+    convert_value_to_java_bytes((uchar*) row_buf, buf_len, env);
+
+  if (thd_sql_command(ha_thd()) == SQLCOM_UPDATE) // Taken when actual update, not an ON DUPLICATE KEY UPDATE
+  {
+    if (violates_uniqueness(serialized_row))
+    {
+      DBUG_RETURN(HA_ERR_FOUND_DUPP_KEY);
+    }
+  }
+
+  env->CallVoidMethod(handler_proxy, cache->handler_proxy().update_row,
+      serialized_row);
+  rc |= check_exceptions(env, cache, "HoneycombHandler::update_row");
+  if (rc) {
+    DBUG_RETURN(rc);
+  }
+  else {
+    ha_statistic_increment(&SSV::ha_update_count);
+    DBUG_RETURN(rc);
+  }
+}

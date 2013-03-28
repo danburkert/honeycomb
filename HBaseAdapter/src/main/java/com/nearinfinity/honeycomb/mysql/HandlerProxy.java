@@ -1,19 +1,16 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-import static java.lang.String.format;
-
-import java.nio.ByteBuffer;
-import java.util.UUID;
-
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+
+import java.nio.ByteBuffer;
+
+import static com.google.common.base.Preconditions.*;
+import static java.lang.String.format;
 
 public class HandlerProxy {
     private final StoreFactory storeFactory;
@@ -208,6 +205,7 @@ public class HandlerProxy {
      */
     public void insertRow(byte[] rowBytes) {
         checkTableOpen();
+        checkNotNull(rowBytes);
         TableSchema schema = store.getSchema(tableName);
         Row row = Row.deserialize(rowBytes);
         row.setRandomUUID();
@@ -221,16 +219,16 @@ public class HandlerProxy {
         table.insert(row);
     }
 
-    public void deleteRow(UUID uuid) {
+    public void deleteRow(byte[] uuidBytes) {
         checkTableOpen();
-        table.delete(uuid);
+        table.delete(Util.bytesToUUID(uuidBytes));
     }
 
-    public void updateRow(byte[] newRowBytes) {
+    public void updateRow(byte[] rowBytes) {
         checkTableOpen();
-        checkNotNull(newRowBytes);
-        Row newRow = Row.deserialize(newRowBytes);
-        table.update(newRow);
+        checkNotNull(rowBytes);
+        Row updatedRow = Row.deserialize(rowBytes);
+        table.update(updatedRow);
     }
 
     public void flush() {

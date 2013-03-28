@@ -1,21 +1,17 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import static org.fest.assertions.Assertions.assertThat;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.nearinfinity.honeycomb.hbaseclient.Constants;
+import com.nearinfinity.honeycomb.mysql.gen.*;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.nearinfinity.honeycomb.hbaseclient.Constants;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
-import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
-import com.nearinfinity.honeycomb.mysql.gen.QueryType;
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import static org.fest.assertions.Assertions.assertThat;
 
 public class HandleProxyIntegrationTest {
     public static final String COLUMN1 = "c1";
@@ -166,7 +162,7 @@ public class HandleProxyIntegrationTest {
                 IndexKey key = createKey(5, QueryType.EXACT_KEY);
                 proxy.startIndexScan(key.serialize());
                 Row r = Row.deserialize(proxy.getNextRow());
-                proxy.deleteRow(r.getUUID());
+                proxy.deleteRow(Util.UUIDToBytes(r.getUUID()));
                 proxy.flush();
             }
         });

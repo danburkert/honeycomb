@@ -54,7 +54,7 @@ class Row : public Serializable
    * @param uuid_buf  byte buffer holding new UUID value. Must be 16 bytes long.
    * @return Error code
    */
-  int set_UUID(char* uuid_buf);
+  int set_UUID(unsigned char* uuid_buf);
 
   /**
    * @brief Get the bytes of a record in the Row.  The value byte buffer will
