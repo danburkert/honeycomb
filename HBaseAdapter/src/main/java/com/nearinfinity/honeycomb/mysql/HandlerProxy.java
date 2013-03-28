@@ -181,7 +181,7 @@ public class HandlerProxy {
     }
 
     public void dropIndex(String indexName) {
-        checkNotNull(indexName);
+        Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
         checkTableOpen();
 
         store.dropIndex(tableName, indexName);
