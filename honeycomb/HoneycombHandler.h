@@ -133,8 +133,6 @@ class HoneycombHandler : public handler
     int index_first(uchar *buf);
     int index_last(uchar *buf);
 
-    void set_autoinc_counter(jlong new_value, jboolean is_truncate);
-
     /* DDL helper methods */
     int pack_column_schema(ColumnSchema* schema, Field* field);
     int pack_index_schema(IndexSchema* schema, KEY* key);

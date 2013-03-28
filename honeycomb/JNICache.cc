@@ -36,6 +36,7 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   handler_proxy_.increment_row_count      = get_method_id(env, handler_proxy_.clazz, "incrementRowCount", "(J)V");
   handler_proxy_.increment_auto_increment = get_method_id(env, handler_proxy_.clazz, "incrementAutoIncrement", "(J)J");
   handler_proxy_.get_auto_increment       = get_method_id(env, handler_proxy_.clazz, "getAutoIncrement", "()J");
+  handler_proxy_.set_auto_increment       = get_method_id(env, handler_proxy_.clazz, "setAutoIncrement", "(J)V");
 
   TableExistsException   = get_class_ref(env, HONEYCOMB "TableExistsException");
   TableNotFoundException = get_class_ref(env, HONEYCOMB "TableNotFoundException");

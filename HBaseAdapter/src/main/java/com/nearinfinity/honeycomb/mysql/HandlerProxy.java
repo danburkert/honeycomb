@@ -127,6 +127,17 @@ public class HandlerProxy {
     }
 
     /**
+     * Set the auto increment value of the table to the max of value and the
+     * current value.
+     * @param value
+     * @return
+     */
+    public void setAutoIncrement(long value) {
+        checkTableOpen();
+        store.setAutoInc(tableName, value);
+    }
+
+    /**
      * Increment the auto increment value of the table by amount, and return the
      * next auto increment value.  The next value will be the current value + 1,
      * not the incremented value (equivalently, the incremented value - amount).

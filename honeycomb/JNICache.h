@@ -35,6 +35,7 @@ class JNICache
                 get_row,
                 increment_row_count,
                 get_auto_increment,
+                set_auto_increment,
                 increment_auto_increment;
     };
     struct HBaseAdapter

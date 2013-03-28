@@ -350,7 +350,9 @@ void HoneycombHandler::update_create_info(HA_CREATE_INFO* create_info)
   }
   //alter table
   else if (create_info->used_fields == 1) {
-    set_autoinc_counter(create_info->auto_increment_value, JNI_FALSE);
+    env->CallVoidMethod(handler_proxy, cache->handler_proxy().set_auto_increment,
+        create_info->auto_increment_value);
+    check_exceptions(env, cache, "HoneycombHandler::update_create_info");
   }
 
   DBUG_VOID_RETURN;
