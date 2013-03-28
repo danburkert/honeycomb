@@ -246,15 +246,20 @@ static int retrieve_query_flag(enum ha_rkey_function find_flag, IndexContainer::
   {
     case HA_READ_KEY_EXACT:
       *query_type = IndexContainer::EXACT_KEY;
+      break;
     case HA_READ_KEY_OR_NEXT:
       *query_type = IndexContainer::KEY_OR_NEXT;
+      break;
     case HA_READ_KEY_OR_PREV:            
     case HA_READ_PREFIX_LAST_OR_PREV:
       *query_type = IndexContainer::KEY_OR_PREVIOUS;
+      break;
     case HA_READ_AFTER_KEY:             
       *query_type = IndexContainer::AFTER_KEY;
+      break;
     case HA_READ_BEFORE_KEY:           
       *query_type = IndexContainer::BEFORE_KEY;
+      break;
     default:
       return HA_ERR_GENERIC;
   }
