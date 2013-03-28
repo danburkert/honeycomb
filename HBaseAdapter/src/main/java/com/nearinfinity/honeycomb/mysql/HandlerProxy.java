@@ -1,5 +1,12 @@
 package com.nearinfinity.honeycomb.mysql;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static java.lang.String.format;
+
+import java.nio.ByteBuffer;
+
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
@@ -7,11 +14,6 @@ import com.nearinfinity.honeycomb.exceptions.TableNotFoundException;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
-
-import java.nio.ByteBuffer;
-
-import static com.google.common.base.Preconditions.*;
-import static java.lang.String.format;
 
 public class HandlerProxy {
     private final StoreFactory storeFactory;
@@ -173,8 +175,8 @@ public class HandlerProxy {
 
         IndexSchema schema = Util.deserializeIndexSchema(serializedSchema);
         checkArgument(!schema.getIsUnique(), "Honeycomb does not support adding unique indices without a table rebuild.");
-        store.addIndex(tableName, indexName, schema);
 
+        store.addIndex(tableName, indexName, schema);
         table.insertTableIndex(indexName, schema);
     }
 
@@ -183,6 +185,7 @@ public class HandlerProxy {
         checkTableOpen();
 
         store.dropIndex(tableName, indexName);
+        table.deleteTableIndex(indexName);
     }
 
     /**

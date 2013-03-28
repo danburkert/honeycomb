@@ -22,8 +22,8 @@ public interface Table extends Closeable {
     /**
      * Inserts an index on the table
      *
-     * @param indexName The identifying name of the index
-     * @param indexSchema The {@link IndexSchema} representing the index details
+     * @param indexName The identifying name of the index, not null or empty
+     * @param indexSchema The {@link IndexSchema} representing the index details, not null
      */
     void insertTableIndex(final String indexName, final IndexSchema indexSchema);
 
@@ -43,6 +43,13 @@ public interface Table extends Closeable {
      * @throws com.nearinfinity.honeycomb.exceptions.RowNotFoundException
      */
     void delete(UUID uuid);
+
+    /**
+     * Deletes the index corresponding to the specified index name from the table
+     *
+     * @param indexName The identifying name of the index, not null or empty
+     */
+    void deleteTableIndex(final String indexName);
 
     /**
      * Flush all inserts, updates, and deletes to the table.  IUD operations are

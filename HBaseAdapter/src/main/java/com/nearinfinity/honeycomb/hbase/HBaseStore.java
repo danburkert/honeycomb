@@ -77,7 +77,13 @@ public class HBaseStore implements Store {
     }
 
     @Override
-    public void dropIndex(String tableName, String indexName) {
+    public void dropIndex(final String tableName, final String indexName) {
+        Verify.isNotNullOrEmpty(tableName, "The table name is invalid");
+        Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
+
+        final long tableId = cache.tableCacheGet(tableName);
+
+        metadata.deleteTableIndex(tableId, indexName);
     }
 
     @Override
