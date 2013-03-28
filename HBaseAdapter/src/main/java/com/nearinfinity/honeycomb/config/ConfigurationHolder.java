@@ -1,15 +1,13 @@
 package com.nearinfinity.honeycomb.config;
 
-import java.util.Collection;
-
-import net.jcip.annotations.Immutable;
-import net.jcip.annotations.ThreadSafe;
-
-import org.apache.hadoop.conf.Configuration;
-
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.nearinfinity.honeycomb.mysql.Verify;
+import net.jcip.annotations.Immutable;
+import net.jcip.annotations.ThreadSafe;
+import org.apache.hadoop.conf.Configuration;
+
+import java.util.Collection;
 
 /**
  * Responsible for holding the configuration settings used throughout the application
@@ -20,7 +18,6 @@ public final class ConfigurationHolder {
     private final Configuration config;
 
     public static final String DEFAULT_STRING_VALUE = "";
-
 
     /**
      * Creates a wrapper around the provided existing configuration
@@ -33,7 +30,6 @@ public final class ConfigurationHolder {
         // Make a copy of the provided configuration to enforce immutability
         config = new Configuration(conf);
     }
-
 
     /**
      * Retrieves the configuration for auto flushing changes on the underlying storage table

@@ -173,7 +173,7 @@ public class HBaseTable implements Table {
             throw new RowNotFoundException(uuid);
         }
 
-        return Row.deserialize(result.getValue(Constants.NIC, new byte[0]));
+        return Row.deserialize(result.getValue(Constants.DEFAULT_COLUMN_FAMILY, new byte[0]));
     }
 
     @Override
@@ -278,7 +278,7 @@ public class HBaseTable implements Table {
     }
 
     private static Put createEmptyQualifierPut(RowKey row, byte[] serializedRow) {
-        return new Put(row.encode()).add(Constants.NIC, new byte[0], serializedRow);
+        return new Put(row.encode()).add(Constants.DEFAULT_COLUMN_FAMILY, new byte[0], serializedRow);
     }
 
     private static Delete createEmptyQualifierDelete(RowKey row) {

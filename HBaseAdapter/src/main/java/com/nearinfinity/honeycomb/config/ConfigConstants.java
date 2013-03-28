@@ -10,7 +10,6 @@ public final class ConfigConstants {
         throw new AssertionError();
     }
 
-
     public static final String PROP_AUTO_FLUSH_CHANGES = Constants.HBASE_TABLESPACE + ".flushChangesImmediately";
     public static final boolean DEFAULT_AUTO_FLUSH_CHANGES = false;
 

@@ -22,7 +22,7 @@ public class TableCreator {
     public static void createTable(ConfigurationHolder configuration)
             throws IOException {
         HTableDescriptor sqlTableDescriptor;
-        HColumnDescriptor nicColumn = new HColumnDescriptor(Constants.NIC);
+        HColumnDescriptor nicColumn = new HColumnDescriptor(Constants.DEFAULT_COLUMN_FAMILY);
         HBaseAdmin admin = new HBaseAdmin(configuration.getConfiguration());
         byte[] tableName = configuration.getStorageTableName().getBytes();
 
@@ -35,7 +35,7 @@ public class TableCreator {
         }
 
         sqlTableDescriptor = admin.getTableDescriptor(tableName);
-        if (!sqlTableDescriptor.hasFamily(Constants.NIC)) {
+        if (!sqlTableDescriptor.hasFamily(Constants.DEFAULT_COLUMN_FAMILY)) {
             logger.info("Adding nic column family to sql table");
 
             if (!admin.isTableDisabled(tableName)) {
