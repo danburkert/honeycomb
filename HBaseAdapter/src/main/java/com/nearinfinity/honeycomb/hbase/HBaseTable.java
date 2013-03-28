@@ -19,6 +19,7 @@ import org.apache.log4j.Logger;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.nearinfinity.honeycomb.RowNotFoundException;
@@ -45,18 +46,13 @@ public class HBaseTable implements Table {
     private final HTableInterface hTable;
     private final HBaseStore store;
     private final long tableId;
-    private final TableSchema schema;
 
     @Inject
-    public HBaseTable(HTableInterface hTable, HBaseStore store,
-                      @Assisted Long tableId, @Assisted TableSchema schema) {
+    public HBaseTable(HTableInterface hTable, HBaseStore store, @Assisted Long tableId) {
         Verify.isValidTableId(tableId);
-        Verify.isValidTableSchema(schema);
-        Verify.isValidIndexSchema(schema.getIndices(), schema.getColumns());
         this.hTable = checkNotNull(hTable);
         this.store = checkNotNull(store);
         this.tableId = tableId;
-        this.schema = schema;
     }
 
     @Override
@@ -66,7 +62,7 @@ public class HBaseTable implements Table {
         final UUID uuid = row.getUUID();
 
         HBaseOperations.performPut(hTable, createEmptyQualifierPut(new DataRow(tableId, uuid), serializeRow));
-        doToIndices(row, schema.getIndices(), new IndexAction() {
+        doToIndices(row, getTableIndices(tableId), new IndexAction() {
             @Override
             public void execute(IndexRowBuilder builder) {
                 HBaseOperations.performPut(hTable, createEmptyQualifierPut(builder.withSortOrder(SortOrder.Ascending).build(), serializeRow));
@@ -90,7 +86,6 @@ public class HBaseTable implements Table {
 
         while (dataRows.hasNext()) {
             final Row dataRow = dataRows.next();
-
             doToIndices(dataRow, ImmutableMap.<String, IndexSchema>of(indexName, indexSchema), new IndexAction() {
                 @Override
                 public void execute(IndexRowBuilder builder) {
@@ -99,9 +94,6 @@ public class HBaseTable implements Table {
                 }
             });
         }
-
-        //TODO This shouldn't need to be done, find a better way to update table schema's index schema info for scanning
-        schema.getIndices().put(indexName, indexSchema);
 
         Util.closeQuietly(dataRows);
     }
@@ -119,7 +111,7 @@ public class HBaseTable implements Table {
         Row row = get(uuid);
         final List<Delete> deleteList = Lists.newLinkedList();
         deleteList.add(new Delete(new DataRow(tableId, uuid).encode()));
-        doToIndices(row, schema.getIndices(), new IndexAction() {
+        doToIndices(row, getTableIndices(tableId), new IndexAction() {
             @Override
             public void execute(IndexRowBuilder builder) {
                 deleteList.add(createEmptyQualifierDelete(builder.withSortOrder(SortOrder.Descending).build()));
@@ -139,7 +131,7 @@ public class HBaseTable implements Table {
             Row row = rows.next();
             final UUID uuid = row.getUUID();
             deleteList.add(new Delete(new DataRow(tableId, uuid).encode()));
-            doToIndices(row, schema.getIndices(), new IndexAction() {
+            doToIndices(row, getTableIndices(tableId), new IndexAction() {
                 @Override
                 public void execute(IndexRowBuilder builder) {
                     deleteList.add(createEmptyQualifierDelete(builder.withSortOrder(SortOrder.Ascending).build()));
@@ -251,9 +243,10 @@ public class HBaseTable implements Table {
         Util.closeQuietly(hTable);
     }
 
-    private void doToIndices(Row row, Map<String, IndexSchema> indices, IndexAction action) {
-        Map<String, ByteBuffer> records = row.getRecords();
-        Map<String, Long> indexIds = store.getIndices(tableId);
+    private void doToIndices(final Row row, final Map<String, IndexSchema> indices, final IndexAction action) {
+        final Map<String, ByteBuffer> records = row.getRecords();
+        final Map<String, Long> indexIds = store.getIndices(tableId);
+        final TableSchema schema = store.getSchema(tableId);
 
         for (Map.Entry<String, IndexSchema> index : indices.entrySet()) {
             long indexId = indexIds.get(index.getKey());
@@ -266,7 +259,7 @@ public class HBaseTable implements Table {
         }
     }
 
-    private Map<String, ColumnType> getColumnTypesForSchema(TableSchema schema) {
+    private static Map<String, ColumnType> getColumnTypesForSchema(TableSchema schema) {
         final ImmutableMap.Builder<String, ColumnType> result = ImmutableMap.builder();
         for (Map.Entry<String, ColumnSchema> entry : schema.getColumns().entrySet()) {
             result.put(entry.getKey(), entry.getValue().getType());
@@ -275,29 +268,30 @@ public class HBaseTable implements Table {
         return result.build();
     }
 
-    private Put createEmptyQualifierPut(RowKey row, byte[] serializedRow) {
+    private static Put createEmptyQualifierPut(RowKey row, byte[] serializedRow) {
         return new Put(row.encode()).add(Constants.NIC, new byte[0], serializedRow);
     }
 
-    private Delete createEmptyQualifierDelete(RowKey row) {
+    private static Delete createEmptyQualifierDelete(RowKey row) {
         return new Delete(row.encode());
     }
 
-    private byte[] padKeyForSorting(byte[] key) {
+    private static byte[] padKeyForSorting(byte[] key) {
         return Bytes.padTail(key, 1);
     }
 
-    private IndexRowBuilder indexPrefixedForTable(IndexKey key) {
-        Map<String, Long> indices = store.getIndices(tableId);
-        long indexId = indices.get(key.getIndexName());
-        IndexSchema indexSchema = schema.getIndices().get(key.getIndexName());
-        IndexRowBuilder indexRowBuilder = IndexRowBuilder.newBuilder(tableId, indexId);
-        if (key.getQueryType() == QueryType.INDEX_LAST || key.getQueryType() == QueryType.INDEX_FIRST) {
+    private IndexRowBuilder indexPrefixedForTable(final IndexKey key) {
+        final Map<String, Long> indices = store.getIndices(tableId);
+        final TableSchema schema = store.getSchema(tableId);
+        final long indexId = indices.get(key.getIndexName());
+        final IndexSchema indexSchema = schema.getIndices().get(key.getIndexName());
+        final IndexRowBuilder indexRowBuilder = IndexRowBuilder.newBuilder(tableId, indexId);
+
+        if( key.getQueryType() == QueryType.INDEX_LAST || key.getQueryType() == QueryType.INDEX_FIRST ) {
             return indexRowBuilder;
         }
 
-        return indexRowBuilder
-                .withRecords(key.getKeys(), getColumnTypesForSchema(schema), indexSchema.getColumns());
+        return indexRowBuilder.withRecords(key.getKeys(), getColumnTypesForSchema(schema), indexSchema.getColumns());
     }
 
     private Scanner createScannerForRange(byte[] start, byte[] end) {
@@ -305,6 +299,28 @@ public class HBaseTable implements Table {
         ResultScanner scanner = HBaseOperations.getScanner(hTable, scan);
         return new HBaseScanner(scanner);
     }
+
+    /**
+     * Fetches the index mapping information for the table with the specified table id
+     * @param tableId The id of the table to consult
+     * @return A mapping of index data for the specified table
+     */
+    private Map<String, IndexSchema> getTableIndices(final long tableId) {
+        Map<String, IndexSchema> indexInfo = Maps.newHashMap();
+        final TableSchema schema = store.getSchema(tableId);
+
+        if( schema != null ) {
+            final Map<String, IndexSchema> tableIndices = schema.getIndices();
+
+            if( tableIndices != null ) {
+                indexInfo = tableIndices;
+            }
+        }
+
+        return indexInfo;
+    }
+
+
 
     private interface IndexAction {
         public void execute(IndexRowBuilder builder);
