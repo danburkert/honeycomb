@@ -329,8 +329,6 @@ public class HBaseTable implements Table {
         return indexInfo;
     }
 
-
-
     private interface IndexAction {
         public void execute(IndexRowBuilder builder);
     }

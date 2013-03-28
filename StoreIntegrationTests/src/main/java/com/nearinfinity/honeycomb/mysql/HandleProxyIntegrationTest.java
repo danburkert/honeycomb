@@ -39,7 +39,7 @@ public class HandleProxyIntegrationTest {
         });
     }
 
-    public static void testSuccessfulIndexAdd() {
+    public static void testAddIndex() {
         final String indexName = "i3";
         final IndexSchema indexSchema = new IndexSchema(Lists.newArrayList(COLUMN1), false);
 
@@ -58,6 +58,34 @@ public class HandleProxyIntegrationTest {
                 // Perform a scan with the new index
                 final IndexKey key = new IndexKey(indexName, QueryType.EXACT_KEY,
                         ImmutableMap.<String, ByteBuffer>of(COLUMN1, encodeValue(keyValue)));
+
+                assertReceivingDifferentRows(proxy, key, rows);
+            }
+        });
+    }
+
+    public static void testAddCompoundIndex() {
+        final String indexName = "i3";
+
+        // Create the compound index ordered as (col2, col1)
+        final IndexSchema indexSchema = new IndexSchema(Lists.newArrayList(COLUMN2, COLUMN1), false);
+
+        testProxy("Testing add compound index", new Action() {
+            @Override
+            public void execute(final HandlerProxy proxy) {
+                final int rows = 1;
+                final int keyValue = 5;
+                final int column2Value = 0;
+
+                // Add data rows to index
+                insertData(proxy, rows, keyValue);
+
+                // Add the new index to the table
+                proxy.addIndex(indexName, Util.serializeIndexSchema(indexSchema));
+
+                // Perform a scan with the new index
+                final IndexKey key = new IndexKey(indexName, QueryType.EXACT_KEY,
+                        ImmutableMap.<String, ByteBuffer>of(COLUMN1, encodeValue(keyValue), COLUMN2, encodeValue(column2Value)));
 
                 assertReceivingDifferentRows(proxy, key, rows);
             }
@@ -348,7 +376,8 @@ public class HandleProxyIntegrationTest {
         try {
             suiteSetup();
             testSuccessfulRename();
-            testSuccessfulIndexAdd();
+            testAddIndex();
+            testAddCompoundIndex();
             testSuccessfulIndexDrop();
             testGetAutoIncrement();
             testIncrementAutoIncrement();

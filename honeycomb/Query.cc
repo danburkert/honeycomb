@@ -41,6 +41,8 @@ int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
     {
       // Absence is the indicator of null on index key
       key_ptr += key_part->store_length;
+      key_part++;
+      keypart_map >>= 1;
       continue;
     }
 
@@ -51,6 +53,7 @@ int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
     ARRAY_DELETE(key_copy);
     key_ptr += key_part->store_length;
     key_part++;
+    keypart_map >>= 1;
   }
 
   DBUG_RETURN(start_index_scan(index_key, buf));
