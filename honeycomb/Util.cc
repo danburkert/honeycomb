@@ -154,7 +154,7 @@ uchar* create_key_copy(Field* index_field, const uchar* key, uint* key_len, THD*
         *key_len = sizeof(long long);
         key_copy = new uchar[sizeof(long long)];
         const bool is_signed = !is_unsigned_field(index_field);
-        bytes_to_long(key, *key_len, is_signed, key_copy);
+        bytes_to_long(key, index_field->pack_length(), is_signed, key_copy);
         make_big_endian(key_copy, *key_len);
         break;
       }
