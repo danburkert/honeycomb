@@ -14,10 +14,6 @@ int HoneycombHandler::pack_row(uchar *buf, TABLE* table, Row* row)
 {
   int ret = 0;
   ret |= row->reset();
-  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
-  {
-    table->timestamp_field->set_time();
-  }
   if(table->next_number_field && buf == table->record[0])
   {
     ret |= update_auto_increment();
@@ -169,6 +165,10 @@ int HoneycombHandler::write_row(uchar *buf)
   {
     return HA_ERR_CRASHED_ON_USAGE;
   }
+  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
+  {
+    table->timestamp_field->set_time();
+  }
 
   my_bitmap_map *old_map = dbug_tmp_use_all_columns(table, table->read_set);
   rc |= pack_row(buf, table, &row);
@@ -192,7 +192,7 @@ int HoneycombHandler::write_row(uchar *buf)
     DBUG_RETURN(rc);
   }
   else {
-    this->rows_written++;
+    ha_statistic_increment(&SSV::ha_write_count);
     DBUG_RETURN(rc);
   }
 }
@@ -242,3 +242,19 @@ int HoneycombHandler::update_row(const uchar *old_row, uchar *new_row)
     DBUG_RETURN(rc);
   }
 }
+
+/**
+ * Called by MySQL when the last scanned row should be deleted.
+ */
+int HoneycombHandler::delete_row(const uchar *buf)
+{
+  DBUG_ENTER("HoneycombHandler::delete_row");
+  ha_statistic_increment(&SSV::ha_delete_count);
+
+  JavaFrame frame(env, 1);
+  jbyteArray pos = convert_value_to_java_bytes(ref, 16, env);
+
+  this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().delete_row, pos);
+  DBUG_RETURN(check_exceptions(env, cache, "HoneycombHandler::delete_row"));
+}
+
