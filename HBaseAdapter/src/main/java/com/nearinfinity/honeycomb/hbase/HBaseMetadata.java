@@ -14,6 +14,7 @@ import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,6 +28,7 @@ import static com.google.common.base.Preconditions.*;
  * row & autoincrement counters to and from HBase.
  */
 public class HBaseMetadata {
+    private static final Logger logger = Logger.getLogger(HBaseMetadata.class);
     private static final byte[] COLUMN_FAMILY = Constants.NIC;
     private final Provider<HTableInterface> provider;
 
@@ -47,6 +49,7 @@ public class HBaseMetadata {
 
             byte[] tableIdBytes = result.getValue(COLUMN_FAMILY, serializedName);
             if (tableIdBytes == null) {
+                logger.info(String.format("Could not get the table id for %s", table));
                 throw new TableNotFoundException(table);
             }
             return deserializeId(tableIdBytes);
@@ -78,6 +81,7 @@ public class HBaseMetadata {
 
             byte[] serializedSchema = result.getValue(COLUMN_FAMILY, serializedTableId);
             if (serializedSchema == null) {
+                logger.info("Couldn't get the schema for table id " + tableId);
                 throw new TableNotFoundException(tableId);
             }
             return Util.deserializeTableSchema(serializedSchema);
