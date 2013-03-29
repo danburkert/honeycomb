@@ -84,6 +84,8 @@ public class HBaseTable implements Table {
         Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
         checkNotNull(indexSchema, "The index schema is invalid");
 
+        final Map<String, IndexSchema> indexDetails = ImmutableMap.<String, IndexSchema>of(indexName, indexSchema);
+
         final Scanner dataRows = tableScan();
 
         if( dataRows.hasNext() ) {
@@ -94,7 +96,7 @@ public class HBaseTable implements Table {
 
         while (dataRows.hasNext()) {
             final Row dataRow = dataRows.next();
-            doToIndices(dataRow, ImmutableMap.<String, IndexSchema>of(indexName, indexSchema), new IndexAction() {
+            doToIndices(dataRow, indexDetails, new IndexAction() {
                 @Override
                 public void execute(IndexRowBuilder builder) {
                     HBaseOperations.performPut(hTable, createEmptyQualifierPut(builder.withSortOrder(SortOrder.Ascending).build(), dataRow.serialize()));
@@ -174,13 +176,14 @@ public class HBaseTable implements Table {
         long totalDeleteSize = 0;
         final List<Delete> deleteList = Lists.newLinkedList();
         final List<Delete> batchDeleteList = Lists.newLinkedList();
+        final Map<String, IndexSchema> tableIndices = getTableIndices(tableId);
         final Scanner rows = tableScan();
 
         while (rows.hasNext()) {
             final Row row = rows.next();
             final UUID uuid = row.getUUID();
             deleteList.add(new Delete(new DataRow(tableId, uuid).encode()));
-            doToIndices(row, getTableIndices(tableId), new IndexAction() {
+            doToIndices(row, tableIndices, new IndexAction() {
                 @Override
                 public void execute(IndexRowBuilder builder) {
                     deleteList.add(createEmptyQualifierDelete(builder.withSortOrder(SortOrder.Ascending).build()));
