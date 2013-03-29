@@ -168,6 +168,13 @@ public class HandlerProxy {
         store.truncateAutoInc(tableName);
     }
 
+    /**
+     * Add the provided index information to the table.  The table must be open
+     * before this operation can be performed.
+     *
+     * @param indexName The name of the index to add, not null or empty
+     * @param serializedSchema The byte representation of the {@link IndexSchema} for this index, not null
+     */
     public void addIndex(String indexName, byte[] serializedSchema) {
         Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
         checkNotNull(serializedSchema);
@@ -180,12 +187,20 @@ public class HandlerProxy {
         table.insertTableIndex(indexName, schema);
     }
 
+    /**
+     * Drop the index specified by the index name from the table. The table must be open
+     * before this operation can be performed.
+     *
+     * @param indexName The name of the index to add, not null or empty
+     */
     public void dropIndex(String indexName) {
         Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
         checkTableOpen();
 
+        TableSchema tableSchema = store.getSchema(tableName);
+        IndexSchema indexSchema = tableSchema.getIndices().get(indexName);
+        table.deleteTableIndex(indexName, indexSchema);
         store.dropIndex(tableName, indexName);
-        table.deleteTableIndex(indexName);
     }
 
     /**

@@ -10,6 +10,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 import static org.fest.assertions.Assertions.assertThat;
+import static org.fest.assertions.Fail.fail;
 
 public class HandleProxyIntegrationTest {
     public static final String COLUMN1 = "c1";
@@ -103,16 +104,26 @@ public class HandleProxyIntegrationTest {
 
                 // Verify that we can get a row from the index scan
                 proxy.startIndexScan(key.serialize());
-                assertThat(proxy.getNextRow()).isNotNull();
+                final Row row = Row.deserialize(proxy.getNextRow());
+                byte[] result = proxy.getRow(Util.UUIDToBytes(row.getUUID()));
+                assertThat(row).isNotNull();
+                assertThat(Row.deserialize(result).getUUID()).isEqualTo(row.getUUID());
                 proxy.endScan();
 
                 // Drop the index from the table
                 proxy.dropIndex(INDEX1);
 
-                // Verify that the scan doesn't return a row now
-                proxy.startIndexScan(key.serialize());
-                assertThat(proxy.getNextRow()).isNull();
-                proxy.endScan();
+                // Verify that the data row is still available after the index has been removed
+                result = proxy.getRow(Util.UUIDToBytes(row.getUUID()));
+                assertThat(Row.deserialize(result).getUUID()).isEqualTo(row.getUUID());
+
+                // Verify that the scan is unable to execute
+                try {
+                    proxy.startIndexScan(key.serialize());
+                    fail("NullPointerException expected because the index name isn't in the cache anymore");
+                } catch (NullPointerException e) {
+                    assertThat(e);
+                }
             }
         });
     }

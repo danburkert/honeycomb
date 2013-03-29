@@ -74,6 +74,8 @@ public class HBaseTable implements Table {
         Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
         checkNotNull(indexSchema, "The index schema is invalid");
 
+        final Map<String, IndexSchema> indexDetails = ImmutableMap.<String, IndexSchema>of(indexName, indexSchema);
+
         final Scanner dataRows = tableScan();
 
         if( dataRows.hasNext() ) {
@@ -84,7 +86,7 @@ public class HBaseTable implements Table {
 
         while (dataRows.hasNext()) {
             final Row dataRow = dataRows.next();
-            doToIndices(dataRow, ImmutableMap.<String, IndexSchema>of(indexName, indexSchema), new IndexAction() {
+            doToIndices(dataRow, indexDetails, new IndexAction() {
                 @Override
                 public void execute(IndexRowBuilder builder) {
                     HBaseOperations.performPut(hTable, createEmptyQualifierPut(builder.withSortOrder(SortOrder.Ascending).build(), dataRow.serialize()));
@@ -97,41 +99,11 @@ public class HBaseTable implements Table {
     }
 
     @Override
-    public void deleteTableIndex(final String indexName) {
+    public void deleteTableIndex(final String indexName, final IndexSchema indexSchema) {
         Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
+        checkNotNull(indexSchema, "The index schema is invalid");
 
-        long totalDeleteSize = 0;
-        final List<Delete> deleteList = Lists.newLinkedList();
-        Map<String, IndexSchema> tableIndices = getTableIndices(tableId);
-
-        // If the table indices are available, get the required index schema details and drop the index
-        if( tableIndices != null && !tableIndices.isEmpty() ) {
-            tableIndices = ImmutableMap.<String, IndexSchema>of(indexName, tableIndices.get(indexName));
-            final Scanner rows = tableScan();
-
-            while (rows.hasNext()) {
-                final Row row = rows.next();
-
-                doToIndices(row, tableIndices, new IndexAction() {
-                    @Override
-                    public void execute(IndexRowBuilder builder) {
-                        deleteList.add(createDelete(builder.withSortOrder(SortOrder.Ascending).build()));
-                        deleteList.add(createDelete(builder.withSortOrder(SortOrder.Descending).build()));
-                    }
-                });
-
-                //TODO: Minimize the duplication of batch write logic between other methods
-                totalDeleteSize += deleteList.size() * row.serialize().length;
-                if (totalDeleteSize > writeBufferSize) {
-                    HBaseOperations.performDelete(hTable, deleteList);
-                    totalDeleteSize = 0;
-                }
-            }
-
-            Util.closeQuietly(rows);
-        }
-
-        HBaseOperations.performDelete(hTable, deleteList);
+        batchDeleteData(tableScan(), ImmutableMap.<String, IndexSchema>of(indexName, indexSchema), false);
     }
 
     @Override
@@ -145,6 +117,10 @@ public class HBaseTable implements Table {
     @Override
     public void delete(final UUID uuid) {
         checkNotNull(uuid);
+        // We need the timestamp in order to limit the delete to the current
+        // version of the (HBase) row.  There is a race condition in HBase when
+        // delete and put are called in succession to the same row. See HBASE-2256.
+        // We hit this during update when delete() and insert() are called consecutively.
         Pair<Long, Row> tsRow = getTSRow(uuid);
         final long ts = tsRow.getFirst();
         Row row = tsRow.getSecond();
@@ -169,15 +145,31 @@ public class HBaseTable implements Table {
 
     @Override
     public void deleteAllRows() {
+        batchDeleteData(tableScan(), getTableIndices(tableId), true);
+    }
+
+
+    /**
+     * Perform a batch delete operation over the rows obtained from the specified data scanner
+     *
+     * @param dataScanner The {@link Scanner} used to gather rows
+     * @param indices The table index mapping to use during this operation
+     * @param deleteRow Indicate that each row obtained from the data scanner should be deleted
+     */
+    private void batchDeleteData(final Scanner dataScanner, final Map<String, IndexSchema> indices, boolean deleteRow) {
         long totalDeleteSize = 0;
         final List<Delete> deleteList = Lists.newLinkedList();
-        final Scanner rows = tableScan();
+        final List<Delete> batchDeleteList = Lists.newLinkedList();
 
-        while (rows.hasNext()) {
-            final Row row = rows.next();
-            final UUID uuid = row.getUUID();
-            deleteList.add(new Delete(new DataRow(tableId, uuid).encode()));
-            doToIndices(row, getTableIndices(tableId), new IndexAction() {
+        while (dataScanner.hasNext()) {
+            final Row row = dataScanner.next();
+
+            if( deleteRow ) {
+                final UUID uuid = row.getUUID();
+                deleteList.add(new Delete(new DataRow(tableId, uuid).encode()));
+            }
+
+            doToIndices(row, indices, new IndexAction() {
                 @Override
                 public void execute(IndexRowBuilder builder) {
                     deleteList.add(createDelete(builder.withSortOrder(SortOrder.Ascending).build()));
@@ -185,15 +177,19 @@ public class HBaseTable implements Table {
                 }
             });
 
+            batchDeleteList.addAll(deleteList);
+
             totalDeleteSize += deleteList.size() * row.serialize().length;
             if (totalDeleteSize > writeBufferSize) {
-                HBaseOperations.performDelete(hTable, deleteList);
+                HBaseOperations.performDelete(hTable, batchDeleteList);
                 totalDeleteSize = 0;
             }
+
+            deleteList.clear();
         }
 
-        Util.closeQuietly(rows);
-        HBaseOperations.performDelete(hTable, deleteList);
+        Util.closeQuietly(dataScanner);
+        HBaseOperations.performDelete(hTable, batchDeleteList);
     }
 
     @Override
@@ -206,6 +202,12 @@ public class HBaseTable implements Table {
         return getTSRow(uuid).getSecond();
     }
 
+    /**
+     * Get row with UUID and return a pair of the returned row, and the timestamp
+     * of the cell.
+     * @param uuid
+     * @return
+     */
     private Pair<Long, Row> getTSRow(UUID uuid) {
         DataRow dataRow = new DataRow(tableId, uuid);
         Get get = new Get(dataRow.encode());
