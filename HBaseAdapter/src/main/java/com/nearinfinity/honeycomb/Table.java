@@ -1,11 +1,11 @@
 package com.nearinfinity.honeycomb;
 
-import java.io.Closeable;
-import java.util.UUID;
-
 import com.nearinfinity.honeycomb.mysql.IndexKey;
 import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
+
+import java.io.Closeable;
+import java.util.UUID;
 
 /**
  * A Table handles operations for a single MySQL table.  It must support "insertRow",

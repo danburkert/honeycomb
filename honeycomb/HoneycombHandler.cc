@@ -35,7 +35,6 @@ HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_share,
 HoneycombHandler::~HoneycombHandler()
 {
   attach_thread(this->jvm, &(this->env), "HoneycombHandler::~HoneycombHandler");
-  this->flush();
   env->DeleteGlobalRef(handler_proxy);
   detach_thread(this->jvm);
 }

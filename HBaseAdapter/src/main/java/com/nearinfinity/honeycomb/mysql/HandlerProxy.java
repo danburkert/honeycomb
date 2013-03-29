@@ -1,12 +1,5 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-import static java.lang.String.format;
-
-import java.nio.ByteBuffer;
-
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
@@ -14,8 +7,15 @@ import com.nearinfinity.honeycomb.exceptions.TableNotFoundException;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import org.apache.log4j.Logger;
+
+import java.nio.ByteBuffer;
+
+import static com.google.common.base.Preconditions.*;
+import static java.lang.String.format;
 
 public class HandlerProxy {
+    private static final Logger logger = Logger.getLogger(HandlerProxy.class);
     private final StoreFactory storeFactory;
     private Store store;
     private Table table;

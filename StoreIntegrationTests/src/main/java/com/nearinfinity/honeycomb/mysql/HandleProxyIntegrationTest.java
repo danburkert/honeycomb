@@ -1,21 +1,15 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import static org.fest.assertions.Assertions.assertThat;
-
-import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.nearinfinity.honeycomb.config.Constants;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
-import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
-import com.nearinfinity.honeycomb.mysql.gen.QueryType;
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import com.nearinfinity.honeycomb.mysql.gen.*;
+
+import java.nio.ByteBuffer;
+import java.util.*;
+
+import static org.fest.assertions.Assertions.assertThat;
 
 public class HandleProxyIntegrationTest {
     public static final String COLUMN1 = "c1";
@@ -394,6 +388,64 @@ public class HandleProxyIntegrationTest {
         });
     }
 
+    public static void testUpdateNullRows() {
+        HashMap<String, ColumnSchema> columns = new HashMap<String, ColumnSchema>();
+        HashMap<String, IndexSchema> indices = new HashMap<String, IndexSchema>();
+        columns.put(COLUMN1, new ColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
+        TableSchema schema = new TableSchema(columns, indices);
+        HandlerProxy proxy = factory.createHandlerProxy();
+
+        String tableName = "t1";
+        String columnName = "c1";
+        String tableSpace = "hbase";
+
+        int iterations = 10;
+
+        try {
+            proxy.dropTable(tableName, tableSpace);
+        } catch (Exception e) {}
+
+        proxy.createTable(tableName, tableSpace, Util.serializeTableSchema(schema), 0);
+        proxy.openTable(tableName, tableSpace);
+        Row row = new Row(Maps.<String, ByteBuffer>newHashMap(), Constants.ZERO_UUID);
+
+        List<Row> rows = new ArrayList<Row>();
+
+        for (int j = 0; j < 20; j++) {
+            if(j % 10 == 0) { System.out.println("iteration " + j); }
+
+            for (int i = 0; i < iterations; i++) {
+                proxy.insertRow(row.serialize());
+            }
+
+            proxy.startTableScan();
+            for (int i = 0; i < iterations; i++) {
+                Row deserialized = Row.deserialize(proxy.getNextRow());
+                deserialized.getRecords().put(columnName, encodeValue(0));
+                rows.add(deserialized);
+            }
+            proxy.endScan();
+
+            for (Row r : rows) {
+                proxy.updateRow(r.serialize());
+            }
+
+            rows.clear();
+
+            proxy.startTableScan();
+            for (int i = 0; i < iterations; i++) {
+                byte[] bytes = proxy.getNextRow();
+                assertThat(bytes).isNotNull();
+                assertThat(Row.deserialize(bytes).getRecords().get(columnName)).isEqualTo(encodeValue(0));
+            }
+            proxy.endScan();
+            proxy.truncateTable();
+        }
+
+        proxy.closeTable();
+        proxy.dropTable(tableName, tableSpace);
+    }
+
     public static void main(String[] args) {
         try {
             suiteSetup();
@@ -419,6 +471,7 @@ public class HandleProxyIntegrationTest {
             testAfterKeyWithNullScan();
             testFullTableScan();
             testGetRow();
+            testUpdateNullRows();
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(1);

@@ -1,22 +1,5 @@
 package com.nearinfinity.honeycomb.hbase;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.nio.ByteBuffer;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.log4j.Logger;
-
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -36,11 +19,18 @@ import com.nearinfinity.honeycomb.mysql.IndexKey;
 import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.Verify;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
-import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
-import com.nearinfinity.honeycomb.mysql.gen.QueryType;
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import com.nearinfinity.honeycomb.mysql.gen.*;
+import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.Pair;
+import org.apache.log4j.Logger;
+
+import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class HBaseTable implements Table {
     private static final Logger logger = Logger.getLogger(HBaseTable.class);
@@ -125,8 +115,8 @@ public class HBaseTable implements Table {
                 doToIndices(row, tableIndices, new IndexAction() {
                     @Override
                     public void execute(IndexRowBuilder builder) {
-                        deleteList.add(createEmptyQualifierDelete(builder.withSortOrder(SortOrder.Ascending).build()));
-                        deleteList.add(createEmptyQualifierDelete(builder.withSortOrder(SortOrder.Descending).build()));
+                        deleteList.add(createDelete(builder.withSortOrder(SortOrder.Ascending).build()));
+                        deleteList.add(createDelete(builder.withSortOrder(SortOrder.Descending).build()));
                     }
                 });
 
@@ -147,6 +137,7 @@ public class HBaseTable implements Table {
     @Override
     public void update(Row row) {
         checkNotNull(row);
+
         delete(row.getUUID());
         insert(row);
     }
@@ -154,17 +145,25 @@ public class HBaseTable implements Table {
     @Override
     public void delete(final UUID uuid) {
         checkNotNull(uuid);
-        Row row = get(uuid);
+        Pair<Long, Row> tsRow = getTSRow(uuid);
+        final long ts = tsRow.getFirst();
+        Row row = tsRow.getSecond();
         final List<Delete> deleteList = Lists.newLinkedList();
-        deleteList.add(new Delete(new DataRow(tableId, uuid).encode()));
+        Delete dataDelete = new Delete(new DataRow(tableId, uuid).encode());
+        dataDelete.setTimestamp(ts);
+        deleteList.add(dataDelete);
+
         doToIndices(row, getTableIndices(tableId), new IndexAction() {
             @Override
             public void execute(IndexRowBuilder builder) {
-                deleteList.add(createEmptyQualifierDelete(builder.withSortOrder(SortOrder.Descending).build()));
-                deleteList.add(createEmptyQualifierDelete(builder.withSortOrder(SortOrder.Ascending).build()));
+                Delete ascDelete = createDelete(builder.withSortOrder(SortOrder.Descending).build());
+                Delete descDelete = createDelete(builder.withSortOrder(SortOrder.Ascending).build());
+                ascDelete.setTimestamp(ts);
+                descDelete.setTimestamp(ts);
+                deleteList.add(ascDelete);
+                deleteList.add(descDelete);
             }
         });
-
         HBaseOperations.performDelete(hTable, deleteList);
     }
 
@@ -181,8 +180,8 @@ public class HBaseTable implements Table {
             doToIndices(row, getTableIndices(tableId), new IndexAction() {
                 @Override
                 public void execute(IndexRowBuilder builder) {
-                    deleteList.add(createEmptyQualifierDelete(builder.withSortOrder(SortOrder.Ascending).build()));
-                    deleteList.add(createEmptyQualifierDelete(builder.withSortOrder(SortOrder.Descending).build()));
+                    deleteList.add(createDelete(builder.withSortOrder(SortOrder.Ascending).build()));
+                    deleteList.add(createDelete(builder.withSortOrder(SortOrder.Descending).build()));
                 }
             });
 
@@ -204,6 +203,10 @@ public class HBaseTable implements Table {
 
     @Override
     public Row get(UUID uuid) {
+        return getTSRow(uuid).getSecond();
+    }
+
+    private Pair<Long, Row> getTSRow(UUID uuid) {
         DataRow dataRow = new DataRow(tableId, uuid);
         Get get = new Get(dataRow.encode());
         Result result = HBaseOperations.performGet(hTable, get);
@@ -211,7 +214,16 @@ public class HBaseTable implements Table {
             throw new RowNotFoundException(uuid);
         }
 
-        return Row.deserialize(result.getValue(Constants.DEFAULT_COLUMN_FAMILY, new byte[0]));
+        Pair<Long, Row> pair = new Pair<Long, Row>();
+
+        Map.Entry<Long, byte[]> latestRowResult = result.getMap()
+                .get(Constants.DEFAULT_COLUMN_FAMILY)
+                .get(new byte[0])
+                .lastEntry();
+
+        pair.setFirst(latestRowResult.getKey());
+        pair.setSecond(Row.deserialize(latestRowResult.getValue()));
+        return pair;
     }
 
     @Override
@@ -319,7 +331,7 @@ public class HBaseTable implements Table {
         return new Put(row.encode()).add(Constants.DEFAULT_COLUMN_FAMILY, new byte[0], serializedRow);
     }
 
-    private static Delete createEmptyQualifierDelete(RowKey row) {
+    private static Delete createDelete(RowKey row) {
         return new Delete(row.encode());
     }
 

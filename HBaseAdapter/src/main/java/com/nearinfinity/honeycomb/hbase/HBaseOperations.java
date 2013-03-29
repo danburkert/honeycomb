@@ -28,7 +28,6 @@ public class HBaseOperations {
         } catch (IOException e) {
             String msg = String.format("HBase table put failed for put %s", put.toString());
             throw createException(msg, e, hTable);
-
         }
     }
 

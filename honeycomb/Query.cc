@@ -197,7 +197,7 @@ int HoneycombHandler::retrieve_value_from_index(uchar* buf)
 int HoneycombHandler::get_next_row(uchar* buf)
 {
   JavaFrame frame(env, 1);
-  jbyteArray row_bytes = static_cast<jbyteArray>(this->env->CallObjectMethod(handler_proxy, 
+  jbyteArray row_bytes = static_cast<jbyteArray>(this->env->CallObjectMethod(handler_proxy,
         cache->handler_proxy().get_next_row));
   int rc = check_exceptions(env, cache, "HoneycombHandler::get_next_row");
   if (rc != 0)

@@ -6,6 +6,7 @@ import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -114,5 +115,17 @@ public class Row {
         }
 
         return true;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("UUID: %s\n", getUUID().toString()));
+        for (Map.Entry<String, ByteBuffer> entry : getRecords().entrySet()) {
+            sb.append(entry.getKey());
+            sb.append(": ");
+            sb.append(Bytes.toStringBinary(entry.getValue()));
+        }
+        return sb.toString();
     }
 }
