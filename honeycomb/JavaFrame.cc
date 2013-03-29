@@ -2,10 +2,19 @@
 #include "Logging.h"
 #include "Macros.h"
 
+/**
+ * Create JNI Stack Frame.  If enough memory is not able to be allocated, log
+ * errors and abort.
+ */
 JavaFrame::JavaFrame(JNIEnv* env, int capacity) : env(env)
 {
-  int result = env->PushLocalFrame(capacity);
-  CHECK_JNI_ABORT(result, "JavaFrame: Out of memory exception thrown in PushLocalFrame");
+  if (env->PushLocalFrame(capacity))
+  {
+    const char* msg = "Unable to push local frame.  Out of memory. Aborting.";
+    perror(msg);
+    Logging::fatal(msg);
+    abort();
+  }
 }
 
 JavaFrame::~JavaFrame()

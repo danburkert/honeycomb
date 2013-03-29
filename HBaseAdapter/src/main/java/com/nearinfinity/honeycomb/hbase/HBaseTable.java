@@ -23,15 +23,15 @@ import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.name.Named;
-import com.nearinfinity.honeycomb.RowNotFoundException;
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.config.ConfigConstants;
+import com.nearinfinity.honeycomb.config.Constants;
+import com.nearinfinity.honeycomb.exceptions.RowNotFoundException;
 import com.nearinfinity.honeycomb.hbase.rowkey.DataRow;
 import com.nearinfinity.honeycomb.hbase.rowkey.IndexRow;
 import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowBuilder;
 import com.nearinfinity.honeycomb.hbase.rowkey.SortOrder;
-import com.nearinfinity.honeycomb.hbaseclient.Constants;
 import com.nearinfinity.honeycomb.mysql.IndexKey;
 import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.mysql.Util;
@@ -80,7 +80,7 @@ public class HBaseTable implements Table {
     }
 
     @Override
-    public void insertTableIndex(String indexName, IndexSchema indexSchema) {
+    public void insertTableIndex(final String indexName, final IndexSchema indexSchema) {
         Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
         checkNotNull(indexSchema, "The index schema is invalid");
 
@@ -104,6 +104,44 @@ public class HBaseTable implements Table {
         }
 
         Util.closeQuietly(dataRows);
+    }
+
+    @Override
+    public void deleteTableIndex(final String indexName) {
+        Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
+
+        long totalDeleteSize = 0;
+        final List<Delete> deleteList = Lists.newLinkedList();
+        Map<String, IndexSchema> tableIndices = getTableIndices(tableId);
+
+        // If the table indices are available, get the required index schema details and drop the index
+        if( tableIndices != null && !tableIndices.isEmpty() ) {
+            tableIndices = ImmutableMap.<String, IndexSchema>of(indexName, tableIndices.get(indexName));
+            final Scanner rows = tableScan();
+
+            while (rows.hasNext()) {
+                final Row row = rows.next();
+
+                doToIndices(row, tableIndices, new IndexAction() {
+                    @Override
+                    public void execute(IndexRowBuilder builder) {
+                        deleteList.add(createEmptyQualifierDelete(builder.withSortOrder(SortOrder.Ascending).build()));
+                        deleteList.add(createEmptyQualifierDelete(builder.withSortOrder(SortOrder.Descending).build()));
+                    }
+                });
+
+                //TODO: Minimize the duplication of batch write logic between other methods
+                totalDeleteSize += deleteList.size() * row.serialize().length;
+                if (totalDeleteSize > writeBufferSize) {
+                    HBaseOperations.performDelete(hTable, deleteList);
+                    totalDeleteSize = 0;
+                }
+            }
+
+            Util.closeQuietly(rows);
+        }
+
+        HBaseOperations.performDelete(hTable, deleteList);
     }
 
     @Override
@@ -173,7 +211,7 @@ public class HBaseTable implements Table {
             throw new RowNotFoundException(uuid);
         }
 
-        return Row.deserialize(result.getValue(Constants.NIC, new byte[0]));
+        return Row.deserialize(result.getValue(Constants.DEFAULT_COLUMN_FAMILY, new byte[0]));
     }
 
     @Override
@@ -278,7 +316,7 @@ public class HBaseTable implements Table {
     }
 
     private static Put createEmptyQualifierPut(RowKey row, byte[] serializedRow) {
-        return new Put(row.encode()).add(Constants.NIC, new byte[0], serializedRow);
+        return new Put(row.encode()).add(Constants.DEFAULT_COLUMN_FAMILY, new byte[0], serializedRow);
     }
 
     private static Delete createEmptyQualifierDelete(RowKey row) {

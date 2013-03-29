@@ -1,7 +1,7 @@
 package com.nearinfinity.honeycomb.hbase;
 
 import com.nearinfinity.honeycomb.MockHTable;
-import com.nearinfinity.honeycomb.TableNotFoundException;
+import com.nearinfinity.honeycomb.exceptions.TableNotFoundException;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import com.nearinfinity.honeycomb.mysql.generators.ColumnSchemaGenerator;

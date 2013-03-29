@@ -10,7 +10,7 @@ import java.util.UUID;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.nearinfinity.honeycomb.hbaseclient.Constants;
+import com.nearinfinity.honeycomb.config.Constants;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
@@ -96,11 +96,29 @@ public class HandleProxyIntegrationTest {
         });
     }
 
-    public static void testSuccessfulIndexDrop() {
+    public static void testDropIndex() {
         testProxy("Testing drop index", new Action() {
             @Override
             public void execute(HandlerProxy proxy) {
+                final int rows = 1;
+                final int keyValue = 7;
+                final IndexKey key = createKey(keyValue, QueryType.EXACT_KEY);
+
+                // Add data rows to index
+                insertData(proxy, rows, keyValue);
+
+                // Verify that we can get a row from the index scan
+                proxy.startIndexScan(key.serialize());
+                assertThat(proxy.getNextRow()).isNotNull();
+                proxy.endScan();
+
+                // Drop the index from the table
                 proxy.dropIndex(INDEX1);
+
+                // Verify that the scan doesn't return a row now
+                proxy.startIndexScan(key.serialize());
+                assertThat(proxy.getNextRow()).isNull();
+                proxy.endScan();
             }
         });
     }
@@ -382,7 +400,7 @@ public class HandleProxyIntegrationTest {
             testSuccessfulRename();
             testAddIndex();
             testAddCompoundIndex();
-            testSuccessfulIndexDrop();
+            testDropIndex();
             testGetAutoIncrement();
             testIncrementAutoIncrement();
             testTruncateAutoInc();

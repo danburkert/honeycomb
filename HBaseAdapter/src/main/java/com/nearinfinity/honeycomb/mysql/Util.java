@@ -2,7 +2,7 @@ package com.nearinfinity.honeycomb.mysql;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import com.nearinfinity.honeycomb.RuntimeIOException;
+import com.nearinfinity.honeycomb.exceptions.RuntimeIOException;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;

@@ -1,4 +1,4 @@
-package com.nearinfinity.honeycomb;
+package com.nearinfinity.honeycomb.exceptions;
 
 import java.util.UUID;
 

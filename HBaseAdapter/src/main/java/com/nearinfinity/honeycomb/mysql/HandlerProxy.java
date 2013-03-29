@@ -10,7 +10,7 @@ import java.nio.ByteBuffer;
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
-import com.nearinfinity.honeycomb.TableNotFoundException;
+import com.nearinfinity.honeycomb.exceptions.TableNotFoundException;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
@@ -175,8 +175,8 @@ public class HandlerProxy {
 
         IndexSchema schema = Util.deserializeIndexSchema(serializedSchema);
         checkArgument(!schema.getIsUnique(), "Honeycomb does not support adding unique indices without a table rebuild.");
-        store.addIndex(tableName, indexName, schema);
 
+        store.addIndex(tableName, indexName, schema);
         table.insertTableIndex(indexName, schema);
     }
 
@@ -185,6 +185,7 @@ public class HandlerProxy {
         checkTableOpen();
 
         store.dropIndex(tableName, indexName);
+        table.deleteTableIndex(indexName);
     }
 
     /**

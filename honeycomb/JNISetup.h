@@ -4,7 +4,7 @@
 
 
 jobject initialize_jvm(JavaVM** jvm);
-jint attach_thread(JavaVM *jvm, JNIEnv** env);
+void attach_thread(JavaVM *jvm, JNIEnv** env, const char* location = "unknown");
 jint detach_thread(JavaVM *jvm);
 
 #endif

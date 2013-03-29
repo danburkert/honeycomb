@@ -1,7 +1,5 @@
 package com.nearinfinity.honeycomb.config;
 
-import com.nearinfinity.honeycomb.hbaseclient.Constants;
-
 /**
  * Stores the configuration constants represented by {@link ConfigurationHolder}
  *
@@ -11,7 +9,6 @@ public final class ConfigConstants {
     private ConfigConstants() {
         throw new AssertionError();
     }
-
 
     public static final String PROP_AUTO_FLUSH_CHANGES = Constants.HBASE_TABLESPACE + ".flushChangesImmediately";
     public static final boolean DEFAULT_AUTO_FLUSH_CHANGES = false;

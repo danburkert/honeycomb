@@ -5,7 +5,6 @@ import org.apache.hadoop.hbase.client.HTablePool;
 
 import com.google.inject.Provider;
 import com.nearinfinity.honeycomb.config.ConfigurationHolder;
-import com.nearinfinity.honeycomb.mysqlengine.HTableFactory;
 
 public class HTableProvider implements Provider<HTableInterface> {
 
@@ -19,7 +18,8 @@ public class HTableProvider implements Provider<HTableInterface> {
         boolean autoFlush = configuration.getStorageAutoFlushChanges();
 
         tableName = hTableName;
-        tablePool = new HTablePool(configuration.getConfiguration(), poolSize, new HTableFactory(writeBufferSize, autoFlush));
+        tablePool = new HTablePool(configuration.getConfiguration(), poolSize,
+                new HTableFactory(writeBufferSize, autoFlush));
     }
 
     @Override
