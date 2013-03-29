@@ -23,7 +23,6 @@ import com.nearinfinity.honeycomb.mysql.Verify;
 import com.nearinfinity.honeycomb.mysql.gen.*;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.hbase.util.Pair;
 import org.apache.log4j.Logger;
 
 import java.nio.ByteBuffer;
@@ -75,7 +74,7 @@ public class HBaseTable implements Table {
         Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
         checkNotNull(indexSchema, "The index schema is invalid");
 
-        final Map<String, IndexSchema> indexDetails = ImmutableMap.<String, IndexSchema>of(indexName, indexSchema);
+        final Map<String, IndexSchema> indexDetails = ImmutableMap.of(indexName, indexSchema);
 
         final Scanner dataRows = tableScan();
 
@@ -108,26 +107,31 @@ public class HBaseTable implements Table {
     }
 
     @Override
-    public void update(Row row) {
+    public void update(Row row, Map<String, IndexSchema> changedIndices) {
         checkNotNull(row);
 
-        delete(row.getUUID());
+        // Delete indices that have changed
+        final List<Delete> deleteList = Lists.newLinkedList();
+        doToIndices(row, changedIndices, new IndexAction() {
+            @Override
+            public void execute(IndexRowBuilder builder) {
+                Delete ascDelete = createDelete(builder.withSortOrder(SortOrder.Descending).build());
+                Delete descDelete = createDelete(builder.withSortOrder(SortOrder.Ascending).build());
+                deleteList.add(ascDelete);
+                deleteList.add(descDelete);
+            }
+        });
+        HBaseOperations.performDelete(hTable, deleteList);
+
         insert(row);
     }
 
     @Override
     public void delete(final UUID uuid) {
         checkNotNull(uuid);
-        // We need the timestamp in order to limit the delete to the current
-        // version of the (HBase) row.  There is a race condition in HBase when
-        // delete and put are called in succession to the same row. See HBASE-2256.
-        // We hit this during update when delete() and insert() are called consecutively.
-        Pair<Long, Row> tsRow = getTSRow(uuid);
-        final long ts = tsRow.getFirst();
-        Row row = tsRow.getSecond();
+        Row row = get(uuid);
         final List<Delete> deleteList = Lists.newLinkedList();
         Delete dataDelete = new Delete(new DataRow(tableId, uuid).encode());
-        dataDelete.setTimestamp(ts);
         deleteList.add(dataDelete);
 
         doToIndices(row, getTableIndices(tableId), new IndexAction() {
@@ -135,8 +139,6 @@ public class HBaseTable implements Table {
             public void execute(IndexRowBuilder builder) {
                 Delete ascDelete = createDelete(builder.withSortOrder(SortOrder.Descending).build());
                 Delete descDelete = createDelete(builder.withSortOrder(SortOrder.Ascending).build());
-                ascDelete.setTimestamp(ts);
-                descDelete.setTimestamp(ts);
                 deleteList.add(ascDelete);
                 deleteList.add(descDelete);
             }
@@ -200,33 +202,14 @@ public class HBaseTable implements Table {
 
     @Override
     public Row get(UUID uuid) {
-        return getTSRow(uuid).getSecond();
-    }
-
-    /**
-     * Get row with UUID and return a pair of the returned row, and the timestamp
-     * of the cell.
-     * @param uuid
-     * @return
-     */
-    private Pair<Long, Row> getTSRow(UUID uuid) {
         DataRow dataRow = new DataRow(tableId, uuid);
         Get get = new Get(dataRow.encode());
         Result result = HBaseOperations.performGet(hTable, get);
         if (result.isEmpty()) {
             throw new RowNotFoundException(uuid);
         }
-
-        Pair<Long, Row> pair = new Pair<Long, Row>();
-
-        Map.Entry<Long, byte[]> latestRowResult = result.getMap()
-                .get(Constants.DEFAULT_COLUMN_FAMILY)
-                .get(new byte[0])
-                .lastEntry();
-
-        pair.setFirst(latestRowResult.getKey());
-        pair.setSecond(Row.deserialize(latestRowResult.getValue()));
-        return pair;
+        return Row.deserialize(result.getValue(Constants.DEFAULT_COLUMN_FAMILY,
+                new byte[0]));
     }
 
     @Override
