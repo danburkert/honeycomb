@@ -1,6 +1,5 @@
 package com.nearinfinity.honeycomb.hbase.rowkey;
 
-import com.nearinfinity.honeycomb.hbase.RowKey;
 import com.nearinfinity.honeycomb.hbase.VarEncoder;
 import com.nearinfinity.honeycomb.mysql.Util;
 

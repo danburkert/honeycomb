@@ -1,6 +1,5 @@
 package com.nearinfinity.honeycomb.hbase.rowkey;
 
-import com.nearinfinity.honeycomb.hbase.RowKey;
 
 public abstract class PrefixRow implements RowKey {
     private final byte[] rowKey;

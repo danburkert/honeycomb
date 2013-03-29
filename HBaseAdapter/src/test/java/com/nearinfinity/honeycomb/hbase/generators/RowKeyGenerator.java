@@ -1,7 +1,6 @@
 package com.nearinfinity.honeycomb.hbase.generators;
 
 import com.google.common.collect.Maps;
-import com.nearinfinity.honeycomb.hbase.RowKey;
 import com.nearinfinity.honeycomb.hbase.rowkey.*;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.mysql.generators.ByteBufferGenerator;

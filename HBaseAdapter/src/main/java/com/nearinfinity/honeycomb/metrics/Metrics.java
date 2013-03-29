@@ -1,4 +1,4 @@
-package com.nearinfinity.honeycomb.config;
+package com.nearinfinity.honeycomb.metrics;
 
 import org.apache.log4j.Logger;
 
