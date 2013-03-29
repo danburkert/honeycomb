@@ -113,38 +113,7 @@ public class HBaseTable implements Table {
         Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
         checkNotNull(indexSchema, "The index schema is invalid");
 
-        long totalDeleteSize = 0;
-        final List<Delete> deleteList = Lists.newLinkedList();
-        final List<Delete> batchDeleteList = Lists.newLinkedList();
-        final Map<String, IndexSchema> indexDetails = ImmutableMap.<String, IndexSchema>of(indexName, indexSchema);
-
-        final Scanner rows = tableScan();
-
-        while (rows.hasNext()) {
-            final Row row = rows.next();
-
-            doToIndices(row, indexDetails, new IndexAction() {
-                @Override
-                public void execute(IndexRowBuilder builder) {
-                    deleteList.add(createEmptyQualifierDelete(builder.withSortOrder(SortOrder.Ascending).build()));
-                    deleteList.add(createEmptyQualifierDelete(builder.withSortOrder(SortOrder.Descending).build()));
-                }
-            });
-
-            batchDeleteList.addAll(deleteList);
-
-            //TODO: Minimize the duplication of batch write logic between other methods
-            totalDeleteSize += deleteList.size() * row.serialize().length;
-            if (totalDeleteSize > writeBufferSize) {
-                HBaseOperations.performDelete(hTable, batchDeleteList);
-                totalDeleteSize = 0;
-            }
-
-            deleteList.clear();
-        }
-
-        Util.closeQuietly(rows);
-        HBaseOperations.performDelete(hTable, deleteList);
+        batchDeleteData(tableScan(), ImmutableMap.<String, IndexSchema>of(indexName, indexSchema), false);
     }
 
     @Override
@@ -173,17 +142,31 @@ public class HBaseTable implements Table {
 
     @Override
     public void deleteAllRows() {
+        batchDeleteData(tableScan(), getTableIndices(tableId), true);
+    }
+
+
+    /**
+     * Perform a batch delete operation over the rows obtained from the specified data scanner
+     *
+     * @param dataScanner The {@link Scanner} used to gather rows
+     * @param indices The table index mapping to use during this operation
+     * @param deleteRow Indicate that each row obtained from the data scanner should be deleted
+     */
+    private void batchDeleteData(final Scanner dataScanner, final Map<String, IndexSchema> indices, boolean deleteRow) {
         long totalDeleteSize = 0;
         final List<Delete> deleteList = Lists.newLinkedList();
         final List<Delete> batchDeleteList = Lists.newLinkedList();
-        final Map<String, IndexSchema> tableIndices = getTableIndices(tableId);
-        final Scanner rows = tableScan();
 
-        while (rows.hasNext()) {
-            final Row row = rows.next();
-            final UUID uuid = row.getUUID();
-            deleteList.add(new Delete(new DataRow(tableId, uuid).encode()));
-            doToIndices(row, tableIndices, new IndexAction() {
+        while (dataScanner.hasNext()) {
+            final Row row = dataScanner.next();
+
+            if( deleteRow ) {
+                final UUID uuid = row.getUUID();
+                deleteList.add(new Delete(new DataRow(tableId, uuid).encode()));
+            }
+
+            doToIndices(row, indices, new IndexAction() {
                 @Override
                 public void execute(IndexRowBuilder builder) {
                     deleteList.add(createEmptyQualifierDelete(builder.withSortOrder(SortOrder.Ascending).build()));
@@ -202,8 +185,8 @@ public class HBaseTable implements Table {
             deleteList.clear();
         }
 
-        Util.closeQuietly(rows);
-        HBaseOperations.performDelete(hTable, deleteList);
+        Util.closeQuietly(dataScanner);
+        HBaseOperations.performDelete(hTable, batchDeleteList);
     }
 
     @Override
