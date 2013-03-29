@@ -2,6 +2,7 @@ package com.nearinfinity.honeycomb.hbase.rowkey;
 
 import java.util.UUID;
 
+import com.google.common.base.Objects;
 import com.nearinfinity.honeycomb.hbase.VarEncoder;
 import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.Verify;
@@ -28,6 +29,7 @@ public class DataRow implements RowKey {
                     VarEncoder.encodeULong(tableId),
                     Util.UUIDToBytes(uuid));
         }
+
         return  VarEncoder.appendByteArraysWithPrefix(PREFIX,
                 VarEncoder.encodeULong(tableId));
     }
@@ -47,13 +49,10 @@ public class DataRow implements RowKey {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder("[");
-        sb.append(String.format("%02X", PREFIX));
-        sb.append("\t");
-        sb.append(tableId);
-        sb.append("\t");
-        sb.append(uuid == null ? "" : Util.generateHexString(Util.UUIDToBytes(uuid)));
-        sb.append("]");
-        return sb.toString();
+        return Objects.toStringHelper(this.getClass())
+            .add("Prefix", String.format("%02X", PREFIX))
+            .add("TableId", tableId)
+            .add("UUID", uuid == null ? "" : Util.generateHexString(Util.UUIDToBytes(uuid)))
+            .toString();
     }
 }
