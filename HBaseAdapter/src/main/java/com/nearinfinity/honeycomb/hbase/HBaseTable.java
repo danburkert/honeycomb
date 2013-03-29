@@ -129,20 +129,24 @@ public class HBaseTable implements Table {
     @Override
     public void delete(final UUID uuid) {
         checkNotNull(uuid);
-        Row row = get(uuid);
         final List<Delete> deleteList = Lists.newLinkedList();
         Delete dataDelete = new Delete(new DataRow(tableId, uuid).encode());
         deleteList.add(dataDelete);
 
-        doToIndices(row, getTableIndices(tableId), new IndexAction() {
-            @Override
-            public void execute(IndexRowBuilder builder) {
-                Delete ascDelete = createDelete(builder.withSortOrder(SortOrder.Descending).build());
-                Delete descDelete = createDelete(builder.withSortOrder(SortOrder.Ascending).build());
-                deleteList.add(ascDelete);
-                deleteList.add(descDelete);
-            }
-        });
+        Map<String, IndexSchema> indices = getTableIndices(tableId);
+        if (!indices.isEmpty()) {
+            Row row = get(uuid);
+            doToIndices(row, getTableIndices(tableId), new IndexAction() {
+                @Override
+                public void execute(IndexRowBuilder builder) {
+                    Delete ascDelete = createDelete(builder.withSortOrder(SortOrder.Descending).build());
+                    Delete descDelete = createDelete(builder.withSortOrder(SortOrder.Ascending).build());
+                    deleteList.add(ascDelete);
+                    deleteList.add(descDelete);
+                }
+            });
+        }
+
         HBaseOperations.performDelete(hTable, deleteList);
     }
 
