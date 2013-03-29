@@ -1,15 +1,17 @@
 package com.nearinfinity.honeycomb.mysql;
 
+import com.google.common.collect.*;
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
-import com.nearinfinity.honeycomb.exceptions.TableNotFoundException;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import org.apache.log4j.Logger;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
+import java.util.Set;
 
 import static com.google.common.base.Preconditions.*;
 import static java.lang.String.format;
@@ -59,11 +61,7 @@ public class HandlerProxy {
         Verify.isNotNullOrEmpty(tableName);
         Store store = storeFactory.createStore(tableSpace);
         Table table;
-        try {
-            table = store.openTable(tableName);
-        } catch (TableNotFoundException ignored) {
-            return;
-        }
+        table = store.openTable(tableName);
 
         table.deleteAllRows();
         Util.closeQuietly(table);
@@ -267,7 +265,27 @@ public class HandlerProxy {
         checkTableOpen();
         checkNotNull(rowBytes);
         Row updatedRow = Row.deserialize(rowBytes);
-        table.update(updatedRow);
+        TableSchema schema = store.getSchema(tableName);
+        if (schema.getIndices().isEmpty()) {
+            table.update(updatedRow, ImmutableMap.<String, IndexSchema>of());
+        }
+
+        Row oldRow = table.get(updatedRow.getUUID());
+
+        MapDifference<String, ByteBuffer> diff = Maps.difference(oldRow.getRecords(),
+                updatedRow.getRecords());
+        Set<String> changedColumns = diff.entriesDiffering().keySet();
+
+        ImmutableMap.Builder<String, IndexSchema> changedIndices = ImmutableMap.builder();
+
+        for (Map.Entry<String, IndexSchema> index : schema.getIndices().entrySet()) {
+            Set<String> indexColumns = ImmutableSet.copyOf(index.getValue().getColumns());
+            if (!Sets.intersection(changedColumns, indexColumns).isEmpty()) {
+                changedIndices.put(index);
+            }
+        }
+
+        table.update(updatedRow, changedIndices.build());
     }
 
     /**

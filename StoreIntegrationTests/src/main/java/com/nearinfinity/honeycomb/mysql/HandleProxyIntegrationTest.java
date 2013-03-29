@@ -400,6 +400,7 @@ public class HandleProxyIntegrationTest {
     }
 
     public static void testUpdateNullRows() {
+        System.out.println("Testing test update null rows");
         HashMap<String, ColumnSchema> columns = new HashMap<String, ColumnSchema>();
         HashMap<String, IndexSchema> indices = new HashMap<String, IndexSchema>();
         columns.put(COLUMN1, new ColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
@@ -422,8 +423,8 @@ public class HandleProxyIntegrationTest {
 
         List<Row> rows = new ArrayList<Row>();
 
-        for (int j = 0; j < 20; j++) {
-            if(j % 10 == 0) { System.out.println("iteration " + j); }
+        for (int j = 0; j < 50; j++) {
+//            if(j % 10 == 0) { System.out.println("iteration " + j); }
 
             for (int i = 0; i < iterations; i++) {
                 proxy.insertRow(row.serialize());
@@ -449,6 +450,7 @@ public class HandleProxyIntegrationTest {
                 assertThat(bytes).isNotNull();
                 assertThat(Row.deserialize(bytes).getRecords().get(columnName)).isEqualTo(encodeValue(0));
             }
+            assertThat(proxy.getNextRow()).isNull();
             proxy.endScan();
             proxy.truncateTable();
         }

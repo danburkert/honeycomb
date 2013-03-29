@@ -12,7 +12,6 @@ import net.jcip.annotations.ThreadSafe;
 import org.apache.log4j.Logger;
 
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
 @Singleton
 @ThreadSafe
@@ -241,10 +240,9 @@ public class MetadataCache {
         try {
             return cache.get(key);
         }
-        catch (ExecutionException e) {
-            Throwable cause = e.getCause();
-            logger.error("Encountered unexpected exception during cache get:", cause);
-            throw new RuntimeException(cause);
+        catch (Exception e) {
+            logger.error("Encountered unexpected exception during cache get:", e.getCause());
+            throw (RuntimeException) e.getCause();
         }
     }
 }
