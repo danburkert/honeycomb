@@ -1,6 +1,7 @@
 package com.nearinfinity.honeycomb.mysql;
 
 import static org.fest.assertions.Assertions.assertThat;
+import static org.fest.assertions.Fail.fail;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -115,10 +116,13 @@ public class HandleProxyIntegrationTest {
                 // Drop the index from the table
                 proxy.dropIndex(INDEX1);
 
-                // Verify that the scan doesn't return a row now
-                proxy.startIndexScan(key.serialize());
-                assertThat(proxy.getNextRow()).isNull();
-                proxy.endScan();
+                // Verify that the scan is unable to execute
+                try {
+                    proxy.startIndexScan(key.serialize());
+                    fail("NullPointerException expected because the index name isn't in the cache anymore");
+                } catch (NullPointerException e) {
+                    assertThat(e);
+                }
             }
         });
     }

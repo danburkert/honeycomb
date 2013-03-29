@@ -107,40 +107,36 @@ public class HBaseTable implements Table {
     }
 
     @Override
-    public void deleteTableIndex(final String indexName) {
+    public void deleteTableIndex(final String indexName, final IndexSchema indexSchema) {
         Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
+        checkNotNull(indexSchema, "The index schema is invalid");
 
         long totalDeleteSize = 0;
         final List<Delete> deleteList = Lists.newLinkedList();
-        Map<String, IndexSchema> tableIndices = getTableIndices(tableId);
+        final Map<String, IndexSchema> indexDetails = ImmutableMap.<String, IndexSchema>of(indexName, indexSchema);
 
-        // If the table indices are available, get the required index schema details and drop the index
-        if( tableIndices != null && !tableIndices.isEmpty() ) {
-            tableIndices = ImmutableMap.<String, IndexSchema>of(indexName, tableIndices.get(indexName));
-            final Scanner rows = tableScan();
+        final Scanner rows = tableScan();
 
-            while (rows.hasNext()) {
-                final Row row = rows.next();
+        while (rows.hasNext()) {
+            final Row row = rows.next();
 
-                doToIndices(row, tableIndices, new IndexAction() {
-                    @Override
-                    public void execute(IndexRowBuilder builder) {
-                        deleteList.add(createEmptyQualifierDelete(builder.withSortOrder(SortOrder.Ascending).build()));
-                        deleteList.add(createEmptyQualifierDelete(builder.withSortOrder(SortOrder.Descending).build()));
-                    }
-                });
-
-                //TODO: Minimize the duplication of batch write logic between other methods
-                totalDeleteSize += deleteList.size() * row.serialize().length;
-                if (totalDeleteSize > writeBufferSize) {
-                    HBaseOperations.performDelete(hTable, deleteList);
-                    totalDeleteSize = 0;
+            doToIndices(row, indexDetails, new IndexAction() {
+                @Override
+                public void execute(IndexRowBuilder builder) {
+                    deleteList.add(createEmptyQualifierDelete(builder.withSortOrder(SortOrder.Ascending).build()));
+                    deleteList.add(createEmptyQualifierDelete(builder.withSortOrder(SortOrder.Descending).build()));
                 }
-            }
+            });
 
-            Util.closeQuietly(rows);
+            //TODO: Minimize the duplication of batch write logic between other methods
+            totalDeleteSize += deleteList.size() * row.serialize().length;
+            if (totalDeleteSize > writeBufferSize) {
+                HBaseOperations.performDelete(hTable, deleteList);
+                totalDeleteSize = 0;
+            }
         }
 
+        Util.closeQuietly(rows);
         HBaseOperations.performDelete(hTable, deleteList);
     }
 

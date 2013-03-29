@@ -48,8 +48,9 @@ public interface Table extends Closeable {
      * Deletes the index corresponding to the specified index name from the table
      *
      * @param indexName The identifying name of the index, not null or empty
+     * @param indexSchema The {@link IndexSchema} representing the index details, not null
      */
-    void deleteTableIndex(final String indexName);
+    void deleteTableIndex(final String indexName, final IndexSchema indexSchema);
 
     /**
      * Flush all inserts, updates, and deletes to the table.  IUD operations are

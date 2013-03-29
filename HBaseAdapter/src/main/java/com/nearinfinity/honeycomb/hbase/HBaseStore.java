@@ -84,6 +84,8 @@ public class HBaseStore implements Store {
         final long tableId = cache.tableCacheGet(tableName);
 
         metadata.deleteTableIndex(tableId, indexName);
+        cache.invalidateSchemaCache(tableId);
+        cache.invalidateIndicesCache(tableId);
     }
 
     @Override
