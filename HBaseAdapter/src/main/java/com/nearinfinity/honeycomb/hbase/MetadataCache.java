@@ -1,15 +1,5 @@
 package com.nearinfinity.honeycomb.hbase;
 
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
-import net.jcip.annotations.GuardedBy;
-import net.jcip.annotations.ThreadSafe;
-
-import org.apache.log4j.Logger;
-
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -18,21 +8,22 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.nearinfinity.honeycomb.mysql.Verify;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import net.jcip.annotations.ThreadSafe;
+import org.apache.log4j.Logger;
+
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 @Singleton
 @ThreadSafe
 public class MetadataCache {
     private static final Logger logger = Logger.getLogger(MetadataCache.class);
-    @GuardedBy("readWriteLock")
     private final LoadingCache<String, Long> tableCache;
-    @GuardedBy("readWriteLock")
     private final LoadingCache<Long, BiMap<String, Long>> columnsCache;
     private final LoadingCache<Long, Long> rowsCache;
     private final LoadingCache<Long, Long> autoIncCache;
-    @GuardedBy("readWriteLock")
     private final LoadingCache<Long, TableSchema> schemaCache;
     private final LoadingCache<Long, Map<String, Long>> indicesCache;
-    private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
     @Inject
     public MetadataCache(final HBaseMetadata metadata) {
@@ -103,12 +94,7 @@ public class MetadataCache {
      */
     public long tableCacheGet(final String tableName) {
         Verify.isNotNullOrEmpty(tableName);
-        readWriteLock.readLock().lock();
-        try {
-            return cacheGet(tableCache, tableName);
-        } finally {
-            readWriteLock.readLock().unlock();
-        }
+        return cacheGet(tableCache, tableName);
     }
 
     /**
@@ -119,12 +105,7 @@ public class MetadataCache {
      */
     public BiMap<String, Long> columnsCacheGet(final long tableId) {
         Verify.isValidTableId(tableId);
-        readWriteLock.readLock().lock();
-        try {
-            return cacheGet(columnsCache, tableId);
-        } finally {
-            readWriteLock.readLock().unlock();
-        }
+        return cacheGet(columnsCache, tableId);
     }
 
     /**
@@ -135,12 +116,7 @@ public class MetadataCache {
      */
     public TableSchema schemaCacheGet(final long tableId) {
         Verify.isValidTableId(tableId);
-        readWriteLock.readLock().lock();
-        try {
-            return cacheGet(schemaCache, tableId);
-        } finally {
-            readWriteLock.readLock().unlock();
-        }
+        return cacheGet(schemaCache, tableId);
     }
 
     /**
@@ -182,7 +158,7 @@ public class MetadataCache {
      * @param tableId Table ID
      * @param value   New row count
      */
-    public void updateRowCache(final long tableId, long value) {
+    public void updateRowsCache(final long tableId, long value) {
         Verify.isValidTableId(tableId);
         rowsCache.put(tableId, value);
     }
@@ -192,7 +168,7 @@ public class MetadataCache {
      *
      * @param tableId Table ID
      */
-    public void invalidateRowCache(long tableId) {
+    public void invalidateRowsCache(long tableId) {
         Verify.isValidTableId(tableId);
         rowsCache.invalidate(tableId);
     }
@@ -221,22 +197,23 @@ public class MetadataCache {
 
 
     /**
+     * Evict a table's columns cache.
+     *
+     * @param tableId Table ID
+     */
+    public void invalidateColumnsCache(long tableId) {
+        Verify.isValidTableId(tableId);
+        columnsCache.invalidate(tableId);
+    }
+
+    /**
      * Evict a table's metadata from the cache.
      *
      * @param tableName Table name
-     * @param tableId   Table ID
      */
-    public void invalidateCache(String tableName, long tableId) {
+    public void invalidateTableCache(String tableName) {
         Verify.isNotNullOrEmpty(tableName);
-        Verify.isValidTableId(tableId);
-        readWriteLock.writeLock().lock();
-        try {
-            tableCache.invalidate(tableName);
-            columnsCache.invalidate(tableId);
-            schemaCache.invalidate(tableId);
-        } finally {
-            readWriteLock.writeLock().unlock();
-        }
+        tableCache.invalidate(tableName);
     }
 
     /**
@@ -263,7 +240,8 @@ public class MetadataCache {
     private static <K, V> V cacheGet(LoadingCache<K, V> cache, K key) {
         try {
             return cache.get(key);
-        } catch (ExecutionException e) {
+        }
+        catch (ExecutionException e) {
             Throwable cause = e.getCause();
             logger.error("Encountered unexpected exception during cache get:", cause);
             throw new RuntimeException(cause);

@@ -1,13 +1,13 @@
 package com.nearinfinity.honeycomb.hbase;
 
-import java.util.Map;
-
 import com.google.common.collect.BiMap;
 import com.google.inject.Inject;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+
+import java.util.Map;
 
 public class HBaseStore implements Store {
     private final HBaseMetadata metadata;
@@ -56,7 +56,9 @@ public class HBaseStore implements Store {
     @Override
     public void deleteTable(String tableName) {
         long tableId = cache.tableCacheGet(tableName);
-        cache.invalidateCache(tableName, tableId);
+        cache.invalidateTableCache(tableName);
+        cache.invalidateColumnsCache(tableId);
+        cache.invalidateSchemaCache(tableId);
         metadata.deleteTable(tableName);
     }
 
@@ -77,7 +79,9 @@ public class HBaseStore implements Store {
     public void renameTable(String curTableName, String newTableName) {
         long tableId = cache.tableCacheGet(curTableName);
         metadata.renameExistingTable(curTableName, newTableName);
-        cache.invalidateCache(curTableName, tableId);
+        cache.invalidateTableCache(curTableName);
+        cache.invalidateColumnsCache(tableId);
+        cache.invalidateSchemaCache(tableId);
     }
 
     @Override
@@ -119,7 +123,7 @@ public class HBaseStore implements Store {
     public long incrementRowCount(String tableName, long amount) {
         long tableId = cache.tableCacheGet(tableName);
         long value = metadata.incrementRowCount(tableId, amount);
-        cache.updateRowCache(tableId, value);
+        cache.updateRowsCache(tableId, value);
         return value;
     }
 
@@ -127,6 +131,6 @@ public class HBaseStore implements Store {
     public void truncateRowCount(String tableName) {
         long tableId = cache.tableCacheGet(tableName);
         metadata.truncateRowCount(tableId);
-        cache.invalidateRowCache(tableId);
+        cache.invalidateRowsCache(tableId);
     }
 }
