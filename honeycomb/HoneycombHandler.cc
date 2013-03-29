@@ -30,13 +30,11 @@ HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_share,
   this->ref_length = 16;
   this->rows_written = 0;
   this->failed_key_index = 0;
-  this->curr_scan_id = -1;
-  this->curr_write_id = -1;
 }
 
 HoneycombHandler::~HoneycombHandler()
 {
-  attach_thread(this->jvm, &(this->env));
+  attach_thread(this->jvm, &(this->env), "HoneycombHandler::~HoneycombHandler");
   this->flush();
   env->DeleteGlobalRef(handler_proxy);
   detach_thread(this->jvm);
@@ -44,7 +42,9 @@ HoneycombHandler::~HoneycombHandler()
 
 int HoneycombHandler::open(const char *path, int mode, uint test_if_locked)
 {
-  DBUG_ENTER("HoneycombHandler::open");
+  const char* location = "HoneycombHandler::open";
+  DBUG_ENTER(location);
+  int rc = 0;
 
   if (!(share = get_share(path, table)))
   {
@@ -53,172 +53,52 @@ int HoneycombHandler::open(const char *path, int mode, uint test_if_locked)
 
   thr_lock_data_init(&share->lock, &lock, (void*) this);
 
-  attach_thread(jvm, &env);
+  attach_thread(jvm, &env, location);
   {
     JavaFrame frame(env, 2);
     jstring jtable_name =
-      string_to_java_string(extract_table_name_from_path(path));
+      string_to_java_string(env, extract_table_name_from_path(path));
     jstring jtablespace = NULL;
     if (this->table->s->tablespace != NULL)
     {
-      jtablespace = string_to_java_string(this->table->s->tablespace);
+      jtablespace = string_to_java_string(env, this->table->s->tablespace);
     }
 
     this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().open_table,
         jtable_name, jtablespace);
-    EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::open", "calling openTable");
+    rc |= check_exceptions(env, cache, location);
   }
   detach_thread(jvm);
 
-  DBUG_RETURN(0);
+  DBUG_RETURN(rc);
 }
 
 int HoneycombHandler::close(void)
 {
-  DBUG_ENTER("HoneycombHandler::close");
-  attach_thread(jvm, &env);
+  const char* location = "HoneycombHandler::close";
+  DBUG_ENTER(location);
+  int rc = 0;
+  attach_thread(jvm, &env, location);
   {
     JavaFrame frame(env, 2);
     this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().close_table);
     env->DeleteGlobalRef(handler_proxy);
+    rc |= check_exceptions(env, cache, location);
     handler_proxy = NULL;
-    EXCEPTION_CHECK_DBUG_IE("HoneycombHandler::close", "calling closetTable");
   }
   detach_thread(jvm);
-  DBUG_RETURN(free_share(share));
-}
-
-/**
- * @brief Stores a value pulled out of HBase into a MySQL field.
- *
- * @param field MySQL to store an HBase value
- * @param val HBase value
- * @param val_length Length of the HBase value
- */
-void HoneycombHandler::store_field_value(Field *field, const char *val, int val_length)
-{
-  enum_field_types type = field->real_type();
-
-  if (!is_unsupported_field(type))
-  {
-    if (is_integral_field(type))
-    {
-      if (type == MYSQL_TYPE_LONGLONG)
-      {
-        memcpy(field->ptr, val, sizeof(ulonglong));
-        if (is_little_endian())
-        {
-          reverse_bytes(field->ptr, val_length);
-        }
-      }
-      else
-      {
-        long long long_value = *(long long*) val;
-        if (is_little_endian())
-        {
-          long_value = bswap64(long_value);
-        }
-
-        field->store(long_value, false);
-      }
-    }
-    else if (is_byte_field(type))
-    {
-      field->store((char*)val, val_length, &my_charset_bin);
-    }
-    else if (is_date_or_time_field(type))
-    {
-      if (type == MYSQL_TYPE_TIME)
-      {
-        long long long_value = *(long long*) val;
-        if (is_little_endian())
-        {
-          long_value = bswap64(long_value);
-        }
-        field->store(long_value, false);
-      }
-      else
-      {
-        MYSQL_TIME mysql_time;
-        int was_cut;
-        str_to_datetime((char*)val, val_length, &mysql_time, TIME_FUZZY_DATE, &was_cut);
-        field->store_time(&mysql_time, mysql_time.time_type);
-      }
-    }
-    else if (is_decimal_field(type))
-    {
-      // TODO: Is this reliable? Field_decimal doesn't seem to have these members.
-      // Potential crash for old decimal types. - ABC
-      uint precision = ((Field_new_decimal*) field)->precision;
-      uint scale = ((Field_new_decimal*) field)->dec;
-      my_decimal decimal_val;
-      binary2my_decimal(0, (const uchar *) val, &decimal_val, precision, scale);
-      ((Field_new_decimal *) field)->store_value(
-          (const my_decimal*) &decimal_val);
-    }
-    else if (is_floating_point_field(type))
-    {
-      double double_value;
-      if (is_little_endian())
-      {
-        long long* long_ptr = (long long*) val;
-        longlong swapped_long = bswap64(*long_ptr);
-        double_value = *(double*) &swapped_long;
-      } else
-      {
-        double_value = *(double*) val;
-      }
-      field->store(double_value);
-    }
-  }
-}
-
-/**
- * @brief Converts an HBase row into the MySQL unireg row format.
- *
- * @param buf MySQL unireg row buffer
- * @param row_map HBase row
- * @return 0 on success
- */
-int HoneycombHandler::java_to_sql(uchar* buf, Row* row)
-{
-  my_bitmap_map *orig_bitmap;
-  orig_bitmap = dbug_tmp_use_all_columns(table, table->write_set);
-  const char* value;
-  size_t size;
-
-  for (uint i = 0; i < table->s->fields; i++)
-  {
-    Field *field = table->field[i];
-    const char* key = field->field_name;
-    row->get_bytes_record(key, &value, &size);
-    if (value == NULL)
-    {
-      field->set_null();
-      continue;
-    }
-
-    my_ptrdiff_t offset = (my_ptrdiff_t) (buf - this->table->record[0]);
-    field->move_field_offset(offset);
-
-    field->set_notnull(); // for some reason the field was inited as null during rnd_pos
-    store_field_value(field, value, size);
-
-    field->move_field_offset(-offset);
-  }
-
-  dbug_tmp_restore_column_map(table->write_set, orig_bitmap);
-  return 0;
+  DBUG_RETURN(rc | free_share(share));
 }
 
 int HoneycombHandler::external_lock(THD *thd, int lock_type)
 {
-  DBUG_ENTER("HoneycombHandler::external_lock");
+  const char* location = "HoneycombHandler::external_lock";
+  DBUG_ENTER(location);
   int ret = 0;
 
   if (lock_type == F_WRLCK || lock_type == F_RDLCK)
   {
-    attach_thread(jvm, &env);
+    attach_thread(jvm, &env, location);
   }
 
   if (lock_type == F_UNLCK)
@@ -227,7 +107,7 @@ int HoneycombHandler::external_lock(THD *thd, int lock_type)
     {
       this->env->CallVoidMethod(handler_proxy,
           cache->handler_proxy().increment_row_count, this->rows_written);
-      check_exceptions(env, cache, "HoneycombHandler::external_lock");
+      check_exceptions(env, cache, location);
       this->rows_written = 0;
     }
     ret |= this->flush();
@@ -280,16 +160,18 @@ int HoneycombHandler::info(uint flag)
 {
   // TODO: Update this function to take into account the flag being passed in,
   // like the other engines
-  ha_rows rec_per_key;
-  attach_thread(jvm, &env);
+  const char* location = "HoneycombHandler::info";
+  DBUG_ENTER(location);
+  attach_thread(jvm, &env, location);
 
-  DBUG_ENTER("HoneycombHandler::info");
+  ha_rows rec_per_key;
+
   if (flag & HA_STATUS_VARIABLE)
   {
     JavaFrame frame(env);
     jlong row_count = this->env->CallLongMethod(handler_proxy,
         cache->handler_proxy().get_row_count);
-    check_exceptions(env, cache, "HoneycombHandler::info get_row_count");
+    check_exceptions(env, cache, location);
 
     if (row_count < 0)
       row_count = 0;
@@ -352,7 +234,7 @@ int HoneycombHandler::info(uint flag)
   if ((flag & HA_STATUS_AUTO) && table->found_next_number_field) {
     jlong auto_inc_value = env->CallLongMethod(handler_proxy,
         cache->handler_proxy().get_auto_increment);
-    check_exceptions(env, cache, "HoneycombHandler::info getAutoIncValue");
+    check_exceptions(env, cache, location);
     stats.auto_increment_value = (ulonglong) auto_inc_value;
   }
 
@@ -425,11 +307,12 @@ void HoneycombHandler::get_auto_increment(ulonglong offset, ulonglong increment,
                                  ulonglong *first_value,
                                  ulonglong *nb_reserved_values)
 {
-  DBUG_ENTER("HoneycombHandler::get_auto_increment");
+  const char* location = "HoneycombHandler::get_auto_increment";
+  DBUG_ENTER(location);
 
   jlong value = env->CallLongMethod(handler_proxy,
       cache->handler_proxy().increment_auto_increment, nb_desired_values);
-  if (check_exceptions(env, cache, "HoneycombHandler::get_auto_increment"))
+  if (check_exceptions(env, cache, location))
   { // exception thrown, return error code
     *first_value = ~(ulonglong) 0;
     DBUG_VOID_RETURN;
@@ -445,93 +328,6 @@ void HoneycombHandler::release_auto_increment()
   // Stored functions call this last. Hack to get around MySQL not calling
   // start/end bulk insert on insert in a stored function.
   this->flush();
-}
-
-/**
- * Delete this function
- */
-int HoneycombHandler::get_failed_key_index(const char *key_name)
-{
-  if (this->table->s->keys == 0)
-  {
-    return 0;
-  }
-
-  for (uint key = 0; key < this->table->s->keys; key++)
-  {
-    char* name = index_name(table, key);
-    bool are_equal = strcmp(name, key_name) == 0;
-    ARRAY_DELETE(name);
-    if (are_equal)
-    {
-      return key;
-    }
-  }
-
-  return -1;
-}
-
-/**
- * Delete this function
- */
-bool HoneycombHandler::field_has_unique_index(Field *field)
-{
-  for (uint i = 0; i < table->s->keys; i++)
-  {
-    KEY *key_info = table->s->key_info + i;
-    KEY_PART_INFO *key_part = key_info->key_part;
-    KEY_PART_INFO *end_key_part = key_part + key_info->key_parts;
-
-    while(key_part < end_key_part)
-    {
-      if ((key_info->flags & HA_NOSAME) && strcmp(key_part->field->field_name,
-            field->field_name) == 0)
-      {
-        return true;
-      }
-
-      key_part++;
-    }
-  }
-
-  return false;
-}
-
-
-/**
- * Create java string from native string.  The returned jstring is a local reference
- * which must be deleted.  Aborts if the string cannot be constructed.
- */
-jstring HoneycombHandler::string_to_java_string(const char *string)
-{
-  jstring jstring = this->env->NewStringUTF(string);
-  NULL_CHECK_ABORT(jstring, "HoneycombHandler::string_to_java_string: OutOfMemoryError while calling NewStringUTF");
-  return jstring;
-}
-
-/**
- * Create const char* string from java string.  The passed in java string is NOT
- * cleaned up, cleaned up with a call to
- * ReleaseStringUTFChars(jstring, native_string).
- */
-const char *HoneycombHandler::java_to_string(jstring string)
-{
-  const char* chars = this->env->GetStringUTFChars(string, JNI_FALSE);
-  NULL_CHECK_ABORT(chars, "HoneycombHandler::java_to_string: OutOfMemoryError while calling GetStringUTFChars");
-  return chars;
-}
-
-/**
- * Test whether a column in a table is nullable.
- */
-bool HoneycombHandler::is_field_nullable(jstring table_name, const char* field_name)
-{
-  JavaFrame frame(env, 1);
-  jstring field = string_to_java_string(field_name);
-  jboolean result = env->CallStaticBooleanMethod(cache->hbase_adapter().clazz,
-      cache->hbase_adapter().is_nullable, table_name, field);
-  EXCEPTION_CHECK("HoneycombHandler::is_field_nullable", "calling isNullable()");
-  return result;
 }
 
 /**
@@ -571,10 +367,11 @@ int HoneycombHandler::analyze(THD* thd, HA_CHECK_OPT* check_opt)
  */
 ha_rows HoneycombHandler::estimate_rows_upper_bound()
 {
-  DBUG_ENTER("HoneycombHandler::estimate_rows_upper_bound");
+  const char* location = "HoneycombHandler::estimate_rows_upper_bound";
+  DBUG_ENTER(location);
   jlong row_count = this->env->CallLongMethod(handler_proxy,
       cache->handler_proxy().get_row_count);
-  EXCEPTION_CHECK("HoneycombHandler::estimate_rows_upper_bound", "calling getRowCount");
+  check_exceptions(env, cache, location);
 
   // Stupid MySQL and its filesort. This must be large enough to filesort when
   // there are less than 2 records.
@@ -588,45 +385,4 @@ int HoneycombHandler::flush()
 {
   this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().flush);
   return check_exceptions(env, cache, "HoneycombHandler::flush");
-}
-
-/**
- * Remove this function.
- */
-jstring HoneycombHandler::table_name()
-{
-  return NULL;
-}
-
-void HoneycombHandler::deserialized_from_java(jbyteArray bytes, Serializable& serializable)
-{
-  jbyte* buf = this->env->GetByteArrayElements(bytes, JNI_FALSE);
-  serializable.deserialize((const char*) buf, this->env->GetArrayLength(bytes));
-  this->env->ReleaseByteArrayElements(bytes, buf, 0);
-}
-
-jbyteArray HoneycombHandler::serialize_to_java(Serializable& serializable)
-{
-  const char* serialized_buf;
-  size_t buf_len;
-  serializable.serialize(&serialized_buf, &buf_len);
-  jbyteArray jserialized_key = convert_value_to_java_bytes((uchar*) serialized_buf, buf_len, env);
-  delete[] serialized_buf;
-  return jserialized_key;
-}
-/**
- * Remove this function.
- */
-char* HoneycombHandler::index_name(KEY_PART_INFO* key_part,
-    KEY_PART_INFO* key_part_end, uint key_parts)
-{
-  return "";
-}
-
-/**
- * Remove this function.
- */
-char* HoneycombHandler::index_name(TABLE* table, uint key)
-{
-  return "";
 }

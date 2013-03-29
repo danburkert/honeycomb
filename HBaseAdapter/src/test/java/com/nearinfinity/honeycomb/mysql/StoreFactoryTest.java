@@ -2,7 +2,7 @@ package com.nearinfinity.honeycomb.mysql;
 
 import com.google.inject.Provider;
 import com.nearinfinity.honeycomb.Store;
-import com.nearinfinity.honeycomb.StoreNotFoundException;
+import com.nearinfinity.honeycomb.exceptions.StoreNotFoundException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

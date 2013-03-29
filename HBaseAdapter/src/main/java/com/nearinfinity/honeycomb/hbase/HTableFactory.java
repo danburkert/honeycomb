@@ -1,4 +1,4 @@
-package com.nearinfinity.honeycomb.mysqlengine;
+package com.nearinfinity.honeycomb.hbase;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;

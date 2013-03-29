@@ -25,14 +25,14 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import com.nearinfinity.honeycomb.TableNotFoundException;
+import com.nearinfinity.honeycomb.config.Constants;
+import com.nearinfinity.honeycomb.exceptions.TableNotFoundException;
 import com.nearinfinity.honeycomb.hbase.rowkey.AutoIncRow;
 import com.nearinfinity.honeycomb.hbase.rowkey.ColumnsRow;
 import com.nearinfinity.honeycomb.hbase.rowkey.IndicesRow;
 import com.nearinfinity.honeycomb.hbase.rowkey.RowsRow;
 import com.nearinfinity.honeycomb.hbase.rowkey.SchemaRow;
 import com.nearinfinity.honeycomb.hbase.rowkey.TablesRow;
-import com.nearinfinity.honeycomb.hbaseclient.Constants;
 import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.Verify;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
@@ -44,7 +44,7 @@ import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
  * row & autoincrement counters to and from HBase.
  */
 public class HBaseMetadata {
-    private static final byte[] COLUMN_FAMILY = Constants.NIC;
+    private static final byte[] COLUMN_FAMILY = Constants.DEFAULT_COLUMN_FAMILY;
     private final Provider<HTableInterface> provider;
 
     @Inject
@@ -119,12 +119,14 @@ public class HBaseMetadata {
 
     /**
      * Performs all metadata operations necessary to create a table index
+     *
      * @param tableId The id of the table to create the index
      * @param indexName The identifying name of the index, not null or empty
      * @param indexSchema The {@link IndexSchema} representing the index details, not null
      */
     public void createTableIndex(final long tableId, final String indexName,
             final IndexSchema indexSchema) {
+        Verify.isValidTableId(tableId);
         Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
         checkNotNull(indexSchema, "The index schema is invalid");
 
@@ -144,6 +146,34 @@ public class HBaseMetadata {
         // Write the updated table schema and created index
         puts.add(putTableSchema(tableId, updatedSchema));
         puts.add(putIndices(tableId, indexDetailMap));
+
+        performMutations(deletes, puts);
+    }
+
+    /**
+     * Performs all metadata operations necessary to remove the specified index from the specified table
+     *
+     * @param tableId The id of the table to create the index
+     * @param indexName The identifying name of the index, not null or empty
+     */
+    public void deleteTableIndex(final long tableId, final String indexName) {
+        Verify.isValidTableId(tableId);
+        Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
+
+        final List<Put> puts = Lists.newArrayList();
+        final List<Delete> deletes = Lists.newArrayList();
+
+        // Update the table schema to remove index schema details
+        final TableSchema existingSchema = getSchema(tableId);
+        final TableSchema updatedSchema = TableSchema.newBuilder(existingSchema).build();
+        updatedSchema.getIndices().remove(indexName);
+
+        // Delete the previous table schema and index
+        deletes.add(deleteTableSchema(tableId));
+        deletes.add(generateIndexDelete(tableId, indexName));
+
+        // Write the updated table schema
+        puts.add(putTableSchema(tableId, updatedSchema));
 
         performMutations(deletes, puts);
     }
@@ -177,7 +207,6 @@ public class HBaseMetadata {
      * @param oldTableName The name of the existing table
      * @param newTableName The new name to use for this table
      * @throws TableNotFoundException Thrown when existing table cannot be found
-     * @ Thrown on HBase mutation failure
      */
     public void renameExistingTable(final String oldTableName, final String newTableName) {
         Verify.isNotNullOrEmpty(oldTableName, "Old table name must have value");
@@ -332,6 +361,11 @@ public class HBaseMetadata {
                 .deleteColumns(COLUMN_FAMILY, serializeId(tableId));
     }
 
+    private Delete generateIndexDelete(final long tableId, final String indexName) {
+        return new Delete(new IndicesRow(tableId).encode())
+            .deleteColumns(COLUMN_FAMILY, serializeName(indexName));
+    }
+
     private Put putColumnIds(long tableId, Map<String, ColumnSchema> columns) {
         long columnId = getNextColumnId(tableId, columns.size());
         Put put = new Put(new ColumnsRow(tableId).encode());
@@ -383,7 +417,6 @@ public class HBaseMetadata {
      *
      * @param deletes A list of {@link Delete} operations to execute, not null
      * @param puts    A list of  {@link Put} operations to execute, not null
-     * @ Thrown on mutation commit failure
      */
     private void performMutations(final List<Delete> deletes, final List<Put> puts) {
         checkNotNull(deletes, "The delete mutations container is invalid");

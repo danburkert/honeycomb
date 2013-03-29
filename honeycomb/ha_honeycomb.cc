@@ -19,6 +19,7 @@
 #include "TableSchema.h"
 #include "IndexSchema.h"
 #include "ColumnSchema.h"
+#include "Java.h"
 
 static handler *honeycomb_create_handler(handlerton *hton,
     TABLE_SHARE *table, MEM_ROOT *mem_root);
@@ -76,7 +77,7 @@ static jobject handler_factory(JNIEnv* env)
 {
   jobject handler_proxy_local = env->CallObjectMethod(handler_proxy_factory,
       cache->handler_proxy_factory().createHandlerProxy);
-  EXCEPTION_CHECK("ha_honeycomb::handler_factory", "createHandlerProxy");
+  check_exceptions(env, cache, "HoneycombHandlerton::handler_factory");
   jobject handler_proxy = env->NewGlobalRef(handler_proxy_local);
   NULL_CHECK_ABORT(handler_proxy, "Out of Memory while creating global ref to HandlerProxy");
   env->DeleteLocalRef(handler_proxy_local);

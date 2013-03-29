@@ -1,16 +1,19 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import com.nearinfinity.honeycomb.Scanner;
-import com.nearinfinity.honeycomb.Store;
-import com.nearinfinity.honeycomb.Table;
-import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
-import com.nearinfinity.honeycomb.mysql.gen.QueryType;
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static java.lang.String.format;
 
 import java.nio.ByteBuffer;
 
-import static com.google.common.base.Preconditions.*;
-import static java.lang.String.format;
+import com.nearinfinity.honeycomb.Scanner;
+import com.nearinfinity.honeycomb.Store;
+import com.nearinfinity.honeycomb.Table;
+import com.nearinfinity.honeycomb.exceptions.TableNotFoundException;
+import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.gen.QueryType;
+import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 
 public class HandlerProxy {
     private final StoreFactory storeFactory;
@@ -55,9 +58,14 @@ public class HandlerProxy {
     public void dropTable(String tableName, String tableSpace) {
         Verify.isNotNullOrEmpty(tableName);
         Store store = storeFactory.createStore(tableSpace);
-        Table table = store.openTable(tableName);
-        table.deleteAllRows();
+        Table table;
+        try {
+            table = store.openTable(tableName);
+        } catch (TableNotFoundException ignored) {
+            return;
+        }
 
+        table.deleteAllRows();
         Util.closeQuietly(table);
         store.deleteTable(tableName);
     }
@@ -120,16 +128,29 @@ public class HandlerProxy {
     public long getAutoIncrement() {
         checkTableOpen();
         if (!Verify.hasAutoIncrementColumn(store.getSchema(tableName))) {
-            throw new IllegalArgumentException(format("Table %s does not contain an auto increment column.", tableName));
+            throw new IllegalArgumentException(format("Table %s does not" +
+                    " contain an auto increment column.", tableName));
         }
 
         return store.getAutoInc(tableName);
     }
 
     /**
+     * Set the auto increment value of the table to the max of value and the
+     * current value.
+     * @param value
+     * @return
+     */
+    public void setAutoIncrement(long value) {
+        checkTableOpen();
+        store.setAutoInc(tableName, value);
+    }
+
+    /**
      * Increment the auto increment value of the table by amount, and return the
-     * next auto increment value.  The next value will be the current value + 1,
+     * next auto increment value.  The next value will be the current value,
      * not the incremented value (equivalently, the incremented value - amount).
+     *
      * @param amount
      * @return
      */
@@ -147,28 +168,45 @@ public class HandlerProxy {
         store.truncateAutoInc(tableName);
     }
 
+    /**
+     * Add the provided index information to the table.  The table must be open
+     * before this operation can be performed.
+     *
+     * @param indexName The name of the index to add, not null or empty
+     * @param serializedSchema The byte representation of the {@link IndexSchema} for this index, not null
+     */
     public void addIndex(String indexName, byte[] serializedSchema) {
-        checkNotNull(indexName);
+        Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
         checkNotNull(serializedSchema);
         checkTableOpen();
 
         IndexSchema schema = Util.deserializeIndexSchema(serializedSchema);
         checkArgument(!schema.getIsUnique(), "Honeycomb does not support adding unique indices without a table rebuild.");
-        store.addIndex(tableName, indexName, schema);
 
+        store.addIndex(tableName, indexName, schema);
         table.insertTableIndex(indexName, schema);
     }
 
+    /**
+     * Drop the index specified by the index name from the table. The table must be open
+     * before this operation can be performed.
+     *
+     * @param indexName The name of the index to add, not null or empty
+     */
     public void dropIndex(String indexName) {
-        checkNotNull(indexName);
+        Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
         checkTableOpen();
 
+        TableSchema tableSchema = store.getSchema(tableName);
+        IndexSchema indexSchema = tableSchema.getIndices().get(indexName);
+        table.deleteTableIndex(indexName, indexSchema);
         store.dropIndex(tableName, indexName);
     }
 
     /**
      * Check whether the index contains a row with the same field values and a
      * distinct UUID.
+     *
      * @param indexName
      * @param serializedRow
      */
@@ -199,6 +237,7 @@ public class HandlerProxy {
 
     /**
      * Insert row into table.
+     *
      * @param rowBytes Serialized row to be written
      * @return true if the write succeeds, or false if a uniqueness constraint
      *         is violated.
@@ -229,6 +268,24 @@ public class HandlerProxy {
         checkNotNull(rowBytes);
         Row updatedRow = Row.deserialize(rowBytes);
         table.update(updatedRow);
+    }
+
+    /**
+     * Delete all rows in the table.
+     */
+    public void deleteAllRows() {
+        checkTableOpen();
+        store.truncateRowCount(tableName);
+        table.deleteAllRows();
+    }
+
+    /**
+     * Delete all rows in the table, and reset the auto increment value.
+     */
+    public void truncateTable() {
+        checkTableOpen();
+        deleteAllRows();
+        store.truncateAutoInc(tableName);
     }
 
     public void flush() {

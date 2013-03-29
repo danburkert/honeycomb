@@ -139,7 +139,7 @@ bool HoneycombHandler::violates_uniqueness(jbyteArray serialized_row)
   {
     if (table->key_info[i].flags & HA_NOSAME) // filter on uniqueness
     {
-      jstring index_name = string_to_java_string(table->key_info[i].name);
+      jstring index_name = string_to_java_string(env, table->key_info[i].name);
       bool contains_duplicate = env->CallBooleanMethod(handler_proxy,
           cache->handler_proxy().index_contains_duplicate, index_name,
           serialized_row);
@@ -158,8 +158,8 @@ int HoneycombHandler::write_row(uchar *buf)
 {
   DBUG_ENTER("HoneycombHandler::write_row");
   JavaFrame frame(env, 1);
+  row->reset();
   int rc = 0;
-  Row row;
 
   if (share->crashed)
   {
@@ -171,14 +171,10 @@ int HoneycombHandler::write_row(uchar *buf)
   }
 
   my_bitmap_map *old_map = dbug_tmp_use_all_columns(table, table->read_set);
-  rc |= pack_row(buf, table, &row);
+  rc |= pack_row(buf, table, row);
   dbug_tmp_restore_column_map(table->read_set, old_map);
 
-  const char* row_buf;
-  size_t buf_len;
-  row.serialize(&row_buf, &buf_len);
-  jbyteArray serialized_row =
-    convert_value_to_java_bytes((uchar*) row_buf, buf_len, env);
+  jbyteArray serialized_row = serialize_to_java(env, *row);
 
   if (!rc && violates_uniqueness(serialized_row))
   {
@@ -217,11 +213,7 @@ int HoneycombHandler::update_row(const uchar *old_row, uchar *new_row)
   }
 
   JavaFrame frame(env, 1);
-  const char* row_buf;
-  size_t buf_len;
-  row->serialize(&row_buf, &buf_len);
-  jbyteArray serialized_row =
-    convert_value_to_java_bytes((uchar*) row_buf, buf_len, env);
+  jbyteArray serialized_row = serialize_to_java(env, *row);
 
   if (thd_sql_command(ha_thd()) == SQLCOM_UPDATE) // Taken when actual update, not an ON DUPLICATE KEY UPDATE
   {
@@ -258,3 +250,16 @@ int HoneycombHandler::delete_row(const uchar *buf)
   DBUG_RETURN(check_exceptions(env, cache, "HoneycombHandler::delete_row"));
 }
 
+int HoneycombHandler::delete_all_rows()
+{
+  DBUG_ENTER("HoneycombHandler::delete_all_rows");
+  env->CallVoidMethod(handler_proxy, cache->handler_proxy().delete_all_rows);
+  DBUG_RETURN(check_exceptions(env, cache, "HoneycombHandler::delete_all_rows"));
+}
+
+int HoneycombHandler::truncate()
+{
+  DBUG_ENTER("HoneycombHandler::truncate");
+  env->CallVoidMethod(handler_proxy, cache->handler_proxy().truncate_table);
+  DBUG_RETURN(check_exceptions(env, cache, "HoneycombHandler::truncate"));
+}

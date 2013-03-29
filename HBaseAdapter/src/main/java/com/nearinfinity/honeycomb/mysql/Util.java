@@ -2,7 +2,7 @@ package com.nearinfinity.honeycomb.mysql;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import com.nearinfinity.honeycomb.RuntimeIOException;
+import com.nearinfinity.honeycomb.exceptions.RuntimeIOException;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
@@ -178,7 +178,7 @@ public class Util {
         try {
             closeable.close();
         } catch (IOException e) {
-            logger.error("IOException thrown while closing resource.", e);
+            logger.error(String.format("IOException thrown while closing resource of type %s", closeable.getClass().getName()), e);
             throw new RuntimeIOException(e);
         }
     }
@@ -198,6 +198,20 @@ public class Util {
         }
         return ImmutableSet.copyOf(indices);
     }
+    /**
+     * Return the name of the auto increment column in the table, or null.
+     * @param schema
+     * @return
+     */
+    public static String getAutoIncrementColumn(TableSchema schema) {
+        Map<String, ColumnSchema> columns = schema.getColumns();
+        for (Map.Entry<String, ColumnSchema> entry : columns.entrySet()) {
+            if (entry.getValue().getIsAutoIncrement()) {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
 
     private static <T> RuntimeException deserializationError(byte[] serializedData, IOException e, Class<T> clazz) {
         String clazzMessage = clazz == null ? "" : "of class type " + clazz.getName();
@@ -213,18 +227,4 @@ public class Util {
         logger.error(format, e);
         return new RuntimeException(format, e);
 	}
-    /**
-     * Return the name of the auto increment column in the table, or null.
-     * @param schema
-     * @return
-     */
-    public static String getAutoIncrementColumn(TableSchema schema) {
-        Map<String, ColumnSchema> columns = schema.getColumns();
-        for (Map.Entry<String, ColumnSchema> entry : columns.entrySet()) {
-            if (entry.getValue().getIsAutoIncrement()) {
-                return entry.getKey();
-            }
-        }
-        return null;
-    }
 }

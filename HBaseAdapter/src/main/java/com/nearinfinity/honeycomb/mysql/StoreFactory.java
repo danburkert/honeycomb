@@ -4,8 +4,8 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
 import com.nearinfinity.honeycomb.Store;
-import com.nearinfinity.honeycomb.StoreNotFoundException;
-import com.nearinfinity.honeycomb.hbaseclient.Constants;
+import com.nearinfinity.honeycomb.exceptions.StoreNotFoundException;
+import com.nearinfinity.honeycomb.config.Constants;
 
 import java.util.Map;
 

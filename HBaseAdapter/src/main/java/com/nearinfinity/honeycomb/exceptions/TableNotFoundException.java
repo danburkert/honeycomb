@@ -1,4 +1,4 @@
-package com.nearinfinity.honeycomb;
+package com.nearinfinity.honeycomb.exceptions;
 
 public class TableNotFoundException extends RuntimeException {
     private String name;

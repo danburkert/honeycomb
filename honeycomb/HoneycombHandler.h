@@ -12,6 +12,7 @@
 #include "ColumnSchema.h"
 #include "IndexSchema.h"
 #include "IndexContainer.h"
+#include "Serializable.h"
 
 #include "my_global.h"          /* ulonglong */
 #include "thr_lock.h"           /* THR_LOCK, THR_LOCK_DATA */
@@ -19,7 +20,6 @@
 #include "my_base.h"            /* ha_rows */
 #include <jni.h>
 #include "probes_mysql.h"
-#include "Serializable.h"
 
 class JNICache;
 
@@ -30,53 +30,17 @@ class HoneycombHandler : public handler
     HoneycombShare *share;  ///< Sharedclass lock info
     mysql_mutex_t* honeycomb_mutex;
     HASH* honeycomb_open_tables;
-    bool performing_scan;
     HoneycombShare *get_share(const char *table_name, TABLE *table);
-    uint32 max_row_length();
-    jbyteArray serialize_to_java(Serializable& serializable);
-    void deserialized_from_java(jbyteArray bytes, Serializable& serializable);
-    int start_index_scan(Serializable& index_key, uchar* buf);
 
-    long long curr_scan_id, curr_write_id;
     ulonglong rows_written;
-
     uint failed_key_index;
 
-    // HBase JNI Adapter:
+    // JNI State:
     JNIEnv* env;
     JavaVM* jvm;
     JNICache* cache;
     jobject handler_proxy;
     Row* row;
-
-    int pack_row(uchar *buf, TABLE* table, Row* row);
-    jstring table_name();
-    const char* java_to_string(jstring str);
-    jstring string_to_java_string(const char *string);
-    int java_to_sql(uchar *buf, Row *row);
-    jobject sql_to_java();
-    int delete_all_rows();
-    int truncate();
-    void store_uuid_ref(Row* row);
-    int full_index_scan(uchar* buf, IndexContainer::QueryType query);
-    void bytes_to_long(const uchar* buff, unsigned int buff_length, bool is_signed, uchar* long_buff);
-    int read_row(uchar* buf);
-    int get_next_row(uchar* buf);
-    int read_bytes_into_mysql(jbyteArray row_bytes, uchar* buf);
-    int flush();
-    bool field_has_unique_index(Field *field);
-    jbyteArray find_duplicate_column_values(char* columns);
-    bool row_has_duplicate_values(jobject value_map, jobject changedColumns);
-    int get_failed_key_index(const char *key_name);
-    void store_field_value(Field *field, const char* val, int length);
-    char* index_name(KEY_PART_INFO* key_part, KEY_PART_INFO* key_part_end, uint key_parts);
-    char* index_name(TABLE* table, uint key);
-    jobject create_key_value_list(int index, uint* key_sizes, uchar** key_copies, const char** key_names, jboolean* key_null_bits, jboolean* key_is_null);
-    bool is_field_nullable(jstring table_name, const char* field_name);
-    bool is_allowed_column(Field* field, int* error_number);
-    int retrieve_value_from_index(uchar* buf);
-    int write_row(uchar* buf, jobject updated_fields);
-    void collect_changed_fields(jobject updated_fields, const uchar* old_row, uchar* new_row);
 
     bool is_integral_field(enum_field_types field_type)
     {
@@ -127,30 +91,32 @@ class HoneycombHandler : public handler
       || field_type == MYSQL_TYPE_GEOMETRY);
     }
 
-    /* Index methods */
-    int index_init(uint idx, bool sorted);
-    int index_end();
-    int index_next(uchar *buf);
-    int index_prev(uchar *buf);
-    int index_first(uchar *buf);
-    int index_last(uchar *buf);
+    /* HoneycombHandler helper methods */
+    void store_uuid_ref(Row* row);
 
-    void set_autoinc_counter(jlong new_value, jboolean is_truncate);
+    /* Query helper methods */
+    int start_index_scan(Serializable& index_key, uchar* buf);
+    int read_row(uchar* buf);
+    int get_next_row(uchar* buf);
+    int read_bytes_into_mysql(jbyteArray row_bytes, uchar* buf);
+    int full_index_scan(uchar* buf, IndexContainer::QueryType query);
+    int retrieve_value_from_index(uchar* buf);
+    int unpack_row(uchar *buf, Row *row);
+    void store_field_value(Field *field, const char* val, int length);
 
     /* DDL helper methods */
     int pack_column_schema(ColumnSchema* schema, Field* field);
     int pack_index_schema(IndexSchema* schema, KEY* key);
     int init_table_share(TABLE_SHARE* table_share, const char* path);
+    bool is_allowed_column(Field* field, int* error_number);
+    bool check_column_being_renamed(const TABLE*  table);
 
     /* IUD helper methods*/
     bool violates_uniqueness(jbyteArray serialized_row);
+    int pack_row(uchar *buf, TABLE* table, Row* row);
 
 
   public:
-    HoneycombHandler(handlerton *hton, TABLE_SHARE *table_share,
-        mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm, JNICache* cache, jobject handler_proxy);
-    ~HoneycombHandler();
-
     const char *table_type() const
     {
       return "Honeycomb";
@@ -232,46 +198,55 @@ class HoneycombHandler : public handler
       return 0;
     }
 
+    /* HoneycombHandler */
+    HoneycombHandler(handlerton *hton, TABLE_SHARE *table_share,
+        mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm, JNICache* cache, jobject handler_proxy);
+    ~HoneycombHandler();
     const char **bas_ext() const;
     int open(const char *name, int mode, uint test_if_locked);    // required
     int close(void);                                              // required
-
-    int rnd_init(bool scan);                                      //required
-    int rnd_next(uchar *buf);                                     ///< required
-    int rnd_pos(uchar *buf, uchar *pos);                          ///< required
-    int rnd_end();
-
-    int index_read_map(uchar * buf, const uchar * key, key_part_map keypart_map, enum ha_rkey_function find_flag);
-
     void position(const uchar *record);                           ///< required
     int info(uint);                                               ///< required
     int external_lock(THD *thd, int lock_type);                   ///< required
-
+    void get_auto_increment(ulonglong offset, ulonglong increment, ulonglong nb_desired_values, ulonglong *first_value, ulonglong *nb_reserved_values);
+    void release_auto_increment();
+    int flush();
     THR_LOCK_DATA **store_lock(THD *thd, THR_LOCK_DATA **to, enum thr_lock_type lock_type);     ///< required
-    void update_create_info(HA_CREATE_INFO* create_info);
     int extra(enum ha_extra_function operation);
     int free_share(HoneycombShare *share);
     ha_rows records_in_range(uint inx, key_range *min_key, key_range *max_key);
     int analyze(THD* thd, HA_CHECK_OPT* check_opt);
     ha_rows estimate_rows_upper_bound();
 
-    /* HoneycombHandler */
-    void get_auto_increment(ulonglong offset, ulonglong increment, ulonglong nb_desired_values, ulonglong *first_value, ulonglong *nb_reserved_values);
-    void release_auto_increment();
+    /* Query */
+    int index_init(uint idx, bool sorted);
+    int index_read_map(uchar * buf, const uchar * key, key_part_map keypart_map, enum ha_rkey_function find_flag);
+    int index_next(uchar *buf);
+    int index_prev(uchar *buf);
+    int index_first(uchar *buf);
+    int index_last(uchar *buf);
+    int index_end();
+
+    int rnd_init(bool scan);                                      //required
+    int rnd_next(uchar *buf);                                     ///< required
+    int rnd_pos(uchar *buf, uchar *pos);                          ///< required
+    int rnd_end();
 
     /* DDL */
     int create(const char *name, TABLE *form, HA_CREATE_INFO *create_info); ///< required
     int delete_table(const char *name);
     int rename_table(const char *from, const char *to);
     bool check_if_incompatible_data(HA_CREATE_INFO *create_info, uint table_changes);
-    bool check_column_being_renamed(const TABLE*  table);
     int prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys);
     int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add);
+    void update_create_info(HA_CREATE_INFO* create_info);
 
     /* IUD */
-    int update_row(const uchar *old_data, uchar *new_data);
     int write_row(uchar *buf);
+    int update_row(const uchar *old_data, uchar *new_data);
     int delete_row(const uchar *buf);
+    int delete_all_rows();
+    int truncate();
 };
 
 #endif

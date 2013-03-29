@@ -23,7 +23,6 @@ public interface Store {
      *
      * @param tableName
      * @param schema
-     * @
      */
     public void createTable(String tableName, TableSchema schema);
 
@@ -51,27 +50,27 @@ public interface Store {
     public TableSchema getSchema(String tableName);
 
     /**
-     * Add index to the table specified by tableName
+     * Add the provided index information to the table specified by the table name
      *
-     * @param tableName The name of the table to be altered
-     * @param indexName The name of the new index
-     * @param schema    The schema of the index
+     * @param tableName The name of the table to be altered, not null or empty
+     * @param indexName The name of the index to add, not null or empty
+     * @param schema    The schema of the index, not null
      */
-    public void addIndex(String tableName, String indexName, IndexSchema schema);
+    public void addIndex(final String tableName, final String indexName, final IndexSchema schema);
 
     /**
-     * Drop index from the table
+     * Drop the specified index from the table specified by the table name
      *
-     * @param tableName The name of the table to be altered
-     * @param indexName The name of the index to be dropped
+     * @param tableName The name of the table to be altered, not null or empty
+     * @param indexName The name of the index to be dropped, not null or empty
      */
-    public void dropIndex(String tableName, String indexName);
+    public void dropIndex(final String tableName, final String indexName);
 
     /**
      * Gets the current value of the auto increment column in the table
      *
      * @param tableName
-     * @return
+     * @return The current auto-increment value
      */
     public long getAutoInc(String tableName);
 
@@ -81,7 +80,6 @@ public interface Store {
      *
      * @param tableName
      * @param value
-     * @return
      */
     public void setAutoInc(String tableName, long value);
 
@@ -91,7 +89,7 @@ public interface Store {
      *
      * @param tableName Name of table
      * @param amount    Amount to auto increment by
-     * @return
+     * @return The post-incremented value
      */
     public long incrementAutoInc(String tableName, long amount);
 

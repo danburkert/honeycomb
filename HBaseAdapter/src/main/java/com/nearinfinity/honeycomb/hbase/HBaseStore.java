@@ -1,9 +1,12 @@
 package com.nearinfinity.honeycomb.hbase;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.collect.BiMap;
 import com.google.inject.Inject;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
+import com.nearinfinity.honeycomb.mysql.Verify;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 
@@ -63,7 +66,11 @@ public class HBaseStore implements Store {
     }
 
     @Override
-    public void addIndex(String tableName, String indexName, IndexSchema schema) {
+    public void addIndex(final String tableName, final String indexName, final IndexSchema schema) {
+        Verify.isNotNullOrEmpty(tableName, "The table name is invalid");
+        Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
+        checkNotNull(schema);
+
         final long tableId = cache.tableCacheGet(tableName);
 
         metadata.createTableIndex(tableId, indexName, schema);
@@ -72,7 +79,15 @@ public class HBaseStore implements Store {
     }
 
     @Override
-    public void dropIndex(String tableName, String indexName) {
+    public void dropIndex(final String tableName, final String indexName) {
+        Verify.isNotNullOrEmpty(tableName, "The table name is invalid");
+        Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
+
+        final long tableId = cache.tableCacheGet(tableName);
+
+        metadata.deleteTableIndex(tableId, indexName);
+        cache.invalidateSchemaCache(tableId);
+        cache.invalidateIndicesCache(tableId);
     }
 
     @Override

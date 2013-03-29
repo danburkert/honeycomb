@@ -39,8 +39,9 @@ const char* table_creation_errors[] = {
 int HoneycombHandler::create(const char *path, TABLE *table,
     HA_CREATE_INFO *create_info)
 {
-  DBUG_ENTER("HoneycombHandler::create");
-  attach_thread(jvm, &env);
+  const char* location = "HoneycombHandler::create";
+  DBUG_ENTER(location);
+  attach_thread(jvm, &env, location);
 
   if(table->part_info != NULL)
   {
@@ -49,7 +50,7 @@ int HoneycombHandler::create(const char *path, TABLE *table,
 
   int ret = 0;
   { // Destruct frame before calling detach_thread
-    JavaFrame frame(env, 4);
+    JavaFrame frame(env, 3);
 
     TableSchema table_schema;
     ColumnSchema column_schema;
@@ -81,19 +82,15 @@ int HoneycombHandler::create(const char *path, TABLE *table,
       table_schema.add_index(table->key_info[i].name, &index_schema);
     }
 
-    jstring jtable_name = string_to_java_string(extract_table_name_from_path(path));
+    jstring jtable_name = string_to_java_string(env, extract_table_name_from_path(path));
     jstring jtablespace = NULL;
     if (table->s->tablespace != NULL)
     {
-      jtablespace = string_to_java_string(table->s->tablespace);
+      jtablespace = string_to_java_string(env, table->s->tablespace);
     }
     jlong jauto_inc_value = max(1, create_info->auto_increment_value);
 
-    const char* buf;
-    size_t buf_len;
-    table_schema.serialize(&buf, &buf_len);
-    jbyteArray jserialized_schema =
-      convert_value_to_java_bytes((uchar*) buf, buf_len, env);
+    jbyteArray jserialized_schema = serialize_to_java(env, table_schema);
 
     this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().create_table,
         jtable_name, jtablespace, jserialized_schema, jauto_inc_value);
@@ -261,13 +258,14 @@ int HoneycombHandler::pack_index_schema(IndexSchema* schema, KEY* key)
 
 int HoneycombHandler::delete_table(const char *path)
 {
-  DBUG_ENTER("HoneycombHandler::delete_table");
+  const char* location = "HoneycombHandler::delete_table";
+  DBUG_ENTER(location);
   int ret = 0;
 
-  attach_thread(jvm, &env);
+  attach_thread(jvm, &env, location);
   { // destruct frame before detaching
     JavaFrame frame(env, 2);
-    jstring table_name = string_to_java_string(
+    jstring table_name = string_to_java_string(env,
         extract_table_name_from_path(path));
 
     TABLE_SHARE table_share;
@@ -276,13 +274,13 @@ int HoneycombHandler::delete_table(const char *path)
     jstring jtablespace = NULL;
     if (table_share.tablespace != NULL)
     {
-      jtablespace = string_to_java_string(table_share.tablespace);
+      jtablespace = string_to_java_string(env, table_share.tablespace);
     }
     free_table_share(&table_share);
 
     this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().drop_table,
         table_name, jtablespace);
-    ret |= check_exceptions(env, cache, "HoneycombHandler::drop_table");
+    ret |= check_exceptions(env, cache, location);
   }
   detach_thread(jvm);
 
@@ -291,28 +289,32 @@ int HoneycombHandler::delete_table(const char *path)
 
 int HoneycombHandler::rename_table(const char *from, const char *to)
 {
-  DBUG_ENTER("HoneycombHandler::rename_table");
+  const char* location = "HoneycombHandler::rename_table";
+  DBUG_ENTER(location);
   int ret = 0;
 
-  attach_thread(jvm, &env);
+  attach_thread(jvm, &env, location);
   {
     JavaFrame frame(env, 2);
 
-    jstring old_table_name = string_to_java_string(extract_table_name_from_path(from));
-    jstring new_table_name = string_to_java_string(extract_table_name_from_path(to));
+    jstring old_table_name = string_to_java_string(env,
+        extract_table_name_from_path(from));
+    jstring new_table_name = string_to_java_string(env,
+        extract_table_name_from_path(to));
 
     TABLE_SHARE table_share;
     ret |= init_table_share(&table_share, from);
     jstring jtablespace = NULL;
     if (table_share.tablespace != NULL)
     {
-      jtablespace = string_to_java_string(table_share.tablespace);
+      jtablespace = string_to_java_string(env,
+          table_share.tablespace);
     }
     free_table_share(&table_share);
 
     env->CallVoidMethod(handler_proxy, cache->handler_proxy().rename_table,
         old_table_name, jtablespace, new_table_name);
-    ret |= check_exceptions(env, cache, "HoneycombHandler::rename_table");
+    ret |= check_exceptions(env, cache, location);
   }
   detach_thread(jvm);
 
@@ -341,7 +343,8 @@ int HoneycombHandler::init_table_share(TABLE_SHARE* table_share, const char* pat
  */
 void HoneycombHandler::update_create_info(HA_CREATE_INFO* create_info)
 {
-  DBUG_ENTER("HoneycombHandler::update_create_info");
+  const char* location = "HoneycombHandler::update_create_info";
+  DBUG_ENTER(location);
 
   //show create table
   if (!(create_info->used_fields & HA_CREATE_USED_AUTO)) {
@@ -350,7 +353,9 @@ void HoneycombHandler::update_create_info(HA_CREATE_INFO* create_info)
   }
   //alter table
   else if (create_info->used_fields == 1) {
-    set_autoinc_counter(create_info->auto_increment_value, JNI_FALSE);
+    env->CallVoidMethod(handler_proxy, cache->handler_proxy().set_auto_increment,
+        create_info->auto_increment_value);
+    check_exceptions(env, cache, location);
   }
 
   DBUG_VOID_RETURN;
@@ -388,6 +393,9 @@ bool HoneycombHandler::check_if_incompatible_data(HA_CREATE_INFO *create_info,
   return COMPATIBLE_DATA_YES;
 }
 
+/**
+ * Check if a column is being renamed during an alter table operation
+ */
 bool HoneycombHandler::check_column_being_renamed(const TABLE* table)
 {
   const Field* field;
@@ -405,15 +413,16 @@ bool HoneycombHandler::check_column_being_renamed(const TABLE* table)
 int HoneycombHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys,
     handler_add_index **add)
 {
-  DBUG_ENTER("HoneycombHandler::add_index");
-  attach_thread(jvm, &env);
+  const char* location = "HoneycombHandler::add_index";
+  DBUG_ENTER(location);
+  attach_thread(jvm, &env, location);
   int ret = 0;
   IndexSchema schema;
   for(uint k = 0; k < num_of_keys; k++)
   {
     JavaFrame frame(env, 2);
     KEY* key = key_info + k;
-    jstring index_name = string_to_java_string(key->name);
+    jstring index_name = string_to_java_string(env, key->name);
     pack_index_schema(&schema, key);
 
     if (key->flags & HA_NOSAME)
@@ -422,15 +431,11 @@ int HoneycombHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_key
       DBUG_RETURN(HA_ERR_WRONG_COMMAND);
     }
 
-    const char* buf;
-    size_t buf_len;
-    schema.serialize(&buf, &buf_len);
-    jbyteArray serialized_schema =
-      convert_value_to_java_bytes((uchar*) buf, buf_len, env);
+    jbyteArray serialized_schema = serialize_to_java(env, schema);
 
     this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().add_index,
         index_name, serialized_schema);
-    ret |= check_exceptions(env, cache, "HoneycombHandler::add_index");
+    ret |= check_exceptions(env, cache, location);
   }
   detach_thread(jvm);
   DBUG_RETURN(ret);
@@ -438,15 +443,16 @@ int HoneycombHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_key
 
 int HoneycombHandler::prepare_drop_index(TABLE *table, uint *key_num, uint num_of_keys)
 {
-  DBUG_ENTER("HoneycombHandler::prepare_drop_index");
-  attach_thread(jvm, &env);
+  const char* location = "HoneycombHandler::prepare_drop_index";
+  DBUG_ENTER(location);
+  attach_thread(jvm, &env, location);
   int ret = 0;
   for (uint i = 0; i < num_of_keys; i++) {
     JavaFrame frame(env, 1);
-    jstring index_name = string_to_java_string((table->key_info + key_num[i])->name);
+    jstring index_name = string_to_java_string(env, (table->key_info + key_num[i])->name);
     this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().drop_index,
         index_name);
-    ret |= check_exceptions(env, cache, "HoneycombHandler::prepare_drop_index");
+    ret |= check_exceptions(env, cache, location);
   }
   detach_thread(jvm);
   DBUG_RETURN(ret);

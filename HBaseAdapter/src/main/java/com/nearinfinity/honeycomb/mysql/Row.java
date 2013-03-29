@@ -7,10 +7,8 @@ import org.apache.avro.io.DatumWriter;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.UUID;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -70,18 +68,6 @@ public class Row {
     }
 
     /**
-     * Remove me
-     */
-    public Map<String, byte[]> getRecordsLegacy() {
-        Map<String, byte[]> retMap = new TreeMap<String, byte[]>();
-        for (Map.Entry<String, ByteBuffer> entry : row.getRecords().entrySet()) {
-            retMap.put(entry.getKey(), (entry.getValue() == null) ? null : entry.getValue().array());
-        }
-
-        return retMap;
-    }
-
-    /**
      * Returns the a map of column names to records of this Row.
      *
      * @return Map of column names to records
@@ -94,7 +80,6 @@ public class Row {
      * Serialize this {@link Row} instance to a byte array.
      *
      * @return Serialized row
-     * @throws IOException when serialization fails
      */
     public byte[] serialize() {
         return Util.serializeAvroObject(row, writer);
@@ -129,29 +114,5 @@ public class Row {
         }
 
         return true;
-    }
-
-    /**
-     * The following methods are called through JNI.  They are a stop-gap until
-     * we get access to the Avro container on the C++ side.  When that happens
-     * they should be removed.
-     */
-
-    public byte[] getUUIDBuffer() {
-        return row.getUuid().bytes();
-    }
-
-    public Map<String, byte[]> getRowMap() {
-        return new TreeMap<String, byte[]>(getRecordsLegacy());
-    }
-
-    public byte[][] getValues() {
-        Map<String, byte[]> records = getRecordsLegacy();
-        return records.values().toArray(new byte[records.size()][]);
-    }
-
-    public String[] getKeys() {
-        Map<String, ByteBuffer> records = row.getRecords();
-        return records.keySet().toArray(new String[records.size()]);
     }
 }
