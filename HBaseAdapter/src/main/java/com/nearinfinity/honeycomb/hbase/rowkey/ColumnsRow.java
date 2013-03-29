@@ -1,7 +1,6 @@
 package com.nearinfinity.honeycomb.hbase.rowkey;
 
 import com.google.common.base.Preconditions;
-import com.nearinfinity.honeycomb.hbase.RowKey;
 import com.nearinfinity.honeycomb.hbase.VarEncoder;
 
 public class ColumnsRow implements RowKey {

@@ -1,4 +1,4 @@
-package com.nearinfinity.honeycomb.hbase;
+package com.nearinfinity.honeycomb.hbase.rowkey;
 
 public interface RowKey {
     public byte[] encode();
