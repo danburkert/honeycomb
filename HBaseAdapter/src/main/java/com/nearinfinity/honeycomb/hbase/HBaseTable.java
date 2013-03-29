@@ -113,6 +113,7 @@ public class HBaseTable implements Table {
 
         long totalDeleteSize = 0;
         final List<Delete> deleteList = Lists.newLinkedList();
+        final List<Delete> batchDeleteList = Lists.newLinkedList();
         final Map<String, IndexSchema> indexDetails = ImmutableMap.<String, IndexSchema>of(indexName, indexSchema);
 
         final Scanner rows = tableScan();
@@ -128,12 +129,16 @@ public class HBaseTable implements Table {
                 }
             });
 
+            batchDeleteList.addAll(deleteList);
+
             //TODO: Minimize the duplication of batch write logic between other methods
             totalDeleteSize += deleteList.size() * row.serialize().length;
             if (totalDeleteSize > writeBufferSize) {
-                HBaseOperations.performDelete(hTable, deleteList);
+                HBaseOperations.performDelete(hTable, batchDeleteList);
                 totalDeleteSize = 0;
             }
+
+            deleteList.clear();
         }
 
         Util.closeQuietly(rows);
@@ -168,6 +173,7 @@ public class HBaseTable implements Table {
     public void deleteAllRows() {
         long totalDeleteSize = 0;
         final List<Delete> deleteList = Lists.newLinkedList();
+        final List<Delete> batchDeleteList = Lists.newLinkedList();
         final Scanner rows = tableScan();
 
         while (rows.hasNext()) {
@@ -182,11 +188,15 @@ public class HBaseTable implements Table {
                 }
             });
 
+            batchDeleteList.addAll(deleteList);
+
             totalDeleteSize += deleteList.size() * row.serialize().length;
             if (totalDeleteSize > writeBufferSize) {
-                HBaseOperations.performDelete(hTable, deleteList);
+                HBaseOperations.performDelete(hTable, batchDeleteList);
                 totalDeleteSize = 0;
             }
+
+            deleteList.clear();
         }
 
         Util.closeQuietly(rows);
