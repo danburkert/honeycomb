@@ -136,6 +136,7 @@ public class HandlerProxy {
     /**
      * Set the auto increment value of the table to the max of value and the
      * current value.
+     *
      * @param value
      * @return
      */
@@ -170,7 +171,7 @@ public class HandlerProxy {
      * Add the provided index information to the table.  The table must be open
      * before this operation can be performed.
      *
-     * @param indexName The name of the index to add, not null or empty
+     * @param indexName        The name of the index to add, not null or empty
      * @param serializedSchema The byte representation of the {@link IndexSchema} for this index, not null
      */
     public void addIndex(String indexName, byte[] serializedSchema) {
@@ -266,11 +267,10 @@ public class HandlerProxy {
         checkNotNull(rowBytes);
         Row updatedRow = Row.deserialize(rowBytes);
         TableSchema schema = store.getSchema(tableName);
-        if (schema.getIndices().isEmpty()) {
-            table.update(updatedRow, ImmutableMap.<String, IndexSchema>of());
-        }
-
         Row oldRow = table.get(updatedRow.getUUID());
+        if (schema.getIndices().isEmpty()) {
+            table.update(oldRow, updatedRow, ImmutableMap.<String, IndexSchema>of());
+        }
 
         MapDifference<String, ByteBuffer> diff = Maps.difference(oldRow.getRecords(),
                 updatedRow.getRecords());
@@ -285,7 +285,7 @@ public class HandlerProxy {
             }
         }
 
-        table.update(updatedRow, changedIndices.build());
+        table.update(oldRow, updatedRow, changedIndices.build());
     }
 
     /**
