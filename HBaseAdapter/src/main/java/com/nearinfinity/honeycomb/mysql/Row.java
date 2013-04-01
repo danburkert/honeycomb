@@ -10,6 +10,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -127,5 +128,17 @@ public class Row {
             sb.append(Bytes.toStringBinary(entry.getValue()));
         }
         return sb.toString();
+    }
+
+    public boolean isRecordsEqual(Row other, Set<String> columns) {
+        Map<String, ByteBuffer> records = other.getRecords();
+        for (Map.Entry<String, ByteBuffer> entry : this.getRecords().entrySet()) {
+            ByteBuffer otherValue = records.get(entry.getKey());
+            if (columns.contains(entry.getKey()) && !entry.getValue().equals(otherValue)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
