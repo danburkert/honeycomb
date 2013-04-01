@@ -31,7 +31,6 @@ public class IndexRowBuilder {
     private UUID uuid;
 
     private IndexRowBuilder() {
-        throw new AssertionError();
     }
 
     /**
@@ -119,35 +118,37 @@ public class IndexRowBuilder {
         return new DescIndexRow(tableId, indexId, sortedRecords, uuid);
     }
 
-    private static List<byte[]> getValuesInColumnOrder(Map<String, byte[]> records, Collection<String> columns) {
-        List<byte[]> sortedRecords = new LinkedList<byte[]>();
-        for (String column : columns) {
+    private static List<byte[]> getValuesInColumnOrder(final Map<String, byte[]> records, final Collection<String> columns) {
+        final List<byte[]> sortedRecords = new LinkedList<byte[]>();
+        for (final String column : columns) {
             sortedRecords.add(records.get(column));
         }
+
         return sortedRecords;
     }
 
-    private static Map<String, byte[]> reverseRowValues(Map<String, byte[]> row) {
+    private static Map<String, byte[]> reverseRowValues(final Map<String, byte[]> row) {
         final ImmutableMap.Builder<String, byte[]> result = ImmutableMap.builder();
-        for (Map.Entry<String, byte[]> entry : row.entrySet()) {
+        for (final Map.Entry<String, byte[]> entry : row.entrySet()) {
             result.put(entry.getKey(), reverseValue(entry.getValue()));
         }
+
         return result.build();
     }
 
-    private static byte[] reverseValue(byte[] value) {
-        ByteBuffer buffer = ByteBuffer.allocate(value.length);
+    private static byte[] reverseValue(final byte[] value) {
+        final ByteBuffer buffer = ByteBuffer.allocate(value.length);
 
-        for (byte aValue : value) {
+        for (final byte aValue : value) {
             buffer.put((byte) (~aValue));
         }
 
         return buffer.array();
     }
 
-    private static Map<String, byte[]> encodeRow(Map<String, ByteBuffer> rows, Map<String, ColumnType> columnTypes) {
+    private static Map<String, byte[]> encodeRow(final Map<String, ByteBuffer> rows, final Map<String, ColumnType> columnTypes) {
         final ImmutableMap.Builder<String, byte[]> result = ImmutableMap.builder();
-        for (Map.Entry<String, ByteBuffer> entry : rows.entrySet()) {
+        for (final Map.Entry<String, ByteBuffer> entry : rows.entrySet()) {
             byte[] encodedValue = encodeValue(entry.getValue(), columnTypes.get(entry.getKey()));
             result.put(entry.getKey(), encodedValue);
         }
@@ -161,12 +162,12 @@ public class IndexRowBuilder {
                 case LONG:
                 case ULONG:
                 case TIME: {
-                    long longValue = value.getLong();
+                    final long longValue = value.getLong();
                     return Bytes.toBytes(longValue ^ INVERT_SIGN_MASK);
                 }
                 case DOUBLE: {
-                    double doubleValue = value.getDouble();
-                    long longValue = Double.doubleToLongBits(doubleValue);
+                    final double doubleValue = value.getDouble();
+                    final long longValue = Double.doubleToLongBits(doubleValue);
                     if (doubleValue < 0.0) {
                         return Bytes.toBytes(~longValue);
                     }
@@ -181,15 +182,17 @@ public class IndexRowBuilder {
         }
     }
 
+    /**
+     * Representation of the rowkey associated with an index in descending order for data row content
+     */
     private static class DescIndexRow extends IndexRow {
         private static final byte PREFIX = 0x08;
         private static final byte[] NOT_NULL_BYTES = {0x00};
         private static final byte[] NULL_BYTES = {0x01};
 
-        public DescIndexRow(long tableId, long indexId,
-                            List<byte[]> records, UUID uuid) {
-            super(tableId, indexId, records, uuid, PREFIX,
-                    NOT_NULL_BYTES, NULL_BYTES);
+        public DescIndexRow(final long tableId, final long indexId,
+                            final List<byte[]> records, final UUID uuid) {
+            super(tableId, indexId, records, uuid, PREFIX, NOT_NULL_BYTES, NULL_BYTES);
         }
 
         @Override
@@ -198,15 +201,17 @@ public class IndexRowBuilder {
         }
     }
 
+    /**
+     * Representation of the rowkey associated with an index in ascending order for data row content
+     */
     private static class AscIndexRow extends IndexRow {
         private static final byte PREFIX = 0x07;
         private static final byte[] NOT_NULL_BYTES = {0x01};
         private static final byte[] NULL_BYTES = {0x00};
 
-        public AscIndexRow(long tableId, long indexId,
-                           List<byte[]> records, UUID uuid) {
-            super(tableId, indexId, records, uuid, PREFIX,
-                    NOT_NULL_BYTES, NULL_BYTES);
+        public AscIndexRow(final long tableId, final long indexId,
+                           final List<byte[]> records, final UUID uuid) {
+            super(tableId, indexId, records, uuid, PREFIX, NOT_NULL_BYTES, NULL_BYTES);
         }
 
         @Override
