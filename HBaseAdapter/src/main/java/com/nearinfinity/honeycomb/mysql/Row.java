@@ -130,11 +130,10 @@ public class Row {
         return sb.toString();
     }
 
-    public boolean isRecordsEqual(Row other, Set<String> columns) {
+    public boolean isDuplicateForIndex(Row other, Set<String> columns) {
         Map<String, ByteBuffer> records = other.getRecords();
-        for (Map.Entry<String, ByteBuffer> entry : this.getRecords().entrySet()) {
-            ByteBuffer otherValue = records.get(entry.getKey());
-            if (columns.contains(entry.getKey()) && !entry.getValue().equals(otherValue)) {
+        for (String column : columns) {
+            if (!records.get(column).equals(this.getRecords().get(column))) {
                 return false;
             }
         }

@@ -232,8 +232,8 @@ public class HandlerProxy {
         try {
             while (scanner.hasNext()) {
                 Row next = scanner.next();
-                boolean isSameRow = next.getUUID().equals(row.getUUID()) || row.isRecordsEqual(next, columns);
-                if (isSameRow) {
+                boolean indexDuplicate = row.isDuplicateForIndex(next, columns);
+                if (indexDuplicate) {
                     return true;
                 }
             }
@@ -261,8 +261,13 @@ public class HandlerProxy {
         if (auto_inc_col != null) {
             ByteBuffer bb = row.getRecords().get(auto_inc_col);
             long auto_inc = bb.getLong();
+            long next_auto_inc = auto_inc + 1;
+            if (auto_inc > next_auto_inc) { // The autoincrement will wrap around. MySQL says don't wrap.
+                next_auto_inc = auto_inc;
+            }
+
             bb.rewind();
-            store.setAutoInc(tableName, auto_inc + 1);
+            store.setAutoInc(tableName, next_auto_inc);
         }
         table.insert(row);
     }
