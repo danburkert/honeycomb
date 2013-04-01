@@ -223,7 +223,7 @@ public class HandlerProxy {
 
         try {
             while (scanner.hasNext()) {
-                if (scanner.next().getUUID() != row.getUUID()) {
+                if (scanner.next().getUUID().equals(row.getUUID())) {
                     return true;
                 }
             }
@@ -319,13 +319,18 @@ public class HandlerProxy {
 
     public void startTableScan() {
         checkTableOpen();
-        checkState(currentScanner == null, "Previous scan should have ended before starting a new one.");
+        if (currentScanner != null) {
+            endScan();
+        }
+
         currentScanner = table.tableScan();
     }
 
     public void startIndexScan(byte[] indexKeys) {
         checkTableOpen();
-        checkState(currentScanner == null, "Previous scan should have ended before starting a new one.");
+        if (currentScanner != null) {
+            endScan();
+        }
         checkNotNull(indexKeys, "Index scan requires non-null key");
 
         IndexKey key = IndexKey.deserialize(indexKeys);
