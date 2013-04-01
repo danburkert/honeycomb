@@ -7,15 +7,30 @@ import com.nearinfinity.honeycomb.hbase.VarEncoder;
 import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.Verify;
 
+/**
+ * Representation of the rowkey associated with data row content
+ */
 public class DataRow implements RowKey {
     private static final byte PREFIX = 0x06;
     private final long tableId;
     private final UUID uuid;
 
+    /**
+     * Creates a data rowkey for the specified table identifier
+     *
+     * @param tableId The valid table id that this data row belongs to
+     */
     public DataRow(final long tableId) {
         this(tableId, null);
     }
 
+    /**
+     * Creates a data rowkey for the specified table identifier with the provided
+     * universally unique identifier
+     *
+     * @param tableId The valid table id that this data row belongs to
+     * @param uuid The {@link UUID} to associate with this data row
+     */
     public DataRow(final long tableId, final UUID uuid) {
         Verify.isValidTableId(tableId);
         this.tableId = tableId;
@@ -24,14 +39,13 @@ public class DataRow implements RowKey {
 
     @Override
     public byte[] encode() {
-        if (uuid != null) {
+        if( uuid != null ) {
             return VarEncoder.appendByteArraysWithPrefix(PREFIX,
                     VarEncoder.encodeULong(tableId),
                     Util.UUIDToBytes(uuid));
         }
 
-        return  VarEncoder.appendByteArraysWithPrefix(PREFIX,
-                VarEncoder.encodeULong(tableId));
+        return  VarEncoder.appendByteArraysWithPrefix(PREFIX, VarEncoder.encodeULong(tableId));
     }
 
     public long getTableId() {
