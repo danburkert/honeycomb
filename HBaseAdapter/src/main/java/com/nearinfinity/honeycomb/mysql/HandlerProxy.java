@@ -274,7 +274,10 @@ public class HandlerProxy {
 
         MapDifference<String, ByteBuffer> diff = Maps.difference(oldRow.getRecords(),
                 updatedRow.getRecords());
-        Set<String> changedColumns = diff.entriesDiffering().keySet();
+
+        Set<String> changedColumns = Sets.union(
+                diff.entriesDiffering().keySet(),
+                diff.entriesOnlyOnRight().keySet());
 
         ImmutableMap.Builder<String, IndexSchema> changedIndices = ImmutableMap.builder();
 
