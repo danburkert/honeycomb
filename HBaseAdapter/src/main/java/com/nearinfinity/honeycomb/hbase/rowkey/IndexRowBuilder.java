@@ -1,66 +1,122 @@
 package com.nearinfinity.honeycomb.hbase.rowkey;
 
-import com.google.common.collect.ImmutableMap;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
-import org.apache.hadoop.hbase.util.Bytes;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
+import org.apache.hadoop.hbase.util.Bytes;
+
+import com.google.common.collect.ImmutableMap;
+import com.nearinfinity.honeycomb.mysql.Verify;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
+
+/**
+ * A builder for creating {@link IndexRow} instances.  Builder instances can be reused as it is safe
+ * to call {@link #build} multiple times.
+ */
 public class IndexRowBuilder {
     private static final long INVERT_SIGN_MASK = 0x8000000000000000L;
     private long tableId;
     private long indexId;
-    private SortOrder order;
+    private SortOrder sortOrder;
     private Map<String, ByteBuffer> records;
     private Map<String, ColumnType> columnTypes;
     private Collection<String> columnOrder;
     private UUID uuid;
 
     private IndexRowBuilder() {
+        throw new AssertionError();
     }
 
-    public static IndexRowBuilder newBuilder(long tableId, long indexId) {
-        IndexRowBuilder builder = new IndexRowBuilder();
+    /**
+     * Creates a builder with the specified table and index identifiers using {@link SortOrder#Ascending}
+     * as the default sort order
+     *
+     * @param tableId The valid table id that the {@link IndexRow} will correspond to
+     * @param indexId The valid index id used to identify the {@link IndexRow}
+     * @return The current builder instance
+     */
+    public static IndexRowBuilder newBuilder(final long tableId, final long indexId) {
+        Verify.isValidTableId(tableId);
+        checkArgument(indexId >= 0, "The index id is invalid");
+        final IndexRowBuilder builder = new IndexRowBuilder();
         builder.tableId = tableId;
         builder.indexId = indexId;
-        builder.order = SortOrder.Ascending;
+        builder.sortOrder = SortOrder.Ascending;
         return builder;
     }
 
-    public IndexRowBuilder withSortOrder(SortOrder sortOrder) {
-        this.order = sortOrder;
+    /**
+     * Adds the specified {@link SortOrder} to the builder instance being constructed
+     *
+     * @param sortOrder The sort order to use during the build phase, not null
+     * @return The current builder instance
+     */
+    public IndexRowBuilder withSortOrder(final SortOrder sortOrder) {
+        checkNotNull(sortOrder);
+        this.sortOrder = sortOrder;
         return this;
     }
 
-    public IndexRowBuilder withUUID(UUID uuid) {
+    /**
+     *  Adds the specified {@link UUID} to the builder instance being constructed
+     *
+     * @param uuid The identifier to use during the build phase, not null
+     * @return The current builder instance
+     */
+    public IndexRowBuilder withUUID(final UUID uuid) {
+        checkNotNull(uuid);
         this.uuid = uuid;
         return this;
     }
 
-    public IndexRowBuilder withRecords(Map<String, ByteBuffer> records, Map<String, ColumnType> columnTypes, Collection<String> columnOrder) {
+    /**
+     * Adds the specified records and column metadata details to the builder
+     * instance being constructed
+     *
+     * @param records The records to associate with the index, not null
+     * @param columnTypes The column name to {@link ColumnType} mapping for the index, not null
+     * @param columnOrder The order of column names used for sorting the records. not null
+     * @return The current builder instance
+     */
+    public IndexRowBuilder withRecords(final Map<String, ByteBuffer> records,
+            final Map<String, ColumnType> columnTypes, final Collection<String> columnOrder) {
+        checkNotNull(records);
+        checkNotNull(columnTypes);
+        checkNotNull(columnOrder);
         this.records = records;
         this.columnTypes = columnTypes;
         this.columnOrder = columnOrder;
         return this;
     }
 
+    /**
+     * Creates an {@link IndexRow} instance with the parameters supplied to the builder
+     *
+     * @return A new row instance constructed by the builder
+     */
     public IndexRow build() {
         List<byte[]> sortedRecords = null;
-        if (this.records != null) {
-            Map<String, byte[]> encodedRow = encodeRow(this.records, this.columnTypes);
-            if (order == SortOrder.Descending) {
+        if (records != null) {
+            Map<String, byte[]> encodedRow = encodeRow(records, columnTypes);
+            if (sortOrder == SortOrder.Descending) {
                 encodedRow = reverseRowValues(encodedRow);
             }
 
-            sortedRecords = getValuesInColumnOrder(encodedRow, this.columnOrder);
+            sortedRecords = getValuesInColumnOrder(encodedRow, columnOrder);
         }
 
-        if (order == SortOrder.Ascending) {
-            return new AscIndexRow(this.tableId, this.indexId, sortedRecords, this.uuid);
+        if (sortOrder == SortOrder.Ascending) {
+            return new AscIndexRow(tableId, indexId, sortedRecords, uuid);
         }
 
-        return new DescIndexRow(this.tableId, this.indexId, sortedRecords, this.uuid);
+        return new DescIndexRow(tableId, indexId, sortedRecords, uuid);
     }
 
     private static List<byte[]> getValuesInColumnOrder(Map<String, byte[]> records, Collection<String> columns) {
