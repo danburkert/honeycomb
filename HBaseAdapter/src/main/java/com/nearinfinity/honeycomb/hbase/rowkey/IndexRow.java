@@ -1,32 +1,37 @@
 package com.nearinfinity.honeycomb.hbase.rowkey;
 
-import com.nearinfinity.honeycomb.hbase.VarEncoder;
-import com.nearinfinity.honeycomb.mysql.Util;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.List;
+import java.util.UUID;
+
+import com.google.common.base.Objects;
+import com.google.common.collect.Lists;
+import com.nearinfinity.honeycomb.hbase.VarEncoder;
+import com.nearinfinity.honeycomb.mysql.Util;
+import com.nearinfinity.honeycomb.mysql.Verify;
+
+/**
+ * Representation of the rowkey used to define the indexed column details for data row content
+ */
 public abstract class IndexRow implements RowKey {
     private final byte prefix;
     private final long tableId;
     private final long indexId;
     private final byte[] notNullBytes;
     private final byte[] nullBytes;
-    private UUID uuid;
-    private List<byte[]> records;
+    private final UUID uuid;
+    private final List<byte[]> records;
 
-    protected IndexRow(long tableId,
-                       long indexId,
-                       List<byte[]> records,
-                       UUID uuid,
-                       byte prefix,
-                       byte[] notNullBytes,
-                       byte[] nullBytes) {
-        checkArgument(tableId >= 0, "Table ID must be non-zero.");
+    protected IndexRow(final long tableId,
+                       final long indexId,
+                       final List<byte[]> records,
+                       final UUID uuid,
+                       final byte prefix,
+                       final byte[] notNullBytes,
+                       final byte[] nullBytes) {
+        Verify.isValidTableId(tableId);
         checkArgument(indexId >= 0, "Index ID must be non-zero.");
         checkNotNull(prefix, "Prefix cannot be null");
         checkNotNull(notNullBytes, "Not null bytes cannot be null");
@@ -42,14 +47,14 @@ public abstract class IndexRow implements RowKey {
 
     @Override
     public byte[] encode() {
-        byte[] prefixBytes = {prefix};
-        List<byte[]> encodedParts = new ArrayList<byte[]>();
+        final byte[] prefixBytes = {prefix};
+        final List<byte[]> encodedParts = Lists.newArrayList();
         encodedParts.add(prefixBytes);
         encodedParts.add(VarEncoder.encodeULong(tableId));
         encodedParts.add(VarEncoder.encodeULong(indexId));
 
         if (records != null) {
-            for (byte[] record : records) {
+            for (final byte[] record : records) {
                 if (record == null) {
                     encodedParts.add(nullBytes);
                 } else {
@@ -61,6 +66,7 @@ public abstract class IndexRow implements RowKey {
         if (uuid != null) {
             encodedParts.add(Util.UUIDToBytes(uuid));
         }
+
         return VarEncoder.appendByteArrays(encodedParts);
     }
 
@@ -89,25 +95,22 @@ public abstract class IndexRow implements RowKey {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder("[");
-        sb.append(String.format("%02X", prefix));
-        sb.append("\t");
-        sb.append(tableId);
-        sb.append("\t");
-        sb.append(indexId);
-        sb.append("\t");
-        sb.append(records == null ? "" : recordValueStrings());
-        sb.append("\t");
-        sb.append(uuid == null ? "" : Util.generateHexString(Util.UUIDToBytes(uuid)));
-        sb.append("]");
-        return sb.toString();
+        return Objects.toStringHelper(this.getClass())
+                .add("Prefix", String.format("%02X", prefix))
+                .add("TableId", tableId)
+                .add("IndexId", indexId)
+                .add("Records", records == null ? "" : recordValueStrings())
+                .add("UUID", uuid == null ? "" : Util.generateHexString(Util.UUIDToBytes(uuid)))
+                .toString();
     }
 
     private List<String> recordValueStrings() {
-        List<String> strings = new ArrayList<String>();
-        for (byte[] bytes : records) {
+        final List<String> strings = Lists.newArrayList();
+
+        for (final byte[] bytes : records) {
             strings.add((bytes == null) ? "null" : Util.generateHexString(bytes));
         }
+
         return strings;
     }
 }
