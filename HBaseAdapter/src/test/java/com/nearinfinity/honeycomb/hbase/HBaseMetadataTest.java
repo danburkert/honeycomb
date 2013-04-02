@@ -42,6 +42,9 @@ public class HBaseMetadataTest {
     private static final String COLUMN_NAME = "columnA";
     private static final String INDEX_NAME = "indexA";
 
+    private static final long INVALID_TABLE_ID = -1;
+
+
     @Mock
     private HTableProvider provider;
 
@@ -91,8 +94,7 @@ public class HBaseMetadataTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testLookupIndexIdsInvalidTableId() {
-        final long invalidTableId = -1;
-        hbaseMetadata.getIndexIds(invalidTableId);
+        hbaseMetadata.getIndexIds(INVALID_TABLE_ID);
     }
 
     @Test
@@ -110,8 +112,7 @@ public class HBaseMetadataTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testLookupColumnIdsInvalidTableId() {
-        final long invalidTableId = -1;
-        hbaseMetadata.getColumnIds(invalidTableId);
+        hbaseMetadata.getColumnIds(INVALID_TABLE_ID);
     }
 
     @Test
@@ -127,6 +128,32 @@ public class HBaseMetadataTest {
         final Map<String, Long> tableColumns = hbaseMetadata.getColumnIds(tableId);
         assertEquals(1, tableColumns.size());
         assertTrue(tableColumns.containsKey(COLUMN_NAME));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testLookupTableSchemaInvalidTableId() {
+        hbaseMetadata.getSchema(INVALID_TABLE_ID);
+    }
+
+    @Test(expected = TableNotFoundException.class)
+    public void testLookupTableSchemaUnknownTableId() {
+        final long unknownTableId = 2;
+        hbaseMetadata.getSchema(unknownTableId);
+    }
+
+    @Test
+    public void testLookupTableSchemaValidTableId() {
+        final Map<String, ColumnSchema> columns = ImmutableMap.<String, ColumnSchema>of(
+                COLUMN_NAME, new ColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
+
+        final TableSchema tableSchema = new TableSchema(columns, ImmutableMap.<String, IndexSchema>of());
+
+        hbaseMetadata.createTable(TABLE_NAME, tableSchema);
+        final long tableId = hbaseMetadata.getTableId(TABLE_NAME);
+
+        final TableSchema schemaTwo = hbaseMetadata.getSchema(tableId);
+        assertEquals(1, schemaTwo.getColumns().size());
+        assertTrue(schemaTwo.getColumns().containsKey(COLUMN_NAME));
     }
 
     @Test
