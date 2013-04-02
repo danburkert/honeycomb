@@ -104,7 +104,7 @@ public class MetadataCache {
      * @return BiMap of column name to column ID
      */
     public BiMap<String, Long> columnsCacheGet(final long tableId) {
-        Verify.isValidTableId(tableId);
+        Verify.isValidId(tableId);
         return cacheGet(columnsCache, tableId);
     }
 
@@ -115,7 +115,7 @@ public class MetadataCache {
      * @return Table schema
      */
     public TableSchema schemaCacheGet(final long tableId) {
-        Verify.isValidTableId(tableId);
+        Verify.isValidId(tableId);
         return cacheGet(schemaCache, tableId);
     }
 
@@ -126,7 +126,7 @@ public class MetadataCache {
      * @return Map of index name to index ID
      */
     public Map<String, Long> indicesCacheGet(Long tableId) {
-        Verify.isValidTableId(tableId);
+        Verify.isValidId(tableId);
         return cacheGet(indicesCache, tableId);
     }
 
@@ -137,7 +137,7 @@ public class MetadataCache {
      * @return Auto increment count
      */
     public Long autoIncCacheGet(Long tableId) {
-        Verify.isValidTableId(tableId);
+        Verify.isValidId(tableId);
         return cacheGet(autoIncCache, tableId);
     }
 
@@ -148,7 +148,7 @@ public class MetadataCache {
      * @return Table row count
      */
     public Long rowsCacheGet(final long tableId) {
-        Verify.isValidTableId(tableId);
+        Verify.isValidId(tableId);
         return cacheGet(rowsCache, tableId);
     }
 
@@ -159,7 +159,7 @@ public class MetadataCache {
      * @param value   New row count
      */
     public void updateRowsCache(final long tableId, long value) {
-        Verify.isValidTableId(tableId);
+        Verify.isValidId(tableId);
         rowsCache.put(tableId, value);
     }
 
@@ -169,7 +169,7 @@ public class MetadataCache {
      * @param tableId Table ID
      */
     public void invalidateRowsCache(long tableId) {
-        Verify.isValidTableId(tableId);
+        Verify.isValidId(tableId);
         rowsCache.invalidate(tableId);
     }
 
@@ -180,7 +180,7 @@ public class MetadataCache {
      * @param tableId Table ID
      */
     public void invalidateIndicesCache(long tableId) {
-        Verify.isValidTableId(tableId);
+        Verify.isValidId(tableId);
         indicesCache.invalidate(tableId);
     }
 
@@ -191,7 +191,7 @@ public class MetadataCache {
      * @param tableId Table ID
      */
     public void invalidateSchemaCache(long tableId) {
-        Verify.isValidTableId(tableId);
+        Verify.isValidId(tableId);
         schemaCache.invalidate(tableId);
     }
 
@@ -202,7 +202,7 @@ public class MetadataCache {
      * @param tableId Table ID
      */
     public void invalidateColumnsCache(long tableId) {
-        Verify.isValidTableId(tableId);
+        Verify.isValidId(tableId);
         columnsCache.invalidate(tableId);
     }
 
@@ -222,7 +222,7 @@ public class MetadataCache {
      * @param tableId Table ID
      */
     public void invalidateAutoIncCache(long tableId) {
-        Verify.isValidTableId(tableId);
+        Verify.isValidId(tableId);
         autoIncCache.invalidate(tableId);
     }
 
@@ -233,7 +233,7 @@ public class MetadataCache {
      * @param value   New auto increment value
      */
     public void updateAutoIncCache(long tableId, long value) {
-        Verify.isValidTableId(tableId);
+        Verify.isValidId(tableId);
         autoIncCache.put(tableId, value);
     }
 

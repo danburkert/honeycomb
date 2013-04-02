@@ -3,10 +3,13 @@ package com.nearinfinity.honeycomb.hbase;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.primitives.Longs;
 import com.google.common.primitives.UnsignedBytes;
 import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowBuilder;
 import com.nearinfinity.honeycomb.hbase.rowkey.SortOrder;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
+import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.collection.Pair;
 import net.java.quickcheck.generator.PrimitiveGenerators;
@@ -52,8 +55,8 @@ public class EncodingTest {
         List<Pair<Long, byte[]>> rows = Lists.newArrayList();
         Generator<Long> longs = PrimitiveGenerators.longs();
         Map<String, ByteBuffer> records = Maps.newHashMap();
-        Map<String, ColumnType> columnTypeMap = Maps.newHashMap();
-        columnTypeMap.put("c1", ColumnType.LONG);
+        Map<String, ColumnSchema> columnSchemas = Maps.newHashMap();
+        columnSchemas.put("c1", ColumnSchema.newBuilder().setType(ColumnType.LONG).build());
         List<String> columnOrder = Lists.newArrayList();
         columnOrder.add("c1");
 
@@ -63,10 +66,10 @@ public class EncodingTest {
 
         for (long number : numbers) {
             records.put("c1",
-                    (ByteBuffer) ByteBuffer.allocate(Long.SIZE / 8).putLong(number).rewind());
+                    (ByteBuffer) ByteBuffer.wrap(Longs.toByteArray(number)));
             rows.add(new Pair<Long, byte[]>(number, builder
                     .withUUID(UUID.randomUUID())
-                    .withRecords(records, columnTypeMap, columnOrder)
+                    .withRecords(records, new IndexSchema(columnOrder, false), columnSchemas)
                     .build().encode()));
         }
         return rows;

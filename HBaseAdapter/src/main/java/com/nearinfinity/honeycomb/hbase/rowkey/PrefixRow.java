@@ -1,13 +1,13 @@
 package com.nearinfinity.honeycomb.hbase.rowkey;
 
+import com.google.common.base.Objects;
+
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.base.Objects;
-
-
 /**
- * Representation of a rowkey that contains only the row prefix identifier
+ * Super class for rowkeys that only occur once, ie,
+ * rowkeys that are shared across all tables.
  */
 public abstract class PrefixRow implements RowKey {
     private final byte[] rowKey;
@@ -38,5 +38,10 @@ public abstract class PrefixRow implements RowKey {
         return Objects.toStringHelper(this.getClass())
                 .add("Prefix", String.format("%02X", getPrefix()))
                 .toString();
+    }
+
+    @Override
+    public int compareTo(RowKey o) {
+        return getPrefix() - o.getPrefix();
     }
 }

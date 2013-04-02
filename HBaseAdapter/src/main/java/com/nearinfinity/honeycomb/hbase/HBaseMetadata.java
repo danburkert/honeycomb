@@ -91,7 +91,7 @@ public class HBaseMetadata {
      * @return The indices mapping details for the table
      */
     public Map<String, Long> getIndexIds(final long tableId) {
-        Verify.isValidTableId(tableId);
+        Verify.isValidId(tableId);
 
         return getNameToIdMap(new IndicesRow(tableId).encode());
     }
@@ -104,7 +104,7 @@ public class HBaseMetadata {
      * @return The columns mapping details for the table
      */
     public BiMap<String, Long> getColumnIds(final long tableId) {
-        Verify.isValidTableId(tableId);
+        Verify.isValidId(tableId);
 
         final Map<String, Long> nameToId = getNameToIdMap(new ColumnsRow(tableId).encode());
         return ImmutableBiMap.copyOf(nameToId);
@@ -117,7 +117,7 @@ public class HBaseMetadata {
      * @return The table schema details for the table
      */
     public TableSchema getSchema(final long tableId) {
-        Verify.isValidTableId(tableId);
+        Verify.isValidId(tableId);
 
         final byte[] serializedTableId = serializeId(tableId);
         final Get get = new Get(new SchemaRow().encode());
@@ -174,7 +174,7 @@ public class HBaseMetadata {
      */
     public void createTableIndex(final long tableId, final String indexName,
             final IndexSchema indexSchema) {
-        Verify.isValidTableId(tableId);
+        Verify.isValidId(tableId);
         Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
         checkNotNull(indexSchema, "The index schema is invalid");
 
@@ -201,7 +201,7 @@ public class HBaseMetadata {
      * @param indexName The identifying name of the index, not null or empty
      */
     public void deleteTableIndex(final long tableId, final String indexName) {
-        Verify.isValidTableId(tableId);
+        Verify.isValidId(tableId);
         Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
 
         final List<Put> puts = Lists.newArrayList();
@@ -270,18 +270,18 @@ public class HBaseMetadata {
     }
 
     public long getAutoInc(long tableId) {
-        Verify.isValidTableId(tableId);
+        Verify.isValidId(tableId);
         return getCounter(new AutoIncRow().encode(), serializeId(tableId));
     }
 
     public long incrementAutoInc(long tableId, long amount) {
-        Verify.isValidTableId(tableId);
+        Verify.isValidId(tableId);
         return incrementCounter(new AutoIncRow().encode(),
                 serializeId(tableId), amount);
     }
 
     public void setAutoInc(long tableId, long value) {
-        Verify.isValidTableId(tableId);
+        Verify.isValidId(tableId);
         Put put = new Put(new AutoIncRow().encode());
         put.add(COLUMN_FAMILY, serializeId(tableId), Bytes.toBytes(value));
         HTableInterface hTable = getHTable();
@@ -293,17 +293,17 @@ public class HBaseMetadata {
     }
 
     public long getRowCount(long tableId) {
-        Verify.isValidTableId(tableId);
+        Verify.isValidId(tableId);
         return getCounter(new RowsRow().encode(), serializeId(tableId));
     }
 
     public long incrementRowCount(long tableId, long amount) {
-        Verify.isValidTableId(tableId);
+        Verify.isValidId(tableId);
         return incrementCounter(new RowsRow().encode(), serializeId(tableId), amount);
     }
 
     public void truncateRowCount(long tableId) {
-        Verify.isValidTableId(tableId);
+        Verify.isValidId(tableId);
         performMutations(Lists.<Delete>newArrayList(deleteRowsCounter(tableId)),
                 ImmutableList.<Put>of());
     }

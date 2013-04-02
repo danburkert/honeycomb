@@ -1,17 +1,15 @@
 package com.nearinfinity.honeycomb.mysql.generators;
 
-import java.util.List;
-import java.util.Map;
-
+import com.google.common.collect.Lists;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.CombinedGenerators;
 import net.java.quickcheck.generator.PrimitiveGenerators;
 import net.java.quickcheck.generator.distribution.Distribution;
 
-import com.google.common.collect.Lists;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
-import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import java.util.Map;
 
 public class TableSchemaGenerator implements Generator<TableSchema> {
     /**
@@ -24,7 +22,14 @@ public class TableSchemaGenerator implements Generator<TableSchema> {
      * Maximum number of columns per table
      * @see <a href="https://dev.mysql.com/doc/refman/5.5/en/column-count-limit.html">https://dev.mysql.com/doc/refman/5.5/en/column-count-limit.html</a>
      */
-    public static final int MYSQL_MAX_COLUMNS = 4096;
+//    public static final int MYSQL_MAX_COLUMNS = 4096;
+    public static final int MYSQL_MAX_COLUMNS = 32; // Set artificially low so tests are fast
+
+    /**
+     * Maximum number of indices per table
+     * @see <a href="// https://dev.mysql.com/doc/refman/5.5/en/column-indexes.html">MySQL documentation</a>
+     */
+    public static final int MYSQL_MAX_INDICES = 16;
 
     public static final Generator<String> MYSQL_NAME_GEN =
             CombinedGenerators.uniqueValues(PrimitiveGenerators.strings(1, MYSQL_MAX_NAME_LENGTH));
@@ -35,16 +40,25 @@ public class TableSchemaGenerator implements Generator<TableSchema> {
             CombinedGenerators.maps(MYSQL_NAME_GEN, COLUMN_SCHEMA_GEN,
                     PrimitiveGenerators.integers(1, MYSQL_MAX_COLUMNS, Distribution.POSITIV_NORMAL));
 
-    private static final Generator<Integer> NUM_INDICES_GEN = PrimitiveGenerators.integers(0, 16); // https://dev.mysql.com/doc/refman/5.5/en/column-indexes.html
+    private final Generator<Integer> numIndicesGen;
+
+    public TableSchemaGenerator() {
+        super();
+        this.numIndicesGen = PrimitiveGenerators.integers(0, MYSQL_MAX_INDICES);
+    }
+
+    public TableSchemaGenerator(int minNumIndices) {
+        super();
+        this.numIndicesGen = PrimitiveGenerators.integers(minNumIndices, MYSQL_MAX_INDICES);
+    }
 
     @Override
     public TableSchema next() {
         final Map<String, ColumnSchema> columnSchemas = COLUMNS_GEN.next();
-        final List<String> columns = Lists.newArrayList(columnSchemas.keySet());
 
         final Generator<Map<String, IndexSchema>> indexGen = CombinedGenerators.maps(MYSQL_NAME_GEN,
-                new IndexSchemaGenerator(columns), NUM_INDICES_GEN);
+                new IndexSchemaGenerator(Lists.newArrayList(columnSchemas.keySet())), numIndicesGen);
 
-        return new TableSchema(COLUMNS_GEN.next(), indexGen.next());
+        return new TableSchema(columnSchemas, indexGen.next());
     }
 }

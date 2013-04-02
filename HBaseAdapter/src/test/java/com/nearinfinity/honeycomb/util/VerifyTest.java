@@ -19,12 +19,12 @@ public class VerifyTest {
 
     @Test
     public void testIsValidTableId() {
-        Verify.isValidTableId(0);
+        Verify.isValidId(0);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testIsValidTableIdInvalidId() {
-        Verify.isValidTableId(-1);
+        Verify.isValidId(-1);
     }
 
     @Test(expected = NullPointerException.class)

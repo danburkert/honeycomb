@@ -38,26 +38,6 @@ public class VarEncoder {
         return value;
     }
 
-    public static byte[] encodeBytes(final byte[] value) {
-        checkNotNull(value);
-        byte[] length = encodeULong(value.length);
-        return ByteBuffer
-                .allocate(length.length + value.length)
-                .put(length)
-                .put(value)
-                .array();
-    }
-
-    public static byte[] decodeBytes(final byte[] bytes) {
-        checkNotNull(bytes);
-        checkArgument(bytes.length > 0);
-        int start = bytes[0] + 1;
-        int length = bytes.length - start;
-        byte[] decodedBytes = new byte[length];
-        System.arraycopy(bytes, start, decodedBytes, 0, length);
-        return decodedBytes;
-    }
-
     public static byte[] appendByteArrays(List<byte[]> arrays) {
         checkNotNull(arrays);
         int size = 0;

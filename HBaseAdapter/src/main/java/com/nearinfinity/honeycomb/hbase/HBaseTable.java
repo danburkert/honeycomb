@@ -38,7 +38,7 @@ public class HBaseTable implements Table {
 
     @Inject
     public HBaseTable(HTableInterface hTable, HBaseStore store, @Assisted Long tableId) {
-        Verify.isValidTableId(tableId);
+        Verify.isValidId(tableId);
         this.hTable = checkNotNull(hTable);
         this.store = checkNotNull(store);
         this.tableId = tableId;
@@ -179,8 +179,10 @@ public class HBaseTable implements Table {
                 .withSortOrder(SortOrder.Ascending)
                 .build();
 
+        long indexId = store.getIndices(tableId).get(key.getIndexName());
+
         IndexRow endRow = IndexRowBuilder
-                .newBuilder(tableId, startRow.getIndexId() + 1)
+                .newBuilder(tableId, indexId + 1)
                 .withSortOrder(SortOrder.Ascending)
                 .build();
         return createScannerForRange(startRow.encode(), endRow.encode());
@@ -193,8 +195,10 @@ public class HBaseTable implements Table {
                 .withUUID(Constants.FULL_UUID)
                 .build();
 
+        long indexId = store.getIndices(tableId).get(key.getIndexName());
+
         IndexRow endRow = IndexRowBuilder
-                .newBuilder(tableId, startRow.getIndexId() + 1)
+                .newBuilder(tableId, indexId + 1)
                 .withSortOrder(SortOrder.Ascending)
                 .build();
         return createScannerForRange(padKeyForSorting(startRow.encode()), endRow.encode());
@@ -206,8 +210,10 @@ public class HBaseTable implements Table {
                 .withSortOrder(SortOrder.Descending)
                 .build();
 
+        long indexId = store.getIndices(tableId).get(key.getIndexName());
+
         IndexRow endRow = IndexRowBuilder
-                .newBuilder(tableId, startRow.getIndexId() + 1)
+                .newBuilder(tableId, indexId + 1)
                 .withSortOrder(SortOrder.Descending)
                 .build();
         return createScannerForRange(startRow.encode(), endRow.encode());
@@ -220,8 +226,10 @@ public class HBaseTable implements Table {
                 .withUUID(Constants.FULL_UUID)
                 .build();
 
+        long indexId = store.getIndices(tableId).get(key.getIndexName());
+
         IndexRow endRow = IndexRowBuilder
-                .newBuilder(tableId, startRow.getIndexId() + 1)
+                .newBuilder(tableId, indexId + 1)
                 .withSortOrder(SortOrder.Descending)
                 .build();
         return createScannerForRange(padKeyForSorting(startRow.encode()), endRow.encode());
@@ -240,15 +248,6 @@ public class HBaseTable implements Table {
     @Override
     public void close() {
         Util.closeQuietly(hTable);
-    }
-
-    private static Map<String, ColumnType> getColumnTypesForSchema(TableSchema schema) {
-        final ImmutableMap.Builder<String, ColumnType> result = ImmutableMap.builder();
-        for (Map.Entry<String, ColumnSchema> entry : schema.getColumns().entrySet()) {
-            result.put(entry.getKey(), entry.getValue().getType());
-        }
-
-        return result.build();
     }
 
     private static Put createEmptyQualifierPut(RowKey row, byte[] serializedRow) {
@@ -317,7 +316,7 @@ public class HBaseTable implements Table {
             IndexRowBuilder builder = IndexRowBuilder
                     .newBuilder(tableId, indexId)
                     .withUUID(row.getUUID())
-                    .withRecords(records, getColumnTypesForSchema(schema), index.getValue().getColumns());
+                    .withRecords(records, index.getValue(), schema.getColumns());
             action.execute(builder);
         }
     }
@@ -333,7 +332,8 @@ public class HBaseTable implements Table {
             return indexRowBuilder;
         }
 
-        return indexRowBuilder.withRecords(key.getKeys(), getColumnTypesForSchema(schema), indexSchema.getColumns());
+        return indexRowBuilder
+                .withRecords(key.getKeys(), indexSchema, schema.getColumns());
     }
 
     private Scanner createScannerForRange(byte[] start, byte[] end) {

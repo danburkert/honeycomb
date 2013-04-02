@@ -1,17 +1,23 @@
 package com.nearinfinity.honeycomb.hbase;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.primitives.UnsignedBytes;
 import com.nearinfinity.honeycomb.hbase.generators.RowKeyGenerator;
-import com.nearinfinity.honeycomb.hbase.rowkey.*;
-import com.nearinfinity.honeycomb.mysql.Util;
+import com.nearinfinity.honeycomb.hbase.rowkey.RowKey;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
+import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.iterable.Iterables;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 public class RowKeyTest {
@@ -26,7 +32,7 @@ public class RowKeyTest {
             encodedRowKeys.add(rowKey.encode());
         }
 
-        Collections.sort(rowKeys, new RowKeyComparator());
+        Collections.sort(rowKeys);
         Collections.sort(encodedRowKeys, UnsignedBytes.lexicographicalComparator());
 
         for (int i = 0; i < rowKeys.size(); i++) {
@@ -37,90 +43,39 @@ public class RowKeyTest {
         }
     }
 
-    private class RowKeyComparator implements Comparator<RowKey> {
-        @Override
-        public int compare(RowKey row1, RowKey row2) {
-            Class row1Class = row1.getClass();
-            int classCompare = row1.getPrefix() - row2.getPrefix();
-            if (classCompare != 0) {
-                return classCompare;
-            }
+    @Test
+    public void testIndexRowKeyStrings() {
+        String columnName = "c1";
+        String indexName = "i1";
+        ColumnSchema columnSchema = ColumnSchema.newBuilder()
+                .setType(ColumnType.DATETIME).build();
+        IndexSchema indexSchema = IndexSchema.newBuilder()
+                .setColumns(ImmutableList.of(columnName))
+                .setIsUnique(false)
+                .build();
+        TableSchema tableSchema = TableSchema.newBuilder()
+                .setColumns(ImmutableMap.of(columnName, columnSchema))
+                .setIndices(ImmutableMap.of(indexName, indexSchema))
+                .build();
 
-            if (row1 instanceof PrefixRow) {
-                return 0;
-            } else if (row1 instanceof ColumnsRow) {
-                return ColumnsRowCompare((ColumnsRow) row1, (ColumnsRow) row2);
-            } else if (row1Class == DataRow.class) {
-                return dataRowCompare((DataRow) row1, (DataRow) row2);
-            } else if (row1 instanceof IndexRow) {
-                IndexRow indexRow = (IndexRow) row1;
-                IndexRow indexRow2 = (IndexRow) row2;
-                if (indexRow.getSortOrder() == SortOrder.Ascending) {
-                    return indexCompare(indexRow, indexRow2, -1);
-                }
-                return indexCompare(indexRow, indexRow2, 1);
-            }
+        Generator<RowKey> rowkeysGen = RowKeyGenerator.getAscIndexRowKeyGenerator(tableSchema);
+        List<RowKey> rowkeys = Lists.newArrayList(Iterables.toIterable(rowkeysGen));
+        Collections.sort(rowkeys);
 
-            throw new IllegalArgumentException("Not a valid row key");
+        List<byte[]> encodedRowkeys = Lists.newArrayList();
+        for (RowKey rowkey : rowkeys) {
+            encodedRowkeys.add(rowkey.encode());
         }
 
-        private int ColumnsRowCompare(ColumnsRow row1, ColumnsRow row2) {
-            return Long.signum(row1.getTableId() - row2.getTableId());
-        }
+        Collections.sort(encodedRowkeys, new Bytes.ByteArrayComparator());
 
-        private int dataRowCompare(DataRow row1, DataRow row2) {
-            int tableCompare = Long.signum(row1.getTableId() - row2.getTableId());
-            if (tableCompare != 0) {
-                return tableCompare;
-            }
-            return UnsignedBytes.lexicographicalComparator().compare(
-                    Util.UUIDToBytes(row1.getUuid()),
-                    Util.UUIDToBytes(row2.getUuid()));
-        }
+        for (int i = 0; i < rowkeys.size(); i++) {
+            RowKey rowKey = rowkeys.get(i);
+            byte[] encodedRowKey = encodedRowkeys.get(i);
 
-        private int indexCompare(IndexRow row1, IndexRow row2, int nullOrder) {
-            int compare;
-            compare = Long.signum(row1.getTableId() - row2.getTableId());
-            if (compare != 0) {
-                return compare;
-            }
-            compare = Long.signum(row1.getIndexId() - row2.getIndexId());
-            if (compare != 0) {
-                return compare;
-            }
-            compare = recordsCompare(row1.getRecords(), row2.getRecords(), nullOrder);
-            if (compare != 0) {
-                return compare;
-            }
-            return UnsignedBytes.lexicographicalComparator().compare(
-                    Util.UUIDToBytes(row1.getUuid()),
-                    Util.UUIDToBytes(row2.getUuid()));
-        }
-
-        private int recordsCompare(List<byte[]> records1, List<byte[]> records2, int nullOrder) {
-            byte[] value1, value2;
-            int compare;
-            if (records1.size() != records2.size()) {
-                throw new IllegalArgumentException("Number of records in indices must match.");
-            }
-            for (int i = 0; i < records1.size(); i++) {
-                value1 = records1.get(i);
-                value2 = records2.get(i);
-                if (value1 == value2) {
-                    continue;
-                }
-                if (value1 == null) {
-                    return nullOrder;
-                }
-                if (value2 == null) {
-                    return nullOrder * -1;
-                }
-                compare = new ByteArrayComparator().compare(value1, value2);
-                if (compare != 0) {
-                    return compare;
-                }
-            }
-            return 0;
+            Assert.assertArrayEquals(encodedRowKey, rowKey.encode());
         }
     }
+
+
 }
