@@ -308,8 +308,9 @@ public class HBaseMetadata {
         }
     }
 
-    private long incrementCounter(byte[] row, byte[] identifier, long amount) {
-        HTableInterface hTable = getHTable();
+    private long incrementCounter(final byte[] row, final byte[] identifier, final long amount) {
+        final HTableInterface hTable = getHTable();
+
         try {
             return HBaseOperations.performIncrementColumnValue(hTable, row, COLUMN_FAMILY, identifier, amount);
         } finally {
@@ -318,33 +319,15 @@ public class HBaseMetadata {
     }
 
     private long getNextTableId() {
-        HTableInterface hTable = getHTable();
-        try {
-            return HBaseOperations.performIncrementColumnValue(hTable, new TablesRow().encode(),
-                    COLUMN_FAMILY, new byte[0], 1);
-        } finally {
-            HBaseOperations.closeTable(hTable);
-        }
+        return incrementCounter(new TablesRow().encode(), new byte[0], 1);
     }
 
-    private long getNextIndexId(long tableId, int n) {
-        HTableInterface hTable = getHTable();
-        try {
-            return HBaseOperations.performIncrementColumnValue(hTable, new IndicesRow(tableId).encode(),
-                    COLUMN_FAMILY, new byte[0], n);
-        } finally {
-            HBaseOperations.closeTable(hTable);
-        }
+    private long getNextIndexId(final long tableId, final int n) {
+        return incrementCounter(new IndicesRow(tableId).encode(), new byte[0], n);
     }
 
-    private long getNextColumnId(long tableId, int n) {
-        HTableInterface hTable = getHTable();
-        try {
-            return HBaseOperations.performIncrementColumnValue(hTable, new ColumnsRow(tableId).encode(),
-                    COLUMN_FAMILY, new byte[0], n);
-        } finally {
-            HBaseOperations.closeTable(hTable);
-        }
+    private long getNextColumnId(final long tableId, final int n) {
+        return incrementCounter(new ColumnsRow(tableId).encode(), new byte[0], n);
     }
 
     private Delete deleteTableId(String tableName) {
