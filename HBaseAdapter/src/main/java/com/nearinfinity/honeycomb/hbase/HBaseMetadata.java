@@ -1,27 +1,42 @@
 package com.nearinfinity.honeycomb.hbase;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.util.Bytes;
+
 import com.google.common.base.Charsets;
-import com.google.common.collect.*;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.ImmutableBiMap;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.nearinfinity.honeycomb.config.Constants;
 import com.nearinfinity.honeycomb.exceptions.TableNotFoundException;
-import com.nearinfinity.honeycomb.hbase.rowkey.*;
+import com.nearinfinity.honeycomb.hbase.rowkey.AutoIncRow;
+import com.nearinfinity.honeycomb.hbase.rowkey.ColumnsRow;
+import com.nearinfinity.honeycomb.hbase.rowkey.IndicesRow;
+import com.nearinfinity.honeycomb.hbase.rowkey.RowsRow;
+import com.nearinfinity.honeycomb.hbase.rowkey.SchemaRow;
+import com.nearinfinity.honeycomb.hbase.rowkey.TablesRow;
 import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import com.nearinfinity.honeycomb.util.Verify;
-
-import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.util.Bytes;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static com.google.common.base.Preconditions.*;
 
 /**
  * Manages writing and reading table & column schemas, table & column ids, and
@@ -87,17 +102,29 @@ public class HBaseMetadata {
         }
     }
 
+    /**
+     * Performs all metadata operations necessary to create a table
+     *
+     * @param tableName The name of the table to create, not null or empty
+     * @param schema The schema details of the table to create, not null
+     */
     public void createTable(String tableName, TableSchema schema) {
         Verify.isNotNullOrEmpty(tableName);
         checkNotNull(schema);
-        long tableId = getNextTableId();
-        List<Put> puts = new ArrayList<Put>();
+
+        final List<Put> puts = Lists.newArrayList();
+
+        // Fetch the next table id to use for this table
+        final long tableId = getNextTableId();
+
         puts.add(putTableId(tableName, tableId));
         puts.add(putColumnIds(tableId, schema.getColumns()));
         puts.add(putTableSchema(tableId, schema));
-        if (!schema.getIndices().isEmpty()) {
+
+        if( !schema.getIndices().isEmpty() ) {
             puts.add(putIndices(tableId, schema.getIndices()));
         }
+
         performMutations(ImmutableList.<Delete>of(), puts);
     }
 
@@ -157,17 +184,23 @@ public class HBaseMetadata {
         performMutations(deletes, puts);
     }
 
+    /**
+     * Performs all metadata operations necessary to delete the specified table
+     *
+     * @param tableName The name of the table to delete, not null or empty
+     */
     public void deleteTable(String tableName) {
         Verify.isNotNullOrEmpty(tableName);
-        long tableId = getTableId(tableName);
-        byte[] serializedId = serializeId(tableId);
 
-        List<Delete> deletes = new ArrayList<Delete>();
+        List<Delete> deletes = Lists.newArrayList();
 
-        Delete columnIdsDelete = new Delete(new ColumnsRow(tableId).encode());
-        Delete indicesIdsDelete = new Delete(new IndicesRow(tableId).encode());
+        final long tableId = getTableId(tableName);
+        final byte[] serializedId = serializeId(tableId);
 
-        Delete rowsDelete = new Delete(new RowsRow().encode());
+        final Delete columnIdsDelete = new Delete(new ColumnsRow(tableId).encode());
+        final Delete indicesIdsDelete = new Delete(new IndicesRow(tableId).encode());
+
+        final Delete rowsDelete = new Delete(new RowsRow().encode());
         rowsDelete.deleteColumn(COLUMN_FAMILY, serializedId);
 
         deletes.add(deleteTableId(tableName));
