@@ -144,8 +144,7 @@ class HoneycombHandler : public handler
         HA_REC_NOT_IN_SEQ |
         HA_NO_TRANSACTIONS |
         HA_NULL_IN_KEY | // Nulls in indexed columns are allowed
-        HA_TABLE_SCAN_ON_INDEX |
-        HA_STATS_RECORDS_IS_EXACT;
+        HA_TABLE_SCAN_ON_INDEX;
     }
 
     ulong index_flags(uint inx, uint part, bool all_parts) const
