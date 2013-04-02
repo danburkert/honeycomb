@@ -2,7 +2,6 @@ package com.nearinfinity.honeycomb.hbase;
 
 import com.google.common.primitives.UnsignedBytes;
 import net.java.quickcheck.Generator;
-import net.java.quickcheck.generator.CombinedGenerators;
 import net.java.quickcheck.generator.PrimitiveGenerators;
 import net.java.quickcheck.generator.distribution.Distribution;
 import net.java.quickcheck.generator.iterable.Iterables;
@@ -19,8 +18,6 @@ public class VarEncoderTest {
     // significant bytes in the long, instead of a uniform distribution over the
     // range of the long.  It still doesn't do enough; we need an exponential distribution.
     private Generator<Long> uLongGen = PrimitiveGenerators.longs(0, Long.MAX_VALUE, Distribution.POSITIV_NORMAL);
-
-    private Generator<byte[]> bytesGen = CombinedGenerators.byteArrays();
 
     @Test
     public void testULongEncDec() {
@@ -40,7 +37,7 @@ public class VarEncoderTest {
         List<byte[]> bytes = new ArrayList<byte[]>();
 
         for (long n : Iterables.toIterable(uLongGen)) {
-            longs.add(new Long(n));
+            longs.add(n);
             bytes.add(VarEncoder.encodeULong(n));
         }
 
@@ -52,34 +49,6 @@ public class VarEncoderTest {
             byte[] nBytes = bytes.get(i);
             Assert.assertEquals(n, VarEncoder.decodeULong(nBytes));
             Assert.assertArrayEquals(nBytes, VarEncoder.encodeULong(n));
-        }
-    }
-
-    @Test
-    public void testBytesEncDec() {
-        for (byte[] b : Iterables.toIterable(bytesGen)) {
-            Assert.assertArrayEquals(b, VarEncoder.decodeBytes(VarEncoder.encodeBytes(b)));
-        }
-    }
-
-    @Test
-    public void testBytesEncSort() {
-        List<byte[]> bytes = new ArrayList<byte[]>();
-        List<byte[]> encodedBytes = new ArrayList<byte[]>();
-
-        for (byte[] b : Iterables.toIterable(bytesGen)) {
-            bytes.add(b);
-            encodedBytes.add(VarEncoder.encodeBytes(b));
-        }
-
-        Collections.sort(bytes, new ByteArrayComparator());
-        Collections.sort(encodedBytes, UnsignedBytes.lexicographicalComparator());
-
-        for (int i = 0; i < bytes.size(); i++) {
-            byte[] b = bytes.get(i);
-            byte[] encodedB = encodedBytes.get(i);
-            Assert.assertArrayEquals(b, VarEncoder.decodeBytes(encodedB));
-            Assert.assertArrayEquals(encodedB, VarEncoder.encodeBytes(b));
         }
     }
 }

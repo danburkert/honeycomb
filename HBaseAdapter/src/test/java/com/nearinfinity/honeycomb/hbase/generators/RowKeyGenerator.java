@@ -1,22 +1,23 @@
 package com.nearinfinity.honeycomb.hbase.generators;
 
-import com.google.common.collect.Maps;
 import com.nearinfinity.honeycomb.hbase.rowkey.*;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
-import com.nearinfinity.honeycomb.mysql.generators.ByteBufferGenerator;
+import com.nearinfinity.honeycomb.mysql.Row;
+import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import com.nearinfinity.honeycomb.mysql.generators.RowGenerator;
+import com.nearinfinity.honeycomb.mysql.generators.TableSchemaGenerator;
 import com.nearinfinity.honeycomb.mysql.generators.UUIDGenerator;
 import net.java.quickcheck.FrequencyGenerator;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.CombinedGenerators;
 import net.java.quickcheck.generator.PrimitiveGenerators;
-import net.java.quickcheck.generator.distribution.Distribution;
 import net.java.quickcheck.generator.support.DefaultFrequencyGenerator;
-import net.java.quickcheck.generator.support.FixedValuesGenerator;
 
-import java.nio.ByteBuffer;
-import java.util.Map;
+import java.util.Collection;
 import java.util.Random;
 import java.util.UUID;
+
+import static com.google.common.base.Preconditions.checkState;
 
 public class RowKeyGenerator implements Generator<RowKey> {
     private static final Random RAND = new Random();
@@ -24,11 +25,11 @@ public class RowKeyGenerator implements Generator<RowKey> {
     private static final RowsRow rowsRow = new RowsRow();
     private static final AutoIncRow autoIncRow = new AutoIncRow();
     private static final SchemaRow schemaRow = new SchemaRow();
-    private static final Generator<Map<String, ByteBuffer>> recordGen =
-            CombinedGenerators.maps(PrimitiveGenerators.strings(), new ByteBufferGenerator(),
-                    PrimitiveGenerators.integers(4, 4, Distribution.UNIFORM));
-    private static Generator<Long> randIdGen = PrimitiveGenerators.longs(0, Long.MAX_VALUE);
-    private static Generator<UUID> uuidGen = new UUIDGenerator();
+    private static final Generator<Long> randIdGen = CombinedGenerators.uniqueValues(
+            PrimitiveGenerators.longs(0, 1024));
+    private static final Generator<SortOrder> randSortOrder = PrimitiveGenerators.enumValues(SortOrder.class);
+    private static final Generator<UUID> uuidGen = new UUIDGenerator();
+    private static final Generator<TableSchema> tableSchemaGen = new TableSchemaGenerator(1);
     private final FrequencyGenerator<RowKey> rowKeyGen;
 
     public RowKeyGenerator() {
@@ -36,24 +37,42 @@ public class RowKeyGenerator implements Generator<RowKey> {
         // parts of the row key.  E.G. There are two ColumnSchema generators.
         // The first tests sorting on tableId, the second holds tableId constant
         // and tests sorting on columnId.
-        rowKeyGen = new DefaultFrequencyGenerator<RowKey>(new PrefixRowGenerator(), 2);
-        rowKeyGen.add(new ColumnsRowGenerator(), 1);
-        rowKeyGen.add(new IndicesRowGenerator(), 1);
+
+        rowKeyGen = new DefaultFrequencyGenerator<RowKey>(new PrefixRowGenerator(), 1);
+        rowKeyGen.add(new TableIDRowGenerator(), 1);
         rowKeyGen.add(new DataRowGenerator(randIdGen), 3);
         rowKeyGen.add(new DataRowGenerator(fixedLong()), 3);
-        rowKeyGen.add(new IndexRowGenerator(randIdGen, randIdGen, recordGen), 3);
-        rowKeyGen.add(new IndexRowGenerator(fixedLong(), randIdGen, recordGen), 4);
-        rowKeyGen.add(new IndexRowGenerator(fixedLong(), fixedLong(), recordGen), 8);
-        rowKeyGen.add(new IndexRowGenerator(fixedLong(), fixedLong(), fixedRecord()), 8);
+        rowKeyGen.add(new IndexRowGenerator(randIdGen, randIdGen, tableSchemaGen, randSortOrder), 4);
+        rowKeyGen.add(new IndexRowGenerator(fixedLong(), randIdGen, fixedTableSchema(), randSortOrder), 4);
+        rowKeyGen.add(new IndexRowGenerator(fixedLong(), fixedLong(), fixedTableSchema(), randSortOrder), 8);
+
     }
 
-    private FixedValuesGenerator<Map<String, ByteBuffer>> fixedRecord() {
-        return new FixedValuesGenerator<Map<String, ByteBuffer>>(recordGen.next());
+    private Generator<Long> fixedLong() {
+        return PrimitiveGenerators.fixedValues(randIdGen.next());
+    }
+    private Generator<TableSchema> fixedTableSchema() {
+        return PrimitiveGenerators.fixedValues(new TableSchemaGenerator(1).next());
     }
 
-    private FixedValuesGenerator<Long> fixedLong() {
-        return new FixedValuesGenerator<Long>(randIdGen.next());
+    public static Generator<RowKey> getAscIndexRowKeyGenerator(TableSchema schema) {
+        return new IndexRowGenerator(
+                PrimitiveGenerators.fixedValues(1L),
+                PrimitiveGenerators.fixedValues(1L),
+                PrimitiveGenerators.fixedValues(schema),
+                PrimitiveGenerators.fixedValues(SortOrder.Ascending)
+        );
     }
+
+    public static Generator<RowKey> getDescIndexRowKeyGenerator(TableSchema schema) {
+        return new IndexRowGenerator(
+                PrimitiveGenerators.fixedValues(1L),
+                PrimitiveGenerators.fixedValues(1L),
+                PrimitiveGenerators.fixedValues(schema),
+                PrimitiveGenerators.fixedValues(SortOrder.Descending)
+        );
+    }
+
 
     @Override
     public RowKey next() {
@@ -78,17 +97,15 @@ public class RowKeyGenerator implements Generator<RowKey> {
         }
     }
 
-    private class ColumnsRowGenerator implements Generator<RowKey> {
+    private class TableIDRowGenerator implements Generator<RowKey> {
         @Override
         public RowKey next() {
-            return new ColumnsRow(randIdGen.next());
-        }
-    }
+            if (RAND.nextBoolean()) {
+                return new ColumnsRow(randIdGen.next());
+            } else {
+                return new IndicesRow(randIdGen.next());
 
-    private class IndicesRowGenerator implements Generator<RowKey> {
-        @Override
-        public RowKey next() {
-            return new ColumnsRow(randIdGen.next());
+            }
         }
     }
 
@@ -105,51 +122,40 @@ public class RowKeyGenerator implements Generator<RowKey> {
         }
     }
 
-    private class IndexRowGenerator implements Generator<RowKey> {
-        private final Generator<Long> tableIdGen;
-        private final Generator<Long> indexIdGen;
-        private final Generator<Map<String, ByteBuffer>> recordsGen;
-        private final Generator<ColumnType> columnTypeGenerator = PrimitiveGenerators.enumValues(ColumnType.class);
+    private static class IndexRowGenerator implements Generator<RowKey> {
+        private final Generator<Long> tableIds;
+        private final Generator<Long> indexIds;
+        private final TableSchema tableSchema;
+        private final IndexSchema indexSchema;
+        private final Generator<Row> rows;
+        private final Generator<SortOrder> order;
 
         public IndexRowGenerator(
-                Generator<Long> tableIdGen,
-                Generator<Long> indexIdGen,
-                Generator<Map<String, ByteBuffer>> recordsGen) {
-            this.tableIdGen = tableIdGen;
-            this.indexIdGen = indexIdGen;
-            this.recordsGen = recordsGen;
+                Generator<Long> tableIds,
+                Generator<Long> indexIds,
+                Generator<TableSchema> schemas,
+                Generator<SortOrder> order) {
+            this.tableIds = tableIds;
+            this.indexIds = indexIds;
+            this.tableSchema = schemas.next();
+            Collection<IndexSchema> indices = this.tableSchema.getIndices().values();
+            checkState(indices.size() > 0, "Generated table schema must have an index.");
+            this.indexSchema = indices.toArray(new IndexSchema[0])[RAND.nextInt(indices.size())];
+            this.rows = new RowGenerator(this.tableSchema);
+            this.order = order;
         }
 
         @Override
         public RowKey next() {
-            Map<String, ColumnType> columnTypeMap = Maps.newHashMap();
-            Map<String, ByteBuffer> records = recordGen.next();
-            for (Map.Entry<String, ByteBuffer> entry : records.entrySet()) {
-                ColumnType next = columnTypeGenerator.next();
-                columnTypeMap.put(entry.getKey(), next);
-                switch (next) {
-                    case LONG:
-                    case ULONG:
-                    case TIME: {
-                        records.put(entry.getKey(),
-                                (ByteBuffer) ByteBuffer.allocate(8).putLong(RAND.nextLong()).rewind());
-                    }
-                    case DOUBLE: {
-                        records.put(entry.getKey(),
-                                (ByteBuffer) ByteBuffer.allocate(8).putDouble(RAND.nextDouble()).rewind());
-                    }
-                }
-            }
+            Row row = rows.next();
             IndexRowBuilder builder = IndexRowBuilder
-                    .newBuilder(tableIdGen.next(), indexIdGen.next())
-                    .withRecords(records, columnTypeMap, records.keySet())
-                    .withUUID(uuidGen.next());
+                    .newBuilder(tableIds.next(), indexIds.next())
+                    .withRecords(row.getRecords(),
+                            indexSchema,
+                            tableSchema.getColumns())
+                    .withUUID(row.getUUID());
 
-            if (RAND.nextBoolean()) {
-                return builder.withSortOrder(SortOrder.Ascending).build();
-            }
-
-            return builder.withSortOrder(SortOrder.Descending).build();
+            return builder.withSortOrder(order.next()).build();
         }
     }
 }

@@ -1,16 +1,18 @@
 package com.nearinfinity.honeycomb.mysql.generators;
 
-import java.util.Random;
-
+import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.PrimitiveGenerators;
 
-import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
+import java.util.Random;
 
 public class ColumnSchemaGenerator implements Generator<ColumnSchema> {
+//    private static final int MYSQL_MAX_VARCHAR = 65535;
+    private static final int MYSQL_MAX_VARCHAR = 128; // Set artificially low so tests are fast
+
     private static final Generator<ColumnType> typeGen = PrimitiveGenerators.enumValues(ColumnType.class);
-    private static final Generator<Integer> lengthGen = PrimitiveGenerators.integers(0, 65535);
+    private static final Generator<Integer> lengthGen = PrimitiveGenerators.integers(0, MYSQL_MAX_VARCHAR);
     private static final Random RAND = new Random();
 
     @Override

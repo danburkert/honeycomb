@@ -1,7 +1,9 @@
 package com.nearinfinity.honeycomb.hbase.rowkey;
 
+import com.google.common.base.Objects;
 import com.nearinfinity.honeycomb.hbase.VarEncoder;
 import com.nearinfinity.honeycomb.mysql.Util;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +12,9 @@ import java.util.UUID;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+/**
+ * Super class for index rowkeys
+ */
 public abstract class IndexRow implements RowKey {
     private final byte prefix;
     private final long tableId;
@@ -54,12 +59,12 @@ public abstract class IndexRow implements RowKey {
                     encodedParts.add(nullBytes);
                 } else {
                     encodedParts.add(notNullBytes);
-                    encodedParts.add(VarEncoder.encodeBytes(record));
+                    encodedParts.add(record);
                 }
             }
-        }
-        if (uuid != null) {
-            encodedParts.add(Util.UUIDToBytes(uuid));
+            if (uuid != null) {
+                encodedParts.add(Util.UUIDToBytes(uuid));
+            }
         }
         return VarEncoder.appendByteArrays(encodedParts);
     }
@@ -89,18 +94,13 @@ public abstract class IndexRow implements RowKey {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder("[");
-        sb.append(String.format("%02X", prefix));
-        sb.append("\t");
-        sb.append(tableId);
-        sb.append("\t");
-        sb.append(indexId);
-        sb.append("\t");
-        sb.append(records == null ? "" : recordValueStrings());
-        sb.append("\t");
-        sb.append(uuid == null ? "" : Util.generateHexString(Util.UUIDToBytes(uuid)));
-        sb.append("]");
-        return sb.toString();
+        return Objects.toStringHelper(this.getClass())
+                .add("Prefix", String.format("%02X", prefix))
+                .add("TableId", tableId)
+                .add("IndexId", indexId)
+                .add("Records", recordValueStrings())
+                .add("UUID", uuid == null ? "" : Util.generateHexString(Util.UUIDToBytes(uuid)))
+                .toString();
     }
 
     private List<String> recordValueStrings() {
@@ -109,5 +109,59 @@ public abstract class IndexRow implements RowKey {
             strings.add((bytes == null) ? "null" : Util.generateHexString(bytes));
         }
         return strings;
+    }
+
+    @Override
+    public int compareTo(RowKey o) {
+        int typeCompare = getPrefix() - o.getPrefix();
+        if (typeCompare != 0) { return typeCompare; }
+        IndexRow row2 = (IndexRow) o;
+
+        List<byte[]> records1 = getRecords();
+        List<byte[]> records2 = row2.getRecords();
+        int nullOrder = getSortOrder() == SortOrder.Ascending ? -1 : 1;
+
+        int compare;
+        compare = Long.signum(getTableId() - row2.getTableId());
+        if (compare != 0) {
+            return compare;
+        }
+        compare = Long.signum(getIndexId() - row2.getIndexId());
+        if (compare != 0) {
+            return compare;
+        }
+        compare = recordsCompare(getRecords(), row2.getRecords(), nullOrder);
+        if (compare != 0) {
+            return compare;
+        }
+        return new Bytes.ByteArrayComparator().compare(
+                Util.UUIDToBytes(getUuid()),
+                Util.UUIDToBytes(row2.getUuid()));
+    }
+
+    private int recordsCompare(List<byte[]> records1, List<byte[]> records2, int nullOrder) {
+        byte[] value1, value2;
+        int compare;
+        if (records1.size() != records2.size()) {
+            throw new IllegalArgumentException("Number of records in indices must match.");
+        }
+        for (int i = 0; i < records1.size(); i++) {
+            value1 = records1.get(i);
+            value2 = records2.get(i);
+            if (value1 == value2) {
+                continue;
+            }
+            if (value1 == null) {
+                return nullOrder;
+            }
+            if (value2 == null) {
+                return nullOrder * -1;
+            }
+            compare = new Bytes.ByteArrayComparator().compare(value1, value2);
+            if (compare != 0) {
+                return compare;
+            }
+        }
+        return 0;
     }
 }

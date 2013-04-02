@@ -1,35 +1,54 @@
 package com.nearinfinity.honeycomb.hbase.rowkey;
 
-import com.google.common.collect.ImmutableMap;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
+import com.google.common.collect.Lists;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 public class IndexRowBuilder {
     private static final long INVERT_SIGN_MASK = 0x8000000000000000L;
     private long tableId;
     private long indexId;
     private SortOrder order;
+    private IndexSchema schema;
+    private Map<String, ColumnSchema> columnSchemas;
     private Map<String, ByteBuffer> records;
-    private Map<String, ColumnType> columnTypes;
-    private Collection<String> columnOrder;
     private UUID uuid;
 
     private IndexRowBuilder() {
     }
 
-    public static IndexRowBuilder newBuilder(long tableId, long indexId) {
+    public static IndexRowBuilder newBuilder(long tableId,
+                                             long indexId) {
         IndexRowBuilder builder = new IndexRowBuilder();
         builder.tableId = tableId;
         builder.indexId = indexId;
-        builder.order = SortOrder.Ascending;
+
         return builder;
     }
 
-    public IndexRowBuilder withSortOrder(SortOrder sortOrder) {
-        this.order = sortOrder;
+    public IndexRowBuilder withSortOrder(SortOrder order) {
+        this.order = order;
+        return this;
+    }
+
+    public IndexRowBuilder withRecords(Map<String, ByteBuffer> records,
+                                       IndexSchema schema,
+                                       Map<String, ColumnSchema> columnSchemas) {
+        checkNotNull(schema, "Index schema must be set on IndexRowBuilder");
+        checkNotNull(columnSchemas, "Column schemas must be set on IndexRowBuilder");
+        this.records = records;
+        this.schema = schema;
+        this.columnSchemas = columnSchemas;
         return this;
     }
 
@@ -38,72 +57,43 @@ public class IndexRowBuilder {
         return this;
     }
 
-    public IndexRowBuilder withRecords(Map<String, ByteBuffer> records, Map<String, ColumnType> columnTypes, Collection<String> columnOrder) {
-        this.records = records;
-        this.columnTypes = columnTypes;
-        this.columnOrder = columnOrder;
-        return this;
-    }
-
     public IndexRow build() {
-        List<byte[]> sortedRecords = null;
+        checkState(order != null, "Sort order must be set on IndexRowBuilder.");
+        List<byte[]> encodedRecords = Lists.newArrayList();
         if (this.records != null) {
-            Map<String, byte[]> encodedRow = encodeRow(this.records, this.columnTypes);
-            if (order == SortOrder.Descending) {
-                encodedRow = reverseRowValues(encodedRow);
+            for (String column : schema.getColumns()) {
+                ByteBuffer record = records.get(column);
+                if (record != null) {
+                    byte[] encodedRecord = encodeValue(record,
+                            columnSchemas.get(column));
+                    encodedRecords.add(order == SortOrder.Ascending
+                            ? encodedRecord
+                            : reverseValue(encodedRecord));
+                } else {
+                    encodedRecords.add(null);
+                }
             }
-
-            sortedRecords = getValuesInColumnOrder(encodedRow, this.columnOrder);
         }
 
         if (order == SortOrder.Ascending) {
-            return new AscIndexRow(this.tableId, this.indexId, sortedRecords, this.uuid);
+            return new AscIndexRow(this.tableId, this.indexId, encodedRecords, this.uuid);
+        } else {
+            return new DescIndexRow(this.tableId, this.indexId, encodedRecords, this.uuid);
         }
-
-        return new DescIndexRow(this.tableId, this.indexId, sortedRecords, this.uuid);
-    }
-
-    private static List<byte[]> getValuesInColumnOrder(Map<String, byte[]> records, Collection<String> columns) {
-        List<byte[]> sortedRecords = new LinkedList<byte[]>();
-        for (String column : columns) {
-            sortedRecords.add(records.get(column));
-        }
-        return sortedRecords;
-    }
-
-    private static Map<String, byte[]> reverseRowValues(Map<String, byte[]> row) {
-        final ImmutableMap.Builder<String, byte[]> result = ImmutableMap.builder();
-        for (Map.Entry<String, byte[]> entry : row.entrySet()) {
-            result.put(entry.getKey(), reverseValue(entry.getValue()));
-        }
-        return result.build();
     }
 
     private static byte[] reverseValue(byte[] value) {
-        ByteBuffer buffer = ByteBuffer.allocate(value.length);
-
-        for (byte aValue : value) {
-            buffer.put((byte) (~aValue));
+        byte[] reversed = new byte[value.length];
+        for (int i = 0; i < value.length; i++) {
+            reversed[i] = (byte) (~value[i] & 0xFF);
         }
-
-        return buffer.array();
+        return reversed;
     }
 
-    private static Map<String, byte[]> encodeRow(Map<String, ByteBuffer> rows, Map<String, ColumnType> columnTypes) {
-        final ImmutableMap.Builder<String, byte[]> result = ImmutableMap.builder();
-        for (Map.Entry<String, ByteBuffer> entry : rows.entrySet()) {
-            byte[] encodedValue = encodeValue(entry.getValue(), columnTypes.get(entry.getKey()));
-            result.put(entry.getKey(), encodedValue);
-        }
-
-        return result.build();
-    }
-
-    private static byte[] encodeValue(final ByteBuffer value, final ColumnType columnType) {
+    private static byte[] encodeValue(final ByteBuffer value, final ColumnSchema columnSchema) {
         try {
-            switch (columnType) {
+            switch (columnSchema.getType()) {
                 case LONG:
-                case ULONG:
                 case TIME: {
                     long longValue = value.getLong();
                     return Bytes.toBytes(longValue ^ INVERT_SIGN_MASK);
@@ -116,6 +106,10 @@ public class IndexRowBuilder {
                     }
 
                     return Bytes.toBytes(longValue ^ INVERT_SIGN_MASK);
+                }
+                case BINARY:
+                case STRING: {
+                    return Arrays.copyOf(value.array(), columnSchema.getMaxLength());
                 }
                 default:
                     return value.array();

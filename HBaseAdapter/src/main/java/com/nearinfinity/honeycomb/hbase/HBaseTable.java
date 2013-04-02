@@ -241,15 +241,6 @@ public class HBaseTable implements Table {
         Util.closeQuietly(hTable);
     }
 
-    private static Map<String, ColumnType> getColumnTypesForSchema(TableSchema schema) {
-        final ImmutableMap.Builder<String, ColumnType> result = ImmutableMap.builder();
-        for (Map.Entry<String, ColumnSchema> entry : schema.getColumns().entrySet()) {
-            result.put(entry.getKey(), entry.getValue().getType());
-        }
-
-        return result.build();
-    }
-
     private static Put createEmptyQualifierPut(RowKey row, byte[] serializedRow) {
         return new Put(row.encode()).add(Constants.DEFAULT_COLUMN_FAMILY, new byte[0], serializedRow);
     }
@@ -316,7 +307,7 @@ public class HBaseTable implements Table {
             IndexRowBuilder builder = IndexRowBuilder
                     .newBuilder(tableId, indexId)
                     .withUUID(row.getUUID())
-                    .withRecords(records, getColumnTypesForSchema(schema), index.getValue().getColumns());
+                    .withRecords(records, index.getValue(), schema.getColumns());
             action.execute(builder);
         }
     }
@@ -332,7 +323,8 @@ public class HBaseTable implements Table {
             return indexRowBuilder;
         }
 
-        return indexRowBuilder.withRecords(key.getKeys(), getColumnTypesForSchema(schema), indexSchema.getColumns());
+        return indexRowBuilder
+                .withRecords(key.getKeys(), indexSchema, schema.getColumns());
     }
 
     private Scanner createScannerForRange(byte[] start, byte[] end) {
