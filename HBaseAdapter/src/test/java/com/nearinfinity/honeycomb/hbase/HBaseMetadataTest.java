@@ -1,13 +1,9 @@
 package com.nearinfinity.honeycomb.hbase;
 
-import com.nearinfinity.honeycomb.MockHTable;
-import com.nearinfinity.honeycomb.exceptions.TableNotFoundException;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
-import com.nearinfinity.honeycomb.mysql.generators.ColumnSchemaGenerator;
-import com.nearinfinity.honeycomb.mysql.generators.TableSchemaGenerator;
+import static org.mockito.Mockito.when;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.PrimitiveGenerators;
+
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
@@ -19,13 +15,13 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.powermock.api.mockito.PowerMockito;
 
-import java.io.IOException;
-
-import static org.mockito.Mockito.when;
+import com.nearinfinity.honeycomb.MockHTable;
+import com.nearinfinity.honeycomb.exceptions.TableNotFoundException;
+import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import com.nearinfinity.honeycomb.mysql.generators.TableSchemaGenerator;
 
 public class HBaseMetadataTest {
     private static final Generator<TableSchema> tableSchemaGen = new TableSchemaGenerator();
-    private static final Generator<ColumnSchema> columnSchemaGen = new ColumnSchemaGenerator();
     private static final Generator<Long> longGen = PrimitiveGenerators.longs();
 
     private static final String DUMMY_TABLE_NAME = "foo";
@@ -94,22 +90,22 @@ public class HBaseMetadataTest {
     }
 
     @Test(expected = NullPointerException.class)
-    public void testRenameExistingTableNullCurrentTableName() throws IOException, TableNotFoundException {
+    public void testRenameExistingTableNullCurrentTableName() throws TableNotFoundException {
         hbaseMetadata.renameExistingTable(null, DUMMY_TABLE_NAME);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testRenameExistingTableEmptyCurrentTableName() throws IOException, TableNotFoundException {
+    public void testRenameExistingTableEmptyCurrentTableName() throws TableNotFoundException {
         hbaseMetadata.renameExistingTable("", DUMMY_TABLE_NAME);
     }
 
     @Test(expected = NullPointerException.class)
-    public void testRenameExistingTableNullNewTableName() throws IOException, TableNotFoundException {
+    public void testRenameExistingTableNullNewTableName() throws TableNotFoundException {
         hbaseMetadata.renameExistingTable(DUMMY_TABLE_NAME, null);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testRenameExistingTableEmptyNewTableName() throws IOException, TableNotFoundException {
+    public void testRenameExistingTableEmptyNewTableName() throws TableNotFoundException {
         hbaseMetadata.renameExistingTable(DUMMY_TABLE_NAME, "");
     }
 
