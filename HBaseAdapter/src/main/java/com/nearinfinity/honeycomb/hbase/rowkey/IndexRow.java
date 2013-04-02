@@ -10,7 +10,7 @@ import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.nearinfinity.honeycomb.hbase.VarEncoder;
 import com.nearinfinity.honeycomb.mysql.Util;
-import com.nearinfinity.honeycomb.mysql.Verify;
+import com.nearinfinity.honeycomb.util.Verify;
 
 /**
  * Representation of the rowkey used to define the indexed column details for data row content

@@ -13,8 +13,8 @@ import java.util.UUID;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.google.common.collect.ImmutableMap;
-import com.nearinfinity.honeycomb.mysql.Verify;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
+import com.nearinfinity.honeycomb.util.Verify;
 
 /**
  * A builder for creating {@link IndexRow} instances.  Builder instances can be reused as it is safe

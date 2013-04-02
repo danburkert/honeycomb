@@ -2,7 +2,7 @@ package com.nearinfinity.honeycomb.hbase.rowkey;
 
 import com.google.common.base.Objects;
 import com.nearinfinity.honeycomb.hbase.VarEncoder;
-import com.nearinfinity.honeycomb.mysql.Verify;
+import com.nearinfinity.honeycomb.util.Verify;
 
 /**
  * Representation of the rowkey associated with the index metadata details for the tables being stored
