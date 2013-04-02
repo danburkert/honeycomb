@@ -47,38 +47,66 @@ public class HBaseMetadata {
     private final Provider<HTableInterface> provider;
 
     @Inject
-    public HBaseMetadata(HTableProvider provider) {
+    public HBaseMetadata(final HTableProvider provider) {
         checkNotNull(provider);
+
         this.provider = provider;
     }
 
-    public long getTableId(String table) {
-        Verify.isNotNullOrEmpty(table);
-        Get get = new Get(new TablesRow().encode());
-        byte[] serializedName = serializeName(table);
-        get.addColumn(COLUMN_FAMILY, serializedName);
-        HTableInterface hTable = getHTable();
-        try {
-            Result result = HBaseOperations.performGet(hTable, get);
+    /**
+     * Fetches the table identifier for the specified table name from the underlying
+     * data store
+     *
+     * @param tableName The name of the table this lookup is for, not null or empty
+     * @return The table identifier stored for the table name
+     */
+    public long getTableId(final String tableName) {
+        Verify.isNotNullOrEmpty(tableName);
 
-            byte[] tableIdBytes = result.getValue(COLUMN_FAMILY, serializedName);
-            if (tableIdBytes == null) {
-                throw new TableNotFoundException(table);
+        final byte[] serializedName = serializeName(tableName);
+        final Get get = new Get(new TablesRow().encode());
+        get.addColumn(COLUMN_FAMILY, serializedName);
+
+        final HTableInterface hTable = getHTable();
+
+        try {
+            final Result result = HBaseOperations.performGet(hTable, get);
+
+            final byte[] tableIdBytes = result.getValue(COLUMN_FAMILY, serializedName);
+            if( tableIdBytes == null ) {
+                throw new TableNotFoundException(tableName);
             }
+
             return deserializeId(tableIdBytes);
         } finally {
             HBaseOperations.closeTable(hTable);
         }
     }
 
-    public Map<String, Long> getIndexIds(long tableId) {
+    /**
+     * Fetches the index name to index identifier mappings for the table corresponding
+     * to the specified table identifier
+     *
+     * @param tableId The valid table identifier of the table this lookup is for
+     * @return The indices mapping details for the table
+     */
+    public Map<String, Long> getIndexIds(final long tableId) {
         Verify.isValidId(tableId);
+
         return getNameToIdMap(new IndicesRow(tableId).encode());
     }
 
-    public BiMap<String, Long> getColumnIds(long tableId) {
+    /**
+     * Fetches the column name to column identifier mappings for the table corresponding
+     * to the specified table identifier
+     *
+     * @param tableId The valid table identifier of the table this lookup is for
+     * @return The columns mapping details for the table
+     */
+    public BiMap<String, Long> getColumnIds(final long tableId) {
         Verify.isValidId(tableId);
-        Map<String, Long> nameToId = getNameToIdMap(new ColumnsRow(tableId).encode());
+
+        final Map<String, Long> nameToId = getNameToIdMap(new ColumnsRow(tableId).encode());
         return ImmutableBiMap.copyOf(nameToId);
     }
 
