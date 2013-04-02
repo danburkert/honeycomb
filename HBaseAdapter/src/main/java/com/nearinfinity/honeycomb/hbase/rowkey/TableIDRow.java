@@ -1,5 +1,6 @@
 package com.nearinfinity.honeycomb.hbase.rowkey;
 
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ComparisonChain;
 import com.nearinfinity.honeycomb.hbase.VarEncoder;
@@ -34,7 +35,10 @@ public class TableIDRow implements RowKey {
 
     @Override
     public String toString() {
-        return "[" + String.format("%02X", prefix) + "\t" + tableId + "]";
+        return Objects.toStringHelper(this.getClass())
+                .add("Prefix", String.format("%02X", prefix))
+                .add("TableId", tableId)
+                .toString();
     }
 
     @Override

@@ -3,7 +3,6 @@ package com.nearinfinity.honeycomb.hbase;
 import com.google.common.primitives.UnsignedBytes;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.PrimitiveGenerators;
-import net.java.quickcheck.generator.distribution.Distribution;
 import net.java.quickcheck.generator.iterable.Iterables;
 import org.junit.Assert;
 import org.junit.Test;
@@ -17,11 +16,11 @@ public class VarEncoderTest {
     // This is an attempt to get a uniform distribution over the number of
     // significant bytes in the long, instead of a uniform distribution over the
     // range of the long.  It still doesn't do enough; we need an exponential distribution.
-    private Generator<Long> uLongGen = PrimitiveGenerators.longs(0, Long.MAX_VALUE, Distribution.POSITIV_NORMAL);
+    private static final Generator<Long> ULONG_GEN = PrimitiveGenerators.longs(0, Long.MAX_VALUE);
 
     @Test
     public void testULongEncDec() {
-        for (long n : Iterables.toIterable(uLongGen)) {
+        for (long n : Iterables.toIterable(ULONG_GEN)) {
             Assert.assertEquals(n, VarEncoder.decodeULong(VarEncoder.encodeULong(n)));
         }
     }
@@ -36,8 +35,8 @@ public class VarEncoderTest {
         List<Long> longs = new ArrayList<Long>();
         List<byte[]> bytes = new ArrayList<byte[]>();
 
-        for (long n : Iterables.toIterable(uLongGen)) {
-            longs.add(n);
+        for (long n : Iterables.toIterable(ULONG_GEN)) {
+            longs.add(new Long(n));
             bytes.add(VarEncoder.encodeULong(n));
         }
 

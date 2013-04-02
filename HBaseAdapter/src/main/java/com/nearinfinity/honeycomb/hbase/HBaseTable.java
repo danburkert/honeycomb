@@ -15,8 +15,9 @@ import com.nearinfinity.honeycomb.hbase.rowkey.*;
 import com.nearinfinity.honeycomb.mysql.IndexKey;
 import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.mysql.Util;
-import com.nearinfinity.honeycomb.mysql.Verify;
 import com.nearinfinity.honeycomb.mysql.gen.*;
+import com.nearinfinity.honeycomb.util.Verify;
+
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
@@ -37,7 +38,7 @@ public class HBaseTable implements Table {
 
     @Inject
     public HBaseTable(HTableInterface hTable, HBaseStore store, @Assisted Long tableId) {
-        Verify.isValidTableId(tableId);
+        Verify.isValidId(tableId);
         this.hTable = checkNotNull(hTable);
         this.store = checkNotNull(store);
         this.tableId = tableId;
@@ -178,8 +179,10 @@ public class HBaseTable implements Table {
                 .withSortOrder(SortOrder.Ascending)
                 .build();
 
+        long indexId = store.getIndices(tableId).get(key.getIndexName());
+
         IndexRow endRow = IndexRowBuilder
-                .newBuilder(tableId, startRow.getIndexId() + 1)
+                .newBuilder(tableId, indexId + 1)
                 .withSortOrder(SortOrder.Ascending)
                 .build();
         return createScannerForRange(startRow.encode(), endRow.encode());
@@ -192,8 +195,10 @@ public class HBaseTable implements Table {
                 .withUUID(Constants.FULL_UUID)
                 .build();
 
+        long indexId = store.getIndices(tableId).get(key.getIndexName());
+
         IndexRow endRow = IndexRowBuilder
-                .newBuilder(tableId, startRow.getIndexId() + 1)
+                .newBuilder(tableId, indexId + 1)
                 .withSortOrder(SortOrder.Ascending)
                 .build();
         return createScannerForRange(padKeyForSorting(startRow.encode()), endRow.encode());
@@ -205,8 +210,10 @@ public class HBaseTable implements Table {
                 .withSortOrder(SortOrder.Descending)
                 .build();
 
+        long indexId = store.getIndices(tableId).get(key.getIndexName());
+
         IndexRow endRow = IndexRowBuilder
-                .newBuilder(tableId, startRow.getIndexId() + 1)
+                .newBuilder(tableId, indexId + 1)
                 .withSortOrder(SortOrder.Descending)
                 .build();
         return createScannerForRange(startRow.encode(), endRow.encode());
@@ -219,8 +226,10 @@ public class HBaseTable implements Table {
                 .withUUID(Constants.FULL_UUID)
                 .build();
 
+        long indexId = store.getIndices(tableId).get(key.getIndexName());
+
         IndexRow endRow = IndexRowBuilder
-                .newBuilder(tableId, startRow.getIndexId() + 1)
+                .newBuilder(tableId, indexId + 1)
                 .withSortOrder(SortOrder.Descending)
                 .build();
         return createScannerForRange(padKeyForSorting(startRow.encode()), endRow.encode());

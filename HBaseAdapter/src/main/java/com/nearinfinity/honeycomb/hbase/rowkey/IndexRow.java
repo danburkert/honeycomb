@@ -1,11 +1,12 @@
 package com.nearinfinity.honeycomb.hbase.rowkey;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.Lists;
 import com.nearinfinity.honeycomb.hbase.VarEncoder;
 import com.nearinfinity.honeycomb.mysql.Util;
+import com.nearinfinity.honeycomb.util.Verify;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,17 +22,19 @@ public abstract class IndexRow implements RowKey {
     private final long indexId;
     private final byte[] notNullBytes;
     private final byte[] nullBytes;
-    private UUID uuid;
-    private List<byte[]> records;
+    private final UUID uuid;
+    private final List<byte[]> records;
+    private final SortOrder sortOrder;
 
-    protected IndexRow(long tableId,
-                       long indexId,
-                       List<byte[]> records,
-                       UUID uuid,
-                       byte prefix,
-                       byte[] notNullBytes,
-                       byte[] nullBytes) {
-        checkArgument(tableId >= 0, "Table ID must be non-zero.");
+    protected IndexRow(final long tableId,
+                       final long indexId,
+                       final List<byte[]> records,
+                       final UUID uuid,
+                       final byte prefix,
+                       final byte[] notNullBytes,
+                       final byte[] nullBytes,
+                       final SortOrder sortOrder) {
+        Verify.isValidId(tableId);
         checkArgument(indexId >= 0, "Index ID must be non-zero.");
         checkNotNull(prefix, "Prefix cannot be null");
         checkNotNull(notNullBytes, "Not null bytes cannot be null");
@@ -43,18 +46,19 @@ public abstract class IndexRow implements RowKey {
         this.notNullBytes = notNullBytes;
         this.nullBytes = nullBytes;
         this.records = records;
+        this.sortOrder = sortOrder;
     }
 
     @Override
     public byte[] encode() {
-        byte[] prefixBytes = {prefix};
-        List<byte[]> encodedParts = new ArrayList<byte[]>();
+        final byte[] prefixBytes = {prefix};
+        final List<byte[]> encodedParts = Lists.newArrayList();
         encodedParts.add(prefixBytes);
         encodedParts.add(VarEncoder.encodeULong(tableId));
         encodedParts.add(VarEncoder.encodeULong(indexId));
 
         if (records != null) {
-            for (byte[] record : records) {
+            for (final byte[] record : records) {
                 if (record == null) {
                     encodedParts.add(nullBytes);
                 } else {
@@ -66,6 +70,7 @@ public abstract class IndexRow implements RowKey {
                 encodedParts.add(Util.UUIDToBytes(uuid));
             }
         }
+
         return VarEncoder.appendByteArrays(encodedParts);
     }
 
@@ -74,40 +79,24 @@ public abstract class IndexRow implements RowKey {
         return prefix;
     }
 
-    public long getTableId() {
-        return tableId;
-    }
-
-    public UUID getUuid() {
-        return uuid;
-    }
-
-    public long getIndexId() {
-        return indexId;
-    }
-
-    public List<byte[]> getRecords() {
-        return records;
-    }
-
-    public abstract SortOrder getSortOrder();
-
     @Override
     public String toString() {
         return Objects.toStringHelper(this.getClass())
                 .add("Prefix", String.format("%02X", prefix))
                 .add("TableId", tableId)
                 .add("IndexId", indexId)
-                .add("Records", recordValueStrings())
+                .add("Records", records == null ? "" : recordValueStrings())
                 .add("UUID", uuid == null ? "" : Util.generateHexString(Util.UUIDToBytes(uuid)))
                 .toString();
     }
 
     private List<String> recordValueStrings() {
-        List<String> strings = new ArrayList<String>();
-        for (byte[] bytes : records) {
+        final List<String> strings = Lists.newArrayList();
+
+        for (final byte[] bytes : records) {
             strings.add((bytes == null) ? "null" : Util.generateHexString(bytes));
         }
+
         return strings;
     }
 
@@ -117,26 +106,25 @@ public abstract class IndexRow implements RowKey {
         if (typeCompare != 0) { return typeCompare; }
         IndexRow row2 = (IndexRow) o;
 
-        List<byte[]> records1 = getRecords();
-        List<byte[]> records2 = row2.getRecords();
-        int nullOrder = getSortOrder() == SortOrder.Ascending ? -1 : 1;
+        List<byte[]> records2 = row2.records;
+        int nullOrder = sortOrder == SortOrder.Ascending ? -1 : 1;
 
         int compare;
-        compare = Long.signum(getTableId() - row2.getTableId());
+        compare = Long.signum(tableId - row2.tableId);
         if (compare != 0) {
             return compare;
         }
-        compare = Long.signum(getIndexId() - row2.getIndexId());
+        compare = Long.signum(indexId - row2.indexId);
         if (compare != 0) {
             return compare;
         }
-        compare = recordsCompare(getRecords(), row2.getRecords(), nullOrder);
+        compare = recordsCompare(this.records, row2.records, nullOrder);
         if (compare != 0) {
             return compare;
         }
         return new Bytes.ByteArrayComparator().compare(
-                Util.UUIDToBytes(getUuid()),
-                Util.UUIDToBytes(row2.getUuid()));
+                Util.UUIDToBytes(uuid),
+                Util.UUIDToBytes(row2.uuid));
     }
 
     private int recordsCompare(List<byte[]> records1, List<byte[]> records2, int nullOrder) {

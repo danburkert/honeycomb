@@ -10,6 +10,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -127,5 +128,16 @@ public class Row {
             sb.append(Bytes.toStringBinary(entry.getValue()));
         }
         return sb.toString();
+    }
+
+    public boolean isDuplicateForIndex(Row other, Set<String> columns) {
+        Map<String, ByteBuffer> records = other.getRecords();
+        for (String column : columns) {
+            if (!records.get(column).equals(this.getRecords().get(column))) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

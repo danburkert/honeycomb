@@ -1,13 +1,25 @@
 package com.nearinfinity.honeycomb.hbase.rowkey;
 
+import com.google.common.base.Objects;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
- * Super class for rowkeys that only occur once, that is,
+ * Super class for rowkeys that only occur once, ie,
  * rowkeys that are shared across all tables.
  */
 public abstract class PrefixRow implements RowKey {
     private final byte[] rowKey;
 
-    public PrefixRow(byte[] rowKey) {
+    /**
+     * Creates a prefix rowkey with the provided rowkey content
+     *
+     * @param rowKey The rowkey content that this row represents, not null or empty
+     */
+    public PrefixRow(final byte[] rowKey) {
+        checkNotNull(rowKey, "The rowkey is invalid");
+        checkArgument(rowKey.length > 0, "The rowkey cannot be empty");
         this.rowKey = rowKey;
     }
 
@@ -23,7 +35,9 @@ public abstract class PrefixRow implements RowKey {
 
     @Override
     public String toString() {
-        return '[' + String.format("%02X", getPrefix()) + ']';
+        return Objects.toStringHelper(this.getClass())
+                .add("Prefix", String.format("%02X", getPrefix()))
+                .toString();
     }
 
     @Override

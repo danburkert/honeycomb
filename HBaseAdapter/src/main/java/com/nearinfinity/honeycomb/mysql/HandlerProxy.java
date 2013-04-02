@@ -7,6 +7,8 @@ import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import com.nearinfinity.honeycomb.util.Verify;
+
 import org.apache.log4j.Logger;
 
 import java.nio.ByteBuffer;
@@ -209,21 +211,31 @@ public class HandlerProxy {
      * @param indexName
      * @param serializedRow
      */
-    public boolean indexContainsDuplicate(String indexName, byte[] serializedRow) {
+    public boolean indexContainsDuplicate(String indexName, byte[] serializedRow, byte[] originalRowBytes) {
         // This method must get its own table because it may be called during
         // a full table scan.
         checkNotNull(indexName);
         checkNotNull(serializedRow);
 
         Row row = Row.deserialize(serializedRow);
-        Table t = store.openTable(tableName);
+        Map<String, ByteBuffer> differenceMap;
+        if (originalRowBytes != null) {
+            Row originalRow = Row.deserialize(originalRowBytes);
+            differenceMap = computeUpdateDifference(originalRow, row);
+        } else {
+            differenceMap = row.getRecords();
+        }
 
-        IndexKey key = new IndexKey(indexName, null, row.getRecords());
+        Table t = store.openTable(tableName);
+        IndexKey key = new IndexKey(indexName, null, differenceMap);
         Scanner scanner = t.indexScanExact(key);
+        Set<String> columns = Sets.newHashSet(store.getSchema(tableName).getIndices().get(indexName).getColumns());
 
         try {
             while (scanner.hasNext()) {
-                if (scanner.next().getUUID() != row.getUUID()) {
+                Row next = scanner.next();
+                boolean indexDuplicate = row.isDuplicateForIndex(next, columns);
+                if (indexDuplicate) {
                     return true;
                 }
             }
@@ -251,8 +263,13 @@ public class HandlerProxy {
         if (auto_inc_col != null) {
             ByteBuffer bb = row.getRecords().get(auto_inc_col);
             long auto_inc = bb.getLong();
+            long next_auto_inc = auto_inc + 1;
+            if (auto_inc > next_auto_inc) { // The autoincrement will wrap around. MySQL says don't wrap.
+                next_auto_inc = auto_inc;
+            }
+
             bb.rewind();
-            store.setAutoInc(tableName, auto_inc + 1);
+            store.setAutoInc(tableName, next_auto_inc);
         }
         table.insert(row);
     }
@@ -274,7 +291,10 @@ public class HandlerProxy {
 
         MapDifference<String, ByteBuffer> diff = Maps.difference(oldRow.getRecords(),
                 updatedRow.getRecords());
-        Set<String> changedColumns = diff.entriesDiffering().keySet();
+
+        Set<String> changedColumns = Sets.union(
+                diff.entriesDiffering().keySet(),
+                diff.entriesOnlyOnRight().keySet());
 
         ImmutableMap.Builder<String, IndexSchema> changedIndices = ImmutableMap.builder();
 
@@ -316,13 +336,18 @@ public class HandlerProxy {
 
     public void startTableScan() {
         checkTableOpen();
-        checkState(currentScanner == null, "Previous scan should have ended before starting a new one.");
+        if (currentScanner != null) {
+            endScan();
+        }
+
         currentScanner = table.tableScan();
     }
 
     public void startIndexScan(byte[] indexKeys) {
         checkTableOpen();
-        checkState(currentScanner == null, "Previous scan should have ended before starting a new one.");
+        if (currentScanner != null) {
+            endScan();
+        }
         checkNotNull(indexKeys, "Index scan requires non-null key");
 
         IndexKey key = IndexKey.deserialize(indexKeys);
@@ -373,6 +398,17 @@ public class HandlerProxy {
     public void endScan() {
         Util.closeQuietly(currentScanner);
         currentScanner = null;
+    }
+
+    private Map<String, ByteBuffer> computeUpdateDifference(Row originalRow, Row row) {
+        MapDifference<String, ByteBuffer> difference = Maps.difference(originalRow.getRecords(), row.getRecords());
+        Map<String, MapDifference.ValueDifference<ByteBuffer>> differenceMap = difference.entriesDiffering();
+        ImmutableMap.Builder<String, ByteBuffer> builder = ImmutableMap.builder();
+        for (Map.Entry<String, MapDifference.ValueDifference<ByteBuffer>> entry : differenceMap.entrySet()) {
+            builder.put(entry.getKey(), entry.getValue().rightValue());
+        }
+
+        return builder.build();
     }
 
     private void checkTableOpen() {
