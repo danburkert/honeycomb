@@ -15,8 +15,9 @@ import com.nearinfinity.honeycomb.hbase.rowkey.*;
 import com.nearinfinity.honeycomb.mysql.IndexKey;
 import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.mysql.Util;
-import com.nearinfinity.honeycomb.mysql.Verify;
 import com.nearinfinity.honeycomb.mysql.gen.*;
+import com.nearinfinity.honeycomb.util.Verify;
+
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;

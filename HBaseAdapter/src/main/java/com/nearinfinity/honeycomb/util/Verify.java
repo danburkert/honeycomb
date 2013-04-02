@@ -1,5 +1,6 @@
-package com.nearinfinity.honeycomb.mysql;
+package com.nearinfinity.honeycomb.util;
 
+import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;

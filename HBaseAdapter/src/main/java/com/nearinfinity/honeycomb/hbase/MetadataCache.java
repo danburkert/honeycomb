@@ -6,8 +6,9 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.BiMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.nearinfinity.honeycomb.mysql.Verify;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import com.nearinfinity.honeycomb.util.Verify;
+
 import net.jcip.annotations.ThreadSafe;
 import org.apache.log4j.Logger;
 

@@ -7,6 +7,8 @@ import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import com.nearinfinity.honeycomb.util.Verify;
+
 import org.apache.log4j.Logger;
 
 import java.nio.ByteBuffer;

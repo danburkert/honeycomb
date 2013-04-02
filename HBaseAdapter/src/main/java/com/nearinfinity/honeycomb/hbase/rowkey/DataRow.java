@@ -5,7 +5,7 @@ import java.util.UUID;
 import com.google.common.base.Objects;
 import com.nearinfinity.honeycomb.hbase.VarEncoder;
 import com.nearinfinity.honeycomb.mysql.Util;
-import com.nearinfinity.honeycomb.mysql.Verify;
+import com.nearinfinity.honeycomb.util.Verify;
 
 /**
  * Representation of the rowkey associated with data row content

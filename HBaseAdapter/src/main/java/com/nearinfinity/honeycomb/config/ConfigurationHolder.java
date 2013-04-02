@@ -2,7 +2,8 @@ package com.nearinfinity.honeycomb.config;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
-import com.nearinfinity.honeycomb.mysql.Verify;
+import com.nearinfinity.honeycomb.util.Verify;
+
 import net.jcip.annotations.Immutable;
 import net.jcip.annotations.ThreadSafe;
 import org.apache.hadoop.conf.Configuration;
