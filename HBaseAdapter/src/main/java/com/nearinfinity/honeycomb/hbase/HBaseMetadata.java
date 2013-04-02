@@ -201,7 +201,7 @@ public class HBaseMetadata {
         final Delete indicesIdsDelete = new Delete(new IndicesRow(tableId).encode());
 
         final Delete rowsDelete = new Delete(new RowsRow().encode());
-        rowsDelete.deleteColumn(COLUMN_FAMILY, serializedId);
+        rowsDelete.deleteColumns(COLUMN_FAMILY, serializedId);
 
         deletes.add(deleteTableId(tableName));
         deletes.add(columnIdsDelete);
