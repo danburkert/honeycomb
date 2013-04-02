@@ -38,7 +38,8 @@ int HoneycombHandler::pack_row(uchar *buf, TABLE* table, Row* row)
       continue; 
     }
 
-    switch (field->real_type())
+    enum_field_types type = field->real_type();
+    switch (type)
     {
     case MYSQL_TYPE_TINY:
     case MYSQL_TYPE_SHORT:
@@ -87,6 +88,9 @@ int HoneycombHandler::pack_row(uchar *buf, TABLE* table, Row* row)
       MYSQL_TIME mysql_time;
       char temporal_value[MAX_DATE_STRING_REP_LENGTH];
       field->get_time(&mysql_time);
+      if (mysql_time.time_type == MYSQL_TIMESTAMP_DATE && type == MYSQL_TYPE_TIMESTAMP)
+        mysql_time.time_type = MYSQL_TIMESTAMP_DATETIME;
+
       my_TIME_to_str(&mysql_time, temporal_value);
       actualFieldSize = strlen(temporal_value);
       byte_val = (char*) my_malloc(actualFieldSize, MYF(MY_WME));
