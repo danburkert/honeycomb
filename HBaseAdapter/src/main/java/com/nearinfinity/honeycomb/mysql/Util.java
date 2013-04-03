@@ -198,6 +198,7 @@ public class Util {
         }
         return ImmutableSet.copyOf(indices);
     }
+
     /**
      * Return the name of the auto increment column in the table, or null.
      * @param schema

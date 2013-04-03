@@ -211,31 +211,22 @@ public class HandlerProxy {
      * @param indexName
      * @param serializedRow
      */
-    public boolean indexContainsDuplicate(String indexName, byte[] serializedRow, byte[] originalRowBytes) {
+    public boolean indexContainsDuplicate(String indexName, byte[] serializedRow) {
         // This method must get its own table because it may be called during
         // a full table scan.
         checkNotNull(indexName);
         checkNotNull(serializedRow);
 
         Row row = Row.deserialize(serializedRow);
-        Map<String, ByteBuffer> differenceMap;
-        if (originalRowBytes != null) {
-            Row originalRow = Row.deserialize(originalRowBytes);
-            differenceMap = computeUpdateDifference(originalRow, row);
-        } else {
-            differenceMap = row.getRecords();
-        }
 
         Table t = store.openTable(tableName);
-        IndexKey key = new IndexKey(indexName, null, differenceMap);
+        IndexKey key = new IndexKey(indexName, null, row.getRecords());
         Scanner scanner = t.indexScanExact(key);
-        Set<String> columns = Sets.newHashSet(store.getSchema(tableName).getIndices().get(indexName).getColumns());
 
         try {
             while (scanner.hasNext()) {
-                Row next = scanner.next();
-                boolean indexDuplicate = row.isDuplicateForIndex(next, columns);
-                if (indexDuplicate) {
+                if (!scanner.next().getUUID().equals(row.getUUID()))
+                {
                     return true;
                 }
             }
@@ -398,17 +389,6 @@ public class HandlerProxy {
     public void endScan() {
         Util.closeQuietly(currentScanner);
         currentScanner = null;
-    }
-
-    private Map<String, ByteBuffer> computeUpdateDifference(Row originalRow, Row row) {
-        MapDifference<String, ByteBuffer> difference = Maps.difference(originalRow.getRecords(), row.getRecords());
-        Map<String, MapDifference.ValueDifference<ByteBuffer>> differenceMap = difference.entriesDiffering();
-        ImmutableMap.Builder<String, ByteBuffer> builder = ImmutableMap.builder();
-        for (Map.Entry<String, MapDifference.ValueDifference<ByteBuffer>> entry : differenceMap.entrySet()) {
-            builder.put(entry.getKey(), entry.getValue().rightValue());
-        }
-
-        return builder.build();
     }
 
     private void checkTableOpen() {

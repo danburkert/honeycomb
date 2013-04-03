@@ -112,7 +112,7 @@ class HoneycombHandler : public handler
     bool check_column_being_renamed(const TABLE*  table);
 
     /* IUD helper methods*/
-    bool violates_uniqueness(jbyteArray serialized_row, jbyteArray original_row);
+    bool violates_uniqueness(jbyteArray serialized_row);
     int pack_row(uchar *buf, TABLE* table, Row* row);
 
 

@@ -32,10 +32,10 @@ int HoneycombHandler::pack_row(uchar *buf, TABLE* table, Row* row)
     my_ptrdiff_t offset = (my_ptrdiff_t) (buf - table->record[0]);
     field->move_field_offset(offset);
 
-    if (field->is_null()) 
-    { 
+    if (field->is_null())
+    {
       field->move_field_offset(-offset);
-      continue; 
+      continue;
     }
 
     enum_field_types type = field->real_type();
@@ -143,7 +143,7 @@ int HoneycombHandler::pack_row(uchar *buf, TABLE* table, Row* row)
  * inserted or updated.  Sets the handler's failed_key_index field if the
  * constraint is violated.
  */
-bool HoneycombHandler::violates_uniqueness(jbyteArray serialized_row, jbyteArray original_row = NULL)
+bool HoneycombHandler::violates_uniqueness(jbyteArray serialized_row)
 {
   JavaFrame frame(env, table->s->keys);
   for (uint i = 0; i < table->s->keys; i++) // for all indices
@@ -153,7 +153,7 @@ bool HoneycombHandler::violates_uniqueness(jbyteArray serialized_row, jbyteArray
       jstring index_name = string_to_java_string(env, table->key_info[i].name);
       bool contains_duplicate = env->CallBooleanMethod(handler_proxy,
           cache->handler_proxy().index_contains_duplicate, index_name,
-          serialized_row, original_row);
+          serialized_row);
         check_exceptions(env, cache, "HoneycombHandler::violates_uniqueness");
       if (contains_duplicate)
       {
@@ -216,8 +216,6 @@ int HoneycombHandler::update_row(const uchar *old_row, uchar *new_row)
 
   row->reset();
   my_bitmap_map *old_map = dbug_tmp_use_all_columns(table, table->read_set);
-  Row old_row_obj;
-  rc |= pack_row(const_cast<uchar*>(old_row), table, &old_row_obj);
   rc |= pack_row(new_row, table, row);
   dbug_tmp_restore_column_map(table->read_set, old_map);
   rc |= row->set_UUID(this->ref);
@@ -228,11 +226,10 @@ int HoneycombHandler::update_row(const uchar *old_row, uchar *new_row)
 
   JavaFrame frame(env, 1);
   jbyteArray serialized_row = serialize_to_java(env, *row);
-  jbyteArray original_row = serialize_to_java(env, old_row_obj);
 
   if (thd_sql_command(ha_thd()) == SQLCOM_UPDATE) // Taken when actual update, not an ON DUPLICATE KEY UPDATE
   {
-    if (violates_uniqueness(serialized_row, original_row))
+    if (violates_uniqueness(serialized_row))
     {
       DBUG_RETURN(HA_ERR_FOUND_DUPP_KEY);
     }
