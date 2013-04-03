@@ -1,20 +1,15 @@
 package com.nearinfinity.honeycomb.hbase.rowkey;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.nio.ByteBuffer;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import org.apache.hadoop.hbase.util.Bytes;
-
 import com.google.common.collect.ImmutableMap;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.util.Verify;
+import org.apache.hadoop.hbase.util.Bytes;
+
+import java.nio.ByteBuffer;
+import java.util.*;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * A builder for creating {@link IndexRow} instances.  Builder instances can be reused as it is safe
@@ -64,7 +59,7 @@ public class IndexRowBuilder {
     }
 
     /**
-     *  Adds the specified {@link UUID} to the builder instance being constructed
+     * Adds the specified {@link UUID} to the builder instance being constructed
      *
      * @param uuid The identifier to use during the build phase, not null
      * @return The current builder instance
@@ -79,13 +74,13 @@ public class IndexRowBuilder {
      * Adds the specified records and column metadata details to the builder
      * instance being constructed
      *
-     * @param records The records to associate with the index, not null
+     * @param records     The records to associate with the index, not null
      * @param columnTypes The column name to {@link ColumnType} mapping for the index, not null
      * @param columnOrder The order of column names used for sorting the records. not null
      * @return The current builder instance
      */
     public IndexRowBuilder withRecords(final Map<String, ByteBuffer> records,
-            final Map<String, ColumnType> columnTypes, final Collection<String> columnOrder) {
+                                       final Map<String, ColumnType> columnTypes, final Collection<String> columnOrder) {
         checkNotNull(records);
         checkNotNull(columnTypes);
         checkNotNull(columnOrder);
@@ -121,7 +116,9 @@ public class IndexRowBuilder {
     private static List<byte[]> getValuesInColumnOrder(final Map<String, byte[]> records, final Collection<String> columns) {
         final List<byte[]> sortedRecords = new LinkedList<byte[]>();
         for (final String column : columns) {
-            sortedRecords.add(records.get(column));
+            if (records.containsKey(column)) {
+                sortedRecords.add(records.get(column));
+            }
         }
 
         return sortedRecords;
