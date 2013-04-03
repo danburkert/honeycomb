@@ -5,6 +5,73 @@ const char TYPE[] = "queryType";
 const char RECORDS[] = "records";
 const char INDEX_NAME[] = "indexName";
 
+#define INDEX_CONTAINER_SCHEMA "{\"type\":\"record\",\"name\":\"IndexContainer\",\"namespace\":\"com.nearinfinity.honeycomb.mysql.gen\",\"fields\":[{\"name\":\"indexName\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}},{\"name\":\"queryType\",\"type\":{\"type\":\"enum\",\"name\":\"QueryType\",\"symbols\":[\"EXACT_KEY\",\"AFTER_KEY\",\"KEY_OR_NEXT\",\"KEY_OR_PREVIOUS\",\"BEFORE_KEY\",\"INDEX_FIRST\",\"INDEX_LAST\"]}},{\"name\":\"records\",\"type\":{\"type\":\"map\",\"values\":[\"null\",\"bytes\"],\"avro.java.string\":\"String\"}}]}"
+
+int IndexContainer::get_record(const char* column_name, const char* type, avro_value_t** entry_value)
+{
+  int ret = 0;
+  int type_disc;
+  int null_disc;
+  int current_disc;
+  avro_value_t records_map;
+  avro_value_t entry_union;
+  avro_schema_t union_schema;
+
+  // Get the records map 
+  ret |= avro_value_get_by_name(&container_schema, "records", &records_map, NULL);
+  // Get the entry associated with the column name
+  ret |= avro_value_get_by_name(&records_map, column_name, &entry_union, NULL);
+  // The whole union entry is null
+  if (entry_union.self == NULL) {*entry_value = NULL; return 0;} // Not found
+
+  union_schema = avro_value_get_schema(&entry_union);
+
+  // Get the discriminant (union offset) of the actual record, as well as
+  // the expected type and null type discriminants
+  ret |= avro_value_get_discriminant(&entry_union, &current_disc);
+  // Retrieve the name of the bytes branch
+  avro_schema_union_branch_by_name(union_schema, &type_disc, type);
+  // Retrieve the name of the null branch
+  avro_schema_union_branch_by_name(union_schema, &null_disc, "null");
+
+  if (!ret)
+  {
+    if (current_disc == type_disc)
+    {
+      // Extract the value object of the current union branch
+      ret |= avro_value_get_current_branch(&entry_union, *entry_value);
+    } else if (current_disc == null_disc) {
+      // The union is on the null branch
+      *entry_value = NULL;
+    } else {
+      ret = -1;
+    }
+  }
+  return ret;
+}
+
+int IndexContainer::set_record(const char* column_name, const char* type, avro_value_t* record)
+{
+  int ret = 0;
+  int type_disc;
+  avro_value_t records_map;
+  avro_value_t entry_union;
+  avro_schema_t union_schema;
+
+  // Get the records map
+  ret |= avro_value_get_by_name(&container_schema, "records", &records_map, NULL);
+  // Get the entry associated with the column name
+  ret |= avro_value_add(&records_map, column_name, &entry_union, NULL, NULL);
+
+  union_schema = avro_value_get_schema(&entry_union);
+  // Get the union branch for the specified type
+  avro_schema_union_branch_by_name(union_schema, &type_disc, type);
+  // Set the union to the branch specified by type
+  ret |= avro_value_set_branch(&entry_union, type_disc, record);
+
+  return ret;
+}
+
 IndexContainer::IndexContainer()
 {
   if (avro_schema_from_json_literal(INDEX_CONTAINER_SCHEMA, &container_schema_schema))
@@ -48,14 +115,36 @@ int IndexContainer::deserialize(const char* buf, int64_t len)
   return deserialize_object(&container_schema, buf, len);
 }
 
-int IndexContainer::set_record(const char* column_name, char* value, size_t size)
+int IndexContainer::set_bytes_record(const char* column_name, char* value, size_t size)
 {
-  return set_map_value(&container_schema, column_name, RECORDS, value, size);
+  int ret = 0;
+  avro_value_t record;
+  if (value == NULL)
+  {
+    ret |= set_record(column_name, "null", &record);
+  }
+  else
+  {
+    ret |= set_record(column_name, "bytes", &record);
+    ret |= avro_value_set_bytes(&record, value, size);
+  }
+  return ret;
 }
 
 int IndexContainer::get_bytes_record(const char* column_name, const char** value, size_t* size)
 {
-  return get_map_value(&container_schema, column_name, RECORDS, value, size);
+  int ret;
+  avro_value_t record;
+  avro_value_t* rec_ptr = &record;
+
+  ret = get_record(column_name, "bytes", &rec_ptr);
+  if (!ret && (rec_ptr == NULL))
+  {
+    *value = NULL;
+  } else {
+    ret |= avro_value_get_bytes(rec_ptr, (const void**) value, size);
+  }
+  return ret;
 }
 
 IndexContainer::QueryType IndexContainer::get_type()

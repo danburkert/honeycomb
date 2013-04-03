@@ -77,6 +77,6 @@ class Row : public Serializable
    *
    * @return Error code
    */
-  int set_record(const char* column_name, char* value, size_t size);
+  int set_bytes_record(const char* column_name, char* value, size_t size);
 };
 #endif

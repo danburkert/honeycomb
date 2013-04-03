@@ -270,6 +270,12 @@ int HoneycombHandler::delete_table(const char *path)
 
     TABLE_SHARE table_share;
     ret |= init_table_share(&table_share, path);
+    if (ret == 1)
+    {
+      THD* thd = ha_thd();
+      thd->stmt_da->reset_diagnostics_area();
+      ret = 0;
+    }
 
     jstring jtablespace = NULL;
     if (table_share.tablespace != NULL)

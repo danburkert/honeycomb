@@ -3,21 +3,17 @@ package com.nearinfinity.honeycomb.hbase.rowkey;
 import com.google.common.collect.Lists;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
+import com.nearinfinity.honeycomb.util.Verify;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-
-import com.nearinfinity.honeycomb.util.Verify;
 
 /**
  * A builder for creating {@link IndexRow} instances.  Builder instances can be reused as it is safe
@@ -58,7 +54,7 @@ public class IndexRowBuilder {
     /**
      * Adds the specified {@link SortOrder} to the builder instance being constructed
      *
-     * @param sortOrder The sort order to use during the build phase, not null
+     * @param order The sort order to use during the build phase, not null
      * @return The current builder instance
      */
     public IndexRowBuilder withSortOrder(SortOrder order) {
@@ -80,7 +76,7 @@ public class IndexRowBuilder {
     }
 
     /**
-     *  Adds the specified {@link UUID} to the builder instance being constructed
+     * Adds the specified {@link UUID} to the builder instance being constructed
      *
      * @param uuid The identifier to use during the build phase, not null
      * @return The current builder instance
@@ -101,6 +97,9 @@ public class IndexRowBuilder {
         List<byte[]> encodedRecords = Lists.newArrayList();
         if (this.records != null) {
             for (String column : schema.getColumns()) {
+                if (!records.containsKey(column)) {
+                    continue;
+                }
                 ByteBuffer record = records.get(column);
                 if (record != null) {
                     byte[] encodedRecord = encodeValue(record,

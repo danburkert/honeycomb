@@ -80,7 +80,7 @@ int Row::get_bytes_record(const char* column_name, const char** value, size_t* s
   return get_map_value(&row_container, column_name, "records", value, size);
 }
 
-int Row::set_record(const char* column_name, char* value, size_t size)
+int Row::set_bytes_record(const char* column_name, char* value, size_t size)
 {
   return set_map_value(&row_container, column_name, "records", value, size);
 }

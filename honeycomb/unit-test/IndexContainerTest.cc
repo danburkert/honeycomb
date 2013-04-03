@@ -68,3 +68,13 @@ TEST_F(IndexContainerTest, Name)
     ASSERT_TRUE(strcmp(name, name_cmp) == 0);
   }
 }
+
+TEST_F(IndexContainerTest, CanHaveNullValue)
+{
+  index.reset();
+  const char* value;
+
+  ASSERT_EQ(index.set_bytes_record("test", NULL, 0), 0);
+  ASSERT_EQ(index.get_bytes_record("test", &value, NULL), 0);
+  ASSERT_TRUE(value == NULL);
+}

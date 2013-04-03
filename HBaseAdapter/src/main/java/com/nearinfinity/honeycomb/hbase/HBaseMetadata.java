@@ -110,20 +110,29 @@ public class HBaseMetadata {
         return ImmutableBiMap.copyOf(nameToId);
     }
 
-    public TableSchema getSchema(long tableId) {
+    /**
+     * Fetches the {@link TableSchema} for the table corresponding to the specified table identifier
+     *
+     * @param tableId The valid table identifier of the table this lookup is for
+     * @return The table schema details for the table
+     */
+    public TableSchema getSchema(final long tableId) {
         Verify.isValidId(tableId);
-        byte[] serializedTableId = serializeId(tableId);
 
-        Get get = new Get(new SchemaRow().encode());
+        final byte[] serializedTableId = serializeId(tableId);
+        final Get get = new Get(new SchemaRow().encode());
         get.addColumn(COLUMN_FAMILY, serializedTableId);
-        HTableInterface hTable = getHTable();
-        try {
-            Result result = HBaseOperations.performGet(hTable, get);
 
-            byte[] serializedSchema = result.getValue(COLUMN_FAMILY, serializedTableId);
+        final HTableInterface hTable = getHTable();
+
+        try {
+            final Result result = HBaseOperations.performGet(hTable, get);
+
+            final byte[] serializedSchema = result.getValue(COLUMN_FAMILY, serializedTableId);
             if (serializedSchema == null) {
                 throw new TableNotFoundException(tableId);
             }
+
             return Util.deserializeTableSchema(serializedSchema);
         } finally {
             HBaseOperations.closeTable(hTable);
@@ -136,7 +145,7 @@ public class HBaseMetadata {
      * @param tableName The name of the table to create, not null or empty
      * @param schema The schema details of the table to create, not null
      */
-    public void createTable(String tableName, TableSchema schema) {
+    public void createTable(final String tableName, final TableSchema schema) {
         Verify.isNotNullOrEmpty(tableName);
         checkNotNull(schema);
 
