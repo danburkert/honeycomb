@@ -1,23 +1,39 @@
 package com.nearinfinity.honeycomb.mysql.generators;
 
+import com.google.common.collect.ImmutableMap;
 import com.nearinfinity.honeycomb.mysql.Row;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import net.java.quickcheck.Generator;
-import net.java.quickcheck.generator.CombinedGenerators;
-import net.java.quickcheck.generator.PrimitiveGenerators;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.Random;
 import java.util.UUID;
 
 public class RowGenerator implements Generator<Row> {
-    private static Generator<Map<String, ByteBuffer>> records =
-            CombinedGenerators.maps(
-                    PrimitiveGenerators.strings(),
-                    new ByteBufferGenerator());
-    Generator<UUID> uuids = new UUIDGenerator();
+    private static final Random RAND = new Random();
+    private static final Generator<UUID> uuids = new UUIDGenerator();
+    private final Map<String, Generator<ByteBuffer>> recordGenerators;
+
+    public RowGenerator(TableSchema schema) {
+        super();
+        ImmutableMap.Builder<String, Generator<ByteBuffer>> recordGenerators = ImmutableMap.builder();
+        for (Map.Entry<String, ColumnSchema> columns : schema.getColumns().entrySet()) {
+            recordGenerators.put(columns.getKey(), new RecordGenerator(columns.getValue()));
+        }
+        this.recordGenerators = recordGenerators.build();
+    }
 
     @Override
     public Row next() {
-        return new Row(records.next(), uuids.next());
+        ImmutableMap.Builder<String, ByteBuffer> records = ImmutableMap.builder();
+        for (Map.Entry<String, Generator<ByteBuffer>> record : recordGenerators.entrySet()) {
+            ByteBuffer nextValue = record.getValue().next();
+            if (nextValue != null) {
+                records.put(record.getKey(), nextValue);
+            }
+        }
+        return new Row(records.build(), uuids.next());
     }
 }

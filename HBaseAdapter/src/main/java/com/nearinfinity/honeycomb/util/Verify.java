@@ -1,17 +1,16 @@
 package com.nearinfinity.honeycomb.util;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.util.Arrays;
-import java.util.Map;
-
-import org.apache.log4j.Logger;
-
 import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import org.apache.log4j.Logger;
+
+import java.util.Arrays;
+import java.util.Map;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Checks that operations are valid.
@@ -30,14 +29,14 @@ public class Verify {
     }
 
     /**
-     * Verifies that the provided table identifier is valid
+     * Verifies that the provided entity identifier is valid
      *
-     * @param tableId The table identifier to verify, must be greater than or equal to 0
+     * @param id The entity identifier to verify, must be greater than or equal to 0
      * @param message Additional messages to include on verification failure
-     * @throws IllegalArgumentException Thrown if the table identifier is invalid
+     * @throws IllegalArgumentException Thrown if the entity identifier is invalid
      */
-    public static void isValidTableId(final long tableId, final String... message) {
-        checkArgument(tableId >= 0, "Table id must be greater than or equal to zero. " + Arrays.toString(message));
+    public static void isValidId(final long id, final String... message) {
+        checkArgument(id >= 0, "Id must be greater than or equal to zero. " + Arrays.toString(message));
     }
 
     /**

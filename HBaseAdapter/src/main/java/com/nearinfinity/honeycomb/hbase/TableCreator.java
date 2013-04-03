@@ -5,6 +5,8 @@ import com.nearinfinity.honeycomb.config.Constants;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.io.encoding.DataBlockEncoding;
+import org.apache.hadoop.hbase.regionserver.StoreFile;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -13,41 +15,45 @@ public class TableCreator {
     private static final Logger logger = Logger.getLogger(TableCreator.class);
 
     /**
-     * Creates an HTable, with the correct column family, in HBase that will
-     * store all of the SQL tables.
+     * Creates a table in HBase to store all Honeycomb tables
      *
      * @param configuration Configuration of the HTable
      * @throws IOException
      */
     public static void createTable(ConfigurationHolder configuration)
             throws IOException {
-        HTableDescriptor sqlTableDescriptor;
-        HColumnDescriptor nicColumn = new HColumnDescriptor(Constants.DEFAULT_COLUMN_FAMILY);
+        HTableDescriptor tableDescriptor;
+        HColumnDescriptor columnDescriptor = new HColumnDescriptor(Constants.DEFAULT_COLUMN_FAMILY);
         HBaseAdmin admin = new HBaseAdmin(configuration.getConfiguration());
         byte[] tableName = configuration.getStorageTableName().getBytes();
 
-        if (!admin.tableExists(tableName)) {
-            logger.info("Creating sql table");
-            sqlTableDescriptor = new HTableDescriptor(tableName);
-            sqlTableDescriptor.addFamily(nicColumn);
+        columnDescriptor.setBloomFilterType(StoreFile.BloomType.ROW)
+                .setDataBlockEncoding(DataBlockEncoding.PREFIX)
+//                .setCompressionType(Compression.Algorithm.SNAPPY)
+                .setMaxVersions(1);
 
-            admin.createTable(sqlTableDescriptor);
+        if (!admin.tableExists(tableName)) {
+            logger.info("Creating HBase table");
+            tableDescriptor = new HTableDescriptor(tableName);
+            tableDescriptor.addFamily(columnDescriptor);
+
+            admin.createTable(tableDescriptor);
         }
 
-        sqlTableDescriptor = admin.getTableDescriptor(tableName);
-        if (!sqlTableDescriptor.hasFamily(Constants.DEFAULT_COLUMN_FAMILY)) {
-            logger.info("Adding nic column family to sql table");
+        tableDescriptor = admin.getTableDescriptor(tableName);
+        if (!tableDescriptor.hasFamily(Constants.DEFAULT_COLUMN_FAMILY)) {
+            logger.info("Adding column family to HBase table");
 
             if (!admin.isTableDisabled(tableName)) {
-                logger.info("Disabling sql table");
+                logger.info("Disabling HBase table");
                 admin.disableTable(tableName);
             }
 
-            admin.addColumn(tableName, nicColumn);
+            admin.addColumn(tableName, columnDescriptor);
         }
 
         if (admin.isTableDisabled(tableName)) {
-            logger.info("Enabling sql table");
+            logger.info("Enabling HBase table");
             admin.enableTable(tableName);
         }
 
@@ -62,6 +68,6 @@ public class TableCreator {
             }
         }
 
-        logger.info("Sql table successfully initialized.");
+        logger.info("HBase table successfully initialized.");
     }
 }

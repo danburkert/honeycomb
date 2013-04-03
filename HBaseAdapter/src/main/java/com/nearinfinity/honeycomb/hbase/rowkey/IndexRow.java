@@ -1,19 +1,20 @@
 package com.nearinfinity.honeycomb.hbase.rowkey;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.util.List;
-import java.util.UUID;
-
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.nearinfinity.honeycomb.hbase.VarEncoder;
 import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.util.Verify;
+import org.apache.hadoop.hbase.util.Bytes;
+
+import java.util.List;
+import java.util.UUID;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Representation of the rowkey used to define the indexed column details for data row content
+ * Super class for index rowkeys
  */
 public abstract class IndexRow implements RowKey {
     private final byte prefix;
@@ -23,6 +24,7 @@ public abstract class IndexRow implements RowKey {
     private final byte[] nullBytes;
     private final UUID uuid;
     private final List<byte[]> records;
+    private final SortOrder sortOrder;
 
     protected IndexRow(final long tableId,
                        final long indexId,
@@ -30,8 +32,9 @@ public abstract class IndexRow implements RowKey {
                        final UUID uuid,
                        final byte prefix,
                        final byte[] notNullBytes,
-                       final byte[] nullBytes) {
-        Verify.isValidTableId(tableId);
+                       final byte[] nullBytes,
+                       final SortOrder sortOrder) {
+        Verify.isValidId(tableId);
         checkArgument(indexId >= 0, "Index ID must be non-zero.");
         checkNotNull(prefix, "Prefix cannot be null");
         checkNotNull(notNullBytes, "Not null bytes cannot be null");
@@ -43,6 +46,7 @@ public abstract class IndexRow implements RowKey {
         this.notNullBytes = notNullBytes;
         this.nullBytes = nullBytes;
         this.records = records;
+        this.sortOrder = sortOrder;
     }
 
     @Override
@@ -59,12 +63,12 @@ public abstract class IndexRow implements RowKey {
                     encodedParts.add(nullBytes);
                 } else {
                     encodedParts.add(notNullBytes);
-                    encodedParts.add(VarEncoder.encodeBytes(record));
+                    encodedParts.add(record);
                 }
             }
-        }
-        if (uuid != null) {
-            encodedParts.add(Util.UUIDToBytes(uuid));
+            if (uuid != null) {
+                encodedParts.add(Util.UUIDToBytes(uuid));
+            }
         }
 
         return VarEncoder.appendByteArrays(encodedParts);
@@ -74,24 +78,6 @@ public abstract class IndexRow implements RowKey {
     public byte getPrefix() {
         return prefix;
     }
-
-    public long getTableId() {
-        return tableId;
-    }
-
-    public UUID getUuid() {
-        return uuid;
-    }
-
-    public long getIndexId() {
-        return indexId;
-    }
-
-    public List<byte[]> getRecords() {
-        return records;
-    }
-
-    public abstract SortOrder getSortOrder();
 
     @Override
     public String toString() {
@@ -112,5 +98,58 @@ public abstract class IndexRow implements RowKey {
         }
 
         return strings;
+    }
+
+    @Override
+    public int compareTo(RowKey o) {
+        int typeCompare = getPrefix() - o.getPrefix();
+        if (typeCompare != 0) { return typeCompare; }
+        IndexRow row2 = (IndexRow) o;
+
+        List<byte[]> records2 = row2.records;
+        int nullOrder = sortOrder == SortOrder.Ascending ? -1 : 1;
+
+        int compare;
+        compare = Long.signum(tableId - row2.tableId);
+        if (compare != 0) {
+            return compare;
+        }
+        compare = Long.signum(indexId - row2.indexId);
+        if (compare != 0) {
+            return compare;
+        }
+        compare = recordsCompare(this.records, row2.records, nullOrder);
+        if (compare != 0) {
+            return compare;
+        }
+        return new Bytes.ByteArrayComparator().compare(
+                Util.UUIDToBytes(uuid),
+                Util.UUIDToBytes(row2.uuid));
+    }
+
+    private int recordsCompare(List<byte[]> records1, List<byte[]> records2, int nullOrder) {
+        byte[] value1, value2;
+        int compare;
+        if (records1.size() != records2.size()) {
+            throw new IllegalArgumentException("Number of records in indices must match.");
+        }
+        for (int i = 0; i < records1.size(); i++) {
+            value1 = records1.get(i);
+            value2 = records2.get(i);
+            if (value1 == value2) {
+                continue;
+            }
+            if (value1 == null) {
+                return nullOrder;
+            }
+            if (value2 == null) {
+                return nullOrder * -1;
+            }
+            compare = new Bytes.ByteArrayComparator().compare(value1, value2);
+            if (compare != 0) {
+                return compare;
+            }
+        }
+        return 0;
     }
 }

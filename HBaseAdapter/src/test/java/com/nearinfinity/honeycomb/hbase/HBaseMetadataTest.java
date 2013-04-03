@@ -42,6 +42,9 @@ public class HBaseMetadataTest {
     private static final String COLUMN_NAME = "columnA";
     private static final String INDEX_NAME = "indexA";
 
+    private static final long INVALID_TABLE_ID = -1;
+
+
     @Mock
     private HTableProvider provider;
 
@@ -57,6 +60,100 @@ public class HBaseMetadataTest {
 
         table = MockHTable.create();
         when(provider.get()).thenReturn(table);
+    }
+
+    @SuppressWarnings("unused")
+    @Test(expected = NullPointerException.class)
+    public void testConstructMetadataNullProvider() {
+        new HBaseMetadata(null);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testLookupTableIdNullTableName() {
+        hbaseMetadata.getTableId(null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testLookupTableIdEmptyTableName() {
+        hbaseMetadata.getTableId("");
+    }
+
+    @Test(expected = TableNotFoundException.class)
+    public void testLookupTableIdUnknownTableName() {
+        hbaseMetadata.getTableId(TABLE_NAME);
+    }
+
+    @Test
+    public void testLookupTableIdValidTableName() {
+        final TableSchema schema = TABLE_SCHEMA_GEN.next();
+        final String tableName = TableSchemaGenerator.MYSQL_NAME_GEN.next();
+
+        hbaseMetadata.createTable(tableName, schema);
+        assertEquals(1, hbaseMetadata.getTableId(tableName));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testLookupIndexIdsInvalidTableId() {
+        hbaseMetadata.getIndexIds(INVALID_TABLE_ID);
+    }
+
+    @Test
+    public void testLookupIndexIdsValidTableId() {
+        final TableSchema tableSchema = new TableSchema(ImmutableMap.<String, ColumnSchema>of(), ImmutableMap.<String, IndexSchema>of(
+                INDEX_NAME, new IndexSchema(Lists.newArrayList(COLUMN_NAME), false)));
+
+        hbaseMetadata.createTable(TABLE_NAME, tableSchema);
+        final long tableId = hbaseMetadata.getTableId(TABLE_NAME);
+
+        final Map<String, Long> tableIndices = hbaseMetadata.getIndexIds(tableId);
+        assertEquals(1, tableIndices.size());
+        assertTrue(tableIndices.containsKey(INDEX_NAME));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testLookupColumnIdsInvalidTableId() {
+        hbaseMetadata.getColumnIds(INVALID_TABLE_ID);
+    }
+
+    @Test
+    public void testLookupColumnIdsValidTableId() {
+        final Map<String, ColumnSchema> columns = ImmutableMap.<String, ColumnSchema>of(
+                COLUMN_NAME, new ColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
+
+        final TableSchema tableSchema = new TableSchema(columns, ImmutableMap.<String, IndexSchema>of());
+
+        hbaseMetadata.createTable(TABLE_NAME, tableSchema);
+        final long tableId = hbaseMetadata.getTableId(TABLE_NAME);
+
+        final Map<String, Long> tableColumns = hbaseMetadata.getColumnIds(tableId);
+        assertEquals(1, tableColumns.size());
+        assertTrue(tableColumns.containsKey(COLUMN_NAME));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testLookupTableSchemaInvalidTableId() {
+        hbaseMetadata.getSchema(INVALID_TABLE_ID);
+    }
+
+    @Test(expected = TableNotFoundException.class)
+    public void testLookupTableSchemaUnknownTableId() {
+        final long unknownTableId = 2;
+        hbaseMetadata.getSchema(unknownTableId);
+    }
+
+    @Test
+    public void testLookupTableSchemaValidTableId() {
+        final Map<String, ColumnSchema> columns = ImmutableMap.<String, ColumnSchema>of(
+                COLUMN_NAME, new ColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
+
+        final TableSchema tableSchema = new TableSchema(columns, ImmutableMap.<String, IndexSchema>of());
+
+        hbaseMetadata.createTable(TABLE_NAME, tableSchema);
+        final long tableId = hbaseMetadata.getTableId(TABLE_NAME);
+
+        final TableSchema schemaTwo = hbaseMetadata.getSchema(tableId);
+        assertEquals(1, schemaTwo.getColumns().size());
+        assertTrue(schemaTwo.getColumns().containsKey(COLUMN_NAME));
     }
 
     @Test
