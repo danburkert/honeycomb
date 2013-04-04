@@ -8,6 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
@@ -67,28 +68,28 @@ public class IndexRowBuilderTest {
 
     @Test(expected = NullPointerException.class)
     public void testBuilderRecordsNullRecords() {
-        builder.withRecords(null,
-                new IndexSchema(ImmutableList.<String>of(), false),
+        builder.withQueryValues(null,
+                getColumns(),
                 ImmutableMap.<String, ColumnSchema>of());
     }
 
     @Test(expected = NullPointerException.class)
     public void testBuilderRecordsNullColumnTypes() {
-        builder.withRecords(ImmutableMap.<String, ByteBuffer>of(),
+        builder.withQueryValues(ImmutableMap.<String, ByteBuffer>of(),
                 null, ImmutableMap.<String, ColumnSchema>of());
     }
 
     @Test(expected = NullPointerException.class)
     public void testBuilderRecordsNullColumnOrder() {
-        builder.withRecords(ImmutableMap.<String, ByteBuffer>of(),
-                new IndexSchema(ImmutableList.<String>of(), false),
+        builder.withQueryValues(ImmutableMap.<String, ByteBuffer>of(),
+                getColumns(),
                 null);
     }
 
     @Test
     public void testBuilderRecords() {
-        builder.withRecords(ImmutableMap.<String, ByteBuffer>of(),
-                new IndexSchema(ImmutableList.<String>of(), false),
+        builder.withQueryValues(ImmutableMap.<String, ByteBuffer>of(),
+                getColumns(),
                 ImmutableMap.<String, ColumnSchema>of());
     }
 
@@ -97,5 +98,14 @@ public class IndexRowBuilderTest {
         final IndexRow row = builder.withSortOrder(SortOrder.Ascending).build();
 
         assertEquals(ASC_INDEX_PREFIX, row.getPrefix());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testBuildWithoutSortOrderFails(){
+        builder.build();
+    }
+
+    private List<String> getColumns() {
+        return new IndexSchema(ImmutableList.<String>of(), false).getColumns();
     }
  }

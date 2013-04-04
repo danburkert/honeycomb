@@ -150,8 +150,8 @@ public class RowKeyGenerator implements Generator<RowKey> {
             Row row = rows.next();
             IndexRowBuilder builder = IndexRowBuilder
                     .newBuilder(tableIds.next(), indexIds.next())
-                    .withRecords(row.getRecords(),
-                            indexSchema,
+                    .withQueryValues(row.getRecords(),
+                            indexSchema.getColumns(),
                             tableSchema.getColumns())
                     .withUUID(row.getUUID());
 

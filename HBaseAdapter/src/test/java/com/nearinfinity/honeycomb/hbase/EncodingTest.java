@@ -69,7 +69,7 @@ public class EncodingTest {
                     (ByteBuffer) ByteBuffer.wrap(Longs.toByteArray(number)));
             rows.add(new Pair<Long, byte[]>(number, builder
                     .withUUID(UUID.randomUUID())
-                    .withRecords(records, new IndexSchema(columnOrder, false), columnSchemas)
+                    .withQueryValues(records, new IndexSchema(columnOrder, false).getColumns(), columnSchemas)
                     .build().encode()));
         }
         return rows;

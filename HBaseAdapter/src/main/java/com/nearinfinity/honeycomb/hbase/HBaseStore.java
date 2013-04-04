@@ -24,16 +24,12 @@ public class HBaseStore implements Store {
         this.cache = cache;
     }
 
-    public long getTableId(String tableName) {
-        return cache.tableCacheGet(tableName);
-    }
-
     public BiMap<String, Long> getColumns(long tableId) {
         return cache.columnsCacheGet(tableId);
     }
 
-    public Map<String, Long> getIndices(long tableId) {
-        return cache.indicesCacheGet(tableId);
+    public long getIndexId(long tableId, String tableName){
+        return cache.indicesCacheGet(tableId).get(tableName);
     }
 
     public TableSchema getSchema(Long tableId) {
