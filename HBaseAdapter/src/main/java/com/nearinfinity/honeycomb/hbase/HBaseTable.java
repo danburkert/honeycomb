@@ -23,6 +23,7 @@ import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -53,7 +54,9 @@ public class HBaseTable implements Table {
     }
 
     private static byte[] padKeyForSorting(byte[] key) {
-        return Bytes.padTail(key, 1);
+        BigInteger integer = new BigInteger(key);
+        return integer.add(new BigInteger("1")).toByteArray();
+
     }
 
     @Inject
@@ -204,7 +207,6 @@ public class HBaseTable implements Table {
     public Scanner ascendingIndexScanAfter(IndexKey key) {
         IndexRow startRow = indexPrefixedForTable(key)
                 .withSortOrder(SortOrder.Ascending)
-                .withUUID(Constants.FULL_UUID)
                 .build();
 
         long indexId = store.getIndexId(tableId, key.getIndexName());
@@ -235,7 +237,6 @@ public class HBaseTable implements Table {
     public Scanner descendingIndexScanAfter(IndexKey key) {
         IndexRow startRow = indexPrefixedForTable(key)
                 .withSortOrder(SortOrder.Descending)
-                .withUUID(Constants.FULL_UUID)
                 .build();
 
         long indexId = store.getIndexId(tableId, key.getIndexName());
@@ -250,8 +251,8 @@ public class HBaseTable implements Table {
     @Override
     public Scanner indexScanExact(IndexKey key) {
         IndexRowBuilder builder = indexPrefixedForTable(key).withSortOrder(SortOrder.Ascending);
-        IndexRow startRow = builder.withUUID(Constants.ZERO_UUID).build();
-        IndexRow endRow = builder.withUUID(Constants.FULL_UUID).build();
+        IndexRow startRow = builder.build();
+        IndexRow endRow = builder.build();
 
         // Scan is [start, end) : add a zero to put the end key after an all 0xFF UUID
         return createScannerForRange(startRow.encode(), padKeyForSorting(endRow.encode()));

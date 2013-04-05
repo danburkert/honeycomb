@@ -15,6 +15,12 @@ int HoneycombHandler::index_init(uint idx, bool sorted)
   DBUG_RETURN(0);
 }
 
+int HoneycombHandler::index_read_last_map(uchar * buf, const uchar * key, key_part_map keypart_map)
+{
+  DBUG_ENTER("HoneycombHandler::index_read_map");
+  DBUG_RETURN(index_read_map(buf, key, keypart_map, HA_READ_PREFIX_LAST));
+}
+
 int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
     key_part_map keypart_map, enum ha_rkey_function find_flag)
 {
@@ -253,6 +259,7 @@ static int retrieve_query_flag(enum ha_rkey_function find_flag, IndexContainer::
       *query_type = IndexContainer::KEY_OR_NEXT;
       break;
     case HA_READ_KEY_OR_PREV:
+    case HA_READ_PREFIX_LAST:
     case HA_READ_PREFIX_LAST_OR_PREV:
       *query_type = IndexContainer::KEY_OR_PREVIOUS;
       break;

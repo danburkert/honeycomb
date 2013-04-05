@@ -124,7 +124,7 @@ class HoneycombHandler : public handler
 
     const char *index_type(uint inx)
     {
-      return "HASH";
+      return "BTREE";
     }
 
     uint alter_table_flags(uint flags)
@@ -221,6 +221,7 @@ class HoneycombHandler : public handler
     /* Query */
     int index_init(uint idx, bool sorted);
     int index_read_map(uchar * buf, const uchar * key, key_part_map keypart_map, enum ha_rkey_function find_flag);
+    int index_read_last_map(uchar * buf, const uchar * key, key_part_map keypart_map);
     int index_next(uchar *buf);
     int index_prev(uchar *buf);
     int index_first(uchar *buf);
