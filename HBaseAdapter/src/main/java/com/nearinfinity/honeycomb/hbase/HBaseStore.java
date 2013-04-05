@@ -1,7 +1,5 @@
 package com.nearinfinity.honeycomb.hbase;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import com.google.common.collect.BiMap;
 import com.google.inject.Inject;
 import com.nearinfinity.honeycomb.Store;
@@ -10,7 +8,7 @@ import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import com.nearinfinity.honeycomb.util.Verify;
 
-import java.util.Map;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class HBaseStore implements Store {
     private final HBaseMetadata metadata;
@@ -28,8 +26,8 @@ public class HBaseStore implements Store {
         return cache.columnsCacheGet(tableId);
     }
 
-    public long getIndexId(long tableId, String tableName){
-        return cache.indicesCacheGet(tableId).get(tableName);
+    public long getIndexId(long tableId, String indexName) {
+        return cache.indicesCacheGet(tableId).get(indexName);
     }
 
     public TableSchema getSchema(Long tableId) {

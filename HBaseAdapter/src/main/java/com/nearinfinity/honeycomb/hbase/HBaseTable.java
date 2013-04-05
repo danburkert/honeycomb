@@ -2,7 +2,6 @@ package com.nearinfinity.honeycomb.hbase;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.name.Named;
@@ -34,6 +33,7 @@ public class HBaseTable implements Table {
     private final HTableInterface hTable;
     private final HBaseStore store;
     private final long tableId;
+    private final MutationFactory mutationFactory;
     private long writeBufferSize = ConfigConstants.DEFAULT_WRITE_BUFFER_SIZE;
 
     @Inject
@@ -42,6 +42,7 @@ public class HBaseTable implements Table {
         this.hTable = checkNotNull(hTable);
         this.store = checkNotNull(store);
         this.tableId = tableId;
+        this.mutationFactory = new MutationFactory(store);
     }
 
     @Inject
@@ -52,17 +53,7 @@ public class HBaseTable implements Table {
     @Override
     public void insert(Row row) {
         checkNotNull(row);
-        final byte[] serializeRow = row.serialize();
-        final UUID uuid = row.getUUID();
-
-        HBaseOperations.performPut(hTable, createEmptyQualifierPut(new DataRow(tableId, uuid), serializeRow));
-        doToIndices(row, getTableIndices(tableId), new IndexAction() {
-            @Override
-            public void execute(IndexRowBuilder builder) {
-                HBaseOperations.performPut(hTable, createEmptyQualifierPut(builder.withSortOrder(SortOrder.Ascending).build(), serializeRow));
-                HBaseOperations.performPut(hTable, createEmptyQualifierPut(builder.withSortOrder(SortOrder.Descending).build(), serializeRow));
-            }
-        });
+        HBaseOperations.performPut(hTable, mutationFactory.insert(tableId, row));
     }
 
     @Override
@@ -70,28 +61,14 @@ public class HBaseTable implements Table {
         Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
         checkNotNull(indexSchema, "The index schema is invalid");
 
-        final Map<String, IndexSchema> indexDetails = ImmutableMap.of(indexName, indexSchema);
-
-        final Scanner dataRows = tableScan();
-
-        if (dataRows.hasNext()) {
-            logger.debug("Inserting indices for named index: " + indexName);
-        } else {
-            logger.info("There are no data rows available to index");
+        final Map<String, IndexSchema> indices = ImmutableMap.of(indexName, indexSchema);
+        final Scanner scanner = tableScan();
+        while (scanner.hasNext()) {
+            HBaseOperations.performPut(hTable,
+                    mutationFactory.insertIndices(tableId, scanner.next(), indices));
         }
 
-        while (dataRows.hasNext()) {
-            final Row dataRow = dataRows.next();
-            doToIndices(dataRow, indexDetails, new IndexAction() {
-                @Override
-                public void execute(IndexRowBuilder builder) {
-                    HBaseOperations.performPut(hTable, createEmptyQualifierPut(builder.withSortOrder(SortOrder.Ascending).build(), dataRow.serialize()));
-                    HBaseOperations.performPut(hTable, createEmptyQualifierPut(builder.withSortOrder(SortOrder.Descending).build(), dataRow.serialize()));
-                }
-            });
-        }
-
-        Util.closeQuietly(dataRows);
+        Util.closeQuietly(scanner);
     }
 
     @Override
@@ -107,46 +84,26 @@ public class HBaseTable implements Table {
         checkNotNull(newRow);
 
         // Delete indices that have changed
-        final List<Delete> deleteList = Lists.newLinkedList();
-        doToIndices(oldRow, changedIndices, new IndexAction() {
-            @Override
-            public void execute(IndexRowBuilder builder) {
-                deleteList.add(createDelete(builder.withSortOrder(SortOrder.Descending).build()));
-                deleteList.add(createDelete(builder.withSortOrder(SortOrder.Ascending).build()));
-            }
-        });
-        HBaseOperations.performDelete(hTable, deleteList);
+        final List<Delete> deletes =
+                mutationFactory.deleteIndices(tableId, oldRow, changedIndices);
+        // Insert data row and indices that have changed
+        final List<Put> puts =
+                mutationFactory.insert(tableId, newRow, changedIndices);
 
-        insert(newRow);
+        HBaseOperations.performPut(hTable, puts);
+        HBaseOperations.performDelete(hTable, deletes);
     }
 
     @Override
     public void delete(final UUID uuid) {
         checkNotNull(uuid);
-        final List<Delete> deleteList = Lists.newLinkedList();
-        Delete dataDelete = new Delete(new DataRow(tableId, uuid).encode());
-        deleteList.add(dataDelete);
-
-        Map<String, IndexSchema> indices = getTableIndices(tableId);
-        if (!indices.isEmpty()) {
-            Row row = get(uuid);
-            doToIndices(row, getTableIndices(tableId), new IndexAction() {
-                @Override
-                public void execute(IndexRowBuilder builder) {
-                    Delete ascDelete = createDelete(builder.withSortOrder(SortOrder.Descending).build());
-                    Delete descDelete = createDelete(builder.withSortOrder(SortOrder.Ascending).build());
-                    deleteList.add(ascDelete);
-                    deleteList.add(descDelete);
-                }
-            });
-        }
-
-        HBaseOperations.performDelete(hTable, deleteList);
+        Row row = get(uuid);  // TODO: Should be passed in from C++ side
+        HBaseOperations.performDelete(hTable, mutationFactory.delete(tableId, row));
     }
 
     @Override
     public void deleteAllRows() {
-        batchDeleteData(tableScan(), getTableIndices(tableId), true);
+        batchDeleteData(tableScan(), store.getSchema(tableId).getIndices(), true);
     }
 
     @Override
@@ -200,7 +157,7 @@ public class HBaseTable implements Table {
                 .newBuilder(tableId, indexId + 1)
                 .withSortOrder(SortOrder.Ascending)
                 .build();
-        return createScannerForRange(incrementKeyForSorting(startRow.encode()), endRow.encode());
+        return createScannerForRange(incrementRowKey(startRow.encode()), endRow.encode());
     }
 
     @Override
@@ -230,17 +187,15 @@ public class HBaseTable implements Table {
                 .newBuilder(tableId, indexId + 1)
                 .withSortOrder(SortOrder.Descending)
                 .build();
-        return createScannerForRange(incrementKeyForSorting(startRow.encode()), endRow.encode());
+        return createScannerForRange(incrementRowKey(startRow.encode()), endRow.encode());
     }
 
     @Override
     public Scanner indexScanExact(IndexKey key) {
-        IndexRowBuilder builder = indexPrefixedForTable(key).withSortOrder(SortOrder.Ascending);
-        IndexRow startRow = builder.build();
-        IndexRow endRow = builder.build();
+        IndexRow row = indexPrefixedForTable(key).withSortOrder(SortOrder.Ascending).build();
 
-        // Scan is [start, end) : add a zero to put the end key after an all 0xFF UUID
-        return createScannerForRange(startRow.encode(), incrementKeyForSorting(endRow.encode()));
+        // Scan is [start, end) : increment to set end to next possible row
+        return createScannerForRange(row.encode(), incrementRowKey(row.encode()));
     }
 
     @Override
@@ -248,74 +203,45 @@ public class HBaseTable implements Table {
         Util.closeQuietly(hTable);
     }
 
-    private static Put createEmptyQualifierPut(RowKey row, byte[] serializedRow) {
-        return new Put(row.encode()).add(Constants.DEFAULT_COLUMN_FAMILY, new byte[0], serializedRow);
-    }
-
-    private static Delete createDelete(RowKey row) {
-        return new Delete(row.encode());
-    }
-
-    private static byte[] incrementKeyForSorting(byte[] key) {
+    private static byte[] incrementRowKey(byte[] key) {
         BigInteger integer = new BigInteger(key);
         return integer.add(new BigInteger("1")).toByteArray();
     }
 
     /**
-     * Perform a batch delete operation over the rows obtained from the specified data scanner
+     * Perform a batch delete operation over the rows obtained from the
+     * specified data scanner
      *
      * @param dataScanner The {@link Scanner} used to gather rows
      * @param indices     The table index mapping to use during this operation
      * @param deleteRow   Indicate that each row obtained from the data scanner should be deleted
      */
-    private void batchDeleteData(final Scanner dataScanner, final Map<String, IndexSchema> indices, boolean deleteRow) {
-        long totalDeleteSize = 0;
-        final List<Delete> deleteList = Lists.newLinkedList();
-        final List<Delete> batchDeleteList = Lists.newLinkedList();
+    private void batchDeleteData(final Scanner dataScanner,
+                                 final Map<String, IndexSchema> indices,
+                                 boolean deleteRow) {
+        long numDeletes = 0;
+        int deletesPerRow = 2 * indices.size() + (deleteRow ? 1 : 0);
+        final List<Delete> deletes = Lists.newLinkedList();
 
         while (dataScanner.hasNext()) {
             final Row row = dataScanner.next();
 
             if (deleteRow) {
-                final UUID uuid = row.getUUID();
-                deleteList.add(new Delete(new DataRow(tableId, uuid).encode()));
+                deletes.addAll(mutationFactory.delete(tableId, row));
+            } else {
+                deletes.addAll(mutationFactory.deleteIndices(tableId, row));
             }
 
-            doToIndices(row, indices, new IndexAction() {
-                @Override
-                public void execute(IndexRowBuilder builder) {
-                    deleteList.add(createDelete(builder.withSortOrder(SortOrder.Ascending).build()));
-                    deleteList.add(createDelete(builder.withSortOrder(SortOrder.Descending).build()));
-                }
-            });
+            numDeletes += deletesPerRow;
 
-            batchDeleteList.addAll(deleteList);
-
-            totalDeleteSize += deleteList.size() * row.serialize().length;
-            if (totalDeleteSize > writeBufferSize) {
-                HBaseOperations.performDelete(hTable, batchDeleteList);
-                totalDeleteSize = 0;
+            if (numDeletes > writeBufferSize) {
+                HBaseOperations.performDelete(hTable, deletes);
+                numDeletes = 0;
             }
-
-            deleteList.clear();
         }
 
         Util.closeQuietly(dataScanner);
-        HBaseOperations.performDelete(hTable, batchDeleteList);
-    }
-
-    private void doToIndices(final Row row, final Map<String, IndexSchema> indices, final IndexAction action) {
-        final TableSchema schema = store.getSchema(tableId);
-
-        for (Map.Entry<String, IndexSchema> index : indices.entrySet()) {
-            long indexId = store.getIndexId(tableId, index.getKey());
-
-            IndexRowBuilder builder = IndexRowBuilder
-                    .newBuilder(tableId, indexId)
-                    .withUUID(row.getUUID())
-                    .withSqlRow(row, index.getValue().getColumns(), schema.getColumns());
-            action.execute(builder);
-        }
+        HBaseOperations.performDelete(hTable, deletes);
     }
 
     private IndexRowBuilder indexPrefixedForTable(final IndexKey key) {
@@ -336,30 +262,5 @@ public class HBaseTable implements Table {
         Scan scan = new Scan(start, end);
         ResultScanner scanner = HBaseOperations.getScanner(hTable, scan);
         return new HBaseScanner(scanner);
-    }
-
-    /**
-     * Fetches the index mapping information for the table with the specified table id
-     *
-     * @param tableId The id of the table to consult
-     * @return A mapping of index data for the specified table
-     */
-    private Map<String, IndexSchema> getTableIndices(final long tableId) {
-        Map<String, IndexSchema> indexInfo = Maps.newHashMap();
-        final TableSchema schema = store.getSchema(tableId);
-
-        if (schema != null) {
-            final Map<String, IndexSchema> tableIndices = schema.getIndices();
-
-            if (tableIndices != null) {
-                indexInfo = tableIndices;
-            }
-        }
-
-        return indexInfo;
-    }
-
-    private interface IndexAction {
-        public void execute(IndexRowBuilder builder);
     }
 }

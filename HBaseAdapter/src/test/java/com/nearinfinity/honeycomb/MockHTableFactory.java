@@ -7,9 +7,15 @@ import org.apache.hadoop.hbase.client.HTableInterfaceFactory;
 import java.io.IOException;
 
 public class MockHTableFactory implements HTableInterfaceFactory {
+    private final MockHTable hTable;
+
+    public MockHTableFactory(MockHTable hTable) {
+        this.hTable = hTable;
+    }
+
     @Override
     public HTableInterface createHTableInterface(Configuration config, byte[] tableName) {
-        return MockHTable.create();
+        return hTable;
     }
 
     @Override

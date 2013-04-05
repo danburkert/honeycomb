@@ -1,27 +1,5 @@
 package com.nearinfinity.honeycomb.hbase;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
-
-import java.util.List;
-import java.util.Map;
-
-import net.java.quickcheck.Generator;
-import net.java.quickcheck.generator.PrimitiveGenerators;
-
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-import org.powermock.api.mockito.PowerMockito;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -32,6 +10,23 @@ import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import com.nearinfinity.honeycomb.mysql.generators.TableSchemaGenerator;
+import net.java.quickcheck.Generator;
+import net.java.quickcheck.generator.PrimitiveGenerators;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+import org.powermock.api.mockito.PowerMockito;
+
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.when;
 
 
 public class HBaseMetadataTest {
@@ -97,6 +92,11 @@ public class HBaseMetadataTest {
         hbaseMetadata.getIndexIds(INVALID_TABLE_ID);
     }
 
+    @Test(expected = TableNotFoundException.class)
+    public void testLookupIndexIdsUnknownTableId() {
+        hbaseMetadata.getIndexIds(132);
+    }
+
     @Test
     public void testLookupIndexIdsValidTableId() {
         final TableSchema tableSchema = new TableSchema(ImmutableMap.<String, ColumnSchema>of(), ImmutableMap.<String, IndexSchema>of(
@@ -113,6 +113,11 @@ public class HBaseMetadataTest {
     @Test(expected = IllegalArgumentException.class)
     public void testLookupColumnIdsInvalidTableId() {
         hbaseMetadata.getColumnIds(INVALID_TABLE_ID);
+    }
+
+    @Test(expected = TableNotFoundException.class)
+    public void testLookupColumnIdsUnknownTableId() {
+        hbaseMetadata.getColumnIds(132);
     }
 
     @Test
@@ -257,9 +262,6 @@ public class HBaseMetadataTest {
         final TableSchema schemaBefore = hbaseMetadata.getSchema(tableId);
         assertNotNull(schemaBefore);
         assertTrue(schemaBefore.getIndices().isEmpty());
-
-        // Verify that no indices exist after table creation
-        assertTrue(hbaseMetadata.getIndexIds(tableId).isEmpty());
 
         // Add a new index to the table
         hbaseMetadata.createTableIndex(tableId, INDEX_NAME, new IndexSchema(ImmutableList.<String> of(COLUMN_NAME), false));
