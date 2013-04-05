@@ -13,9 +13,43 @@ else
   honeycomb_lib=/usr/local/lib/honeycomb
 fi
 
+echo -e "Running Maven build script\n"
+
+testOption=$1
+mvnTestMode="-DskipIntTests"
+
+if [ -n "$testOption" ]
+then
+    case "$testOption" in
+        none)
+            echo -e "Disabling unit and integration tests\n"
+            mvnTestMode="-DskipTests"
+            ;;
+        all)
+            echo -e "Enabling unit and integration tests\n"
+            mvnTestMode=""
+            ;;
+        it)
+            echo -e "Disabling unit tests\n"
+            mvnTestMode="-DskipUnitTests"
+            ;;
+        ut)
+            echo -e "Disabling integration tests\n"
+            mvnTestMode="-DskipIntTests"
+            ;;
+        *)
+            echo -e "Unknown Maven test mode specified ($testOption), running unit tests\n"
+            ;;
+    esac
+else
+    echo "Test running mode not specified"
+fi
+
+
+
 cd $HONEYCOMB_HOME
 
-mvn -V clean install -Dapache
+mvn -V clean install -Dapache $mvnTestMode
 [ $? -ne 0 ] && { exit 1; }
 
 $HONEYCOMB_HOME/bin/install-honeycomb-jars.sh "$HONEYCOMB_HOME/HBaseAdapter" $honeycomb_lib
