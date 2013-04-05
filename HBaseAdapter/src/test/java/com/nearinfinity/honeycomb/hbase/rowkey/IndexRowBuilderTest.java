@@ -2,6 +2,7 @@ package com.nearinfinity.honeycomb.hbase.rowkey;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.nearinfinity.honeycomb.IndexSchemaFactory;
 import com.nearinfinity.honeycomb.mysql.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.IndexSchema;
 import org.junit.Before;
@@ -106,6 +107,6 @@ public class IndexRowBuilderTest {
     }
 
     private List<String> getColumns() {
-        return new IndexSchema(ImmutableList.<String>of(), false).getColumns();
+        return IndexSchemaFactory.createIndexSchema(ImmutableList.<String>of(), false).getColumns();
     }
  }

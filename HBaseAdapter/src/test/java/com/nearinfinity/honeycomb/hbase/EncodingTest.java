@@ -5,6 +5,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Longs;
 import com.google.common.primitives.UnsignedBytes;
+import com.nearinfinity.honeycomb.IndexSchemaFactory;
 import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowBuilder;
 import com.nearinfinity.honeycomb.hbase.rowkey.SortOrder;
 import com.nearinfinity.honeycomb.mysql.ColumnSchema;
@@ -71,7 +72,7 @@ public class EncodingTest {
                     (ByteBuffer) ByteBuffer.wrap(Longs.toByteArray(number)));
             rows.add(new Pair<Long, byte[]>(number, builder
                     .withUUID(UUID.randomUUID())
-                    .withQueryValues(records, new IndexSchema(columnOrder, false).getColumns(), columnSchemas)
+                    .withQueryValues(records, IndexSchemaFactory.createIndexSchema(columnOrder, false).getColumns(), columnSchemas)
                     .build().encode()));
         }
         return rows;

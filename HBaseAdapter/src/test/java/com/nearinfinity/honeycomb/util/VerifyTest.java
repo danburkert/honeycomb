@@ -2,6 +2,7 @@ package com.nearinfinity.honeycomb.util;
 
 import java.util.Map;
 
+import com.nearinfinity.honeycomb.IndexSchemaFactory;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
@@ -60,7 +61,7 @@ public class VerifyTest {
     @Test
     public void testIsValidIndexSchema() {
         final Map<String, IndexSchema> indices = ImmutableMap.<String, IndexSchema>of(
-                INDEX_NAME, new IndexSchema(ImmutableList.<String>of(COLUMN_A), false));
+                INDEX_NAME, IndexSchemaFactory.createIndexSchema(ImmutableList.<String>of(COLUMN_A), false, INDEX_NAME));
 
         final Map<String, ColumnSchema> columns = ImmutableMap.<String, ColumnSchema>of(
                 COLUMN_A, new ColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
@@ -71,7 +72,7 @@ public class VerifyTest {
     @Test(expected = IllegalArgumentException.class)
     public void testIsValidIndexSchemaInvalidColumn() {
         final Map<String, IndexSchema> indices = ImmutableMap.<String, IndexSchema>of(
-                INDEX_NAME, new IndexSchema(ImmutableList.<String>of(COLUMN_B), false));
+                INDEX_NAME, IndexSchemaFactory.createIndexSchema(ImmutableList.<String>of(COLUMN_B), false, INDEX_NAME));
 
         final Map<String, ColumnSchema> columns = ImmutableMap.<String, ColumnSchema>of(
                 COLUMN_A, new ColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));

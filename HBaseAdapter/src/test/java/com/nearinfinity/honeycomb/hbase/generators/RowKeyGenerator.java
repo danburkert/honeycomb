@@ -138,7 +138,7 @@ public class RowKeyGenerator implements Generator<RowKey> {
             this.tableIds = tableIds;
             this.indexIds = indexIds;
             this.tableSchema = schemas.next();
-            Collection<IndexSchema> indices = this.tableSchema.getIndices().values();
+            Collection<IndexSchema> indices = this.tableSchema.getIndices();
             checkState(indices.size() > 0, "Generated table schema must have an index.");
             this.indexSchema = indices.toArray(new IndexSchema[0])[RAND.nextInt(indices.size())];
             this.rows = new RowGenerator(this.tableSchema);
@@ -152,7 +152,7 @@ public class RowKeyGenerator implements Generator<RowKey> {
                     .newBuilder(tableIds.next(), indexIds.next())
                     .withQueryValues(row.getRecords(),
                             indexSchema.getColumns(),
-                            tableSchema.getColumns())
+                            tableSchema.getColumnsMap())
                     .withUUID(row.getUUID());
 
             return builder.withSortOrder(order.next()).build();

@@ -1,17 +1,20 @@
 package com.nearinfinity.honeycomb.hbase;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
-
-import java.util.List;
-import java.util.Map;
-
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.nearinfinity.honeycomb.IndexSchemaFactory;
+import com.nearinfinity.honeycomb.MockHTable;
+import com.nearinfinity.honeycomb.exceptions.TableNotFoundException;
+import com.nearinfinity.honeycomb.mysql.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.TableSchema;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
+import com.nearinfinity.honeycomb.mysql.generators.TableSchemaGenerator;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.PrimitiveGenerators;
-
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
@@ -22,35 +25,31 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.powermock.api.mockito.PowerMockito;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.nearinfinity.honeycomb.MockHTable;
-import com.nearinfinity.honeycomb.exceptions.TableNotFoundException;
-import com.nearinfinity.honeycomb.mysql.ColumnSchema;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
-import com.nearinfinity.honeycomb.mysql.IndexSchema;
-import com.nearinfinity.honeycomb.mysql.TableSchema;
-import com.nearinfinity.honeycomb.mysql.generators.TableSchemaGenerator;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.when;
 
 
 public class HBaseMetadataTest {
     private static final Generator<TableSchema> TABLE_SCHEMA_GEN = new TableSchemaGenerator();
     private static final Generator<Long> LONG_GEN = PrimitiveGenerators.longs();
-
     private static final String TABLE_NAME = "foo";
     private static final String COLUMN_NAME = "columnA";
     private static final String INDEX_NAME = "indexA";
-
     private static final long INVALID_TABLE_ID = -1;
-
-
     @Mock
     private HTableProvider provider;
-
     private MockHTable table;
     private HBaseMetadata hbaseMetadata;
-
+    private Predicate<IndexSchema> indexPredicate = new Predicate<IndexSchema>() {
+        @Override
+        public boolean apply(IndexSchema input) {
+            return input.getIndexName().equals(INDEX_NAME);
+        }
+    };
 
     @Before
     public void testSetup() {
@@ -100,7 +99,7 @@ public class HBaseMetadataTest {
     @Test
     public void testLookupIndexIdsValidTableId() {
         final TableSchema tableSchema = new TableSchema(ImmutableMap.<String, ColumnSchema>of(), ImmutableMap.<String, IndexSchema>of(
-                INDEX_NAME, new IndexSchema(Lists.newArrayList(COLUMN_NAME), false)));
+                INDEX_NAME, IndexSchemaFactory.createIndexSchema(Lists.newArrayList(COLUMN_NAME), false, INDEX_NAME)));
 
         hbaseMetadata.createTable(TABLE_NAME, tableSchema);
         final long tableId = hbaseMetadata.getTableId(TABLE_NAME);
@@ -143,7 +142,7 @@ public class HBaseMetadataTest {
 
     @Test
     public void testLookupTableSchemaValidTableId() {
-        final Map<String, ColumnSchema> columns = ImmutableMap.<String, ColumnSchema>of(
+        final Map<String, ColumnSchema> columns = ImmutableMap.of(
                 COLUMN_NAME, new ColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
 
         final TableSchema tableSchema = new TableSchema(columns, ImmutableMap.<String, IndexSchema>of());
@@ -153,7 +152,12 @@ public class HBaseMetadataTest {
 
         final TableSchema schemaTwo = hbaseMetadata.getSchema(tableId);
         assertEquals(1, schemaTwo.getColumns().size());
-        assertTrue(schemaTwo.getColumns().containsKey(COLUMN_NAME));
+        assertTrue(Iterables.any(schemaTwo.getColumns(), new Predicate<ColumnSchema>() {
+            @Override
+            public boolean apply(ColumnSchema input) {
+                return input.getColumnName().equals(COLUMN_NAME);
+            }
+        }));
     }
 
     @Test
@@ -224,17 +228,21 @@ public class HBaseMetadataTest {
     @Test(expected = IllegalArgumentException.class)
     public void testCreateIndexInvalidTableId() {
         final long invalidTableId = -1;
-        hbaseMetadata.createTableIndex(invalidTableId, INDEX_NAME, new IndexSchema());
+        hbaseMetadata.createTableIndex(invalidTableId, INDEX_NAME, getIndexEmpty());
     }
 
     @Test(expected = NullPointerException.class)
     public void testCreateIndexNullIndexName() {
-        hbaseMetadata.createTableIndex(1, null, new IndexSchema());
+        hbaseMetadata.createTableIndex(1, null, getIndexEmpty());
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testCreateIndexEmptyIndexName() {
-        hbaseMetadata.createTableIndex(1, "", new IndexSchema());
+        hbaseMetadata.createTableIndex(1, "", getIndexEmpty());
+    }
+
+    private IndexSchema getIndexEmpty() {
+        return new IndexSchema(null, "");
     }
 
     @Test(expected = NullPointerException.class)
@@ -244,7 +252,7 @@ public class HBaseMetadataTest {
 
     @Test
     public void testCreateIndex() {
-        final Map<String, ColumnSchema> columns = ImmutableMap.<String, ColumnSchema>of(
+        final Map<String, ColumnSchema> columns = ImmutableMap.of(
                 COLUMN_NAME, new ColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
 
         final TableSchema tableSchema = new TableSchema(columns, ImmutableMap.<String, IndexSchema>of());
@@ -262,18 +270,19 @@ public class HBaseMetadataTest {
         assertTrue(hbaseMetadata.getIndexIds(tableId).isEmpty());
 
         // Add a new index to the table
-        hbaseMetadata.createTableIndex(tableId, INDEX_NAME, new IndexSchema(ImmutableList.<String> of(COLUMN_NAME), false));
+        hbaseMetadata.createTableIndex(tableId, INDEX_NAME,
+                IndexSchemaFactory.createIndexSchema(ImmutableList.<String>of(COLUMN_NAME), false, INDEX_NAME));
 
         // Verify that the table schema has been correctly updated
 
         final TableSchema schemaAfter = hbaseMetadata.getSchema(tableId);
         assertNotNull(schemaAfter);
 
-        final Map<String, IndexSchema> schemaIndices = schemaAfter.getIndices();
+        final Collection<IndexSchema> schemaIndices = schemaAfter.getIndices();
         assertEquals(1, schemaIndices.size());
-        assertTrue(schemaIndices.containsKey(INDEX_NAME));
 
-        final IndexSchema newIndexDetails = schemaIndices.get(INDEX_NAME);
+
+        final IndexSchema newIndexDetails = Iterables.find(schemaIndices, indexPredicate);
         assertNotNull(newIndexDetails);
 
         final List<String> indexColumns = newIndexDetails.getColumns();
@@ -310,7 +319,7 @@ public class HBaseMetadataTest {
                 COLUMN_NAME, new ColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
 
         final TableSchema tableSchema = new TableSchema(columns, ImmutableMap.<String, IndexSchema>of(
-                INDEX_NAME, new IndexSchema(Lists.newArrayList(COLUMN_NAME), false)));
+                INDEX_NAME, IndexSchemaFactory.createIndexSchema(Lists.newArrayList(COLUMN_NAME), false, INDEX_NAME)));
 
         // Create a new table with the configured details
         hbaseMetadata.createTable(TABLE_NAME, tableSchema);
@@ -322,11 +331,10 @@ public class HBaseMetadataTest {
         final TableSchema schemaBefore = hbaseMetadata.getSchema(tableId);
         assertNotNull(schemaBefore);
 
-        final Map<String, IndexSchema> schemaIndices = schemaBefore.getIndices();
+        final Collection<IndexSchema> schemaIndices = schemaBefore.getIndices();
         assertEquals(1, schemaIndices.size());
-        assertTrue(schemaIndices.containsKey(INDEX_NAME));
 
-        final IndexSchema newIndexDetails = schemaIndices.get(INDEX_NAME);
+        final IndexSchema newIndexDetails = Iterables.find(schemaIndices, indexPredicate);
         assertNotNull(newIndexDetails);
 
         final List<String> indexColumns = newIndexDetails.getColumns();

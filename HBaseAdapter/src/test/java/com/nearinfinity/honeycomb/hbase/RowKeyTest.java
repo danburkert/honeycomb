@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.UnsignedBytes;
+import com.nearinfinity.honeycomb.IndexSchemaFactory;
 import com.nearinfinity.honeycomb.hbase.generators.RowKeyGenerator;
 import com.nearinfinity.honeycomb.hbase.rowkey.RowKey;
 import com.nearinfinity.honeycomb.mysql.ColumnSchema;
@@ -50,7 +51,7 @@ public class RowKeyTest {
         String indexName = "i1";
         ColumnSchema columnSchema = new ColumnSchema();
         columnSchema.setType(ColumnType.DATETIME);
-        IndexSchema indexSchema = new IndexSchema(ImmutableList.of(columnName), false);
+        IndexSchema indexSchema = IndexSchemaFactory.createIndexSchema(ImmutableList.of(columnName), false, indexName);
         TableSchema tableSchema = new TableSchema(ImmutableMap.of(columnName, columnSchema), ImmutableMap.of(indexName, indexSchema));
 
         Generator<RowKey> rowkeysGen = RowKeyGenerator.getAscIndexRowKeyGenerator(tableSchema);
