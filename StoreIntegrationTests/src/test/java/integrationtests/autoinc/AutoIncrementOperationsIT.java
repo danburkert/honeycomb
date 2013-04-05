@@ -1,23 +1,22 @@
 package integrationtests.autoinc;
 
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.assertThat;
+import com.nearinfinity.honeycomb.mysql.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.TableSchema;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import integrationtests.HoneycombIntegrationTest;
 import integrationtests.ITUtils;
 import integrationtests.TestConstants;
-
 import org.junit.Test;
 
-import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.Assert.assertThat;
 
 public class AutoIncrementOperationsIT extends HoneycombIntegrationTest {
 
     @Override
     protected TableSchema getTableSchema() {
         final TableSchema schema = ITUtils.getTableSchema();
-        schema.getColumns().put(TestConstants.COLUMN1, new ColumnSchema(ColumnType.LONG, true, true, 8, 0, 0));
+        schema.getColumns().add(new ColumnSchema(ColumnType.LONG, true, true, 8, 0, 0));
 
         return schema;
     }

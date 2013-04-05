@@ -1,33 +1,20 @@
 package integrationtests.row;
 
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
+import com.google.common.collect.Maps;
+import com.nearinfinity.honeycomb.config.Constants;
+import com.nearinfinity.honeycomb.mysql.*;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
+import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import integrationtests.HoneycombIntegrationTest;
 import integrationtests.ITUtils;
 import integrationtests.TestConstants;
-
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
 import org.junit.Test;
 
-import com.google.common.collect.Maps;
-import com.nearinfinity.honeycomb.config.Constants;
-import com.nearinfinity.honeycomb.mysql.HandlerProxy;
-import com.nearinfinity.honeycomb.mysql.IndexKey;
-import com.nearinfinity.honeycomb.mysql.Row;
-import com.nearinfinity.honeycomb.mysql.Util;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
-import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
-import com.nearinfinity.honeycomb.mysql.gen.QueryType;
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import java.nio.ByteBuffer;
+import java.util.*;
+
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.Assert.*;
 
 public class RowOperationsIT extends HoneycombIntegrationTest {
 
@@ -118,7 +105,7 @@ public class RowOperationsIT extends HoneycombIntegrationTest {
 
         int iterations = 10;
 
-        proxy.createTable(tableName, Constants.HBASE_TABLESPACE, Util.serializeTableSchema(schema), 0);
+        proxy.createTable(tableName, Constants.HBASE_TABLESPACE, schema.serialize(), 0);
         proxy.openTable(tableName, Constants.HBASE_TABLESPACE);
         Row row = new Row(Maps.<String, ByteBuffer>newHashMap(), Constants.ZERO_UUID);
 

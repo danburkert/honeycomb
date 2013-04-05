@@ -1,40 +1,39 @@
 package integrationtests.index;
 
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import integrationtests.HoneycombIntegrationTest;
-import integrationtests.ITUtils;
-import integrationtests.TestConstants;
-
-import java.nio.ByteBuffer;
-
-import org.junit.Test;
-
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.nearinfinity.honeycomb.mysql.IndexKey;
+import com.nearinfinity.honeycomb.mysql.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.mysql.Util;
-import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
+import integrationtests.HoneycombIntegrationTest;
+import integrationtests.ITUtils;
+import integrationtests.IndexSchemaFactory;
+import integrationtests.TestConstants;
+import org.junit.Test;
+
+import java.nio.ByteBuffer;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class IndexOperationsIT extends HoneycombIntegrationTest {
 
     private static final int ROW_COUNT = 1;
     private static final int INDEX_COL_VALUE = 5;
-
     private static final String NEW_INDEX_NAME = "i3";
 
     @Test
     public void testAddIndex() {
-        final IndexSchema indexSchema = new IndexSchema(Lists.newArrayList(TestConstants.COLUMN1), false);
+        final IndexSchema indexSchema = IndexSchemaFactory.createIndexSchema(Lists.newArrayList(TestConstants.COLUMN1), false, NEW_INDEX_NAME);
 
         // Add data rows to index
         ITUtils.insertData(proxy, ROW_COUNT, INDEX_COL_VALUE);
 
         // Add the new index to the table
-        proxy.addIndex(NEW_INDEX_NAME, Util.serializeIndexSchema(indexSchema));
+        proxy.addIndex(NEW_INDEX_NAME, indexSchema.serialize());
 
         // Perform a scan with the new index
 
@@ -47,7 +46,7 @@ public class IndexOperationsIT extends HoneycombIntegrationTest {
     @Test
     public void testAddCompoundIndex() {
         // Create the compound index ordered as (col2, col1)
-        final IndexSchema indexSchema = new IndexSchema(Lists.newArrayList(TestConstants.COLUMN2, TestConstants.COLUMN1), false);
+        final IndexSchema indexSchema = IndexSchemaFactory.createIndexSchema(Lists.newArrayList(TestConstants.COLUMN2, TestConstants.COLUMN1), false, NEW_INDEX_NAME);
 
         final int column2Value = 0;
 
@@ -55,7 +54,7 @@ public class IndexOperationsIT extends HoneycombIntegrationTest {
         ITUtils.insertData(proxy, ROW_COUNT, INDEX_COL_VALUE);
 
         // Add the new index to the table
-        proxy.addIndex(NEW_INDEX_NAME, Util.serializeIndexSchema(indexSchema));
+        proxy.addIndex(NEW_INDEX_NAME, indexSchema.serialize());
 
         // Perform a scan with the new index
 
