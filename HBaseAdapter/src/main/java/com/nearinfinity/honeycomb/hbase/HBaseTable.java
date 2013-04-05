@@ -20,7 +20,6 @@ import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import com.nearinfinity.honeycomb.util.Verify;
 import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
 
 import java.math.BigInteger;
@@ -43,20 +42,6 @@ public class HBaseTable implements Table {
         this.hTable = checkNotNull(hTable);
         this.store = checkNotNull(store);
         this.tableId = tableId;
-    }
-
-    private static Put createEmptyQualifierPut(RowKey row, byte[] serializedRow) {
-        return new Put(row.encode()).add(Constants.DEFAULT_COLUMN_FAMILY, new byte[0], serializedRow);
-    }
-
-    private static Delete createDelete(RowKey row) {
-        return new Delete(row.encode());
-    }
-
-    private static byte[] padKeyForSorting(byte[] key) {
-        BigInteger integer = new BigInteger(key);
-        return integer.add(new BigInteger("1")).toByteArray();
-
     }
 
     @Inject
@@ -215,7 +200,7 @@ public class HBaseTable implements Table {
                 .newBuilder(tableId, indexId + 1)
                 .withSortOrder(SortOrder.Ascending)
                 .build();
-        return createScannerForRange(padKeyForSorting(startRow.encode()), endRow.encode());
+        return createScannerForRange(incrementKeyForSorting(startRow.encode()), endRow.encode());
     }
 
     @Override
@@ -245,7 +230,7 @@ public class HBaseTable implements Table {
                 .newBuilder(tableId, indexId + 1)
                 .withSortOrder(SortOrder.Descending)
                 .build();
-        return createScannerForRange(padKeyForSorting(startRow.encode()), endRow.encode());
+        return createScannerForRange(incrementKeyForSorting(startRow.encode()), endRow.encode());
     }
 
     @Override
@@ -255,12 +240,25 @@ public class HBaseTable implements Table {
         IndexRow endRow = builder.build();
 
         // Scan is [start, end) : add a zero to put the end key after an all 0xFF UUID
-        return createScannerForRange(startRow.encode(), padKeyForSorting(endRow.encode()));
+        return createScannerForRange(startRow.encode(), incrementKeyForSorting(endRow.encode()));
     }
 
     @Override
     public void close() {
         Util.closeQuietly(hTable);
+    }
+
+    private static Put createEmptyQualifierPut(RowKey row, byte[] serializedRow) {
+        return new Put(row.encode()).add(Constants.DEFAULT_COLUMN_FAMILY, new byte[0], serializedRow);
+    }
+
+    private static Delete createDelete(RowKey row) {
+        return new Delete(row.encode());
+    }
+
+    private static byte[] incrementKeyForSorting(byte[] key) {
+        BigInteger integer = new BigInteger(key);
+        return integer.add(new BigInteger("1")).toByteArray();
     }
 
     /**
