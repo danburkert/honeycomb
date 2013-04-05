@@ -1,6 +1,6 @@
 {
     "type": "record",
-    "name": "IndexContainer",
+    "name": "AvroQueryKey",
     "namespace": "com.nearinfinity.honeycomb.mysql.gen",
     "fields":
     [

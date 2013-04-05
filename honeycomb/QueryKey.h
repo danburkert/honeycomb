@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include "Serializable.h"
 
-class IndexContainer : public Serializable
+class QueryKey : public Serializable
 {
   private:
     avro_schema_t container_schema_schema;
@@ -23,10 +23,10 @@ class IndexContainer : public Serializable
       INDEX_FIRST,
       INDEX_LAST
     };
-    IndexContainer();
-    ~IndexContainer();
+    QueryKey();
+    ~QueryKey();
     int reset();
-    bool equals(const IndexContainer& other);
+    bool equals(const QueryKey& other);
 
     int serialize(const char** buf, size_t* len);
 

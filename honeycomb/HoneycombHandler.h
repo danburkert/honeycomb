@@ -11,7 +11,7 @@
 #include "TableSchema.h"
 #include "ColumnSchema.h"
 #include "IndexSchema.h"
-#include "IndexContainer.h"
+#include "QueryKey.h"
 #include "Serializable.h"
 
 #include "my_global.h"          /* ulonglong */
@@ -99,7 +99,7 @@ class HoneycombHandler : public handler
     int read_row(uchar* buf);
     int get_next_row(uchar* buf);
     int read_bytes_into_mysql(jbyteArray row_bytes, uchar* buf);
-    int full_index_scan(uchar* buf, IndexContainer::QueryType query);
+    int full_index_scan(uchar* buf, QueryKey::QueryType query);
     int retrieve_value_from_index(uchar* buf);
     int unpack_row(uchar *buf, Row *row);
     void store_field_value(Field *field, const char* val, int length);

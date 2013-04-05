@@ -3,9 +3,9 @@
 #include "Java.h"
 #include "Logging.h"
 #include "Macros.h"
-#include "IndexContainer.h"
+#include "QueryKey.h"
 
-static int retrieve_query_flag(enum ha_rkey_function find_flag, IndexContainer::QueryType* query_type);
+static int retrieve_query_flag(enum ha_rkey_function find_flag, QueryKey::QueryType* query_type);
 
 // Index scanning
 int HoneycombHandler::index_init(uint idx, bool sorted)
@@ -25,8 +25,8 @@ int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
     key_part_map keypart_map, enum ha_rkey_function find_flag)
 {
   DBUG_ENTER("HoneycombHandler::index_read_map");
-  IndexContainer index_key;
-  IndexContainer::QueryType query_type;
+  QueryKey index_key;
+  QueryKey::QueryType query_type;
   int rc = retrieve_query_flag(find_flag, &query_type);
   if (rc) { DBUG_RETURN(rc); }
 
@@ -69,14 +69,14 @@ int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
 int HoneycombHandler::index_first(uchar *buf)
 {
   DBUG_ENTER("HoneycombHandler::index_first");
-  int rc = full_index_scan(buf, IndexContainer::INDEX_FIRST);
+  int rc = full_index_scan(buf, QueryKey::INDEX_FIRST);
   DBUG_RETURN(rc);
 }
 
 int HoneycombHandler::index_last(uchar *buf)
 {
   DBUG_ENTER("HoneycombHandler::index_last");
-  int rc = full_index_scan(buf, IndexContainer::INDEX_LAST);
+  int rc = full_index_scan(buf, QueryKey::INDEX_LAST);
   DBUG_RETURN(rc);
 }
 
@@ -167,9 +167,9 @@ int HoneycombHandler::rnd_end()
 
 // Scan helpers
 
-int HoneycombHandler::full_index_scan(uchar* buf, IndexContainer::QueryType query)
+int HoneycombHandler::full_index_scan(uchar* buf, QueryKey::QueryType query)
 {
-  IndexContainer index_key;
+  QueryKey index_key;
   KEY *key_info = table->s->key_info + this->active_index;
   index_key.set_type(query);
   index_key.set_name(key_info->name);
@@ -248,26 +248,26 @@ int HoneycombHandler::read_row(uchar *buf)
  *
  * @return Success 0 otherwise HA_ERR_GENERIC
  */
-static int retrieve_query_flag(enum ha_rkey_function find_flag, IndexContainer::QueryType* query_type)
+static int retrieve_query_flag(enum ha_rkey_function find_flag, QueryKey::QueryType* query_type)
 {
   switch(find_flag)
   {
     case HA_READ_KEY_EXACT:
-      *query_type = IndexContainer::EXACT_KEY;
+      *query_type = QueryKey::EXACT_KEY;
       break;
     case HA_READ_KEY_OR_NEXT:
-      *query_type = IndexContainer::KEY_OR_NEXT;
+      *query_type = QueryKey::KEY_OR_NEXT;
       break;
     case HA_READ_KEY_OR_PREV:
     case HA_READ_PREFIX_LAST:
     case HA_READ_PREFIX_LAST_OR_PREV:
-      *query_type = IndexContainer::KEY_OR_PREVIOUS;
+      *query_type = QueryKey::KEY_OR_PREVIOUS;
       break;
     case HA_READ_AFTER_KEY:
-      *query_type = IndexContainer::AFTER_KEY;
+      *query_type = QueryKey::AFTER_KEY;
       break;
     case HA_READ_BEFORE_KEY:
-      *query_type = IndexContainer::BEFORE_KEY;
+      *query_type = QueryKey::BEFORE_KEY;
       break;
     default:
       return HA_ERR_GENERIC;

@@ -1,6 +1,6 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import com.nearinfinity.honeycomb.mysql.gen.IndexContainer;
+import com.nearinfinity.honeycomb.mysql.gen.AvroQueryKey;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DatumWriter;
@@ -13,19 +13,19 @@ import java.util.Map;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class IndexKey {
-    private static final DatumWriter<IndexContainer> writer =
-            new SpecificDatumWriter<IndexContainer>(IndexContainer.class);
-    private static final DatumReader<IndexContainer> reader =
-            new SpecificDatumReader<IndexContainer>(IndexContainer.class);
-    private final IndexContainer indexContainer;
+    private static final DatumWriter<AvroQueryKey> writer =
+            new SpecificDatumWriter<AvroQueryKey>(AvroQueryKey.class);
+    private static final DatumReader<AvroQueryKey> reader =
+            new SpecificDatumReader<AvroQueryKey>(AvroQueryKey.class);
+    private final AvroQueryKey avroQueryKey;
 
     public IndexKey(String indexName, QueryType queryType, Map<String, ByteBuffer> keys) {
         checkNotNull(keys);
-        this.indexContainer = new IndexContainer(indexName, queryType, keys);
+        this.avroQueryKey = new AvroQueryKey(indexName, queryType, keys);
     }
 
-    private IndexKey(IndexContainer indexContainer) {
-        this.indexContainer = indexContainer;
+    private IndexKey(AvroQueryKey AvroQueryKey) {
+        this.avroQueryKey = AvroQueryKey;
     }
 
     public static IndexKey deserialize(byte[] serializedIndexKey) {
@@ -33,18 +33,18 @@ public class IndexKey {
     }
 
     public byte[] serialize() {
-        return Util.serializeAvroObject(indexContainer, writer);
+        return Util.serializeAvroObject(avroQueryKey, writer);
     }
 
     public Map<String, ByteBuffer> getKeys() {
-        return this.indexContainer.getRecords();
+        return this.avroQueryKey.getRecords();
     }
 
     public String getIndexName() {
-        return this.indexContainer.getIndexName();
+        return this.avroQueryKey.getIndexName();
     }
 
     public QueryType getQueryType() {
-        return this.indexContainer.getQueryType();
+        return this.avroQueryKey.getQueryType();
     }
 }

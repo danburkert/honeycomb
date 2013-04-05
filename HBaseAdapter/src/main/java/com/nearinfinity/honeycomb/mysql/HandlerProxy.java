@@ -214,7 +214,7 @@ public class HandlerProxy {
     public boolean indexContainsDuplicate(String indexName, byte[] serializedRow) {
         // This method must get its own table because it may be called during
         // a full table scan.
-        checkNotNull(indexName);
+        Verify.isNotNullOrEmpty(indexName);
         checkNotNull(serializedRow);
 
         Row row = Row.deserialize(serializedRow);

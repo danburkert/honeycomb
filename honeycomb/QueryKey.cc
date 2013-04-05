@@ -1,13 +1,13 @@
-#include "IndexContainer.h"
+#include "QueryKey.h"
 #include "AvroUtil.h"
 
 const char TYPE[] = "queryType";
 const char RECORDS[] = "records";
 const char INDEX_NAME[] = "indexName";
 
-#define INDEX_CONTAINER_SCHEMA "{\"type\":\"record\",\"name\":\"IndexContainer\",\"namespace\":\"com.nearinfinity.honeycomb.mysql.gen\",\"fields\":[{\"name\":\"indexName\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}},{\"name\":\"queryType\",\"type\":{\"type\":\"enum\",\"name\":\"QueryType\",\"symbols\":[\"EXACT_KEY\",\"AFTER_KEY\",\"KEY_OR_NEXT\",\"KEY_OR_PREVIOUS\",\"BEFORE_KEY\",\"INDEX_FIRST\",\"INDEX_LAST\"]}},{\"name\":\"records\",\"type\":{\"type\":\"map\",\"values\":[\"null\",\"bytes\"],\"avro.java.string\":\"String\"}}]}"
+#define INDEX_CONTAINER_SCHEMA "{\"type\":\"record\",\"name\":\"AvroQueryKey\",\"namespace\":\"com.nearinfinity.honeycomb.mysql.gen\",\"fields\":[{\"name\":\"indexName\",\"type\":{\"type\":\"string\",\"avro.java.string\":\"String\"}},{\"name\":\"queryType\",\"type\":{\"type\":\"enum\",\"name\":\"QueryType\",\"symbols\":[\"EXACT_KEY\",\"AFTER_KEY\",\"KEY_OR_NEXT\",\"KEY_OR_PREVIOUS\",\"BEFORE_KEY\",\"INDEX_FIRST\",\"INDEX_LAST\"]}},{\"name\":\"records\",\"type\":{\"type\":\"map\",\"values\":[\"null\",\"bytes\"],\"avro.java.string\":\"String\"}}]}"
 
-int IndexContainer::get_record(const char* column_name, const char* type, avro_value_t** entry_value)
+int QueryKey::get_record(const char* column_name, const char* type, avro_value_t** entry_value)
 {
   int ret = 0;
   int type_disc;
@@ -50,7 +50,7 @@ int IndexContainer::get_record(const char* column_name, const char* type, avro_v
   return ret;
 }
 
-int IndexContainer::set_record(const char* column_name, const char* type, avro_value_t* record)
+int QueryKey::set_record(const char* column_name, const char* type, avro_value_t* record)
 {
   int ret = 0;
   int type_disc;
@@ -72,7 +72,7 @@ int IndexContainer::set_record(const char* column_name, const char* type, avro_v
   return ret;
 }
 
-IndexContainer::IndexContainer()
+QueryKey::QueryKey()
 {
   if (avro_schema_from_json_literal(INDEX_CONTAINER_SCHEMA, &container_schema_schema))
   {
@@ -88,34 +88,34 @@ IndexContainer::IndexContainer()
   avro_value_iface_decref(rc_class);
 }
 
-IndexContainer::~IndexContainer()
+QueryKey::~QueryKey()
 {
   avro_value_decref(&container_schema);
   avro_schema_decref(container_schema_schema);
 }
 
-int IndexContainer::reset()
+int QueryKey::reset()
 {
   return avro_value_reset(&container_schema);
 }
 
-bool IndexContainer::equals(const IndexContainer& other)
+bool QueryKey::equals(const QueryKey& other)
 {
   avro_value_t other_schema = other.container_schema;
   return avro_value_equal(&container_schema, &other_schema);
 }
 
-int IndexContainer::serialize(const char** buf, size_t* len)
+int QueryKey::serialize(const char** buf, size_t* len)
 {
   return serialize_object(&container_schema, buf, len);
 }
 
-int IndexContainer::deserialize(const char* buf, int64_t len)
+int QueryKey::deserialize(const char* buf, int64_t len)
 {
   return deserialize_object(&container_schema, buf, len);
 }
 
-int IndexContainer::set_bytes_record(const char* column_name, char* value, size_t size)
+int QueryKey::set_bytes_record(const char* column_name, char* value, size_t size)
 {
   int ret = 0;
   avro_value_t record;
@@ -131,7 +131,7 @@ int IndexContainer::set_bytes_record(const char* column_name, char* value, size_
   return ret;
 }
 
-int IndexContainer::get_bytes_record(const char* column_name, const char** value, size_t* size)
+int QueryKey::get_bytes_record(const char* column_name, const char** value, size_t* size)
 {
   int ret;
   avro_value_t record;
@@ -147,7 +147,7 @@ int IndexContainer::get_bytes_record(const char* column_name, const char** value
   return ret;
 }
 
-IndexContainer::QueryType IndexContainer::get_type()
+QueryKey::QueryType QueryKey::get_type()
 {
   int val;
   avro_value_t avro_enum;
@@ -156,14 +156,14 @@ IndexContainer::QueryType IndexContainer::get_type()
   return static_cast<QueryType>(val);
 }
 
-int IndexContainer::set_type(QueryType type)
+int QueryKey::set_type(QueryType type)
 {
   avro_value_t avro_enum;
   return avro_value_get_by_name(&container_schema, TYPE, &avro_enum, NULL) |
          avro_value_set_enum(&avro_enum, type);
 }
 
-int IndexContainer::record_count(size_t* count)
+int QueryKey::record_count(size_t* count)
 {
   int ret = 0;
   avro_value_t  map;
@@ -172,7 +172,7 @@ int IndexContainer::record_count(size_t* count)
   return ret;
 }
 
-int IndexContainer::set_name(const char* index_name)
+int QueryKey::set_name(const char* index_name)
 {
   int ret = 0;
   avro_value_t record;
@@ -181,7 +181,7 @@ int IndexContainer::set_name(const char* index_name)
   return ret;
 }
 
-const char* IndexContainer::get_name()
+const char* QueryKey::get_name()
 {
   const char* result;
   avro_value_t record;

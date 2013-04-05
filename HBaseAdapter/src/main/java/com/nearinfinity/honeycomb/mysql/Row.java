@@ -1,6 +1,6 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import com.nearinfinity.honeycomb.mysql.gen.RowContainer;
+import com.nearinfinity.honeycomb.mysql.gen.AvroRow;
 import com.nearinfinity.honeycomb.mysql.gen.UUIDContainer;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DatumWriter;
@@ -16,11 +16,11 @@ import java.util.UUID;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Row {
-    private static final DatumWriter<RowContainer> writer =
-            new SpecificDatumWriter<RowContainer>(RowContainer.class);
-    private static final DatumReader<RowContainer> reader =
-            new SpecificDatumReader<RowContainer>(RowContainer.class);
-    private final RowContainer row;
+    private static final DatumWriter<AvroRow> writer =
+            new SpecificDatumWriter<AvroRow>(AvroRow.class);
+    private static final DatumReader<AvroRow> reader =
+            new SpecificDatumReader<AvroRow>(AvroRow.class);
+    private final AvroRow row;
 
     /**
      * Construct a new Row with specified records and UUID.
@@ -31,15 +31,15 @@ public class Row {
     public Row(Map<String, ByteBuffer> records, UUID uuid) {
         checkNotNull(records, "records must not be null.");
         // uuid nullity will be checked by UUIDToBytes
-        row = new RowContainer(new UUIDContainer(Util.UUIDToBytes(uuid)), records);
+        row = new AvroRow(new UUIDContainer(Util.UUIDToBytes(uuid)), records);
     }
 
     /**
      * Constructor called during deserialization.
      *
-     * @param row {@link RowContainer} the underlying content for this row
+     * @param row {@link AvroRow} the underlying content for this row
      */
-    private Row(RowContainer row) {
+    private Row(AvroRow row) {
         this.row = row;
     }
 
