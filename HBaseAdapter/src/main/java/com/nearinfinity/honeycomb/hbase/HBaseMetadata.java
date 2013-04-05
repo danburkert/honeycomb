@@ -30,7 +30,7 @@ public class HBaseMetadata {
     private final Provider<HTableInterface> provider;
 
     @Inject
-    public HBaseMetadata(final HTableProvider provider) {
+    public HBaseMetadata(final Provider<HTableInterface> provider) {
         checkNotNull(provider);
 
         this.provider = provider;

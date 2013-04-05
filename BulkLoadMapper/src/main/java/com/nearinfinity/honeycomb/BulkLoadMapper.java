@@ -1,15 +1,13 @@
 package com.nearinfinity.honeycomb;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.String.format;
-
-import java.io.IOException;
-import java.text.ParseException;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
+import com.nearinfinity.honeycomb.hbase.HBaseMetadata;
+import com.nearinfinity.honeycomb.hbase.HBaseStore;
+import com.nearinfinity.honeycomb.hbase.MetadataCache;
+import com.nearinfinity.honeycomb.hbase.MutationFactory;
+import com.nearinfinity.honeycomb.mysql.Row;
+import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.HTableInterface;
@@ -20,96 +18,57 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.log4j.Logger;
 
-import au.com.bytecode.opencsv.CSVParser;
+import java.io.IOException;
+import java.text.ParseException;
+import java.util.List;
+import java.util.Set;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
-import com.nearinfinity.honeycomb.hbaseclient.ColumnMetadata;
-import com.nearinfinity.honeycomb.hbaseclient.Index;
-import com.nearinfinity.honeycomb.hbaseclient.PutListFactory;
-import com.nearinfinity.honeycomb.hbaseclient.TableCache;
-import com.nearinfinity.honeycomb.hbaseclient.TableInfo;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 
 public class BulkLoadMapper
         extends Mapper<LongWritable, Text, ImmutableBytesWritable, Put> {
     static final Logger LOG = Logger.getLogger(BulkLoadMapper.class);
-    private CSVParser csvParser;
-    private String[] sqlColumns;
-    private Map<String, ColumnMetadata> columnMetadata;
-    private List<List<String>> indexColumns;
-    private TableInfo tableInfo;
+    private RowParser rowParser;
+    private String[] columns;
+    private long tableId;
+    private TableSchema schema;
+    private MutationFactory mutationFactory;
 
     @Override
     protected void setup(Context context)
             throws IOException, InterruptedException {
         Configuration conf = context.getConfiguration();
 
-        char separator = conf.get("importtsv.separator", " ").charAt(0);
-        if (LOG.isDebugEnabled()) {
-            LOG.debug(format("importtsv.separator = %X", (int) separator));
-            LOG.debug("Hadoop configuration:");
-            for (Map.Entry<String, String> entry : conf) {
-                LOG.debug(entry);
-            }
-        }
-
-        csvParser = new CSVParser(separator);
-        sqlColumns = conf.getStrings("honeycomb.sql.columns");
-
-        // Setup
+        char separator  = conf.get("importtsv.separator", " ").charAt(0);
+        columns = conf.getStrings("honeycomb.sql.columns");
         String zkQuorum = conf.get("zk.quorum");
         String sqlTable = conf.get("honeycomb.sql.table");
-        String hbTable = conf.get("honeycomb.hb.table");
+        String hbaseTable  = conf.get("honeycomb.hb.table");
 
         // Check that necessary configuration variables are set
-        if (zkQuorum == null) {
-            LOG.error("zk.quorum not set.  Job will fail.");
-            throw new IOException("zk.quorum not set");
-        }
-        if (sqlTable == null) {
-            LOG.error("honeycomb.sql.table not set.  Job will fail.");
-            throw new IOException("honeycomb.sql.table not set");
-        }
-        if (sqlColumns == null) {
-            LOG.error("honeycomb.sql.columns not set.  Job will fail.");
-            throw new IOException("honeycomb.sql.columns not set");
-        }
-        if (hbTable == null) {
-            LOG.error("honeycomb.hb.table not set.  Job will fail.");
-            throw new IOException("honeycomb.hb.table not set");
-        }
+        checkNotNull(zkQuorum, "zk.quorum not set.  Job will fail.");
+        checkNotNull(sqlTable, "honeycomb.sql.table not set.  Job will fail.");
+        checkNotNull(columns, "honeycomb.sql.columns not set.  Job will fail.");
+        checkNotNull(hbaseTable, "honeycomb.hb.table not set.  Job will fail.");
 
-        final HTableInterface table = new HTable(conf, hbTable);
+        final HTableInterface table = new HTable(conf, hbaseTable);
+        HBaseMetadata metadata = new HBaseMetadata(new SingleHTableProvider(table));
+        HBaseStore store = new HBaseStore(metadata, null, new MetadataCache(metadata));
 
-        tableInfo = TableCache.getTableInfo(sqlTable, table);
-        indexColumns = Index.indexForTable(tableInfo.tableMetadata());
+        tableId = store.getTableId(sqlTable);
+        schema = store.getSchema(sqlTable);
+        mutationFactory = new MutationFactory(store);
+
+        rowParser = new RowParser(schema, columns, separator, columns);
 
         checkSqlColumnsMatch(sqlTable);
-
-        columnMetadata = new TreeMap<String, ColumnMetadata>();
-        for (String sqlColumn : sqlColumns) {
-            ColumnMetadata metadata = tableInfo.getColumnMetadata(sqlColumn);
-            checkNotNull(metadata, format("Column %s is missing metadata.", sqlColumn));
-            columnMetadata.put(sqlColumn, metadata);
-        }
-
-        if (LOG.isDebugEnabled()) {
-            LOG.debug(tableInfo);
-            LOG.debug("SQL Columns: " + Joiner.on(",").join(sqlColumns));
-            for (List<String> indexColumn : indexColumns) {
-                LOG.debug(Joiner.on(",").join(indexColumn));
-            }
-
-            for (Map.Entry<String, ColumnMetadata> entry : columnMetadata.entrySet()) {
-                LOG.debug(entry);
-            }
-        }
     }
 
     private void checkSqlColumnsMatch(String sqlTable) {
-        Set<String> expectedColumns = tableInfo.getColumnNames();
+        Set<String> expectedColumns = schema.getColumns().keySet();
         List<String> invalidColumns = Lists.newLinkedList();
-        for (String column : sqlColumns) {
+        for (String column : columns) {
             if (!expectedColumns.contains(column)) {
                 LOG.error("Found non-existent column " + column);
                 invalidColumns.add(column);
@@ -129,29 +88,9 @@ public class BulkLoadMapper
     public void map(LongWritable offset, Text line, Context context)
             throws InterruptedException {
         try {
-            String[] fields = csvParser.parseLine(line.toString());
-            if (sqlColumns.length != fields.length) {
-                throw new IllegalArgumentException(
-                        format("Line contains wrong number of columns: %s." +
-                                " Expected: %d Was: %d", line.toString(),
-                                sqlColumns.length, fields.length));
-            }
+            Row row = rowParser.parseRow(line.toString());
 
-            // Create value map to pass to put list creator
-            Map<String, byte[]> valueMap = new TreeMap<String, byte[]>();
-
-            for (int i = 0; i < fields.length; i++) {
-                String sqlColumn = sqlColumns[i];
-                byte[] value = ValueParser.parse(fields[i],
-                        columnMetadata.get(sqlColumn));
-                if (value == null) {
-                    break;
-                } // null field
-                valueMap.put(sqlColumn, value);
-            }
-
-            List<Put> puts = PutListFactory.createDataInsertPutList(valueMap,
-                    tableInfo, indexColumns);
+            List<Put> puts = mutationFactory.insert(tableId, row);
 
             for (Put put : puts) {
                 context.write(new ImmutableBytesWritable(put.getRow()), put);

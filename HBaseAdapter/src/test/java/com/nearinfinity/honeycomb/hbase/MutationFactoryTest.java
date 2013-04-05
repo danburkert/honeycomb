@@ -94,7 +94,7 @@ public class MutationFactoryTest {
         TableSchema schema = new TableSchema(COLUMNS, INDICES);
 
         store.createTable(TABLE, schema);
-        tableId = cache.tableCacheGet(TABLE); // horrible back door
+        tableId = store.getTableId(TABLE);
     }
 
     @Test(expected = IllegalArgumentException.class)

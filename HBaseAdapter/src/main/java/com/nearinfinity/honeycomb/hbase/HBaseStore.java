@@ -22,6 +22,10 @@ public class HBaseStore implements Store {
         this.cache = cache;
     }
 
+    public long getTableId(String tableName) {
+        return metadata.getTableId(tableName);
+    }
+
     public BiMap<String, Long> getColumns(long tableId) {
         return cache.columnsCacheGet(tableId);
     }
