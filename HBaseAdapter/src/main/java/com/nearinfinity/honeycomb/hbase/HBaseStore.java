@@ -6,11 +6,9 @@ import com.google.common.collect.BiMap;
 import com.google.inject.Inject;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
-import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import com.nearinfinity.honeycomb.mysql.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.TableSchema;
 import com.nearinfinity.honeycomb.util.Verify;
-
-import java.util.Map;
 
 public class HBaseStore implements Store {
     private final HBaseMetadata metadata;

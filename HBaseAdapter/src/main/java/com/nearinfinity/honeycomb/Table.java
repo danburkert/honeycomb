@@ -2,7 +2,7 @@ package com.nearinfinity.honeycomb;
 
 import com.nearinfinity.honeycomb.mysql.IndexKey;
 import com.nearinfinity.honeycomb.mysql.Row;
-import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.IndexSchema;
 
 import java.io.Closeable;
 import java.util.Map;

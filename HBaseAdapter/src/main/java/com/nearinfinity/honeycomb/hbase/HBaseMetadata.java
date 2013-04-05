@@ -33,9 +33,9 @@ import com.nearinfinity.honeycomb.hbase.rowkey.RowsRow;
 import com.nearinfinity.honeycomb.hbase.rowkey.SchemaRow;
 import com.nearinfinity.honeycomb.hbase.rowkey.TablesRow;
 import com.nearinfinity.honeycomb.mysql.Util;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
-import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import com.nearinfinity.honeycomb.mysql.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.TableSchema;
 import com.nearinfinity.honeycomb.util.Verify;
 
 /**

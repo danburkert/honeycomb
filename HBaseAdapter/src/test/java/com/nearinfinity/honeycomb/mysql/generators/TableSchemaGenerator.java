@@ -1,9 +1,9 @@
 package com.nearinfinity.honeycomb.mysql.generators;
 
 import com.google.common.collect.Lists;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
-import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import com.nearinfinity.honeycomb.mysql.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.TableSchema;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.CombinedGenerators;
 import net.java.quickcheck.generator.PrimitiveGenerators;

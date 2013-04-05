@@ -1,13 +1,13 @@
 {
     "type": "record",
-    "name": "TableSchema",
+    "name": "AvroTableSchema",
     "namespace": "com.nearinfinity.honeycomb.mysql.gen",
     "fields":
     [
         {"name": "columns", "type": {"type": "map", "values":
             {
                 "type": "record",
-                "name": "ColumnSchema",
+                "name": "AvroColumnSchema",
                 "namespace": "com.nearinfinity.honeycomb.mysql.gen",
                 "fields":
                 [
@@ -28,7 +28,7 @@
         {"name": "indices", "type": {"type": "map", "values":
             {
                 "type": "record",
-                "name": "IndexSchema",
+                "name": "AvroIndexSchema",
                 "namespace": "com.nearinfinity.honeycomb.mysql.gen",
                 "fields":
                 [

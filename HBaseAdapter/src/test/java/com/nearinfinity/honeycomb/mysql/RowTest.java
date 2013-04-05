@@ -1,6 +1,5 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 import com.nearinfinity.honeycomb.mysql.generators.RowGenerator;
 import com.nearinfinity.honeycomb.mysql.generators.TableSchemaGenerator;
 import net.java.quickcheck.generator.iterable.Iterables;

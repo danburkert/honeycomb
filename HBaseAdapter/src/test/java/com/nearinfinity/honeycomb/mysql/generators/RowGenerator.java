@@ -2,8 +2,8 @@ package com.nearinfinity.honeycomb.mysql.generators;
 
 import com.google.common.collect.ImmutableMap;
 import com.nearinfinity.honeycomb.mysql.Row;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import com.nearinfinity.honeycomb.mysql.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.TableSchema;
 import net.java.quickcheck.Generator;
 
 import java.nio.ByteBuffer;

@@ -1,7 +1,7 @@
 package com.nearinfinity.honeycomb;
 
-import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import com.nearinfinity.honeycomb.mysql.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.TableSchema;
 
 /**
  * The store is responsible for meta operations on tables: opening, creating,

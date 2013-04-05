@@ -7,7 +7,7 @@ import java.util.Random;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.PrimitiveGenerators;
 
-import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.IndexSchema;
 
 public class IndexSchemaGenerator implements Generator<IndexSchema> {
     private static final Generator<Integer> lengthGen = PrimitiveGenerators.integers(1, 4);

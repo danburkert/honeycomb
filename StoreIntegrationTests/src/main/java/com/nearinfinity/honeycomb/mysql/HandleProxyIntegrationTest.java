@@ -14,11 +14,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.nearinfinity.honeycomb.config.Constants;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
-import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
 
 public class HandleProxyIntegrationTest {
     public static final String COLUMN1 = "c1";

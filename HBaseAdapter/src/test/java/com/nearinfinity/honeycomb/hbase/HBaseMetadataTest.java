@@ -27,10 +27,10 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.nearinfinity.honeycomb.MockHTable;
 import com.nearinfinity.honeycomb.exceptions.TableNotFoundException;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
-import com.nearinfinity.honeycomb.mysql.gen.IndexSchema;
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import com.nearinfinity.honeycomb.mysql.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.TableSchema;
 import com.nearinfinity.honeycomb.mysql.generators.TableSchemaGenerator;
 
 
