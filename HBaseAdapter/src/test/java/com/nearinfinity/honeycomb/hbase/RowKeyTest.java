@@ -49,10 +49,7 @@ public class RowKeyTest {
         String indexName = "i1";
         ColumnSchema columnSchema = ColumnSchema.newBuilder()
                 .setType(ColumnType.DATETIME).build();
-        IndexSchema indexSchema = IndexSchema.newBuilder()
-                .setColumns(ImmutableList.of(columnName))
-                .setIsUnique(false)
-                .build();
+        IndexSchema indexSchema = new IndexSchema(ImmutableList.of(columnName), false);
         TableSchema tableSchema = TableSchema.newBuilder()
                 .setColumns(ImmutableMap.of(columnName, columnSchema))
                 .setIndices(ImmutableMap.of(indexName, indexSchema))
