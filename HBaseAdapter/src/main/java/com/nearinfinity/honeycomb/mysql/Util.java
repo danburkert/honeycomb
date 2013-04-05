@@ -56,47 +56,6 @@ public class Util {
         return new UUID(buffer.getLong(), buffer.getLong());
     }
 
-    public static byte[] serializeTableSchema(TableSchema schema) {
-        checkNotNull(schema, "Schema cannot be null");
-        return serializeAvroObject(schema, TableSchema.class);
-    }
-
-    public static TableSchema deserializeTableSchema(byte[] schema) {
-        checkNotNull(schema, "Schema cannot be null");
-        return deserializeAvroObject(schema, TableSchema.class);
-    }
-
-    public static byte[] serializeIndexSchema(IndexSchema schema) {
-        checkNotNull(schema, "Schema cannot be null");
-        return serializeAvroObject(schema, IndexSchema.class);
-    }
-
-    public static IndexSchema deserializeIndexSchema(byte[] schema) {
-        checkNotNull(schema, "Schema cannot be null");
-        return deserializeAvroObject(schema, IndexSchema.class);
-    }
-
-    /**
-     * Serialize an object to a byte array
-     *
-     * @param obj   The object to serialize
-     * @param clazz The type of the object being serialized
-     * @return Serialized row
-     */
-    public static <T> byte[] serializeAvroObject(T obj, Class<T> clazz) {
-        DatumWriter<T> writer = new SpecificDatumWriter<T>(clazz);
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        Encoder encoder = EncoderFactory.get().binaryEncoder(out, null);
-        try {
-            writer.write(obj, encoder);
-            encoder.flush();
-        } catch (IOException e) {
-            throw serializationError(obj, e);
-        }
-
-        return out.toByteArray();
-    }
-
     /**
      * Serialize an object to a byte array
      *
@@ -115,27 +74,6 @@ public class Util {
         }
 
         return out.toByteArray();
-    }
-
-    /**
-     * Deserialize the provided serialized data into an instance of the specified class type
-     *
-     * @param serializedData a buffer containing the serialized data
-     * @param clazz          the class type to instantiate to store the deserialized data
-     * @return A new instance of the specified class representing the deserialized data
-     */
-    public static <T> T deserializeAvroObject(byte[] serializedData, Class<T> clazz) {
-        checkNotNull(serializedData);
-        checkNotNull(clazz);
-        final DatumReader<T> userDatumReader = new SpecificDatumReader<T>(clazz);
-        final ByteArrayInputStream in = new ByteArrayInputStream(serializedData);
-        binaryDecoder = DecoderFactory.get().binaryDecoder(in, binaryDecoder);
-
-        try {
-            return userDatumReader.read(null, binaryDecoder);
-        } catch (IOException e) {
-            throw deserializationError(serializedData, e, clazz);
-        }
     }
 
     /**
@@ -178,22 +116,6 @@ public class Util {
             logger.error(String.format("IOException thrown while closing resource of type %s", closeable.getClass().getName()), e);
             throw new RuntimeIOException(e);
         }
-    }
-
-    /**
-     * Return the set of names of unique indices in the table.
-     *
-     * @param schema
-     * @return
-     */
-    public static Set<String> getUniqueIndices(TableSchema schema) {
-        Set<String> indices = Sets.newHashSet();
-        for (Map.Entry<String, IndexSchema> entry : schema.getIndices().entrySet()) {
-            if (entry.getValue().getIsUnique()) {
-                indices.add(entry.getKey());
-            }
-        }
-        return ImmutableSet.copyOf(indices);
     }
 
     /**

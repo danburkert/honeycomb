@@ -1,42 +1,24 @@
 package com.nearinfinity.honeycomb.hbase;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import com.google.common.base.Charsets;
+import com.google.common.collect.*;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.nearinfinity.honeycomb.config.Constants;
+import com.nearinfinity.honeycomb.exceptions.TableNotFoundException;
+import com.nearinfinity.honeycomb.hbase.rowkey.*;
+import com.nearinfinity.honeycomb.mysql.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.TableSchema;
+import com.nearinfinity.honeycomb.util.Verify;
+import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.util.Bytes;
-
-import com.google.common.base.Charsets;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.ImmutableBiMap;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.nearinfinity.honeycomb.config.Constants;
-import com.nearinfinity.honeycomb.exceptions.TableNotFoundException;
-import com.nearinfinity.honeycomb.hbase.rowkey.AutoIncRow;
-import com.nearinfinity.honeycomb.hbase.rowkey.ColumnsRow;
-import com.nearinfinity.honeycomb.hbase.rowkey.IndicesRow;
-import com.nearinfinity.honeycomb.hbase.rowkey.RowsRow;
-import com.nearinfinity.honeycomb.hbase.rowkey.SchemaRow;
-import com.nearinfinity.honeycomb.hbase.rowkey.TablesRow;
-import com.nearinfinity.honeycomb.mysql.Util;
-import com.nearinfinity.honeycomb.mysql.ColumnSchema;
-import com.nearinfinity.honeycomb.mysql.IndexSchema;
-import com.nearinfinity.honeycomb.mysql.TableSchema;
-import com.nearinfinity.honeycomb.util.Verify;
+import static com.google.common.base.Preconditions.*;
 
 /**
  * Manages writing and reading table & column schemas, table & column ids, and
@@ -73,7 +55,7 @@ public class HBaseMetadata {
             final Result result = HBaseOperations.performGet(hTable, get);
 
             final byte[] tableIdBytes = result.getValue(COLUMN_FAMILY, serializedName);
-            if( tableIdBytes == null ) {
+            if (tableIdBytes == null) {
                 throw new TableNotFoundException(tableName);
             }
 
@@ -133,7 +115,8 @@ public class HBaseMetadata {
                 throw new TableNotFoundException(tableId);
             }
 
-            return Util.deserializeTableSchema(serializedSchema);
+            checkNotNull(serializedSchema, "Schema cannot be null");
+            return TableSchema.deserialize(serializedSchema);
         } finally {
             HBaseOperations.closeTable(hTable);
         }
@@ -143,7 +126,7 @@ public class HBaseMetadata {
      * Performs all metadata operations necessary to create a table
      *
      * @param tableName The name of the table to create, not null or empty
-     * @param schema The schema details of the table to create, not null
+     * @param schema    The schema details of the table to create, not null
      */
     public void createTable(final String tableName, final TableSchema schema) {
         Verify.isNotNullOrEmpty(tableName);
@@ -158,7 +141,7 @@ public class HBaseMetadata {
         puts.add(putColumnIds(tableId, schema.getColumns()));
         puts.add(putTableSchema(tableId, schema));
 
-        if( !schema.getIndices().isEmpty() ) {
+        if (schema.hasIndices()) {
             puts.add(putIndices(tableId, schema.getIndices()));
         }
 
@@ -168,24 +151,24 @@ public class HBaseMetadata {
     /**
      * Performs all metadata operations necessary to create a table index
      *
-     * @param tableId The id of the table to create the index
-     * @param indexName The identifying name of the index, not null or empty
+     * @param tableId     The id of the table to create the index
+     * @param indexName   The identifying name of the index, not null or empty
      * @param indexSchema The {@link IndexSchema} representing the index details, not null
      */
     public void createTableIndex(final long tableId, final String indexName,
-            final IndexSchema indexSchema) {
+                                 final IndexSchema indexSchema) {
         Verify.isValidId(tableId);
         Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
         checkNotNull(indexSchema, "The index schema is invalid");
 
         final List<Put> puts = Lists.newArrayList();
 
-        final Map<String, IndexSchema> indexDetailMap = ImmutableMap.<String, IndexSchema>of(indexName, indexSchema);
+        final Map<String, IndexSchema> indexDetailMap = ImmutableMap.of(indexName, indexSchema);
 
         // Update the table schema to store the new index schema details
         final TableSchema existingSchema = getSchema(tableId);
-        final TableSchema updatedSchema = TableSchema.newBuilder(existingSchema).build();
-        updatedSchema.getIndices().putAll(indexDetailMap);
+        final TableSchema updatedSchema = existingSchema.schemaCopy();
+        updatedSchema.addIndices(indexDetailMap);
 
         // Write the updated table schema and created index
         puts.add(putTableSchema(tableId, updatedSchema));
@@ -197,7 +180,7 @@ public class HBaseMetadata {
     /**
      * Performs all metadata operations necessary to remove the specified index from the specified table
      *
-     * @param tableId The id of the table to create the index
+     * @param tableId   The id of the table to create the index
      * @param indexName The identifying name of the index, not null or empty
      */
     public void deleteTableIndex(final long tableId, final String indexName) {
@@ -209,8 +192,8 @@ public class HBaseMetadata {
 
         // Update the table schema to remove index schema details
         final TableSchema existingSchema = getSchema(tableId);
-        final TableSchema updatedSchema = TableSchema.newBuilder(existingSchema).build();
-        updatedSchema.getIndices().remove(indexName);
+        final TableSchema updatedSchema = existingSchema.schemaCopy();
+        updatedSchema.removeIndex(indexName);
 
         // Delete the old index
         deletes.add(generateIndexDelete(tableId, indexName));
@@ -385,7 +368,7 @@ public class HBaseMetadata {
     private Put putTableSchema(long tableId, TableSchema schema) {
         return new Put(new SchemaRow().encode())
                 .add(COLUMN_FAMILY, serializeId(tableId),
-                        Util.serializeTableSchema(schema));
+                        schema.serialize());
     }
 
     private Delete deleteTableSchema(long tableId) {
@@ -395,7 +378,7 @@ public class HBaseMetadata {
 
     private Delete generateIndexDelete(final long tableId, final String indexName) {
         return new Delete(new IndicesRow(tableId).encode())
-            .deleteColumns(COLUMN_FAMILY, serializeName(indexName));
+                .deleteColumns(COLUMN_FAMILY, serializeName(indexName));
     }
 
     private Put putColumnIds(long tableId, Map<String, ColumnSchema> columns) {

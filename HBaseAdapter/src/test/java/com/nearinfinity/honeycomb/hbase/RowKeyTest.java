@@ -7,9 +7,9 @@ import com.google.common.primitives.UnsignedBytes;
 import com.nearinfinity.honeycomb.hbase.generators.RowKeyGenerator;
 import com.nearinfinity.honeycomb.hbase.rowkey.RowKey;
 import com.nearinfinity.honeycomb.mysql.ColumnSchema;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.mysql.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.TableSchema;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.iterable.Iterables;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -22,6 +22,7 @@ import java.util.List;
 
 public class RowKeyTest {
     Generator<RowKey> rowKeyGen = new RowKeyGenerator();
+
     @Test
     public void testRowKeyEncSort() {
         List<RowKey> rowKeys = new ArrayList<RowKey>();
@@ -47,13 +48,10 @@ public class RowKeyTest {
     public void testIndexRowKeyStrings() {
         String columnName = "c1";
         String indexName = "i1";
-        ColumnSchema columnSchema = ColumnSchema.newBuilder()
-                .setType(ColumnType.DATETIME).build();
+        ColumnSchema columnSchema = new ColumnSchema();
+        columnSchema.setType(ColumnType.DATETIME);
         IndexSchema indexSchema = new IndexSchema(ImmutableList.of(columnName), false);
-        TableSchema tableSchema = TableSchema.newBuilder()
-                .setColumns(ImmutableMap.of(columnName, columnSchema))
-                .setIndices(ImmutableMap.of(indexName, indexSchema))
-                .build();
+        TableSchema tableSchema = new TableSchema(ImmutableMap.of(columnName, columnSchema), ImmutableMap.of(indexName, indexSchema));
 
         Generator<RowKey> rowkeysGen = RowKeyGenerator.getAscIndexRowKeyGenerator(tableSchema);
         List<RowKey> rowkeys = Lists.newArrayList(Iterables.toIterable(rowkeysGen));

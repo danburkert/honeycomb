@@ -42,11 +42,6 @@ public class VerifyTest {
         Verify.isNotNullOrEmpty("foo");
     }
 
-    @Test
-    public void testIsValidTableSchema() {
-        Verify.isValidTableSchema(new TableSchema());
-    }
-
     @Test(expected = NullPointerException.class)
     public void testIsValidTableSchemaNullSchema() {
         Verify.isValidTableSchema(null);

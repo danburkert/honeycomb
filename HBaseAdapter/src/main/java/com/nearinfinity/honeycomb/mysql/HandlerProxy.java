@@ -44,7 +44,8 @@ public class HandlerProxy {
         checkNotNull(serializedTableSchema);
 
         store = storeFactory.createStore(tableSpace);
-        TableSchema tableSchema = Util.deserializeTableSchema(serializedTableSchema);
+        checkNotNull(serializedTableSchema, "Schema cannot be null");
+        TableSchema tableSchema = TableSchema.deserialize(serializedTableSchema);
         Verify.isValidTableSchema(tableSchema);
         store.createTable(tableName, tableSchema);
         store.incrementAutoInc(tableName, autoInc);
@@ -179,7 +180,8 @@ public class HandlerProxy {
         checkNotNull(serializedSchema);
         checkTableOpen();
 
-        IndexSchema schema = Util.deserializeIndexSchema(serializedSchema);
+        checkNotNull(serializedSchema, "Schema cannot be null");
+        IndexSchema schema = IndexSchema.deserialize(serializedSchema);
         checkArgument(!schema.getIsUnique(), "Honeycomb does not support adding unique indices without a table rebuild.");
 
         store.addIndex(tableName, indexName, schema);
@@ -197,7 +199,7 @@ public class HandlerProxy {
         checkTableOpen();
 
         TableSchema tableSchema = store.getSchema(tableName);
-        IndexSchema indexSchema = tableSchema.getIndices().get(indexName);
+        IndexSchema indexSchema = tableSchema.getIndexSchemaForName(indexName);
         table.deleteTableIndex(indexName, indexSchema);
         store.dropIndex(tableName, indexName);
     }
@@ -274,7 +276,7 @@ public class HandlerProxy {
         Row updatedRow = Row.deserialize(rowBytes);
         TableSchema schema = store.getSchema(tableName);
         Row oldRow = table.get(updatedRow.getUUID());
-        if (schema.getIndices().isEmpty()) {
+        if (!schema.hasIndices()) {
             table.update(oldRow, updatedRow, ImmutableMap.<String, IndexSchema>of());
         }
 
@@ -287,7 +289,7 @@ public class HandlerProxy {
 
         ImmutableMap.Builder<String, IndexSchema> changedIndices = ImmutableMap.builder();
 
-        for (Map.Entry<String, IndexSchema> index : schema.getIndices().entrySet()) {
+        for (Map.Entry<String, IndexSchema> index : schema.getIndexSchemaEntries()) {
             Set<String> indexColumns = ImmutableSet.copyOf(index.getValue().getColumns());
             if (!Sets.intersection(changedColumns, indexColumns).isEmpty()) {
                 changedIndices.put(index);

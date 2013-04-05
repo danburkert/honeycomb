@@ -8,8 +8,8 @@ import com.google.common.primitives.UnsignedBytes;
 import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowBuilder;
 import com.nearinfinity.honeycomb.hbase.rowkey.SortOrder;
 import com.nearinfinity.honeycomb.mysql.ColumnSchema;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.mysql.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.collection.Pair;
 import net.java.quickcheck.generator.PrimitiveGenerators;
@@ -56,7 +56,9 @@ public class EncodingTest {
         Generator<Long> longs = PrimitiveGenerators.longs();
         Map<String, ByteBuffer> records = Maps.newHashMap();
         Map<String, ColumnSchema> columnSchemas = Maps.newHashMap();
-        columnSchemas.put("c1", ColumnSchema.newBuilder().setType(ColumnType.LONG).build());
+        ColumnSchema c1 = new ColumnSchema();
+        c1.setType(ColumnType.LONG);
+        columnSchemas.put("c1", c1);
         List<String> columnOrder = Lists.newArrayList();
         columnOrder.add("c1");
 

@@ -1,5 +1,6 @@
 package com.nearinfinity.honeycomb.mysql;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.fest.assertions.Fail.fail;
 
@@ -57,7 +58,8 @@ public class HandleProxyIntegrationTest {
                 insertData(proxy, rows, keyValue);
 
                 // Add the new index to the table
-                proxy.addIndex(indexName, Util.serializeIndexSchema(indexSchema));
+                checkNotNull(indexSchema, "Schema cannot be null");
+                proxy.addIndex(indexName, indexSchema.serialize());
 
                 // Perform a scan with the new index
                 final IndexKey key = new IndexKey(indexName, QueryType.EXACT_KEY,
@@ -85,7 +87,8 @@ public class HandleProxyIntegrationTest {
                 insertData(proxy, rows, keyValue);
 
                 // Add the new index to the table
-                proxy.addIndex(indexName, Util.serializeIndexSchema(indexSchema));
+                checkNotNull(indexSchema, "Schema cannot be null");
+                proxy.addIndex(indexName, indexSchema.serialize());
 
                 // Perform a scan with the new index
                 final IndexKey key = new IndexKey(indexName, QueryType.EXACT_KEY,
@@ -418,7 +421,8 @@ public class HandleProxyIntegrationTest {
 
         int iterations = 10;
 
-        proxy.createTable(tableName, tableSpace, Util.serializeTableSchema(schema), 0);
+        checkNotNull(schema, "Schema cannot be null");
+        proxy.createTable(tableName, tableSpace, schema.serialize(), 0);
         proxy.openTable(tableName, tableSpace);
         Row row = new Row(Maps.<String, ByteBuffer>newHashMap(), Constants.ZERO_UUID);
 
@@ -537,7 +541,8 @@ public class HandleProxyIntegrationTest {
     private static void testProxy(String message, TableSchema schema, Action test) {
         System.out.println(message);
         HandlerProxy proxy = factory.createHandlerProxy();
-        proxy.createTable(tableName, Constants.HBASE_TABLESPACE, Util.serializeTableSchema(schema), 1);
+        checkNotNull(schema, "Schema cannot be null");
+        proxy.createTable(tableName, Constants.HBASE_TABLESPACE, schema.serialize(), 1);
         proxy.openTable(tableName, Constants.HBASE_TABLESPACE);
         test.execute(proxy);
         proxy.closeTable();
