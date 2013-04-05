@@ -4,22 +4,22 @@
 #include <string.h>
 #include <avro.h>
 #include "gtest/gtest.h"
-#include "../IndexContainer.h"
+#include "../QueryKey.h"
 #include "Generator.h"
 #include "map_test.hpp"
 
 const int ITERATIONS = 100;
 
-class IndexContainerTest : public ::testing::Test
+class QueryKeyTest : public ::testing::Test
 {
   protected:
-    IndexContainer index;
+    QueryKey index;
     virtual void SetUp() {
       srand(time(NULL));
     }
 };
 
-TEST_F(IndexContainerTest, SetType)
+TEST_F(QueryKeyTest, SetType)
 {
   ASSERT_FALSE(index.reset());
 
@@ -27,17 +27,17 @@ TEST_F(IndexContainerTest, SetType)
   ASSERT_FALSE(index.set_type(query_type)); \
   EXPECT_EQ(query_type, index.get_type()); } while(0);
 
-  TEST_TYPE(IndexContainer::EXACT_KEY);
-  TEST_TYPE(IndexContainer::AFTER_KEY);
-  TEST_TYPE(IndexContainer::KEY_OR_NEXT);
-  TEST_TYPE(IndexContainer::KEY_OR_PREVIOUS);
-  TEST_TYPE(IndexContainer::BEFORE_KEY);
-  TEST_TYPE(IndexContainer::INDEX_FIRST);
-  TEST_TYPE(IndexContainer::INDEX_LAST);
+  TEST_TYPE(QueryKey::EXACT_KEY);
+  TEST_TYPE(QueryKey::AFTER_KEY);
+  TEST_TYPE(QueryKey::KEY_OR_NEXT);
+  TEST_TYPE(QueryKey::KEY_OR_PREVIOUS);
+  TEST_TYPE(QueryKey::BEFORE_KEY);
+  TEST_TYPE(QueryKey::INDEX_FIRST);
+  TEST_TYPE(QueryKey::INDEX_LAST);
 #undef TEST_TYPE
 }
 
-TEST_F(IndexContainerTest, RandRecords)
+TEST_F(QueryKeyTest, RandRecords)
 {
   for(int i = 0; i < ITERATIONS; i++)
   {
@@ -45,7 +45,7 @@ TEST_F(IndexContainerTest, RandRecords)
   }
 }
 
-TEST_F(IndexContainerTest, BytesRecord)
+TEST_F(QueryKeyTest, BytesRecord)
 {
   for(int i = 0; i < ITERATIONS; i++)
   {
@@ -53,7 +53,7 @@ TEST_F(IndexContainerTest, BytesRecord)
   }
 }
 
-TEST_F(IndexContainerTest, Name)
+TEST_F(QueryKeyTest, Name)
 {
   int i;
   char name[256];
@@ -69,7 +69,7 @@ TEST_F(IndexContainerTest, Name)
   }
 }
 
-TEST_F(IndexContainerTest, CanHaveNullValue)
+TEST_F(QueryKeyTest, CanHaveNullValue)
 {
   index.reset();
   const char* value;
