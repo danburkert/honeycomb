@@ -53,10 +53,9 @@ public interface Store {
      * Add the provided index information to the table specified by the table name
      *
      * @param tableName The name of the table to be altered, not null or empty
-     * @param indexName The name of the index to add, not null or empty
      * @param schema    The schema of the index, not null
      */
-    public void addIndex(final String tableName, final String indexName, final IndexSchema schema);
+    public void addIndex(final String tableName, final IndexSchema schema);
 
     /**
      * Drop the specified index from the table specified by the table name
