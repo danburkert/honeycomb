@@ -3,8 +3,8 @@ package com.nearinfinity.honeycomb.hbase;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.nearinfinity.honeycomb.config.Constants;
-import com.nearinfinity.honeycomb.hbase.rowkey.DataRow;
-import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowBuilder;
+import com.nearinfinity.honeycomb.hbase.rowkey.DataRowKey;
+import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowKeyBuilder;
 import com.nearinfinity.honeycomb.hbase.rowkey.RowKey;
 import com.nearinfinity.honeycomb.hbase.rowkey.SortOrder;
 import com.nearinfinity.honeycomb.mysql.IndexSchema;
@@ -66,7 +66,7 @@ public class MutationFactory {
         final UUID uuid = row.getUUID();
         final ImmutableList.Builder<Put> puts = ImmutableList.builder();
 
-        puts.add(emptyQualifierPut(new DataRow(tableId, uuid), serializedRow));
+        puts.add(emptyQualifierPut(new DataRowKey(tableId, uuid), serializedRow));
         puts.addAll(insertIndices(tableId, row, indices));
 
         return puts.build();
@@ -87,7 +87,7 @@ public class MutationFactory {
         final ImmutableList.Builder<Put> puts = ImmutableList.builder();
         doToIndices(tableId, row, indices, new IndexAction() {
             @Override
-            public void execute(IndexRowBuilder builder) {
+            public void execute(IndexRowKeyBuilder builder) {
                 puts.add(emptyQualifierPut(builder.withSortOrder(SortOrder.Ascending).build(), serializedRow));
                 puts.add(emptyQualifierPut(builder.withSortOrder(SortOrder.Descending).build(), serializedRow));
             }
@@ -104,7 +104,7 @@ public class MutationFactory {
      */
     public List<Delete> delete(long tableId, final Row row) {
         List<Delete> deletes = deleteIndices(tableId, row);
-        deletes.add(new Delete(new DataRow(tableId, row.getUUID()).encode()));
+        deletes.add(new Delete(new DataRowKey(tableId, row.getUUID()).encode()));
         return deletes;
     }
 
@@ -137,7 +137,7 @@ public class MutationFactory {
         final List<Delete> deletes = Lists.newLinkedList();
         doToIndices(tableId, row, indices, new IndexAction() {
             @Override
-            public void execute(IndexRowBuilder builder) {
+            public void execute(IndexRowKeyBuilder builder) {
                 deletes.add(new Delete(builder.withSortOrder(SortOrder.Ascending).build().encode()));
                 deletes.add(new Delete(builder.withSortOrder(SortOrder.Descending).build().encode()));
             }
@@ -154,7 +154,7 @@ public class MutationFactory {
             long indexId = store.getIndexId(tableId, index.getIndexName());
             TableSchema schema = store.getSchema(tableId);
 
-            IndexRowBuilder builder = IndexRowBuilder
+            IndexRowKeyBuilder builder = IndexRowKeyBuilder
                     .newBuilder(tableId, indexId)
                     .withUUID(row.getUUID())
                     .withSqlRow(row, index.getColumns(), schema.getColumnsMap());
@@ -163,6 +163,6 @@ public class MutationFactory {
     }
 
     private interface IndexAction {
-        public void execute(IndexRowBuilder builder);
+        public void execute(IndexRowKeyBuilder builder);
     }
 }

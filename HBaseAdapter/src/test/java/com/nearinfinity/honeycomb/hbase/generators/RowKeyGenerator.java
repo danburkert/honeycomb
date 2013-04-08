@@ -21,10 +21,10 @@ import static com.google.common.base.Preconditions.checkState;
 
 public class RowKeyGenerator implements Generator<RowKey> {
     private static final Random RAND = new Random();
-    private static final TablesRow tablesRow = new TablesRow();
-    private static final RowsRow rowsRow = new RowsRow();
-    private static final AutoIncRow autoIncRow = new AutoIncRow();
-    private static final SchemaRow schemaRow = new SchemaRow();
+    private static final TablesRowKey tablesRow = new TablesRowKey();
+    private static final RowsRowKey rowsRow = new RowsRowKey();
+    private static final AutoIncRowKey autoIncRow = new AutoIncRowKey();
+    private static final SchemaRowKey schemaRow = new SchemaRowKey();
     private static final Generator<Long> randIdGen = CombinedGenerators.uniqueValues(
             PrimitiveGenerators.longs(0, 1024));
     private static final Generator<SortOrder> randSortOrder = PrimitiveGenerators.enumValues(SortOrder.class);
@@ -101,9 +101,9 @@ public class RowKeyGenerator implements Generator<RowKey> {
         @Override
         public RowKey next() {
             if (RAND.nextBoolean()) {
-                return new ColumnsRow(randIdGen.next());
+                return new ColumnsRowKey(randIdGen.next());
             } else {
-                return new IndicesRow(randIdGen.next());
+                return new IndicesRowKey(randIdGen.next());
 
             }
         }
@@ -118,7 +118,7 @@ public class RowKeyGenerator implements Generator<RowKey> {
 
         @Override
         public RowKey next() {
-            return new DataRow(tableIdGen.next(), uuidGen.next());
+            return new DataRowKey(tableIdGen.next(), uuidGen.next());
         }
     }
 
@@ -148,7 +148,7 @@ public class RowKeyGenerator implements Generator<RowKey> {
         @Override
         public RowKey next() {
             Row row = rows.next();
-            IndexRowBuilder builder = IndexRowBuilder
+            IndexRowKeyBuilder builder = IndexRowKeyBuilder
                     .newBuilder(tableIds.next(), indexIds.next())
                     .withQueryValues(row.getRecords(),
                             indexSchema.getColumns(),

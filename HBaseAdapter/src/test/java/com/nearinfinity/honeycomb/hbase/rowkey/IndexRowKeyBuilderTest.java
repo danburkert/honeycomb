@@ -15,35 +15,35 @@ import java.util.UUID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-public class IndexRowBuilderTest {
+public class IndexRowKeyBuilderTest {
 
     private static final int ASC_INDEX_PREFIX = 0x07;
 
     private static final long TABLE_ID = 1;
     private static final long INDEX_ID = 5;
 
-    private IndexRowBuilder builder;
+    private IndexRowKeyBuilder builder;
 
     @Before
     public void setupTestCases() {
-        builder = IndexRowBuilder.newBuilder(TABLE_ID, INDEX_ID);
+        builder = IndexRowKeyBuilder.newBuilder(TABLE_ID, INDEX_ID);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNewBuilderInvalidTableId() {
         final long invalidTableId = -1;
-        IndexRowBuilder.newBuilder(invalidTableId, INDEX_ID);
+        IndexRowKeyBuilder.newBuilder(invalidTableId, INDEX_ID);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNewBuilderInvalidIndexId() {
         final long invalidIndexId = -1;
-        IndexRowBuilder.newBuilder(TABLE_ID, invalidIndexId);
+        IndexRowKeyBuilder.newBuilder(TABLE_ID, invalidIndexId);
     }
 
     @Test
     public void testNewBuilder() {
-        assertNotNull(IndexRowBuilder.newBuilder(TABLE_ID, INDEX_ID));
+        assertNotNull(IndexRowKeyBuilder.newBuilder(TABLE_ID, INDEX_ID));
     }
 
 
@@ -96,7 +96,7 @@ public class IndexRowBuilderTest {
 
     @Test
     public void testBuildAscendingIndex() {
-        final IndexRow row = builder.withSortOrder(SortOrder.Ascending).build();
+        final IndexRowKey row = builder.withSortOrder(SortOrder.Ascending).build();
 
         assertEquals(ASC_INDEX_PREFIX, row.getPrefix());
     }

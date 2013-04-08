@@ -6,22 +6,22 @@ import org.junit.Test;
 
 import com.nearinfinity.honeycomb.hbase.VarEncoder;
 
-public class ColumnsRowTest {
+public class IndicesRowKeyTest {
     private static final long TABLE_ID = 1;
-    private static final byte COLUMNS_ROW_PREFIX = 0x01;
+    private static final byte INDICES_ROW_PREFIX = 0x02;
 
     @SuppressWarnings("unused")
     @Test(expected = IllegalArgumentException.class)
-    public void testConstructColumnsRowInvalidTableId() {
+    public void testConstructIndicesRowInvalidTableId() {
         final long invalidTableId = -1;
-        new ColumnsRow(invalidTableId);
+        new IndicesRowKey(invalidTableId);
     }
 
     @Test
-    public void testEncodeColumnsRow() {
-        final ColumnsRow row = new ColumnsRow(TABLE_ID);
+    public void testEncodeIndicesRow() {
+        final IndicesRowKey row = new IndicesRowKey(TABLE_ID);
 
-        final byte[] expectedEncoding = VarEncoder.appendByteArraysWithPrefix(COLUMNS_ROW_PREFIX,
+        final byte[] expectedEncoding = VarEncoder.appendByteArraysWithPrefix(INDICES_ROW_PREFIX,
                                     VarEncoder.encodeULong(TABLE_ID));
 
         assertArrayEquals(expectedEncoding, row.encode());

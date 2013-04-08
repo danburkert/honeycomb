@@ -9,7 +9,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Super class for rowkeys that only occur once, ie,
  * rowkeys that are shared across all tables.
  */
-public abstract class PrefixRow implements RowKey {
+public abstract class PrefixRowKey implements RowKey {
     private final byte[] rowKey;
 
     /**
@@ -17,7 +17,7 @@ public abstract class PrefixRow implements RowKey {
      *
      * @param rowKey The rowkey content that this row represents, not null or empty
      */
-    public PrefixRow(final byte[] rowKey) {
+    public PrefixRowKey(final byte[] rowKey) {
         checkNotNull(rowKey, "The rowkey is invalid");
         checkArgument(rowKey.length > 0, "The rowkey cannot be empty");
         this.rowKey = rowKey;

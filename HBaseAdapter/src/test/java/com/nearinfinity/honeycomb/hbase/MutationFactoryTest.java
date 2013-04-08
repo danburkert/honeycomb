@@ -8,8 +8,8 @@ import com.nearinfinity.honeycomb.IndexSchemaFactory;
 import com.nearinfinity.honeycomb.MockHTable;
 import com.nearinfinity.honeycomb.TableSchemaFactory;
 import com.nearinfinity.honeycomb.exceptions.TableNotFoundException;
-import com.nearinfinity.honeycomb.hbase.rowkey.DataRow;
-import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowBuilder;
+import com.nearinfinity.honeycomb.hbase.rowkey.DataRowKey;
+import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowKeyBuilder;
 import com.nearinfinity.honeycomb.hbase.rowkey.SortOrder;
 import com.nearinfinity.honeycomb.mysql.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.IndexSchema;
@@ -51,10 +51,10 @@ public class MutationFactoryTest {
             }},
             UUID.randomUUID()
     );
-    private static final byte DATA_PREFIX = new DataRow(0, null).getPrefix();
-    private static final byte ASC_PREFIX = IndexRowBuilder.newBuilder(0, 0)
+    private static final byte DATA_PREFIX = new DataRowKey(0, null).getPrefix();
+    private static final byte ASC_PREFIX = IndexRowKeyBuilder.newBuilder(0, 0)
             .withSortOrder(SortOrder.Ascending).build().getPrefix();
-    private static final byte DESC_PREFIX = IndexRowBuilder.newBuilder(0, 0)
+    private static final byte DESC_PREFIX = IndexRowKeyBuilder.newBuilder(0, 0)
             .withSortOrder(SortOrder.Descending).build().getPrefix();
     private MutationFactory factory;
     private long tableId;

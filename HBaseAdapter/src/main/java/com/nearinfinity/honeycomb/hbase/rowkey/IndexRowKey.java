@@ -16,7 +16,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Super class for index rowkeys
  */
-public abstract class IndexRow implements RowKey {
+public abstract class IndexRowKey implements RowKey {
     private final byte prefix;
     private final long tableId;
     private final long indexId;
@@ -26,7 +26,7 @@ public abstract class IndexRow implements RowKey {
     private final List<byte[]> records;
     private final SortOrder sortOrder;
 
-    protected IndexRow(final long tableId,
+    protected IndexRowKey(final long tableId,
                        final long indexId,
                        final List<byte[]> records,
                        final UUID uuid,
@@ -104,7 +104,7 @@ public abstract class IndexRow implements RowKey {
     public int compareTo(RowKey o) {
         int typeCompare = getPrefix() - o.getPrefix();
         if (typeCompare != 0) { return typeCompare; }
-        IndexRow row2 = (IndexRow) o;
+        IndexRowKey row2 = (IndexRowKey) o;
 
         List<byte[]> records2 = row2.records;
         int nullOrder = sortOrder == SortOrder.Ascending ? -1 : 1;

@@ -12,7 +12,7 @@ import java.util.UUID;
 /**
  * Representation of the rowkey associated with data row content
  */
-public class DataRow implements RowKey {
+public class DataRowKey implements RowKey {
     private static final byte PREFIX = 0x06;
     private final long tableId;
     private final UUID uuid;
@@ -22,7 +22,7 @@ public class DataRow implements RowKey {
      *
      * @param tableId The valid table id that this data row belongs to
      */
-    public DataRow(final long tableId) {
+    public DataRowKey(final long tableId) {
         this(tableId, null);
     }
 
@@ -33,7 +33,7 @@ public class DataRow implements RowKey {
      * @param tableId The valid table id that this data row belongs to
      * @param uuid The {@link UUID} to associate with this data row
      */
-    public DataRow(final long tableId, final UUID uuid) {
+    public DataRowKey(final long tableId, final UUID uuid) {
         Verify.isValidId(tableId);
         this.tableId = tableId;
         this.uuid = uuid;
@@ -76,7 +76,7 @@ public class DataRow implements RowKey {
     public int compareTo(RowKey o) {
         int typeCompare = getPrefix() - o.getPrefix();
         if (typeCompare != 0) { return typeCompare; }
-        DataRow row2 = (DataRow) o;
+        DataRowKey row2 = (DataRowKey) o;
         return ComparisonChain.start()
                 .compare(getTableId(), row2.getTableId())
                 .compare(Util.UUIDToBytes(getUuid()),

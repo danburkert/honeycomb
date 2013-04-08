@@ -47,7 +47,7 @@ public class HBaseMetadata {
         Verify.isNotNullOrEmpty(tableName);
 
         final byte[] serializedName = serializeName(tableName);
-        final Get get = new Get(new TablesRow().encode());
+        final Get get = new Get(new TablesRowKey().encode());
         get.addColumn(COLUMN_FAMILY, serializedName);
 
         final HTableInterface hTable = getHTable();
@@ -76,7 +76,7 @@ public class HBaseMetadata {
     public Map<String, Long> getIndexIds(final long tableId) {
         Verify.isValidId(tableId);
 
-        return getNameToIdMap(tableId, new IndicesRow(tableId).encode());
+        return getNameToIdMap(tableId, new IndicesRowKey(tableId).encode());
     }
 
     /**
@@ -90,7 +90,7 @@ public class HBaseMetadata {
         Verify.isValidId(tableId);
 
         return ImmutableBiMap.copyOf(
-                getNameToIdMap(tableId, new ColumnsRow(tableId).encode()));
+                getNameToIdMap(tableId, new ColumnsRowKey(tableId).encode()));
     }
 
     /**
@@ -103,7 +103,7 @@ public class HBaseMetadata {
         Verify.isValidId(tableId);
 
         final byte[] serializedTableId = serializeId(tableId);
-        final Get get = new Get(new SchemaRow().encode());
+        final Get get = new Get(new SchemaRowKey().encode());
         get.addColumn(COLUMN_FAMILY, serializedTableId);
 
         final HTableInterface hTable = getHTable();
@@ -219,10 +219,10 @@ public class HBaseMetadata {
         final long tableId = getTableId(tableName);
         final byte[] serializedId = serializeId(tableId);
 
-        final Delete columnIdsDelete = new Delete(new ColumnsRow(tableId).encode());
-        final Delete indicesIdsDelete = new Delete(new IndicesRow(tableId).encode());
+        final Delete columnIdsDelete = new Delete(new ColumnsRowKey(tableId).encode());
+        final Delete indicesIdsDelete = new Delete(new IndicesRowKey(tableId).encode());
 
-        final Delete rowsDelete = new Delete(new RowsRow().encode());
+        final Delete rowsDelete = new Delete(new RowsRowKey().encode());
         rowsDelete.deleteColumns(COLUMN_FAMILY, serializedId);
 
         deletes.add(deleteTableId(tableName));
@@ -236,7 +236,7 @@ public class HBaseMetadata {
     }
 
     /**
-     * Performs the operations necessary to rename an existing table stored in a {@link TablesRow} row
+     * Performs the operations necessary to rename an existing table stored in a {@link TablesRowKey} row
      *
      * @param oldTableName The name of the existing table
      * @param newTableName The new name to use for this table
@@ -256,18 +256,18 @@ public class HBaseMetadata {
 
     public long getAutoInc(long tableId) {
         Verify.isValidId(tableId);
-        return getCounter(new AutoIncRow().encode(), serializeId(tableId));
+        return getCounter(new AutoIncRowKey().encode(), serializeId(tableId));
     }
 
     public long incrementAutoInc(long tableId, long amount) {
         Verify.isValidId(tableId);
-        return incrementCounter(new AutoIncRow().encode(),
+        return incrementCounter(new AutoIncRowKey().encode(),
                 serializeId(tableId), amount);
     }
 
     public void setAutoInc(long tableId, long value) {
         Verify.isValidId(tableId);
-        Put put = new Put(new AutoIncRow().encode());
+        Put put = new Put(new AutoIncRowKey().encode());
         put.add(COLUMN_FAMILY, serializeId(tableId), Bytes.toBytes(value));
         HTableInterface hTable = getHTable();
         try {
@@ -279,12 +279,12 @@ public class HBaseMetadata {
 
     public long getRowCount(long tableId) {
         Verify.isValidId(tableId);
-        return getCounter(new RowsRow().encode(), serializeId(tableId));
+        return getCounter(new RowsRowKey().encode(), serializeId(tableId));
     }
 
     public long incrementRowCount(long tableId, long amount) {
         Verify.isValidId(tableId);
-        return incrementCounter(new RowsRow().encode(), serializeId(tableId), amount);
+        return incrementCounter(new RowsRowKey().encode(), serializeId(tableId), amount);
     }
 
     public void truncateRowCount(long tableId) {
@@ -341,51 +341,51 @@ public class HBaseMetadata {
     }
 
     private long getNextTableId() {
-        return incrementCounter(new TablesRow().encode(), new byte[0], 1);
+        return incrementCounter(new TablesRowKey().encode(), new byte[0], 1);
     }
 
     private long getNextIndexId(final long tableId, final int n) {
-        return incrementCounter(new IndicesRow(tableId).encode(), new byte[0], n);
+        return incrementCounter(new IndicesRowKey(tableId).encode(), new byte[0], n);
     }
 
     private long getNextColumnId(final long tableId, final int n) {
-        return incrementCounter(new ColumnsRow(tableId).encode(), new byte[0], n);
+        return incrementCounter(new ColumnsRowKey(tableId).encode(), new byte[0], n);
     }
 
     private Delete deleteTableId(String tableName) {
-        return new Delete(new TablesRow().encode())
+        return new Delete(new TablesRowKey().encode())
                 .deleteColumns(COLUMN_FAMILY, serializeName(tableName));
     }
 
     private Delete deleteAutoIncCounter(long tableId) {
-        return new Delete(new AutoIncRow().encode())
+        return new Delete(new AutoIncRowKey().encode())
                 .deleteColumns(COLUMN_FAMILY, serializeId(tableId));
     }
 
     private Delete deleteRowsCounter(long tableId) {
-        return new Delete(new RowsRow().encode())
+        return new Delete(new RowsRowKey().encode())
                 .deleteColumns(COLUMN_FAMILY, serializeId(tableId));
     }
 
     private Put putTableSchema(long tableId, TableSchema schema) {
-        return new Put(new SchemaRow().encode())
+        return new Put(new SchemaRowKey().encode())
                 .add(COLUMN_FAMILY, serializeId(tableId),
                         schema.serialize());
     }
 
     private Delete deleteTableSchema(long tableId) {
-        return new Delete(new SchemaRow().encode())
+        return new Delete(new SchemaRowKey().encode())
                 .deleteColumns(COLUMN_FAMILY, serializeId(tableId));
     }
 
     private Delete generateIndexDelete(final long tableId, final String indexName) {
-        return new Delete(new IndicesRow(tableId).encode())
+        return new Delete(new IndicesRowKey(tableId).encode())
                 .deleteColumns(COLUMN_FAMILY, serializeName(indexName));
     }
 
     private Put putColumnIds(long tableId, Collection<ColumnSchema> columns) {
         long columnId = getNextColumnId(tableId, columns.size());
-        Put put = new Put(new ColumnsRow(tableId).encode());
+        Put put = new Put(new ColumnsRowKey(tableId).encode());
 
         for (ColumnSchema columnEntry : columns) {
             put.add(COLUMN_FAMILY, serializeName(columnEntry.getColumnName()),
@@ -397,7 +397,7 @@ public class HBaseMetadata {
     private Put putIndices(long tableId, Collection<IndexSchema> indices) {
         checkState(!indices.isEmpty(), "putIndices requires 1 or more indices.");
         long indexId = getNextIndexId(tableId, indices.size());
-        Put put = new Put(new IndicesRow(tableId).encode());
+        Put put = new Put(new IndicesRowKey(tableId).encode());
 
         for (IndexSchema columnEntry : indices) {
             put.add(COLUMN_FAMILY, serializeName(columnEntry.getIndexName()),
@@ -407,7 +407,7 @@ public class HBaseMetadata {
     }
 
     private Put putTableId(String tableName, long tableId) {
-        Put idPut = new Put(new TablesRow().encode());
+        Put idPut = new Put(new TablesRowKey().encode());
         idPut.add(COLUMN_FAMILY, serializeName(tableName), serializeId(tableId));
         return idPut;
     }

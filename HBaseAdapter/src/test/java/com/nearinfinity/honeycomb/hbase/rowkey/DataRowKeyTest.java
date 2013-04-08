@@ -9,7 +9,7 @@ import org.junit.Test;
 import com.nearinfinity.honeycomb.hbase.VarEncoder;
 import com.nearinfinity.honeycomb.mysql.Util;
 
-public class DataRowTest {
+public class DataRowKeyTest {
 
     private static final long TABLE_ID = 1;
     private static final byte DATA_ROW_PREFIX = 0x06;
@@ -18,13 +18,13 @@ public class DataRowTest {
     @Test(expected = IllegalArgumentException.class)
     public void testConstructDataRowInvalidTableId() {
         final long invalidTableId = -1;
-        new DataRow(invalidTableId);
+        new DataRowKey(invalidTableId);
     }
 
     @Test
     public void testEncodeDataRow() {
         final UUID rowUUID = UUID.randomUUID();
-        final DataRow row = new DataRow(TABLE_ID, rowUUID);
+        final DataRowKey row = new DataRowKey(TABLE_ID, rowUUID);
 
         final byte[] expectedEncoding = VarEncoder.appendByteArraysWithPrefix(DATA_ROW_PREFIX,
                                     VarEncoder.encodeULong(TABLE_ID),
@@ -35,7 +35,7 @@ public class DataRowTest {
 
     @Test
     public void testEncodeDataRowNullUUID() {
-        final DataRow row = new DataRow(TABLE_ID);
+        final DataRowKey row = new DataRowKey(TABLE_ID);
 
         final byte[] expectedEncoding = VarEncoder.appendByteArraysWithPrefix(DATA_ROW_PREFIX,
                                     VarEncoder.encodeULong(TABLE_ID));
