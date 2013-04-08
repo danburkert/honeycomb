@@ -12,6 +12,6 @@ public class IndexSchemaFactory {
     }
 
     public static IndexSchema createIndexSchema(List<String> columns, boolean isUnique) {
-        return createIndexSchema(columns, isUnique, "");
+        return createIndexSchema(columns, isUnique, "default");
     }
 }

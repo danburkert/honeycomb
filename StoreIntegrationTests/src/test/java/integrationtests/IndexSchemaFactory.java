@@ -10,8 +10,4 @@ public class IndexSchemaFactory {
         AvroIndexSchema avroIndexSchema = new AvroIndexSchema(columns, isUnique);
         return new IndexSchema(avroIndexSchema, indexName);
     }
-
-    public static IndexSchema createIndexSchema(List<String> columns, boolean isUnique) {
-        return createIndexSchema(columns, isUnique, "");
-    }
 }

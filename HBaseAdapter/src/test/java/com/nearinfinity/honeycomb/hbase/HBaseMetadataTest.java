@@ -28,13 +28,13 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.powermock.api.mockito.PowerMockito;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.when;
-
 
 public class HBaseMetadataTest {
     private static final Generator<TableSchema> TABLE_SCHEMA_GEN = new TableSchemaGenerator();
@@ -259,7 +259,7 @@ public class HBaseMetadataTest {
     }
 
     private IndexSchema getIndexEmpty() {
-        return new IndexSchema(null, "");
+        return IndexSchemaFactory.createIndexSchema(new ArrayList<String>(), false);
     }
 
     @Test(expected = NullPointerException.class)
