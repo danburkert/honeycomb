@@ -1,18 +1,20 @@
 package com.nearinfinity.honeycomb.mysql.schema;
 
-import com.google.common.collect.ImmutableList;
-import com.nearinfinity.honeycomb.mysql.Util;
-import com.nearinfinity.honeycomb.mysql.gen.AvroIndexSchema;
-import com.nearinfinity.honeycomb.util.Verify;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.util.List;
+
 import net.jcip.annotations.Immutable;
+
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
 
-import java.util.List;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.collect.ImmutableList;
+import com.nearinfinity.honeycomb.mysql.Util;
+import com.nearinfinity.honeycomb.mysql.gen.AvroIndexSchema;
+import com.nearinfinity.honeycomb.util.Verify;
 
 @Immutable
 public class IndexSchema {
@@ -26,7 +28,7 @@ public class IndexSchema {
     public IndexSchema(List<String> columns, boolean isUnique, String indexName) {
         checkNotNull(columns);
         Verify.isNotNullOrEmpty(indexName);
-        this.avroIndexSchema = new AvroIndexSchema(columns, isUnique);
+        avroIndexSchema = new AvroIndexSchema(columns, isUnique);
         this.indexName = indexName;
     }
 
@@ -36,7 +38,7 @@ public class IndexSchema {
      * @param indexName       Index name [Not null, Not empty]
      * @param avroIndexSchema Avro index schema [Not null]
      */
-    public IndexSchema(String indexName, AvroIndexSchema avroIndexSchema) {
+    IndexSchema(String indexName, AvroIndexSchema avroIndexSchema) {
         checkNotNull(avroIndexSchema);
         Verify.isNotNullOrEmpty(indexName);
         this.avroIndexSchema = AvroIndexSchema.newBuilder(avroIndexSchema).build();
