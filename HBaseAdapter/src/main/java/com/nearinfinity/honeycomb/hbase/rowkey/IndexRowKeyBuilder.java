@@ -13,7 +13,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.nearinfinity.honeycomb.mysql.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.util.Verify;
 

@@ -9,7 +9,7 @@ import com.nearinfinity.honeycomb.ColumnSchemaFactory;
 import com.nearinfinity.honeycomb.IndexSchemaFactory;
 import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowKeyBuilder;
 import com.nearinfinity.honeycomb.hbase.rowkey.SortOrder;
-import com.nearinfinity.honeycomb.mysql.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.collection.Pair;

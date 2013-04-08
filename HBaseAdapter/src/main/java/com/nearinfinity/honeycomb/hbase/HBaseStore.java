@@ -4,8 +4,8 @@ import com.google.common.collect.BiMap;
 import com.google.inject.Inject;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
-import com.nearinfinity.honeycomb.mysql.IndexSchema;
-import com.nearinfinity.honeycomb.mysql.TableSchema;
+import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import com.nearinfinity.honeycomb.util.Verify;
 
 import static com.google.common.base.Preconditions.checkNotNull;

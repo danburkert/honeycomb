@@ -8,7 +8,7 @@ import com.nearinfinity.honeycomb.IndexSchemaFactory;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.PrimitiveGenerators;
 
-import com.nearinfinity.honeycomb.mysql.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 
 public class IndexSchemaGenerator implements Generator<IndexSchema> {
     private static final Generator<Integer> lengthGen = PrimitiveGenerators.integers(1, 4);

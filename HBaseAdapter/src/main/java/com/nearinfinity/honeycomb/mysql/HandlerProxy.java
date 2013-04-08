@@ -5,6 +5,8 @@ import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
+import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import com.nearinfinity.honeycomb.util.Verify;
 
 import org.apache.log4j.Logger;
@@ -172,7 +174,7 @@ public class HandlerProxy {
      * before this operation can be performed.
      *
      * @param indexName        The name of the index to add, not null or empty
-     * @param serializedSchema The byte representation of the {@link IndexSchema} for this index, not null
+     * @param serializedSchema The byte representation of the {@link com.nearinfinity.honeycomb.mysql.schema.IndexSchema} for this index, not null
      */
     public void addIndex(String indexName, byte[] serializedSchema) {
         Verify.isNotNullOrEmpty(indexName, "The index name is invalid");

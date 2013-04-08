@@ -1,7 +1,8 @@
-package com.nearinfinity.honeycomb.mysql;
+package com.nearinfinity.honeycomb.mysql.schema;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.gen.AvroColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.AvroIndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.AvroTableSchema;

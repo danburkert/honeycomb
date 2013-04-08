@@ -1,8 +1,8 @@
 package com.nearinfinity.honeycomb;
 
-import com.nearinfinity.honeycomb.mysql.ColumnSchema;
-import com.nearinfinity.honeycomb.mysql.IndexSchema;
-import com.nearinfinity.honeycomb.mysql.TableSchema;
+import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 
 import java.util.Map;
 

@@ -1,7 +1,7 @@
 package com.nearinfinity.honeycomb.mysql.generators;
 
 import com.nearinfinity.honeycomb.ColumnSchemaFactory;
-import com.nearinfinity.honeycomb.mysql.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.PrimitiveGenerators;

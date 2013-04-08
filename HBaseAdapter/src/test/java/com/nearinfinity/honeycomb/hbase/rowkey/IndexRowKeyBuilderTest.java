@@ -3,8 +3,7 @@ package com.nearinfinity.honeycomb.hbase.rowkey;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.nearinfinity.honeycomb.IndexSchemaFactory;
-import com.nearinfinity.honeycomb.mysql.ColumnSchema;
-import com.nearinfinity.honeycomb.mysql.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import org.junit.Before;
 import org.junit.Test;
 

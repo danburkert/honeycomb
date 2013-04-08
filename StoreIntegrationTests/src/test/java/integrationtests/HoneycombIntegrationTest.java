@@ -4,7 +4,7 @@ import com.nearinfinity.honeycomb.config.Constants;
 import com.nearinfinity.honeycomb.mysql.Bootstrap;
 import com.nearinfinity.honeycomb.mysql.HandlerProxy;
 import com.nearinfinity.honeycomb.mysql.HandlerProxyFactory;
-import com.nearinfinity.honeycomb.mysql.TableSchema;
+import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;

@@ -1,6 +1,6 @@
 package com.nearinfinity.honeycomb;
 
-import com.nearinfinity.honeycomb.mysql.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 
 public class ColumnSchemaFactory {

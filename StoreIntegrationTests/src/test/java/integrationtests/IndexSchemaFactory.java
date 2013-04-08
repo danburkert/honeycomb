@@ -1,7 +1,6 @@
 package integrationtests;
 
-import com.nearinfinity.honeycomb.mysql.IndexSchema;
-import com.nearinfinity.honeycomb.mysql.gen.AvroIndexSchema;
+import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 
 import java.util.List;
 

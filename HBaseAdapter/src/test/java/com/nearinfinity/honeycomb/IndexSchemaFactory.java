@@ -1,6 +1,6 @@
 package com.nearinfinity.honeycomb;
 
-import com.nearinfinity.honeycomb.mysql.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 
 import java.util.List;
 

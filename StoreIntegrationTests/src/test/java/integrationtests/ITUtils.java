@@ -5,6 +5,9 @@ import com.google.common.collect.Maps;
 import com.nearinfinity.honeycomb.mysql.*;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
+import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import com.nearinfinity.honeycomb.util.Verify;
 
 import java.nio.ByteBuffer;
@@ -23,7 +26,7 @@ import static org.junit.Assert.*;
  */
 public class ITUtils {
     /**
-     * Generates a new {@link TableSchema} with columns and indexes
+     * Generates a new {@link com.nearinfinity.honeycomb.mysql.schema.TableSchema} with columns and indexes
      *
      * @return The created schema
      */

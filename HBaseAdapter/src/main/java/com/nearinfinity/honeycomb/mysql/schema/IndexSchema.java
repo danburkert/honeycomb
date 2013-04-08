@@ -1,6 +1,7 @@
-package com.nearinfinity.honeycomb.mysql;
+package com.nearinfinity.honeycomb.mysql.schema;
 
 import com.google.common.collect.ImmutableList;
+import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.gen.AvroIndexSchema;
 import com.nearinfinity.honeycomb.util.Verify;
 import net.jcip.annotations.Immutable;
@@ -83,15 +84,6 @@ public class IndexSchema {
     }
 
     /**
-     * Retrieve a copy of the underlying avro object used to create this index schema.
-     *
-     * @return Avro object representing this object.
-     */
-    AvroIndexSchema getAvroValue() {
-        return AvroIndexSchema.newBuilder(avroIndexSchema).build();
-    }
-
-    /**
      * Serialize the index schema out to a byte array
      *
      * @return Serialized form of the index schema
@@ -116,5 +108,14 @@ public class IndexSchema {
     @Override
     public int hashCode() {
         return avroIndexSchema != null ? avroIndexSchema.hashCode() : 0;
+    }
+
+    /**
+     * Retrieve a copy of the underlying avro object used to create this index schema.
+     *
+     * @return Avro object representing this object.
+     */
+    AvroIndexSchema getAvroValue() {
+        return AvroIndexSchema.newBuilder(avroIndexSchema).build();
     }
 }

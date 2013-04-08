@@ -5,6 +5,9 @@ import com.nearinfinity.honeycomb.config.Constants;
 import com.nearinfinity.honeycomb.mysql.*;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
+import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import integrationtests.*;
 import org.junit.Test;
 
