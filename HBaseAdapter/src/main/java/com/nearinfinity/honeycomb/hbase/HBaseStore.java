@@ -64,14 +64,14 @@ public class HBaseStore implements Store {
     }
 
     @Override
-    public void addIndex(final String tableName, final String indexName, final IndexSchema schema) {
+    public void addIndex(final String tableName, final IndexSchema schema) {
         Verify.isNotNullOrEmpty(tableName, "The table name is invalid");
-        Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
+
         checkNotNull(schema);
 
         final long tableId = cache.tableCacheGet(tableName);
 
-        metadata.createTableIndex(tableId, indexName, schema);
+        metadata.createTableIndex(tableId, schema);
         cache.invalidateSchemaCache(tableId);
         cache.invalidateIndicesCache(tableId);
     }
