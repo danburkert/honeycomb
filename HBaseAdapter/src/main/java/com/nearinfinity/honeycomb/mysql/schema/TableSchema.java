@@ -56,12 +56,12 @@ public class TableSchema {
 
         this.columns = Lists.newArrayList();
         for (Map.Entry<String, AvroColumnSchema> entry : avroTableSchema.getColumns().entrySet()) {
-            this.columns.add(new ColumnSchema(entry.getValue(), entry.getKey()));
+            this.columns.add(new ColumnSchema(entry.getKey(), entry.getValue()));
         }
 
         this.indices = Lists.newArrayList();
         for (Map.Entry<String, AvroIndexSchema> entry : avroTableSchema.getIndices().entrySet()) {
-            this.indices.add(new IndexSchema(entry.getValue(), entry.getKey()));
+            this.indices.add(new IndexSchema(entry.getKey(), entry.getValue()));
         }
     }
 
@@ -147,7 +147,7 @@ public class TableSchema {
      */
     public void removeIndex(String indexName) {
         Verify.isNotNullOrEmpty(indexName);
-        IndexSchema schema = getIndexSchemaForName(indexName);
+        IndexSchema schema = getIndexSchema(indexName);
         checkNotNull(schema);
         indices.remove(schema);
         avroTableSchema.getIndices().remove(indexName);
@@ -158,19 +158,25 @@ public class TableSchema {
     }
 
     /**
+     * Retrieve a column schema by name.
+     *
+     * @param columnName Name of index schema [Not null, Not empty]
+     * @return Index schema by name indexName
+     */
+    public ColumnSchema getColumnSchema(String columnName) {
+        AvroColumnSchema columnSchema = avroTableSchema.getColumns().get(columnName);
+        return new ColumnSchema(columnName, columnSchema);
+    }
+
+    /**
      * Retrieve an index schema by name.
      *
      * @param indexName Name of index schema [Not null, Not empty]
      * @return Index schema by name indexName
      */
-    public IndexSchema getIndexSchemaForName(String indexName) {
-        for (IndexSchema schema : indices) {
-            if (schema.getIndexName().equals(indexName)) {
-                return schema;
-            }
-        }
-
-        return null;
+    public IndexSchema getIndexSchema(String indexName) {
+        AvroIndexSchema indexSchema = avroTableSchema.getIndices().get(indexName);
+        return new IndexSchema(indexName, indexSchema);
     }
 
     /**
@@ -194,10 +200,8 @@ public class TableSchema {
 
         TableSchema that = (TableSchema) o;
 
-        if (avroTableSchema != null ? !avroTableSchema.equals(that.avroTableSchema) : that.avroTableSchema != null)
-            return false;
-
-        return true;
+        return avroTableSchema == null ? that.avroTableSchema == null
+                : avroTableSchema.equals(that.avroTableSchema);
     }
 
     @Override

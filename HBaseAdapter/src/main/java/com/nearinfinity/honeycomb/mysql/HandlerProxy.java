@@ -205,7 +205,7 @@ public class HandlerProxy {
         checkTableOpen();
 
         TableSchema tableSchema = store.getSchema(tableName);
-        IndexSchema indexSchema = tableSchema.getIndexSchemaForName(indexName);
+        IndexSchema indexSchema = tableSchema.getIndexSchema(indexName);
         table.deleteTableIndex(indexSchema);
         store.dropIndex(tableName, indexName);
     }

@@ -33,10 +33,10 @@ public class IndexSchema {
     /**
      * Construct an index schema based on a avro index schema and index name
      *
-     * @param avroIndexSchema Avro index schema [Not null]
      * @param indexName       Index name [Not null, Not empty]
+     * @param avroIndexSchema Avro index schema [Not null]
      */
-    IndexSchema(AvroIndexSchema avroIndexSchema, String indexName) {
+    public IndexSchema(String indexName, AvroIndexSchema avroIndexSchema) {
         checkNotNull(avroIndexSchema);
         Verify.isNotNullOrEmpty(indexName);
         this.avroIndexSchema = AvroIndexSchema.newBuilder(avroIndexSchema).build();
@@ -53,7 +53,7 @@ public class IndexSchema {
     public static IndexSchema deserialize(byte[] serializedIndexSchema, String indexName) {
         checkNotNull(serializedIndexSchema);
         Verify.isNotNullOrEmpty(indexName);
-        return new IndexSchema(Util.deserializeAvroObject(serializedIndexSchema, reader), indexName);
+        return new IndexSchema(indexName, Util.deserializeAvroObject(serializedIndexSchema, reader));
     }
 
     /**

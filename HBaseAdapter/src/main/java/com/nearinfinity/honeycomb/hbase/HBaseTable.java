@@ -244,15 +244,16 @@ public class HBaseTable implements Table {
     private IndexRowKeyBuilder indexPrefixedForTable(final QueryKey key) {
         final TableSchema schema = store.getSchema(tableId);
         final long indexId = store.getIndexId(tableId, key.getIndexName());
-        final IndexSchema indexSchema = schema.getIndexSchemaForName(key.getIndexName());
+        final IndexSchema indexSchema = schema.getIndexSchema(key.getIndexName());
         final IndexRowKeyBuilder indexRowBuilder = IndexRowKeyBuilder.newBuilder(tableId, indexId);
 
-        if (key.getQueryType() == QueryType.INDEX_LAST || key.getQueryType() == QueryType.INDEX_FIRST) {
+        if (key.getQueryType() == QueryType.INDEX_LAST
+                || key.getQueryType() == QueryType.INDEX_FIRST) {
             return indexRowBuilder;
         }
 
         return indexRowBuilder
-                .withQueryValues(key.getKeys(), indexSchema.getColumns(), schema.getColumnsMap());
+                .withQueryValues(key.getKeys(), indexSchema.getColumns(), schema);
     }
 
     private Scanner createScannerForRange(byte[] start, byte[] end) {

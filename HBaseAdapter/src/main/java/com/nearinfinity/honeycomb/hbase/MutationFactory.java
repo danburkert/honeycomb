@@ -157,7 +157,7 @@ public class MutationFactory {
             IndexRowKeyBuilder builder = IndexRowKeyBuilder
                     .newBuilder(tableId, indexId)
                     .withUUID(row.getUUID())
-                    .withSqlRow(row, index.getColumns(), schema.getColumnsMap());
+                    .withSqlRow(row, index.getColumns(), schema);
             action.execute(builder);
         }
     }

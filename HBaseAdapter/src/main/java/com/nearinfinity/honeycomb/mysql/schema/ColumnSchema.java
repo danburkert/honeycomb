@@ -29,10 +29,10 @@ public class ColumnSchema {
     /**
      * Construct a column schema based on a avro column schema and column name.
      *
-     * @param avroColumnSchema Avro column schema [Not null]
      * @param columnName       Column name [Not null, Not empty]
+     * @param avroColumnSchema Avro column schema [Not null]
      */
-    ColumnSchema(AvroColumnSchema avroColumnSchema, String columnName) {
+    public ColumnSchema(String columnName, AvroColumnSchema avroColumnSchema) {
         checkNotNull(avroColumnSchema);
         Verify.isNotNullOrEmpty(columnName);
         this.avroColumnSchema = AvroColumnSchema.newBuilder(avroColumnSchema).build();
@@ -49,7 +49,7 @@ public class ColumnSchema {
     public static ColumnSchema deserialize(byte[] serializedColumnSchema, String columnName) {
         checkNotNull(serializedColumnSchema);
         Verify.isNotNullOrEmpty(columnName);
-        return new ColumnSchema(Util.deserializeAvroObject(serializedColumnSchema, reader), columnName);
+        return new ColumnSchema(columnName, Util.deserializeAvroObject(serializedColumnSchema, reader));
     }
 
     public ColumnType getType() {

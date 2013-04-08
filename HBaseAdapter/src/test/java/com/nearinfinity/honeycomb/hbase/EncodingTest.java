@@ -1,16 +1,17 @@
 package com.nearinfinity.honeycomb.hbase;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 import com.google.common.primitives.Longs;
 import com.google.common.primitives.UnsignedBytes;
 import com.nearinfinity.honeycomb.ColumnSchemaFactory;
 import com.nearinfinity.honeycomb.IndexSchemaFactory;
+import com.nearinfinity.honeycomb.TableSchemaFactory;
 import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowKeyBuilder;
 import com.nearinfinity.honeycomb.hbase.rowkey.SortOrder;
-import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
+import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.collection.Pair;
 import net.java.quickcheck.generator.PrimitiveGenerators;
@@ -60,8 +61,9 @@ public class EncodingTest {
         ColumnSchema c1 = ColumnSchemaFactory.createColumnSchema();
         c1.setType(ColumnType.LONG);
         columnSchemas.put("c1", c1);
-        List<String> columnOrder = Lists.newArrayList();
-        columnOrder.add("c1");
+        IndexSchema indexSchema = IndexSchemaFactory.createIndexSchema(ImmutableList.<String>of("c1"), false);
+        TableSchema tableSchema = TableSchemaFactory.createTableSchema(columnSchemas,
+                ImmutableMap.<String, IndexSchema>of("c1", indexSchema));
 
         for (int i = 0; i < 100; i++) {
             numbers.add(longs.next());
@@ -72,7 +74,7 @@ public class EncodingTest {
                     (ByteBuffer) ByteBuffer.wrap(Longs.toByteArray(number)));
             rows.add(new Pair<Long, byte[]>(number, builder
                     .withUUID(UUID.randomUUID())
-                    .withQueryValues(records, IndexSchemaFactory.createIndexSchema(columnOrder, false).getColumns(), columnSchemas)
+                    .withQueryValues(records, indexSchema.getColumns(), tableSchema)
                     .build().encode()));
         }
         return rows;
