@@ -1,17 +1,18 @@
 package com.nearinfinity.honeycomb.hbase.rowkey;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.util.List;
+import java.util.UUID;
+
+import org.apache.hadoop.hbase.util.Bytes;
+
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.nearinfinity.honeycomb.hbase.VarEncoder;
 import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.util.Verify;
-import org.apache.hadoop.hbase.util.Bytes;
-
-import java.util.List;
-import java.util.UUID;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Super class for index rowkeys
@@ -106,7 +107,6 @@ public abstract class IndexRowKey implements RowKey {
         if (typeCompare != 0) { return typeCompare; }
         IndexRowKey row2 = (IndexRowKey) o;
 
-        List<byte[]> records2 = row2.records;
         int nullOrder = sortOrder == SortOrder.Ascending ? -1 : 1;
 
         int compare;
@@ -118,7 +118,7 @@ public abstract class IndexRowKey implements RowKey {
         if (compare != 0) {
             return compare;
         }
-        compare = recordsCompare(this.records, row2.records, nullOrder);
+        compare = recordsCompare(records, row2.records, nullOrder);
         if (compare != 0) {
             return compare;
         }
@@ -127,7 +127,7 @@ public abstract class IndexRowKey implements RowKey {
                 Util.UUIDToBytes(row2.uuid));
     }
 
-    private int recordsCompare(List<byte[]> records1, List<byte[]> records2, int nullOrder) {
+    private static int recordsCompare(List<byte[]> records1, List<byte[]> records2, int nullOrder) {
         byte[] value1, value2;
         int compare;
         if (records1.size() != records2.size()) {
