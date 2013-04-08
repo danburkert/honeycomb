@@ -7,9 +7,9 @@ import com.google.inject.Provider;
 import com.nearinfinity.honeycomb.config.Constants;
 import com.nearinfinity.honeycomb.exceptions.TableNotFoundException;
 import com.nearinfinity.honeycomb.hbase.rowkey.*;
-import com.nearinfinity.honeycomb.mysql.ColumnSchema;
-import com.nearinfinity.honeycomb.mysql.IndexSchema;
-import com.nearinfinity.honeycomb.mysql.TableSchema;
+import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import com.nearinfinity.honeycomb.util.Verify;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -153,17 +153,14 @@ public class HBaseMetadata {
      * Performs all metadata operations necessary to create a table index
      *
      * @param tableId     The id of the table to create the index
-     * @param indexName   The identifying name of the index, not null or empty
-     * @param indexSchema The {@link IndexSchema} representing the index details, not null
+     * @param indexSchema The {@link com.nearinfinity.honeycomb.mysql.schema.IndexSchema} representing the index details, not null
      */
-    public void createTableIndex(final long tableId, final String indexName,
+    public void createTableIndex(final long tableId,
                                  final IndexSchema indexSchema) {
         Verify.isValidId(tableId);
-        Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
         checkNotNull(indexSchema, "The index schema is invalid");
 
         final List<Put> puts = Lists.newArrayList();
-
 
         final List<IndexSchema> indexDetailMap = ImmutableList.of(indexSchema);
 

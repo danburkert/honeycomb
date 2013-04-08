@@ -2,6 +2,7 @@ package com.nearinfinity.honeycomb.mysql;
 
 import com.nearinfinity.honeycomb.mysql.generators.RowGenerator;
 import com.nearinfinity.honeycomb.mysql.generators.TableSchemaGenerator;
+import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import net.java.quickcheck.generator.iterable.Iterables;
 import org.junit.Assert;
 import org.junit.Test;

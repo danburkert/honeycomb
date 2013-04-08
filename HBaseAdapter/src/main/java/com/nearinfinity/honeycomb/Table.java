@@ -2,11 +2,10 @@ package com.nearinfinity.honeycomb;
 
 import com.nearinfinity.honeycomb.mysql.IndexKey;
 import com.nearinfinity.honeycomb.mysql.Row;
-import com.nearinfinity.honeycomb.mysql.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 
 import java.io.Closeable;
 import java.util.Collection;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -24,7 +23,7 @@ public interface Table extends Closeable {
     /**
      * Inserts an index on the table
      *
-     * @param indexSchema The {@link com.nearinfinity.honeycomb.mysql.IndexSchema} representing the index details, not null
+     * @param indexSchema The {@link com.nearinfinity.honeycomb.mysql.schema.IndexSchema} representing the index details, not null
      */
     void insertTableIndex(final IndexSchema indexSchema);
 
@@ -52,7 +51,7 @@ public interface Table extends Closeable {
     /**
      * Deletes the index corresponding to the specified index name from the table
      *
-     * @param indexSchema The {@link com.nearinfinity.honeycomb.mysql.IndexSchema} representing the index details, not null
+     * @param indexSchema The {@link com.nearinfinity.honeycomb.mysql.schema.IndexSchema} representing the index details, not null
      */
     void deleteTableIndex(final IndexSchema indexSchema);
 

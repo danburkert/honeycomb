@@ -11,9 +11,9 @@ import com.nearinfinity.honeycomb.IndexSchemaFactory;
 import com.nearinfinity.honeycomb.MockHTable;
 import com.nearinfinity.honeycomb.TableSchemaFactory;
 import com.nearinfinity.honeycomb.exceptions.TableNotFoundException;
-import com.nearinfinity.honeycomb.mysql.ColumnSchema;
-import com.nearinfinity.honeycomb.mysql.IndexSchema;
-import com.nearinfinity.honeycomb.mysql.TableSchema;
+import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.mysql.generators.TableSchemaGenerator;
 import net.java.quickcheck.Generator;
@@ -129,8 +129,8 @@ public class HBaseMetadataTest {
 
     @Test
     public void testLookupColumnIdsValidTableId() {
-        final Map<String, ColumnSchema> columns = ImmutableMap.<String, ColumnSchema>of(
-                COLUMN_NAME, ColumnSchemaFactory.createColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
+        final Map<String, ColumnSchema> columns = ImmutableMap.of(
+                COLUMN_NAME, ColumnSchemaFactory.createColumnSchema(ColumnType.LONG, true, false, 8, 0, 0, COLUMN_NAME));
 
         final TableSchema tableSchema = TableSchemaFactory.createTableSchema(columns, ImmutableMap.<String, IndexSchema>of());
 
@@ -245,26 +245,26 @@ public class HBaseMetadataTest {
     @Test(expected = IllegalArgumentException.class)
     public void testCreateIndexInvalidTableId() {
         final long invalidTableId = -1;
-        hbaseMetadata.createTableIndex(invalidTableId, INDEX_NAME, getIndexEmpty());
+        hbaseMetadata.createTableIndex(invalidTableId, getIndexEmpty("ignore"));
     }
 
     @Test(expected = NullPointerException.class)
     public void testCreateIndexNullIndexName() {
-        hbaseMetadata.createTableIndex(1, null, getIndexEmpty());
+        hbaseMetadata.createTableIndex(1, getIndexEmpty(null));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testCreateIndexEmptyIndexName() {
-        hbaseMetadata.createTableIndex(1, "", getIndexEmpty());
+        hbaseMetadata.createTableIndex(1, getIndexEmpty(""));
     }
 
-    private IndexSchema getIndexEmpty() {
-        return IndexSchemaFactory.createIndexSchema(new ArrayList<String>(), false);
+    private IndexSchema getIndexEmpty(String indexName) {
+        return IndexSchemaFactory.createIndexSchema(new ArrayList<String>(), false, indexName);
     }
 
     @Test(expected = NullPointerException.class)
     public void testCreateIndexNullIndexSchema() {
-        hbaseMetadata.createTableIndex(1, INDEX_NAME, null);
+        hbaseMetadata.createTableIndex(1, null);
     }
 
     @Test
@@ -284,7 +284,7 @@ public class HBaseMetadataTest {
         assertTrue(schemaBefore.getIndices().isEmpty());
 
         // Add a new index to the table
-        hbaseMetadata.createTableIndex(tableId, INDEX_NAME,
+        hbaseMetadata.createTableIndex(tableId,
                 IndexSchemaFactory.createIndexSchema(ImmutableList.<String>of(COLUMN_NAME), false, INDEX_NAME));
 
         // Verify that the table schema has been correctly updated

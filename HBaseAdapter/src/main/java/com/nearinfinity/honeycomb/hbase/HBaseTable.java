@@ -17,6 +17,8 @@ import com.nearinfinity.honeycomb.hbase.rowkey.SortOrder;
 import com.nearinfinity.honeycomb.mysql.*;
 import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
+import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import com.nearinfinity.honeycomb.util.Verify;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.log4j.Logger;

@@ -1,5 +1,6 @@
-package com.nearinfinity.honeycomb.mysql;
+package com.nearinfinity.honeycomb.mysql.schema;
 
+import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.gen.AvroColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.util.Verify;
@@ -17,6 +18,13 @@ public class ColumnSchema {
             new SpecificDatumReader<AvroColumnSchema>(AvroColumnSchema.class);
     private final AvroColumnSchema avroColumnSchema;
     private final String columnName;
+
+    public ColumnSchema(ColumnType type, boolean isNullable, boolean isAutoIncrement, int maxLength, int scale, int precision, String columnName) {
+        checkNotNull(type);
+        Verify.isNotNullOrEmpty(columnName);
+        this.avroColumnSchema = new AvroColumnSchema(type, isNullable, isAutoIncrement, maxLength, scale, precision);
+        this.columnName = columnName;
+    }
 
     /**
      * Construct a column schema based on a avro column schema and column name.
@@ -85,15 +93,6 @@ public class ColumnSchema {
     }
 
     /**
-     * Retrieve a copy of the underlying avro object used to create this index schema.
-     *
-     * @return Avro object representing this object.
-     */
-    public AvroColumnSchema getAvroValue() {
-        return AvroColumnSchema.newBuilder(avroColumnSchema).build();
-    }
-
-    /**
      * Serialize the column schema out to a byte array
      *
      * @return Serialized form of the column schema
@@ -122,5 +121,14 @@ public class ColumnSchema {
 
     public String getColumnName() {
         return columnName;
+    }
+
+    /**
+     * Retrieve a copy of the underlying avro object used to create this index schema.
+     *
+     * @return Avro object representing this object.
+     */
+    AvroColumnSchema getAvroValue() {
+        return AvroColumnSchema.newBuilder(avroColumnSchema).build();
     }
 }

@@ -2,8 +2,8 @@ package com.nearinfinity.honeycomb.hbase.generators;
 
 import com.nearinfinity.honeycomb.hbase.rowkey.*;
 import com.nearinfinity.honeycomb.mysql.Row;
-import com.nearinfinity.honeycomb.mysql.IndexSchema;
-import com.nearinfinity.honeycomb.mysql.TableSchema;
+import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import com.nearinfinity.honeycomb.mysql.generators.RowGenerator;
 import com.nearinfinity.honeycomb.mysql.generators.TableSchemaGenerator;
 import com.nearinfinity.honeycomb.mysql.generators.UUIDGenerator;

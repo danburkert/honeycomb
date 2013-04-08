@@ -4,9 +4,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.nearinfinity.honeycomb.IndexSchemaFactory;
 import com.nearinfinity.honeycomb.TableSchemaFactory;
-import com.nearinfinity.honeycomb.mysql.ColumnSchema;
-import com.nearinfinity.honeycomb.mysql.IndexSchema;
-import com.nearinfinity.honeycomb.mysql.TableSchema;
+import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import org.junit.Before;
 import org.junit.Test;
 

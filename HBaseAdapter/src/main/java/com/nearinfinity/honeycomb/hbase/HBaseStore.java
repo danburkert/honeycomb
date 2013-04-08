@@ -4,8 +4,8 @@ import com.google.common.collect.BiMap;
 import com.google.inject.Inject;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
-import com.nearinfinity.honeycomb.mysql.IndexSchema;
-import com.nearinfinity.honeycomb.mysql.TableSchema;
+import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import com.nearinfinity.honeycomb.util.Verify;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -64,14 +64,14 @@ public class HBaseStore implements Store {
     }
 
     @Override
-    public void addIndex(final String tableName, final String indexName, final IndexSchema schema) {
+    public void addIndex(final String tableName, final IndexSchema schema) {
         Verify.isNotNullOrEmpty(tableName, "The table name is invalid");
-        Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
+
         checkNotNull(schema);
 
         final long tableId = cache.tableCacheGet(tableName);
 
-        metadata.createTableIndex(tableId, indexName, schema);
+        metadata.createTableIndex(tableId, schema);
         cache.invalidateSchemaCache(tableId);
         cache.invalidateIndicesCache(tableId);
     }
