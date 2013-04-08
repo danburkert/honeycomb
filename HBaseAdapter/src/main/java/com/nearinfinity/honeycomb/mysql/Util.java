@@ -1,11 +1,7 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.nearinfinity.honeycomb.exceptions.RuntimeIOException;
 import org.apache.avro.io.*;
-import org.apache.avro.specific.SpecificDatumReader;
-import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
 
@@ -14,8 +10,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -118,21 +112,6 @@ public class Util {
         }
     }
 
-    /**
-     * Return the name of the auto increment column in the table, or null.
-     * @param schema
-     * @return
-     */
-    public static String getAutoIncrementColumn(TableSchema schema) {
-        Map<String, ColumnSchema> columns = schema.getColumns();
-        for (Map.Entry<String, ColumnSchema> entry : columns.entrySet()) {
-            if (entry.getValue().getIsAutoIncrement()) {
-                return entry.getKey();
-            }
-        }
-        return null;
-    }
-
     private static <T> RuntimeException deserializationError(byte[] serializedData, IOException e, Class<T> clazz) {
         String clazzMessage = clazz == null ? "" : "of class type " + clazz.getName();
         String format = String.format("Deserialization failed for data (%s) " + clazzMessage,
@@ -146,5 +125,5 @@ public class Util {
                 obj.toString(), obj.getClass().getName());
         logger.error(format, e);
         return new RuntimeException(format, e);
-	}
+    }
 }

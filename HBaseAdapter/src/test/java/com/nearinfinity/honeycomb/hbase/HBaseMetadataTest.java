@@ -5,8 +5,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.nearinfinity.honeycomb.ColumnSchemaFactory;
 import com.nearinfinity.honeycomb.IndexSchemaFactory;
 import com.nearinfinity.honeycomb.MockHTable;
+import com.nearinfinity.honeycomb.TableSchemaFactory;
 import com.nearinfinity.honeycomb.exceptions.TableNotFoundException;
 import com.nearinfinity.honeycomb.mysql.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.IndexSchema;
@@ -98,7 +100,7 @@ public class HBaseMetadataTest {
 
     @Test
     public void testLookupIndexIdsValidTableId() {
-        final TableSchema tableSchema = new TableSchema(ImmutableMap.<String, ColumnSchema>of(), ImmutableMap.<String, IndexSchema>of(
+        final TableSchema tableSchema = TableSchemaFactory.createTableSchema(ImmutableMap.<String, ColumnSchema>of(), ImmutableMap.<String, IndexSchema>of(
                 INDEX_NAME, IndexSchemaFactory.createIndexSchema(Lists.newArrayList(COLUMN_NAME), false, INDEX_NAME)));
 
         hbaseMetadata.createTable(TABLE_NAME, tableSchema);
@@ -117,9 +119,9 @@ public class HBaseMetadataTest {
     @Test
     public void testLookupColumnIdsValidTableId() {
         final Map<String, ColumnSchema> columns = ImmutableMap.<String, ColumnSchema>of(
-                COLUMN_NAME, new ColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
+                COLUMN_NAME, ColumnSchemaFactory.createColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
 
-        final TableSchema tableSchema = new TableSchema(columns, ImmutableMap.<String, IndexSchema>of());
+        final TableSchema tableSchema = TableSchemaFactory.createTableSchema(columns, ImmutableMap.<String, IndexSchema>of());
 
         hbaseMetadata.createTable(TABLE_NAME, tableSchema);
         final long tableId = hbaseMetadata.getTableId(TABLE_NAME);
@@ -143,9 +145,9 @@ public class HBaseMetadataTest {
     @Test
     public void testLookupTableSchemaValidTableId() {
         final Map<String, ColumnSchema> columns = ImmutableMap.of(
-                COLUMN_NAME, new ColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
+                COLUMN_NAME, ColumnSchemaFactory.createColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
 
-        final TableSchema tableSchema = new TableSchema(columns, ImmutableMap.<String, IndexSchema>of());
+        final TableSchema tableSchema = TableSchemaFactory.createTableSchema(columns, ImmutableMap.<String, IndexSchema>of());
 
         hbaseMetadata.createTable(TABLE_NAME, tableSchema);
         final long tableId = hbaseMetadata.getTableId(TABLE_NAME);
@@ -197,7 +199,11 @@ public class HBaseMetadataTest {
         long newId = hbaseMetadata.getTableId(newName);
 
         assertEquals(origId, newId);
-        assertEquals(origSchema.getColumns(), hbaseMetadata.getSchema(newId).getColumns());
+        Collection<ColumnSchema> origSchemaColumns = origSchema.getColumns();
+        TableSchema newSchema = hbaseMetadata.getSchema(newId);
+        for (ColumnSchema columnSchema : newSchema.getColumns()) {
+            assertTrue(origSchemaColumns.contains(columnSchema));
+        }
 
         // Trying to access the id of the old table name will result in an exception
         hbaseMetadata.getTableId(originalName);
@@ -253,9 +259,9 @@ public class HBaseMetadataTest {
     @Test
     public void testCreateIndex() {
         final Map<String, ColumnSchema> columns = ImmutableMap.of(
-                COLUMN_NAME, new ColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
+                COLUMN_NAME, ColumnSchemaFactory.createColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
 
-        final TableSchema tableSchema = new TableSchema(columns, ImmutableMap.<String, IndexSchema>of());
+        final TableSchema tableSchema = TableSchemaFactory.createTableSchema(columns, ImmutableMap.<String, IndexSchema>of());
 
         // Create a new table with the configured details
         hbaseMetadata.createTable(TABLE_NAME, tableSchema);
@@ -316,9 +322,9 @@ public class HBaseMetadataTest {
     @Test
     public void testDeleteIndex() {
         final Map<String, ColumnSchema> columns = ImmutableMap.<String, ColumnSchema>of(
-                COLUMN_NAME, new ColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
+                COLUMN_NAME, ColumnSchemaFactory.createColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
 
-        final TableSchema tableSchema = new TableSchema(columns, ImmutableMap.<String, IndexSchema>of(
+        final TableSchema tableSchema = TableSchemaFactory.createTableSchema(columns, ImmutableMap.<String, IndexSchema>of(
                 INDEX_NAME, IndexSchemaFactory.createIndexSchema(Lists.newArrayList(COLUMN_NAME), false, INDEX_NAME)));
 
         // Create a new table with the configured details

@@ -1,5 +1,6 @@
 package com.nearinfinity.honeycomb.mysql.generators;
 
+import com.nearinfinity.honeycomb.ColumnSchemaFactory;
 import com.nearinfinity.honeycomb.mysql.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import net.java.quickcheck.Generator;
@@ -17,7 +18,7 @@ public class ColumnSchemaGenerator implements Generator<ColumnSchema> {
 
     @Override
     public ColumnSchema next() {
-        ColumnSchema schema = new ColumnSchema();
+        ColumnSchema schema = ColumnSchemaFactory.createColumnSchema();
         schema.setType(typeGen.next());
 
         schema.setIsNullable(RAND.nextBoolean());

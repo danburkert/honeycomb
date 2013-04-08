@@ -15,21 +15,19 @@ public class IndexSchema {
     private static final DatumReader<AvroIndexSchema> reader =
             new SpecificDatumReader<AvroIndexSchema>(AvroIndexSchema.class);
     private final AvroIndexSchema avroIndexSchema;
+    private String indexName;
 
-    public IndexSchema() {
-        avroIndexSchema = new AvroIndexSchema();
-    }
-
-    public IndexSchema(List<String> columns, boolean isUnique) {
-        avroIndexSchema = new AvroIndexSchema(columns, isUnique);
-    }
-
-    public IndexSchema(AvroIndexSchema avroIndexSchema) {
+    public IndexSchema(AvroIndexSchema avroIndexSchema, String indexName) {
         this.avroIndexSchema = avroIndexSchema;
+        this.indexName = indexName;
     }
 
-    public static IndexSchema deserialize(byte[] serializedIndexSchema) {
-        return new IndexSchema(Util.deserializeAvroObject(serializedIndexSchema, reader));
+    public static IndexSchema deserialize(byte[] serializedIndexSchema, String indexName) {
+        return new IndexSchema(Util.deserializeAvroObject(serializedIndexSchema, reader), indexName);
+    }
+
+    public String getIndexName() {
+        return indexName;
     }
 
     public List<String> getColumns() {

@@ -5,9 +5,7 @@ import com.nearinfinity.honeycomb.config.Constants;
 import com.nearinfinity.honeycomb.mysql.*;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
-import integrationtests.HoneycombIntegrationTest;
-import integrationtests.ITUtils;
-import integrationtests.TestConstants;
+import integrationtests.*;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
@@ -97,9 +95,10 @@ public class RowOperationsIT extends HoneycombIntegrationTest {
         HandlerProxy proxy = factory.createHandlerProxy();
         HashMap<String, ColumnSchema> columns = Maps.newHashMap();
         HashMap<String, IndexSchema> indices = Maps.newHashMap();
-        columns.put(TestConstants.COLUMN1, new ColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
+        columns.put(TestConstants.COLUMN1, ColumnSchemaFactory.createColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
 
-        TableSchema schema = new TableSchema(columns, indices);
+
+        TableSchema schema = TableSchemaFactory.createTableSchema(columns, indices);
 
         String tableName = "t1";
 

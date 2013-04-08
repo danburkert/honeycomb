@@ -1,5 +1,6 @@
 package com.nearinfinity.honeycomb.hbase;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -23,6 +24,7 @@ import org.apache.hadoop.hbase.client.*;
 import org.apache.log4j.Logger;
 
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -70,7 +72,7 @@ public class HBaseTable implements Table {
         Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
         checkNotNull(indexSchema, "The index schema is invalid");
 
-        final Map<String, IndexSchema> indexDetails = ImmutableMap.of(indexName, indexSchema);
+        final Collection<IndexSchema> indexDetails = ImmutableList.of(indexSchema);
 
         final Scanner dataRows = tableScan();
 
@@ -99,11 +101,11 @@ public class HBaseTable implements Table {
         Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
         checkNotNull(indexSchema, "The index schema is invalid");
 
-        batchDeleteData(tableScan(), ImmutableMap.<String, IndexSchema>of(indexName, indexSchema), false);
+        batchDeleteData(tableScan(), ImmutableList.of(indexSchema), false);
     }
 
     @Override
-    public void update(Row oldRow, Row newRow, Map<String, IndexSchema> changedIndices) {
+    public void update(Row oldRow, Row newRow, Collection<IndexSchema> changedIndices) {
         checkNotNull(newRow);
 
         // Delete indices that have changed
@@ -127,7 +129,7 @@ public class HBaseTable implements Table {
         Delete dataDelete = new Delete(new DataRow(tableId, uuid).encode());
         deleteList.add(dataDelete);
 
-        Map<String, IndexSchema> indices = getTableIndices(tableId);
+        Collection<IndexSchema> indices = getTableIndices(tableId);
         if (!indices.isEmpty()) {
             Row row = get(uuid);
             doToIndices(row, getTableIndices(tableId), new IndexAction() {
@@ -268,7 +270,7 @@ public class HBaseTable implements Table {
      * @param indices     The table index mapping to use during this operation
      * @param deleteRow   Indicate that each row obtained from the data scanner should be deleted
      */
-    private void batchDeleteData(final Scanner dataScanner, final Map<String, IndexSchema> indices, boolean deleteRow) {
+    private void batchDeleteData(final Scanner dataScanner, final Collection<IndexSchema> indices, boolean deleteRow) {
         long totalDeleteSize = 0;
         final List<Delete> deleteList = Lists.newLinkedList();
         final List<Delete> batchDeleteList = Lists.newLinkedList();
@@ -304,16 +306,16 @@ public class HBaseTable implements Table {
         HBaseOperations.performDelete(hTable, batchDeleteList);
     }
 
-    private void doToIndices(final Row row, final Map<String, IndexSchema> indices, final IndexAction action) {
+    private void doToIndices(final Row row, final Collection<IndexSchema> indices, final IndexAction action) {
         final TableSchema schema = store.getSchema(tableId);
 
-        for (Map.Entry<String, IndexSchema> index : indices.entrySet()) {
-            long indexId = store.getIndexId(tableId, index.getKey());
+        for (IndexSchema index : indices) {
+            long indexId = store.getIndexId(tableId, index.getIndexName());
 
             IndexRowBuilder builder = IndexRowBuilder
                     .newBuilder(tableId, indexId)
                     .withUUID(row.getUUID())
-                    .withSqlRow(row, index.getValue().getColumns(), schema.getColumns());
+                    .withSqlRow(row, index.getColumns(), schema.getColumnsMap());
             action.execute(builder);
         }
     }
@@ -321,7 +323,7 @@ public class HBaseTable implements Table {
     private IndexRowBuilder indexPrefixedForTable(final IndexKey key) {
         final TableSchema schema = store.getSchema(tableId);
         final long indexId = store.getIndexId(tableId, key.getIndexName());
-        final IndexSchema indexSchema = schema.getIndices().get(key.getIndexName());
+        final IndexSchema indexSchema = schema.getIndexSchemaForName(key.getIndexName());
         final IndexRowBuilder indexRowBuilder = IndexRowBuilder.newBuilder(tableId, indexId);
 
         if (key.getQueryType() == QueryType.INDEX_LAST || key.getQueryType() == QueryType.INDEX_FIRST) {
@@ -329,7 +331,7 @@ public class HBaseTable implements Table {
         }
 
         return indexRowBuilder
-                .withQueryValues(key.getKeys(), indexSchema.getColumns(), schema.getColumns());
+                .withQueryValues(key.getKeys(), indexSchema.getColumns(), schema.getColumnsMap());
     }
 
     private Scanner createScannerForRange(byte[] start, byte[] end) {
@@ -344,12 +346,12 @@ public class HBaseTable implements Table {
      * @param tableId The id of the table to consult
      * @return A mapping of index data for the specified table
      */
-    private Map<String, IndexSchema> getTableIndices(final long tableId) {
-        Map<String, IndexSchema> indexInfo = Maps.newHashMap();
+    private Collection<IndexSchema> getTableIndices(final long tableId) {
+        Collection<IndexSchema> indexInfo = Lists.newArrayList();
         final TableSchema schema = store.getSchema(tableId);
 
         if (schema != null) {
-            final Map<String, IndexSchema> tableIndices = schema.getIndices();
+            final Collection<IndexSchema> tableIndices = schema.getIndices();
 
             if (tableIndices != null) {
                 indexInfo = tableIndices;

@@ -32,8 +32,8 @@ public class ITUtils {
         final HashMap<String, IndexSchema> indices = Maps.newHashMap();
 
         // Add nullable, non-autoincrementing columns
-        columns.put(TestConstants.COLUMN1, new ColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
-        columns.put(TestConstants.COLUMN2, new ColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
+        columns.put(TestConstants.COLUMN1, ColumnSchemaFactory.createColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
+        columns.put(TestConstants.COLUMN2, ColumnSchemaFactory.createColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
 
         // Add non-unique index on one column
         indices.put(TestConstants.INDEX1, IndexSchemaFactory.createIndexSchema(Lists.newArrayList(TestConstants.COLUMN1), false, TestConstants.INDEX1));
@@ -41,7 +41,7 @@ public class ITUtils {
         // Add non-unique compound index on (c1, c2)
         indices.put(TestConstants.INDEX2, IndexSchemaFactory.createIndexSchema(Lists.newArrayList(TestConstants.COLUMN1, TestConstants.COLUMN2), false, TestConstants.INDEX1));
 
-        return new TableSchema(columns, indices);
+        return TableSchemaFactory.createTableSchema(columns, indices);
     }
 
     /**

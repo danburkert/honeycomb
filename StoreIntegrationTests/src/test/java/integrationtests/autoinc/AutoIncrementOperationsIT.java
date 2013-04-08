@@ -1,11 +1,10 @@
 package integrationtests.autoinc;
 
-import com.nearinfinity.honeycomb.mysql.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.TableSchema;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
+import integrationtests.ColumnSchemaFactory;
 import integrationtests.HoneycombIntegrationTest;
 import integrationtests.ITUtils;
-import integrationtests.TestConstants;
 import org.junit.Test;
 
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -16,7 +15,7 @@ public class AutoIncrementOperationsIT extends HoneycombIntegrationTest {
     @Override
     protected TableSchema getTableSchema() {
         final TableSchema schema = ITUtils.getTableSchema();
-        schema.getColumns().add(new ColumnSchema(ColumnType.LONG, true, true, 8, 0, 0));
+        schema.getColumns().add(ColumnSchemaFactory.createColumnSchema(ColumnType.LONG, true, true, 8, 0, 0));
 
         return schema;
     }

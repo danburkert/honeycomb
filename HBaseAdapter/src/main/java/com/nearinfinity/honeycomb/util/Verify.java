@@ -1,6 +1,5 @@
 package com.nearinfinity.honeycomb.util;
 
-import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.TableSchema;
@@ -25,7 +24,7 @@ public class Verify {
      * @return True if the schema has an auto increment column name, false otherwise
      */
     public static boolean hasAutoIncrementColumn(final TableSchema schema) {
-        return Util.getAutoIncrementColumn(schema) != null;
+        return schema.getAutoIncrementColumn() != null;
     }
 
     /**

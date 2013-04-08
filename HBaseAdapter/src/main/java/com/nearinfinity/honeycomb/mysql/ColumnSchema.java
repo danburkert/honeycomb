@@ -14,21 +14,15 @@ public class ColumnSchema {
     private static final DatumReader<AvroColumnSchema> reader =
             new SpecificDatumReader<AvroColumnSchema>(AvroColumnSchema.class);
     private final AvroColumnSchema avroColumnSchema;
+    private String columnName;
 
-    public ColumnSchema() {
-        avroColumnSchema = new AvroColumnSchema(ColumnType.LONG, false, false, 0, 0, 0);
-    }
-
-    public ColumnSchema(AvroColumnSchema avroColumnSchema) {
+    public ColumnSchema(AvroColumnSchema avroColumnSchema, String columnName) {
         this.avroColumnSchema = avroColumnSchema;
+        this.columnName = columnName;
     }
 
-    public ColumnSchema(ColumnType type, boolean isNullable, boolean isAutoIncrement, int maxLength, int scale, int precision) {
-        avroColumnSchema = new AvroColumnSchema(type, isNullable, isAutoIncrement, maxLength, scale, precision);
-    }
-
-    public static ColumnSchema deserialize(byte[] serializedColumnSchema) {
-        return new ColumnSchema(Util.deserializeAvroObject(serializedColumnSchema, reader));
+    public static ColumnSchema deserialize(byte[] serializedColumnSchema, String columnName) {
+        return new ColumnSchema(Util.deserializeAvroObject(serializedColumnSchema, reader), columnName);
     }
 
     public ColumnType getType() {
@@ -103,5 +97,9 @@ public class ColumnSchema {
     @Override
     public int hashCode() {
         return avroColumnSchema != null ? avroColumnSchema.hashCode() : 0;
+    }
+
+    public String getColumnName() {
+        return columnName;
     }
 }

@@ -1,6 +1,7 @@
 package com.nearinfinity.honeycomb.mysql.generators;
 
 import com.google.common.collect.Lists;
+import com.nearinfinity.honeycomb.TableSchemaFactory;
 import com.nearinfinity.honeycomb.mysql.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.TableSchema;
@@ -59,6 +60,6 @@ public class TableSchemaGenerator implements Generator<TableSchema> {
         final Generator<Map<String, IndexSchema>> indexGen = CombinedGenerators.maps(MYSQL_NAME_GEN,
                 new IndexSchemaGenerator(Lists.newArrayList(columnSchemas.keySet())), numIndicesGen);
 
-        return new TableSchema(columnSchemas, indexGen.next());
+        return TableSchemaFactory.createTableSchema(columnSchemas, indexGen.next());
     }
 }

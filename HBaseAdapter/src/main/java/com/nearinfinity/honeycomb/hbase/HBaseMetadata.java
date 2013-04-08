@@ -14,6 +14,7 @@ import com.nearinfinity.honeycomb.util.Verify;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -163,7 +164,7 @@ public class HBaseMetadata {
 
         final List<Put> puts = Lists.newArrayList();
 
-        final Map<String, IndexSchema> indexDetailMap = ImmutableMap.of(indexName, indexSchema);
+        final List<IndexSchema> indexDetailMap = ImmutableList.of(indexSchema);
 
         // Update the table schema to store the new index schema details
         final TableSchema existingSchema = getSchema(tableId);
@@ -381,24 +382,24 @@ public class HBaseMetadata {
                 .deleteColumns(COLUMN_FAMILY, serializeName(indexName));
     }
 
-    private Put putColumnIds(long tableId, Map<String, ColumnSchema> columns) {
+    private Put putColumnIds(long tableId, Collection<ColumnSchema> columns) {
         long columnId = getNextColumnId(tableId, columns.size());
         Put put = new Put(new ColumnsRow(tableId).encode());
 
-        for (Map.Entry<String, ColumnSchema> columnEntry : columns.entrySet()) {
-            put.add(COLUMN_FAMILY, serializeName(columnEntry.getKey()),
+        for (ColumnSchema columnEntry : columns) {
+            put.add(COLUMN_FAMILY, serializeName(columnEntry.getColumnName()),
                     serializeId(columnId--));
         }
         return put;
     }
 
-    private Put putIndices(long tableId, Map<String, IndexSchema> indices) {
+    private Put putIndices(long tableId, Collection<IndexSchema> indices) {
         checkState(!indices.isEmpty(), "putIndices requires 1 or more indices.");
         long indexId = getNextIndexId(tableId, indices.size());
         Put put = new Put(new IndicesRow(tableId).encode());
 
-        for (Map.Entry<String, IndexSchema> columnEntry : indices.entrySet()) {
-            put.add(COLUMN_FAMILY, serializeName(columnEntry.getKey()),
+        for (IndexSchema columnEntry : indices) {
+            put.add(COLUMN_FAMILY, serializeName(columnEntry.getIndexName()),
                     serializeId(indexId--));
         }
         return put;

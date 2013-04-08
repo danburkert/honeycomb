@@ -10,7 +10,6 @@ import com.nearinfinity.honeycomb.util.Verify;
 import org.apache.log4j.Logger;
 
 import java.nio.ByteBuffer;
-import java.util.Map;
 import java.util.Set;
 
 import static com.google.common.base.Preconditions.*;
@@ -181,7 +180,7 @@ public class HandlerProxy {
         checkTableOpen();
 
         checkNotNull(serializedSchema, "Schema cannot be null");
-        IndexSchema schema = IndexSchema.deserialize(serializedSchema);
+        IndexSchema schema = IndexSchema.deserialize(serializedSchema, indexName);
         checkArgument(!schema.getIsUnique(), "Honeycomb does not support adding unique indices without a table rebuild.");
 
         store.addIndex(tableName, indexName, schema);
@@ -250,7 +249,7 @@ public class HandlerProxy {
         TableSchema schema = store.getSchema(tableName);
         Row row = Row.deserialize(rowBytes);
         row.setRandomUUID();
-        String auto_inc_col = Util.getAutoIncrementColumn(schema);
+        String auto_inc_col = schema.getAutoIncrementColumn();
         if (auto_inc_col != null) {
             ByteBuffer bb = row.getRecords().get(auto_inc_col);
             long auto_inc = bb.getLong();
@@ -277,7 +276,7 @@ public class HandlerProxy {
         TableSchema schema = store.getSchema(tableName);
         Row oldRow = table.get(updatedRow.getUUID());
         if (!schema.hasIndices()) {
-            table.update(oldRow, updatedRow, ImmutableMap.<String, IndexSchema>of());
+            table.update(oldRow, updatedRow, ImmutableList.<IndexSchema>of());
         }
 
         MapDifference<String, ByteBuffer> diff = Maps.difference(oldRow.getRecords(),
@@ -287,12 +286,12 @@ public class HandlerProxy {
                 diff.entriesDiffering().keySet(),
                 diff.entriesOnlyOnRight().keySet());
 
-        ImmutableMap.Builder<String, IndexSchema> changedIndices = ImmutableMap.builder();
+        ImmutableList.Builder<IndexSchema> changedIndices = ImmutableList.builder();
 
-        for (Map.Entry<String, IndexSchema> index : schema.getIndexSchemaEntries()) {
-            Set<String> indexColumns = ImmutableSet.copyOf(index.getValue().getColumns());
+        for (IndexSchema index : schema.getIndices()) {
+            Set<String> indexColumns = ImmutableSet.copyOf(index.getColumns());
             if (!Sets.intersection(changedColumns, indexColumns).isEmpty()) {
-                changedIndices.put(index);
+                changedIndices.add(index);
             }
         }
 

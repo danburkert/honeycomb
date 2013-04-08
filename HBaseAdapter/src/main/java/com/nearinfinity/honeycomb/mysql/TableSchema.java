@@ -1,5 +1,6 @@
 package com.nearinfinity.honeycomb.mysql;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.nearinfinity.honeycomb.mysql.gen.AvroColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.AvroIndexSchema;
@@ -18,26 +19,20 @@ public class TableSchema {
     private static final DatumReader<AvroTableSchema> reader =
             new SpecificDatumReader<AvroTableSchema>(AvroTableSchema.class);
     private final AvroTableSchema avroTableSchema;
-    private final Map<String, ColumnSchema> columns;
-    private final Map<String, IndexSchema> indices;
+    private final Collection<ColumnSchema> columns;
+    private final Collection<IndexSchema> indices;
 
-    public TableSchema(Map<String, ColumnSchema> columns, Map<String, IndexSchema> indices) {
-        this.columns = columns;
-        this.indices = indices;
-        this.avroTableSchema = initializeAvroTableSchema(columns, indices);
-    }
-
-    private TableSchema(AvroTableSchema avroTableSchema) {
+    public TableSchema(AvroTableSchema avroTableSchema) {
         this.avroTableSchema = avroTableSchema;
 
-        this.columns = Maps.newHashMap();
+        this.columns = Lists.newArrayList();
         for (Map.Entry<String, AvroColumnSchema> entry : avroTableSchema.getColumns().entrySet()) {
-            this.columns.put(entry.getKey(), new ColumnSchema(entry.getValue()));
+            this.columns.add(new ColumnSchema(entry.getValue(), entry.getKey()));
         }
 
-        this.indices = Maps.newHashMap();
+        this.indices = Lists.newArrayList();
         for (Map.Entry<String, AvroIndexSchema> entry : avroTableSchema.getIndices().entrySet()) {
-            this.indices.put(entry.getKey(), new IndexSchema(entry.getValue()));
+            this.indices.add(new IndexSchema(entry.getValue(), entry.getKey()));
         }
     }
 
@@ -47,7 +42,7 @@ public class TableSchema {
 
     /**
      * Produce a copy of the current schema such that the two schemas are independent
-     * each other.
+     * each other. A change to the copy doesn't affect the original.
      *
      * @return New independent table schema
      */
@@ -59,23 +54,33 @@ public class TableSchema {
         return Util.serializeAvroObject(avroTableSchema, writer);
     }
 
-    public Map<String, ColumnSchema> getColumns() {
+    public Collection<ColumnSchema> getColumns() {
         return columns;
     }
 
-    public Map<String, IndexSchema> getIndices() {
+    public Map<String, ColumnSchema> getColumnsMap() {
+        Map<String, ColumnSchema> map = Maps.newHashMap();
+        for (ColumnSchema columnSchema : columns) {
+            map.put(columnSchema.getColumnName(), columnSchema);
+        }
+
+        return map;
+    }
+
+    public Collection<IndexSchema> getIndices() {
         return indices;
     }
 
-    public void addIndices(Map<String, IndexSchema> indices) {
-        getIndices().putAll(indices);
-        for (Map.Entry<String, IndexSchema> entry : indices.entrySet()) {
-            avroTableSchema.getIndices().put(entry.getKey(), entry.getValue().getAvroValue());
+    public void addIndices(Collection<IndexSchema> indices) {
+        for (IndexSchema entry : indices) {
+            getIndices().add(entry);
+            avroTableSchema.getIndices().put(entry.getIndexName(), entry.getAvroValue());
         }
     }
 
     public void removeIndex(String indexName) {
-        getIndices().remove(indexName);
+        IndexSchema schema = getIndexSchemaForName(indexName);
+        getIndices().remove(schema);
         avroTableSchema.getIndices().remove(indexName);
     }
 
@@ -83,12 +88,28 @@ public class TableSchema {
         return !getIndices().isEmpty();
     }
 
-    public Collection<Map.Entry<String, IndexSchema>> getIndexSchemaEntries() {
-        return getIndices().entrySet();
+    public IndexSchema getIndexSchemaForName(String indexName) {
+        for (IndexSchema schema : getIndices()) {
+            if (schema.getIndexName().equals(indexName)) {
+                return schema;
+            }
+        }
+
+        return null;
     }
 
-    public IndexSchema getIndexSchemaForName(String indexName) {
-        return getIndices().get(indexName);
+    /**
+     * Return the name of the auto increment column in the table, or null.
+     *
+     * @return ColumnSchema with an auto increment modifier
+     */
+    public String getAutoIncrementColumn() {
+        for (ColumnSchema entry : getColumns()) {
+            if (entry.getIsAutoIncrement()) {
+                return entry.getColumnName();
+            }
+        }
+        return null;
     }
 
     @Override
@@ -109,16 +130,4 @@ public class TableSchema {
         return avroTableSchema != null ? avroTableSchema.hashCode() : 0;
     }
 
-    private AvroTableSchema initializeAvroTableSchema(Map<String, ColumnSchema> columns, Map<String, IndexSchema> indices) {
-        Map<String, AvroColumnSchema> columnSchemaMap = Maps.newHashMap();
-        Map<String, AvroIndexSchema> indexSchemaMap = Maps.newHashMap();
-        for (Map.Entry<String, ColumnSchema> entry : columns.entrySet()) {
-            columnSchemaMap.put(entry.getKey(), entry.getValue().getAvroValue());
-        }
-        for (Map.Entry<String, IndexSchema> entry : indices.entrySet()) {
-            indexSchemaMap.put(entry.getKey(), entry.getValue().getAvroValue());
-        }
-
-        return new AvroTableSchema(columnSchemaMap, indexSchemaMap);
-    }
 }

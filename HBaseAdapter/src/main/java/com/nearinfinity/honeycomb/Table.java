@@ -5,6 +5,7 @@ import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.mysql.IndexSchema;
 
 import java.io.Closeable;
+import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
 
@@ -31,13 +32,14 @@ public interface Table extends Closeable {
     /**
      * Update row in table
      *
+     *
      * @param oldRow         The old row
      * @param newRow         The new row
      * @param changedIndices List of indices with updated values.
      * @throws com.nearinfinity.honeycomb.exceptions.RowNotFoundException
      *
      */
-    void update(Row oldRow, Row newRow, Map<String, IndexSchema> changedIndices);
+    void update(Row oldRow, Row newRow, Collection<IndexSchema> changedIndices);
 
     /**
      * Remove row with given UUID from the table

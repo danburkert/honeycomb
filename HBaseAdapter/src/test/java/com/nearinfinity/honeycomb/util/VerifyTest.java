@@ -2,7 +2,9 @@ package com.nearinfinity.honeycomb.util;
 
 import java.util.Map;
 
+import com.nearinfinity.honeycomb.ColumnSchemaFactory;
 import com.nearinfinity.honeycomb.IndexSchemaFactory;
+import com.nearinfinity.honeycomb.TableSchemaFactory;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
@@ -64,7 +66,7 @@ public class VerifyTest {
                 INDEX_NAME, IndexSchemaFactory.createIndexSchema(ImmutableList.<String>of(COLUMN_A), false, INDEX_NAME));
 
         final Map<String, ColumnSchema> columns = ImmutableMap.<String, ColumnSchema>of(
-                COLUMN_A, new ColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
+                COLUMN_A, ColumnSchemaFactory.createColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
 
         Verify.isValidIndexSchema(indices, columns);
     }
@@ -75,7 +77,7 @@ public class VerifyTest {
                 INDEX_NAME, IndexSchemaFactory.createIndexSchema(ImmutableList.<String>of(COLUMN_B), false, INDEX_NAME));
 
         final Map<String, ColumnSchema> columns = ImmutableMap.<String, ColumnSchema>of(
-                COLUMN_A, new ColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
+                COLUMN_A, ColumnSchemaFactory.createColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
 
         Verify.isValidIndexSchema(indices, columns);
     }
@@ -83,9 +85,9 @@ public class VerifyTest {
     @Test
     public void testHasAutoIncrementColumn() {
         final Map<String, ColumnSchema> columns = ImmutableMap.<String, ColumnSchema>of(
-                COLUMN_B, new ColumnSchema(ColumnType.LONG, true, true, 8, 0, 0));
+                COLUMN_B, ColumnSchemaFactory.createColumnSchema(ColumnType.LONG, true, true, 8, 0, 0));
 
-        final TableSchema tableSchema = new TableSchema(columns, ImmutableMap.<String, IndexSchema>of());
+        final TableSchema tableSchema = TableSchemaFactory.createTableSchema(columns, ImmutableMap.<String, IndexSchema>of());
 
         Verify.hasAutoIncrementColumn(tableSchema);
     }
@@ -93,9 +95,9 @@ public class VerifyTest {
     @Test
     public void testHasAutoIncrementColumnNotAutoInc() {
         final Map<String, ColumnSchema> columns = ImmutableMap.<String, ColumnSchema>of(
-                COLUMN_B, new ColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
+                COLUMN_B, ColumnSchemaFactory.createColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
 
-        final TableSchema tableSchema = new TableSchema(columns, ImmutableMap.<String, IndexSchema>of());
+        final TableSchema tableSchema = TableSchemaFactory.createTableSchema(columns, ImmutableMap.<String, IndexSchema>of());
 
         Verify.hasAutoIncrementColumn(tableSchema);
     }
