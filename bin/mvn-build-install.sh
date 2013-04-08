@@ -3,10 +3,7 @@
 : ${HONEYCOMB_HOME?"Need to set HONEYCOMB_HOME environmental variable to the top of the project."}
 command -v mvn >/dev/null 2>&1 || { echo >&2 "mvn is required to run $0."; exit 1; }
 
-if [ $# -eq 1 ]
-then
-  honeycomb_lib=$1
-elif [ ! -z "$HONEYCOMB_LIB" ]
+if [ ! -z "$HONEYCOMB_LIB" ]
 then
   honeycomb_lib=$HONEYCOMB_LIB
 else
