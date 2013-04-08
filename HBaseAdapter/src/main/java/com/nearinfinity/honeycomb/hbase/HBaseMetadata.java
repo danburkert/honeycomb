@@ -30,7 +30,7 @@ public class HBaseMetadata {
     private final Provider<HTableInterface> provider;
 
     @Inject
-    public HBaseMetadata(final HTableProvider provider) {
+    public HBaseMetadata(final Provider<HTableInterface> provider) {
         checkNotNull(provider);
 
         this.provider = provider;
@@ -76,7 +76,7 @@ public class HBaseMetadata {
     public Map<String, Long> getIndexIds(final long tableId) {
         Verify.isValidId(tableId);
 
-        return getNameToIdMap(new IndicesRow(tableId).encode());
+        return getNameToIdMap(tableId, new IndicesRow(tableId).encode());
     }
 
     /**
@@ -89,8 +89,8 @@ public class HBaseMetadata {
     public BiMap<String, Long> getColumnIds(final long tableId) {
         Verify.isValidId(tableId);
 
-        final Map<String, Long> nameToId = getNameToIdMap(new ColumnsRow(tableId).encode());
-        return ImmutableBiMap.copyOf(nameToId);
+        return ImmutableBiMap.copyOf(
+                getNameToIdMap(tableId, new ColumnsRow(tableId).encode()));
     }
 
     /**
@@ -163,6 +163,7 @@ public class HBaseMetadata {
         checkNotNull(indexSchema, "The index schema is invalid");
 
         final List<Put> puts = Lists.newArrayList();
+
 
         final List<IndexSchema> indexDetailMap = ImmutableList.of(indexSchema);
 
@@ -292,14 +293,14 @@ public class HBaseMetadata {
                 ImmutableList.<Put>of());
     }
 
-    private Map<String, Long> getNameToIdMap(byte[] encodedRow) {
+    private Map<String, Long> getNameToIdMap(long tableId, byte[] encodedRow) {
         HTableInterface hTable = getHTable();
         try {
             Get get = new Get(encodedRow);
             get.addFamily(COLUMN_FAMILY);
             Result result = HBaseOperations.performGet(hTable, get);
             if (result.isEmpty()) {
-                return Maps.newHashMap();
+                throw new TableNotFoundException(tableId);
             }
 
             Map<byte[], byte[]> serializedNameIds = result.getFamilyMap(COLUMN_FAMILY);

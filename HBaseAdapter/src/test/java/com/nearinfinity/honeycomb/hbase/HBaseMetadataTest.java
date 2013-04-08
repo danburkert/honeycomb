@@ -1,5 +1,6 @@
 package com.nearinfinity.honeycomb.hbase;
 
+
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -98,6 +99,11 @@ public class HBaseMetadataTest {
         hbaseMetadata.getIndexIds(INVALID_TABLE_ID);
     }
 
+    @Test(expected = TableNotFoundException.class)
+    public void testLookupIndexIdsUnknownTableId() {
+        hbaseMetadata.getIndexIds(132);
+    }
+
     @Test
     public void testLookupIndexIdsValidTableId() {
         final TableSchema tableSchema = TableSchemaFactory.createTableSchema(ImmutableMap.<String, ColumnSchema>of(), ImmutableMap.<String, IndexSchema>of(
@@ -114,6 +120,11 @@ public class HBaseMetadataTest {
     @Test(expected = IllegalArgumentException.class)
     public void testLookupColumnIdsInvalidTableId() {
         hbaseMetadata.getColumnIds(INVALID_TABLE_ID);
+    }
+
+    @Test(expected = TableNotFoundException.class)
+    public void testLookupColumnIdsUnknownTableId() {
+        hbaseMetadata.getColumnIds(132);
     }
 
     @Test
@@ -271,9 +282,6 @@ public class HBaseMetadataTest {
         final TableSchema schemaBefore = hbaseMetadata.getSchema(tableId);
         assertNotNull(schemaBefore);
         assertTrue(schemaBefore.getIndices().isEmpty());
-
-        // Verify that no indices exist after table creation
-        assertTrue(hbaseMetadata.getIndexIds(tableId).isEmpty());
 
         // Add a new index to the table
         hbaseMetadata.createTableIndex(tableId, INDEX_NAME,

@@ -8,7 +8,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.nearinfinity.honeycomb.mysql.TableSchema;
 import com.nearinfinity.honeycomb.util.Verify;
-
 import net.jcip.annotations.ThreadSafe;
 import org.apache.log4j.Logger;
 

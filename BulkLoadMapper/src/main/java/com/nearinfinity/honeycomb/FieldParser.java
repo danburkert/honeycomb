@@ -1,8 +1,10 @@
 package com.nearinfinity.honeycomb;
 
-import com.nearinfinity.honeycomb.hbaseclient.ColumnMetadata;
-import com.nearinfinity.honeycomb.hbaseclient.ColumnType;
+import com.google.common.primitives.Longs;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import org.apache.commons.lang.time.DateUtils;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -15,81 +17,70 @@ import java.util.Date;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class ValueParser {
-    public static byte[] parse(String val, ColumnMetadata meta) throws ParseException {
+public class FieldParser {
+    public static ByteBuffer parse(String val, ColumnSchema schema) throws ParseException {
         checkNotNull(val, "Should not be parsing null. Something went terribly wrong.");
-        checkNotNull(meta, "Column metadata is null.");
-        ColumnType type = meta.getType();
+        checkNotNull(schema, "Column metadata is null.");
+
+        ColumnType type = schema.getType();
 
         if (val.length() == 0 && type != ColumnType.STRING
                 && type != ColumnType.BINARY) {
-            if (meta.isNullable()) {
+            if (schema.getIsNullable()) {
                 return null;
             } else {
-                throw new IllegalArgumentException("Expected a value for a non null SQL column, but no value was given.");
+                throw new IllegalArgumentException("Expected a value for a" +
+                        " non-null SQL column, but no value was given.");
             }
         }
 
-        byte[] ret;
-
         switch (type) {
             case LONG:
-                ret = ByteBuffer.allocate(8).putLong(Long.parseLong(val)).array();
-                break;
+                return ByteBuffer.wrap(Longs.toByteArray(Long.parseLong(val)));
             case ULONG:
                 BigInteger n = new BigInteger(val);
                 if (n.compareTo(BigInteger.ZERO) == -1) {
                     throw new IllegalArgumentException("negative value provided for unsigned column. value: " + val);
                 }
-                ret = ByteBuffer.allocate(8).putLong(n.longValue()).array();
-                break;
+                return ByteBuffer.wrap(Longs.toByteArray(n.longValue()));
             case DOUBLE:
-                ret = ByteBuffer.allocate(8).putDouble(Double.parseDouble(val)).array();
-                break;
+                return ByteBuffer.wrap(Bytes.toBytes(Double.parseDouble(val)));
             case DATE:
-                ret = extractDate(val, "yyyy-MM-dd",
+                return  extractDate(val, "yyyy-MM-dd",
                         "yyyy-MM-dd",
                         "yyyy/MM/dd",
                         "yyyy.MM.dd",
                         "yyyyMMdd");
-                break;
             case TIME:
-                ret = extractDate(val, "HH:mm:ss",
+                return  extractDate(val, "HH:mm:ss",
                         "HH:mm:ss",
                         "HHmmss");
-                break;
             case DATETIME:
-                ret = extractDate(val, "yyyy-MM-dd HH:mm:ss",
+                return extractDate(val, "yyyy-MM-dd HH:mm:ss",
                         "yyyy-MM-dd HH:mm:ss",
                         "yyyy/MM/dd HH:mm:ss",
                         "yyyy.MM.dd HH:mm:ss",
                         "yyyyMMdd HHmmss");
-                break;
             case DECIMAL:
-                ret = extractDecimal(val, meta);
-                break;
+                return extractDecimal(val, schema);
             case STRING:
             case BINARY:
-            case NONE:
             default:
-                ret = val.getBytes(Charset.forName("UTF-8"));
-                break;
+                return ByteBuffer.wrap(val.getBytes(Charset.forName("UTF-8")));
         }
-        return ret;
     }
 
-    private static byte[] extractDate(String val, String dateFormat,
+    private static ByteBuffer extractDate(String val, String dateFormat,
                                       String... parseFormats)
             throws ParseException {
         Date d = DateUtils.parseDateStrictly(val, parseFormats);
         SimpleDateFormat format = new SimpleDateFormat(dateFormat);
-        return format.format(d).getBytes();
+        return ByteBuffer.wrap(format.format(d).getBytes());
     }
 
-    private static byte[] extractDecimal(String val, ColumnMetadata meta) {
-        byte[] ret;
-        int precision = meta.getPrecision();
-        int right_scale = meta.getScale();
+    private static ByteBuffer extractDecimal(String val, ColumnSchema schema) {
+        int precision = schema.getPrecision();
+        int right_scale = schema.getScale();
         int left_scale = precision - 2;
         BigDecimal x = new BigDecimal(val);
         boolean is_negative = x.compareTo(BigDecimal.ZERO) == -1;
@@ -115,8 +106,7 @@ public class ValueParser {
                 buff[i] ^= -1; // 0xff
             }
         }
-        ret = buff;
-        return ret;
+        return ByteBuffer.wrap(buff);
     }
 
     public static int bytesFromDigits(int digits) {
