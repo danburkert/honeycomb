@@ -1,7 +1,6 @@
 package com.nearinfinity.honeycomb.mysql;
 
 import com.nearinfinity.honeycomb.mysql.gen.AvroColumnSchema;
-import com.nearinfinity.honeycomb.mysql.gen.AvroColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DatumWriter;
@@ -14,10 +13,10 @@ public class ColumnSchema {
     private static final DatumReader<AvroColumnSchema> reader =
             new SpecificDatumReader<AvroColumnSchema>(AvroColumnSchema.class);
     private final AvroColumnSchema avroColumnSchema;
-    private String columnName;
+    private final String columnName;
 
     public ColumnSchema(AvroColumnSchema avroColumnSchema, String columnName) {
-        this.avroColumnSchema = avroColumnSchema;
+        this.avroColumnSchema = AvroColumnSchema.newBuilder(avroColumnSchema).build();
         this.columnName = columnName;
     }
 
@@ -57,24 +56,21 @@ public class ColumnSchema {
         avroColumnSchema.setMaxLength(value);
     }
 
-    public Integer getScale() {
-        return avroColumnSchema.getScale();
-    }
-
     public void setScale(Integer value) {
         avroColumnSchema.setScale(value);
-    }
-
-    public Integer getPrecision() {
-        return avroColumnSchema.getPrecision();
     }
 
     public void setPrecision(Integer value) {
         avroColumnSchema.setPrecision(value);
     }
 
+    /**
+     * Retrieve a copy of the underlying avro object used to create this index schema.
+     *
+     * @return Avro object representing this object.
+     */
     public AvroColumnSchema getAvroValue() {
-        return avroColumnSchema;
+        return AvroColumnSchema.newBuilder(avroColumnSchema).build();
     }
 
     public byte[] serialize() {

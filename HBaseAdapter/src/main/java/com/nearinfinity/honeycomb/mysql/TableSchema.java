@@ -59,6 +59,10 @@ public class TableSchema {
         return Collections.unmodifiableCollection(columns);
     }
 
+    public Collection<IndexSchema> getIndices() {
+        return Collections.unmodifiableCollection(indices);
+    }
+
     public Map<String, ColumnSchema> getColumnsMap() {
         Map<String, ColumnSchema> map = Maps.newHashMap();
         for (ColumnSchema columnSchema : columns) {
@@ -66,10 +70,6 @@ public class TableSchema {
         }
 
         return map;
-    }
-
-    public Collection<IndexSchema> getIndices() {
-        return Collections.unmodifiableCollection(indices);
     }
 
     public void addIndices(Collection<IndexSchema> indices) {
@@ -129,10 +129,5 @@ public class TableSchema {
     @Override
     public int hashCode() {
         return avroTableSchema != null ? avroTableSchema.hashCode() : 0;
-    }
-
-    public void addColumn(ColumnSchema columnSchema) {
-        columns.add(columnSchema);
-        avroTableSchema.getColumns().put(columnSchema.getColumnName(), columnSchema.getAvroValue());
     }
 }

@@ -15,9 +15,4 @@ public class ColumnSchemaFactory {
         AvroColumnSchema avroColumnSchema = new AvroColumnSchema(type, isNullable, isAutoIncrement, maxLength, scale, precision);
         return new ColumnSchema(avroColumnSchema, columnName);
     }
-
-    public static ColumnSchema createColumnSchema() {
-        AvroColumnSchema avroColumnSchema = new AvroColumnSchema(ColumnType.LONG, false, false, 0, 0, 0);
-        return new ColumnSchema(avroColumnSchema, "");
-    }
 }
