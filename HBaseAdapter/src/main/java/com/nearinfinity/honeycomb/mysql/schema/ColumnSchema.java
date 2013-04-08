@@ -25,10 +25,10 @@ public class ColumnSchema {
     public ColumnSchema(ColumnType type, boolean isNullable, boolean isAutoIncrement, int maxLength, int scale, int precision, String columnName) {
         checkNotNull(type);
         Verify.isNotNullOrEmpty(columnName);
-        checkArgument(maxLength >= 0, "Column's max length can't be below zero.");
-        checkArgument(scale >= 0, "Column's scale can't be below zero.");
-        checkArgument(precision >= 0, "Column's precision can't be below zero.");
-        this.avroColumnSchema = new AvroColumnSchema(type, isNullable, isAutoIncrement, maxLength, scale, precision);
+        checkArgument(maxLength >= 0, "Max length can't be below zero.");
+        checkArgument(scale >= 0, "Scale can't be below zero.");
+        checkArgument(precision >= 0, "Precision can't be below zero.");
+        this.avroColumnSchema = new AvroColumnSchema(ColumnType.valueOf(type.name()), isNullable, isAutoIncrement, maxLength, scale, precision);
         this.columnName = columnName;
     }
 
