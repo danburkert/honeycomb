@@ -3,7 +3,7 @@ package integrationtests.index;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.nearinfinity.honeycomb.mysql.IndexKey;
+import com.nearinfinity.honeycomb.mysql.QueryKey;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.mysql.Util;
@@ -37,7 +37,7 @@ public class IndexOperationsIT extends HoneycombIntegrationTest {
 
         // Perform a scan with the new index
 
-        final IndexKey key = new IndexKey(NEW_INDEX_NAME, QueryType.EXACT_KEY,
+        final QueryKey key = new QueryKey(NEW_INDEX_NAME, QueryType.EXACT_KEY,
                 ImmutableMap.<String, ByteBuffer>of(TestConstants.COLUMN1, ITUtils.encodeValue(INDEX_COL_VALUE)));
 
         ITUtils.assertReceivingDifferentRows(proxy, key, ROW_COUNT);
@@ -58,7 +58,7 @@ public class IndexOperationsIT extends HoneycombIntegrationTest {
 
         // Perform a scan with the new index
 
-        final IndexKey key = new IndexKey(NEW_INDEX_NAME, QueryType.EXACT_KEY,
+        final QueryKey key = new QueryKey(NEW_INDEX_NAME, QueryType.EXACT_KEY,
                 ImmutableMap.<String, ByteBuffer>of(TestConstants.COLUMN1, ITUtils.encodeValue(INDEX_COL_VALUE),
                         TestConstants.COLUMN2, ITUtils.encodeValue(column2Value)));
 
@@ -68,7 +68,7 @@ public class IndexOperationsIT extends HoneycombIntegrationTest {
     @Test(expected = NullPointerException.class)
     public void testDropIndex() {
         final int keyValue = 7;
-        final IndexKey key = ITUtils.createKey(keyValue, QueryType.EXACT_KEY);
+        final QueryKey key = ITUtils.createKey(keyValue, QueryType.EXACT_KEY);
 
         // Add data rows to index
         ITUtils.insertData(proxy, ROW_COUNT, keyValue);

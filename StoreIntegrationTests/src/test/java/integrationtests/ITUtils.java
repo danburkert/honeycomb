@@ -79,7 +79,7 @@ public class ITUtils {
      * @param key      The index used to run an index scan, not null
      * @param rowCount The valid number of rows expected to be returned from the scan
      */
-    public static void assertReceivingDifferentRows(final HandlerProxy proxy, final IndexKey key, final int rowCount) {
+    public static void assertReceivingDifferentRows(final HandlerProxy proxy, final QueryKey key, final int rowCount) {
         checkNotNull(proxy);
         checkNotNull(key);
         verifyRowCount(rowCount);
@@ -188,10 +188,10 @@ public class ITUtils {
      * @param queryType The query type that this index will be used for
      * @return The constructed index with the provided details
      */
-    public static IndexKey createKey(final int keyValue, final QueryType queryType) {
+    public static QueryKey createKey(final int keyValue, final QueryType queryType) {
         HashMap<String, ByteBuffer> keys = Maps.newHashMap();
         keys.put(TestConstants.COLUMN1, encodeValue(keyValue));
-        return new IndexKey(TestConstants.INDEX1, queryType, keys);
+        return new QueryKey(TestConstants.INDEX1, queryType, keys);
     }
 
     private static void verifyRowCount(final long rowCount) {

@@ -130,7 +130,7 @@ public class HBaseTable implements Table {
     }
 
     @Override
-    public Scanner ascendingIndexScanAt(IndexKey key) {
+    public Scanner ascendingIndexScanAt(QueryKey key) {
         IndexRowKey startRow = indexPrefixedForTable(key)
                 .withSortOrder(SortOrder.Ascending)
                 .build();
@@ -145,7 +145,7 @@ public class HBaseTable implements Table {
     }
 
     @Override
-    public Scanner ascendingIndexScanAfter(IndexKey key) {
+    public Scanner ascendingIndexScanAfter(QueryKey key) {
         IndexRowKey startRow = indexPrefixedForTable(key)
                 .withSortOrder(SortOrder.Ascending)
                 .build();
@@ -160,7 +160,7 @@ public class HBaseTable implements Table {
     }
 
     @Override
-    public Scanner descendingIndexScanAt(IndexKey key) {
+    public Scanner descendingIndexScanAt(QueryKey key) {
         IndexRowKey startRow = indexPrefixedForTable(key)
                 .withSortOrder(SortOrder.Descending)
                 .build();
@@ -175,7 +175,7 @@ public class HBaseTable implements Table {
     }
 
     @Override
-    public Scanner descendingIndexScanAfter(IndexKey key) {
+    public Scanner descendingIndexScanAfter(QueryKey key) {
         IndexRowKey startRow = indexPrefixedForTable(key)
                 .withSortOrder(SortOrder.Descending)
                 .build();
@@ -190,7 +190,7 @@ public class HBaseTable implements Table {
     }
 
     @Override
-    public Scanner indexScanExact(IndexKey key) {
+    public Scanner indexScanExact(QueryKey key) {
         IndexRowKey row = indexPrefixedForTable(key).withSortOrder(SortOrder.Ascending).build();
 
         // Scan is [start, end) : increment to set end to next possible row
@@ -241,7 +241,7 @@ public class HBaseTable implements Table {
         HBaseOperations.performDelete(hTable, deletes);
     }
 
-    private IndexRowKeyBuilder indexPrefixedForTable(final IndexKey key) {
+    private IndexRowKeyBuilder indexPrefixedForTable(final QueryKey key) {
         final TableSchema schema = store.getSchema(tableId);
         final long indexId = store.getIndexId(tableId, key.getIndexName());
         final IndexSchema indexSchema = schema.getIndexSchemaForName(key.getIndexName());

@@ -227,7 +227,7 @@ public class HandlerProxy {
         Row row = Row.deserialize(serializedRow);
 
         Table t = store.openTable(tableName);
-        IndexKey key = new IndexKey(indexName, null, row.getRecords());
+        QueryKey key = new QueryKey(indexName, null, row.getRecords());
         Scanner scanner = t.indexScanExact(key);
 
         try {
@@ -346,7 +346,7 @@ public class HandlerProxy {
         }
         checkNotNull(indexKeys, "Index scan requires non-null key");
 
-        IndexKey key = IndexKey.deserialize(indexKeys);
+        QueryKey key = QueryKey.deserialize(indexKeys);
         QueryType queryType = key.getQueryType();
         switch (queryType) {
             case EXACT_KEY:

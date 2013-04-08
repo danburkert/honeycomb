@@ -32,7 +32,7 @@ public class RowOperationsIT extends HoneycombIntegrationTest {
         proxy.insertRow(row.serialize());
         proxy.flush();
 
-        final IndexKey key = ITUtils.createKey(INDEX_COL_VALUE, QueryType.EXACT_KEY);
+        final QueryKey key = ITUtils.createKey(INDEX_COL_VALUE, QueryType.EXACT_KEY);
 
         ITUtils.assertReceivingDifferentRows(proxy, key, ROW_COUNT);
     }
@@ -41,7 +41,7 @@ public class RowOperationsIT extends HoneycombIntegrationTest {
     public void testGetRow() {
         ITUtils.insertData(proxy, ROW_COUNT, INDEX_COL_VALUE);
 
-        final IndexKey key = ITUtils.createKey(INDEX_COL_VALUE, QueryType.EXACT_KEY);
+        final QueryKey key = ITUtils.createKey(INDEX_COL_VALUE, QueryType.EXACT_KEY);
         proxy.startIndexScan(key.serialize());
 
         final Row r = Row.deserialize(proxy.getNextRow());
@@ -61,7 +61,7 @@ public class RowOperationsIT extends HoneycombIntegrationTest {
         proxy.insertRow(row.serialize());
         proxy.flush();
 
-        final IndexKey key = ITUtils.createKey(INDEX_COL_VALUE, QueryType.EXACT_KEY);
+        final QueryKey key = ITUtils.createKey(INDEX_COL_VALUE, QueryType.EXACT_KEY);
         proxy.startIndexScan(key.serialize());
 
         final Row r = Row.deserialize(proxy.getNextRow());
@@ -79,7 +79,7 @@ public class RowOperationsIT extends HoneycombIntegrationTest {
         proxy.insertRow(row.serialize());
         proxy.flush();
 
-        final IndexKey key = ITUtils.createKey(INDEX_COL_VALUE, QueryType.EXACT_KEY);
+        final QueryKey key = ITUtils.createKey(INDEX_COL_VALUE, QueryType.EXACT_KEY);
         proxy.startIndexScan(key.serialize());
         final Row r = Row.deserialize(proxy.getNextRow());
 

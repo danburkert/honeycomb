@@ -1,6 +1,6 @@
 package com.nearinfinity.honeycomb;
 
-import com.nearinfinity.honeycomb.mysql.IndexKey;
+import com.nearinfinity.honeycomb.mysql.QueryKey;
 import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 
@@ -83,7 +83,7 @@ public interface Table extends Closeable {
      * @param key
      * @return Scanner over index
      */
-    Scanner ascendingIndexScanAt(IndexKey key);
+    Scanner ascendingIndexScanAt(QueryKey key);
 
     /**
      * Return a scanner over the table's index after the specified key / values
@@ -92,7 +92,7 @@ public interface Table extends Closeable {
      * @param key
      * @return Scanner over index
      */
-    Scanner ascendingIndexScanAfter(IndexKey key);
+    Scanner ascendingIndexScanAfter(QueryKey key);
 
     /**
      * Return a scanner over the table's index at the specified key / values in
@@ -101,7 +101,7 @@ public interface Table extends Closeable {
      * @param key
      * @return Scanner over index
      */
-    Scanner descendingIndexScanAt(IndexKey key);
+    Scanner descendingIndexScanAt(QueryKey key);
 
     /**
      * Return a scanner over the table's index after the specified key / values
@@ -110,7 +110,7 @@ public interface Table extends Closeable {
      * @param key
      * @return Scanner over index
      */
-    Scanner descendingIndexScanAfter(IndexKey key);
+    Scanner descendingIndexScanAfter(QueryKey key);
 
     /**
      * Return a scanner over the rows in the table with the specified key /values
@@ -118,7 +118,7 @@ public interface Table extends Closeable {
      * @param key
      * @return Scanner over index
      */
-    Scanner indexScanExact(IndexKey key);
+    Scanner indexScanExact(QueryKey key);
 
     /**
      * Remove all rows from the table.

@@ -1,5 +1,6 @@
 package integrationtests.scan;
 
+import com.nearinfinity.honeycomb.mysql.QueryKey;
 import integrationtests.HoneycombIntegrationTest;
 import integrationtests.ITUtils;
 import integrationtests.TestConstants;
@@ -11,7 +12,6 @@ import org.junit.Test;
 
 import com.google.common.collect.Maps;
 import com.nearinfinity.honeycomb.config.Constants;
-import com.nearinfinity.honeycomb.mysql.IndexKey;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 
 public class ScanOperationsIT extends HoneycombIntegrationTest {
@@ -23,7 +23,7 @@ public class ScanOperationsIT extends HoneycombIntegrationTest {
     public void testIndexExactScan() {
         ITUtils.insertData(proxy, ROW_COUNT, INDEX_COL_VALUE);
 
-        final IndexKey key = ITUtils.createKey(INDEX_COL_VALUE, QueryType.EXACT_KEY);
+        final QueryKey key = ITUtils.createKey(INDEX_COL_VALUE, QueryType.EXACT_KEY);
         ITUtils.assertReceivingDifferentRows(proxy, key, ROW_COUNT);
     }
 
@@ -33,7 +33,7 @@ public class ScanOperationsIT extends HoneycombIntegrationTest {
         ITUtils.insertData(proxy, 1, INDEX_COL_VALUE + 1, Constants.ZERO_UUID);
         ITUtils.insertData(proxy, ROW_COUNT, INDEX_COL_VALUE + 1);
 
-        final IndexKey key = ITUtils.createKey(INDEX_COL_VALUE, QueryType.AFTER_KEY);
+        final QueryKey key = ITUtils.createKey(INDEX_COL_VALUE, QueryType.AFTER_KEY);
         ITUtils.assertReceivingDifferentRows(proxy, key, ROW_COUNT + 1);
     }
 
@@ -43,7 +43,7 @@ public class ScanOperationsIT extends HoneycombIntegrationTest {
         ITUtils.insertData(proxy, 1, INDEX_COL_VALUE - 1, Constants.ZERO_UUID);
         ITUtils.insertData(proxy, ROW_COUNT, INDEX_COL_VALUE - 1);
 
-        final IndexKey key = ITUtils.createKey(INDEX_COL_VALUE, QueryType.BEFORE_KEY);
+        final QueryKey key = ITUtils.createKey(INDEX_COL_VALUE, QueryType.BEFORE_KEY);
         ITUtils.assertReceivingDifferentRows(proxy, key, ROW_COUNT + 1);
     }
 
@@ -53,7 +53,7 @@ public class ScanOperationsIT extends HoneycombIntegrationTest {
         ITUtils.insertData(proxy, 1, INDEX_COL_VALUE + 1, Constants.ZERO_UUID);
         ITUtils.insertData(proxy, ROW_COUNT, INDEX_COL_VALUE + 1);
 
-        final IndexKey key = ITUtils.createKey(INDEX_COL_VALUE, QueryType.KEY_OR_NEXT);
+        final QueryKey key = ITUtils.createKey(INDEX_COL_VALUE, QueryType.KEY_OR_NEXT);
         ITUtils.assertReceivingDifferentRows(proxy, key, ROW_COUNT + 2);
     }
 
@@ -63,7 +63,7 @@ public class ScanOperationsIT extends HoneycombIntegrationTest {
         ITUtils.insertData(proxy, 1, INDEX_COL_VALUE - 1, Constants.ZERO_UUID);
         ITUtils.insertData(proxy, ROW_COUNT, INDEX_COL_VALUE - 1);
 
-        final IndexKey key = ITUtils.createKey(INDEX_COL_VALUE, QueryType.KEY_OR_PREVIOUS);
+        final QueryKey key = ITUtils.createKey(INDEX_COL_VALUE, QueryType.KEY_OR_PREVIOUS);
         ITUtils.assertReceivingDifferentRows(proxy, key, ROW_COUNT + 2);
     }
 
@@ -73,7 +73,7 @@ public class ScanOperationsIT extends HoneycombIntegrationTest {
         ITUtils.insertData(proxy, 1, INDEX_COL_VALUE - 1, Constants.ZERO_UUID);
         ITUtils.insertData(proxy, ROW_COUNT, INDEX_COL_VALUE - 1);
 
-        final IndexKey key = new IndexKey(TestConstants.INDEX1, QueryType.INDEX_LAST, Maps.<String, ByteBuffer>newHashMap());
+        final QueryKey key = new QueryKey(TestConstants.INDEX1, QueryType.INDEX_LAST, Maps.<String, ByteBuffer>newHashMap());
         ITUtils.assertReceivingDifferentRows(proxy, key, ROW_COUNT + 2);
     }
 
@@ -84,7 +84,7 @@ public class ScanOperationsIT extends HoneycombIntegrationTest {
         ITUtils.insertData(proxy, 1, INDEX_COL_VALUE + 1, Constants.ZERO_UUID);
         ITUtils.insertData(proxy, ROW_COUNT, INDEX_COL_VALUE + 1);
 
-        final IndexKey key = new IndexKey(TestConstants.INDEX1, QueryType.INDEX_FIRST, Maps.<String, ByteBuffer>newHashMap());
+        final QueryKey key = new QueryKey(TestConstants.INDEX1, QueryType.INDEX_FIRST, Maps.<String, ByteBuffer>newHashMap());
         ITUtils.assertReceivingDifferentRows(proxy, key, ROW_COUNT + 4);
     }
 
@@ -97,7 +97,7 @@ public class ScanOperationsIT extends HoneycombIntegrationTest {
         final Map<String, ByteBuffer> keyValues = Maps.newHashMap();
         keyValues.put(TestConstants.COLUMN1, ITUtils.encodeValue(2));
 
-        final IndexKey key = new IndexKey(TestConstants.INDEX2, QueryType.AFTER_KEY, keyValues);
+        final QueryKey key = new QueryKey(TestConstants.INDEX2, QueryType.AFTER_KEY, keyValues);
         ITUtils.assertReceivingDifferentRows(proxy, key, ROW_COUNT + ROW_COUNT);
     }
 
