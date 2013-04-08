@@ -11,6 +11,7 @@ import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 public class TableSchema {
@@ -55,7 +56,7 @@ public class TableSchema {
     }
 
     public Collection<ColumnSchema> getColumns() {
-        return columns;
+        return Collections.unmodifiableCollection(columns);
     }
 
     public Map<String, ColumnSchema> getColumnsMap() {
@@ -68,19 +69,19 @@ public class TableSchema {
     }
 
     public Collection<IndexSchema> getIndices() {
-        return indices;
+        return Collections.unmodifiableCollection(indices);
     }
 
     public void addIndices(Collection<IndexSchema> indices) {
         for (IndexSchema entry : indices) {
-            getIndices().add(entry);
+            this.indices.add(entry);
             avroTableSchema.getIndices().put(entry.getIndexName(), entry.getAvroValue());
         }
     }
 
     public void removeIndex(String indexName) {
         IndexSchema schema = getIndexSchemaForName(indexName);
-        getIndices().remove(schema);
+        indices.remove(schema);
         avroTableSchema.getIndices().remove(indexName);
     }
 
@@ -104,7 +105,7 @@ public class TableSchema {
      * @return ColumnSchema with an auto increment modifier
      */
     public String getAutoIncrementColumn() {
-        for (ColumnSchema entry : getColumns()) {
+        for (ColumnSchema entry : columns) {
             if (entry.getIsAutoIncrement()) {
                 return entry.getColumnName();
             }
@@ -130,4 +131,8 @@ public class TableSchema {
         return avroTableSchema != null ? avroTableSchema.hashCode() : 0;
     }
 
+    public void addColumn(ColumnSchema columnSchema) {
+        columns.add(columnSchema);
+        avroTableSchema.getColumns().put(columnSchema.getColumnName(), columnSchema.getAvroValue());
+    }
 }

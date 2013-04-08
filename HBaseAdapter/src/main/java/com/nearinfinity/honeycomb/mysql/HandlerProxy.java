@@ -184,7 +184,7 @@ public class HandlerProxy {
         checkArgument(!schema.getIsUnique(), "Honeycomb does not support adding unique indices without a table rebuild.");
 
         store.addIndex(tableName, indexName, schema);
-        table.insertTableIndex(indexName, schema);
+        table.insertTableIndex(schema);
     }
 
     /**
@@ -199,7 +199,7 @@ public class HandlerProxy {
 
         TableSchema tableSchema = store.getSchema(tableName);
         IndexSchema indexSchema = tableSchema.getIndexSchemaForName(indexName);
-        table.deleteTableIndex(indexName, indexSchema);
+        table.deleteTableIndex(indexSchema);
         store.dropIndex(tableName, indexName);
     }
 

@@ -57,8 +57,7 @@ public class HBaseTable implements Table {
     }
 
     @Override
-    public void insertTableIndex(final String indexName, final IndexSchema indexSchema) {
-        Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
+    public void insertTableIndex(final IndexSchema indexSchema) {
         checkNotNull(indexSchema, "The index schema is invalid");
         final Collection<IndexSchema> indices = ImmutableList.of(indexSchema);
         final Scanner scanner = tableScan();
@@ -71,8 +70,7 @@ public class HBaseTable implements Table {
     }
 
     @Override
-    public void deleteTableIndex(final String indexName, final IndexSchema indexSchema) {
-        Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
+    public void deleteTableIndex(final IndexSchema indexSchema) {
         checkNotNull(indexSchema, "The index schema is invalid");
 
         batchDeleteData(tableScan(), ImmutableList.of(indexSchema), false);

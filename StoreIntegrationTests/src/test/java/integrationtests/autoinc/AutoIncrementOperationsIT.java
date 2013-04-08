@@ -15,7 +15,7 @@ public class AutoIncrementOperationsIT extends HoneycombIntegrationTest {
     @Override
     protected TableSchema getTableSchema() {
         final TableSchema schema = ITUtils.getTableSchema();
-        schema.getColumns().add(ColumnSchemaFactory.createColumnSchema(ColumnType.LONG, true, true, 8, 0, 0));
+        schema.addColumn(ColumnSchemaFactory.createColumnSchema(ColumnType.LONG, true, true, 8, 0, 0, "test"));
 
         return schema;
     }
