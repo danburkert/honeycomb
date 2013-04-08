@@ -51,8 +51,7 @@ public class RowKeyTest {
     public void testIndexRowKeyStrings() {
         String columnName = "c1";
         String indexName = "i1";
-        ColumnSchema columnSchema = ColumnSchemaFactory.createColumnSchema();
-        columnSchema.setType(ColumnType.DATETIME);
+        ColumnSchema columnSchema = ColumnSchemaFactory.createColumnSchema(ColumnType.DATETIME);
         IndexSchema indexSchema = IndexSchemaFactory.createIndexSchema(ImmutableList.of(columnName), false, indexName);
         TableSchema tableSchema = TableSchemaFactory.createTableSchema(ImmutableMap.of(columnName, columnSchema), ImmutableMap.of(indexName, indexSchema));
 

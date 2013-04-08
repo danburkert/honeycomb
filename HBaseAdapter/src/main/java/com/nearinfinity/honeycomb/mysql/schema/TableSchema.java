@@ -114,20 +114,6 @@ public class TableSchema {
     }
 
     /**
-     * Retrieve a map of column name to column schema.
-     *
-     * @return Column name to column schema map
-     */
-    public Map<String, ColumnSchema> getColumnsMap() {
-        Map<String, ColumnSchema> map = Maps.newHashMap();
-        for (ColumnSchema columnSchema : columns) {
-            map.put(columnSchema.getColumnName(), columnSchema);
-        }
-
-        return map;
-    }
-
-    /**
      * Add an index schema to the table schema
      *
      * @param indices New index schemas [Not null]
@@ -164,6 +150,7 @@ public class TableSchema {
      * @return Index schema by name indexName
      */
     public ColumnSchema getColumnSchema(String columnName) {
+        Verify.isNotNullOrEmpty(columnName);
         AvroColumnSchema columnSchema = avroTableSchema.getColumns().get(columnName);
         return new ColumnSchema(columnName, columnSchema);
     }
@@ -175,6 +162,7 @@ public class TableSchema {
      * @return Index schema by name indexName
      */
     public IndexSchema getIndexSchema(String indexName) {
+        Verify.isNotNullOrEmpty(indexName);
         AvroIndexSchema indexSchema = avroTableSchema.getIndices().get(indexName);
         return new IndexSchema(indexName, indexSchema);
     }

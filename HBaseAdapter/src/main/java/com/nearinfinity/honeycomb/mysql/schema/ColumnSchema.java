@@ -4,13 +4,16 @@ import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.gen.AvroColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.util.Verify;
+import net.jcip.annotations.Immutable;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+@Immutable
 public class ColumnSchema {
     private static final DatumWriter<AvroColumnSchema> writer =
             new SpecificDatumWriter<AvroColumnSchema>(AvroColumnSchema.class);
@@ -22,6 +25,9 @@ public class ColumnSchema {
     public ColumnSchema(ColumnType type, boolean isNullable, boolean isAutoIncrement, int maxLength, int scale, int precision, String columnName) {
         checkNotNull(type);
         Verify.isNotNullOrEmpty(columnName);
+        checkArgument(maxLength >= 0, "Column's max length can't be below zero.");
+        checkArgument(scale >= 0, "Column's scale can't be below zero.");
+        checkArgument(precision >= 0, "Column's precision can't be below zero.");
         this.avroColumnSchema = new AvroColumnSchema(type, isNullable, isAutoIncrement, maxLength, scale, precision);
         this.columnName = columnName;
     }
@@ -56,40 +62,16 @@ public class ColumnSchema {
         return avroColumnSchema.getType();
     }
 
-    public void setType(ColumnType value) {
-        avroColumnSchema.setType(value);
-    }
-
     public boolean getIsNullable() {
         return avroColumnSchema.getIsNullable();
-    }
-
-    public void setIsNullable(boolean value) {
-        avroColumnSchema.setIsNullable(value);
     }
 
     public boolean getIsAutoIncrement() {
         return avroColumnSchema.getIsAutoIncrement();
     }
 
-    public void setIsAutoIncrement(boolean value) {
-        avroColumnSchema.setIsAutoIncrement(value);
-    }
-
-    public Integer getMaxLength() {
+    public int getMaxLength() {
         return avroColumnSchema.getMaxLength();
-    }
-
-    public void setMaxLength(int value) {
-        avroColumnSchema.setMaxLength(value);
-    }
-
-    public void setScale(int value) {
-        avroColumnSchema.setScale(value);
-    }
-
-    public void setPrecision(Integer value) {
-        avroColumnSchema.setPrecision(value);
     }
 
     /**

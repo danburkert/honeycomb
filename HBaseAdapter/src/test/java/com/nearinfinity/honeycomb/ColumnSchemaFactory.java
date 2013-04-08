@@ -1,10 +1,9 @@
 package com.nearinfinity.honeycomb;
 
-import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
+import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 
 public class ColumnSchemaFactory {
-
     public static ColumnSchema createColumnSchema(ColumnType type, boolean isNullable, boolean isAutoIncrement, int maxLength, int scale, int precision) {
         return new ColumnSchema(type, isNullable, isAutoIncrement, maxLength, scale, precision, "default");
     }
@@ -19,5 +18,9 @@ public class ColumnSchemaFactory {
 
     public static ColumnSchema createColumnSchema(long columnId) {
         return new ColumnSchema(ColumnType.LONG, false, false, 0, 0, 0, "default" + columnId);
+    }
+
+    public static ColumnSchema createColumnSchema(ColumnType type) {
+        return new ColumnSchema(type, false, false, 0, 0, 0, "default");
     }
 }

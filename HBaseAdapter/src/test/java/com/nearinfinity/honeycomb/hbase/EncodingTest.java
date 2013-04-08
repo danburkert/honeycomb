@@ -59,7 +59,6 @@ public class EncodingTest {
         Map<String, ByteBuffer> records = Maps.newHashMap();
         Map<String, ColumnSchema> columnSchemas = Maps.newHashMap();
         ColumnSchema c1 = ColumnSchemaFactory.createColumnSchema();
-        c1.setType(ColumnType.LONG);
         columnSchemas.put("c1", c1);
         IndexSchema indexSchema = IndexSchemaFactory.createIndexSchema(ImmutableList.<String>of("c1"), false);
         TableSchema tableSchema = TableSchemaFactory.createTableSchema(columnSchemas,
