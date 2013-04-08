@@ -22,6 +22,17 @@ public class ColumnSchema {
     private final AvroColumnSchema avroColumnSchema;
     private final String columnName;
 
+    /**
+     * Construct a column with column data.
+     *
+     * @param type            Column type
+     * @param isNullable      Is nullable column
+     * @param isAutoIncrement Is auto increment column
+     * @param maxLength       Column max length
+     * @param scale           Column scale
+     * @param precision       Column precision
+     * @param columnName      Column name
+     */
     public ColumnSchema(ColumnType type, boolean isNullable, boolean isAutoIncrement, int maxLength, int scale, int precision, String columnName) {
         checkNotNull(type);
         Verify.isNotNullOrEmpty(columnName);

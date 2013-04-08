@@ -23,10 +23,17 @@ public class IndexSchema {
     private final AvroIndexSchema avroIndexSchema;
     private final String indexName;
 
+    /**
+     * Construct an index schema for columns in a table.
+     *
+     * @param columns   Table columns
+     * @param isUnique  Is a unique index?
+     * @param indexName Name of the index
+     */
     public IndexSchema(List<String> columns, boolean isUnique, String indexName) {
         checkNotNull(columns);
         Verify.isNotNullOrEmpty(indexName);
-        this.avroIndexSchema = new AvroIndexSchema(columns, isUnique);
+        this.avroIndexSchema = new AvroIndexSchema(ImmutableList.copyOf(columns), isUnique);
         this.indexName = indexName;
     }
 
