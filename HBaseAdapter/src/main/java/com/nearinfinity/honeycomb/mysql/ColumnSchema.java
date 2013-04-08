@@ -18,13 +18,20 @@ public class ColumnSchema {
     private final AvroColumnSchema avroColumnSchema;
     private final String columnName;
 
+    public ColumnSchema(ColumnType type, boolean isNullable, boolean isAutoIncrement, int maxLength, int scale, int precision, String columnName) {
+        checkNotNull(type);
+        Verify.isNotNullOrEmpty(columnName);
+        this.avroColumnSchema = new AvroColumnSchema(type, isNullable, isAutoIncrement, maxLength, scale, precision);
+        this.columnName = columnName;
+    }
+
     /**
      * Construct a column schema based on a avro column schema and column name.
      *
      * @param avroColumnSchema Avro column schema [Not null]
      * @param columnName       Column name [Not null, Not empty]
      */
-    public ColumnSchema(AvroColumnSchema avroColumnSchema, String columnName) {
+    ColumnSchema(AvroColumnSchema avroColumnSchema, String columnName) {
         checkNotNull(avroColumnSchema);
         Verify.isNotNullOrEmpty(columnName);
         this.avroColumnSchema = AvroColumnSchema.newBuilder(avroColumnSchema).build();
@@ -89,7 +96,7 @@ public class ColumnSchema {
      *
      * @return Avro object representing this object.
      */
-    public AvroColumnSchema getAvroValue() {
+    AvroColumnSchema getAvroValue() {
         return AvroColumnSchema.newBuilder(avroColumnSchema).build();
     }
 

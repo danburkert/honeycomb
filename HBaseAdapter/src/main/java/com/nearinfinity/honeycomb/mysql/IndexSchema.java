@@ -22,13 +22,20 @@ public class IndexSchema {
     private final AvroIndexSchema avroIndexSchema;
     private final String indexName;
 
+    public IndexSchema(List<String> columns, boolean isUnique, String indexName) {
+        checkNotNull(columns);
+        Verify.isNotNullOrEmpty(indexName);
+        this.avroIndexSchema = new AvroIndexSchema(columns, isUnique);
+        this.indexName = indexName;
+    }
+
     /**
      * Construct an index schema based on a avro index schema and index name
      *
      * @param avroIndexSchema Avro index schema [Not null]
      * @param indexName       Index name [Not null, Not empty]
      */
-    public IndexSchema(AvroIndexSchema avroIndexSchema, String indexName) {
+    IndexSchema(AvroIndexSchema avroIndexSchema, String indexName) {
         checkNotNull(avroIndexSchema);
         Verify.isNotNullOrEmpty(indexName);
         this.avroIndexSchema = AvroIndexSchema.newBuilder(avroIndexSchema).build();
@@ -80,7 +87,7 @@ public class IndexSchema {
      *
      * @return Avro object representing this object.
      */
-    public AvroIndexSchema getAvroValue() {
+    AvroIndexSchema getAvroValue() {
         return AvroIndexSchema.newBuilder(avroIndexSchema).build();
     }
 

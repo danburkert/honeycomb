@@ -27,15 +27,30 @@ public class TableSchema {
     private final Collection<IndexSchema> indices;
 
     /**
-     * Construct a table schema based on a Avro Table Schema.
+     * Construct a table schema from a map of column schemas and index schemas.
      *
-     * @param avroTableSchema Avro table schema [Not null]
+     * @param columns Column schemas map [Not null]
+     * @param indices Index schema map [Not null]
      */
-    public TableSchema(AvroTableSchema avroTableSchema) {
-        checkNotNull(avroTableSchema);
-        checkNotNull(avroTableSchema.getColumns());
-        checkNotNull(avroTableSchema.getIndices());
+    public TableSchema(Map<String, ColumnSchema> columns, Map<String, IndexSchema> indices) {
+        checkNotNull(columns);
+        checkNotNull(indices);
 
+        Map<String, AvroColumnSchema> columnSchemaMap = Maps.newHashMap();
+        for (Map.Entry<String, ColumnSchema> entry : columns.entrySet()) {
+            columnSchemaMap.put(entry.getKey(), entry.getValue().getAvroValue());
+        }
+
+        Map<String, AvroIndexSchema> indexSchemaMap = Maps.newHashMap();
+        for (Map.Entry<String, IndexSchema> entry : indices.entrySet()) {
+            indexSchemaMap.put(entry.getKey(), entry.getValue().getAvroValue());
+        }
+        avroTableSchema = new AvroTableSchema(columnSchemaMap, indexSchemaMap);
+        this.columns = columns.values();
+        this.indices = indices.values();
+    }
+
+    private TableSchema(AvroTableSchema avroTableSchema) {
         this.avroTableSchema = avroTableSchema;
 
         this.columns = Lists.newArrayList();
