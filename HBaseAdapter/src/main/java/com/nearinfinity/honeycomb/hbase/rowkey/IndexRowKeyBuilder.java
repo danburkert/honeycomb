@@ -1,12 +1,7 @@
 package com.nearinfinity.honeycomb.hbase.rowkey;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.nearinfinity.honeycomb.mysql.Row;
-import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
-import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
-import com.nearinfinity.honeycomb.util.Verify;
-import org.apache.hadoop.hbase.util.Bytes;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -14,9 +9,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import org.apache.hadoop.hbase.util.Bytes;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.nearinfinity.honeycomb.mysql.Row;
+import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
+import com.nearinfinity.honeycomb.util.Verify;
 
 /**
  * A builder for creating {@link IndexRowKey} instances.  Builder instances can be reused as it is safe
@@ -142,7 +142,7 @@ public class IndexRowKeyBuilder {
         checkNotNull(indexColumns, "Index columns must be set on IndexRowBuilder");
         checkNotNull(tableSchema, "Column schemas must be set on IndexRowBuilder");
         this.records = records;
-        this.columnNames = indexColumns;
+        columnNames = indexColumns;
         this.tableSchema = tableSchema;
         return this;
     }
@@ -167,6 +167,7 @@ public class IndexRowKeyBuilder {
      */
     public IndexRowKey build() {
         checkState(order != null, "Sort order must be set on IndexRowBuilder.");
+
         List<byte[]> encodedRecords = Lists.newArrayList();
         if (records != null) {
             for (String column : columnNames) {
