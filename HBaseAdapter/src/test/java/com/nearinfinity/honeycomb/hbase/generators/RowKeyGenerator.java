@@ -11,6 +11,7 @@ import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import net.java.quickcheck.FrequencyGenerator;
 import net.java.quickcheck.Generator;
+import net.java.quickcheck.collection.Pair;
 import net.java.quickcheck.generator.CombinedGenerators;
 import net.java.quickcheck.generator.PrimitiveGenerators;
 import net.java.quickcheck.generator.support.DefaultFrequencyGenerator;
@@ -42,11 +43,11 @@ public class RowKeyGenerator implements Generator<RowKey> {
 
         rowKeyGen = new DefaultFrequencyGenerator<RowKey>(new PrefixRowGenerator(), 1);
         rowKeyGen.add(new TableIDRowGenerator(), 1);
-        rowKeyGen.add(new DataRowGenerator(randIdGen), 3);
-        rowKeyGen.add(new DataRowGenerator(fixedLong()), 3);
-        rowKeyGen.add(new IndexRowGenerator(randIdGen, randIdGen, tableSchemaGen.next(), randSortOrder), 4);
-        rowKeyGen.add(new IndexRowGenerator(fixedLong(), randIdGen, tableSchemaGen.next(), randSortOrder), 4);
-        rowKeyGen.add(new IndexRowGenerator(fixedLong(), fixedLong(), tableSchemaGen.next(), randSortOrder), 8);
+        rowKeyGen.add(new DataRowKeyGenerator(randIdGen), 3);
+        rowKeyGen.add(new DataRowKeyGenerator(fixedLong()), 3);
+        rowKeyGen.add(new IndexRowKeyGenerator(randIdGen, randIdGen, tableSchemaGen.next(), randSortOrder), 4);
+        rowKeyGen.add(new IndexRowKeyGenerator(fixedLong(), randIdGen, tableSchemaGen.next(), randSortOrder), 4);
+        rowKeyGen.add(new IndexRowKeyGenerator(fixedLong(), fixedLong(), tableSchemaGen.next(), randSortOrder), 8);
 
     }
 
@@ -54,8 +55,8 @@ public class RowKeyGenerator implements Generator<RowKey> {
         return PrimitiveGenerators.fixedValues(randIdGen.next());
     }
 
-    public static Generator<RowKey> getAscIndexRowKeyGenerator(TableSchema schema) {
-        return new IndexRowGenerator(
+    public static IndexRowKeyGenerator getAscIndexRowKeyGenerator(TableSchema schema) {
+        return new IndexRowKeyGenerator(
                 PrimitiveGenerators.fixedValues(randIdGen.next()),
                 PrimitiveGenerators.fixedValues(randIdGen.next()),
                 schema,
@@ -63,15 +64,14 @@ public class RowKeyGenerator implements Generator<RowKey> {
         );
     }
 
-    public static Generator<RowKey> getDescIndexRowKeyGenerator(TableSchema schema) {
-        return new IndexRowGenerator(
+    public static IndexRowKeyGenerator getDescIndexRowKeyGenerator(TableSchema schema) {
+        return new IndexRowKeyGenerator(
                 PrimitiveGenerators.fixedValues(randIdGen.next()),
                 PrimitiveGenerators.fixedValues(randIdGen.next()),
                 schema,
                 PrimitiveGenerators.fixedValues(SortOrder.Descending)
         );
     }
-
 
     @Override
     public RowKey next() {
@@ -107,10 +107,10 @@ public class RowKeyGenerator implements Generator<RowKey> {
         }
     }
 
-    private class DataRowGenerator implements Generator<RowKey> {
+    private class DataRowKeyGenerator implements Generator<RowKey> {
         Generator<Long> tableIdGen;
 
-        public DataRowGenerator(Generator<Long> generator) {
+        public DataRowKeyGenerator(Generator<Long> generator) {
             tableIdGen = generator;
         }
 
@@ -120,7 +120,7 @@ public class RowKeyGenerator implements Generator<RowKey> {
         }
     }
 
-    private static class IndexRowGenerator implements Generator<RowKey> {
+    public static class IndexRowKeyGenerator implements Generator<RowKey> {
         private final Generator<Long> tableIds;
         private final Generator<Long> indexIds;
         private final TableSchema tableSchema;
@@ -129,7 +129,7 @@ public class RowKeyGenerator implements Generator<RowKey> {
         private final Generator<QueryKey> queryKeys;
         private final Generator<SortOrder> order;
 
-        public IndexRowGenerator(
+        public IndexRowKeyGenerator(
                 Generator<Long> tableIds,
                 Generator<Long> indexIds,
                 TableSchema tableSchema,
@@ -148,7 +148,7 @@ public class RowKeyGenerator implements Generator<RowKey> {
         @Override
         public RowKey next() {
             IndexRowKeyBuilder builder;
-            if (RAND.nextBoolean()) {
+            if (true) {
                 Row row = rows.next();
                 builder = IndexRowKeyBuilder
                         .newBuilder(tableIds.next(), indexIds.next())
@@ -162,6 +162,16 @@ public class RowKeyGenerator implements Generator<RowKey> {
                         .withQueryKey(queryKeys.next(), tableSchema);
             }
             return builder.withSortOrder(order.next()).build();
+        }
+
+        public Pair<IndexRowKey, QueryKey> nextWithQueryKey() {
+            QueryKey queryKey = queryKeys.next();
+            IndexRowKey rowKey = IndexRowKeyBuilder
+                    .newBuilder(tableIds.next(), indexIds.next())
+                    .withQueryKey(queryKey, tableSchema)
+                    .withSortOrder(order.next())
+                    .build();
+            return new Pair(rowKey, queryKey);
         }
     }
 }

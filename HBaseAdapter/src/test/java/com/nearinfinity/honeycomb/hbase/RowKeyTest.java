@@ -1,18 +1,14 @@
 package com.nearinfinity.honeycomb.hbase;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.UnsignedBytes;
-import com.nearinfinity.honeycomb.ColumnSchemaFactory;
-import com.nearinfinity.honeycomb.IndexSchemaFactory;
-import com.nearinfinity.honeycomb.TableSchemaFactory;
 import com.nearinfinity.honeycomb.hbase.generators.RowKeyGenerator;
 import com.nearinfinity.honeycomb.hbase.rowkey.RowKey;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.iterable.Iterables;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -51,10 +47,9 @@ public class RowKeyTest {
     public void testIndexRowKeyStrings() {
         String columnName = "c1";
         String indexName = "i1";
-        ColumnSchema columnSchema = ColumnSchemaFactory.createColumnSchema();
-        columnSchema.setType(ColumnType.DATETIME);
-        IndexSchema indexSchema = IndexSchemaFactory.createIndexSchema(ImmutableList.of(columnName), false, indexName);
-        TableSchema tableSchema = TableSchemaFactory.createTableSchema(ImmutableMap.of(columnName, columnSchema), ImmutableMap.of(indexName, indexSchema));
+        ColumnSchema columnSchema = new ColumnSchema("default", ColumnType.DATETIME, false, false, null, null, null);
+        IndexSchema indexSchema = new IndexSchema(ImmutableList.of(columnName), false, indexName);
+        TableSchema tableSchema = new TableSchema(ImmutableList.of(columnSchema), ImmutableList.of(indexSchema));
 
         Generator<RowKey> rowkeysGen = RowKeyGenerator.getAscIndexRowKeyGenerator(tableSchema);
         List<RowKey> rowkeys = Lists.newArrayList(Iterables.toIterable(rowkeysGen));
@@ -74,6 +69,4 @@ public class RowKeyTest {
             Assert.assertArrayEquals(encodedRowKey, rowKey.encode());
         }
     }
-
-
 }

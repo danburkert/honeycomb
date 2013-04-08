@@ -3,19 +3,15 @@ package com.nearinfinity.honeycomb.hbase;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.nearinfinity.honeycomb.ColumnSchemaFactory;
-import com.nearinfinity.honeycomb.IndexSchemaFactory;
 import com.nearinfinity.honeycomb.MockHTable;
-import com.nearinfinity.honeycomb.TableSchemaFactory;
 import com.nearinfinity.honeycomb.exceptions.TableNotFoundException;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
+import com.nearinfinity.honeycomb.mysql.generators.TableSchemaGenerator;
 import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
-import com.nearinfinity.honeycomb.mysql.generators.TableSchemaGenerator;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.PrimitiveGenerators;
 import org.apache.hadoop.hbase.client.HTableInterface;
@@ -106,8 +102,11 @@ public class HBaseMetadataTest {
 
     @Test
     public void testLookupIndexIdsValidTableId() {
-        final TableSchema tableSchema = TableSchemaFactory.createTableSchema(ImmutableMap.<String, ColumnSchema>of(), ImmutableMap.<String, IndexSchema>of(
-                INDEX_NAME, IndexSchemaFactory.createIndexSchema(Lists.newArrayList(COLUMN_NAME), false, INDEX_NAME)));
+        final TableSchema tableSchema = new TableSchema(
+                ImmutableList.<ColumnSchema>of(
+                        new ColumnSchema(COLUMN_NAME, ColumnType.LONG, false, false, null, null, null)),
+                ImmutableList.<IndexSchema>of(new IndexSchema(Lists.newArrayList(COLUMN_NAME), false, INDEX_NAME))
+        );
 
         hbaseMetadata.createTable(TABLE_NAME, tableSchema);
         final long tableId = hbaseMetadata.getTableId(TABLE_NAME);
@@ -129,10 +128,10 @@ public class HBaseMetadataTest {
 
     @Test
     public void testLookupColumnIdsValidTableId() {
-        final Map<String, ColumnSchema> columns = ImmutableMap.of(
-                COLUMN_NAME, ColumnSchemaFactory.createColumnSchema(ColumnType.LONG, true, false, 8, 0, 0, COLUMN_NAME));
+        final List<ColumnSchema> columns = ImmutableList.of(
+                new ColumnSchema(COLUMN_NAME, ColumnType.LONG, true, false, null, null, null));
 
-        final TableSchema tableSchema = TableSchemaFactory.createTableSchema(columns, ImmutableMap.<String, IndexSchema>of());
+        final TableSchema tableSchema = new TableSchema(columns, ImmutableList.<IndexSchema>of());
 
         hbaseMetadata.createTable(TABLE_NAME, tableSchema);
         final long tableId = hbaseMetadata.getTableId(TABLE_NAME);
@@ -155,10 +154,10 @@ public class HBaseMetadataTest {
 
     @Test
     public void testLookupTableSchemaValidTableId() {
-        final Map<String, ColumnSchema> columns = ImmutableMap.of(
-                COLUMN_NAME, ColumnSchemaFactory.createColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
+        final List<ColumnSchema> columns = ImmutableList.of(
+                new ColumnSchema(COLUMN_NAME, ColumnType.LONG, true, false, null, null, null));
 
-        final TableSchema tableSchema = TableSchemaFactory.createTableSchema(columns, ImmutableMap.<String, IndexSchema>of());
+        final TableSchema tableSchema = new TableSchema(columns, ImmutableList.<IndexSchema>of());
 
         hbaseMetadata.createTable(TABLE_NAME, tableSchema);
         final long tableId = hbaseMetadata.getTableId(TABLE_NAME);
@@ -259,7 +258,7 @@ public class HBaseMetadataTest {
     }
 
     private IndexSchema getIndexEmpty(String indexName) {
-        return IndexSchemaFactory.createIndexSchema(new ArrayList<String>(), false, indexName);
+        return new IndexSchema(new ArrayList<String>(), false, indexName);
     }
 
     @Test(expected = NullPointerException.class)
@@ -269,10 +268,10 @@ public class HBaseMetadataTest {
 
     @Test
     public void testCreateIndex() {
-        final Map<String, ColumnSchema> columns = ImmutableMap.of(
-                COLUMN_NAME, ColumnSchemaFactory.createColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
+        final List<ColumnSchema> columns = ImmutableList.of(
+                new ColumnSchema(COLUMN_NAME, ColumnType.LONG, true, false, null, null, null));
 
-        final TableSchema tableSchema = TableSchemaFactory.createTableSchema(columns, ImmutableMap.<String, IndexSchema>of());
+        final TableSchema tableSchema = new TableSchema(columns, ImmutableList.<IndexSchema>of());
 
         // Create a new table with the configured details
         hbaseMetadata.createTable(TABLE_NAME, tableSchema);
@@ -285,7 +284,7 @@ public class HBaseMetadataTest {
 
         // Add a new index to the table
         hbaseMetadata.createTableIndex(tableId,
-                IndexSchemaFactory.createIndexSchema(ImmutableList.<String>of(COLUMN_NAME), false, INDEX_NAME));
+                new IndexSchema(ImmutableList.<String>of(COLUMN_NAME), false, INDEX_NAME));
 
         // Verify that the table schema has been correctly updated
 
@@ -329,11 +328,13 @@ public class HBaseMetadataTest {
 
     @Test
     public void testDeleteIndex() {
-        final Map<String, ColumnSchema> columns = ImmutableMap.<String, ColumnSchema>of(
-                COLUMN_NAME, ColumnSchemaFactory.createColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
+        final List<ColumnSchema> columns = ImmutableList.<ColumnSchema>of(
+                new ColumnSchema(COLUMN_NAME, ColumnType.LONG, true, false, null, null, null));
 
-        final TableSchema tableSchema = TableSchemaFactory.createTableSchema(columns, ImmutableMap.<String, IndexSchema>of(
-                INDEX_NAME, IndexSchemaFactory.createIndexSchema(Lists.newArrayList(COLUMN_NAME), false, INDEX_NAME)));
+        final TableSchema tableSchema =
+                new TableSchema(columns,
+                        ImmutableList.<IndexSchema>of(
+                                new IndexSchema(Lists.newArrayList(COLUMN_NAME), false, INDEX_NAME)));
 
         // Create a new table with the configured details
         hbaseMetadata.createTable(TABLE_NAME, tableSchema);

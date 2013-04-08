@@ -1,16 +1,15 @@
 package integrationtests.autoinc;
 
-import com.google.common.collect.Maps;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
-import integrationtests.ColumnSchemaFactory;
 import integrationtests.HoneycombIntegrationTest;
-import integrationtests.TableSchemaFactory;
 import org.junit.Test;
 
-import java.util.HashMap;
+import java.util.List;
 
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertThat;
@@ -19,9 +18,9 @@ public class AutoIncrementOperationsIT extends HoneycombIntegrationTest {
 
     @Override
     protected TableSchema getTableSchema() {
-        final HashMap<String, ColumnSchema> columns = Maps.newHashMap();
-        columns.put("test", ColumnSchemaFactory.createColumnSchema(ColumnType.LONG, true, true, 8, 0, 0, "test"));
-        return TableSchemaFactory.createTableSchema(columns, Maps.<String, IndexSchema>newHashMap());
+        final List<ColumnSchema> columns = Lists.newArrayList();
+        columns.add(new ColumnSchema("test", ColumnType.LONG, true, true, null, null, null));
+        return new TableSchema(columns, ImmutableList.<IndexSchema>of());
     }
 
     @Test

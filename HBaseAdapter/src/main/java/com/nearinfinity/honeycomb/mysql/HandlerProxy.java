@@ -183,10 +183,9 @@ public class HandlerProxy {
      */
     public void addIndex(String indexName, byte[] serializedSchema) {
         Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
-        checkNotNull(serializedSchema);
+        checkNotNull(serializedSchema, "Schema cannot be null");
         checkTableOpen();
 
-        checkNotNull(serializedSchema, "Schema cannot be null");
         IndexSchema schema = IndexSchema.deserialize(serializedSchema, indexName);
         checkArgument(!schema.getIsUnique(), "Honeycomb does not support adding unique indices without a table rebuild.");
 

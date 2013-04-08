@@ -1,33 +1,45 @@
 package com.nearinfinity.honeycomb.hbase;
 
-import com.google.common.collect.*;
-import com.google.common.primitives.Longs;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.common.primitives.UnsignedBytes;
-import com.nearinfinity.honeycomb.ColumnSchemaFactory;
-import com.nearinfinity.honeycomb.IndexSchemaFactory;
-import com.nearinfinity.honeycomb.TableSchemaFactory;
-import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowKeyBuilder;
-import com.nearinfinity.honeycomb.hbase.rowkey.SortOrder;
+import com.nearinfinity.honeycomb.hbase.generators.RowKeyGenerator;
+import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowKey;
 import com.nearinfinity.honeycomb.mysql.QueryKey;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
-import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
-import net.java.quickcheck.Generator;
 import net.java.quickcheck.collection.Pair;
-import net.java.quickcheck.generator.PrimitiveGenerators;
 import org.junit.Test;
 
-import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 import static org.junit.Assert.assertTrue;
 
 public class EncodingTest {
+    private static final String COLUMN = "c1";
+    private static TableSchema tableSchema =
+            new TableSchema(
+                    ImmutableList.of(new ColumnSchema(COLUMN, ColumnType.LONG,
+                            false, false, null, null, null)),
+                    ImmutableList.of(new IndexSchema(ImmutableList.of(COLUMN), false, "i1"))
+            );
+
     @Test
     public void testAscendingCorrectlySortsLongs() {
-        List<Pair<Long, byte[]>> rows = getPairs(SortOrder.Ascending);
+        List<Pair<Long, byte[]>> rows = Lists.newArrayList();
+        RowKeyGenerator.IndexRowKeyGenerator rowKeyGen =
+                RowKeyGenerator.getAscIndexRowKeyGenerator(tableSchema);
+        Pair<IndexRowKey, QueryKey> pair;
+        for (int i = 0; i < 200; i++) {
+            pair = rowKeyGen.nextWithQueryKey();
+            rows.add(new Pair(
+                    pair.getSecond().getKeys().get(COLUMN).getLong(),
+                    pair.getFirst().encode()));
+        }
 
         Collections.sort(rows, new RowComparator());
 
@@ -40,8 +52,16 @@ public class EncodingTest {
 
     @Test
     public void testDescendingCorrectlySortsLong() {
-        List<Pair<Long, byte[]>> rows = getPairs(SortOrder.Descending);
-
+        List<Pair<Long, byte[]>> rows = Lists.newArrayList();
+        RowKeyGenerator.IndexRowKeyGenerator rowKeyGen =
+                RowKeyGenerator.getDescIndexRowKeyGenerator(tableSchema);
+        Pair<IndexRowKey, QueryKey> pair;
+        for (int i = 0; i < 200; i++) {
+            pair = rowKeyGen.nextWithQueryKey();
+            rows.add(new Pair(
+                    pair.getSecond().getKeys().get(COLUMN).getLong(),
+                    pair.getFirst().encode()));
+        }
         Collections.sort(rows, new RowComparator());
 
         for (int i = 1; i < rows.size(); i++) {
@@ -49,37 +69,6 @@ public class EncodingTest {
             Pair<Long, byte[]> current = rows.get(i);
             assertTrue(previous.getFirst() > current.getFirst());
         }
-    }
-
-    private List<Pair<Long, byte[]>> getPairs(SortOrder sortOrder) {
-        IndexRowKeyBuilder builder = IndexRowKeyBuilder
-                .newBuilder(1, 1)
-                .withSortOrder(sortOrder);
-        Set<Long> numbers = Sets.newHashSet();
-        List<Pair<Long, byte[]>> rows = Lists.newArrayList();
-        Generator<Long> longs = PrimitiveGenerators.longs();
-        Map<String, ByteBuffer> records = Maps.newHashMap();
-        Map<String, ColumnSchema> columnSchemas = Maps.newHashMap();
-        ColumnSchema c1 = ColumnSchemaFactory.createColumnSchema();
-        c1.setType(ColumnType.LONG);
-        columnSchemas.put("c1", c1);
-        IndexSchema indexSchema = IndexSchemaFactory.createIndexSchema(ImmutableList.<String>of("i1"), false);
-        TableSchema tableSchema = TableSchemaFactory.createTableSchema(columnSchemas,
-                ImmutableMap.<String, IndexSchema>of("c1", indexSchema));
-        QueryKey queryKey = new QueryKey("i1", QueryType.AFTER_KEY, records);
-
-        for (int i = 0; i < 100; i++) {
-            numbers.add(longs.next());
-        }
-
-        for (long number : numbers) {
-            records.put("c1", ByteBuffer.wrap(Longs.toByteArray(number)));
-            rows.add(new Pair<Long, byte[]>(number, builder
-                    .withUUID(UUID.randomUUID())
-                    .withQueryKey(queryKey, tableSchema)
-                    .build().encode()));
-        }
-        return rows;
     }
 
     private class RowComparator implements Comparator<Pair<Long, byte[]>> {

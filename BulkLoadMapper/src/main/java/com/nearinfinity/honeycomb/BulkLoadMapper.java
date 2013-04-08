@@ -2,12 +2,14 @@ package com.nearinfinity.honeycomb;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.nearinfinity.honeycomb.hbase.HBaseMetadata;
 import com.nearinfinity.honeycomb.hbase.HBaseStore;
 import com.nearinfinity.honeycomb.hbase.MetadataCache;
 import com.nearinfinity.honeycomb.hbase.MutationFactory;
 import com.nearinfinity.honeycomb.mysql.Row;
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.HTableInterface;
@@ -66,7 +68,10 @@ public class BulkLoadMapper
     }
 
     private void checkSqlColumnsMatch(String sqlTable) {
-        Set<String> expectedColumns = schema.getColumns().keySet();
+        Set<String> expectedColumns = Sets.newHashSet();
+        for (ColumnSchema column : schema.getColumns()) {
+            expectedColumns.add(column.getColumnName());
+        }
         List<String> invalidColumns = Lists.newLinkedList();
         for (String column : columns) {
             if (!expectedColumns.contains(column)) {

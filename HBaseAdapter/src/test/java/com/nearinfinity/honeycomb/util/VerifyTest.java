@@ -1,24 +1,24 @@
 package com.nearinfinity.honeycomb.util;
 
-import java.util.Map;
-
-import com.nearinfinity.honeycomb.ColumnSchemaFactory;
-import com.nearinfinity.honeycomb.IndexSchemaFactory;
-import com.nearinfinity.honeycomb.TableSchemaFactory;
-import org.junit.Test;
-
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
+import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
+import org.junit.Test;
+
+import java.util.List;
 
 public class VerifyTest {
 
-    private static final String INDEX_NAME = "idxName";
     private static final String COLUMN_A = "columnA";
     private static final String COLUMN_B = "columnB";
+    private static final List<IndexSchema> INDICES = ImmutableList.of(
+            new IndexSchema(ImmutableList.<String>of(COLUMN_A), false, "INDEX_A"),
+            new IndexSchema(ImmutableList.<String>of(COLUMN_B), false, "INDEX_B"));
+    private static final List<ColumnSchema> COLUMNS = ImmutableList.of(
+            new ColumnSchema(COLUMN_A, ColumnType.LONG, true, false, null, null, null),
+            new ColumnSchema(COLUMN_B, ColumnType.LONG, true, false, null, null, null));
 
     @Test
     public void testIsValidTableId() {
@@ -52,52 +52,44 @@ public class VerifyTest {
 
     @Test(expected = NullPointerException.class)
     public void testIsValidIndexSchemaNullIndices() {
-        Verify.isValidIndexSchema(null, ImmutableMap.<String, ColumnSchema>of());
+        Verify.isValidIndexSchema(null, ImmutableList.<ColumnSchema>of());
     }
 
     @Test(expected = NullPointerException.class)
     public void testIsValidIndexSchemaNullColumns() {
-        Verify.isValidIndexSchema(ImmutableMap.<String, IndexSchema>of(), null);
+        Verify.isValidIndexSchema(ImmutableList.<IndexSchema>of(), null);
     }
 
     @Test
     public void testIsValidIndexSchema() {
-        final Map<String, IndexSchema> indices = ImmutableMap.<String, IndexSchema>of(
-                INDEX_NAME, IndexSchemaFactory.createIndexSchema(ImmutableList.<String>of(COLUMN_A), false, INDEX_NAME));
-
-        final Map<String, ColumnSchema> columns = ImmutableMap.<String, ColumnSchema>of(
-                COLUMN_A, ColumnSchemaFactory.createColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
-
-        Verify.isValidIndexSchema(indices, columns);
+        Verify.isValidIndexSchema(INDICES, COLUMNS);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testIsValidIndexSchemaInvalidColumn() {
-        final Map<String, IndexSchema> indices = ImmutableMap.<String, IndexSchema>of(
-                INDEX_NAME, IndexSchemaFactory.createIndexSchema(ImmutableList.<String>of(COLUMN_B), false, INDEX_NAME));
+        final List<IndexSchema> indices = ImmutableList.of(
+                new IndexSchema(ImmutableList.of("invalid"), false, "index_name")
+        );
 
-        final Map<String, ColumnSchema> columns = ImmutableMap.<String, ColumnSchema>of(
-                COLUMN_A, ColumnSchemaFactory.createColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
-
-        Verify.isValidIndexSchema(indices, columns);
+        Verify.isValidIndexSchema(indices, COLUMNS);
     }
 
     @Test
     public void testHasAutoIncrementColumn() {
-        final Map<String, ColumnSchema> columns = ImmutableMap.<String, ColumnSchema>of(
-                COLUMN_B, ColumnSchemaFactory.createColumnSchema(ColumnType.LONG, true, true, 8, 0, 0));
+        final List<ColumnSchema> columns = ImmutableList.<ColumnSchema>of(
+                new ColumnSchema(COLUMN_B, ColumnType.LONG, true, true, null, null, null));
 
-        final TableSchema tableSchema = TableSchemaFactory.createTableSchema(columns, ImmutableMap.<String, IndexSchema>of());
+        final TableSchema tableSchema = new TableSchema(columns, ImmutableList.<IndexSchema>of());
 
         Verify.hasAutoIncrementColumn(tableSchema);
     }
 
     @Test
     public void testHasAutoIncrementColumnNotAutoInc() {
-        final Map<String, ColumnSchema> columns = ImmutableMap.<String, ColumnSchema>of(
-                COLUMN_B, ColumnSchemaFactory.createColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
+        final List<ColumnSchema> columns = ImmutableList.<ColumnSchema>of(
+                new ColumnSchema(COLUMN_B, ColumnType.LONG, true, false, null, null, null));
 
-        final TableSchema tableSchema = TableSchemaFactory.createTableSchema(columns, ImmutableMap.<String, IndexSchema>of());
+        final TableSchema tableSchema = new TableSchema(columns, ImmutableList.<IndexSchema>of());
 
         Verify.hasAutoIncrementColumn(tableSchema);
     }

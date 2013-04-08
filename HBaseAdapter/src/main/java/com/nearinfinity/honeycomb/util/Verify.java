@@ -1,12 +1,14 @@
 package com.nearinfinity.honeycomb.util;
 
+import com.google.common.collect.Sets;
 import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import org.apache.log4j.Logger;
 
 import java.util.Arrays;
-import java.util.Map;
+import java.util.Collection;
+import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -68,14 +70,19 @@ public class Verify {
      * @throws IllegalArgumentException Thrown if a {@link IndexSchema} indexes
      *                                  a column that is not an available column
      */
-    public static void isValidIndexSchema(final Map<String, IndexSchema> indices,
-                                          final Map<String, ColumnSchema> columns) {
+    public static void isValidIndexSchema(final Collection<IndexSchema> indices,
+                                          final Collection<ColumnSchema> columns) {
         checkNotNull(indices);
         checkNotNull(columns);
 
-        for (final IndexSchema index : indices.values()) {
+        Set<String> columnNames = Sets.newHashSet();
+        for (ColumnSchema column : columns) {
+            columnNames.add(column.getColumnName());
+        }
+
+        for (final IndexSchema index : indices) {
             for (final String column : index.getColumns()) {
-                if (!columns.containsKey(column)) {
+                if (!columnNames.contains(column)) {
                     throw new IllegalArgumentException("Only columns in the table may be indexed.");
                 }
             }

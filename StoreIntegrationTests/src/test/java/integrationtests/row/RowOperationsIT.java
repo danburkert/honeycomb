@@ -1,5 +1,6 @@
 package integrationtests.row;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.nearinfinity.honeycomb.config.Constants;
 import com.nearinfinity.honeycomb.mysql.*;
@@ -96,12 +97,11 @@ public class RowOperationsIT extends HoneycombIntegrationTest {
     @Test
     public void testUpdateNullRows() {
         HandlerProxy proxy = factory.createHandlerProxy();
-        HashMap<String, ColumnSchema> columns = Maps.newHashMap();
-        HashMap<String, IndexSchema> indices = Maps.newHashMap();
-        columns.put(TestConstants.COLUMN1, ColumnSchemaFactory.createColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
+        List<ColumnSchema> columns = Lists.newArrayList();
+        List<IndexSchema> indices = Lists.newArrayList();
+        columns.add(new ColumnSchema(TestConstants.COLUMN1, ColumnType.LONG, true, false, null, null, null));
 
-
-        TableSchema schema = TableSchemaFactory.createTableSchema(columns, indices);
+        TableSchema schema = new TableSchema(columns, indices);
 
         String tableName = "t1";
 

@@ -20,12 +20,12 @@ public class QueryKey {
             new SpecificDatumReader<AvroQueryKey>(AvroQueryKey.class);
     private final AvroQueryKey avroQueryKey;
 
-    public QueryKey(String indexName, QueryType queryType, Map<String, ByteBuffer> keys) {
-        checkNotNull(keys);
+    public QueryKey(String indexName, QueryType queryType, Map<String, ByteBuffer> fields) {
+        checkNotNull(fields);
         checkNotNull(queryType);
         Verify.isNotNullOrEmpty(indexName);
 
-        this.avroQueryKey = new AvroQueryKey(indexName, queryType, keys);
+        this.avroQueryKey = new AvroQueryKey(indexName, queryType, fields);
     }
 
     private QueryKey(AvroQueryKey AvroQueryKey) {

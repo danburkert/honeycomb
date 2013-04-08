@@ -1,8 +1,9 @@
 package com.nearinfinity.honeycomb.hbase.rowkey;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.nearinfinity.honeycomb.TableSchemaFactory;
 import com.nearinfinity.honeycomb.mysql.QueryKey;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
@@ -69,20 +70,13 @@ public class IndexRowKeyBuilderTest {
     }
 
     @Test(expected = NullPointerException.class)
-    public void testBuilderRecordsNullRecords() {
-        builder.withQueryKey(null,
-                getSchema());
+    public void testBuilderQueryKeyNullQueryKey() {
+        builder.withQueryKey(null, getSchema());
     }
 
     @Test(expected = NullPointerException.class)
-    public void testBuilderRecordsNullColumnTypes() {
-        builder.withQueryKey(getQueryKey(), getSchema());
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void testBuilderRecordsNullColumnOrder() {
-        builder.withQueryKey(getQueryKey(),
-                null);
+    public void testBuilderQueryKeyNullTableSchema() {
+        builder.withQueryKey(getQueryKey(), null);
     }
 
     @Test
@@ -103,9 +97,9 @@ public class IndexRowKeyBuilderTest {
     }
 
     private TableSchema getSchema() {
-        return TableSchemaFactory.createTableSchema(
-                ImmutableMap.<String, ColumnSchema>of(),
-                ImmutableMap.<String, IndexSchema>of());
+        return new TableSchema(ImmutableList.<ColumnSchema>of(
+                new ColumnSchema("c1", ColumnType.BINARY, false, false, null, null, null)),
+                ImmutableList.<IndexSchema>of());
     }
 
     private QueryKey getQueryKey() {

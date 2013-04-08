@@ -1,8 +1,8 @@
 package com.nearinfinity.honeycomb;
 
 import com.google.common.primitives.Longs;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
+import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.hadoop.hbase.util.Bytes;
 

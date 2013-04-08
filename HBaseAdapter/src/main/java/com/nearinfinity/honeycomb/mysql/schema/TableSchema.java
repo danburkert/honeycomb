@@ -1,5 +1,6 @@
 package com.nearinfinity.honeycomb.mysql.schema;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.nearinfinity.honeycomb.mysql.Util;
@@ -16,6 +17,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class TableSchema {
@@ -33,22 +35,23 @@ public class TableSchema {
      * @param columns Column schemas map [Not null]
      * @param indices Index schema map [Not null]
      */
-    public TableSchema(Map<String, ColumnSchema> columns, Map<String, IndexSchema> indices) {
-        checkNotNull(columns);
+    public TableSchema(Collection<ColumnSchema> columns, Collection<IndexSchema> indices) {
+        checkArgument(columns.size() > 0, "Table must have at least one column.");
         checkNotNull(indices);
 
         Map<String, AvroColumnSchema> columnSchemaMap = Maps.newHashMap();
-        for (Map.Entry<String, ColumnSchema> entry : columns.entrySet()) {
-            columnSchemaMap.put(entry.getKey(), entry.getValue().getAvroValue());
+        for (ColumnSchema columnSchema : columns) {
+            columnSchemaMap.put(columnSchema.getColumnName(), columnSchema.getAvroValue());
         }
 
         Map<String, AvroIndexSchema> indexSchemaMap = Maps.newHashMap();
-        for (Map.Entry<String, IndexSchema> entry : indices.entrySet()) {
-            indexSchemaMap.put(entry.getKey(), entry.getValue().getAvroValue());
+        for (IndexSchema indexSchema : indices) {
+            indexSchemaMap.put(indexSchema.getIndexName(), indexSchema.getAvroValue());
         }
+
         avroTableSchema = new AvroTableSchema(columnSchemaMap, indexSchemaMap);
-        this.columns = columns.values();
-        this.indices = indices.values();
+        this.columns = columns;
+        this.indices = indices;
     }
 
     private TableSchema(AvroTableSchema avroTableSchema) {
@@ -150,6 +153,7 @@ public class TableSchema {
      * @return Index schema by name indexName
      */
     public ColumnSchema getColumnSchema(String columnName) {
+        Verify.isNotNullOrEmpty(columnName);
         AvroColumnSchema columnSchema = avroTableSchema.getColumns().get(columnName);
         return new ColumnSchema(columnName, columnSchema);
     }
@@ -161,6 +165,7 @@ public class TableSchema {
      * @return Index schema by name indexName
      */
     public IndexSchema getIndexSchema(String indexName) {
+        Verify.isNotNullOrEmpty(indexName);
         AvroIndexSchema indexSchema = avroTableSchema.getIndices().get(indexName);
         return new IndexSchema(indexName, indexSchema);
     }
@@ -193,5 +198,13 @@ public class TableSchema {
     @Override
     public int hashCode() {
         return avroTableSchema != null ? avroTableSchema.hashCode() : 0;
+    }
+
+    @Override
+    public String toString() {
+        return Objects.toStringHelper(this.getClass())
+                .add("Columns", avroTableSchema.getColumns())
+                .add("Indices", avroTableSchema.getIndices())
+                .toString();
     }
 }

@@ -129,15 +129,4 @@ public class Row {
         }
         return sb.toString();
     }
-
-    public boolean isDuplicateForIndex(Row other, Set<String> columns) {
-        Map<String, ByteBuffer> records = other.getRecords();
-        for (String column : columns) {
-            if (!records.get(column).equals(this.getRecords().get(column))) {
-                return false;
-            }
-        }
-
-        return true;
-    }
 }

@@ -3,19 +3,16 @@ package com.nearinfinity.honeycomb.hbase;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
-import com.nearinfinity.honeycomb.ColumnSchemaFactory;
-import com.nearinfinity.honeycomb.IndexSchemaFactory;
 import com.nearinfinity.honeycomb.MockHTable;
-import com.nearinfinity.honeycomb.TableSchemaFactory;
 import com.nearinfinity.honeycomb.exceptions.TableNotFoundException;
 import com.nearinfinity.honeycomb.hbase.rowkey.DataRowKey;
 import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowKeyBuilder;
 import com.nearinfinity.honeycomb.hbase.rowkey.SortOrder;
+import com.nearinfinity.honeycomb.mysql.Row;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
-import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
@@ -24,7 +21,10 @@ import org.junit.Test;
 import org.mockito.MockitoAnnotations;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -36,13 +36,13 @@ public class MutationFactoryTest {
     private static final String COLUMN2 = "c2";
     private static final String INDEX1 = "i1";
     private static final String INDEX2 = "i2";
-    private static final Map<String, ColumnSchema> COLUMNS = new HashMap<String, ColumnSchema>() {{
-        put(COLUMN1, ColumnSchemaFactory.createColumnSchema(ColumnType.LONG, false, true, 8, 0, 0));
-        put(COLUMN2, ColumnSchemaFactory.createColumnSchema(ColumnType.STRING, true, false, 32, 0, 0));
+    private static final List<ColumnSchema> COLUMNS = new ArrayList<ColumnSchema>() {{
+        add(new ColumnSchema(COLUMN1, ColumnType.LONG, false, true, null, null, null));
+        add(new ColumnSchema(COLUMN2, ColumnType.STRING, true, false, 32, null, null));
     }};
-    private static final Map<String, IndexSchema> INDICES = new HashMap<String, IndexSchema>() {{
-        put(INDEX1, IndexSchemaFactory.createIndexSchema(Lists.newArrayList(COLUMN1), false, INDEX1));
-        put(INDEX2, IndexSchemaFactory.createIndexSchema(Lists.newArrayList(COLUMN1, COLUMN2), true, INDEX2));
+    private static final List<IndexSchema> INDICES = new ArrayList<IndexSchema>() {{
+        add(new IndexSchema(Lists.newArrayList(COLUMN1), false, INDEX1));
+        add(new IndexSchema(Lists.newArrayList(COLUMN1, COLUMN2), true, INDEX2));
     }};
     private static final Row row = new Row(
             new HashMap<String, ByteBuffer>() {{
@@ -74,7 +74,7 @@ public class MutationFactoryTest {
         HBaseStore store = new HBaseStore(metadata, tableFactory, cache);
         factory = new MutationFactory(store);
 
-        TableSchema schema = TableSchemaFactory.createTableSchema(COLUMNS, INDICES);
+        TableSchema schema = new TableSchema(COLUMNS, INDICES);
 
         store.createTable(TABLE, schema);
         tableId = store.getTableId(TABLE);
@@ -113,7 +113,7 @@ public class MutationFactoryTest {
 
     @Test(expected = TableNotFoundException.class)
     public void testPartialInsertRejectsUnknownTableId() throws Exception {
-        factory.insert(99, row, ImmutableList.of(INDICES.get(INDEX1)));
+        factory.insert(99, row, ImmutableList.of(INDICES.get(0)));
     }
 
     @Test(expected = NullPointerException.class)
@@ -124,7 +124,7 @@ public class MutationFactoryTest {
     @Test
     public void testPartialInsert() throws Exception {
         List<Put> puts = factory.insert(tableId, row,
-                ImmutableList.of(INDICES.get(INDEX1)));
+                ImmutableList.of(INDICES.get(0)));
         byte[] rowCounts = countRowTypes(puts);
 
         assertEquals("data row count", 1, rowCounts[DATA_PREFIX]);
@@ -165,7 +165,7 @@ public class MutationFactoryTest {
 
     @Test(expected = TableNotFoundException.class)
     public void testPartialDeleteIndicesRejectsUnknownTableId() throws Exception {
-        factory.deleteIndices(99, row, ImmutableList.of(INDICES.get(INDEX1)));
+        factory.deleteIndices(99, row, ImmutableList.of(INDICES.get(0)));
     }
 
     @Test(expected = NullPointerException.class)
@@ -176,7 +176,7 @@ public class MutationFactoryTest {
     @Test
     public void testPartialDeleteIndices() throws Exception {
         List<Delete> deletes = factory.deleteIndices(tableId, row,
-                ImmutableList.of(INDICES.get(INDEX1)));
+                ImmutableList.of(INDICES.get(0)));
         byte[] rowCounts = countRowTypes(deletes);
 
         assertEquals("ascending index count", 1, rowCounts[ASC_PREFIX]);

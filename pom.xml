@@ -36,9 +36,9 @@
                     <name>apache</name>
                 </property>
             </activation>
-            <!--<modules> -->
-            <!--<module>HBaseTableCreator</module> -->
-            <!--</modules> -->
+            <modules>
+            <module>HBaseTableCreator</module>
+            </modules>
             <build>
                 <plugins>
                     <plugin>

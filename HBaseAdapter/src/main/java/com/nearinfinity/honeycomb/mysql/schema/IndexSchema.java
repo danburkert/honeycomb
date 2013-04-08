@@ -1,5 +1,6 @@
 package com.nearinfinity.honeycomb.mysql.schema;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.gen.AvroIndexSchema;
@@ -23,10 +24,17 @@ public class IndexSchema {
     private final AvroIndexSchema avroIndexSchema;
     private final String indexName;
 
+    /**
+     * Construct an index schema for columns in a table.
+     *
+     * @param columns   Table columns
+     * @param isUnique  Is a unique index?
+     * @param indexName Name of the index
+     */
     public IndexSchema(List<String> columns, boolean isUnique, String indexName) {
         checkNotNull(columns);
         Verify.isNotNullOrEmpty(indexName);
-        this.avroIndexSchema = new AvroIndexSchema(columns, isUnique);
+        avroIndexSchema = new AvroIndexSchema(ImmutableList.copyOf(columns), isUnique);
         this.indexName = indexName;
     }
 
@@ -36,7 +44,7 @@ public class IndexSchema {
      * @param indexName       Index name [Not null, Not empty]
      * @param avroIndexSchema Avro index schema [Not null]
      */
-    public IndexSchema(String indexName, AvroIndexSchema avroIndexSchema) {
+    IndexSchema(String indexName, AvroIndexSchema avroIndexSchema) {
         checkNotNull(avroIndexSchema);
         Verify.isNotNullOrEmpty(indexName);
         this.avroIndexSchema = AvroIndexSchema.newBuilder(avroIndexSchema).build();
@@ -117,5 +125,14 @@ public class IndexSchema {
      */
     AvroIndexSchema getAvroValue() {
         return AvroIndexSchema.newBuilder(avroIndexSchema).build();
+    }
+
+    @Override
+    public String toString() {
+        return Objects.toStringHelper(this.getClass())
+                .add("name", indexName)
+                .add("columns", avroIndexSchema.getColumns())
+                .add("isUnique", avroIndexSchema.getIsUnique())
+                .toString();
     }
 }

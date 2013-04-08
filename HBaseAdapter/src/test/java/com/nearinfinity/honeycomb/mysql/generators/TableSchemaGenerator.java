@@ -1,7 +1,6 @@
 package com.nearinfinity.honeycomb.mysql.generators;
 
-import com.google.common.collect.Lists;
-import com.nearinfinity.honeycomb.TableSchemaFactory;
+import com.google.common.collect.ImmutableList;
 import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
@@ -10,7 +9,7 @@ import net.java.quickcheck.generator.CombinedGenerators;
 import net.java.quickcheck.generator.PrimitiveGenerators;
 import net.java.quickcheck.generator.distribution.Distribution;
 
-import java.util.Map;
+import java.util.List;
 
 public class TableSchemaGenerator implements Generator<TableSchema> {
     /**
@@ -35,11 +34,10 @@ public class TableSchemaGenerator implements Generator<TableSchema> {
     public static final Generator<String> MYSQL_NAME_GEN =
             CombinedGenerators.uniqueValues(PrimitiveGenerators.strings(1, MYSQL_MAX_NAME_LENGTH));
 
-    private static final Generator<ColumnSchema> COLUMN_SCHEMA_GEN = new ColumnSchemaGenerator();
-
-    private static final Generator<Map<String, ColumnSchema>> COLUMNS_GEN =
-            CombinedGenerators.maps(MYSQL_NAME_GEN, COLUMN_SCHEMA_GEN,
-                    PrimitiveGenerators.integers(1, MYSQL_MAX_COLUMNS, Distribution.POSITIV_NORMAL));
+    private static final Generator<List<ColumnSchema>> COLUMNS_GEN =
+            CombinedGenerators.lists(new ColumnSchemaGenerator(),
+                    PrimitiveGenerators.integers(1, MYSQL_MAX_COLUMNS,
+                            Distribution.POSITIV_NORMAL));
 
     private final Generator<Integer> numIndicesGen;
 
@@ -55,11 +53,16 @@ public class TableSchemaGenerator implements Generator<TableSchema> {
 
     @Override
     public TableSchema next() {
-        final Map<String, ColumnSchema> columnSchemas = COLUMNS_GEN.next();
+        final List<ColumnSchema> columnSchemas = COLUMNS_GEN.next();
 
-        final Generator<Map<String, IndexSchema>> indexGen = CombinedGenerators.maps(MYSQL_NAME_GEN,
-                new IndexSchemaGenerator(Lists.newArrayList(columnSchemas.keySet())), numIndicesGen);
+        ImmutableList.Builder<String> columns = ImmutableList.builder();
+        for (ColumnSchema columnSchema : columnSchemas) {
+            columns.add(columnSchema.getColumnName());
+        }
 
-        return TableSchemaFactory.createTableSchema(columnSchemas, indexGen.next());
+        final Generator<List<IndexSchema>> indexGen = CombinedGenerators.lists(
+                new IndexSchemaGenerator(columns.build()), numIndicesGen);
+
+        return new TableSchema(columnSchemas, indexGen.next());
     }
 }

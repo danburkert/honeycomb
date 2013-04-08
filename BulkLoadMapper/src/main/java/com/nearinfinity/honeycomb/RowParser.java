@@ -3,7 +3,7 @@ package com.nearinfinity.honeycomb;
 import au.com.bytecode.opencsv.CSVParser;
 import com.google.common.collect.ImmutableMap;
 import com.nearinfinity.honeycomb.mysql.Row;
-import com.nearinfinity.honeycomb.mysql.gen.TableSchema;
+import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -33,7 +33,7 @@ public class RowParser {
         for (int i = 0; i < columns.length; i++) {
             fields.put(columns[i],
                     FieldParser.parse(unparsedFields[i],
-                            schema.getColumns().get(columns[i])));
+                            schema.getColumnSchema(columns[i])));
         }
         return new Row(fields.build(), UUID.randomUUID());
     }

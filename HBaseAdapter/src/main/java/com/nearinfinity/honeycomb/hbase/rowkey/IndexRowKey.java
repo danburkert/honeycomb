@@ -157,6 +157,6 @@ public abstract class IndexRowKey implements RowKey {
                 return compare;
             }
         }
-        return records1.size() - records2.size();
+        return records2.size() - records1.size();
     }
 }

@@ -2,7 +2,9 @@ package integrationtests;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.nearinfinity.honeycomb.mysql.*;
+import com.nearinfinity.honeycomb.mysql.HandlerProxy;
+import com.nearinfinity.honeycomb.mysql.QueryKey;
+import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
@@ -12,6 +14,7 @@ import com.nearinfinity.honeycomb.util.Verify;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -31,20 +34,20 @@ public class ITUtils {
      * @return The created schema
      */
     public static TableSchema getTableSchema() {
-        final HashMap<String, ColumnSchema> columns = Maps.newHashMap();
-        final HashMap<String, IndexSchema> indices = Maps.newHashMap();
+        final List<ColumnSchema> columns = Lists.newArrayList();
+        final List<IndexSchema> indices = Lists.newArrayList();
 
         // Add nullable, non-autoincrementing columns
-        columns.put(TestConstants.COLUMN1, ColumnSchemaFactory.createColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
-        columns.put(TestConstants.COLUMN2, ColumnSchemaFactory.createColumnSchema(ColumnType.LONG, true, false, 8, 0, 0));
+        columns.add(new ColumnSchema(TestConstants.COLUMN1, ColumnType.LONG, true, false, 8, 0, 0));
+        columns.add(new ColumnSchema(TestConstants.COLUMN2, ColumnType.LONG, true, false, 8, 0, 0));
 
         // Add non-unique index on one column
-        indices.put(TestConstants.INDEX1, IndexSchemaFactory.createIndexSchema(Lists.newArrayList(TestConstants.COLUMN1), false, TestConstants.INDEX1));
+        indices.add(new IndexSchema(Lists.newArrayList(TestConstants.COLUMN1), false, TestConstants.INDEX1));
 
         // Add non-unique compound index on (c1, c2)
-        indices.put(TestConstants.INDEX2, IndexSchemaFactory.createIndexSchema(Lists.newArrayList(TestConstants.COLUMN1, TestConstants.COLUMN2), false, TestConstants.INDEX1));
+        indices.add(new IndexSchema(Lists.newArrayList(TestConstants.COLUMN1, TestConstants.COLUMN2), false, TestConstants.INDEX1));
 
-        return TableSchemaFactory.createTableSchema(columns, indices);
+        return new TableSchema(columns, indices);
     }
 
     /**

@@ -4,13 +4,12 @@ package integrationtests.index;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.nearinfinity.honeycomb.mysql.QueryKey;
-import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
+import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import integrationtests.HoneycombIntegrationTest;
 import integrationtests.ITUtils;
-import integrationtests.IndexSchemaFactory;
 import integrationtests.TestConstants;
 import org.junit.Test;
 
@@ -27,7 +26,7 @@ public class IndexOperationsIT extends HoneycombIntegrationTest {
 
     @Test
     public void testAddIndex() {
-        final IndexSchema indexSchema = IndexSchemaFactory.createIndexSchema(Lists.newArrayList(TestConstants.COLUMN1), false, NEW_INDEX_NAME);
+        final IndexSchema indexSchema = new IndexSchema(Lists.newArrayList(TestConstants.COLUMN1), false, NEW_INDEX_NAME);
 
         // Add data rows to index
         ITUtils.insertData(proxy, ROW_COUNT, INDEX_COL_VALUE);
@@ -46,7 +45,7 @@ public class IndexOperationsIT extends HoneycombIntegrationTest {
     @Test
     public void testAddCompoundIndex() {
         // Create the compound index ordered as (col2, col1)
-        final IndexSchema indexSchema = IndexSchemaFactory.createIndexSchema(Lists.newArrayList(TestConstants.COLUMN2, TestConstants.COLUMN1), false, NEW_INDEX_NAME);
+        final IndexSchema indexSchema = new IndexSchema(Lists.newArrayList(TestConstants.COLUMN2, TestConstants.COLUMN1), false, NEW_INDEX_NAME);
 
         final int column2Value = 0;
 
