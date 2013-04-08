@@ -1,9 +1,9 @@
 package com.nearinfinity.honeycomb.hbase.rowkey;
 
-public class IndicesRow extends TableIDRow {
+public class IndicesRowKey extends TableIDRowKey {
     private static final byte PREFIX = 0x02;
 
-    public IndicesRow(long tableId) {
+    public IndicesRowKey(long tableId) {
         super(PREFIX, tableId);
     }
 }

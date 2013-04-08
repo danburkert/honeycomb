@@ -10,9 +10,9 @@ import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.config.ConfigConstants;
 import com.nearinfinity.honeycomb.config.Constants;
 import com.nearinfinity.honeycomb.exceptions.RowNotFoundException;
-import com.nearinfinity.honeycomb.hbase.rowkey.DataRow;
-import com.nearinfinity.honeycomb.hbase.rowkey.IndexRow;
-import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowBuilder;
+import com.nearinfinity.honeycomb.hbase.rowkey.DataRowKey;
+import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowKey;
+import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowKeyBuilder;
 import com.nearinfinity.honeycomb.hbase.rowkey.SortOrder;
 import com.nearinfinity.honeycomb.mysql.*;
 import com.nearinfinity.honeycomb.mysql.Row;
@@ -110,7 +110,7 @@ public class HBaseTable implements Table {
 
     @Override
     public Row get(UUID uuid) {
-        DataRow dataRow = new DataRow(tableId, uuid);
+        DataRowKey dataRow = new DataRowKey(tableId, uuid);
         Get get = new Get(dataRow.encode());
         Result result = HBaseOperations.performGet(hTable, get);
         if (result.isEmpty()) {
@@ -122,20 +122,20 @@ public class HBaseTable implements Table {
 
     @Override
     public Scanner tableScan() {
-        DataRow startRow = new DataRow(tableId);
-        DataRow endRow = new DataRow(tableId + 1);
+        DataRowKey startRow = new DataRowKey(tableId);
+        DataRowKey endRow = new DataRowKey(tableId + 1);
         return createScannerForRange(startRow.encode(), endRow.encode());
     }
 
     @Override
     public Scanner ascendingIndexScanAt(IndexKey key) {
-        IndexRow startRow = indexPrefixedForTable(key)
+        IndexRowKey startRow = indexPrefixedForTable(key)
                 .withSortOrder(SortOrder.Ascending)
                 .build();
 
         long indexId = store.getIndexId(tableId, key.getIndexName());
 
-        IndexRow endRow = IndexRowBuilder
+        IndexRowKey endRow = IndexRowKeyBuilder
                 .newBuilder(tableId, indexId + 1)
                 .withSortOrder(SortOrder.Ascending)
                 .build();
@@ -144,13 +144,13 @@ public class HBaseTable implements Table {
 
     @Override
     public Scanner ascendingIndexScanAfter(IndexKey key) {
-        IndexRow startRow = indexPrefixedForTable(key)
+        IndexRowKey startRow = indexPrefixedForTable(key)
                 .withSortOrder(SortOrder.Ascending)
                 .build();
 
         long indexId = store.getIndexId(tableId, key.getIndexName());
 
-        IndexRow endRow = IndexRowBuilder
+        IndexRowKey endRow = IndexRowKeyBuilder
                 .newBuilder(tableId, indexId + 1)
                 .withSortOrder(SortOrder.Ascending)
                 .build();
@@ -159,13 +159,13 @@ public class HBaseTable implements Table {
 
     @Override
     public Scanner descendingIndexScanAt(IndexKey key) {
-        IndexRow startRow = indexPrefixedForTable(key)
+        IndexRowKey startRow = indexPrefixedForTable(key)
                 .withSortOrder(SortOrder.Descending)
                 .build();
 
         long indexId = store.getIndexId(tableId, key.getIndexName());
 
-        IndexRow endRow = IndexRowBuilder
+        IndexRowKey endRow = IndexRowKeyBuilder
                 .newBuilder(tableId, indexId + 1)
                 .withSortOrder(SortOrder.Descending)
                 .build();
@@ -174,13 +174,13 @@ public class HBaseTable implements Table {
 
     @Override
     public Scanner descendingIndexScanAfter(IndexKey key) {
-        IndexRow startRow = indexPrefixedForTable(key)
+        IndexRowKey startRow = indexPrefixedForTable(key)
                 .withSortOrder(SortOrder.Descending)
                 .build();
 
         long indexId = store.getIndexId(tableId, key.getIndexName());
 
-        IndexRow endRow = IndexRowBuilder
+        IndexRowKey endRow = IndexRowKeyBuilder
                 .newBuilder(tableId, indexId + 1)
                 .withSortOrder(SortOrder.Descending)
                 .build();
@@ -189,7 +189,7 @@ public class HBaseTable implements Table {
 
     @Override
     public Scanner indexScanExact(IndexKey key) {
-        IndexRow row = indexPrefixedForTable(key).withSortOrder(SortOrder.Ascending).build();
+        IndexRowKey row = indexPrefixedForTable(key).withSortOrder(SortOrder.Ascending).build();
 
         // Scan is [start, end) : increment to set end to next possible row
         return createScannerForRange(row.encode(), incrementRowKey(row.encode()));
@@ -239,11 +239,11 @@ public class HBaseTable implements Table {
         HBaseOperations.performDelete(hTable, deletes);
     }
 
-    private IndexRowBuilder indexPrefixedForTable(final IndexKey key) {
+    private IndexRowKeyBuilder indexPrefixedForTable(final IndexKey key) {
         final TableSchema schema = store.getSchema(tableId);
         final long indexId = store.getIndexId(tableId, key.getIndexName());
         final IndexSchema indexSchema = schema.getIndexSchemaForName(key.getIndexName());
-        final IndexRowBuilder indexRowBuilder = IndexRowBuilder.newBuilder(tableId, indexId);
+        final IndexRowKeyBuilder indexRowBuilder = IndexRowKeyBuilder.newBuilder(tableId, indexId);
 
         if (key.getQueryType() == QueryType.INDEX_LAST || key.getQueryType() == QueryType.INDEX_FIRST) {
             return indexRowBuilder;

@@ -7,7 +7,7 @@ import com.google.common.primitives.Longs;
 import com.google.common.primitives.UnsignedBytes;
 import com.nearinfinity.honeycomb.ColumnSchemaFactory;
 import com.nearinfinity.honeycomb.IndexSchemaFactory;
-import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowBuilder;
+import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowKeyBuilder;
 import com.nearinfinity.honeycomb.hbase.rowkey.SortOrder;
 import com.nearinfinity.honeycomb.mysql.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
@@ -49,7 +49,7 @@ public class EncodingTest {
     }
 
     private List<Pair<Long, byte[]>> getPairs(SortOrder sortOrder) {
-        IndexRowBuilder builder = IndexRowBuilder
+        IndexRowKeyBuilder builder = IndexRowKeyBuilder
                 .newBuilder(1, 1)
                 .withSortOrder(sortOrder);
         Set<Long> numbers = Sets.newHashSet();

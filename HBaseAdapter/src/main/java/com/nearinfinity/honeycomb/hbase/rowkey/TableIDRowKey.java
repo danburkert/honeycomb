@@ -8,11 +8,11 @@ import com.nearinfinity.honeycomb.hbase.VarEncoder;
 /**
  * Super class for rowkeys that occur once per MySQL table
  */
-public class TableIDRow implements RowKey {
+public class TableIDRowKey implements RowKey {
     private final byte prefix;
     private final long tableId;
 
-    public TableIDRow(final byte prefix, final long tableId) {
+    public TableIDRowKey(final byte prefix, final long tableId) {
         Preconditions.checkArgument(tableId >= 0, "Table ID must be non-zero.");
         this.prefix = prefix;
         this.tableId = tableId;
@@ -45,7 +45,7 @@ public class TableIDRow implements RowKey {
     public int compareTo(RowKey o) {
         int typeCompare = getPrefix() - o.getPrefix();
         if (typeCompare != 0) { return typeCompare; }
-        TableIDRow row2 = (TableIDRow) o;
+        TableIDRowKey row2 = (TableIDRowKey) o;
         return ComparisonChain.start().compare(getTableId(), row2.getTableId()).result();
     }
 }
