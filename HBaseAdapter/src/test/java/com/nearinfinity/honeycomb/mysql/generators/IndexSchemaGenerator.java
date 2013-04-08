@@ -24,6 +24,6 @@ public class IndexSchemaGenerator implements Generator<IndexSchema> {
     public IndexSchema next() {
         Collections.shuffle(columnNames);
         List<String> columns = columnNames.subList(0, Math.min(lengthGen.next(), columnNames.size()));
-        return IndexSchemaFactory.createIndexSchema(columns, RAND.nextBoolean(), lengthGen.next().toString());
+        return IndexSchemaFactory.createIndexSchema(columns, RAND.nextBoolean(), PrimitiveGenerators.strings());
     }
 }

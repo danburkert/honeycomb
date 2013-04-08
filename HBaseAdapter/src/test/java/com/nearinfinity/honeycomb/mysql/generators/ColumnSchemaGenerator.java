@@ -19,6 +19,7 @@ public class ColumnSchemaGenerator implements Generator<ColumnSchema> {
     @Override
     public ColumnSchema next() {
         ColumnSchema schema = ColumnSchemaFactory.createColumnSchema(RAND.nextLong());
+        ColumnSchema schema = new ColumnSchema()
         schema.setType(typeGen.next());
 
         schema.setIsNullable(RAND.nextBoolean());

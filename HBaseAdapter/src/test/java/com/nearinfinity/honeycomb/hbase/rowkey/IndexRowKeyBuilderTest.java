@@ -1,9 +1,9 @@
 package com.nearinfinity.honeycomb.hbase.rowkey;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.nearinfinity.honeycomb.IndexSchemaFactory;
 import com.nearinfinity.honeycomb.TableSchemaFactory;
+import com.nearinfinity.honeycomb.mysql.QueryKey;
+import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
@@ -11,7 +11,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
@@ -71,29 +70,24 @@ public class IndexRowKeyBuilderTest {
 
     @Test(expected = NullPointerException.class)
     public void testBuilderRecordsNullRecords() {
-        builder.withQueryValues(null,
-                getColumns(),
+        builder.withQueryKey(null,
                 getSchema());
     }
 
     @Test(expected = NullPointerException.class)
     public void testBuilderRecordsNullColumnTypes() {
-        builder.withQueryValues(ImmutableMap.<String, ByteBuffer>of(),
-                null, getSchema());
+        builder.withQueryKey(getQueryKey(), getSchema());
     }
 
     @Test(expected = NullPointerException.class)
     public void testBuilderRecordsNullColumnOrder() {
-        builder.withQueryValues(ImmutableMap.<String, ByteBuffer>of(),
-                getColumns(),
+        builder.withQueryKey(getQueryKey(),
                 null);
     }
 
     @Test
     public void testBuilderRecords() {
-        builder.withQueryValues(ImmutableMap.<String, ByteBuffer>of(),
-                getColumns(),
-                getSchema());
+        builder.withQueryKey(getQueryKey(), getSchema());
     }
 
     @Test
@@ -108,13 +102,13 @@ public class IndexRowKeyBuilderTest {
         builder.build();
     }
 
-    private List<String> getColumns() {
-        return IndexSchemaFactory.createIndexSchema(ImmutableList.<String>of(), false).getColumns();
-    }
-
     private TableSchema getSchema() {
         return TableSchemaFactory.createTableSchema(
                 ImmutableMap.<String, ColumnSchema>of(),
                 ImmutableMap.<String, IndexSchema>of());
+    }
+
+    private QueryKey getQueryKey() {
+        return new QueryKey("i1", QueryType.AFTER_KEY, ImmutableMap.<String, ByteBuffer>of());
     }
  }

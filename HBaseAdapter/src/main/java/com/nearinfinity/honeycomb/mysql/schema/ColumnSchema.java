@@ -19,7 +19,7 @@ public class ColumnSchema {
     private final AvroColumnSchema avroColumnSchema;
     private final String columnName;
 
-    public ColumnSchema(ColumnType type, boolean isNullable, boolean isAutoIncrement, int maxLength, int scale, int precision, String columnName) {
+    public ColumnSchema(ColumnType type, boolean isNullable, boolean isAutoIncrement, Integer maxLength, Integer scale, Integer precision, String columnName) {
         checkNotNull(type);
         Verify.isNotNullOrEmpty(columnName);
         this.avroColumnSchema = new AvroColumnSchema(type, isNullable, isAutoIncrement, maxLength, scale, precision);

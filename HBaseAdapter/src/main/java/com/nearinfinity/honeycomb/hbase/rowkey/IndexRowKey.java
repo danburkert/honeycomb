@@ -1,18 +1,17 @@
 package com.nearinfinity.honeycomb.hbase.rowkey;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.util.List;
-import java.util.UUID;
-
-import org.apache.hadoop.hbase.util.Bytes;
-
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.nearinfinity.honeycomb.hbase.VarEncoder;
 import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.util.Verify;
+import org.apache.hadoop.hbase.util.Bytes;
+
+import java.util.List;
+import java.util.UUID;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Super class for index rowkeys
@@ -122,18 +121,26 @@ public abstract class IndexRowKey implements RowKey {
         if (compare != 0) {
             return compare;
         }
-        return new Bytes.ByteArrayComparator().compare(
-                Util.UUIDToBytes(uuid),
-                Util.UUIDToBytes(row2.uuid));
+
+        if (uuid == null) {
+            if (row2.uuid == null) {
+                return 0;
+            }
+            return -1;
+        } else if (row2.uuid == null) {
+            return 1;
+        } else {
+            return new Bytes.ByteArrayComparator().compare(
+                    Util.UUIDToBytes(uuid),
+                    Util.UUIDToBytes(row2.uuid));
+        }
     }
 
     private static int recordsCompare(List<byte[]> records1, List<byte[]> records2, int nullOrder) {
         byte[] value1, value2;
         int compare;
-        if (records1.size() != records2.size()) {
-            throw new IllegalArgumentException("Number of records in indices must match.");
-        }
-        for (int i = 0; i < records1.size(); i++) {
+
+        for (int i = 0; i < Math.min(records1.size(), records2.size()); i++) {
             value1 = records1.get(i);
             value2 = records2.get(i);
             if (value1 == value2) {
@@ -150,6 +157,6 @@ public abstract class IndexRowKey implements RowKey {
                 return compare;
             }
         }
-        return 0;
+        return records1.size() - records2.size();
     }
 }

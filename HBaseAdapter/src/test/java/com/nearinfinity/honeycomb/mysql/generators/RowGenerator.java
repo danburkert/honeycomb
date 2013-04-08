@@ -20,7 +20,7 @@ public class RowGenerator implements Generator<Row> {
         super();
         ImmutableMap.Builder<String, Generator<ByteBuffer>> recordGenerators = ImmutableMap.builder();
         for (ColumnSchema columns : schema.getColumns()) {
-            recordGenerators.put(columns.getColumnName(), new RecordGenerator(columns));
+            recordGenerators.put(columns.getColumnName(), new FieldGenerator(columns));
         }
         this.recordGenerators = recordGenerators.build();
     }

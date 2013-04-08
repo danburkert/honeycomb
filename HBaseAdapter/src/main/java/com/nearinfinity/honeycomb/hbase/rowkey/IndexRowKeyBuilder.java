@@ -2,6 +2,7 @@ package com.nearinfinity.honeycomb.hbase.rowkey;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.nearinfinity.honeycomb.mysql.QueryKey;
 import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
@@ -14,8 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * A builder for creating {@link IndexRowKey} instances.  Builder instances can be reused as it is safe
@@ -26,9 +27,9 @@ public class IndexRowKeyBuilder {
     private long tableId;
     private long indexId;
     private SortOrder order;
-    private List<String> columnNames;
+    private String indexName;
     private TableSchema tableSchema;
-    private Map<String, ByteBuffer> records;
+    private Map<String, ByteBuffer> fields;
     private UUID uuid;
 
     private IndexRowKeyBuilder() {
@@ -108,40 +109,39 @@ public class IndexRowKeyBuilder {
      *
      *
      * @param row           SQL row
-     * @param indexColumns  Columns in the index
+     * @param indexName     Columns in the index
      * @param tableSchema   Table schema
      * @return The current builder instance
      */
-    public IndexRowKeyBuilder withSqlRow(Row row,
-                                      List<String> indexColumns,
+    public IndexRowKeyBuilder withRow(Row row,
+                                      String indexName,
                                       TableSchema tableSchema) {
-        checkNotNull(row, "row cannot be null.");
+        checkNotNull(row, "row must not be null.");
         Map<String, ByteBuffer> recordCopy = Maps.newHashMap(row.getRecords());
-        for (String column : indexColumns) {
+        for (String column : tableSchema.getIndexSchema(indexName).getColumns()) {
             if (!recordCopy.containsKey(column)) {
                 recordCopy.put(column, null);
             }
         }
-        return withQueryValues(recordCopy, indexColumns, tableSchema);
+        this.fields = row.getRecords();
+        this.indexName = indexName;
+        this.tableSchema = tableSchema;
+        return this;
     }
 
     /**
-     * Set the values of the index row based on a sql key. (This method is intended for queries)
+     * Set the values of the index row based on a QueryKey.
      *
-     *
-     * @param records       Index key values
-     * @param indexColumns  Columns in the index
+     * @param queryKey      Query key
      * @param tableSchema   Table schema
      * @return The current builder instance
      */
-    public IndexRowKeyBuilder withQueryValues(Map<String, ByteBuffer> records,
-                                           List<String> indexColumns,
+    public IndexRowKeyBuilder withQueryKey(QueryKey queryKey,
                                            TableSchema tableSchema) {
-        checkNotNull(records, "records must be set on IndexRowBuilder");
-        checkNotNull(indexColumns, "Index columns must be set on IndexRowBuilder");
-        checkNotNull(tableSchema, "Column schemas must be set on IndexRowBuilder");
-        this.records = records;
-        this.columnNames = indexColumns;
+        checkNotNull(queryKey, "queryKey must not be null.");
+        checkNotNull(tableSchema, "tableSchema must not be null.");
+        this.fields = queryKey.getKeys();
+        this.indexName = queryKey.getIndexName();
         this.tableSchema = tableSchema;
         return this;
     }
@@ -165,14 +165,14 @@ public class IndexRowKeyBuilder {
      * @return A new row instance constructed by the builder
      */
     public IndexRowKey build() {
-        checkArgument(order != null, "Sort order must be set on IndexRowBuilder.");
+        checkState(order != null, "Sort order must be set on IndexRowBuilder.");
         List<byte[]> encodedRecords = Lists.newArrayList();
-        if (records != null) {
-            for (String column : columnNames) {
-                if (!records.containsKey(column)) {
+        if (fields != null) {
+            for (String column : tableSchema.getIndexSchema(indexName).getColumns()) {
+                if (!fields.containsKey(column)) {
                     continue;
                 }
-                ByteBuffer record = records.get(column);
+                ByteBuffer record = fields.get(column);
                 if (record != null) {
                     byte[] encodedRecord = encodeValue(record,
                             tableSchema.getColumnSchema(column));

@@ -114,20 +114,6 @@ public class TableSchema {
     }
 
     /**
-     * Retrieve a map of column name to column schema.
-     *
-     * @return Column name to column schema map
-     */
-    public Map<String, ColumnSchema> getColumnsMap() {
-        Map<String, ColumnSchema> map = Maps.newHashMap();
-        for (ColumnSchema columnSchema : columns) {
-            map.put(columnSchema.getColumnName(), columnSchema);
-        }
-
-        return map;
-    }
-
-    /**
      * Add an index schema to the table schema
      *
      * @param indices New index schemas [Not null]

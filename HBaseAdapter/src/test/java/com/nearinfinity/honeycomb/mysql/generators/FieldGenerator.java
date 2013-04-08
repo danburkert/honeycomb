@@ -8,10 +8,10 @@ import net.java.quickcheck.generator.PrimitiveGenerators;
 
 import java.nio.ByteBuffer;
 
-public class RecordGenerator implements Generator<ByteBuffer> {
+public class FieldGenerator implements Generator<ByteBuffer> {
     Generator<byte[]> generator;
 
-    public RecordGenerator(ColumnSchema schema) {
+    public FieldGenerator(ColumnSchema schema) {
         switch (schema.getType()) {
             case ULONG:
             case LONG:

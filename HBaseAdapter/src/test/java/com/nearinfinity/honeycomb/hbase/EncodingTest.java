@@ -8,7 +8,9 @@ import com.nearinfinity.honeycomb.IndexSchemaFactory;
 import com.nearinfinity.honeycomb.TableSchemaFactory;
 import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowKeyBuilder;
 import com.nearinfinity.honeycomb.hbase.rowkey.SortOrder;
+import com.nearinfinity.honeycomb.mysql.QueryKey;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
+import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
@@ -61,20 +63,20 @@ public class EncodingTest {
         ColumnSchema c1 = ColumnSchemaFactory.createColumnSchema();
         c1.setType(ColumnType.LONG);
         columnSchemas.put("c1", c1);
-        IndexSchema indexSchema = IndexSchemaFactory.createIndexSchema(ImmutableList.<String>of("c1"), false);
+        IndexSchema indexSchema = IndexSchemaFactory.createIndexSchema(ImmutableList.<String>of("i1"), false);
         TableSchema tableSchema = TableSchemaFactory.createTableSchema(columnSchemas,
                 ImmutableMap.<String, IndexSchema>of("c1", indexSchema));
+        QueryKey queryKey = new QueryKey("i1", QueryType.AFTER_KEY, records);
 
         for (int i = 0; i < 100; i++) {
             numbers.add(longs.next());
         }
 
         for (long number : numbers) {
-            records.put("c1",
-                    (ByteBuffer) ByteBuffer.wrap(Longs.toByteArray(number)));
+            records.put("c1", ByteBuffer.wrap(Longs.toByteArray(number)));
             rows.add(new Pair<Long, byte[]>(number, builder
                     .withUUID(UUID.randomUUID())
-                    .withQueryValues(records, indexSchema.getColumns(), tableSchema)
+                    .withQueryKey(queryKey, tableSchema)
                     .build().encode()));
         }
         return rows;

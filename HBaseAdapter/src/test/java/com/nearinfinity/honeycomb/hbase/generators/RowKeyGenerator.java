@@ -1,12 +1,14 @@
 package com.nearinfinity.honeycomb.hbase.generators;
 
 import com.nearinfinity.honeycomb.hbase.rowkey.*;
+import com.nearinfinity.honeycomb.mysql.QueryKey;
 import com.nearinfinity.honeycomb.mysql.Row;
-import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
-import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
+import com.nearinfinity.honeycomb.mysql.generators.QueryKeyGenerator;
 import com.nearinfinity.honeycomb.mysql.generators.RowGenerator;
 import com.nearinfinity.honeycomb.mysql.generators.TableSchemaGenerator;
 import com.nearinfinity.honeycomb.mysql.generators.UUIDGenerator;
+import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import net.java.quickcheck.FrequencyGenerator;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.CombinedGenerators;
@@ -42,33 +44,30 @@ public class RowKeyGenerator implements Generator<RowKey> {
         rowKeyGen.add(new TableIDRowGenerator(), 1);
         rowKeyGen.add(new DataRowGenerator(randIdGen), 3);
         rowKeyGen.add(new DataRowGenerator(fixedLong()), 3);
-        rowKeyGen.add(new IndexRowGenerator(randIdGen, randIdGen, tableSchemaGen, randSortOrder), 4);
-        rowKeyGen.add(new IndexRowGenerator(fixedLong(), randIdGen, fixedTableSchema(), randSortOrder), 4);
-        rowKeyGen.add(new IndexRowGenerator(fixedLong(), fixedLong(), fixedTableSchema(), randSortOrder), 8);
+        rowKeyGen.add(new IndexRowGenerator(randIdGen, randIdGen, tableSchemaGen.next(), randSortOrder), 4);
+        rowKeyGen.add(new IndexRowGenerator(fixedLong(), randIdGen, tableSchemaGen.next(), randSortOrder), 4);
+        rowKeyGen.add(new IndexRowGenerator(fixedLong(), fixedLong(), tableSchemaGen.next(), randSortOrder), 8);
 
     }
 
     private Generator<Long> fixedLong() {
         return PrimitiveGenerators.fixedValues(randIdGen.next());
     }
-    private Generator<TableSchema> fixedTableSchema() {
-        return PrimitiveGenerators.fixedValues(new TableSchemaGenerator(1).next());
-    }
 
     public static Generator<RowKey> getAscIndexRowKeyGenerator(TableSchema schema) {
         return new IndexRowGenerator(
-                PrimitiveGenerators.fixedValues(1L),
-                PrimitiveGenerators.fixedValues(1L),
-                PrimitiveGenerators.fixedValues(schema),
+                PrimitiveGenerators.fixedValues(randIdGen.next()),
+                PrimitiveGenerators.fixedValues(randIdGen.next()),
+                schema,
                 PrimitiveGenerators.fixedValues(SortOrder.Ascending)
         );
     }
 
     public static Generator<RowKey> getDescIndexRowKeyGenerator(TableSchema schema) {
         return new IndexRowGenerator(
-                PrimitiveGenerators.fixedValues(1L),
-                PrimitiveGenerators.fixedValues(1L),
-                PrimitiveGenerators.fixedValues(schema),
+                PrimitiveGenerators.fixedValues(randIdGen.next()),
+                PrimitiveGenerators.fixedValues(randIdGen.next()),
+                schema,
                 PrimitiveGenerators.fixedValues(SortOrder.Descending)
         );
     }
@@ -104,7 +103,6 @@ public class RowKeyGenerator implements Generator<RowKey> {
                 return new ColumnsRowKey(randIdGen.next());
             } else {
                 return new IndicesRowKey(randIdGen.next());
-
             }
         }
     }
@@ -126,35 +124,43 @@ public class RowKeyGenerator implements Generator<RowKey> {
         private final Generator<Long> tableIds;
         private final Generator<Long> indexIds;
         private final TableSchema tableSchema;
-        private final IndexSchema indexSchema;
+        private final Generator<IndexSchema> indexSchemas;
         private final Generator<Row> rows;
+        private final Generator<QueryKey> queryKeys;
         private final Generator<SortOrder> order;
 
         public IndexRowGenerator(
                 Generator<Long> tableIds,
                 Generator<Long> indexIds,
-                Generator<TableSchema> schemas,
+                TableSchema tableSchema,
                 Generator<SortOrder> order) {
             this.tableIds = tableIds;
             this.indexIds = indexIds;
-            this.tableSchema = schemas.next();
+            this.tableSchema = tableSchema;
             Collection<IndexSchema> indices = this.tableSchema.getIndices();
             checkState(indices.size() > 0, "Generated table schema must have an index.");
-            this.indexSchema = indices.toArray(new IndexSchema[0])[RAND.nextInt(indices.size())];
+            this.indexSchemas = PrimitiveGenerators.fixedValues(indices);
             this.rows = new RowGenerator(this.tableSchema);
+            this.queryKeys = new QueryKeyGenerator(this.tableSchema);
             this.order = order;
         }
 
         @Override
         public RowKey next() {
-            Row row = rows.next();
-            IndexRowKeyBuilder builder = IndexRowKeyBuilder
-                    .newBuilder(tableIds.next(), indexIds.next())
-                    .withQueryValues(row.getRecords(),
-                            indexSchema.getColumns(),
-                            tableSchema)
-                    .withUUID(row.getUUID());
-
+            IndexRowKeyBuilder builder;
+            if (RAND.nextBoolean()) {
+                Row row = rows.next();
+                builder = IndexRowKeyBuilder
+                        .newBuilder(tableIds.next(), indexIds.next())
+                        .withRow(row,
+                                indexSchemas.next().getIndexName(),
+                                tableSchema)
+                        .withUUID(row.getUUID());
+            } else {
+                builder = IndexRowKeyBuilder
+                        .newBuilder(tableIds.next(), indexIds.next())
+                        .withQueryKey(queryKeys.next(), tableSchema);
+            }
             return builder.withSortOrder(order.next()).build();
         }
     }
