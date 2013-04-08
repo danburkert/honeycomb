@@ -2,6 +2,7 @@ package com.nearinfinity.honeycomb.mysql;
 
 import com.google.common.collect.ImmutableList;
 import com.nearinfinity.honeycomb.mysql.gen.AvroIndexSchema;
+import com.nearinfinity.honeycomb.util.Verify;
 import net.jcip.annotations.Immutable;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DatumWriter;
@@ -9,6 +10,8 @@ import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
 
 import java.util.List;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 @Immutable
 public class IndexSchema {
@@ -19,15 +22,37 @@ public class IndexSchema {
     private final AvroIndexSchema avroIndexSchema;
     private final String indexName;
 
+    /**
+     * Construct an index schema based on a avro index schema and index name
+     *
+     * @param avroIndexSchema Avro index schema [Not null]
+     * @param indexName       Index name [Not null, Not empty]
+     */
     public IndexSchema(AvroIndexSchema avroIndexSchema, String indexName) {
+        checkNotNull(avroIndexSchema);
+        Verify.isNotNullOrEmpty(indexName);
         this.avroIndexSchema = AvroIndexSchema.newBuilder(avroIndexSchema).build();
         this.indexName = indexName;
     }
 
+    /**
+     * Deserialize a byte array into an index schema.
+     *
+     * @param serializedIndexSchema Byte array of the index schema [Not null]
+     * @param indexName             Name of the index [Not null, Not empty]
+     * @return An index schema for the byte array.
+     */
     public static IndexSchema deserialize(byte[] serializedIndexSchema, String indexName) {
+        checkNotNull(serializedIndexSchema);
+        Verify.isNotNullOrEmpty(indexName);
         return new IndexSchema(Util.deserializeAvroObject(serializedIndexSchema, reader), indexName);
     }
 
+    /**
+     * Retrieve the name of this index.
+     *
+     * @return Index name
+     */
     public String getIndexName() {
         return indexName;
     }
@@ -41,6 +66,11 @@ public class IndexSchema {
         return ImmutableList.copyOf(avroIndexSchema.getColumns());
     }
 
+    /**
+     * Retrieve whether this index is unique.
+     *
+     * @return Is a unique index?
+     */
     public boolean getIsUnique() {
         return avroIndexSchema.getIsUnique();
     }
@@ -54,6 +84,11 @@ public class IndexSchema {
         return AvroIndexSchema.newBuilder(avroIndexSchema).build();
     }
 
+    /**
+     * Serialize the index schema out to a byte array
+     *
+     * @return Serialized form of the index schema
+     */
     public byte[] serialize() {
         return Util.serializeAvroObject(avroIndexSchema, writer);
     }
