@@ -18,6 +18,20 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-clean-plugin</artifactId>
+                <configuration>
+                    <filesets>
+                        <fileset>
+                            <directory>${basedir}/src/main/java/com/nearinfinity/honeycomb/mysql/gen</directory>
+                            <includes>
+                                <include>**/*.java</include>
+                            </includes>
+                        </fileset>
+                    </filesets>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.avro</groupId>
                 <artifactId>avro-maven-plugin</artifactId>
                 <version>1.7.3</version>
@@ -70,11 +84,10 @@
                         </ignores>
                         <excludes>
                             <exclude>com/nearinfinity/honeycomb/mysql/gen/**/*.class</exclude>
-                            
-                            <!-- 
-                            Excluded due to Java 6 bug: http://bugs.sun.com/view_bug.do?bug_id=6889255
-                            The usage of the @Named annotation in the StoreFactory constructor is at fault
-                             -->
+
+                            <!-- Excluded due to Java 6 bug: http://bugs.sun.com/view_bug.do?bug_id=6889255 
+                                The usage of the @Named annotation in the StoreFactory constructor is at 
+                                fault -->
                             <exclude>com/nearinfinity/honeycomb/mysql/StoreFactory.class</exclude>
                             <exclude>com/nearinfinity/honeycomb/mysql/StoreFactoryTest.class</exclude>
                         </excludes>
