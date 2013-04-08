@@ -1,22 +1,29 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import com.google.common.collect.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static java.lang.String.format;
+
+import java.nio.ByteBuffer;
+import java.util.Set;
+
+import org.apache.log4j.Logger;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.MapDifference;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.util.Verify;
 
-import org.apache.log4j.Logger;
-
-import java.nio.ByteBuffer;
-import java.util.Set;
-
-import static com.google.common.base.Preconditions.*;
-import static java.lang.String.format;
-
 public class HandlerProxy {
     private static final Logger logger = Logger.getLogger(HandlerProxy.class);
+
     private final StoreFactory storeFactory;
     private Store store;
     private Table table;
@@ -60,8 +67,7 @@ public class HandlerProxy {
     public void dropTable(String tableName, String tableSpace) {
         Verify.isNotNullOrEmpty(tableName);
         Store store = storeFactory.createStore(tableSpace);
-        Table table;
-        table = store.openTable(tableName);
+        Table table = store.openTable(tableName);
 
         table.deleteAllRows();
         Util.closeQuietly(table);
@@ -138,7 +144,6 @@ public class HandlerProxy {
      * current value.
      *
      * @param value
-     * @return
      */
     public void setAutoIncrement(long value) {
         checkTableOpen();
@@ -151,7 +156,7 @@ public class HandlerProxy {
      * not the incremented value (equivalently, the incremented value - amount).
      *
      * @param amount
-     * @return
+     * @return The specified amount subtracted from the incremented value
      */
     public long incrementAutoIncrement(long amount) {
         checkTableOpen();
@@ -209,6 +214,7 @@ public class HandlerProxy {
      *
      * @param indexName
      * @param serializedRow
+     * @return True If a duplicate is found, False otherwise
      */
     public boolean indexContainsDuplicate(String indexName, byte[] serializedRow) {
         // This method must get its own table because it may be called during
@@ -240,8 +246,6 @@ public class HandlerProxy {
      * Insert row into table.
      *
      * @param rowBytes Serialized row to be written
-     * @return true if the write succeeds, or false if a uniqueness constraint
-     *         is violated.
      */
     public void insertRow(byte[] rowBytes) {
         checkTableOpen();
