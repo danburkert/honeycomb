@@ -39,7 +39,7 @@ public class ColumnSchema {
         checkArgument(maxLength >= 0, "Max length can't be below zero.");
         checkArgument(scale >= 0, "Scale can't be below zero.");
         checkArgument(precision >= 0, "Precision can't be below zero.");
-        this.avroColumnSchema = new AvroColumnSchema(ColumnType.valueOf(type.name()), isNullable, isAutoIncrement, maxLength, scale, precision);
+        avroColumnSchema = new AvroColumnSchema(ColumnType.valueOf(type.name()), isNullable, isAutoIncrement, maxLength, scale, precision);
         this.columnName = columnName;
     }
 
