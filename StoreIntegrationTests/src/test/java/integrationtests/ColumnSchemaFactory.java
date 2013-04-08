@@ -8,11 +8,11 @@ public class ColumnSchemaFactory {
 
     public static ColumnSchema createColumnSchema(ColumnType type, boolean isNullable, boolean isAutoIncrement, int maxLength, int scale, int precision) {
         AvroColumnSchema avroColumnSchema = new AvroColumnSchema(type, isNullable, isAutoIncrement, maxLength, scale, precision);
-        return new ColumnSchema(avroColumnSchema, "default");
+        return new ColumnSchema("default", avroColumnSchema);
     }
 
     public static ColumnSchema createColumnSchema(ColumnType type, boolean isNullable, boolean isAutoIncrement, int maxLength, int scale, int precision, String columnName) {
         AvroColumnSchema avroColumnSchema = new AvroColumnSchema(type, isNullable, isAutoIncrement, maxLength, scale, precision);
-        return new ColumnSchema(avroColumnSchema, columnName);
+        return new ColumnSchema(columnName, avroColumnSchema);
     }
 }

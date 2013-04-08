@@ -8,6 +8,6 @@ import java.util.List;
 public class IndexSchemaFactory {
     public static IndexSchema createIndexSchema(List<String> columns, boolean isUnique, String indexName) {
         AvroIndexSchema avroIndexSchema = new AvroIndexSchema(columns, isUnique);
-        return new IndexSchema(avroIndexSchema, indexName);
+        return new IndexSchema(indexName, avroIndexSchema);
     }
 }

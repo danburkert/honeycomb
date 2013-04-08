@@ -1,7 +1,12 @@
 package com.nearinfinity.honeycomb.hbase.rowkey;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.nearinfinity.honeycomb.mysql.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.Row;
+import com.nearinfinity.honeycomb.mysql.TableSchema;
+import com.nearinfinity.honeycomb.util.Verify;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -9,13 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.apache.hadoop.hbase.util.Bytes;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.nearinfinity.honeycomb.mysql.ColumnSchema;
-import com.nearinfinity.honeycomb.mysql.Row;
-import com.nearinfinity.honeycomb.util.Verify;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * A builder for creating {@link IndexRowKey} instances.  Builder instances can be reused as it is safe
@@ -26,8 +26,8 @@ public class IndexRowKeyBuilder {
     private long tableId;
     private long indexId;
     private SortOrder order;
-    private List<String> schema;
-    private Map<String, ColumnSchema> columnSchemas;
+    private List<String> columnNames;
+    private TableSchema tableSchema;
     private Map<String, ByteBuffer> records;
     private UUID uuid;
 
@@ -42,7 +42,7 @@ public class IndexRowKeyBuilder {
      * @return The current builder instance
      */
     public static IndexRowKeyBuilder newBuilder(long tableId,
-                                             long indexId) {
+                                                long indexId) {
         Verify.isValidId(tableId);
         Verify.isValidId(indexId);
         IndexRowKeyBuilder builder = new IndexRowKeyBuilder();
@@ -102,17 +102,19 @@ public class IndexRowKeyBuilder {
     }
 
     /**
-     * Set the values of the index row based on a sql row. If an index column is missing from the sql row
-     * it is replaced with an explicit null. (This method is intended for insert)
+     * Set the values of the index row based on a sql row. If an index column is
+     * missing from the sql row it is replaced with an explicit null. (This
+     * method is intended for insert)
+     *
      *
      * @param row           SQL row
      * @param indexColumns  Columns in the index
-     * @param columnSchemas Layout of the index
+     * @param tableSchema   Table schema
      * @return The current builder instance
      */
     public IndexRowKeyBuilder withSqlRow(Row row,
                                       List<String> indexColumns,
-                                      Map<String, ColumnSchema> columnSchemas) {
+                                      TableSchema tableSchema) {
         checkNotNull(row, "row cannot be null.");
         Map<String, ByteBuffer> recordCopy = Maps.newHashMap(row.getRecords());
         for (String column : indexColumns) {
@@ -120,26 +122,27 @@ public class IndexRowKeyBuilder {
                 recordCopy.put(column, null);
             }
         }
-        return withQueryValues(recordCopy, indexColumns, columnSchemas);
+        return withQueryValues(recordCopy, indexColumns, tableSchema);
     }
 
     /**
      * Set the values of the index row based on a sql key. (This method is intended for queries)
      *
+     *
      * @param records       Index key values
      * @param indexColumns  Columns in the index
-     * @param columnSchemas Layout of the index
+     * @param tableSchema   Table schema
      * @return The current builder instance
      */
     public IndexRowKeyBuilder withQueryValues(Map<String, ByteBuffer> records,
                                            List<String> indexColumns,
-                                           Map<String, ColumnSchema> columnSchemas) {
+                                           TableSchema tableSchema) {
         checkNotNull(records, "records must be set on IndexRowBuilder");
         checkNotNull(indexColumns, "Index columns must be set on IndexRowBuilder");
-        checkNotNull(columnSchemas, "Column schemas must be set on IndexRowBuilder");
+        checkNotNull(tableSchema, "Column schemas must be set on IndexRowBuilder");
         this.records = records;
-        schema = indexColumns;
-        this.columnSchemas = columnSchemas;
+        this.columnNames = indexColumns;
+        this.tableSchema = tableSchema;
         return this;
     }
 
@@ -165,14 +168,14 @@ public class IndexRowKeyBuilder {
         checkState(order != null, "Sort order must be set on IndexRowBuilder.");
         List<byte[]> encodedRecords = Lists.newArrayList();
         if (records != null) {
-            for (String column : schema) {
+            for (String column : columnNames) {
                 if (!records.containsKey(column)) {
                     continue;
                 }
                 ByteBuffer record = records.get(column);
                 if (record != null) {
                     byte[] encodedRecord = encodeValue(record,
-                            columnSchemas.get(column));
+                            tableSchema.getColumnSchema(column));
                     encodedRecords.add(order == SortOrder.Ascending
                             ? encodedRecord
                             : reverseValue(encodedRecord));

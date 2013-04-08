@@ -152,7 +152,7 @@ public class RowKeyGenerator implements Generator<RowKey> {
                     .newBuilder(tableIds.next(), indexIds.next())
                     .withQueryValues(row.getRecords(),
                             indexSchema.getColumns(),
-                            tableSchema.getColumnsMap())
+                            tableSchema)
                     .withUUID(row.getUUID());
 
             return builder.withSortOrder(order.next()).build();
