@@ -14,8 +14,8 @@ public class VerifyTest {
     private static final String COLUMN_A = "columnA";
     private static final String COLUMN_B = "columnB";
     private static final List<IndexSchema> INDICES = ImmutableList.of(
-            new IndexSchema(ImmutableList.<String>of(COLUMN_A), false, "INDEX_A"),
-            new IndexSchema(ImmutableList.<String>of(COLUMN_B), false, "INDEX_B"));
+            new IndexSchema("INDEX_A", ImmutableList.<String>of(COLUMN_A), false),
+            new IndexSchema("INDEX_B", ImmutableList.<String>of(COLUMN_B), false));
     private static final List<ColumnSchema> COLUMNS = ImmutableList.of(
             ColumnSchema.builder(COLUMN_A, ColumnType.LONG).build(),
             ColumnSchema.builder(COLUMN_B, ColumnType.LONG).build());
@@ -68,7 +68,7 @@ public class VerifyTest {
     @Test(expected = IllegalArgumentException.class)
     public void testIsValidIndexSchemaInvalidColumn() {
         final List<IndexSchema> indices = ImmutableList.of(
-                new IndexSchema(ImmutableList.of("invalid"), false, "index_name")
+                new IndexSchema("index_name", ImmutableList.of("invalid"), false)
         );
 
         Verify.isValidIndexSchema(indices, COLUMNS);

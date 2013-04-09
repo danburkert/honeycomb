@@ -42,10 +42,10 @@ public class ITUtils {
         columns.add(ColumnSchema.builder(TestConstants.COLUMN2, ColumnType.LONG).build());
 
         // Add non-unique index on one column
-        indices.add(new IndexSchema(Lists.newArrayList(TestConstants.COLUMN1), false, TestConstants.INDEX1));
+        indices.add(new IndexSchema(TestConstants.INDEX1, Lists.newArrayList(TestConstants.COLUMN1), false));
 
         // Add non-unique compound index on (c1, c2)
-        indices.add(new IndexSchema(Lists.newArrayList(TestConstants.COLUMN1, TestConstants.COLUMN2), false, TestConstants.INDEX2));
+        indices.add(new IndexSchema(TestConstants.INDEX2, Lists.newArrayList(TestConstants.COLUMN1, TestConstants.COLUMN2), false));
 
         return new TableSchema(columns, indices);
     }

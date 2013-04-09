@@ -11,8 +11,10 @@ import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.HTablePool;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.io.LongWritable;
@@ -37,32 +39,40 @@ public class BulkLoadMapper
     private TableSchema schema;
     private MutationFactory mutationFactory;
 
+    private static final String HBASE_TABLE = "honeycomb.hbase.table";
+    private static final String SQL_TABLE = "honeycomb.sql.table";
+    private static final String SQL_COLUMNS = "honeycomb.sql.columns";
+    private static final String SEPARATOR = "importtsv.separator";
+
+    private static final String NOT_SET_ERROR = " not set.  Job will fail.";
+
     @Override
     protected void setup(Context context)
-            throws IOException, InterruptedException {
+            throws IOException {
         Configuration conf = context.getConfiguration();
 
-        char separator  = conf.get("importtsv.separator", " ").charAt(0);
-        columns = conf.getStrings("honeycomb.sql.columns");
-        String zkQuorum = conf.get("zk.quorum");
-        String sqlTable = conf.get("honeycomb.sql.table");
-        String hbaseTable  = conf.get("honeycomb.hb.table");
+        char separator  = conf.get(SEPARATOR, " ").charAt(0);
+        columns = conf.getStrings(SQL_COLUMNS);
+        String sqlTable = conf.get(SQL_TABLE);
+        String hbaseTable  = conf.get(HBASE_TABLE);
 
         // Check that necessary configuration variables are set
-        checkNotNull(zkQuorum, "zk.quorum not set.  Job will fail.");
-        checkNotNull(sqlTable, "honeycomb.sql.table not set.  Job will fail.");
-        checkNotNull(columns, "honeycomb.sql.columns not set.  Job will fail.");
-        checkNotNull(hbaseTable, "honeycomb.hb.table not set.  Job will fail.");
+        checkNotNull(conf.get(HConstants.ZOOKEEPER_QUORUM),
+                HConstants.ZOOKEEPER_QUORUM + NOT_SET_ERROR);
+        checkNotNull(sqlTable, SQL_TABLE + NOT_SET_ERROR);
+        checkNotNull(columns, SQL_COLUMNS + NOT_SET_ERROR);
+        checkNotNull(hbaseTable, HBASE_TABLE + NOT_SET_ERROR);
 
         final HTableInterface table = new HTable(conf, hbaseTable);
-        HBaseMetadata metadata = new HBaseMetadata(new SingleHTableProvider(table));
+        final HTablePool pool = new HTablePool(conf, 1);
+        HBaseMetadata metadata = new HBaseMetadata(new PoolHTableProvider(hbaseTable, pool));
         HBaseStore store = new HBaseStore(metadata, null, new MetadataCache(metadata));
 
         tableId = store.getTableId(sqlTable);
         schema = store.getSchema(sqlTable);
         mutationFactory = new MutationFactory(store);
 
-        rowParser = new RowParser(schema, columns, separator, columns);
+        rowParser = new RowParser(schema, columns, separator);
 
         checkSqlColumnsMatch(sqlTable);
     }
@@ -90,8 +100,7 @@ public class BulkLoadMapper
     }
 
     @Override
-    public void map(LongWritable offset, Text line, Context context)
-            throws InterruptedException {
+    public void map(LongWritable offset, Text line, Context context) {
         try {
             Row row = rowParser.parseRow(line.toString());
 

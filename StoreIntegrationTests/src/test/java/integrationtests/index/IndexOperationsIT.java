@@ -27,7 +27,7 @@ public class IndexOperationsIT extends HoneycombIntegrationTest {
 
     @Test
     public void testAddIndex() {
-        final IndexSchema indexSchema = new IndexSchema(Lists.newArrayList(TestConstants.COLUMN1), false, NEW_INDEX_NAME);
+        final IndexSchema indexSchema = new IndexSchema(NEW_INDEX_NAME, Lists.newArrayList(TestConstants.COLUMN1), false);
 
         // Add data rows to index
         ITUtils.insertData(proxy, ROW_COUNT, INDEX_COL_VALUE);
@@ -46,7 +46,7 @@ public class IndexOperationsIT extends HoneycombIntegrationTest {
     @Test
     public void testAddCompoundIndex() {
         // Create the compound index ordered as (col2, col1)
-        final IndexSchema indexSchema = new IndexSchema(Lists.newArrayList(TestConstants.COLUMN2, TestConstants.COLUMN1), false, NEW_INDEX_NAME);
+        final IndexSchema indexSchema = new IndexSchema(NEW_INDEX_NAME, Lists.newArrayList(TestConstants.COLUMN2, TestConstants.COLUMN1), false);
 
         final int column2Value = 0;
 

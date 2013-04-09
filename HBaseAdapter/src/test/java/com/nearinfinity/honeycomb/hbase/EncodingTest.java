@@ -24,7 +24,7 @@ public class EncodingTest {
     private static TableSchema tableSchema =
             new TableSchema(
                     ImmutableList.of(ColumnSchema.builder(COLUMN, ColumnType.LONG).build()),
-                    ImmutableList.of(new IndexSchema(ImmutableList.of(COLUMN), false, "i1"))
+                    ImmutableList.of(new IndexSchema("i1", ImmutableList.of(COLUMN), false))
             );
 
     @Test

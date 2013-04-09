@@ -20,7 +20,6 @@ import static org.junit.Assert.assertNull;
  * Provides test cases for the {@link FieldParser} class. All test values used
  * for column type data comes from the valid datatype ranges of the database in
  * which the values were received from
- *
  */
 public class FieldParserTest {
 

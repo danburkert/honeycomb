@@ -48,7 +48,7 @@ public class RowKeyTest {
         String columnName = "c1";
         String indexName = "i1";
         ColumnSchema columnSchema = ColumnSchema.builder("default", ColumnType.DATETIME).build();
-        IndexSchema indexSchema = new IndexSchema(ImmutableList.of(columnName), false, indexName);
+        IndexSchema indexSchema = new IndexSchema(indexName, ImmutableList.of(columnName), false);
         TableSchema tableSchema = new TableSchema(ImmutableList.of(columnSchema), ImmutableList.of(indexSchema));
 
         Generator<RowKey> rowkeysGen = RowKeyGenerator.getAscIndexRowKeyGenerator(tableSchema);

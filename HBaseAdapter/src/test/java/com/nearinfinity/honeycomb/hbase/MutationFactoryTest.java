@@ -41,8 +41,8 @@ public class MutationFactoryTest {
         add(ColumnSchema.builder(COLUMN2, ColumnType.STRING).setMaxLength(32).build());
     }};
     private static final List<IndexSchema> INDICES = new ArrayList<IndexSchema>() {{
-        add(new IndexSchema(Lists.newArrayList(COLUMN1), false, INDEX1));
-        add(new IndexSchema(Lists.newArrayList(COLUMN1, COLUMN2), true, INDEX2));
+        add(new IndexSchema(INDEX1, Lists.newArrayList(COLUMN1), false));
+        add(new IndexSchema(INDEX2, Lists.newArrayList(COLUMN1, COLUMN2), true));
     }};
     private static final Row row = new Row(
             new HashMap<String, ByteBuffer>() {{

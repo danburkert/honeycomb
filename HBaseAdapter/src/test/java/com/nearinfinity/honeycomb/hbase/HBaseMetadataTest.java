@@ -107,7 +107,7 @@ public class HBaseMetadataTest {
     public void testLookupIndexIdsValidTableId() {
         final TableSchema tableSchema = new TableSchema(
                 COLUMN_SCHEMAS,
-                ImmutableList.of(new IndexSchema(Lists.newArrayList(COLUMN_NAME), false, INDEX_NAME))
+                ImmutableList.of(new IndexSchema(INDEX_NAME, Lists.newArrayList(COLUMN_NAME), false))
         );
 
         hbaseMetadata.createTable(TABLE_NAME, tableSchema);
@@ -254,7 +254,7 @@ public class HBaseMetadataTest {
     }
 
     private IndexSchema getIndexEmpty(String indexName) {
-        return new IndexSchema(new ArrayList<String>(), false, indexName);
+        return new IndexSchema(indexName, new ArrayList<String>(), false);
     }
 
     @Test(expected = NullPointerException.class)
@@ -277,7 +277,7 @@ public class HBaseMetadataTest {
 
         // Add a new index to the table
         hbaseMetadata.createTableIndex(tableId,
-                new IndexSchema(ImmutableList.<String>of(COLUMN_NAME), false, INDEX_NAME));
+                new IndexSchema(INDEX_NAME, ImmutableList.<String>of(COLUMN_NAME), false));
 
         // Verify that the table schema has been correctly updated
 
@@ -324,7 +324,7 @@ public class HBaseMetadataTest {
         final TableSchema tableSchema =
                 new TableSchema(COLUMN_SCHEMAS,
                         ImmutableList.<IndexSchema>of(
-                                new IndexSchema(Lists.newArrayList(COLUMN_NAME), false, INDEX_NAME)));
+                                new IndexSchema(INDEX_NAME, Lists.newArrayList(COLUMN_NAME), false)));
 
         // Create a new table with the configured details
         hbaseMetadata.createTable(TABLE_NAME, tableSchema);

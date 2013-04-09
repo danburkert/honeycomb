@@ -17,7 +17,7 @@ public class RowParser {
     private final String[] columns;
     private final CSVParser csvParser;
 
-    public RowParser(TableSchema schema, String[] columns, char separator, String[] columns1) {
+    public RowParser(TableSchema schema, String[] columns, char separator) {
         this.schema = schema;
         this.columns = columns;
         this.csvParser = new CSVParser(separator);

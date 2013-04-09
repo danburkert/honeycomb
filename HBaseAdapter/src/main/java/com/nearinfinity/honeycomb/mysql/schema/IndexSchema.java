@@ -27,11 +27,11 @@ public class IndexSchema {
     /**
      * Construct an index schema for columns in a table.
      *
+     * @param indexName Name of the index
      * @param columns   Table columns
      * @param isUnique  Is a unique index?
-     * @param indexName Name of the index
      */
-    public IndexSchema(List<String> columns, boolean isUnique, String indexName) {
+    public IndexSchema(String indexName, List<String> columns, boolean isUnique) {
         checkNotNull(columns);
         Verify.isNotNullOrEmpty(indexName);
         avroIndexSchema = new AvroIndexSchema(ImmutableList.copyOf(columns), isUnique);
@@ -107,10 +107,11 @@ public class IndexSchema {
 
         IndexSchema that = (IndexSchema) o;
 
-        if (avroIndexSchema != null ? !avroIndexSchema.equals(that.avroIndexSchema) : that.avroIndexSchema != null)
-            return false;
-
-        return true;
+        if (avroIndexSchema == null) {
+            return that.avroIndexSchema == null;
+        } else {
+            return avroIndexSchema.equals(that.avroIndexSchema);
+        }
     }
 
     @Override

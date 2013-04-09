@@ -33,6 +33,6 @@ public class IndexSchemaGenerator implements Generator<IndexSchema> {
     public IndexSchema next() {
         Collections.shuffle(columnNames);
         List<String> columns = columnNames.subList(0, Math.min(lengthGen.next(), columnNames.size()));
-        return new IndexSchema(columns, RAND.nextBoolean(), MYSQL_NAME_GEN.next());
+        return new IndexSchema(MYSQL_NAME_GEN.next(), columns, RAND.nextBoolean());
     }
 }
