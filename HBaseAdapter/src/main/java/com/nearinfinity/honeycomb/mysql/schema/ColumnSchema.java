@@ -35,12 +35,12 @@ public class ColumnSchema {
      * @param precision       Column precision
      */
     private ColumnSchema(String columnName,
-                        ColumnType type,
-                        boolean isNullable,
-                        boolean isAutoIncrement,
-                        Integer maxLength,
-                        Integer scale,
-                        Integer precision) {
+                         ColumnType type,
+                         boolean isNullable,
+                         boolean isAutoIncrement,
+                         Integer maxLength,
+                         Integer scale,
+                         Integer precision) {
         Verify.isNotNullOrEmpty(columnName);
         checkNotNull(type);
 
@@ -76,7 +76,7 @@ public class ColumnSchema {
      * @param columnName       Column name [Not null, Not empty]
      * @param avroColumnSchema Avro column schema [Not null]
      */
-    public ColumnSchema(String columnName, AvroColumnSchema avroColumnSchema) {
+    ColumnSchema(String columnName, AvroColumnSchema avroColumnSchema) {
         checkNotNull(avroColumnSchema);
         Verify.isNotNullOrEmpty(columnName);
         this.avroColumnSchema = AvroColumnSchema.newBuilder(avroColumnSchema).build();
