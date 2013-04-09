@@ -18,16 +18,15 @@ import org.junit.runner.Description;
  * of the application framework between test classes in the test suite.
  */
 public abstract class HoneycombIntegrationTest {
-    protected static HandlerProxyFactory factory;
     @Rule
     public final TestRule watcher = new TestWatcher() {
         @Override
         protected void starting(Description description) {
             System.out.println(String.format("Executing: %s", description.getMethodName()));
         }
-
-        ;
     };
+
+    protected static HandlerProxyFactory factory;
     protected HandlerProxy proxy;
 
     @BeforeClass

@@ -44,24 +44,6 @@ public class RowOperationsIT extends HoneycombIntegrationTest {
     }
 
     @Test
-    public void testInsertBuildsIndexCorrectlyOnNullColumns() {
-        final Map<String, ByteBuffer> map = Maps.newHashMap();
-        map.put(TestConstants.COLUMN1, ITUtils.encodeValue(INDEX_COL_VALUE));
-
-        final Row row = new Row(map, UUID.randomUUID());
-        proxy.insertRow(row.serialize());
-        proxy.flush();
-
-        HashMap<String, ByteBuffer> keys = Maps.newHashMap();
-        keys.put(TestConstants.COLUMN1, ITUtils.encodeValue(INDEX_COL_VALUE));
-        keys.put(TestConstants.COLUMN2, null);
-
-        final QueryKey key = new QueryKey(TestConstants.INDEX2, QueryType.EXACT_KEY, keys);
-
-        ITUtils.assertReceivingDifferentRows(proxy, key, ROW_COUNT);
-    }
-
-    @Test
     public void testGetRow() {
         ITUtils.insertData(proxy, ROW_COUNT, INDEX_COL_VALUE);
 
