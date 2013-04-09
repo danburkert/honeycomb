@@ -45,7 +45,7 @@ public class ITUtils {
         indices.add(new IndexSchema(Lists.newArrayList(TestConstants.COLUMN1), false, TestConstants.INDEX1));
 
         // Add non-unique compound index on (c1, c2)
-        indices.add(new IndexSchema(Lists.newArrayList(TestConstants.COLUMN1, TestConstants.COLUMN2), false, TestConstants.INDEX1));
+        indices.add(new IndexSchema(Lists.newArrayList(TestConstants.COLUMN1, TestConstants.COLUMN2), false, TestConstants.INDEX2));
 
         return new TableSchema(columns, indices);
     }
@@ -195,6 +195,18 @@ public class ITUtils {
         HashMap<String, ByteBuffer> keys = Maps.newHashMap();
         keys.put(TestConstants.COLUMN1, encodeValue(keyValue));
         return new QueryKey(TestConstants.INDEX1, queryType, keys);
+    }
+
+    public static QueryKey createKey(final String indexName, final int keyValue, final QueryType queryType) {
+        HashMap<String, ByteBuffer> keys = Maps.newHashMap();
+        keys.put(TestConstants.COLUMN1, encodeValue(keyValue));
+        return new QueryKey(indexName, queryType, keys);
+    }
+
+    public static Row createRow(final int columnValue) {
+        final Map<String, ByteBuffer> map = Maps.newHashMap();
+        map.put(TestConstants.COLUMN1, encodeValue(columnValue));
+        return new Row(map, UUID.randomUUID());
     }
 
     private static void verifyRowCount(final long rowCount) {

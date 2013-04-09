@@ -107,10 +107,9 @@ public class IndexRowKeyBuilder {
      * missing from the sql row it is replaced with an explicit null. (This
      * method is intended for insert)
      *
-     *
-     * @param row           SQL row
-     * @param indexName     Columns in the index
-     * @param tableSchema   Table schema
+     * @param row         SQL row
+     * @param indexName   Columns in the index
+     * @param tableSchema Table schema
      * @return The current builder instance
      */
     public IndexRowKeyBuilder withRow(Row row,
@@ -123,6 +122,7 @@ public class IndexRowKeyBuilder {
                 recordCopy.put(column, null);
             }
         }
+
         this.fields = recordCopy;
         this.indexName = indexName;
         this.tableSchema = tableSchema;
@@ -132,8 +132,8 @@ public class IndexRowKeyBuilder {
     /**
      * Set the values of the index row based on a QueryKey.
      *
-     * @param queryKey      Query key
-     * @param tableSchema   Table schema
+     * @param queryKey    Query key
+     * @param tableSchema Table schema
      * @return The current builder instance
      */
     public IndexRowKeyBuilder withQueryKey(QueryKey queryKey,
@@ -202,7 +202,7 @@ public class IndexRowKeyBuilder {
         private static final byte[] NULL_BYTES = {0x01};
 
         public DescIndexRowKey(final long tableId, final long indexId,
-                            final List<byte[]> records, final UUID uuid) {
+                               final List<byte[]> records, final UUID uuid) {
             super(tableId, indexId, records, uuid, PREFIX, NOT_NULL_BYTES, NULL_BYTES, SortOrder.Descending);
         }
     }
@@ -217,7 +217,7 @@ public class IndexRowKeyBuilder {
         private static final byte[] NULL_BYTES = {0x00};
 
         public AscIndexRowKey(final long tableId, final long indexId,
-                           final List<byte[]> records, final UUID uuid) {
+                              final List<byte[]> records, final UUID uuid) {
             super(tableId, indexId, records, uuid, PREFIX, NOT_NULL_BYTES, NULL_BYTES, SortOrder.Ascending);
         }
     }
