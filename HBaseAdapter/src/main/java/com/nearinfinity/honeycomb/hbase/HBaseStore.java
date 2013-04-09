@@ -18,7 +18,6 @@ public class HBaseStore implements Store {
     private final HBaseTableFactory tableFactory;
     private final MetadataCache cache;
 
-    private final static ReadWriteLock metadataLock = new ReentrantReadWriteLock();
     private final static ReadWriteLock rowsLock = new ReentrantReadWriteLock();
     private final static ReadWriteLock autoIncrementLock = new ReentrantReadWriteLock();
 
@@ -30,102 +29,56 @@ public class HBaseStore implements Store {
     }
 
     public long getTableId(String tableName) {
-        try {
-            metadataLock.readLock().lock();
-            return metadata.getTableId(tableName);
-        } finally {
-            metadataLock.readLock().unlock();
-        }
+        return metadata.getTableId(tableName);
     }
 
     public BiMap<String, Long> getColumns(long tableId) {
-        try {
-            metadataLock.readLock().lock();
-            return cache.columnsCacheGet(tableId);
-        } finally {
-            metadataLock.readLock().unlock();
-        }
+        return cache.columnsCacheGet(tableId);
     }
 
     public long getIndexId(long tableId, String indexName) {
-        try {
-            metadataLock.readLock().lock();
-            return cache.indicesCacheGet(tableId).get(indexName);
-        } finally {
-            metadataLock.readLock().unlock();
-        }
+        return cache.indicesCacheGet(tableId).get(indexName);
     }
 
     public TableSchema getSchema(Long tableId) {
-        try {
-            metadataLock.readLock().lock();
-            return cache.schemaCacheGet(tableId);
-        } finally {
-            metadataLock.readLock().unlock();
-        }
+        return cache.schemaCacheGet(tableId);
     }
 
     @Override
     public Table openTable(String tableName) {
-        Long tableId;
-        try {
-            metadataLock.readLock().lock();
-            tableId = cache.tableCacheGet(tableName);
-        } finally {
-            metadataLock.readLock().unlock();
-        }
-
-        return tableFactory.createTable(tableId);
+        return tableFactory.createTable(cache.tableCacheGet(tableName));
     }
 
     @Override
     public TableSchema getSchema(String tableName) {
-        try {
-            metadataLock.readLock().lock();
-            return cache.schemaCacheGet(cache.tableCacheGet(tableName));
-        } finally {
-            metadataLock.readLock().unlock();
-        }
+        return cache.schemaCacheGet(cache.tableCacheGet(tableName));
     }
 
     @Override
     public void createTable(String tableName, TableSchema schema) {
-        try {
-            metadataLock.writeLock().lock();
-            metadata.createTable(tableName, schema);
-        } finally {
-            metadataLock.writeLock().unlock();
-        }
+        metadata.createTable(tableName, schema);
     }
 
     @Override
     public void deleteTable(String tableName) {
-        try {
-            metadataLock.writeLock().lock();
-            long tableId = cache.tableCacheGet(tableName);
-            cache.invalidateTableCache(tableName);
-            cache.invalidateColumnsCache(tableId);
-            cache.invalidateSchemaCache(tableId);
-            metadata.deleteTable(tableName);
-        } finally {
-            metadataLock.writeLock().unlock();
-        }
+        long tableId = cache.tableCacheGet(tableName);
+        cache.invalidateTableCache(tableName);
+        cache.invalidateColumnsCache(tableId);
+        cache.invalidateSchemaCache(tableId);
+        metadata.deleteTable(tableName);
     }
 
     @Override
     public void addIndex(final String tableName, final IndexSchema schema) {
         Verify.isNotNullOrEmpty(tableName, "The table name is invalid");
+
         checkNotNull(schema);
 
-        try {
-            metadataLock.writeLock().lock();
-            final long tableId = cache.tableCacheGet(tableName);
-            metadata.createTableIndex(tableId, schema);
-            cache.invalidateSchemaCache(tableId);
-            cache.invalidateIndicesCache(tableId);
-        } finally {
-            metadataLock.writeLock().unlock();
-        }
+        final long tableId = cache.tableCacheGet(tableName);
+
+        metadata.createTableIndex(tableId, schema);
+        cache.invalidateSchemaCache(tableId);
+        cache.invalidateIndicesCache(tableId);
     }
 
     @Override
@@ -133,152 +86,108 @@ public class HBaseStore implements Store {
         Verify.isNotNullOrEmpty(tableName, "The table name is invalid");
         Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
 
-        try {
-            metadataLock.writeLock().lock();
-            final long tableId = cache.tableCacheGet(tableName);
-            metadata.deleteTableIndex(tableId, indexName);
-            cache.invalidateSchemaCache(tableId);
-            cache.invalidateIndicesCache(tableId);
-        } finally {
-            metadataLock.writeLock().unlock();
-        }
+        final long tableId = cache.tableCacheGet(tableName);
+
+        metadata.deleteTableIndex(tableId, indexName);
+        cache.invalidateSchemaCache(tableId);
+        cache.invalidateIndicesCache(tableId);
     }
 
     @Override
     public void renameTable(String curTableName, String newTableName) {
-        try {
-            metadataLock.writeLock().lock();
-            long tableId = cache.tableCacheGet(curTableName);
-            metadata.renameExistingTable(curTableName, newTableName);
-            cache.invalidateTableCache(curTableName);
-            cache.invalidateColumnsCache(tableId);
-            cache.invalidateSchemaCache(tableId);
-        } finally {
-            metadataLock.writeLock().unlock();
-        }
+        long tableId = cache.tableCacheGet(curTableName);
+        metadata.renameExistingTable(curTableName, newTableName);
+        cache.invalidateTableCache(curTableName);
+        cache.invalidateColumnsCache(tableId);
+        cache.invalidateSchemaCache(tableId);
     }
 
     @Override
     public long getAutoInc(String tableName) {
+        long tableId = cache.tableCacheGet(tableName);
         try {
-            metadataLock.readLock().lock();
-            long tableId = cache.tableCacheGet(tableName);
-            try {
-                autoIncrementLock.readLock().lock();
-                return cache.autoIncCacheGet(tableId);
-            } finally {
-                autoIncrementLock.readLock().unlock();
-            }
+            autoIncrementLock.readLock().lock();
+            return cache.autoIncCacheGet(tableId);
         } finally {
-            metadataLock.readLock().unlock();
+            autoIncrementLock.readLock().unlock();
         }
     }
 
     @Override
     public void setAutoInc(String tableName, long value) {
+        long tableId = cache.tableCacheGet(tableName);
         try {
-            metadataLock.readLock().lock();
-            long tableId = cache.tableCacheGet(tableName);
-            try {
-                autoIncrementLock.writeLock().lock();
-                long current = cache.autoIncCacheGet(tableId);
-                if (value > current) {
-                    metadata.setAutoInc(tableId, value);
-                    cache.invalidateAutoIncCache(tableId);
-                }
-            } finally {
-                autoIncrementLock.writeLock().unlock();
+            autoIncrementLock.writeLock().lock();
+            long current = cache.autoIncCacheGet(tableId);
+            if (value > current) {
+                metadata.setAutoInc(tableId, value);
+                cache.invalidateAutoIncCache(tableId);
             }
         } finally {
-            metadataLock.readLock().unlock();
+            autoIncrementLock.writeLock().unlock();
         }
     }
 
     @Override
     public long incrementAutoInc(String tableName, long amount) {
+        long tableId = cache.tableCacheGet(tableName);
         long value;
         try {
-            metadataLock.readLock().lock();
-            long tableId = cache.tableCacheGet(tableName);
-            try {
-                autoIncrementLock.writeLock().lock();
-                value = metadata.incrementAutoInc(tableId, amount);
-                cache.updateAutoIncCache(tableId, value);
-            } finally {
-                autoIncrementLock.writeLock().unlock();
-            }
+            autoIncrementLock.writeLock().lock();
+            value = metadata.incrementAutoInc(tableId, amount);
+            cache.updateAutoIncCache(tableId, value);
         } finally {
-            metadataLock.readLock().unlock();
+            autoIncrementLock.writeLock().unlock();
         }
         return value;
     }
 
     @Override
     public void truncateAutoInc(String tableName) {
+        long tableId = cache.tableCacheGet(tableName);
         try {
-            metadataLock.readLock().lock();
-            long tableId = cache.tableCacheGet(tableName);
-            try {
-                autoIncrementLock.writeLock().lock();
-                metadata.setAutoInc(tableId, 1);
-                cache.invalidateAutoIncCache(tableId);
-            } finally {
-                autoIncrementLock.writeLock().unlock();
-            }
+            autoIncrementLock.writeLock().lock();
+            metadata.setAutoInc(tableId, 1);
+            cache.invalidateAutoIncCache(tableId);
         } finally {
-            metadataLock.readLock().unlock();
+            autoIncrementLock.writeLock().unlock();
         }
     }
 
     @Override
     public long getRowCount(String tableName) {
+        long tableId = cache.tableCacheGet(tableName);
         try {
-            metadataLock.readLock().lock();
-            long tableId = cache.tableCacheGet(tableName);
-            try {
-                rowsLock.readLock().lock();
-                return cache.rowsCacheGet(tableId);
-            } finally {
-                rowsLock.readLock().unlock();
-            }
+            rowsLock.readLock().lock();
+            return cache.rowsCacheGet(tableId);
         } finally {
-            metadataLock.readLock().unlock();
+            rowsLock.readLock().unlock();
         }
     }
 
     @Override
     public long incrementRowCount(String tableName, long amount) {
         long value;
+        long tableId = cache.tableCacheGet(tableName);
         try {
-            metadataLock.readLock().lock();
-            long tableId = cache.tableCacheGet(tableName);
-            try {
-                rowsLock.writeLock().lock();
-                value = metadata.incrementRowCount(tableId, amount);
-                cache.updateRowsCache(tableId, value);
-            } finally {
-                rowsLock.writeLock().unlock();
-            }
+            rowsLock.writeLock().lock();
+            value = metadata.incrementRowCount(tableId, amount);
+            cache.updateRowsCache(tableId, value);
         } finally {
-            metadataLock.readLock().unlock();
+            rowsLock.writeLock().unlock();
         }
         return value;
     }
 
     @Override
     public void truncateRowCount(String tableName) {
+        long tableId = cache.tableCacheGet(tableName);
         try {
-            metadataLock.readLock().lock();
-            long tableId = cache.tableCacheGet(tableName);
-            try {
-                rowsLock.writeLock().lock();
-                metadata.truncateRowCount(tableId);
-                cache.invalidateRowsCache(tableId);
-            } finally {
-                rowsLock.writeLock().unlock();
-            }
+            rowsLock.writeLock().lock();
+            metadata.truncateRowCount(tableId);
+            cache.invalidateRowsCache(tableId);
         } finally {
-            metadataLock.readLock().unlock();
+            rowsLock.writeLock().unlock();
         }
     }
 }
