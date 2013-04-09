@@ -1,4 +1,4 @@
-package com.nearinfinity.honeycomb;
+package com.nearinfinity.honeycomb.hbase.bulkload;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;

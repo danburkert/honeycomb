@@ -1,4 +1,4 @@
-package com.nearinfinity.honeycomb;
+package com.nearinfinity.honeycomb.hbase.bulkload;
 
 import com.google.common.primitives.Longs;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;

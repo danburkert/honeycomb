@@ -1,4 +1,4 @@
-package com.nearinfinity.honeycomb;
+package com.nearinfinity.honeycomb.hbase.bulkload;
 
 import au.com.bytecode.opencsv.CSVParser;
 import com.google.common.collect.ImmutableMap;

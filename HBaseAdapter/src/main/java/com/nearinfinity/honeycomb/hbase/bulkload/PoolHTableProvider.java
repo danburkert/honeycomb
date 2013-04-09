@@ -1,4 +1,4 @@
-package com.nearinfinity.honeycomb;
+package com.nearinfinity.honeycomb.hbase.bulkload;
 
 import com.google.inject.Provider;
 import org.apache.hadoop.hbase.client.HTableInterface;

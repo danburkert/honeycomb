@@ -290,7 +290,6 @@
 
     <modules>
         <module>HBaseAdapter</module>
-        <module>BulkLoadMapper</module>
         <module>MedianSplit</module>
         <module>StoreIntegrationTests</module>
     </modules>
