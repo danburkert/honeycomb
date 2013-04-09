@@ -123,7 +123,7 @@ public class IndexRowKeyBuilder {
                 recordCopy.put(column, null);
             }
         }
-        this.fields = row.getRecords();
+        this.fields = recordCopy;
         this.indexName = indexName;
         this.tableSchema = tableSchema;
         return this;
