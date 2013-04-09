@@ -122,8 +122,7 @@ public class RowOperationsIT extends HoneycombIntegrationTest {
         HandlerProxy proxy = factory.createHandlerProxy();
         List<ColumnSchema> columns = Lists.newArrayList();
         List<IndexSchema> indices = Lists.newArrayList();
-        columns.add(new ColumnSchema(TestConstants.COLUMN1, ColumnType.LONG, true, false, null, null, null));
-
+        columns.add(ColumnSchema.builder(TestConstants.COLUMN1, ColumnType.LONG).build());
         TableSchema schema = new TableSchema(columns, indices);
 
         String tableName = "t1";

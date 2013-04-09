@@ -34,7 +34,7 @@ public class ColumnSchema {
      * @param scale           Column scale
      * @param precision       Column precision
      */
-    public ColumnSchema(String columnName,
+    private ColumnSchema(String columnName,
                         ColumnType type,
                         boolean isNullable,
                         boolean isAutoIncrement,

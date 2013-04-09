@@ -28,8 +28,6 @@ public class QueryKeyGenerator implements Generator<QueryKey> {
 
     @Override
     public QueryKey next() {
-        return new QueryKey(indices.next(),
-                queryTypes.next(),
-                rows.next().getRecords());
+        return new QueryKey(indices.next(), queryTypes.next(), rows.next().getRecords());
     }
 }
