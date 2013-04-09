@@ -18,7 +18,6 @@ import static java.lang.String.format;
 
 public class HandlerProxy {
     private static final Logger logger = Logger.getLogger(HandlerProxy.class);
-
     private final StoreFactory storeFactory;
     private Store store;
     private Table table;
@@ -224,8 +223,7 @@ public class HandlerProxy {
 
         try {
             while (scanner.hasNext()) {
-                if (!scanner.next().getUUID().equals(row.getUUID()))
-                {
+                if (!scanner.next().getUUID().equals(row.getUUID())) {
                     return true;
                 }
             }
@@ -273,27 +271,8 @@ public class HandlerProxy {
         Row updatedRow = Row.deserialize(rowBytes);
         TableSchema schema = store.getSchema(tableName);
         Row oldRow = table.get(updatedRow.getUUID());
-        if (!schema.hasIndices()) {
-            table.update(oldRow, updatedRow, ImmutableList.<IndexSchema>of());
-        }
-
-        MapDifference<String, ByteBuffer> diff = Maps.difference(oldRow.getRecords(),
-                updatedRow.getRecords());
-
-        Set<String> changedColumns = Sets.union(
-                diff.entriesDiffering().keySet(),
-                diff.entriesOnlyOnRight().keySet());
-
-        ImmutableList.Builder<IndexSchema> changedIndices = ImmutableList.builder();
-
-        for (IndexSchema index : schema.getIndices()) {
-            Set<String> indexColumns = ImmutableSet.copyOf(index.getColumns());
-            if (!Sets.intersection(changedColumns, indexColumns).isEmpty()) {
-                changedIndices.add(index);
-            }
-        }
-
-        table.update(oldRow, updatedRow, changedIndices.build());
+        ImmutableList<IndexSchema> changedIndices = getChangedIndices(updatedRow, schema, oldRow);
+        table.update(oldRow, updatedRow, changedIndices);
     }
 
     /**
@@ -386,6 +365,30 @@ public class HandlerProxy {
     public void endScan() {
         Util.closeQuietly(currentScanner);
         currentScanner = null;
+    }
+
+    private ImmutableList<IndexSchema> getChangedIndices(Row updatedRow, TableSchema schema, Row oldRow) {
+        if (!schema.hasIndices()) {
+            return ImmutableList.of();
+        }
+
+        MapDifference<String, ByteBuffer> diff = Maps.difference(oldRow.getRecords(),
+                updatedRow.getRecords());
+
+        Set<String> changedColumns = Sets.union(
+                diff.entriesDiffering().keySet(),
+                diff.entriesOnlyOnRight().keySet());
+
+        ImmutableList.Builder<IndexSchema> changedIndices = ImmutableList.builder();
+
+        for (IndexSchema index : schema.getIndices()) {
+            Set<String> indexColumns = ImmutableSet.copyOf(index.getColumns());
+            if (!Sets.intersection(changedColumns, indexColumns).isEmpty()) {
+                changedIndices.add(index);
+            }
+        }
+
+        return changedIndices.build();
     }
 
     private void checkTableOpen() {

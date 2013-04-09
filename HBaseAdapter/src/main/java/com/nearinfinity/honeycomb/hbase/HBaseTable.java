@@ -87,7 +87,7 @@ public class HBaseTable implements Table {
                 mutationFactory.deleteIndices(tableId, oldRow, changedIndices);
         // Insert data row and indices that have changed
         final List<Put> puts =
-                mutationFactory.insert(tableId, newRow, changedIndices);
+                mutationFactory.insert(tableId, newRow);
 
         HBaseOperations.performPut(hTable, puts);
         HBaseOperations.performDelete(hTable, deletes);
