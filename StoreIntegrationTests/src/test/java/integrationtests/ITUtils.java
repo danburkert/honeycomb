@@ -92,19 +92,6 @@ public class ITUtils {
         proxy.endScan();
     }
 
-    private static void assertDifferentRows(final HandlerProxy proxy, final int rowCount) {
-        byte[] previous = null;
-
-        for (int x = 0; x < rowCount; x++) {
-            final byte[] current = proxy.getNextRow();
-            assertNotNull(current);
-            assertThat(current, not(equalTo(previous)));
-            previous = current;
-        }
-
-        assertNull(proxy.getNextRow());
-    }
-
     /**
      * Inserts the number of specified rows with a random {@link UUID}
      *
@@ -207,6 +194,19 @@ public class ITUtils {
         final Map<String, ByteBuffer> map = Maps.newHashMap();
         map.put(TestConstants.COLUMN1, encodeValue(columnValue));
         return new Row(map, UUID.randomUUID());
+    }
+
+    private static void assertDifferentRows(final HandlerProxy proxy, final int rowCount) {
+        byte[] previous = null;
+
+        for (int x = 0; x < rowCount; x++) {
+            final byte[] current = proxy.getNextRow();
+            assertNotNull(current);
+            assertThat(current, not(equalTo(previous)));
+            previous = current;
+        }
+
+        assertNull(proxy.getNextRow());
     }
 
     private static void verifyRowCount(final long rowCount) {

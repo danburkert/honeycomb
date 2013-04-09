@@ -17,7 +17,6 @@ import java.nio.ByteBuffer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 public class IndexOperationsIT extends HoneycombIntegrationTest {
 
@@ -94,10 +93,4 @@ public class IndexOperationsIT extends HoneycombIntegrationTest {
         proxy.startIndexScan(key.serialize());
     }
 
-    @Test
-    public void testIndexContainsDuplicates() {
-        ITUtils.insertData(proxy, 1, 1);
-        Row row = ITUtils.createRow(1);
-        assertTrue(proxy.indexContainsDuplicate(TestConstants.INDEX1, row.serialize()));
-    }
 }
