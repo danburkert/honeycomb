@@ -1,20 +1,6 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-import static java.lang.String.format;
-
-import java.nio.ByteBuffer;
-import java.util.Set;
-
-import org.apache.log4j.Logger;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.MapDifference;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
@@ -22,6 +8,13 @@ import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import com.nearinfinity.honeycomb.util.Verify;
+import org.apache.log4j.Logger;
+
+import java.nio.ByteBuffer;
+import java.util.Set;
+
+import static com.google.common.base.Preconditions.*;
+import static java.lang.String.format;
 
 public class HandlerProxy {
     private static final Logger logger = Logger.getLogger(HandlerProxy.class);
@@ -226,7 +219,7 @@ public class HandlerProxy {
         Row row = Row.deserialize(serializedRow);
 
         Table t = store.openTable(tableName);
-        QueryKey key = new QueryKey(indexName, null, row.getRecords());
+        QueryKey key = new QueryKey(indexName, QueryType.EXACT_KEY, row.getRecords());
         Scanner scanner = t.indexScanExact(key);
 
         try {

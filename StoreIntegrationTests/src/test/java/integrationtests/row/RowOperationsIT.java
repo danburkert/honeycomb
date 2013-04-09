@@ -3,13 +3,18 @@ package integrationtests.row;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.nearinfinity.honeycomb.config.Constants;
-import com.nearinfinity.honeycomb.mysql.*;
+import com.nearinfinity.honeycomb.mysql.HandlerProxy;
+import com.nearinfinity.honeycomb.mysql.QueryKey;
+import com.nearinfinity.honeycomb.mysql.Row;
+import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
-import integrationtests.*;
+import integrationtests.HoneycombIntegrationTest;
+import integrationtests.ITUtils;
+import integrationtests.TestConstants;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
@@ -34,6 +39,24 @@ public class RowOperationsIT extends HoneycombIntegrationTest {
         proxy.flush();
 
         final QueryKey key = ITUtils.createKey(INDEX_COL_VALUE, QueryType.EXACT_KEY);
+
+        ITUtils.assertReceivingDifferentRows(proxy, key, ROW_COUNT);
+    }
+
+    @Test
+    public void testInsertBuildsIndexCorrectlyOnNullColumns() {
+        final Map<String, ByteBuffer> map = Maps.newHashMap();
+        map.put(TestConstants.COLUMN1, ITUtils.encodeValue(INDEX_COL_VALUE));
+
+        final Row row = new Row(map, UUID.randomUUID());
+        proxy.insertRow(row.serialize());
+        proxy.flush();
+
+        HashMap<String, ByteBuffer> keys = Maps.newHashMap();
+        keys.put(TestConstants.COLUMN1, ITUtils.encodeValue(INDEX_COL_VALUE));
+        keys.put(TestConstants.COLUMN2, null);
+
+        final QueryKey key = new QueryKey(TestConstants.INDEX2, QueryType.EXACT_KEY, keys);
 
         ITUtils.assertReceivingDifferentRows(proxy, key, ROW_COUNT);
     }
