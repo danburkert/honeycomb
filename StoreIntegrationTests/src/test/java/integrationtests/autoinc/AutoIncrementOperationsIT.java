@@ -19,7 +19,7 @@ public class AutoIncrementOperationsIT extends HoneycombIntegrationTest {
     @Override
     protected TableSchema getTableSchema() {
         final List<ColumnSchema> columns = Lists.newArrayList();
-        columns.add(new ColumnSchema("test", ColumnType.LONG, true, true, null, null, null));
+        columns.add(ColumnSchema.builder("test", ColumnType.LONG).build());
         return new TableSchema(columns, ImmutableList.<IndexSchema>of());
     }
 

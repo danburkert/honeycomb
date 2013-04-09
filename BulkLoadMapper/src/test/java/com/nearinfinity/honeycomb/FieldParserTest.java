@@ -3,10 +3,9 @@ package com.nearinfinity.honeycomb;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Longs;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
+import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
@@ -25,18 +24,12 @@ import static org.junit.Assert.assertNull;
  */
 public class FieldParserTest {
 
+    private static final String COLUMN_NAME = "c1";
     private static final String EMPTY_STRING = "";
-
-    private ColumnSchema.Builder schemaBuilder;
-
-    @Before
-    public void setupTestCase() {
-        schemaBuilder = ColumnSchema.newBuilder();
-    }
 
     @Test(expected = NullPointerException.class)
     public void testParseNullValue() throws ParseException {
-        FieldParser.parse(null, schemaBuilder.build());
+        FieldParser.parse(null, ColumnSchema.builder(COLUMN_NAME, ColumnType.LONG).build());
     }
 
     @Test(expected = NullPointerException.class)
@@ -54,9 +47,8 @@ public class FieldParserTest {
     @Test
     public void testParseEmptyValueNullableMetadataLongType()
             throws ParseException {
-        ColumnSchema schema = schemaBuilder
-                .setType(ColumnType.LONG)
-                .setIsNullable(true)
+        ColumnSchema schema = ColumnSchema
+                .builder(COLUMN_NAME, ColumnType.LONG)
                 .build();
 
         assertNull(FieldParser.parse(EMPTY_STRING, schema));
@@ -72,8 +64,8 @@ public class FieldParserTest {
     @Test(expected = IllegalArgumentException.class)
     public void testParseEmptyValueNonNullableSchemaLongType()
             throws ParseException {
-        ColumnSchema schema = schemaBuilder
-                .setType(ColumnType.LONG)
+        ColumnSchema schema = ColumnSchema
+                .builder(COLUMN_NAME, ColumnType.LONG)
                 .setIsNullable(false)
                 .build();
 
@@ -82,8 +74,8 @@ public class FieldParserTest {
 
     @Test
     public void testParseLong() throws ParseException {
-        ColumnSchema schema = schemaBuilder
-                .setType(ColumnType.LONG)
+        ColumnSchema schema = ColumnSchema
+                .builder(COLUMN_NAME, ColumnType.LONG)
                 .build();
 
         assertEquals(ByteBuffer.wrap(Longs.toByteArray(0x00L)),
@@ -104,8 +96,8 @@ public class FieldParserTest {
 
     @Test
     public void testParseULong() throws ParseException {
-        ColumnSchema schema = schemaBuilder
-                .setType(ColumnType.ULONG)
+        ColumnSchema schema = ColumnSchema
+                .builder(COLUMN_NAME, ColumnType.ULONG)
                 .build();
 
         assertEquals(ByteBuffer.wrap(Longs.toByteArray(0x00L)),
@@ -120,8 +112,8 @@ public class FieldParserTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testParseULongNegativeInput() throws ParseException {
-        ColumnSchema schema = schemaBuilder
-                .setType(ColumnType.ULONG)
+        ColumnSchema schema = ColumnSchema
+                .builder(COLUMN_NAME, ColumnType.ULONG)
                 .build();
 
         FieldParser.parse("-123", schema);
@@ -129,8 +121,8 @@ public class FieldParserTest {
 
     @Test
     public void testParseDoubleZeroValue() throws ParseException {
-        ColumnSchema schema = schemaBuilder
-                .setType(ColumnType.DOUBLE)
+        ColumnSchema schema = ColumnSchema
+                .builder(COLUMN_NAME, ColumnType.DOUBLE)
                 .build();
 
         // Note: These values are all big endian, as per the JVM
@@ -146,7 +138,9 @@ public class FieldParserTest {
 
     @Test
     public void testParseValidDateFormats() throws ParseException {
-        ColumnSchema schema = schemaBuilder.setType(ColumnType.DATE).build();
+        ColumnSchema schema = ColumnSchema
+                .builder(COLUMN_NAME, ColumnType.DATE)
+                .build();
 
         final String expectedParsedDate = "1989-05-13";
 
@@ -161,14 +155,18 @@ public class FieldParserTest {
 
     @Test(expected = ParseException.class)
     public void testParseInvalidDateFormat() throws ParseException {
-        ColumnSchema schema = schemaBuilder.setType(ColumnType.DATE).build();
+        ColumnSchema schema = ColumnSchema
+                .builder(COLUMN_NAME, ColumnType.DATE)
+                .build();
 
         FieldParser.parse("1989_05_13", schema);
     }
 
     @Test
     public void testParseTime() throws Exception {
-        ColumnSchema schema = schemaBuilder.setType(ColumnType.TIME).build();
+        ColumnSchema schema = ColumnSchema
+                .builder(COLUMN_NAME, ColumnType.TIME)
+                .build();
 
         final String expectedParsedTime = "07:32:15";
 
@@ -183,14 +181,18 @@ public class FieldParserTest {
 
     @Test(expected = ParseException.class)
     public void testParseInvalidTimeFormat() throws ParseException {
-        ColumnSchema schema = schemaBuilder.setType(ColumnType.TIME).build();
+        ColumnSchema schema = ColumnSchema
+                .builder(COLUMN_NAME, ColumnType.TIME)
+                .build();
 
         FieldParser.parse("07_32_15", schema);
     }
 
     @Test
     public void testParseDateTime() throws Exception {
-        ColumnSchema schema = schemaBuilder.setType(ColumnType.DATETIME).build();
+        ColumnSchema schema = ColumnSchema
+                .builder(COLUMN_NAME, ColumnType.DATETIME)
+                .build();
 
         final String expectedParsedDateTime = "1989-05-13 07:32:15";
 
@@ -206,15 +208,17 @@ public class FieldParserTest {
 
     @Test(expected = ParseException.class)
     public void testParseInvalidDateTimeFormat() throws ParseException {
-        ColumnSchema schema = schemaBuilder.setType(ColumnType.DATETIME).build();
+        ColumnSchema schema = ColumnSchema
+                .builder(COLUMN_NAME, ColumnType.DATETIME)
+                .build();
 
         FieldParser.parse("1989_05_13_07_32_15", schema);
     }
 
     @Test
     public void testParseDecimal() throws Exception {
-        ColumnSchema schema = schemaBuilder
-                .setType(ColumnType.DECIMAL)
+        ColumnSchema schema = ColumnSchema
+                .builder(COLUMN_NAME, ColumnType.DECIMAL)
                 .setPrecision(5)
                 .setScale(2)
                 .build();
@@ -232,8 +236,8 @@ public class FieldParserTest {
         assertEquals(ByteBuffer.wrap(Arrays.copyOfRange(Bytes.toBytes(0x7C189CL), 5, 8)),
                 FieldParser.parse("-999.99", schema));
 
-        schema = schemaBuilder
-                .setType(ColumnType.DECIMAL)
+        schema = ColumnSchema
+                .builder(COLUMN_NAME, ColumnType.DECIMAL)
                 .setPrecision(10)
                 .setScale(3)
                 .build();
@@ -272,14 +276,21 @@ public class FieldParserTest {
 
     @Test
     public void testParseStringEmptyValue() throws ParseException {
-        ColumnSchema schema = schemaBuilder.setType(ColumnType.STRING).build();
+        ColumnSchema schema = ColumnSchema
+                .builder(COLUMN_NAME, ColumnType.STRING)
+                .setMaxLength(32)
+                .build();
+
         assertEquals(ByteBuffer.wrap(EMPTY_STRING.getBytes(Charsets.UTF_8)),
                 FieldParser.parse(EMPTY_STRING, schema));
     }
 
     @Test
     public void testParseBinaryEmptyValue() throws ParseException {
-        ColumnSchema schema = schemaBuilder.setType(ColumnType.BINARY).build();
+        ColumnSchema schema = ColumnSchema
+                .builder(COLUMN_NAME, ColumnType.BINARY)
+                .setMaxLength(32)
+                .build();
 
         assertEquals(ByteBuffer.wrap(EMPTY_STRING.getBytes(Charsets.UTF_8)),
                 FieldParser.parse(EMPTY_STRING, schema));

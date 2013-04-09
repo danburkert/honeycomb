@@ -37,8 +37,8 @@ public class MutationFactoryTest {
     private static final String INDEX1 = "i1";
     private static final String INDEX2 = "i2";
     private static final List<ColumnSchema> COLUMNS = new ArrayList<ColumnSchema>() {{
-        add(new ColumnSchema(COLUMN1, ColumnType.LONG, false, true, null, null, null));
-        add(new ColumnSchema(COLUMN2, ColumnType.STRING, true, false, 32, null, null));
+        add(ColumnSchema.builder(COLUMN1, ColumnType.LONG).build());
+        add(ColumnSchema.builder(COLUMN2, ColumnType.STRING).setMaxLength(32).build());
     }};
     private static final List<IndexSchema> INDICES = new ArrayList<IndexSchema>() {{
         add(new IndexSchema(Lists.newArrayList(COLUMN1), false, INDEX1));

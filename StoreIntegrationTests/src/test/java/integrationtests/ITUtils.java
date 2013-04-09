@@ -38,8 +38,8 @@ public class ITUtils {
         final List<IndexSchema> indices = Lists.newArrayList();
 
         // Add nullable, non-autoincrementing columns
-        columns.add(new ColumnSchema(TestConstants.COLUMN1, ColumnType.LONG, true, false, 8, 0, 0));
-        columns.add(new ColumnSchema(TestConstants.COLUMN2, ColumnType.LONG, true, false, 8, 0, 0));
+        columns.add(ColumnSchema.builder(TestConstants.COLUMN1, ColumnType.LONG).build());
+        columns.add(ColumnSchema.builder(TestConstants.COLUMN2, ColumnType.LONG).build());
 
         // Add non-unique index on one column
         indices.add(new IndexSchema(Lists.newArrayList(TestConstants.COLUMN1), false, TestConstants.INDEX1));

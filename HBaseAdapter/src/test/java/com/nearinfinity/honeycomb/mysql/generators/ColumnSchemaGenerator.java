@@ -26,28 +26,25 @@ public class ColumnSchemaGenerator implements Generator<ColumnSchema> {
     @Override
     public ColumnSchema next() {
         ColumnType type = typeGen.next();
-        Integer precision = null, scale = null;
-        boolean autoIncrement = false;
-        boolean nullable = RAND.nextBoolean();
-        Integer maxLength = null;
-
+        ColumnSchema.Builder builder = ColumnSchema.builder(MYSQL_NAME_GEN.next(), type);
         switch (type) {
             case STRING:
             case BINARY:
-                maxLength = lengthGen.next();
+                builder.setMaxLength(lengthGen.next());
                 break;
             case LONG:
             case ULONG:
             case DOUBLE:
-                autoIncrement = RAND.nextBoolean();
+                builder.setIsAutoIncrement(RAND.nextBoolean());
                 break;
             case DECIMAL:
-                precision = RAND.nextInt(66);
-                scale = RAND.nextInt(Math.max(31, precision));
+                int precision = RAND.nextInt(66);
+                int scale = RAND.nextInt(Math.max(31, precision));
+                builder.setPrecision(precision).setScale(scale);
                 break;
             default:
                 break;
         }
-        return new ColumnSchema(MYSQL_NAME_GEN.next(), type, nullable, autoIncrement, maxLength, scale, precision);
+        return builder.build();
     }
 }

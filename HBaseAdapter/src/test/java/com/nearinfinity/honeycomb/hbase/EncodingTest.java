@@ -23,8 +23,7 @@ public class EncodingTest {
     private static final String COLUMN = "c1";
     private static TableSchema tableSchema =
             new TableSchema(
-                    ImmutableList.of(new ColumnSchema(COLUMN, ColumnType.LONG,
-                            false, false, null, null, null)),
+                    ImmutableList.of(ColumnSchema.builder(COLUMN, ColumnType.LONG).build()),
                     ImmutableList.of(new IndexSchema(ImmutableList.of(COLUMN), false, "i1"))
             );
 
@@ -36,9 +35,13 @@ public class EncodingTest {
         Pair<IndexRowKey, QueryKey> pair;
         for (int i = 0; i < 200; i++) {
             pair = rowKeyGen.nextWithQueryKey();
-            rows.add(new Pair(
-                    pair.getSecond().getKeys().get(COLUMN).getLong(),
-                    pair.getFirst().encode()));
+            if (pair.getSecond().getKeys().get(COLUMN) != null) {
+                rows.add(new Pair(
+                        pair.getSecond().getKeys().get(COLUMN).getLong(),
+                        pair.getFirst().encode()));
+            } else {
+                i--;
+            }
         }
 
         Collections.sort(rows, new RowComparator());
@@ -58,9 +61,13 @@ public class EncodingTest {
         Pair<IndexRowKey, QueryKey> pair;
         for (int i = 0; i < 200; i++) {
             pair = rowKeyGen.nextWithQueryKey();
-            rows.add(new Pair(
+            if (pair.getSecond().getKeys().get(COLUMN) != null) {
+                rows.add(new Pair(
                     pair.getSecond().getKeys().get(COLUMN).getLong(),
                     pair.getFirst().encode()));
+            } else {
+                i--;
+            }
         }
         Collections.sort(rows, new RowComparator());
 

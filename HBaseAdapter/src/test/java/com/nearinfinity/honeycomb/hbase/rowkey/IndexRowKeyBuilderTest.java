@@ -97,8 +97,11 @@ public class IndexRowKeyBuilderTest {
     }
 
     private TableSchema getSchema() {
-        return new TableSchema(ImmutableList.<ColumnSchema>of(
-                new ColumnSchema("c1", ColumnType.BINARY, false, false, null, null, null)),
+        return new TableSchema(
+                ImmutableList.<ColumnSchema>of(
+                        ColumnSchema.builder("c1", ColumnType.BINARY)
+                                .setMaxLength(16)
+                                .build()),
                 ImmutableList.<IndexSchema>of());
     }
 

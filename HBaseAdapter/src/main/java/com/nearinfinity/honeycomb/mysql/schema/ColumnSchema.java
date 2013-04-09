@@ -34,14 +34,37 @@ public class ColumnSchema {
      * @param scale           Column scale
      * @param precision       Column precision
      */
-    public ColumnSchema(String columnName, ColumnType type, boolean isNullable,
-                        boolean isAutoIncrement, Integer maxLength,
-                        Integer scale, Integer precision) {
-        checkNotNull(type);
+    private ColumnSchema(String columnName,
+                         ColumnType type,
+                         boolean isNullable,
+                         boolean isAutoIncrement,
+                         Integer maxLength,
+                         Integer scale,
+                         Integer precision) {
         Verify.isNotNullOrEmpty(columnName);
-        checkArgument(maxLength == null || maxLength >= 0, "Max length can't be below zero.");
-        checkArgument(scale == null || scale >= 0, "Scale can't be below zero.");
-        checkArgument(precision == null || precision >= 0, "Precision can't be below zero.");
+        checkNotNull(type);
+
+        if(type == ColumnType.DECIMAL) {
+            checkArgument(scale >= 0, "Scale may not be null or negative.");
+            checkArgument(precision >= 0, "Precision may not be null or negative.");
+        } else {
+            checkArgument(scale == null, "Scale must be null for non-decimal column.");
+            checkArgument(precision == null, "Precision must be null for non-decimal column.");
+        }
+
+        if(type == ColumnType.BINARY || type == ColumnType.STRING) {
+            checkArgument(maxLength >= 0, "maxLength may not be null or negative.");
+        } else {
+            checkArgument(maxLength == null, "maxLength must be null for non-variable length column");
+        }
+
+        if(isAutoIncrement) {
+            checkArgument(type == ColumnType.LONG
+                       || type == ColumnType.DOUBLE
+                       || type == ColumnType.ULONG,
+                    "Only integer or floating-point columns may be auto-increment.");
+        }
+
         avroColumnSchema = new AvroColumnSchema(ColumnType.valueOf(type.name()),
                 isNullable, isAutoIncrement, maxLength, scale, precision);
         this.columnName = columnName;
@@ -53,7 +76,7 @@ public class ColumnSchema {
      * @param columnName       Column name [Not null, Not empty]
      * @param avroColumnSchema Avro column schema [Not null]
      */
-    public ColumnSchema(String columnName, AvroColumnSchema avroColumnSchema) {
+    ColumnSchema(String columnName, AvroColumnSchema avroColumnSchema) {
         checkNotNull(avroColumnSchema);
         Verify.isNotNullOrEmpty(columnName);
         this.avroColumnSchema = AvroColumnSchema.newBuilder(avroColumnSchema).build();
@@ -147,5 +170,64 @@ public class ColumnSchema {
                 .add("precision", avroColumnSchema.getPrecision())
                 .add("scale", avroColumnSchema.getScale())
                 .toString();
+    }
+
+    /**
+     * Create a ColumnSchema builder with given column name and type.
+     */
+    public static Builder builder(String columnName, ColumnType type) {
+        return new Builder(columnName, type);
+    }
+
+    /**
+     * Builder for ColumnSchema.  By default, the column schema is nullable and
+     * non auto increment.
+     */
+    public static class Builder {
+        final String columnName;
+        final ColumnType type;
+        boolean isNullable = true;
+        boolean isAutoIncrement = false;
+        Integer maxLength = null;
+        Integer scale = null;
+        Integer precision = null;
+
+        /**
+         * Default constructor, equivalent to ColumnSchema.builder().
+         */
+        public Builder(String columnName, ColumnType type) {
+            this.columnName = columnName;
+            this.type = type;
+        }
+
+        public Builder setIsNullable(boolean isNullable) {
+            this.isNullable = isNullable;
+            return this;
+        }
+
+        public Builder setIsAutoIncrement(boolean isAutoIncrement) {
+            this.isAutoIncrement = isAutoIncrement;
+            return this;
+        }
+
+        public Builder setMaxLength(int maxLength) {
+            this.maxLength = maxLength;
+            return this;
+        }
+
+        public Builder setScale(int scale) {
+            this.scale = scale;
+            return this;
+        }
+
+        public Builder setPrecision(int precision) {
+            this.precision = precision;
+            return this;
+        }
+
+        public ColumnSchema build() {
+            return new ColumnSchema(columnName, type, isNullable,
+                    isAutoIncrement, maxLength, scale, precision);
+        }
     }
 }

@@ -17,8 +17,8 @@ public class VerifyTest {
             new IndexSchema(ImmutableList.<String>of(COLUMN_A), false, "INDEX_A"),
             new IndexSchema(ImmutableList.<String>of(COLUMN_B), false, "INDEX_B"));
     private static final List<ColumnSchema> COLUMNS = ImmutableList.of(
-            new ColumnSchema(COLUMN_A, ColumnType.LONG, true, false, null, null, null),
-            new ColumnSchema(COLUMN_B, ColumnType.LONG, true, false, null, null, null));
+            ColumnSchema.builder(COLUMN_A, ColumnType.LONG).build(),
+            ColumnSchema.builder(COLUMN_B, ColumnType.LONG).build());
 
     @Test
     public void testIsValidTableId() {
@@ -77,8 +77,7 @@ public class VerifyTest {
     @Test
     public void testHasAutoIncrementColumn() {
         final List<ColumnSchema> columns = ImmutableList.<ColumnSchema>of(
-                new ColumnSchema(COLUMN_B, ColumnType.LONG, true, true, null, null, null));
-
+                ColumnSchema.builder(COLUMN_B, ColumnType.LONG).setIsAutoIncrement(true).build());
         final TableSchema tableSchema = new TableSchema(columns, ImmutableList.<IndexSchema>of());
 
         Verify.hasAutoIncrementColumn(tableSchema);
@@ -87,8 +86,7 @@ public class VerifyTest {
     @Test
     public void testHasAutoIncrementColumnNotAutoInc() {
         final List<ColumnSchema> columns = ImmutableList.<ColumnSchema>of(
-                new ColumnSchema(COLUMN_B, ColumnType.LONG, true, false, null, null, null));
-
+                ColumnSchema.builder(COLUMN_B, ColumnType.LONG).setIsAutoIncrement(false).build());
         final TableSchema tableSchema = new TableSchema(columns, ImmutableList.<IndexSchema>of());
 
         Verify.hasAutoIncrementColumn(tableSchema);
