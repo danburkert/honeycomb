@@ -1,18 +1,23 @@
 package integrationtests;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.nearinfinity.honeycomb.mysql.QueryKey;
 import com.nearinfinity.honeycomb.mysql.Row;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
+import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
+import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.*;
 
 /**
  * Integration tests for the Java side that come from MySQL integration tests.
@@ -97,5 +102,48 @@ public class MySqlBugIT extends HoneycombIntegrationTest {
         Row result = Row.deserialize(proxy.getNextRow());
         assertEquals(result.getRecords().get(TestConstants.COLUMN2).getLong(), ITUtils.encodeValue(2).getLong());
         proxy.endScan();
+    }
+
+    /*
+    drop table if exists t1;
+    create table t1 (c1 int, unique(c1));
+    insert into t1 values (null),(null);
+    Expected: 2 insert
+    Actual: Error duplicate entry
+     */
+    @Test
+    public void testNullsAreNotDuplicatesInUniqueIndex() {
+        ITUtils.insertNullData(proxy, 1);
+        Map<String, ByteBuffer> values = Maps.newHashMap();
+        values.put(TestConstants.COLUMN2, ITUtils.encodeValue(1));
+        Row row = new Row(values, UUID.randomUUID());
+        assertFalse(proxy.indexContainsDuplicate(TestConstants.INDEX3, row.serialize()));
+    }
+
+
+    /**
+     * Provides the {@link com.nearinfinity.honeycomb.mysql.schema.TableSchema} to use for a test case
+     *
+     * @return The schema used for testing
+     */
+    @Override
+    protected TableSchema getTableSchema() {
+        final List<ColumnSchema> columns = Lists.newArrayList();
+        final List<IndexSchema> indices = Lists.newArrayList();
+
+        // Add nullable, non-autoincrementing columns
+        columns.add(ColumnSchema.builder(TestConstants.COLUMN1, ColumnType.LONG).build());
+        columns.add(ColumnSchema.builder(TestConstants.COLUMN2, ColumnType.LONG).build());
+
+        // Add non-unique index on one column
+        indices.add(new IndexSchema(TestConstants.INDEX1, Lists.newArrayList(TestConstants.COLUMN1), false));
+
+        // Add non-unique compound index on (c1, c2)
+        indices.add(new IndexSchema(TestConstants.INDEX2, Lists.newArrayList(TestConstants.COLUMN1, TestConstants.COLUMN2), false));
+
+        // Add unique index on one column
+        indices.add(new IndexSchema(TestConstants.INDEX3, Lists.newArrayList(TestConstants.COLUMN1), true));
+
+        return new TableSchema(columns, indices);
     }
 }

@@ -2,7 +2,6 @@ package com.nearinfinity.honeycomb.mysql;
 
 import com.google.inject.Provider;
 import com.nearinfinity.honeycomb.Store;
-import com.nearinfinity.honeycomb.exceptions.StoreNotFoundException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -29,15 +28,8 @@ public class StoreFactoryTest {
     public void testDefaultTablespaceIsUsed() {
         String tablespace = "default";
         StoreFactory factory = createFactory(tablespace);
-        Store store = factory.createStore(null);
+        Store store = factory.createStore();
         assertEquals(store, this.store);
-    }
-
-    @Test(expected = StoreNotFoundException.class)
-    public void testBadStoreThrowsException() {
-        String tablespace = "default";
-        StoreFactory factory = createFactory(tablespace);
-        factory.createStore("hbase");
     }
 
     private StoreFactory createFactory(String tablespace) {

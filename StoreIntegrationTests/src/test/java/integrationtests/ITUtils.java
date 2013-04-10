@@ -3,7 +3,6 @@ package integrationtests;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Longs;
-import com.nearinfinity.honeycomb.config.Constants;
 import com.nearinfinity.honeycomb.mysql.HandlerProxy;
 import com.nearinfinity.honeycomb.mysql.HandlerProxyFactory;
 import com.nearinfinity.honeycomb.mysql.QueryKey;
@@ -290,7 +289,7 @@ public class ITUtils {
     public static ProxyRunnable openTable = new ITUtils.ProxyRunnable() {
         @Override
         public void run(HandlerProxy proxy) {
-            proxy.openTable(TestConstants.TABLE_NAME, Constants.HBASE_TABLESPACE);
+            proxy.openTable(TestConstants.TABLE_NAME);
         }
     };
 

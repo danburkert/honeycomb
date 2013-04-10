@@ -92,5 +92,4 @@ public class IndexOperationsIT extends HoneycombIntegrationTest {
         // Verify that the scan is unable to execute
         proxy.startIndexScan(key.serialize());
     }
-
 }

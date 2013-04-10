@@ -1,6 +1,5 @@
 package integrationtests;
 
-import com.nearinfinity.honeycomb.config.Constants;
 import com.nearinfinity.honeycomb.mysql.Bootstrap;
 import com.nearinfinity.honeycomb.mysql.HandlerProxy;
 import com.nearinfinity.honeycomb.mysql.HandlerProxyFactory;
@@ -39,17 +38,17 @@ public abstract class HoneycombIntegrationTest {
     public void setupTestCase() {
         proxy = factory.createHandlerProxy();
 
-        proxy.createTable(TestConstants.TABLE_NAME, Constants.HBASE_TABLESPACE,
+        proxy.createTable(TestConstants.TABLE_NAME,
                 getTableSchema().serialize(), 1);
 
-        proxy.openTable(TestConstants.TABLE_NAME, Constants.HBASE_TABLESPACE);
+        proxy.openTable(TestConstants.TABLE_NAME);
     }
 
     @After
     public void teardownTestCase() {
         proxy.closeTable();
 
-        proxy.dropTable(TestConstants.TABLE_NAME, Constants.HBASE_TABLESPACE);
+        proxy.dropTable(TestConstants.TABLE_NAME);
     }
 
     /**

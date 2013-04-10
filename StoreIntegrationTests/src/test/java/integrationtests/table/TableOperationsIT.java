@@ -7,18 +7,16 @@ import integrationtests.TestConstants;
 
 import org.junit.Test;
 
-import com.nearinfinity.honeycomb.config.Constants;
-
 public class TableOperationsIT extends HoneycombIntegrationTest {
 
     @Test
     public void testRenameTable() {
         final String newTableName = "db2/test2";
 
-        proxy.renameTable(TestConstants.TABLE_NAME, Constants.HBASE_TABLESPACE, newTableName);
+        proxy.renameTable(TestConstants.TABLE_NAME, newTableName);
         assertThat(newTableName, equalTo(proxy.getTableName()));
 
         // Restore the original table name to allow for proper testcase teardown
-        proxy.renameTable(newTableName, Constants.HBASE_TABLESPACE, TestConstants.TABLE_NAME);
+        proxy.renameTable(newTableName, TestConstants.TABLE_NAME);
     }
 }

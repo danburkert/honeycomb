@@ -1,6 +1,6 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import com.google.common.collect.*;
+import com.google.common.collect.ImmutableList;
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
@@ -11,7 +11,6 @@ import com.nearinfinity.honeycomb.util.Verify;
 import org.apache.log4j.Logger;
 
 import java.nio.ByteBuffer;
-import java.util.Set;
 
 import static com.google.common.base.Preconditions.*;
 import static java.lang.String.format;
@@ -33,17 +32,15 @@ public class HandlerProxy {
      * this is called.
      *
      * @param tableName             Name of the table
-     * @param tableSpace            Indicates what store to create the table in.
-     *                              If null, create the table in the default store.
      * @param serializedTableSchema Serialized TableSchema avro object
      * @param autoInc               Initial auto increment value
      */
-    public void createTable(String tableName, String tableSpace,
+    public void createTable(String tableName,
                             byte[] serializedTableSchema, long autoInc) {
         Verify.isNotNullOrEmpty(tableName);
         checkNotNull(serializedTableSchema);
 
-        store = storeFactory.createStore(tableSpace);
+        store = storeFactory.createStore();
         checkNotNull(serializedTableSchema, "Schema cannot be null");
         TableSchema tableSchema = TableSchema.deserialize(serializedTableSchema);
         Verify.isValidTableSchema(tableSchema);
@@ -55,12 +52,11 @@ public class HandlerProxy {
      * Drop the table with the given specifications.  The table is not open when
      * this is called.
      *
-     * @param tableName  Name of the table to be dropped
-     * @param tableSpace What store to drop table from.  If null, use default.
+     * @param tableName Name of the table to be dropped
      */
-    public void dropTable(String tableName, String tableSpace) {
+    public void dropTable(String tableName) {
         Verify.isNotNullOrEmpty(tableName);
-        Store store = storeFactory.createStore(tableSpace);
+        Store store = storeFactory.createStore();
         Table table = store.openTable(tableName);
 
         table.deleteAllRows();
@@ -68,10 +64,10 @@ public class HandlerProxy {
         store.deleteTable(tableName);
     }
 
-    public void openTable(String tableName, String tableSpace) {
+    public void openTable(String tableName) {
         Verify.isNotNullOrEmpty(tableName);
         this.tableName = tableName;
-        store = storeFactory.createStore(tableSpace);
+        store = storeFactory.createStore();
         table = store.openTable(this.tableName);
     }
 
@@ -92,16 +88,15 @@ public class HandlerProxy {
      * is not open when this is called.
      *
      * @param originalName The existing name of the table, not null or empty
-     * @param tableSpace   The store which contains the table
      * @param newName      The new table name to represent, not null or empty
      */
-    public void renameTable(final String originalName, final String tableSpace,
+    public void renameTable(final String originalName,
                             final String newName) {
         Verify.isNotNullOrEmpty(originalName, "Original table name must have value.");
         Verify.isNotNullOrEmpty(newName, "New table name must have value.");
         checkArgument(!originalName.equals(newName), "New table name must be different than original.");
 
-        Store store = storeFactory.createStore(tableSpace);
+        Store store = storeFactory.createStore();
         store.renameTable(originalName, newName);
         tableName = newName;
     }
@@ -218,12 +213,24 @@ public class HandlerProxy {
         Row row = Row.deserialize(serializedRow);
 
         Table t = store.openTable(tableName);
+        TableSchema schema = store.getSchema(tableName);
+        IndexSchema indexSchema = schema.getIndexSchema(indexName);
+
         QueryKey key = new QueryKey(indexName, QueryType.EXACT_KEY, row.getRecords());
         Scanner scanner = t.indexScanExact(key);
 
         try {
             while (scanner.hasNext()) {
-                if (!scanner.next().getUUID().equals(row.getUUID())) {
+                Row next = scanner.next();
+                if (!next.getUUID().equals(row.getUUID())) {
+                    // Special case for inserting nulls
+                    for (String column : indexSchema.getColumns()) {
+                        boolean isNullInRecord = !row.getRecords().containsKey(column);
+                        if (isNullInRecord) {
+                            return false;
+                        }
+                    }
+
                     return true;
                 }
             }
@@ -248,14 +255,15 @@ public class HandlerProxy {
         String auto_inc_col = schema.getAutoIncrementColumn();
         if (auto_inc_col != null) {
             ByteBuffer bb = row.getRecords().get(auto_inc_col);
-            long auto_inc = bb.getLong();
-            long next_auto_inc = auto_inc + 1;
-            if (auto_inc > next_auto_inc) { // The autoincrement will wrap around. MySQL says don't wrap.
-                next_auto_inc = auto_inc;
+            if (bb != null) {
+                long auto_inc = bb.getLong();
+                long next_auto_inc = auto_inc + 1;
+                if (auto_inc > next_auto_inc) { // The autoincrement will wrap around. MySQL says don't wrap.
+                    next_auto_inc = auto_inc;
+                }
+                bb.rewind();
+                store.setAutoInc(tableName, next_auto_inc);
             }
-
-            bb.rewind();
-            store.setAutoInc(tableName, next_auto_inc);
         }
         table.insert(row);
     }
@@ -271,7 +279,7 @@ public class HandlerProxy {
         Row updatedRow = Row.deserialize(rowBytes);
         TableSchema schema = store.getSchema(tableName);
         Row oldRow = table.get(updatedRow.getUUID());
-        ImmutableList<IndexSchema> changedIndices = getChangedIndices(updatedRow, schema, oldRow);
+        ImmutableList<IndexSchema> changedIndices = Util.getChangedIndices(schema.getIndices(), oldRow.getRecords(), updatedRow.getRecords());
         table.update(oldRow, updatedRow, changedIndices);
     }
 
@@ -365,30 +373,6 @@ public class HandlerProxy {
     public void endScan() {
         Util.closeQuietly(currentScanner);
         currentScanner = null;
-    }
-
-    private ImmutableList<IndexSchema> getChangedIndices(Row updatedRow, TableSchema schema, Row oldRow) {
-        if (!schema.hasIndices()) {
-            return ImmutableList.of();
-        }
-
-        MapDifference<String, ByteBuffer> diff = Maps.difference(oldRow.getRecords(),
-                updatedRow.getRecords());
-
-        Set<String> changedColumns = Sets.union(
-                diff.entriesDiffering().keySet(),
-                diff.entriesOnlyOnRight().keySet());
-
-        ImmutableList.Builder<IndexSchema> changedIndices = ImmutableList.builder();
-
-        for (IndexSchema index : schema.getIndices()) {
-            Set<String> indexColumns = ImmutableSet.copyOf(index.getColumns());
-            if (!Sets.intersection(changedColumns, indexColumns).isEmpty()) {
-                changedIndices.add(index);
-            }
-        }
-
-        return changedIndices.build();
     }
 
     private void checkTableOpen() {

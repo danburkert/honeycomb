@@ -89,8 +89,8 @@ public class HBaseTable implements Table {
         final List<Put> puts =
                 mutationFactory.insert(tableId, newRow);
 
-        HBaseOperations.performPut(hTable, puts);
         HBaseOperations.performDelete(hTable, deletes);
+        HBaseOperations.performPut(hTable, puts);
     }
 
     @Override
