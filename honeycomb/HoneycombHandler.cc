@@ -57,14 +57,8 @@ int HoneycombHandler::open(const char *path, int mode, uint test_if_locked)
     JavaFrame frame(env, 2);
     jstring jtable_name =
       string_to_java_string(env, extract_table_name_from_path(path));
-    jstring jtablespace = NULL;
-    if (this->table->s->tablespace != NULL)
-    {
-      jtablespace = string_to_java_string(env, this->table->s->tablespace);
-    }
-
     this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().open_table,
-        jtable_name, jtablespace);
+        jtable_name);
     rc |= check_exceptions(env, cache, location);
   }
   detach_thread(jvm);

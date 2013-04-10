@@ -4,9 +4,9 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
 import com.nearinfinity.honeycomb.Store;
+import com.nearinfinity.honeycomb.config.Constants;
 import com.nearinfinity.honeycomb.exceptions.StoreNotFoundException;
 import com.nearinfinity.honeycomb.util.Verify;
-import com.nearinfinity.honeycomb.config.Constants;
 
 import java.util.Map;
 
@@ -25,14 +25,10 @@ public class StoreFactory {
         this.defaultTableSpace = defaultTableSpace;
     }
 
-    public Store createStore(String tablespace) {
-        if (tablespace == null) {
-            tablespace = defaultTableSpace;
-        }
-
-        Provider<Store> storeProvider = this.storeMap.get(tablespace);
+    public Store createStore() {
+        Provider<Store> storeProvider = this.storeMap.get(defaultTableSpace);
         if (storeProvider == null) {
-            throw new StoreNotFoundException(tablespace);
+            throw new StoreNotFoundException(defaultTableSpace);
         }
         return storeProvider.get();
     }

@@ -111,8 +111,8 @@ public class RowOperationsIT extends HoneycombIntegrationTest {
 
         int iterations = 10;
 
-        proxy.createTable(tableName, Constants.HBASE_TABLESPACE, schema.serialize(), 0);
-        proxy.openTable(tableName, Constants.HBASE_TABLESPACE);
+        proxy.createTable(tableName, schema.serialize(), 0);
+        proxy.openTable(tableName);
         Row row = new Row(Maps.<String, ByteBuffer>newHashMap(), Constants.ZERO_UUID);
 
         List<Row> rows = new ArrayList<Row>();
@@ -151,6 +151,6 @@ public class RowOperationsIT extends HoneycombIntegrationTest {
         }
 
         proxy.closeTable();
-        proxy.dropTable(tableName, Constants.HBASE_TABLESPACE);
+        proxy.dropTable(tableName);
     }
 }

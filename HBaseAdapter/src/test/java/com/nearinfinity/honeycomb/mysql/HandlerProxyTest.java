@@ -34,40 +34,40 @@ public class HandlerProxyTest {
 
     @Test
     public void testRenameTable() throws Exception {
-        when(storeFactory.createStore(anyString())).thenReturn(storageMock);
+        when(storeFactory.createStore()).thenReturn(storageMock);
         when(storageMock.openTable(anyString())).thenReturn(tableMock);
 
         final String renamedTableName = "bar/baz";
 
         final HandlerProxy proxy = createProxy();
-        proxy.renameTable(DUMMY_TABLE_NAME, "tablespace", renamedTableName);
+        proxy.renameTable(DUMMY_TABLE_NAME, renamedTableName);
 
         verify(storageMock, times(1)).renameTable(eq(DUMMY_TABLE_NAME), eq(renamedTableName));
     }
 
     @Test(expected = NullPointerException.class)
     public void testRenameTableNullNewTableName() throws Exception {
-        createProxy().renameTable("a", "b", null);
+        createProxy().renameTable("a", null);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testRenameTableEmptyNewTableName() throws Exception {
-        createProxy().renameTable("a", "b", "");
+        createProxy().renameTable("a", "");
     }
 
     @Test(expected = NullPointerException.class)
     public void testRenameTableNullOriginalTableName() throws Exception {
-        createProxy().renameTable(null, "b", "c");
+        createProxy().renameTable(null, "c");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testRenameTableEmptyOriginalTableName() throws Exception {
-        createProxy().renameTable("", "b", "c");
+        createProxy().renameTable("", "c");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testRenameTableToSameName() throws Exception {
-        createProxy().renameTable("a", "b", "a");
+        createProxy().renameTable("a", "a");
     }
 
     private HandlerProxy createProxy() throws Exception {

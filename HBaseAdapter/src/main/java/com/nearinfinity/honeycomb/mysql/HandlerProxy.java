@@ -1,6 +1,6 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import com.google.common.collect.*;
+import com.google.common.collect.ImmutableList;
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
@@ -32,17 +32,15 @@ public class HandlerProxy {
      * this is called.
      *
      * @param tableName             Name of the table
-     * @param tableSpace            Indicates what store to create the table in.
-     *                              If null, create the table in the default store.
      * @param serializedTableSchema Serialized TableSchema avro object
      * @param autoInc               Initial auto increment value
      */
-    public void createTable(String tableName, String tableSpace,
+    public void createTable(String tableName,
                             byte[] serializedTableSchema, long autoInc) {
         Verify.isNotNullOrEmpty(tableName);
         checkNotNull(serializedTableSchema);
 
-        store = storeFactory.createStore(tableSpace);
+        store = storeFactory.createStore();
         checkNotNull(serializedTableSchema, "Schema cannot be null");
         TableSchema tableSchema = TableSchema.deserialize(serializedTableSchema);
         Verify.isValidTableSchema(tableSchema);
@@ -55,11 +53,10 @@ public class HandlerProxy {
      * this is called.
      *
      * @param tableName  Name of the table to be dropped
-     * @param tableSpace What store to drop table from.  If null, use default.
      */
-    public void dropTable(String tableName, String tableSpace) {
+    public void dropTable(String tableName) {
         Verify.isNotNullOrEmpty(tableName);
-        Store store = storeFactory.createStore(tableSpace);
+        Store store = storeFactory.createStore();
         Table table = store.openTable(tableName);
 
         table.deleteAllRows();
@@ -67,10 +64,10 @@ public class HandlerProxy {
         store.deleteTable(tableName);
     }
 
-    public void openTable(String tableName, String tableSpace) {
+    public void openTable(String tableName) {
         Verify.isNotNullOrEmpty(tableName);
         this.tableName = tableName;
-        store = storeFactory.createStore(tableSpace);
+        store = storeFactory.createStore();
         table = store.openTable(this.tableName);
     }
 
@@ -91,16 +88,15 @@ public class HandlerProxy {
      * is not open when this is called.
      *
      * @param originalName The existing name of the table, not null or empty
-     * @param tableSpace   The store which contains the table
      * @param newName      The new table name to represent, not null or empty
      */
-    public void renameTable(final String originalName, final String tableSpace,
+    public void renameTable(final String originalName,
                             final String newName) {
         Verify.isNotNullOrEmpty(originalName, "Original table name must have value.");
         Verify.isNotNullOrEmpty(newName, "New table name must have value.");
         checkArgument(!originalName.equals(newName), "New table name must be different than original.");
 
-        Store store = storeFactory.createStore(tableSpace);
+        Store store = storeFactory.createStore();
         store.renameTable(originalName, newName);
         tableName = newName;
     }
@@ -229,9 +225,8 @@ public class HandlerProxy {
                 if (!next.getUUID().equals(row.getUUID())) {
                     // Special case for inserting nulls
                     for (String column : indexSchema.getColumns()) {
-                        boolean isNullInTable = !next.getRecords().containsKey(column);
                         boolean isNullInRecord = !row.getRecords().containsKey(column);
-                        if (isNullInTable && isNullInRecord) {
+                        if (isNullInRecord) {
                             return false;
                         }
                     }
