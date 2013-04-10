@@ -218,12 +218,25 @@ public class HandlerProxy {
         Row row = Row.deserialize(serializedRow);
 
         Table t = store.openTable(tableName);
+        TableSchema schema = store.getSchema(tableName);
+        IndexSchema indexSchema = schema.getIndexSchema(indexName);
+
         QueryKey key = new QueryKey(indexName, QueryType.EXACT_KEY, row.getRecords());
         Scanner scanner = t.indexScanExact(key);
 
         try {
             while (scanner.hasNext()) {
-                if (!scanner.next().getUUID().equals(row.getUUID())) {
+                Row next = scanner.next();
+                if (!next.getUUID().equals(row.getUUID())) {
+                    // Special case for inserting nulls
+                    for (String column : indexSchema.getColumns()) {
+                        boolean isNullInTable = !next.getRecords().containsKey(column);
+                        boolean isNullInRecord = !row.getRecords().containsKey(column);
+                        if (isNullInTable && isNullInRecord) {
+                            return false;
+                        }
+                    }
+
                     return true;
                 }
             }

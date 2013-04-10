@@ -27,6 +27,8 @@ const char* table_creation_errors[] = {
   "Required: character set utf8 collate utf8_bin"
 };
 
+static __thread jstring alter_table_tablespace = NULL;
+
 /**
  * Called by MySQL during CREATE TABLE statements.  Converts the table's
  * schema into a TableSchema object and hands it off to the HandlerProxy.
@@ -270,21 +272,27 @@ int HoneycombHandler::delete_table(const char *path)
     jstring table_name = string_to_java_string(env,
         extract_table_name_from_path(path));
 
-    TABLE_SHARE table_share;
-    ret |= init_table_share(&table_share, path);
-    if (ret == 1)
-    {
-      THD* thd = ha_thd();
-      thd->stmt_da->reset_diagnostics_area();
-      ret = 0;
-    }
-
     jstring jtablespace = NULL;
-    if (table_share.tablespace != NULL)
+    if (thd_sql_command(ha_thd()) == SQLCOM_ALTER_TABLE)
     {
-      jtablespace = string_to_java_string(env, table_share.tablespace);
+      if (alter_table_tablespace != NULL)
+      {
+        jtablespace = alter_table_tablespace;
+        env->DeleteGlobalRef(alter_table_tablespace);
+        alter_table_tablespace = NULL;
+      }
     }
-    free_table_share(&table_share);
+    else
+    {
+      TABLE_SHARE table_share;
+      ret |= init_table_share(&table_share, path);
+      if (table_share.tablespace != NULL)
+      {
+        jtablespace = string_to_java_string(env, table_share.tablespace);
+      }
+
+      free_table_share(&table_share);
+    }
 
     this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().drop_table,
         table_name, jtablespace);
@@ -304,6 +312,7 @@ int HoneycombHandler::rename_table(const char *from, const char *to)
   attach_thread(jvm, &env, location);
   {
     JavaFrame frame(env, 2);
+    THD* thd = ha_thd();
 
     jstring old_table_name = string_to_java_string(env,
         extract_table_name_from_path(from));
@@ -317,6 +326,10 @@ int HoneycombHandler::rename_table(const char *from, const char *to)
     {
       jtablespace = string_to_java_string(env,
           table_share.tablespace);
+      if (thd_sql_command(thd) == SQLCOM_ALTER_TABLE)
+      {
+        alter_table_tablespace = (jstring)env->NewGlobalRef(jtablespace);
+      }
     }
     free_table_share(&table_share);
 

@@ -11,8 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.*;
 
 /**
  * Integration tests for the Java side that come from MySQL integration tests.
@@ -97,5 +96,21 @@ public class MySqlBugIT extends HoneycombIntegrationTest {
         Row result = Row.deserialize(proxy.getNextRow());
         assertEquals(result.getRecords().get(TestConstants.COLUMN2).getLong(), ITUtils.encodeValue(2).getLong());
         proxy.endScan();
+    }
+
+    /*
+    drop table if exists t1;
+    create table t1 (c1 int, unique(c1));
+    insert into t1 values (null),(null);
+    Expected: 2 insert
+    Actual: Error duplicate entry
+     */
+    @Test
+    public void testNullsAreNotDuplicatesInUniqueIndex() {
+        ITUtils.insertNullData(proxy, 1);
+        Map<String, ByteBuffer> values = Maps.newHashMap();
+        values.put(TestConstants.COLUMN2, ITUtils.encodeValue(1));
+        Row row = new Row(values, UUID.randomUUID());
+        assertFalse(proxy.indexContainsDuplicate(TestConstants.INDEX3, row.serialize()));
     }
 }

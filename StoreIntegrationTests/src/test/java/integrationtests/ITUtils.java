@@ -47,6 +47,9 @@ public class ITUtils {
         // Add non-unique compound index on (c1, c2)
         indices.add(new IndexSchema(TestConstants.INDEX2, Lists.newArrayList(TestConstants.COLUMN1, TestConstants.COLUMN2), false));
 
+        // Add unique index on one column
+        indices.add(new IndexSchema(TestConstants.INDEX3, Lists.newArrayList(TestConstants.COLUMN1), true));
+
         return new TableSchema(columns, indices);
     }
 
