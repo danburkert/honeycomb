@@ -32,7 +32,7 @@ int HoneycombHandler::pack_row(uchar *buf, TABLE* table, Row* row)
     my_ptrdiff_t offset = (my_ptrdiff_t) (buf - table->record[0]);
     field->move_field_offset(offset);
 
-    if (field->is_null() && table->next_number_field != field)
+    if (field->is_null())
     {
       field->move_field_offset(-offset);
       continue;

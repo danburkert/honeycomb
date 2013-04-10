@@ -52,7 +52,7 @@ public class HandlerProxy {
      * Drop the table with the given specifications.  The table is not open when
      * this is called.
      *
-     * @param tableName  Name of the table to be dropped
+     * @param tableName Name of the table to be dropped
      */
     public void dropTable(String tableName) {
         Verify.isNotNullOrEmpty(tableName);
@@ -255,15 +255,15 @@ public class HandlerProxy {
         String auto_inc_col = schema.getAutoIncrementColumn();
         if (auto_inc_col != null) {
             ByteBuffer bb = row.getRecords().get(auto_inc_col);
-            checkNotNull(bb);
-            long auto_inc = bb.getLong();
-            long next_auto_inc = auto_inc + 1;
-            if (auto_inc > next_auto_inc) { // The autoincrement will wrap around. MySQL says don't wrap.
-                next_auto_inc = auto_inc;
+            if (bb != null) {
+                long auto_inc = bb.getLong();
+                long next_auto_inc = auto_inc + 1;
+                if (auto_inc > next_auto_inc) { // The autoincrement will wrap around. MySQL says don't wrap.
+                    next_auto_inc = auto_inc;
+                }
+                bb.rewind();
+                store.setAutoInc(tableName, next_auto_inc);
             }
-
-            bb.rewind();
-            store.setAutoInc(tableName, next_auto_inc);
         }
         table.insert(row);
     }
