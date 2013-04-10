@@ -8,12 +8,18 @@ import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import com.nearinfinity.honeycomb.util.Verify;
 
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class HBaseStore implements Store {
     private final HBaseMetadata metadata;
     private final HBaseTableFactory tableFactory;
     private final MetadataCache cache;
+
+    private final static ReadWriteLock rowsLock = new ReentrantReadWriteLock();
+    private final static ReadWriteLock autoIncrementLock = new ReentrantReadWriteLock();
 
     @Inject
     public HBaseStore(HBaseMetadata metadata, HBaseTableFactory tableFactory, MetadataCache cache) {
@@ -40,8 +46,7 @@ public class HBaseStore implements Store {
 
     @Override
     public Table openTable(String tableName) {
-        Long tableId = cache.tableCacheGet(tableName);
-        return tableFactory.createTable(tableId);
+        return tableFactory.createTable(cache.tableCacheGet(tableName));
     }
 
     @Override
@@ -99,51 +104,90 @@ public class HBaseStore implements Store {
 
     @Override
     public long getAutoInc(String tableName) {
-        return cache.autoIncCacheGet(cache.tableCacheGet(tableName));
+        long tableId = cache.tableCacheGet(tableName);
+        try {
+            autoIncrementLock.readLock().lock();
+            return cache.autoIncCacheGet(tableId);
+        } finally {
+            autoIncrementLock.readLock().unlock();
+        }
     }
 
     @Override
     public void setAutoInc(String tableName, long value) {
         long tableId = cache.tableCacheGet(tableName);
-        long current = cache.autoIncCacheGet(tableId);
-        if (value > current) {
-            metadata.setAutoInc(tableId, value);
-            cache.invalidateAutoIncCache(tableId);
+        try {
+            autoIncrementLock.writeLock().lock();
+            long current = cache.autoIncCacheGet(tableId);
+            if (value > current) {
+                metadata.setAutoInc(tableId, value);
+                cache.invalidateAutoIncCache(tableId);
+            }
+        } finally {
+            autoIncrementLock.writeLock().unlock();
         }
     }
 
     @Override
     public long incrementAutoInc(String tableName, long amount) {
         long tableId = cache.tableCacheGet(tableName);
-        long value = metadata.incrementAutoInc(tableId, amount);
-        cache.updateAutoIncCache(tableId, value);
+        long value;
+        try {
+            autoIncrementLock.writeLock().lock();
+            value = metadata.incrementAutoInc(tableId, amount);
+            cache.updateAutoIncCache(tableId, value);
+        } finally {
+            autoIncrementLock.writeLock().unlock();
+        }
         return value;
     }
 
     @Override
     public void truncateAutoInc(String tableName) {
         long tableId = cache.tableCacheGet(tableName);
-        metadata.setAutoInc(tableId, 1);
-        cache.invalidateAutoIncCache(tableId);
+        try {
+            autoIncrementLock.writeLock().lock();
+            metadata.setAutoInc(tableId, 1);
+            cache.invalidateAutoIncCache(tableId);
+        } finally {
+            autoIncrementLock.writeLock().unlock();
+        }
     }
 
     @Override
     public long getRowCount(String tableName) {
-        return cache.rowsCacheGet(cache.tableCacheGet(tableName));
+        long tableId = cache.tableCacheGet(tableName);
+        try {
+            rowsLock.readLock().lock();
+            return cache.rowsCacheGet(tableId);
+        } finally {
+            rowsLock.readLock().unlock();
+        }
     }
 
     @Override
     public long incrementRowCount(String tableName, long amount) {
+        long value;
         long tableId = cache.tableCacheGet(tableName);
-        long value = metadata.incrementRowCount(tableId, amount);
-        cache.updateRowsCache(tableId, value);
+        try {
+            rowsLock.writeLock().lock();
+            value = metadata.incrementRowCount(tableId, amount);
+            cache.updateRowsCache(tableId, value);
+        } finally {
+            rowsLock.writeLock().unlock();
+        }
         return value;
     }
 
     @Override
     public void truncateRowCount(String tableName) {
         long tableId = cache.tableCacheGet(tableName);
-        metadata.truncateRowCount(tableId);
-        cache.invalidateRowsCache(tableId);
+        try {
+            rowsLock.writeLock().lock();
+            metadata.truncateRowCount(tableId);
+            cache.invalidateRowsCache(tableId);
+        } finally {
+            rowsLock.writeLock().unlock();
+        }
     }
 }
