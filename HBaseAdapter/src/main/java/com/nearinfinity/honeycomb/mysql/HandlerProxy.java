@@ -255,6 +255,7 @@ public class HandlerProxy {
         String auto_inc_col = schema.getAutoIncrementColumn();
         if (auto_inc_col != null) {
             ByteBuffer bb = row.getRecords().get(auto_inc_col);
+            checkNotNull(bb);
             long auto_inc = bb.getLong();
             long next_auto_inc = auto_inc + 1;
             if (auto_inc > next_auto_inc) { // The autoincrement will wrap around. MySQL says don't wrap.
