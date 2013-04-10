@@ -10,7 +10,6 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -20,6 +19,7 @@ public class Row {
             new SpecificDatumWriter<AvroRow>(AvroRow.class);
     private static final DatumReader<AvroRow> reader =
             new SpecificDatumReader<AvroRow>(AvroRow.class);
+
     private final AvroRow row;
 
     /**

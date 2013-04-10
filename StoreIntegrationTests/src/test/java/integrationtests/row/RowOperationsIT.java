@@ -1,7 +1,9 @@
 package integrationtests.row;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.primitives.Longs;
 import com.nearinfinity.honeycomb.config.Constants;
 import com.nearinfinity.honeycomb.mysql.HandlerProxy;
 import com.nearinfinity.honeycomb.mysql.QueryKey;
@@ -18,7 +20,10 @@ import integrationtests.TestConstants;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.*;
@@ -28,19 +33,46 @@ public class RowOperationsIT extends HoneycombIntegrationTest {
     private static final int ROW_COUNT = 1;
     private static final int INDEX_COL_VALUE = 7;
 
+    private static final Map<String, ByteBuffer> fields = ImmutableMap.of(
+            TestConstants.COLUMN1,
+            ByteBuffer.wrap(Longs.toByteArray(1)),
+            TestConstants.COLUMN2,
+            ByteBuffer.wrap(Longs.toByteArray(2)));
+
+    private class InsertRows implements ITUtils.ProxyRunnable {
+        private long count;
+        public InsertRows(long count) {
+            this.count = count;
+        }
+        @Override
+        public void run(HandlerProxy proxy) {
+            byte[] row;
+            for (int i = 0; i < count; i++) {
+                row = new Row(fields, UUID.randomUUID()).serialize();
+                proxy.insertRow(row);
+            }
+            proxy.flush();
+        }
+    }
+
     @Test
-    public void testInsertRow() {
-        final Map<String, ByteBuffer> map = Maps.newHashMap();
-        map.put(TestConstants.COLUMN1, ITUtils.encodeValue(INDEX_COL_VALUE));
-        map.put(TestConstants.COLUMN2, ITUtils.encodeValue(6));
+    public void testInsertRows() {
+        final long numRows = 13;
+        new InsertRows(numRows).run(proxy);
+        ITUtils.assertRowCount(proxy, getTableSchema(), numRows);
+    }
 
-        final Row row = new Row(map, UUID.randomUUID());
-        proxy.insertRow(row.serialize());
-        proxy.flush();
-
-        final QueryKey key = ITUtils.createKey(INDEX_COL_VALUE, QueryType.EXACT_KEY);
-
-        ITUtils.assertReceivingDifferentRows(proxy, key, ROW_COUNT);
+    @Test
+    public void testInsertRowsConcurrently() throws Exception {
+        final long numRows = 13;
+        final int concurrency = 8;
+        final long expectedRowCount = numRows * concurrency;
+        ITUtils.startProxyActionConcurrently(concurrency,
+                ITUtils.openTable,
+                new InsertRows(numRows),
+                ITUtils.closeTable,
+                factory);
+        ITUtils.assertRowCount(proxy, getTableSchema(), expectedRowCount);
     }
 
     @Test

@@ -21,7 +21,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class Util {
     public static final int UUID_WIDTH = 16;
     private static final Logger logger = Logger.getLogger(Util.class);
-    private static BinaryDecoder binaryDecoder;
 
     /**
      * Returns a byte wide buffer from a {@link UUID}.
@@ -81,7 +80,8 @@ public class Util {
         checkNotNull(serializedData);
         checkNotNull(reader);
         final ByteArrayInputStream in = new ByteArrayInputStream(serializedData);
-        binaryDecoder = DecoderFactory.get().binaryDecoder(in, binaryDecoder);
+
+        Decoder binaryDecoder = DecoderFactory.get().binaryDecoder(in, null);
         try {
             return reader.read(null, binaryDecoder);
         } catch (IOException e) {

@@ -1,25 +1,27 @@
 package integrationtests;
 
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.google.common.primitives.Longs;
+import com.nearinfinity.honeycomb.config.Constants;
 import com.nearinfinity.honeycomb.mysql.HandlerProxy;
+import com.nearinfinity.honeycomb.mysql.HandlerProxyFactory;
 import com.nearinfinity.honeycomb.mysql.QueryKey;
 import com.nearinfinity.honeycomb.mysql.Row;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
-import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import com.nearinfinity.honeycomb.util.Verify;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.*;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.*;
@@ -29,35 +31,13 @@ import static org.junit.Assert.*;
  */
 public class ITUtils {
     /**
-     * Generates a new {@link com.nearinfinity.honeycomb.mysql.schema.TableSchema} with columns and indexes
-     *
-     * @return The created schema
-     */
-    public static TableSchema getTableSchema() {
-        final List<ColumnSchema> columns = Lists.newArrayList();
-        final List<IndexSchema> indices = Lists.newArrayList();
-
-        // Add nullable, non-autoincrementing columns
-        columns.add(ColumnSchema.builder(TestConstants.COLUMN1, ColumnType.LONG).build());
-        columns.add(ColumnSchema.builder(TestConstants.COLUMN2, ColumnType.LONG).build());
-
-        // Add non-unique index on one column
-        indices.add(new IndexSchema(TestConstants.INDEX1, Lists.newArrayList(TestConstants.COLUMN1), false));
-
-        // Add non-unique compound index on (c1, c2)
-        indices.add(new IndexSchema(TestConstants.INDEX2, Lists.newArrayList(TestConstants.COLUMN1, TestConstants.COLUMN2), false));
-
-        return new TableSchema(columns, indices);
-    }
-
-    /**
      * Encodes the provided value as a {@link ByteBuffer}
      *
      * @param value The value to encode
      * @return The buffer representing the provided value
      */
     public static ByteBuffer encodeValue(final long value) {
-        return (ByteBuffer) ByteBuffer.allocate(8).putLong(value).rewind();
+        return ByteBuffer.wrap(Longs.toByteArray(value));
     }
 
     /**
@@ -66,7 +46,8 @@ public class ITUtils {
      * @param proxy    The proxy to use for invoking a scan, not null
      * @param rowCount The valid number of rows expected to be returned from the scan
      */
-    public static void assertReceivingDifferentRows(final HandlerProxy proxy, final int rowCount) {
+    public static void assertReceivingDifferentRows(final HandlerProxy proxy,
+                                                    final int rowCount) {
         checkNotNull(proxy);
         verifyRowCount(rowCount);
 
@@ -82,7 +63,9 @@ public class ITUtils {
      * @param key      The index used to run an index scan, not null
      * @param rowCount The valid number of rows expected to be returned from the scan
      */
-    public static void assertReceivingDifferentRows(final HandlerProxy proxy, final QueryKey key, final int rowCount) {
+    public static void assertReceivingDifferentRows(final HandlerProxy proxy,
+                                                    final QueryKey key,
+                                                    final int rowCount) {
         checkNotNull(proxy);
         checkNotNull(key);
         verifyRowCount(rowCount);
@@ -184,12 +167,6 @@ public class ITUtils {
         return new QueryKey(TestConstants.INDEX1, queryType, keys);
     }
 
-    public static QueryKey createKey(final String indexName, final int keyValue, final QueryType queryType) {
-        HashMap<String, ByteBuffer> keys = Maps.newHashMap();
-        keys.put(TestConstants.COLUMN1, encodeValue(keyValue));
-        return new QueryKey(indexName, queryType, keys);
-    }
-
     public static Row createRow(final int columnValue) {
         final Map<String, ByteBuffer> map = Maps.newHashMap();
         map.put(TestConstants.COLUMN1, encodeValue(columnValue));
@@ -211,5 +188,124 @@ public class ITUtils {
 
     private static void verifyRowCount(final long rowCount) {
         checkArgument(rowCount >= 0, "The provided row count is invalid");
+    }
+
+    /**
+     * Check that the table open on the proxy has the expected number of data rows
+     * and index rows on each index (checks both ascending and descending
+     * directions).  Note: this could be very slow for big tables.
+     * @param proxy HandlerProxy with table already open
+     * @param schema TableSchema of open table
+     * @param expectedRowCount Expected number of rows
+     */
+    public static void assertRowCount(final HandlerProxy proxy,
+                                      final TableSchema schema,
+                                      final long expectedRowCount) {
+        checkState(proxy.getTableName() != null, "Proxy must have an open table.");
+        checkNotNull(schema);
+        verifyRowCount(expectedRowCount);
+
+        proxy.startTableScan();
+        assertResultCount(proxy, expectedRowCount);
+        proxy.endScan();
+
+        QueryKey queryKey;
+        for(IndexSchema indexSchema : schema.getIndices()) {
+            queryKey = new QueryKey(indexSchema.getIndexName(),
+                    QueryType.INDEX_FIRST, ImmutableMap.<String, ByteBuffer>of());
+            proxy.startIndexScan(queryKey.serialize());
+            assertResultCount(proxy, expectedRowCount);
+            proxy.endScan();
+
+            queryKey = new QueryKey(indexSchema.getIndexName(),
+                    QueryType.INDEX_LAST, ImmutableMap.<String, ByteBuffer>of());
+            proxy.startIndexScan(queryKey.serialize());
+            assertResultCount(proxy, expectedRowCount);
+            proxy.endScan();
+        }
+    }
+
+    /**
+     * Checks that the open scan on the proxy has the expected number of results.
+     * @param proxy
+     * @param expectedResultCount
+     */
+    private static void assertResultCount(final HandlerProxy proxy,
+                                          final long expectedResultCount) {
+        long actualResultCount = 0;
+        while(proxy.getNextRow() != null) {
+            actualResultCount++;
+        }
+        assertEquals(expectedResultCount, actualResultCount);
+    }
+
+    /**
+     * Start concurrency number of actions concurrently and at the same time.  This
+     * method ensures that the actions are started at the same time, and they are
+     * not being blocked in a thread pool.  Obviously, this uses concurrency
+     * number of threads simultaneously so use caution as thread starvation
+     * deadlock can occur with high concurrency levels.
+     *
+     * @param concurrency Number of handler proxies to run the action against, concurrently
+     * @param setup Action to be run on each proxy before starting concurrent actions
+     * @param action Action to be run concurrently and in sync with other proxies
+     * @param factory HandlerProxyFactory to supply proxies to be run concurrently
+     * @throws InterruptedException
+     */
+    public static void startProxyActionConcurrently(int concurrency,
+                                                    final ProxyRunnable setup,
+                                                    final ProxyRunnable action,
+                                                    final ProxyRunnable cleanup,
+                                                    final HandlerProxyFactory factory)
+            throws InterruptedException{
+        final ExecutorService executor = Executors.newCachedThreadPool();
+        final CountDownLatch ready = new CountDownLatch(concurrency);
+        final CountDownLatch start = new CountDownLatch(1);
+        final CountDownLatch done = new CountDownLatch(concurrency);
+
+        for (int i = 0; i < concurrency; i++) {
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    HandlerProxy proxy = factory.createHandlerProxy();
+                    setup.run(proxy);
+                    ready.countDown();
+                    try {
+                        start.await();
+                        action.run(proxy);
+                    } catch (InterruptedException e) {
+                        System.out.println("Interuppted");
+                        Thread.currentThread().interrupt();
+                    }
+                    cleanup.run(proxy);
+                    done.countDown();
+                }
+            });
+        }
+        ready.await();
+        start.countDown();
+        done.await();
+    }
+
+    public static ProxyRunnable openTable = new ITUtils.ProxyRunnable() {
+        @Override
+        public void run(HandlerProxy proxy) {
+            proxy.openTable(TestConstants.TABLE_NAME, Constants.HBASE_TABLESPACE);
+        }
+    };
+
+    public static ITUtils.ProxyRunnable closeTable = new ITUtils.ProxyRunnable() {
+        @Override
+        public void run(HandlerProxy proxy) {
+            proxy.closeTable();
+        }
+    };
+
+    /**
+     * Basically Runnable, but run takes a HandlerProxy which the action
+     * may use.
+     */
+    public interface ProxyRunnable {
+        public void run(HandlerProxy proxy);
     }
 }

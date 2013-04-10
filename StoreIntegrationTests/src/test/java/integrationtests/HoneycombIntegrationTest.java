@@ -58,6 +58,6 @@ public abstract class HoneycombIntegrationTest {
      * @return The schema used for testing
      */
     protected TableSchema getTableSchema() {
-        return ITUtils.getTableSchema();
+        return TestConstants.TABLE_SCHEMA;
     }
 }
