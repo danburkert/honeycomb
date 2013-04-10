@@ -11,7 +11,6 @@ import com.nearinfinity.honeycomb.util.Verify;
 import org.apache.log4j.Logger;
 
 import java.nio.ByteBuffer;
-import java.util.Set;
 
 import static com.google.common.base.Preconditions.*;
 import static java.lang.String.format;
@@ -284,7 +283,7 @@ public class HandlerProxy {
         Row updatedRow = Row.deserialize(rowBytes);
         TableSchema schema = store.getSchema(tableName);
         Row oldRow = table.get(updatedRow.getUUID());
-        ImmutableList<IndexSchema> changedIndices = getChangedIndices(updatedRow, schema, oldRow);
+        ImmutableList<IndexSchema> changedIndices = Util.getChangedIndices(schema.getIndices(), oldRow.getRecords(), updatedRow.getRecords());
         table.update(oldRow, updatedRow, changedIndices);
     }
 
@@ -378,30 +377,6 @@ public class HandlerProxy {
     public void endScan() {
         Util.closeQuietly(currentScanner);
         currentScanner = null;
-    }
-
-    private ImmutableList<IndexSchema> getChangedIndices(Row updatedRow, TableSchema schema, Row oldRow) {
-        if (!schema.hasIndices()) {
-            return ImmutableList.of();
-        }
-
-        MapDifference<String, ByteBuffer> diff = Maps.difference(oldRow.getRecords(),
-                updatedRow.getRecords());
-
-        Set<String> changedColumns = Sets.difference(
-                Sets.union(updatedRow.getRecords().keySet(), oldRow.getRecords().keySet()),
-                diff.entriesInCommon().keySet());
-
-        ImmutableList.Builder<IndexSchema> changedIndices = ImmutableList.builder();
-
-        for (IndexSchema index : schema.getIndices()) {
-            Set<String> indexColumns = ImmutableSet.copyOf(index.getColumns());
-            if (!Sets.intersection(changedColumns, indexColumns).isEmpty()) {
-                changedIndices.add(index);
-            }
-        }
-
-        return changedIndices.build();
     }
 
     private void checkTableOpen() {

@@ -1,6 +1,8 @@
 package com.nearinfinity.honeycomb.mysql;
 
+import com.google.common.collect.*;
 import com.nearinfinity.honeycomb.exceptions.RuntimeIOException;
+import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import org.apache.avro.io.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
@@ -10,6 +12,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -110,6 +115,32 @@ public class Util {
             logger.error(String.format("IOException thrown while closing resource of type %s", closeable.getClass().getName()), e);
             throw new RuntimeIOException(e);
         }
+    }
+
+    public static ImmutableList<IndexSchema> getChangedIndices(Collection<IndexSchema> indices,
+                                                               Map<String, ByteBuffer> oldRecords,
+                                                               Map<String, ByteBuffer> newRecords) {
+        if (indices.isEmpty()) {
+            return ImmutableList.of();
+        }
+
+        MapDifference<String, ByteBuffer> diff = Maps.difference(oldRecords,
+                newRecords);
+
+        Set<String> changedColumns = Sets.difference(
+                Sets.union(newRecords.keySet(), oldRecords.keySet()),
+                diff.entriesInCommon().keySet());
+
+        ImmutableList.Builder<IndexSchema> changedIndices = ImmutableList.builder();
+
+        for (IndexSchema index : indices) {
+            Set<String> indexColumns = ImmutableSet.copyOf(index.getColumns());
+            if (!Sets.intersection(changedColumns, indexColumns).isEmpty()) {
+                changedIndices.add(index);
+            }
+        }
+
+        return changedIndices.build();
     }
 
     private static <T> RuntimeException deserializationError(byte[] serializedData, IOException e, Class<T> clazz) {
