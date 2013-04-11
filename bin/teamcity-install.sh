@@ -18,7 +18,7 @@ then
 fi
 
 echo "Copying ha_honeycomb.so, mysqlengine.jar and honeycomb-test to $honeycomb_lib"
-cp -R $HONEYCOMB_HOME/mysql-5.5.28/storage/honeycomb/honeycomb-test $honeycomb_lib
+cp -R $HONEYCOMB_HOME/mysql/storage/honeycomb/honeycomb-test $honeycomb_lib
 cp $HONEYCOMB_HOME/build/storage/honeycomb/ha_honeycomb.so $honeycomb_lib
 function copy_jar
 {
