@@ -24,6 +24,7 @@ public class HBaseModule extends AbstractModule {
     public HBaseModule(final ConfigurationHolder configuration) throws IOException {
         // Add the HBase resources to the core application configuration
         Configuration hBaseConfiguration = HBaseConfiguration.addHbaseResources(configuration.getConfiguration());
+
         configHolder = new ConfigurationHolder(hBaseConfiguration);
 
         hTableProvider = new HTableProvider(configHolder);
@@ -32,7 +33,11 @@ public class HBaseModule extends AbstractModule {
             TableCreator.createTable(configHolder);
         } catch (IOException e) {
             logger.fatal("Could not create HBaseStore. Aborting initialization.");
+            logger.fatal(configHolder.toString());
             throw e;
+        } catch (Exception e) {
+            logger.fatal(configHolder.toString());
+            throw new RuntimeException(e);
         }
     }
 
@@ -44,7 +49,7 @@ public class HBaseModule extends AbstractModule {
         storeMapBinder.addBinding(Constants.HBASE_TABLESPACE).to(HBaseStore.class);
 
         bind(Long.class).annotatedWith(Names.named(ConfigConstants.PROP_WRITE_BUFFER_SIZE))
-            .toInstance(configHolder.getStorageWriteBufferSize());
+                .toInstance(configHolder.getStorageWriteBufferSize());
 
         install(new FactoryModuleBuilder()
                 .implement(Table.class, HBaseTable.class)

@@ -18,7 +18,7 @@ then
 fi
 
 echo "Copying ha_honeycomb.so, mysqlengine.jar and honeycomb-test to $honeycomb_lib"
-cp -R $HONEYCOMB_HOME/mysql-5.5.28/storage/honeycomb/honeycomb-test $honeycomb_lib
+cp -R $HONEYCOMB_HOME/mysql/storage/honeycomb/honeycomb-test $honeycomb_lib
 cp $HONEYCOMB_HOME/build/storage/honeycomb/ha_honeycomb.so $honeycomb_lib
 function copy_jar
 {
@@ -33,7 +33,5 @@ copy_jar MedianSplit
 copy_jar DataCreator
 copy_jar BulkLoadMapper
 
-create_classpath=$($HONEYCOMB_HOME/bin/create-classpath.rb $honeycomb_lib)
-echo $create_classpath > /home/teamcity/classpath.conf
 echo "Running mysql-restart.sh"
 $SETUID/mysql-restart.sh

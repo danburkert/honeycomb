@@ -1,13 +1,8 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import com.google.common.collect.*;
-import com.nearinfinity.honeycomb.exceptions.RuntimeIOException;
-import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
-import org.apache.avro.io.*;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.log4j.Logger;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
@@ -17,8 +12,22 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import org.apache.avro.io.DatumReader;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.io.Decoder;
+import org.apache.avro.io.DecoderFactory;
+import org.apache.avro.io.Encoder;
+import org.apache.avro.io.EncoderFactory;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.log4j.Logger;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.MapDifference;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.nearinfinity.honeycomb.exceptions.RuntimeIOException;
+import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 
 /**
  * Utility class containing helper functions.
@@ -64,6 +73,7 @@ public class Util {
     public static <T> byte[] serializeAvroObject(T obj, DatumWriter<T> writer) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Encoder encoder = EncoderFactory.get().binaryEncoder(out, null);
+
         try {
             writer.write(obj, encoder);
             encoder.flush();
@@ -84,9 +94,8 @@ public class Util {
     public static <T> T deserializeAvroObject(byte[] serializedData, DatumReader<T> reader) {
         checkNotNull(serializedData);
         checkNotNull(reader);
-        final ByteArrayInputStream in = new ByteArrayInputStream(serializedData);
 
-        Decoder binaryDecoder = DecoderFactory.get().binaryDecoder(in, null);
+        Decoder binaryDecoder = DecoderFactory.get().binaryDecoder(serializedData, null);
         try {
             return reader.read(null, binaryDecoder);
         } catch (IOException e) {
