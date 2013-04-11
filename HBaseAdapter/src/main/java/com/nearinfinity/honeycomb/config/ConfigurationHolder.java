@@ -7,6 +7,7 @@ import com.nearinfinity.honeycomb.util.Verify;
 import net.jcip.annotations.Immutable;
 import net.jcip.annotations.ThreadSafe;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HConstants;
 
 import java.util.Collection;
 
@@ -103,7 +104,9 @@ public final class ConfigurationHolder {
      */
     public Configuration getConfiguration() {
         // Copy the current configuration to enforce immutability
-        return new Configuration(config);
+        Configuration configuration = new Configuration(config);
+        configuration.set(HConstants.ZOOKEEPER_QUORUM, getZookeeperQuorum());
+        return configuration;
     }
 
     @Override
