@@ -11,6 +11,7 @@ import com.nearinfinity.honeycomb.config.ConfigurationHolder;
 import com.nearinfinity.honeycomb.config.Constants;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.log4j.Logger;
 
@@ -24,6 +25,7 @@ public class HBaseModule extends AbstractModule {
     public HBaseModule(final ConfigurationHolder configuration) throws IOException {
         // Add the HBase resources to the core application configuration
         Configuration hBaseConfiguration = HBaseConfiguration.addHbaseResources(configuration.getConfiguration());
+        hBaseConfiguration.set(HConstants.ZOOKEEPER_QUORUM, configuration.getZookeeperQuorum());
         configHolder = new ConfigurationHolder(hBaseConfiguration);
 
         hTableProvider = new HTableProvider(configHolder);
