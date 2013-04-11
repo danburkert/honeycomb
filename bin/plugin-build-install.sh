@@ -8,13 +8,15 @@ command -v make >/dev/null 2>&1 || { echo >&2 "make is required to run $0."; exi
 build_dir=$HONEYCOMB_HOME/build
 unit_test_dir=$HONEYCOMB_HOME/build/storage/honeycomb/unit-test
 
-if [ ! -L $HONEYCOMB_HOME/mysql ]
+if [ $# -eq 1 ]
 then
-    echo "Create a symbolic link to your mysql source code in $HONEYCOMB_HOME (ln -s <mysql source directory> mysql)"
-    exit 1
+    mysql_path=$1
+else
+    [ -z "$MYSQL_SOURCE_PATH" ] && { echo "Need to set MYSQL_SOURCE_PATH if you want to run this script without arguments."; exit 1; }
+    mysql_path=$MYSQL_SOURCE_PATH
 fi
 
-honeycomb_link=$HONEYCOMB_HOME/mysql/storage/honeycomb
+honeycomb_link=$mysql_path/storage/honeycomb
 if [ ! -L $honeycomb_link ]
 then
     echo "Creating symbolic link to $honeycomb_link"
@@ -32,7 +34,7 @@ cd $build_dir
 if [ ! -e CMakeCache.txt ]
 then
   echo "Running cmake with debug enabled."
-  cmake -DWITH_DEBUG=1 -DMYSQL_MAINTAINER_MODE=0 ../mysql
+  cmake -DWITH_DEBUG=1 -DMYSQL_MAINTAINER_MODE=0 $mysql_path
   [ $? -ne 0 ] && { echo "CMake failed stopping the script.\n*** Don't forget to delete CMakeCache.txt before running again.***"; exit 1; }
 fi
 
