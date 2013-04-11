@@ -18,7 +18,7 @@
            (loop [times []]
              (condp = @phase
                :bench (recur (conj times
-                                   (let [t (. System (nanoTime))]
+                                   (let [t (System/nanoTime)]
                                      (op)
                                      t)))
                :warmup (do (op)
@@ -70,6 +70,14 @@
       (prn (name table) query clients
            (float (/ timestep resolution)) (float (or (get results timestep) 0))))))
 
+(defmacro wrap-query
+  "Execute a query, and delay execution of query generator until just before used."
+  [& body]
+  `(fn []
+     (sql/with-query-results res#
+       ~@body
+       (dorun res#))))
+
 (defn- benchmark-queries
   "Run benchmarks against different configurations of tables, concurrent client
    connections, and query types.  The database, warmup period, benchmark period,
@@ -79,7 +87,7 @@
           table tables
           clients clients]
     (let [query-op (get (ns-publics 'nearinfinity.honeycomb.benchmark.query) query)]
-      (-> (benchmark db-spec (query-op table) clients warmup bench)
+      (-> (benchmark db-spec (wrap-query (query-op table)) clients warmup bench)
           flatten
           (aggregate-timesteps resolution)
           (print-results table query clients bench resolution)))))
