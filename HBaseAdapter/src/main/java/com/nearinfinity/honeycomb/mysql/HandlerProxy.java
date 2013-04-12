@@ -265,7 +265,11 @@ public class HandlerProxy {
                 store.setAutoInc(tableName, next_auto_inc);
             }
         }
+
         table.insert(row);
+        if (schema.hasUniqueIndices()) {
+            table.flush();
+        }
     }
 
     public void deleteRow(byte[] uuidBytes) {
@@ -281,6 +285,9 @@ public class HandlerProxy {
         Row oldRow = table.get(updatedRow.getUUID());
         ImmutableList<IndexSchema> changedIndices = Util.getChangedIndices(schema.getIndices(), oldRow.getRecords(), updatedRow.getRecords());
         table.update(oldRow, updatedRow, changedIndices);
+        if (schema.hasUniqueIndices()) {
+            table.flush();
+        }
     }
 
     /**

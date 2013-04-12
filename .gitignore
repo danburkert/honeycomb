@@ -14,7 +14,6 @@ restart-mysql.sh
 *.swp
 *.reject
 /.project
-mysql
 /mysql-*/.cproject
 /mysql-*/.project
 /mysql-*/.settings/org.eclipse.cdt.codan.core.prefs
