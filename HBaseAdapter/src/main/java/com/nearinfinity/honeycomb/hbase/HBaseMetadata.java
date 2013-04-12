@@ -268,7 +268,7 @@ public class HBaseMetadata {
         put.add(COLUMN_FAMILY, serializeId(tableId), Bytes.toBytes(value));
         HTableInterface hTable = getHTable();
         try {
-            HBaseOperations.performPut(hTable, put);
+            performMutations(ImmutableList.<Delete>of(), ImmutableList.of(put));
         } finally {
             HBaseOperations.closeTable(hTable);
         }

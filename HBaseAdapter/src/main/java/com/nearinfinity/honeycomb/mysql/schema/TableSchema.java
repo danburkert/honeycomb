@@ -28,6 +28,7 @@ public class TableSchema {
     private final AvroTableSchema avroTableSchema;
     private final Collection<ColumnSchema> columns;
     private final Collection<IndexSchema> indices;
+    private int uniqueIndexCount = 0;
 
     /**
      * Construct a table schema from a map of column schemas and index schemas.
@@ -47,6 +48,9 @@ public class TableSchema {
         Map<String, AvroIndexSchema> indexSchemaMap = Maps.newHashMap();
         for (IndexSchema indexSchema : indices) {
             indexSchemaMap.put(indexSchema.getIndexName(), indexSchema.getAvroValue());
+            if (indexSchema.getIsUnique()) {
+                uniqueIndexCount++;
+            }
         }
 
         avroTableSchema = new AvroTableSchema(columnSchemaMap, indexSchemaMap);
@@ -65,6 +69,9 @@ public class TableSchema {
         this.indices = Lists.newArrayList();
         for (Map.Entry<String, AvroIndexSchema> entry : avroTableSchema.getIndices().entrySet()) {
             this.indices.add(new IndexSchema(entry.getKey(), entry.getValue()));
+            if (entry.getValue().getIsUnique()) {
+                uniqueIndexCount++;
+            }
         }
     }
 
@@ -126,6 +133,9 @@ public class TableSchema {
         for (IndexSchema entry : indices) {
             this.indices.add(entry);
             avroTableSchema.getIndices().put(entry.getIndexName(), entry.getAvroValue());
+            if (entry.getIsUnique()) {
+                uniqueIndexCount++;
+            }
         }
     }
 
@@ -140,10 +150,17 @@ public class TableSchema {
         checkNotNull(schema);
         indices.remove(schema);
         avroTableSchema.getIndices().remove(indexName);
+        if (schema.getIsUnique()) {
+            uniqueIndexCount--;
+        }
     }
 
     public boolean hasIndices() {
         return !indices.isEmpty();
+    }
+
+    public boolean hasUniqueIndices() {
+        return uniqueIndexCount > 0;
     }
 
     /**
