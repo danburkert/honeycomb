@@ -11,7 +11,7 @@ BUILD_SCRIPTS_DIR=$HONEYCOMB_HOME/bin
 # Initialize the Maven test running mode to use default behavior
 MAVEN_TEST_MODE="ut"
 
-usage () 
+usage ()
 {
     echo "Usage: $0 [OPTION]"
     echo -e "-t\tMaven test runner mode\t(none: no tests, all: all tests, ut: only unit tests, it: only integration tests)"

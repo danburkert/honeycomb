@@ -15,9 +15,9 @@
         <skipTests>false</skipTests>
         <skipIntTests>${skipTests}</skipIntTests>
         <skipUnitTests>${skipTests}</skipUnitTests>
-        <hadoop.artifactId>hadoop-core</hadoop.artifactId>
-        <hadoop.version>1.0.4</hadoop.version>
-        <hbase.version>0.94.2</hbase.version>
+        <hadoop.artifactId>hadoop-client</hadoop.artifactId>
+        <hadoop.version>2.0.0-mr1-cdh4.2.0</hadoop.version>
+        <hbase.version>0.94.2-cdh4.2.0</hbase.version>
         <powermock.version>1.5</powermock.version>
     </properties>
 
@@ -28,72 +28,42 @@
         </site>
     </distributionManagement>
 
-    <profiles>
-        <profile>
-            <id>apache</id>
-            <activation>
-                <property>
-                    <name>apache</name>
-                </property>
-            </activation>
-            <modules>
-            <module>HBaseTableCreator</module>
-            </modules>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-dependency-plugin</artifactId>
-                        <version>2.6</version>
-                        <executions>
-                            <execution>
-                                <phase>install</phase>
-                                <goals>
-                                    <goal>copy-dependencies</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>
-                                        ${project.build.directory}/lib
-                                    </outputDirectory>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>cdh</id>
-            <activation>
-                <property>
-                    <name>cdh</name>
-                </property>
-            </activation>
-            <properties>
-                <hadoop.artifactId>hadoop-client</hadoop.artifactId>
-                <hadoop.version>2.0.0-mr1-cdh4.2.0</hadoop.version>
-                <hbase.version>0.94.2-cdh4.2.0</hbase.version>
-            </properties>
-            <repositories>
-                <repository>
-                    <id>cloudera-releases</id>
-                    <url>
-                        https://repository.cloudera.com/artifactory/cloudera-repos/
-                    </url>
-                    <releases>
-                        <enabled>true</enabled>
-                    </releases>
-                    <snapshots>
-                        <enabled>false</enabled>
-                    </snapshots>
-                </repository>
-            </repositories>
-        </profile>
-    </profiles>
+    <repositories>
+        <repository>
+            <id>cloudera-releases</id>
+            <url>
+                https://repository.cloudera.com/artifactory/cloudera-repos/
+            </url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 
     <build>
         <pluginManagement>
             <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>2.6</version>
+                    <executions>
+                        <execution>
+                            <phase>install</phase>
+                            <goals>
+                                <goal>copy-dependencies</goal>
+                            </goals>
+                            <configuration>
+                                <outputDirectory>
+                                    ${project.build.directory}/lib
+                                </outputDirectory>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-clean-plugin</artifactId>

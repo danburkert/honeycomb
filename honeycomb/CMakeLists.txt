@@ -1,46 +1,63 @@
-if (DEFINED ENV{JAVA_HOME})
-  MESSAGE( "JAVA HOME: $ENV{JAVA_HOME}" )
-else()
-  MESSAGE( FATAL_ERROR  "******** ERROR: JAVA_HOME not defined.  If running cmake with sudo consider using the -E flag" )
-endif()
-
-INCLUDE_DIRECTORIES("$ENV{JAVA_HOME}/include")
-
 SET(HONEYCOMB_SOURCE_DIR "${CMAKE_SOURCE_DIR}/storage/honeycomb")
 SET(HONEYCOMB_BINARY_DIR "${CMAKE_BINARY_DIR}/storage/honeycomb")
 SET(HONEYCOMB_THIRD_PARTY "${HONEYCOMB_BINARY_DIR}/third-party")
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${HONEYCOMB_SOURCE_DIR}/cmake/")
 
+FIND_PACKAGE(JNI)
+IF (JNI_FOUND)
+  INCLUDE_DIRECTORIES(${Java_INCLUDE_DIRS})
+  LINK_LIBRARIES(${Java_LIBRARIES})
+  INCLUDE_DIRECTORIES(${JNI_INCLUDE_DIRS})
+  LINK_LIBRARIES(${JNI_LIBRARIES})
+ELSE(JNI_FOUND)
+  EXECUTE_PROCESS(COMMAND readlink -f /usr/bin/java
+    COMMAND sed "s:bin/java::"
+    OUTPUT_VARIABLE JAVA_HOME
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  IF(JAVA_HOME)
+    IF(CMAKE_SIZEOF_VOID_P EQUAL 4) # Is this a 32 bit system?
+      SET(ARCH "i386")
+    ELSE()
+      SET(ARCH "amd64")
+    ENDIF()
+
+    MESSAGE("INCLUDES: ${JAVA_HOME}../include")
+    MESSAGE("LINKS: ${JAVA_HOME}lib/${ARCH}/")
+
+    INCLUDE_DIRECTORIES("${JAVA_HOME}../include")
+    INCLUDE_DIRECTORIES("${JAVA_HOME}../include/linux")
+
+    LINK_DIRECTORIES("${JAVA_HOME}lib/${ARCH}/")
+    LINK_DIRECTORIES("${JAVA_HOME}lib/${ARCH}/server")
+    LINK_DIRECTORIES("${JAVA_HOME}lib/${ARCH}/xawt")
+    LINK_LIBRARIES(jawt jvm jsig)
+  ELSE(JAVA_HOME)
+    MESSAGE(FATAL_ERROR "Unable to find Java JNI libraries.")
+  ENDIF(JAVA_HOME)
+ENDIF(JNI_FOUND)
+
 FIND_PACKAGE(LibXml2 REQUIRED)
-if (LIBXML2_FOUND)
+IF(LIBXML2_FOUND)
   INCLUDE_DIRECTORIES(${LIBXML2_INCLUDE_DIR})
   LINK_LIBRARIES(${LIBXML2_LIBRARIES})
-endif()
+ENDIF(LIBXML2_FOUND)
 
-FIND_PACKAGE(LibAvro REQUIRED)
-if (LIBAVRO_FOUND)
-  INCLUDE_DIRECTORIES(${LIBAVRO_INCLUDE_DIR})
-  LINK_LIBRARIES(${LIBAVRO_LIBRARIES})
-endif()
-
-if (APPLE)
-  MESSAGE( "Compiling on Apple System" )
-  LINK_DIRECTORIES("${CMAKE_BINARY_DIR}/dependencies/lib/")
-  SET(LIBS "-lxml2 -framework JavaVM")
-else()
-  MESSAGE( "Compiling on Linux System" )
-  INCLUDE_DIRECTORIES("$ENV{JAVA_HOME}/include/linux")
-  SET(path "amd64")
-  if(CMAKE_SIZEOF_VOID_P EQUAL 4) # Is this a 32 bit system?
-      SET(path "i386")
-  endif()
-  LINK_DIRECTORIES("${CMAKE_BINARY_DIR}/dependencies/lib/")
-  LINK_DIRECTORIES("/usr/local/avro/lang/c/build/avrolib/lib")
-  LINK_DIRECTORIES("$ENV{JAVA_HOME}/jre/lib/${path}")
-  LINK_DIRECTORIES("$ENV{JAVA_HOME}/jre/lib/${path}/server")
-  LINK_DIRECTORIES("$ENV{JAVA_HOME}/jre/lib/${path}/xawt")
-  SET(LIBS jawt jvm jsig xml2)
-endif()
+include(ExternalProject)
+set(AVRO_VERSION 1.7.4)
+ExternalProject_Add(LibAvro
+  URL http://mirror.nexcess.net/apache/avro/avro-${AVRO_VERSION}/c/avro-c-${AVRO_VERSION}.tar.gz
+  DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}/avro/download
+  SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/avro/source
+  BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/avro/build
+  UPDATE_COMMAND ""
+  PATCH_COMMAND ""
+  INSTALL_COMMAND ""
+)
+SET(LIBAVRO_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/avro/source/src)
+SET(LIBAVRO_LIBRARIES ${CMAKE_CURRENT_BINARY_DIR}/avro/build/src)
+INCLUDE_DIRECTORIES(${LIBAVRO_INCLUDE_DIR})
+LINK_DIRECTORIES(${LIBAVRO_LIBRARIES})
+LINK_LIBRARIES(avro)
 
 SET(HONEYCOMB_PLUGIN_DYNAMIC "ha_honeycomb")
 SET(HONEYCOMB_SOURCES HoneycombHandler.cc DDL.cc ha_honeycomb.cc
@@ -48,5 +65,4 @@ SET(HONEYCOMB_SOURCES HoneycombHandler.cc DDL.cc ha_honeycomb.cc
   JNICache.cc JavaFrame.cc AvroUtil.cc Row.cc TableSchema.cc IndexSchema.cc ColumnSchema.cc
   QueryKey.cc Query.cc IUD.cc)
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-error -g -Wextra -Wno-unused-parameter -Wswitch-default -Wcast-qual -Weffc++ -Wwrite-strings -Winit-self -Winline -Wmissing-noreturn -Wredundant-decls -Wpointer-arith -Wstrict-overflow=5 -Wstrict-aliasing=2 -Wno-deprecated-declarations -Wno-unknown-pragmas -Wctor-dtor-privacy -Woverloaded-virtual")
-MYSQL_ADD_PLUGIN(honeycomb ${HONEYCOMB_SOURCES} STORAGE_ENGINE MODULE_ONLY
-  LINK_LIBRARIES  ${LIBS})
+MYSQL_ADD_PLUGIN(honeycomb ${HONEYCOMB_SOURCES} STORAGE_ENGINE MODULE_ONLY)
