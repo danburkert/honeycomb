@@ -24,4 +24,4 @@ restart-mysql.sh
 *.settings
 repl-port
 gen/
-Vagrantfile
+.vagrant
