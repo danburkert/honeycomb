@@ -14,7 +14,7 @@
   do { \
     errno = ER_CANT_CREATE_TABLE; \
     my_errno = errno; \
-    my_error(ER_CANT_CREATE_TABLE, MYF(0), message); \
+    my_printf_error(ER_CANT_CREATE_TABLE, "Can't create table '%s'", MYF(0), message); \
     DBUG_RETURN(HA_WRONG_CREATE_OPTION); \
   } while(0)
 
