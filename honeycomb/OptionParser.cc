@@ -68,6 +68,7 @@ static bool test_config_file(OptionParser* parser, const char* config_file)
   else
   {
     print_perm(config_file);
+    perror("Open error:");
     const char* message = "Could not open \"%s\". File must be readable.";
     int size = strlen(message) + strlen(config_file) + 1;
     format_error(parser, size, message, config_file);
