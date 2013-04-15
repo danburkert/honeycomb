@@ -36,6 +36,6 @@ apt-get install -y hbase hbase-master hbase-regionserver
 
 #for x in `cd /etc/init.d ; ls hadoop-hdfs-*` ; do service $x start ; done
 
-apt-get -y install dpkg-dev cmake maven libncurses5-dev libxml2-dev
+apt-get -y install dpkg-dev cmake maven libncurses5-dev libxml2-dev git
 apt-get source mysql-5.5
 #apt-get -y install mysql-5.5
