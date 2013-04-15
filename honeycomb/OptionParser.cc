@@ -8,6 +8,9 @@
 #include <cstdlib>
 #include <cctype>
 
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 static const char* schema = "/etc/mysql/honeycomb.xsd";
 
 struct st_optionparser
@@ -18,6 +21,27 @@ struct st_optionparser
   char* error_message;
   xmlErrorPtr error;
 };
+
+static void print_perm(const char* file)
+{
+  struct stat fileStat;
+  stat(file,&fileStat); 
+
+  printf("Information for %s\n",file);
+  printf("---------------------------\n");
+  printf("File Permissions: \t");
+  printf( (S_ISDIR(fileStat.st_mode)) ? "d" : "-");
+  printf( (fileStat.st_mode & S_IRUSR) ? "r" : "-");
+  printf( (fileStat.st_mode & S_IWUSR) ? "w" : "-");
+  printf( (fileStat.st_mode & S_IXUSR) ? "x" : "-");
+  printf( (fileStat.st_mode & S_IRGRP) ? "r" : "-");
+  printf( (fileStat.st_mode & S_IWGRP) ? "w" : "-");
+  printf( (fileStat.st_mode & S_IXGRP) ? "x" : "-");
+  printf( (fileStat.st_mode & S_IROTH) ? "r" : "-");
+  printf( (fileStat.st_mode & S_IWOTH) ? "w" : "-");
+  printf( (fileStat.st_mode & S_IXOTH) ? "x" : "-");
+  printf("\n\n");
+}
 
 static void format_error(OptionParser* parser, int size, const char* message, ...)
 {
@@ -43,6 +67,7 @@ static bool test_config_file(OptionParser* parser, const char* config_file)
   }
   else
   {
+    print_perm(config_file);
     const char* message = "Could not open \"%s\". File must be readable.";
     int size = strlen(message) + strlen(config_file) + 1;
     format_error(parser, size, message, config_file);
