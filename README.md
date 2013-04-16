@@ -63,22 +63,58 @@ Note: MySQL can get into very strange states.
 * Extremely large stack allocations (due to uninitialized variables) can make gdb attach to the MySQL process very slowly. To fix this restart your machine.
 * On Mac OS X, if MySQL crashes, a large core dump file will appear in /cores. 
 
-Honeycomb files
----------------
+## Manual Installation
+### Install Dependencies
+Honeycomb depends on LibAvro 1.7.4, it must be installed on the system which will run Honeycomb.  Download the Avro c 1.7.4 tarball from an [apache mirror](https://www.apache.org/dyn/closer.cgi/avro/), and install:
 
-Two logs files are put out to
+	wget http://mirror.sdunix.com/apache/avro/avro-1.7.4/c/avro-c-1.7.4.tar.gz
+	tar zxf avro-c-1.7.4.tar.gz
+	mkdir avro-c-1.7.4/build
+	cd avro-c-1.7.4/build
+	cmake .. -DCMAKE_INSTALL_PREFIX=/usr
+	make
+	sudo make install
 
-    /var/log/honeycomb/honeycomb-c.log
-    /var/log/honeycomb/honeycomb-java.log
+### Install Honeycomb Storage Engine Plugin
+MySQL is typically installed by the system's package manager (e.g., `aptitude` or `yum`), or in special circumstances, installed from source.  MySQL's build system requires plugins to be built from source as a part of building MySQL as a whole.  The build process produces a shared library object, `ha_honeycomb.so`, which can be loaded into any MySQL installation on the system, regardless of the installation method.  It is required that the version of MySQL that the plugin is built against be the same as the version the plugin is loaded into.  These instructions assume that Honeycomb is being loaded into a MySQL installation managed by the system's package manager.
 
-Honeycomb configuration files
+Download the source tarball of the system's MySQL version from the [mysql website](https://www.mysql.com/downloads/mysql/), or through the package manager (shown below, the system's MySQL version must be the most recent).
 
-    /usr/local/etc/honeycomb/honeycomb.xml
-    /usr/local/etc/honeycomb/honeycomb.xsd
+On debian-based systems:
 
-Honeycomb Java files
+	sudo apt-get update
+	apt-get source mysql-5.5
 
-    /usr/local/lib/honeycomb/*.jar
+	
+Link the honeycomb storage engine plugin source into MySQL's source directory so it will be built alongside MySQL, and build.  $HONEYCOMB_SOURCE is assumed to be the Honeycomb source directory, and $MYSQL_SOURCE the MySQL source directory
+
+	ln -s $HONEYCOMB_SOURCE/honeycomb $MYSQL_SOURCE/storage/
+	mkdir $MYSQL_SOURCE/build
+	cd $MYSQL_SOURCE/build
+	cmake ..
+	make
+
+Move the built `ha_honeycomb.so` into MySQL's plugin directory.  $MYSQL_HOME is assumed to be the MySQL installation directory (containing the `plugin` directory), typically `usr/lib/mysql`.
+
+	cp $MYSQL_SOURCE/build/storage/honeycomb/ha_honeycomb.so $MYSQL_HOME/plugin/
+
+
+###  Setup System Directories
+Honeycomb stores logs in `/var/log/honeycomb`, configuration in `/usr/local/etc/honeycomb`, and Java artifacts in `/usr/local/lib/honeycomb`.  Create these directories and give the `mysql` user ownership (the `mysql` user should be substituted with the user who owns the MySQL process):
+
+	sudo mkdir -p /usr/local/etc/honeycomb   # Configuration
+	sudo mkdir -p /var/log/honeycomb         # Logs
+	sudo mkdir -p /usr/local/lib/honeycomb   # Jars
+	sudo chown mysql:mysql /usr/local/etc/honeycomb
+	sudo chown mysql:mysql /var/log/honeycomb
+	sudo chown mysql:mysql /usr/local/lib/honeycomb
+
+### Install Honeycomb Java Libraries
+Honeycomb relies on Java libraries to connect to HBase.  The Jar must be built and moved to the `/usr/local/lib/honeycomb` directory:
+
+	cd $HONEYCOMB_SOURCE/HBaseAdapater
+	mvn clean package assembly:single
+	cp $HONEYCOMB_SOURCE/HBaseAdapter/target/mysqlengine-0.1-jar-with-dependencies.jar /usr/local/lib/honeycomb/
 
 Testing the Storage Engine Plugin
 -----------------------------
