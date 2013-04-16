@@ -19,5 +19,6 @@ uint64_t bswap64(uint64_t x);
 int count_fields(TABLE* table);
 bool does_path_exist(const char* path);
 bool is_owned_by_mysql(const char* path);
-void abort_with_fatal_error(const char* message, ...);
+void get_current_user_group(char* buffer, size_t buf_size);
+void get_file_user_group(const char* file, char* buffer, size_t buf_size);
 #endif

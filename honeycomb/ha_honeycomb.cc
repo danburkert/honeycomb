@@ -36,6 +36,7 @@ mysql_mutex_t honeycomb_mutex;
 static JavaVM* jvm;
 static JNICache* cache;
 static HASH honeycomb_open_tables;
+static jobject handler_proxy_factory = NULL;
 
 static uchar* honeycomb_get_key(HoneycombShare *share, size_t *length,
     my_bool not_used __attribute__((unused)))
@@ -78,7 +79,7 @@ static uint honeycomb_alter_table_flags(uint flags)
     HA_INPLACE_DROP_UNIQUE_INDEX_NO_WRITE |
     HA_INPLACE_DROP_PK_INDEX_NO_WRITE;
 }
-static jobject handler_proxy_factory;
+
 static jobject handler_factory(JNIEnv* env)
 {
   jobject handler_proxy_local = env->CallObjectMethod(handler_proxy_factory,
@@ -90,34 +91,54 @@ static jobject handler_factory(JNIEnv* env)
   return handler_proxy;
 }
 
+bool test_directory(const char* path)
+{
+  const char* missing_message = "Path %s must exist. Ensure that the full path exists and is owned by MySQL's user. %s";
+  const char* wrong_owner_message = "Path %s must be owned by %s. Currently owner %s. %s\n";
+  if (!does_path_exist(path)) 
+  { 
+    fprintf(stderr, missing_message, path, strerror(errno)); 
+    return false; 
+  } 
+  
+  if (!is_owned_by_mysql(path)) 
+  { 
+    char owner[256], current[256];
+    get_current_user_group(owner, sizeof(owner));
+    get_file_user_group(path, current, sizeof(current));
+    fprintf(stderr, wrong_owner_message, path, owner, current, strerror(errno)); 
+    return false; 
+  } 
+
+  return true;
+}
+
 static bool try_setup()
 {
-  if (!does_path_exist(DEFAULT_LOG_PATH) || !is_owned_by_mysql(DEFAULT_LOG_PATH))
+  if (!test_directory(DEFAULT_LOG_PATH))
+    return false;
+
+  if (!Logging::try_setup_logging(DEFAULT_LOG_PATH DEFAULT_LOG_FILE))
   {
-    fprintf(stderr, "Log path %s could not be opened. Ensure that the full path exists and is owned by MySQL's user. %s", DEFAULT_LOG_PATH, strerror(errno));
     return false;
   }
 
- if (!Logging::try_setup_logging(DEFAULT_LOG_PATH DEFAULT_LOG_FILE))
+  if (!test_directory(SETTINGS_BASE))
+    return false;
+
+  Settings settings(CONFIG_FILE, SCHEMA);
+  if (settings.has_error())
+  {
+    const char* error_message = settings.get_errormessage();
+    Logging::fatal("During setup: %s", error_message);
+    return false;
+  }
+
+  if (!try_initialize_jvm(&jvm, settings, &handler_proxy_factory))
   {
     return false;
   }
 
-  if (!does_path_exist(SETTINGS_BASE) || !is_owned_by_mysql(SETTINGS_BASE))
-  {
-    fprintf(stderr, "Config path %s is missing and must be created and is owned by MySQL's user. %s", SETTINGS_BASE, strerror(errno));
-    return false;
-  }
-
-  Settings* settings = read_settings(CONFIG_FILE, SCHEMA);
-  if (has_error(settings))
-  {
-    char* error_message = get_errormessage(settings);
-    abort_with_fatal_error(error_message);
-  }
-
-  handler_proxy_factory = initialize_jvm(&jvm, settings);
-  free_settings(settings);
   cache = new JNICache(jvm);
   return true;
 }

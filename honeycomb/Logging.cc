@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "my_pthread.h"
+#include "Util.h"
 
 namespace Logging
 {
@@ -21,22 +22,17 @@ namespace Logging
 
   bool try_setup_logging(const char* path)
   {
-    int fd = open(path, O_WRONLY | O_EXCL | O_CREAT, S_IRUSR | S_IWUSR);
-    if (fd == -1)
+    log_file = fopen(path, "a");
+    if (log_file == NULL)
     {
-      if (errno == EEXIST)
-      {
-        fd = open(path, O_WRONLY | O_EXCL);
-      }
-      else
-      {
-        fprintf(stderr, "Error trying to open log file %s. %s\n", path, strerror(errno));
-        return false;
-      }
+      char owner[256],current[256];
+      get_current_user_group(owner, sizeof(owner));
+      get_file_user_group(path, current, sizeof(current));
+      fprintf(stderr, "Error trying to open log file %s. Current process %s file %s. %s\n", path, owner, current, strerror(errno));
+      return false;
     }
 
     pthread_mutex_init(&log_lock, NULL);
-    log_file = fdopen(fd, "a");
     fprintf(log_file, "INFO %s - Log opened\n", time_string());
     return true;
   }
