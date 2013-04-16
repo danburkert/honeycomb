@@ -1,3 +1,3 @@
-HONEYCOMB_XML_PATH = "/etc/mysql/honeycomb.xml"
+HONEYCOMB_XML_PATH = "/usr/local/etc/honeycomb/honeycomb.xml"
 CLASSPATH_PREFIX = "-Djava.class.path="
 MYSQLENGINE_JAR =  "/usr/local/lib/honeycomb/"
