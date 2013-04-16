@@ -9,19 +9,20 @@ IF(JNI_FOUND)
   LINK_LIBRARIES(${JNI_LIBRARIES})
 ENDIF(JNI_FOUND)
 
-EXECUTE_PROCESS(COMMAND readlink -f /usr/bin/java
-  COMMAND sed "s:bin/java::"
-  OUTPUT_VARIABLE JAVA_HOME
-  OUTPUT_STRIP_TRAILING_WHITESPACE)
-IF(JAVA_HOME)
-  IF(CMAKE_SIZEOF_VOID_P EQUAL 4) # Is this a 32 bit system?
-    SET(ARCH "i386")
-  ELSE()
-    SET(ARCH "amd64")
-  ENDIF()
+IF(NOT APPLE)
+  EXECUTE_PROCESS(COMMAND readlink -f /usr/bin/java
+    COMMAND sed "s:bin/java::"
+    OUTPUT_VARIABLE JAVA_HOME
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  IF(JAVA_HOME)
+    IF(CMAKE_SIZEOF_VOID_P EQUAL 4) # Is this a 32 bit system?
+      SET(ARCH "i386")
+    ELSE()
+      SET(ARCH "amd64")
+    ENDIF()
 
-  INCLUDE_DIRECTORIES("${JAVA_HOME}../include")
-  INCLUDE_DIRECTORIES("${JAVA_HOME}../include/linux")
+    INCLUDE_DIRECTORIES("${JAVA_HOME}../include")
+    INCLUDE_DIRECTORIES("${JAVA_HOME}../include/linux")
 
   LINK_DIRECTORIES("${JAVA_HOME}lib/${ARCH}/")
   LINK_DIRECTORIES("${JAVA_HOME}lib/${ARCH}/server")

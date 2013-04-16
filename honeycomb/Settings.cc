@@ -15,13 +15,16 @@
 #include "Macros.h"
 #include "Util.h"
 
-struct st_settings
+class SettingsPrivate
 {
+  public:
   JavaVMOption* options;
   unsigned int count;
   bool has_error;
   char* error_message;
   xmlErrorPtr error;
+  const char* filename;
+  const char* schema;
 };
 
 static void print_perm(const char* file)
@@ -49,7 +52,7 @@ static void print_perm(const char* file)
   printf("\n\n");
 }
 
-static void format_error(Settings* settings, int size, const char* message, ...)
+static void format_error(SettingsPrivate* settings, int size, const char* message, ...)
 {
     va_list args;
     va_start(args,message);
@@ -59,7 +62,7 @@ static void format_error(Settings* settings, int size, const char* message, ...)
     va_end(args);
 }
 
-static bool test_file_owned_by_mysql(Settings* settings, const char* config_file)
+bool Settings::test_file_owned_by_mysql(const char* config_file)
 {
   struct stat fStat;
   if (stat(config_file, &fStat) == -1)
@@ -85,7 +88,7 @@ static bool test_file_owned_by_mysql(Settings* settings, const char* config_file
   return true;
 }
 
-static bool test_file_readable(Settings* settings, const char* config_file)
+bool Settings::test_file_readable(const char* config_file)
 {
   FILE* config = fopen(config_file, "r");
   if(config != NULL)
@@ -107,10 +110,10 @@ static bool test_file_readable(Settings* settings, const char* config_file)
  *
  * @param config_file Configuration file path
  */
-static bool test_config_file(Settings* settings, const char* config_file)
+bool Settings::test_config_file(const char* config_file)
 {
-  return test_file_owned_by_mysql(settings, config_file) &&
-    test_file_readable(settings, config_file);
+  return test_file_owned_by_mysql(config_file) &&
+    test_file_readable(config_file);
 }
 
 /**
@@ -196,7 +199,7 @@ cleanup:
   return rc;
 }
 
-static void extract_values(Settings* settings, xmlDocPtr doc, xmlNodeSetPtr option_nodes)
+static void extract_values(SettingsPrivate* settings, xmlDocPtr doc, xmlNodeSetPtr option_nodes)
 {
   for(unsigned int i = 0; i < settings->count; i++)
   {
@@ -206,7 +209,7 @@ static void extract_values(Settings* settings, xmlDocPtr doc, xmlNodeSetPtr opti
   }
 }
 
-static void read_options(Settings* settings, const char* filename, const char* schema)
+void Settings::read_options()
 {
   const xmlChar* xpath = (const xmlChar*)"/options/jvmoptions/jvmoption";
   xmlXPathObjectPtr jvm_options;
@@ -215,10 +218,10 @@ static void read_options(Settings* settings, const char* filename, const char* s
   xmlNodeSetPtr option_nodes;
 
   xmlInitParser();
-  doc = xmlParseFile(filename);
+  doc = xmlParseFile(settings->filename);
   if (doc == NULL) { goto error; }
 
-  if(validate_against_schema(doc, schema) != 1) { goto error; }
+  if(validate_against_schema(doc, settings->schema) != 1) { goto error; }
 
   xpath_ctx = xmlXPathNewContext(doc);
   if (xpath_ctx == NULL) { goto error; }
@@ -252,21 +255,21 @@ cleanup:
   xmlCleanupParser();
 }
 
-unsigned int get_optioncount(Settings* settings)
+unsigned int Settings::get_optioncount() const
 {
   return settings->count;
 }
 
-JavaVMOption* get_options(Settings* settings)
+JavaVMOption* Settings::get_options() const
 {
   return settings->options;
 }
 
-char* get_errormessage(Settings* settings)
+const char* Settings::get_errormessage() const
 {
   if(!settings->has_error)
   {
-    return NULL;
+    return "";
   }
 
   if(settings->error != NULL)
@@ -277,44 +280,32 @@ char* get_errormessage(Settings* settings)
   return settings->error_message;
 }
 
-bool has_error(Settings* settings)
+bool Settings::has_error() const
 {
   return settings->has_error;
 }
 
-Settings* read_settings(const char* filename, const char* schema)
+Settings::Settings(const char* filename, const char* schema) : settings(new SettingsPrivate)
 {
-  Settings* settings = (Settings*)std::calloc(1, sizeof(Settings));
-  if (!test_config_file(settings, filename))
+  if (test_config_file(filename) && test_config_file(schema))
   {
-    return settings;
+    settings->filename = filename;
+    settings->schema = schema;
+    settings->has_error = false;
+    read_options();
   }
-
-  if (!test_config_file(settings, schema))
-  {
-    return settings;
-  }
-
-  read_options(settings, filename, schema);
-
-  return settings;
 }
 
-void free_settings(Settings* settings)
+Settings::~Settings()
 {
-  if (settings != NULL)
+  for(unsigned int i = 0; i < settings->count; i++)
   {
-    for(unsigned int i = 0; i < settings->count; i++)
+    if (settings->options[i].optionString != NULL)
     {
-      if (settings->options[i].optionString != NULL)
-      {
-        xmlFree(settings->options[i].optionString);
-      }
+      xmlFree(settings->options[i].optionString);
     }
-
-    free(settings->options);
-    settings->options = NULL;
-    free(settings);
-    settings = NULL;
   }
+
+  free(settings->options);
+  delete settings;
 }

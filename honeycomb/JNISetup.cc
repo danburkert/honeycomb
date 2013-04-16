@@ -22,7 +22,7 @@ class JNICache;
  * Initialize Bootstrap class. This should only be called once per MySQL Server
  * instance during Handlerton initialization.
  */
-jobject bootstrap(JavaVM* jvm)
+static bool try_bootstrap(JavaVM* jvm, jobject* factory)
 {
   Logging::info("Starting bootstrap()");
   JNIEnv* env;
@@ -33,23 +33,25 @@ jobject bootstrap(JavaVM* jvm)
 
   if (startup == NULL)
   {
-    abort_with_fatal_error("Failed to find startup method.  Aborting.");
+    Logging::fatal("Failed to find startup method.  Aborting.");
+    return false;
   }
 
   jobject handler_proxy_factory_local = env->CallStaticObjectMethod(bootstrap_class, startup);
 
   if (print_java_exception(env))
   {
-    abort_with_fatal_error("Startup failed with an error. Check"
+    Logging::fatal("Startup failed with an error. Check"
         "HBaseAdapter.log and honeycomb.log for more information.");
+    return false;
   }
 
-  jobject handler_proxy_factory = env->NewGlobalRef(handler_proxy_factory_local);
+  *factory = env->NewGlobalRef(handler_proxy_factory_local);
   env->DeleteLocalRef(bootstrap_class);
   env->DeleteLocalRef(handler_proxy_factory_local);
   detach_thread(jvm);
 
-  return handler_proxy_factory;
+  return true;
 }
 
 
@@ -108,43 +110,45 @@ static void handler(int sig)
  * instance during Handlerton initialization. Aborts process if a JVM already
  * exists. After return the current thread is NOT attached.
  */
-jobject initialize_jvm(JavaVM** jvm, Settings* parser)
+bool try_initialize_jvm(JavaVM** jvm, const Settings& parser, jobject* factory)
 {
   JavaVM* created_vms;
   jsize vm_count;
   jint result = JNI_GetCreatedJavaVMs(&created_vms, sizeof(created_vms), &vm_count);
   if (result == 0 && vm_count > 0) // There is an existing VM
   {
-    abort_with_fatal_error("JVM already created. Aborting.");
-    return NULL;
+    Logging::fatal("JVM already created. Aborting.");
+    return false;
   }
   else
   {
     JNIEnv* env;
     JavaVMInitArgs vm_args;
-    vm_args.options = get_options(parser);
-    vm_args.nOptions = get_optioncount(parser);
+    vm_args.options = parser.get_options();
+    vm_args.nOptions = parser.get_optioncount();
     vm_args.version = JNI_VERSION_1_6;
     thread_attach_count++; // roundabout to attach_thread
     jint result = JNI_CreateJavaVM(jvm, (void**) &env, &vm_args);
     if (result != JNI_OK)
     {
-      abort_with_fatal_error("Failed to create JVM. Check the Java classpath.");
-      return NULL;
+      Logging::fatal("Failed to create JVM. Check the Java classpath.");
+      return false;
     }
     if (env == NULL)
     {
-      abort_with_fatal_error("Environment not created correctly during JVM creation.");
-      return NULL;
+      Logging::fatal("Environment not created correctly during JVM creation.");
+      return false;
     }
 
     log_java_classpath(env);
-    jobject handler_proxy_factory = bootstrap(*jvm);
+    if (!try_bootstrap(*jvm, factory))
+      return false;
+
     detach_thread(*jvm);
 #if defined(__APPLE__) || defined(__linux__)
     signal(SIGTERM, handler);
 #endif
-    return handler_proxy_factory;
+    return true;
   }
 }
 
@@ -165,8 +169,8 @@ void attach_thread(JavaVM *jvm, JNIEnv** env, const char* location)
   } else {
     const char* msg = "Unable to attach thread to JVM.  Aborting.";
     perror(msg);
-    Logging::fatal(msg);
-    abort_with_fatal_error(msg, " Error occurred in: ", location);
+    Logging::fatal(msg, " Error occurred in: ", location);
+    abort();
   }
 }
 

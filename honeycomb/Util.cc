@@ -5,21 +5,35 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include "Logging.h"
-__attribute__((noreturn))
-void abort_with_fatal_error(const char* message, ...)
+#include <pwd.h>
+#include <grp.h>
+
+void get_user_group(uid_t user_id, gid_t group_id, char* buffer, size_t buf_size)
 {
-    va_list args;
-    va_start(args,message);
-    int size = strlen(message) + 512;
-    char* buffer = new char[size];
+  struct passwd passwd;
+  struct passwd* tmp_user;
+  struct group group;
+  struct group* tmp_group;
+  char u_temp_buf[256];
+  char g_temp_buf[256];
 
-    vsnprintf(buffer, size, message, args);
-    Logging::fatal(buffer);
-    perror(buffer);
-    delete[] buffer;
-    abort();
+  getgrgid_r(group_id, &group, g_temp_buf, sizeof(g_temp_buf), &tmp_group);
+  getpwuid_r(user_id, &passwd, u_temp_buf, sizeof(u_temp_buf), &tmp_user);
+  snprintf(buffer, buf_size, "%s:%s", passwd.pw_name, group.gr_name);
+}
 
-    va_end(args);
+void get_file_user_group(const char* file, char* buffer, size_t buf_size)
+{
+  struct stat fstat;
+  stat(file, &fstat);
+  get_user_group(fstat.st_uid, fstat.st_gid, buffer, buf_size);
+}
+
+void get_current_user_group(char* buffer, size_t buf_size)
+{
+  uid_t user_id = getuid();
+  gid_t group_id = getgid();
+  get_user_group(user_id, group_id, buffer, buf_size);
 }
 
 bool does_path_exist(const char* path)
@@ -32,11 +46,12 @@ bool is_owned_by_mysql(const char* path)
 {
   struct stat fstat;
   uid_t user_id = getuid();
+  gid_t group_id = getgid();
   int ret = stat(path, &fstat);
   if (ret == -1)
     return false;
 
-  return fstat.st_uid == user_id; 
+  return fstat.st_uid == user_id && fstat.st_gid == group_id; 
 }
 
 uint64_t bswap64(uint64_t x)
