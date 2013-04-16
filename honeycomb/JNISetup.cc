@@ -48,6 +48,12 @@ jobject bootstrap(JavaVM* jvm)
 
   jclass bootstrap_class = env->FindClass("com/nearinfinity/honeycomb/mysql/Bootstrap");
   jmethodID startup = env->GetStaticMethodID(bootstrap_class, "startup", "()Lcom/nearinfinity/honeycomb/mysql/HandlerProxyFactory;");
+
+  if (startup == NULL)
+  {
+    abort_with_fatal_error("Failed to find startup method.  Aborting.");
+  }
+
   jobject handler_proxy_factory_local = env->CallStaticObjectMethod(bootstrap_class, startup);
 
   if (print_java_exception(env))
