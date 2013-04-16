@@ -86,9 +86,9 @@ int check_exceptions(JNIEnv* env, JNICache* cache, const char* location)
     } else {
       ret = HA_ERR_GENERIC;
     }
+
     print_java_exception(env);
     Logging::error("Exception thrown during JNI call in %s", location);
-    env->ExceptionDescribe();
   }
   env->DeleteLocalRef(e);
   return ret;
