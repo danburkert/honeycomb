@@ -92,7 +92,7 @@ then
   ln -s $target $link
 fi
 
-link=/etc/mysql/honeycomb.xsd
+link=/usr/local/etc/honeycomb/honeycomb.xsd
 target=$HONEYCOMB_HOME/honeycomb/honeycomb.xsd
 if [ ! -h $link ]
 then

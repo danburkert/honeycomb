@@ -43,4 +43,5 @@
 #define HONEYCOMB "com/nearinfinity/honeycomb/"
 #define HBASECLIENT "com/nearinfinity/honeycomb/hbaseclient/"
 #define MYSQLENGINE "com/nearinfinity/honeycomb/mysqlengine/"
+#define SETTINGS_BASE "/usr/local/etc/"
 #endif

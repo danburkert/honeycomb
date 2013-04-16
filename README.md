@@ -33,9 +33,9 @@ Add the following line to your .bashrc/.zshrc and restart your terminal:
 
     export HONEYCOMB_HOME=<path to git repository> # Very important, scripts key off this.
     export MYSQL_HOME=<path to mysql installation> # MySQL home doesn't have to exist before running this (usually $MYSQL_HOME = /usr/local/mysql)
+    export MYSQL_SOURCE_PATH=<path to MySQL source code> # Used for building the storage engine plugin
 
 Before building the storage engine, install Maven, libncurses and cmake. After installing Maven, set the M2_HOME or M3_HOME.
-
 
 Run the following:
 
@@ -47,10 +47,6 @@ The MySQL plugin, MySQL and HBaseAdapter jar are built.
 A link is created from $HONEYCOMB_HOME/build/storage/honeycomb/ha_honeycomb.so to $MYSQL_HOME/lib/plugin/ha_honeycomb.so.
 The honeycomb plugin has been installed in MySQL.
 
-
-The HBaseAdapter jar will be copied into /usr/local/lib/honeycomb along with all of its dependencies.
-/etc/mysql/honeycomb.xml will be created with the settings for the storage engine.
-
 To build and install the plugin alone:
 
     cd $HONEYCOMB_HOME/bin
@@ -61,11 +57,28 @@ To build and install HBaseAdapter alone:
     cd $HONEYCOMB_HOME/bin
     ./mvn-build-install.sh
 
+
 Note: MySQL can get into very strange states.
 
 * Extremely large stack allocations (due to uninitialized variables) can make gdb attach to the MySQL process very slowly. To fix this restart your machine.
 * On Mac OS X, if MySQL crashes, a large core dump file will appear in /cores. 
 
+Honeycomb files
+---------------
+
+Two logs files are put out to
+
+    /var/log/honeycomb/honeycomb-c.log
+    /var/log/honeycomb/honeycomb-java.log
+
+Honeycomb configuration files
+
+   /usr/local/etc/honeycomb/honeycomb.xml
+   /usr/local/etc/honeycomb/honeycomb.xsd
+
+Honeycomb Java files
+
+   /usr/local/lib/honeycomb/*.jar
 
 Testing the Storage Engine Plugin
 -----------------------------

@@ -11,7 +11,9 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-static const char* schema = "/etc/mysql/honeycomb.xsd";
+#include "Macros.h"
+
+#define SCHEMA SETTINGS_BASE "honeycomb/honeycomb.xsd"
 
 struct st_optionparser
 {
@@ -25,7 +27,11 @@ struct st_optionparser
 static void print_perm(const char* file)
 {
   struct stat fileStat;
-  stat(file,&fileStat); 
+  if (stat(file,&fileStat) < 0)
+  {
+    printf("File %s does not appear to exist.\n", file);
+    return;
+  }
 
   printf("Information for %s\n",file);
   printf("---------------------------\n");
@@ -68,7 +74,6 @@ static bool test_config_file(OptionParser* parser, const char* config_file)
   else
   {
     print_perm(config_file);
-    perror("Open error:");
     const char* message = "Could not open \"%s\". File must be readable.";
     int size = strlen(message) + strlen(config_file) + 1;
     format_error(parser, size, message, config_file);
@@ -181,7 +186,7 @@ static void read_options(OptionParser* parser, const char* filename)
   doc = xmlParseFile(filename);
   if (doc == NULL) { goto error; }
 
-  if(validate_against_schema(doc, schema) != 1) { goto error; }
+  if(validate_against_schema(doc, SCHEMA) != 1) { goto error; }
 
   xpath_ctx = xmlXPathNewContext(doc);
   if (xpath_ctx == NULL) { goto error; }
@@ -249,6 +254,11 @@ OptionParser* new_parser(const char* filename)
 {
   OptionParser* parser = (OptionParser*)std::calloc(1, sizeof(OptionParser));
   if (!test_config_file(parser, filename))
+  {
+    return parser;
+  }
+
+  if (!test_config_file(parser, SCHEMA))
   {
     return parser;
   }

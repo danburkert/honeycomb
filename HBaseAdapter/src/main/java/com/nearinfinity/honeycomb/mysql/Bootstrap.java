@@ -21,7 +21,7 @@ import static java.lang.String.format;
 
 
 public final class Bootstrap extends AbstractModule {
-    private static final String CONFIG_PATH = "/etc/mysql";
+    private static final String CONFIG_PATH = "/usr/local/etc/honeycomb";
     private static final String CONFIG_FILENAME = "honeycomb.xml";
     private static final String CONFIG_SCHEMA_FILENAME = "honeycomb.xsd";
     private static final Logger logger = Logger.getLogger(Bootstrap.class);

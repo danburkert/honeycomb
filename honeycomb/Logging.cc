@@ -3,10 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include "my_pthread.h"
+
+#define DEFAULT_LOG_FILE "honeycomb-c.log"
+#define DEFAULT_LOG_PATH "/var/log/honeycomb/"
 namespace Logging
 {
-
-#define DEFAULT_LOG_PATH "/tmp/honeycomb.log"
   static FILE* log_file;
   static pthread_mutex_t log_lock;
 
@@ -20,12 +21,12 @@ namespace Logging
     return time_string;
   }
 
-  void setup_logging(const char* log_path)
+  bool setup_logging(const char* log_path)
   {
     const char* path;
     if(log_path == NULL)
     {
-      path = DEFAULT_LOG_PATH;
+      path = DEFAULT_LOG_PATH DEFAULT_LOG_FILE;
     }
     else
     {
@@ -44,8 +45,8 @@ namespace Logging
     log_file = fopen(path, "a");
     if (log_file == NULL)
     {
-      fprintf(stderr, "Log file %s could not be opened.", path);
-      log_file = stderr;
+      fprintf(stderr, "Log file %s could not be opened. Ensure that the full path exists and is owned by MySQL's user.", path);
+      return true;
     }
     else
     {
@@ -56,6 +57,8 @@ namespace Logging
 
       fprintf(log_file, "INFO %s - Log opened\n", time_string());
     }
+
+    return true;
   }
 
   void close_logging()

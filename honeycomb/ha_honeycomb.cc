@@ -87,7 +87,10 @@ static jobject handler_factory(JNIEnv* env)
 static int honeycomb_init_func(void *p)
 {
   DBUG_ENTER("ha_honeycomb::honeycomb_init_func");
-  Logging::setup_logging(NULL);
+  if (!Logging::setup_logging(NULL))
+  {
+    DBUG_RETURN(1);
+  }
 
 #ifdef HAVE_PSI_INTERFACE
   init_honeycomb_psi_keys();

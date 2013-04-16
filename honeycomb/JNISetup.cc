@@ -14,7 +14,7 @@
 #include "JNICache.h"
 #include "OptionParser.h"
 
-static const char* config_file = "/etc/mysql/honeycomb.xml";
+#define CONFIG_FILE SETTINGS_BASE "honeycomb/honeycomb.xml"
 static __thread int thread_attach_count=0;
 static JavaVMAttachArgs attach_args = {JNI_VERSION_1_6, NULL, NULL};
 class JNICache;
@@ -133,7 +133,7 @@ jobject initialize_jvm(JavaVM** jvm)
   {
     JNIEnv* env;
     JavaVMInitArgs vm_args;
-    OptionParser* parser = new_parser(config_file);
+    OptionParser* parser = new_parser(CONFIG_FILE);
     if (has_error(parser))
     {
       char* error_message = get_errormessage(parser);
@@ -155,8 +155,8 @@ jobject initialize_jvm(JavaVM** jvm)
     }
 
     free_parser(parser);
-    jobject handler_proxy_factory = bootstrap(*jvm);
     log_java_classpath(env);
+    jobject handler_proxy_factory = bootstrap(*jvm);
     detach_thread(*jvm);
 #if defined(__APPLE__) || defined(__linux__)
     signal(SIGTERM, handler);
