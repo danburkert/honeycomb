@@ -28,7 +28,7 @@ IF(JAVA_HOME)
   LINK_DIRECTORIES("${JAVA_HOME}lib/${ARCH}/xawt")
   LINK_LIBRARIES(jawt jvm jsig)
 ELSE(JAVA_HOME)
-  MESSAGE(FATAL_ERROR "Unable to find Java JNI libraries.")
+  MESSAGE("Unable to find Java JNI libraries.")
 ENDIF(JAVA_HOME)
 
 FIND_PACKAGE(LibXml2 REQUIRED)
