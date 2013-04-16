@@ -2,6 +2,43 @@
 #include <tztime.h>
 #include "my_global.h"
 
+#include <sys/stat.h>
+#include <sys/types.h>
+#include "Logging.h"
+__attribute__((noreturn))
+void abort_with_fatal_error(const char* message, ...)
+{
+    va_list args;
+    va_start(args,message);
+    int size = strlen(message) + 512;
+    char* buffer = new char[size];
+
+    vsnprintf(buffer, size, message, args);
+    Logging::fatal(buffer);
+    perror(buffer);
+    delete[] buffer;
+    abort();
+
+    va_end(args);
+}
+
+bool does_path_exist(const char* path)
+{
+  struct stat fstat;
+  return stat(path, &fstat) != -1 && S_ISDIR(fstat.st_mode);
+}
+
+bool is_owned_by_mysql(const char* path)
+{
+  struct stat fstat;
+  uid_t user_id = getuid();
+  int ret = stat(path, &fstat);
+  if (ret == -1)
+    return false;
+
+  return fstat.st_uid == user_id; 
+}
+
 uint64_t bswap64(uint64_t x)
 {
   return __builtin_bswap64(x);

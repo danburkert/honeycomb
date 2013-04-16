@@ -4,8 +4,6 @@
 #include <string.h>
 #include "my_pthread.h"
 
-#define DEFAULT_LOG_FILE "honeycomb-c.log"
-#define DEFAULT_LOG_PATH "/var/log/honeycomb/"
 namespace Logging
 {
   static FILE* log_file;
@@ -21,43 +19,25 @@ namespace Logging
     return time_string;
   }
 
-  bool setup_logging(const char* log_path)
+  bool try_setup_logging(const char* path)
   {
-    const char* path;
-    if(log_path == NULL)
+    int fd = open(path, O_WRONLY | O_EXCL | O_CREAT, S_IRUSR | S_IWUSR);
+    if (fd == -1)
     {
-      path = DEFAULT_LOG_PATH DEFAULT_LOG_FILE;
-    }
-    else
-    {
-      path = log_path;
+      if (errno == EEXIST)
+      {
+        fd = open(path, O_WRONLY | O_EXCL);
+      }
+      else
+      {
+        fprintf(stderr, "Error trying to open log file %s. %s\n", path, strerror(errno));
+        return false;
+      }
     }
 
     pthread_mutex_init(&log_lock, NULL);
-    bool new_file = true;
-    FILE* test = fopen(path, "r");
-    if (test != NULL)
-    {
-      new_file = false;
-      fclose(test);
-    }
-
-    log_file = fopen(path, "a");
-    if (log_file == NULL)
-    {
-      fprintf(stderr, "Log file %s could not be opened. Ensure that the full path exists and is owned by MySQL's user.", path);
-      return true;
-    }
-    else
-    {
-      if (!new_file)
-      {
-        fprintf(log_file, "\n\n\n\n\n");
-      }
-
-      fprintf(log_file, "INFO %s - Log opened\n", time_string());
-    }
-
+    log_file = fdopen(fd, "a");
+    fprintf(log_file, "INFO %s - Log opened\n", time_string());
     return true;
   }
 

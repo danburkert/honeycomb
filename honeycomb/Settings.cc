@@ -1,4 +1,4 @@
-#include "OptionParser.h"
+#include "Settings.h"
 
 #include <libxml/tree.h>
 #include <libxml/parser.h>
@@ -13,10 +13,9 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include "Macros.h"
+#include "Util.h"
 
-#define SCHEMA SETTINGS_BASE "honeycomb/honeycomb.xsd"
-
-struct st_optionparser
+struct st_settings
 {
   JavaVMOption* options;
   unsigned int count;
@@ -50,41 +49,43 @@ static void print_perm(const char* file)
   printf("\n\n");
 }
 
-static void format_error(OptionParser* parser, int size, const char* message, ...)
+static void format_error(Settings* settings, int size, const char* message, ...)
 {
     va_list args;
     va_start(args,message);
-    parser->error_message = (char*)std::malloc(size); 
-    vsnprintf(parser->error_message, size, message, args);
-    parser->has_error = true;
+    settings->error_message = (char*)std::malloc(size);
+    vsnprintf(settings->error_message, size, message, args);
+    settings->has_error = true;
     va_end(args);
 }
 
-static bool test_file_owned_by_mysql(OptionParser* parser, const char* config_file)
+static bool test_file_owned_by_mysql(Settings* settings, const char* config_file)
 {
   struct stat fStat;
-  uid_t user_id = getuid();
   if (stat(config_file, &fStat) == -1)
   {
     const char* message = "Could not stat %s. It mostly likely doesn't exist. Check the path";
     int size = strlen(message) + strlen(config_file) + 1;
-    format_error(parser, size, message, config_file);
+    format_error(settings, size, message, config_file);
     return false;
   }
 
-  if (fStat.st_uid != user_id)
+  if (!is_owned_by_mysql(config_file))
   {
-    struct passwd* passwd_entry = getpwuid(user_id); // Do not free
+    struct passwd passwd_entry;
+    struct passwd* temp;
+    char buffer[256];
+    getpwuid_r(getuid(), &passwd_entry, buffer, sizeof(buffer), &temp);
     const char* message = "The file %s must be owned by %s";
-    int size = strlen(message) + strlen(config_file) + strlen(passwd_entry->pw_name) + 1;
-    format_error(parser, size, message, config_file, passwd_entry->pw_name);
+    int size = strlen(message) + strlen(config_file) + strlen(passwd_entry.pw_name) + 1;
+    format_error(settings, size, message, config_file, passwd_entry.pw_name);
     return false;
   }
 
   return true;
 }
 
-static bool test_file_readable(OptionParser* parser, const char* config_file)
+static bool test_file_readable(Settings* settings, const char* config_file)
 {
   FILE* config = fopen(config_file, "r");
   if(config != NULL)
@@ -97,7 +98,7 @@ static bool test_file_readable(OptionParser* parser, const char* config_file)
     print_perm(config_file);
     const char* message = "Could not open \"%s\". File must be readable.";
     int size = strlen(message) + strlen(config_file) + 1;
-    format_error(parser, size, message, config_file);
+    format_error(settings, size, message, config_file);
     return false;
   }
 }
@@ -106,10 +107,10 @@ static bool test_file_readable(OptionParser* parser, const char* config_file)
  *
  * @param config_file Configuration file path
  */
-static bool test_config_file(OptionParser* parser, const char* config_file)
+static bool test_config_file(Settings* settings, const char* config_file)
 {
-  return test_file_owned_by_mysql(parser, config_file) && 
-    test_file_readable(parser, config_file);
+  return test_file_owned_by_mysql(settings, config_file) &&
+    test_file_readable(settings, config_file);
 }
 
 /**
@@ -153,10 +154,10 @@ static char* ltrim(char *string)
  */
 static int validate_against_schema(const xmlDocPtr doc, const char *schema_filename)
 {
-  xmlDocPtr schema_doc = NULL; 
-  xmlSchemaValidCtxtPtr valid_ctxt = NULL; 
-  xmlSchemaParserCtxtPtr parser_ctxt = NULL; 
-  xmlSchemaPtr schema = NULL; 
+  xmlDocPtr schema_doc = NULL;
+  xmlSchemaValidCtxtPtr valid_ctxt = NULL;
+  xmlSchemaParserCtxtPtr settings_ctxt = NULL;
+  xmlSchemaPtr schema = NULL;
   int rc = 0, is_valid;
 
   schema_doc = xmlReadFile(schema_filename, NULL, XML_PARSE_NONET);
@@ -165,13 +166,13 @@ static int validate_against_schema(const xmlDocPtr doc, const char *schema_filen
     rc = -1;
     goto cleanup;
   }
-  parser_ctxt = xmlSchemaNewDocParserCtxt(schema_doc);
-  if (parser_ctxt == NULL) {
-    /* unable to create a parser context for the schema */
+  settings_ctxt = xmlSchemaNewDocParserCtxt(schema_doc);
+  if (settings_ctxt == NULL) {
+    /* unable to create a settings context for the schema */
     rc = -2;
     goto cleanup;
   }
-  schema = xmlSchemaParse(parser_ctxt);
+  schema = xmlSchemaParse(settings_ctxt);
   if (schema == NULL) {
     /* the schema itself is not valid */
     rc = -3;
@@ -180,7 +181,7 @@ static int validate_against_schema(const xmlDocPtr doc, const char *schema_filen
   valid_ctxt = xmlSchemaNewValidCtxt(schema);
   if (valid_ctxt == NULL) {
     /* unable to create a validation context for the schema */
-    rc = -4; 
+    rc = -4;
     goto cleanup;
   }
 
@@ -189,27 +190,27 @@ static int validate_against_schema(const xmlDocPtr doc, const char *schema_filen
 cleanup:
   if (valid_ctxt != NULL) { xmlSchemaFreeValidCtxt(valid_ctxt); }
   if (schema != NULL) { xmlSchemaFree(schema); }
-  if (parser_ctxt != NULL) { xmlSchemaFreeParserCtxt(parser_ctxt); }
+  if (settings_ctxt != NULL) { xmlSchemaFreeParserCtxt(settings_ctxt); }
   if (schema_doc != NULL) { xmlFreeDoc(schema_doc); }
 
   return rc;
 }
 
-static void extract_values(OptionParser* parser, xmlDocPtr doc, xmlNodeSetPtr option_nodes)
+static void extract_values(Settings* settings, xmlDocPtr doc, xmlNodeSetPtr option_nodes)
 {
-  for(unsigned int i = 0; i < parser->count; i++)
+  for(unsigned int i = 0; i < settings->count; i++)
   {
     xmlNodePtr current_option = option_nodes->nodeTab[i];
     char* opt = (char*)xmlNodeListGetString(doc, current_option->xmlChildrenNode, 1);
-    parser->options[i].optionString = opt != NULL ? ltrim(rtrim(opt)) : NULL;
+    settings->options[i].optionString = opt != NULL ? ltrim(rtrim(opt)) : NULL;
   }
 }
 
-static void read_options(OptionParser* parser, const char* filename) 
+static void read_options(Settings* settings, const char* filename, const char* schema)
 {
   const xmlChar* xpath = (const xmlChar*)"/options/jvmoptions/jvmoption";
   xmlXPathObjectPtr jvm_options;
-  xmlXPathContextPtr xpath_ctx; 
+  xmlXPathContextPtr xpath_ctx;
   xmlDocPtr doc;
   xmlNodeSetPtr option_nodes;
 
@@ -217,7 +218,7 @@ static void read_options(OptionParser* parser, const char* filename)
   doc = xmlParseFile(filename);
   if (doc == NULL) { goto error; }
 
-  if(validate_against_schema(doc, SCHEMA) != 1) { goto error; }
+  if(validate_against_schema(doc, schema) != 1) { goto error; }
 
   xpath_ctx = xmlXPathNewContext(doc);
   if (xpath_ctx == NULL) { goto error; }
@@ -225,23 +226,23 @@ static void read_options(OptionParser* parser, const char* filename)
   if (jvm_options == NULL) { goto error; }
 
   option_nodes = jvm_options->nodesetval;
-  parser->count = option_nodes->nodeNr;
-  parser->options = (JavaVMOption*)malloc(parser->count * sizeof(JavaVMOption));
-  if (parser == NULL)
+  settings->count = option_nodes->nodeNr;
+  settings->options = (JavaVMOption*)malloc(settings->count * sizeof(JavaVMOption));
+  if (settings == NULL)
   {
     const char* error = "Could not allocate memory.";
-    format_error(parser, strlen(error) + 1, error);
+    format_error(settings, strlen(error) + 1, error);
     goto cleanup;
   }
 
-  extract_values(parser, doc, option_nodes);
+  extract_values(settings, doc, option_nodes);
   goto cleanup;
 
 error:
-  parser->error = xmlGetLastError();
-  if (parser->error != NULL)
+  settings->error = xmlGetLastError();
+  if (settings->error != NULL)
   {
-    parser->has_error = true;
+    settings->has_error = true;
   }
 
 cleanup:
@@ -251,69 +252,69 @@ cleanup:
   xmlCleanupParser();
 }
 
-unsigned int get_optioncount(OptionParser* parser)
+unsigned int get_optioncount(Settings* settings)
 {
-  return parser->count;
+  return settings->count;
 }
 
-JavaVMOption* get_options(OptionParser* parser)
+JavaVMOption* get_options(Settings* settings)
 {
-  return parser->options;
+  return settings->options;
 }
 
-char* get_errormessage(OptionParser* parser)
+char* get_errormessage(Settings* settings)
 {
-  if(!parser->has_error)
+  if(!settings->has_error)
   {
     return NULL;
   }
 
-  if(parser->error != NULL)
+  if(settings->error != NULL)
   {
-    return parser->error->message;
+    return settings->error->message;
   }
 
-  return parser->error_message;
+  return settings->error_message;
 }
 
-bool has_error(OptionParser* parser)
+bool has_error(Settings* settings)
 {
-  return parser->has_error;
+  return settings->has_error;
 }
 
-OptionParser* new_parser(const char* filename) 
+Settings* read_settings(const char* filename, const char* schema)
 {
-  OptionParser* parser = (OptionParser*)std::calloc(1, sizeof(OptionParser));
-  if (!test_config_file(parser, filename))
+  Settings* settings = (Settings*)std::calloc(1, sizeof(Settings));
+  if (!test_config_file(settings, filename))
   {
-    return parser;
+    return settings;
   }
 
-  if (!test_config_file(parser, SCHEMA))
+  if (!test_config_file(settings, schema))
   {
-    return parser;
+    return settings;
   }
 
-  read_options(parser, filename);
+  read_options(settings, filename, schema);
 
-  return parser;
+  return settings;
 }
 
-void free_parser(OptionParser* parser)
+void free_settings(Settings* settings)
 {
-  if (parser != NULL)
+  if (settings != NULL)
   {
-    for(unsigned int i = 0; i < parser->count; i++)
+    for(unsigned int i = 0; i < settings->count; i++)
     {
-      if (parser->options[i].optionString != NULL)
+      if (settings->options[i].optionString != NULL)
       {
-        xmlFree(parser->options[i].optionString);
+        xmlFree(settings->options[i].optionString);
       }
     }
 
-    free(parser->options);
-    parser->options = NULL;
-    free(parser);
-    parser = NULL;
+    free(settings->options);
+    settings->options = NULL;
+    free(settings);
+    settings = NULL;
   }
 }

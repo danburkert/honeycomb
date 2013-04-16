@@ -12,29 +12,11 @@
 #include "Java.h"
 #include "JavaFrame.h"
 #include "JNICache.h"
-#include "OptionParser.h"
+#include "Settings.h"
 
-#define CONFIG_FILE SETTINGS_BASE "honeycomb/honeycomb.xml"
 static __thread int thread_attach_count=0;
 static JavaVMAttachArgs attach_args = {JNI_VERSION_1_6, NULL, NULL};
 class JNICache;
-
-__attribute__((noreturn))
-static void abort_with_fatal_error(const char* message, ...)
-{
-    va_list args;
-    va_start(args,message);
-    int size = strlen(message) + 512;
-    char* buffer = new char[size];
-
-    vsnprintf(buffer, size, message, args);
-    Logging::fatal(buffer);
-    perror(buffer);
-    delete[] buffer;
-    abort();
-
-    va_end(args);
-}
 
 /**
  * Initialize Bootstrap class. This should only be called once per MySQL Server
@@ -126,7 +108,7 @@ static void handler(int sig)
  * instance during Handlerton initialization. Aborts process if a JVM already
  * exists. After return the current thread is NOT attached.
  */
-jobject initialize_jvm(JavaVM** jvm)
+jobject initialize_jvm(JavaVM** jvm, Settings* parser)
 {
   JavaVM* created_vms;
   jsize vm_count;
@@ -134,18 +116,12 @@ jobject initialize_jvm(JavaVM** jvm)
   if (result == 0 && vm_count > 0) // There is an existing VM
   {
     abort_with_fatal_error("JVM already created. Aborting.");
+    return NULL;
   }
   else
   {
     JNIEnv* env;
     JavaVMInitArgs vm_args;
-    OptionParser* parser = new_parser(CONFIG_FILE);
-    if (has_error(parser))
-    {
-      char* error_message = get_errormessage(parser);
-      abort_with_fatal_error(error_message);
-    }
-
     vm_args.options = get_options(parser);
     vm_args.nOptions = get_optioncount(parser);
     vm_args.version = JNI_VERSION_1_6;
@@ -154,13 +130,14 @@ jobject initialize_jvm(JavaVM** jvm)
     if (result != JNI_OK)
     {
       abort_with_fatal_error("Failed to create JVM. Check the Java classpath.");
+      return NULL;
     }
     if (env == NULL)
     {
       abort_with_fatal_error("Environment not created correctly during JVM creation.");
+      return NULL;
     }
 
-    free_parser(parser);
     log_java_classpath(env);
     jobject handler_proxy_factory = bootstrap(*jvm);
     detach_thread(*jvm);
