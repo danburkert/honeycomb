@@ -7,6 +7,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <cctype>
+#include <pwd.h>
 
 #include <unistd.h>
 #include <sys/stat.h>
@@ -58,12 +59,32 @@ static void format_error(OptionParser* parser, int size, const char* message, ..
     parser->has_error = true;
     va_end(args);
 }
-/**
- * @brief Ensure that the configuration file is there and readable.
- *
- * @param config_file Configuration file path
- */
-static bool test_config_file(OptionParser* parser, const char* config_file)
+
+static bool test_file_owned_by_mysql(OptionParser* parser, const char* config_file)
+{
+  struct stat fStat;
+  uid_t user_id = getuid();
+  if (stat(config_file, &fStat) == -1)
+  {
+    const char* message = "Could not stat %s. It mostly likely doesn't exist. Check the path";
+    int size = strlen(message) + strlen(config_file) + 1;
+    format_error(parser, size, message, config_file);
+    return false;
+  }
+
+  if (fStat.st_uid != user_id)
+  {
+    struct passwd* passwd_entry = getpwuid(user_id); // Do not free
+    const char* message = "The file %s must be owned by %s";
+    int size = strlen(message) + strlen(config_file) + strlen(passwd_entry->pw_name) + 1;
+    format_error(parser, size, message, config_file, passwd_entry->pw_name);
+    return false;
+  }
+
+  return true;
+}
+
+static bool test_file_readable(OptionParser* parser, const char* config_file)
 {
   FILE* config = fopen(config_file, "r");
   if(config != NULL)
@@ -79,6 +100,16 @@ static bool test_config_file(OptionParser* parser, const char* config_file)
     format_error(parser, size, message, config_file);
     return false;
   }
+}
+/**
+ * @brief Ensure that the configuration file is there and readable.
+ *
+ * @param config_file Configuration file path
+ */
+static bool test_config_file(OptionParser* parser, const char* config_file)
+{
+  return test_file_owned_by_mysql(parser, config_file) && 
+    test_file_readable(parser, config_file);
 }
 
 /**
