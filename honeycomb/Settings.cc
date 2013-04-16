@@ -291,6 +291,7 @@ Settings::Settings(const char* filename, const char* schema) : settings(new Sett
   {
     settings->filename = filename;
     settings->schema = schema;
+    settings->has_error = false;
     read_options();
   }
 }

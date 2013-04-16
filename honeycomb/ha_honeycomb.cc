@@ -135,11 +135,14 @@ static bool try_setup()
   }
 
   if (!try_initialize_jvm(&jvm, settings, &handler_proxy_factory))
-  {
     return false;
-  }
 
   cache = new JNICache(jvm);
+  if (cache->has_error())
+  {
+    delete cache;
+    return false;
+  }
   return true;
 }
 

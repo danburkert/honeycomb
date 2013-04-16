@@ -62,6 +62,7 @@ class JNICache
 
   private:
     JavaVM* jvm;
+    bool error;
 
     HandlerProxy handler_proxy_;
     Throwable throwable_;
@@ -75,6 +76,7 @@ class JNICache
     jfieldID get_static_field_id(JNIEnv* env, jclass clazz, const char* field, const char* type);
 
   public:
+    bool has_error()                            const {return error;}
     HandlerProxy handler_proxy()                const {return handler_proxy_;}
     Throwable throwable()                       const {return throwable_;}
     PrintWriter print_writer()                  const {return print_writer_;}
