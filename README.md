@@ -73,12 +73,12 @@ Two logs files are put out to
 
 Honeycomb configuration files
 
-   /usr/local/etc/honeycomb/honeycomb.xml
-   /usr/local/etc/honeycomb/honeycomb.xsd
+    /usr/local/etc/honeycomb/honeycomb.xml
+    /usr/local/etc/honeycomb/honeycomb.xsd
 
 Honeycomb Java files
 
-   /usr/local/lib/honeycomb/*.jar
+    /usr/local/lib/honeycomb/*.jar
 
 Testing the Storage Engine Plugin
 -----------------------------
