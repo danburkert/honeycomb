@@ -17,4 +17,7 @@ uchar* create_key_copy(Field* index_field, const uchar* key, uint* key_len, THD*
 void extract_mysql_time(long tmp, MYSQL_TIME *time);
 uint64_t bswap64(uint64_t x);
 int count_fields(TABLE* table);
+bool does_path_exist(const char* path);
+bool is_owned_by_mysql(const char* path);
+void abort_with_fatal_error(const char* message, ...);
 #endif

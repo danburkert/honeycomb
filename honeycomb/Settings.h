@@ -1,7 +1,7 @@
-#ifndef OPTIONPARSER_H
-#define OPTIONPARSER_H
+#ifndef SETTINGS_H
+#define SETTINGS_H
 #include <jni.h>
-typedef struct st_optionparser OptionParser;
+typedef struct st_settings Settings;
 
 /**
  * @brief Reads in the options from a file.
@@ -10,48 +10,48 @@ typedef struct st_optionparser OptionParser;
  *
  * @return Parser for file
  */
-OptionParser* new_parser(const char* filename);
+Settings* read_settings(const char* filename, const char* schema);
 
 /**
  * @brief Release resources held by options.
  *
- * @param parser Option parser
+ * @param settings Option settings
  */
-void free_parser(OptionParser* parser);
+void free_settings(Settings* settings);
 
 /**
  * @brief Retrieve the JNI options found in the file.
  *
- * @param parser Option parser
+ * @param settings Option settings
  *
  * @return JNI options
  */
-JavaVMOption* get_options(OptionParser* parser);
+JavaVMOption* get_options(Settings* settings);
 
 /**
  * @brief Retrieve the number of options found in the file.
  *
- * @param parser Option parser
+ * @param settings Option settings
  *
  * @return Number of options found
  */
-unsigned int get_optioncount(OptionParser* parser);
+unsigned int get_optioncount(Settings* settings);
 
 /**
  * @brief Retrieves the error message from reading. Returns NULL if there was no error.
  *
- * @param parser Option parser
+ * @param settings Option settings
  *
  * @return Error during reading
  */
-char* get_errormessage(OptionParser* parser);
+char* get_errormessage(Settings* settings);
 
 /**
  * @brief Describes whether there was an error while trying to read the options.
  *
- * @param parser Option parser
+ * @param settings Option settings
  *
  * @return Was an error during reading
  */
-bool has_error(OptionParser* parser);
+bool has_error(Settings* settings);
 #endif

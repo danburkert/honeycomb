@@ -21,6 +21,12 @@
 #include "ColumnSchema.h"
 #include "Java.h"
 
+#define SETTINGS_BASE "/usr/local/etc/honeycomb/"
+#define CONFIG_FILE SETTINGS_BASE "honeycomb.xml"
+#define SCHEMA SETTINGS_BASE "honeycomb.xsd"
+#define DEFAULT_LOG_FILE "honeycomb-c.log"
+#define DEFAULT_LOG_PATH "/var/log/honeycomb/"
+
 static handler *honeycomb_create_handler(handlerton *hton,
     TABLE_SHARE *table, MEM_ROOT *mem_root);
 
@@ -84,10 +90,42 @@ static jobject handler_factory(JNIEnv* env)
   return handler_proxy;
 }
 
+static bool try_setup()
+{
+  if (!does_path_exist(DEFAULT_LOG_PATH) || !is_owned_by_mysql(DEFAULT_LOG_PATH))
+  {
+    fprintf(stderr, "Log path %s could not be opened. Ensure that the full path exists and is owned by MySQL's user. %s", DEFAULT_LOG_PATH, strerror(errno));
+    return false;
+  }
+
+ if (!Logging::try_setup_logging(DEFAULT_LOG_PATH DEFAULT_LOG_FILE))
+  {
+    return false;
+  }
+
+  if (!does_path_exist(SETTINGS_BASE) || !is_owned_by_mysql(SETTINGS_BASE))
+  {
+    fprintf(stderr, "Config path %s is missing and must be created and is owned by MySQL's user. %s", SETTINGS_BASE, strerror(errno));
+    return false;
+  }
+
+  Settings* settings = read_settings(CONFIG_FILE, SCHEMA);
+  if (has_error(settings))
+  {
+    char* error_message = get_errormessage(settings);
+    abort_with_fatal_error(error_message);
+  }
+
+  handler_proxy_factory = initialize_jvm(&jvm, settings);
+  free_settings(settings);
+  cache = new JNICache(jvm);
+  return true;
+}
+
 static int honeycomb_init_func(void *p)
 {
   DBUG_ENTER("ha_honeycomb::honeycomb_init_func");
-  if (!Logging::setup_logging(NULL))
+  if (!try_setup())
   {
     DBUG_RETURN(1);
   }
@@ -105,10 +143,6 @@ static int honeycomb_init_func(void *p)
   honeycomb_hton->create = honeycomb_create_handler;
   honeycomb_hton->flags = HTON_TEMPORARY_NOT_SUPPORTED;
   honeycomb_hton->alter_table_flags = honeycomb_alter_table_flags;
-
-  handler_proxy_factory = initialize_jvm(&jvm);
-  cache = new JNICache(jvm);
-
   DBUG_RETURN(0);
 }
 
@@ -121,6 +155,7 @@ static int honeycomb_done_func(void *p)
   {
     error= 1;
   }
+
   delete cache;
   Logging::close_logging();
   my_hash_free(&honeycomb_open_tables);
