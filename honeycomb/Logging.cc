@@ -33,7 +33,7 @@ namespace Logging
     }
 
     pthread_mutex_init(&log_lock, NULL);
-    fprintf(log_file, "INFO %s - Log opened\n", time_string());
+    info("%s - Log opened", time_string());
     return true;
   }
 
