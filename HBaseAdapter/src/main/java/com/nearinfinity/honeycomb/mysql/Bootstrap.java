@@ -91,6 +91,7 @@ public final class Bootstrap extends AbstractModule {
                 final ConfigurationParser configParser = new ConfigurationParser();
                 configHolder = configParser.parseConfiguration(configSupplier, new Configuration());
 
+                logger.info(String.format("Honeycomb configuration: %s", configHolder.toString()));
                 logger.debug(format("Read %d configuration properties ",
                         configHolder.getConfiguration().size()));
             } else {

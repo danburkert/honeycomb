@@ -43,6 +43,7 @@ namespace Logging
     {
       fclose(log_file);
     }
+    pthread_mutex_destroy(&log_lock);
   }
 
   void vlog_print(const char* level, const char* format, va_list args)

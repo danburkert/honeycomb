@@ -4,6 +4,8 @@ import com.nearinfinity.honeycomb.config.ConfigurationHolder;
 import com.nearinfinity.honeycomb.config.Constants;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.MasterNotRunningException;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.io.encoding.DataBlockEncoding;
 import org.apache.hadoop.hbase.regionserver.StoreFile;
@@ -23,8 +25,19 @@ public class TableCreator {
     public static void createTable(ConfigurationHolder configuration)
             throws IOException {
         HTableDescriptor tableDescriptor;
+        try {
+            HBaseAdmin.checkHBaseAvailable(configuration.getConfiguration());
+        } catch (MasterNotRunningException e) {
+            logger.fatal("HMaster doesn't appear to be running.", e);
+            throw e;
+        } catch (ZooKeeperConnectionException e) {
+            logger.fatal("Failed to connect to zookeeper when checking HBase.", e);
+            throw e;
+        }
+
         HColumnDescriptor columnDescriptor = new HColumnDescriptor(Constants.DEFAULT_COLUMN_FAMILY);
         HBaseAdmin admin = new HBaseAdmin(configuration.getConfiguration());
+
         byte[] tableName = configuration.getStorageTableName().getBytes();
 
         columnDescriptor.setBloomFilterType(StoreFile.BloomType.ROW)
