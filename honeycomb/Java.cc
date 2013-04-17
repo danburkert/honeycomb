@@ -73,9 +73,6 @@ int check_exceptions(JNIEnv* env, JNICache* cache, const char* location)
     } else if (env->IsInstanceOf(e, cache->TableNotFoundException))
     {
       ret = HA_ERR_NO_SUCH_TABLE;
-    } else if (env->IsInstanceOf(e, cache->TableExistsException))
-    {
-      ret = HA_ERR_TABLE_EXIST;
     } else if (env->IsInstanceOf(e, cache->RowNotFoundException))
     {
       ret = HA_ERR_KEY_NOT_FOUND;

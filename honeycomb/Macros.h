@@ -8,7 +8,7 @@
 
 #define ARRAY_DELETE(arr) do { if (arr != NULL) { delete[] arr; arr = NULL; } } while(0)
 #define MY_FREE(buf) do { if (buf != NULL) { my_free(buf); buf = NULL; } } while(0)
-#define DELETE_REF(env, ref) env->DeleteLocalRef(ref)
+#define DELETE_REF(env, ref) do { if (ref != NULL) { env->DeleteLocalRef(ref); } } while(0);
 
 /**
  * @brief Check the environment for exceptions.  If there is a pending exception,

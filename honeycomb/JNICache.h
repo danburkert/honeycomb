@@ -84,7 +84,6 @@ class JNICache
     HandlerProxyFactory handler_proxy_factory() const {return handler_proxy_factory_;}
 
     jclass TableNotFoundException;
-    jclass TableExistsException;
     jclass RowNotFoundException;
     jclass StoreNotFoundException;
     jclass RuntimeIOException;

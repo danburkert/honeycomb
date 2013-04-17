@@ -37,7 +37,6 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   handler_proxy_.get_auto_increment       = get_method_id(env, handler_proxy_.clazz, "getAutoIncrement", "()J");
   handler_proxy_.set_auto_increment       = get_method_id(env, handler_proxy_.clazz, "setAutoIncrement", "(J)V");
 
-  TableExistsException   = get_class_ref(env, HONEYCOMB "exceptions/TableExistsException");
   TableNotFoundException = get_class_ref(env, HONEYCOMB "exceptions/TableNotFoundException");
   RowNotFoundException   = get_class_ref(env, HONEYCOMB "exceptions/RowNotFoundException");
   StoreNotFoundException = get_class_ref(env, HONEYCOMB "exceptions/StoreNotFoundException");
@@ -65,17 +64,16 @@ JNICache::~JNICache()
   JNIEnv* env;
   attach_thread(jvm, &env, "JNICache::~JNICache");
 
-  env->DeleteGlobalRef(handler_proxy_.clazz);
-  env->DeleteGlobalRef(handler_proxy_factory_.clazz);
-  env->DeleteGlobalRef(throwable_.clazz);
-  env->DeleteGlobalRef(print_writer_.clazz);
-  env->DeleteGlobalRef(string_writer_.clazz);
+  DELETE_REF(env, handler_proxy_.clazz);
+  DELETE_REF(env, handler_proxy_factory_.clazz);
+  DELETE_REF(env, throwable_.clazz);
+  DELETE_REF(env, print_writer_.clazz);
+  DELETE_REF(env, string_writer_.clazz);
 
-  env->DeleteGlobalRef(TableNotFoundException);
-  env->DeleteGlobalRef(TableExistsException);
-  env->DeleteGlobalRef(RowNotFoundException);
-  env->DeleteGlobalRef(RuntimeIOException);
-  env->DeleteGlobalRef(StoreNotFoundException);
+  DELETE_REF(env, TableNotFoundException);
+  DELETE_REF(env, RowNotFoundException);
+  DELETE_REF(env, RuntimeIOException);
+  DELETE_REF(env, StoreNotFoundException);
 
   detach_thread(jvm);
 }
