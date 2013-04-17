@@ -130,7 +130,7 @@ static bool try_setup()
   if (settings.has_error())
   {
     const char* error_message = settings.get_errormessage();
-    Logging::fatal("During setup: %s", error_message);
+    Logging::fatal("Error reading the settings during setup: %s", error_message);
     return false;
   }
 
