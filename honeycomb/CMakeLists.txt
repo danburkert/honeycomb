@@ -14,23 +14,23 @@ IF(NOT APPLE)
     COMMAND sed "s:bin/java::"
     OUTPUT_VARIABLE JAVA_HOME
     OUTPUT_STRIP_TRAILING_WHITESPACE)
-  IF(JAVA_HOME)
-    IF(CMAKE_SIZEOF_VOID_P EQUAL 4) # Is this a 32 bit system?
-      SET(ARCH "i386")
-    ELSE()
-      SET(ARCH "amd64")
-    ENDIF()
 
-    INCLUDE_DIRECTORIES("${JAVA_HOME}../include")
-    INCLUDE_DIRECTORIES("${JAVA_HOME}../include/linux")
+  IF(CMAKE_SIZEOF_VOID_P EQUAL 4) # Is this a 32 bit system?
+    SET(ARCH "i386")
+  ELSE()
+    SET(ARCH "amd64")
+  ENDIF()
+
+  INCLUDE_DIRECTORIES("${JAVA_HOME}../include")
+  INCLUDE_DIRECTORIES("${JAVA_HOME}../include/linux")
 
   LINK_DIRECTORIES("${JAVA_HOME}lib/${ARCH}/")
   LINK_DIRECTORIES("${JAVA_HOME}lib/${ARCH}/server")
   LINK_DIRECTORIES("${JAVA_HOME}lib/${ARCH}/xawt")
   LINK_LIBRARIES(jawt jvm jsig)
-ELSE(JAVA_HOME)
+ELSE()
   MESSAGE("Unable to find Java JNI libraries.")
-ENDIF(JAVA_HOME)
+ENDIF()
 
 FIND_PACKAGE(LibXml2 REQUIRED)
 IF(LIBXML2_FOUND)
