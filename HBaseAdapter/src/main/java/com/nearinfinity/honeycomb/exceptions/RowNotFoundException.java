@@ -8,4 +8,9 @@ public class RowNotFoundException extends RuntimeException {
     public RowNotFoundException(UUID uuid) {
         this.uuid = uuid;
     }
+
+    @Override
+    public String toString() {
+        return String.format("RowNotFoundException{uuid=%s}", uuid);
+    }
 }

@@ -129,7 +129,7 @@ public class ConfigurationParser {
                     config.set(propertyName, propertyValue);
                     logger.debug(String.format("Set configuration property %s = %s", propertyName, propertyValue));
                 } else {
-                    logger.warn("Unable to set configuration property: " + propertyName);
+                    logger.warn(String.format("Unable to set configuration property: %s (It has already been set to %s)", propertyName, config.get(propertyName)));
                 }
             }
         }

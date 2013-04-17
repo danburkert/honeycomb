@@ -11,4 +11,9 @@ public class TableNotFoundException extends RuntimeException {
     public TableNotFoundException(Long tableId) {
         this.id = tableId;
     }
+
+    @Override
+    public String toString() {
+        return String.format("TableNotFoundException{name='%s', id=%d}", name, id);
+    }
 }
