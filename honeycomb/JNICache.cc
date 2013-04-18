@@ -3,7 +3,11 @@
 #include "JavaFrame.h"
 #include "Logging.h"
 #include "Macros.h"
-JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
+
+
+JNICache::JNICache(JavaVM* jvm)
+: jvm(jvm),
+  error(false)
 {
   JNIEnv* env;
   attach_thread(jvm, &env, "JNICache::JNICache");
@@ -11,7 +15,9 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   // (dburkert:) I do not recommend editing this section without javap -s,
   // editor macros, and tabular.vim
 
+
   handler_proxy_.clazz                    = get_class_ref(env, HONEYCOMB "mysql/HandlerProxy");
+
   handler_proxy_.create_table             = get_method_id(env, handler_proxy_.clazz, "createTable", "(Ljava/lang/String;[BJ)V");
   handler_proxy_.drop_table               = get_method_id(env, handler_proxy_.clazz, "dropTable", "(Ljava/lang/String;)V");
   handler_proxy_.rename_table             = get_method_id(env, handler_proxy_.clazz, "renameTable", "(Ljava/lang/String;Ljava/lang/String;)V");
@@ -36,6 +42,7 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   handler_proxy_.increment_auto_increment = get_method_id(env, handler_proxy_.clazz, "incrementAutoIncrement", "(J)J");
   handler_proxy_.get_auto_increment       = get_method_id(env, handler_proxy_.clazz, "getAutoIncrement", "()J");
   handler_proxy_.set_auto_increment       = get_method_id(env, handler_proxy_.clazz, "setAutoIncrement", "(J)V");
+
 
   TableNotFoundException = get_class_ref(env, HONEYCOMB "exceptions/TableNotFoundException");
   RowNotFoundException   = get_class_ref(env, HONEYCOMB "exceptions/RowNotFoundException");
@@ -93,7 +100,7 @@ jclass JNICache::get_class_ref(JNIEnv* env, const char* clazz)
     snprintf(log_buffer, sizeof(log_buffer),
         "JNICache: Failed to find class %s", clazz);
     Logging::fatal(log_buffer);
-    perror("Failure during JNI class lookup. Check honeycomb.log for details.");
+    perror("Failure during JNI class lookup. Check log file for details.");
     env->ExceptionDescribe();
     this->error = true;
     return NULL;
@@ -106,7 +113,7 @@ jclass JNICache::get_class_ref(JNIEnv* env, const char* clazz)
     snprintf(log_buffer, sizeof(log_buffer),
         "JNICache: Not enough JVM memory to create global reference to class %s", clazz);
     Logging::fatal(log_buffer);
-    perror("Failure during JNI reference creation. Check honeycomb.log for details.");
+    perror("Failure during JNI reference creation. Check log file for details.");
     env->ExceptionDescribe();
     this->error = true;
   }
@@ -129,7 +136,7 @@ jmethodID JNICache::get_method_id(JNIEnv* env, jclass clazz, const char* method,
     snprintf(log_buffer, sizeof(log_buffer),
         "JNICache: Failed to find method %s with signature %s", method, signature);
     Logging::fatal(log_buffer);
-    perror("Failure during JNI method id lookup. Check honeycomb.log for details.");
+    perror("Failure during JNI method id lookup. Check log file for details.");
     this->error = true;
   }
   return method_id;
@@ -150,7 +157,7 @@ jmethodID JNICache::get_static_method_id(JNIEnv* env, jclass clazz, const char* 
     snprintf(log_buffer, sizeof(log_buffer),
         "JNICache: Failed to find method %s with signature %s", method, signature);
     Logging::fatal(log_buffer);
-    perror("Failure during JNI static method id lookup. Check honeycomb.log for details.");
+    perror("Failure during JNI static method id lookup. Check log file for details.");
     this->error = true;
   }
   return method_id;
@@ -172,7 +179,7 @@ jfieldID JNICache::get_static_field_id(JNIEnv* env, jclass clazz, const char* fi
     snprintf(log_buffer, sizeof(log_buffer),
         "JNICache: Failed to find static field %s with type %s", field, type);
     Logging::fatal(log_buffer);
-    perror("Failure during JNI static field id lookup. Check honeycomb.log for details.");
+    perror("Failure during JNI static field id lookup. Check log file for details.");
     this->error = true;
   }
   return field_id;
