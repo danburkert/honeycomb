@@ -95,20 +95,20 @@ bool test_directory(const char* path)
 {
   const char* missing_message = "Path %s must exist. Ensure that the full path exists and is owned by MySQL's user. %s";
   const char* wrong_owner_message = "Path %s must be owned by %s. Currently owner %s. %s\n";
-  if (!does_path_exist(path)) 
-  { 
-    fprintf(stderr, missing_message, path, strerror(errno)); 
-    return false; 
-  } 
-  
-  if (!is_owned_by_mysql(path)) 
-  { 
+  if (!does_path_exist(path))
+  {
+    fprintf(stderr, missing_message, path, strerror(errno));
+    return false;
+  }
+
+  if (!is_owned_by_mysql(path))
+  {
     char owner[256], current[256];
     get_current_user_group(owner, sizeof(owner));
     get_file_user_group(path, current, sizeof(current));
-    fprintf(stderr, wrong_owner_message, path, owner, current, strerror(errno)); 
-    return false; 
-  } 
+    fprintf(stderr, wrong_owner_message, path, owner, current, strerror(errno));
+    return false;
+  }
 
   return true;
 }
@@ -131,18 +131,33 @@ static bool try_setup()
   {
     const char* error_message = settings.get_errormessage();
     Logging::fatal("Error reading the settings during setup: %s", error_message);
+
     return false;
+  } else {
+    Logging::info("Finished reading configuration settings");
   }
 
+
   if (!try_initialize_jvm(&jvm, settings, &handler_proxy_factory))
+  {
+	Logging::fatal("Error during JVM initialization");
+
     return false;
+  } else {
+    Logging::info("Initialized JVM");
+  }
 
   cache = new JNICache(jvm);
   if (cache->has_error())
   {
+	Logging::fatal("Error creating JNI cache");
+
     delete cache;
     return false;
+  } else {
+    Logging::info("Created JNI cache");
   }
+
   return true;
 }
 

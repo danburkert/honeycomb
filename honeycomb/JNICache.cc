@@ -3,7 +3,11 @@
 #include "JavaFrame.h"
 #include "Logging.h"
 #include "Macros.h"
-JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
+
+
+JNICache::JNICache(JavaVM* jvm)
+: jvm(jvm),
+  error(false)
 {
   JNIEnv* env;
   attach_thread(jvm, &env, "JNICache::JNICache");
@@ -11,7 +15,9 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   // (dburkert:) I do not recommend editing this section without javap -s,
   // editor macros, and tabular.vim
 
+
   handler_proxy_.clazz                    = get_class_ref(env, HONEYCOMB "mysql/HandlerProxy");
+
   handler_proxy_.create_table             = get_method_id(env, handler_proxy_.clazz, "createTable", "(Ljava/lang/String;[BJ)V");
   handler_proxy_.drop_table               = get_method_id(env, handler_proxy_.clazz, "dropTable", "(Ljava/lang/String;)V");
   handler_proxy_.rename_table             = get_method_id(env, handler_proxy_.clazz, "renameTable", "(Ljava/lang/String;Ljava/lang/String;)V");
@@ -36,6 +42,7 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   handler_proxy_.increment_auto_increment = get_method_id(env, handler_proxy_.clazz, "incrementAutoIncrement", "(J)J");
   handler_proxy_.get_auto_increment       = get_method_id(env, handler_proxy_.clazz, "getAutoIncrement", "()J");
   handler_proxy_.set_auto_increment       = get_method_id(env, handler_proxy_.clazz, "setAutoIncrement", "(J)V");
+
 
   TableNotFoundException = get_class_ref(env, HONEYCOMB "exceptions/TableNotFoundException");
   RowNotFoundException   = get_class_ref(env, HONEYCOMB "exceptions/RowNotFoundException");
