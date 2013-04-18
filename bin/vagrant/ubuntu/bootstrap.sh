@@ -52,15 +52,14 @@ apt-get -y install dpkg-dev cmake maven libncurses5-dev libxml2-dev git vim
 apt-get source mysql-5.5
 rm /home/vagrant/*.tar.gz
 rm /home/vagrant/*.dsc
-mv mysql-5.5 /usr/local/mysql-5.5
+mv mysql-5.5-5.5.29 /usr/local/mysql-5.5
 mkdir /usr/local/mysql-5.5/build
 chown -R vagrant:vagrant /usr/local/mysql-5.5
 ln -s /vagrant/honeycomb /usr/local/mysql-5.5/storage/
 
 # Install MySQL
-sudo debconf-set-selections <<< 'mysql-server-<version> mysql-server/root_password password your_password'
-sudo debconf-set-selections <<< 'mysql-server-<version> mysql-server/root_password_again password your_password'
-sudo apt-get -y install mysql-server
+export DEBIAN_FRONTEND=noninteractive
+apt-get -q -y install mysql-server
 
 sudo mkdir -p /usr/local/etc/honeycomb   # Configuration
 sudo mkdir -p /var/log/honeycomb         # Logs

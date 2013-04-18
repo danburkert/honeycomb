@@ -100,7 +100,7 @@ jclass JNICache::get_class_ref(JNIEnv* env, const char* clazz)
     snprintf(log_buffer, sizeof(log_buffer),
         "JNICache: Failed to find class %s", clazz);
     Logging::fatal(log_buffer);
-    perror("Failure during JNI class lookup. Check honeycomb.log for details.");
+    perror("Failure during JNI class lookup. Check log file for details.");
     env->ExceptionDescribe();
     this->error = true;
     return NULL;
@@ -113,7 +113,7 @@ jclass JNICache::get_class_ref(JNIEnv* env, const char* clazz)
     snprintf(log_buffer, sizeof(log_buffer),
         "JNICache: Not enough JVM memory to create global reference to class %s", clazz);
     Logging::fatal(log_buffer);
-    perror("Failure during JNI reference creation. Check honeycomb.log for details.");
+    perror("Failure during JNI reference creation. Check log file for details.");
     env->ExceptionDescribe();
     this->error = true;
   }
@@ -136,7 +136,7 @@ jmethodID JNICache::get_method_id(JNIEnv* env, jclass clazz, const char* method,
     snprintf(log_buffer, sizeof(log_buffer),
         "JNICache: Failed to find method %s with signature %s", method, signature);
     Logging::fatal(log_buffer);
-    perror("Failure during JNI method id lookup. Check honeycomb.log for details.");
+    perror("Failure during JNI method id lookup. Check log file for details.");
     this->error = true;
   }
   return method_id;
@@ -157,7 +157,7 @@ jmethodID JNICache::get_static_method_id(JNIEnv* env, jclass clazz, const char* 
     snprintf(log_buffer, sizeof(log_buffer),
         "JNICache: Failed to find method %s with signature %s", method, signature);
     Logging::fatal(log_buffer);
-    perror("Failure during JNI static method id lookup. Check honeycomb.log for details.");
+    perror("Failure during JNI static method id lookup. Check log file for details.");
     this->error = true;
   }
   return method_id;
@@ -179,7 +179,7 @@ jfieldID JNICache::get_static_field_id(JNIEnv* env, jclass clazz, const char* fi
     snprintf(log_buffer, sizeof(log_buffer),
         "JNICache: Failed to find static field %s with type %s", field, type);
     Logging::fatal(log_buffer);
-    perror("Failure during JNI static field id lookup. Check honeycomb.log for details.");
+    perror("Failure during JNI static field id lookup. Check log file for details.");
     this->error = true;
   }
   return field_id;

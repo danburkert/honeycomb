@@ -123,6 +123,8 @@ static bool try_setup()
     return false;
   }
 
+  fprintf(stderr, "Detailed logging output configured to: %s%s\n", DEFAULT_LOG_PATH, DEFAULT_LOG_FILE);
+
   if (!test_directory(SETTINGS_BASE))
     return false;
 
