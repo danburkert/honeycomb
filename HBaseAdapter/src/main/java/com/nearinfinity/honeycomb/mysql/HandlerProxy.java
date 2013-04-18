@@ -178,6 +178,7 @@ public class HandlerProxy {
 
         store.addIndex(tableName, schema);
         table.insertTableIndex(schema);
+        table.flush();
     }
 
     /**

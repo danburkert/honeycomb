@@ -154,6 +154,8 @@ public class RowOperationsIT extends HoneycombIntegrationTest {
                 proxy.insertRow(row.serialize());
             }
 
+            proxy.flush();
+
             proxy.startTableScan();
             for (int i = 0; i < iterations; i++) {
                 Row deserialized = Row.deserialize(proxy.getNextRow());
@@ -166,6 +168,7 @@ public class RowOperationsIT extends HoneycombIntegrationTest {
                 proxy.updateRow(r.serialize());
             }
 
+            proxy.flush();
             rows.clear();
 
             proxy.startTableScan();
