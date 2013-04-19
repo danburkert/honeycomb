@@ -25,7 +25,7 @@ class SettingsPrivate
   xmlErrorPtr error;
   const char* filename;
   const char* schema;
-  SettingsPrivate():options(NULL), count(0), has_error(false), error_message(NULL), error(NULL), filename(NULL), schema(NULL)
+  SettingsPrivate() : options(NULL), count(0), has_error(false), error_message(NULL), error(NULL), filename(NULL), schema(NULL)
   {}
 };
 
@@ -285,6 +285,16 @@ const char* Settings::get_errormessage() const
 bool Settings::has_error() const
 {
   return settings->has_error;
+}
+
+const char* Settings::get_filename() const
+{
+  return settings->filename;
+}
+
+const char* Settings::get_schema() const
+{
+  return settings->schema;
 }
 
 Settings::Settings(const char* filename, const char* schema) : settings(new SettingsPrivate)

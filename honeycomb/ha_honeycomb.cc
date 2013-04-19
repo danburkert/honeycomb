@@ -21,7 +21,7 @@
 #include "ColumnSchema.h"
 #include "Java.h"
 
-#define SETTINGS_BASE "/usr/local/etc/honeycomb/"
+#define SETTINGS_BASE "/usr/share/mysql/honeycomb/"
 #define CONFIG_FILE SETTINGS_BASE "honeycomb.xml"
 #define SCHEMA SETTINGS_BASE "honeycomb.xsd"
 #define DEFAULT_LOG_FILE "honeycomb-c.log"

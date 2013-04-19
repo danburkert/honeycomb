@@ -62,5 +62,8 @@ class Settings
      * @return Was an error during reading
      */
     bool has_error() const;
+
+    const char* get_filename() const;
+    const char* get_schema() const;
 };
 #endif

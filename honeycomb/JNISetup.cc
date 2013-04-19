@@ -22,14 +22,17 @@ class JNICache;
  * Initialize Bootstrap class. This should only be called once per MySQL Server
  * instance during Handlerton initialization.
  */
-static bool try_bootstrap(JavaVM* jvm, jobject* factory)
+static bool try_bootstrap(JavaVM* jvm, jobject* factory, const Settings& settings)
 {
   Logging::info("Starting bootstrap()");
   JNIEnv* env;
   attach_thread(jvm, &env, "JNISetup::bootstrap");
+  JavaFrame frame(env, 2);
+  jstring jfilename = string_to_java_string(env, settings.get_filename());
+  jstring jschema = string_to_java_string(env, settings.get_schema());
 
   jclass bootstrap_class = env->FindClass("com/nearinfinity/honeycomb/mysql/Bootstrap");
-  jmethodID startup = env->GetStaticMethodID(bootstrap_class, "startup", "()Lcom/nearinfinity/honeycomb/mysql/HandlerProxyFactory;");
+  jmethodID startup = env->GetStaticMethodID(bootstrap_class, "startup", "(Ljava/lang/String;Ljava/lang/String;)Lcom/nearinfinity/honeycomb/mysql/HandlerProxyFactory;");
 
   if (startup == NULL)
   {
@@ -37,7 +40,7 @@ static bool try_bootstrap(JavaVM* jvm, jobject* factory)
     return false;
   }
 
-  jobject handler_proxy_factory_local = env->CallStaticObjectMethod(bootstrap_class, startup);
+  jobject handler_proxy_factory_local = env->CallStaticObjectMethod(bootstrap_class, startup, jfilename, jschema);
 
   if (print_java_exception(env))
   {
@@ -141,7 +144,7 @@ bool try_initialize_jvm(JavaVM** jvm, const Settings& parser, jobject* factory)
     }
 
     log_java_classpath(env);
-    if (!try_bootstrap(*jvm, factory))
+    if (!try_bootstrap(*jvm, factory, parser))
       return false;
 
     detach_thread(*jvm);
