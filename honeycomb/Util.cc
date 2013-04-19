@@ -51,7 +51,7 @@ bool is_owned_by_mysql(const char* path)
   if (ret == -1)
     return false;
 
-  return fstat.st_uid == user_id && fstat.st_gid == group_id; 
+  return fstat.st_uid == user_id; 
 }
 
 uint64_t bswap64(uint64_t x)

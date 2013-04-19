@@ -25,7 +25,7 @@
 #define CONFIG_FILE SETTINGS_BASE "honeycomb.xml"
 #define SCHEMA SETTINGS_BASE "honeycomb.xsd"
 #define DEFAULT_LOG_FILE "honeycomb-c.log"
-#define DEFAULT_LOG_PATH "/var/log/honeycomb/"
+#define DEFAULT_LOG_PATH "/var/log/mysql/"
 
 static handler *honeycomb_create_handler(handlerton *hton,
     TABLE_SHARE *table, MEM_ROOT *mem_root);

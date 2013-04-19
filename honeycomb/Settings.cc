@@ -25,6 +25,8 @@ class SettingsPrivate
   xmlErrorPtr error;
   const char* filename;
   const char* schema;
+  SettingsPrivate():options(NULL), count(0), has_error(false), error_message(NULL), error(NULL), filename(NULL), schema(NULL)
+  {}
 };
 
 static void print_perm(const char* file)
