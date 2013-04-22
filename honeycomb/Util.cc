@@ -44,14 +44,7 @@ bool does_path_exist(const char* path)
 
 bool is_owned_by_mysql(const char* path)
 {
-  struct stat fstat;
-  uid_t user_id = getuid();
-  gid_t group_id = getgid();
-  int ret = stat(path, &fstat);
-  if (ret == -1)
-    return false;
-
-  return fstat.st_uid == user_id; 
+  return access(path, R_OK|W_OK) == 0;
 }
 
 uint64_t bswap64(uint64_t x)
