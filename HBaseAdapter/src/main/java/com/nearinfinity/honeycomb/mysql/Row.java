@@ -1,18 +1,22 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import com.nearinfinity.honeycomb.mysql.gen.AvroRow;
-import com.nearinfinity.honeycomb.mysql.gen.UUIDContainer;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.nio.ByteBuffer;
+import java.util.Map;
+import java.util.UUID;
+
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.nio.ByteBuffer;
-import java.util.Map;
-import java.util.UUID;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.nearinfinity.honeycomb.mysql.gen.AvroRow;
+import com.nearinfinity.honeycomb.mysql.gen.UUIDContainer;
+import com.nearinfinity.honeycomb.mysql.schema.versioning.RowSchemaInfo;
+import com.nearinfinity.honeycomb.mysql.schema.versioning.SchemaVersionUtils;
 
 public class Row {
     private static final DatumWriter<AvroRow> writer =
@@ -31,7 +35,11 @@ public class Row {
     public Row(Map<String, ByteBuffer> records, UUID uuid) {
         checkNotNull(records, "records must not be null.");
         // uuid nullity will be checked by UUIDToBytes
-        row = new AvroRow(new UUIDContainer(Util.UUIDToBytes(uuid)), records);
+
+        row = AvroRow.newBuilder()
+                .setUuid(new UUIDContainer(Util.UUIDToBytes(uuid)))
+                .setRecords(records)
+                .build();
     }
 
     /**
@@ -50,6 +58,11 @@ public class Row {
      * @return new Row instance from serializedRow
      */
     public static Row deserialize(byte[] serializedRow) {
+        checkNotNull(serializedRow);
+        checkArgument(serializedRow.length > 0);
+
+        SchemaVersionUtils.processSchemaVersion(serializedRow[0], RowSchemaInfo.VER_CURRENT);
+
         return new Row(Util.deserializeAvroObject(serializedRow, reader));
     }
 
@@ -121,6 +134,7 @@ public class Row {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
+        sb.append(String.format("Version: %d\n", row.getVersion()));
         sb.append(String.format("UUID: %s\n", getUUID().toString()));
         for (Map.Entry<String, ByteBuffer> entry : getRecords().entrySet()) {
             sb.append(entry.getKey());

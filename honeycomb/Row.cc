@@ -2,7 +2,11 @@
 #include "AvroUtil.h"
 #include <stdio.h>
 
-#define ROW_CONTAINER_SCHEMA "{\"type\":\"record\",\"name\":\"AvroRow\",\"namespace\":\"com.nearinfinity.honeycomb.mysql.gen\",\"fields\":[{\"name\":\"uuid\",\"type\":{\"type\":\"fixed\",\"name\":\"UUIDContainer\",\"size\":16}},{\"name\":\"records\",\"type\":{\"type\":\"map\",\"values\":\"bytes\",\"avro.java.string\":\"String\"}}]}"
+
+#define ROW_CONTAINER_SCHEMA "{\"type\":\"record\",\"name\":\"AvroRow\",\"namespace\":\"com.nearinfinity.honeycomb.mysql.gen\",\"fields\":[{\"name\":\"version\",\"type\":\"int\",\"doc\":\"Schema version number\",\"default\":0},{\"name\":\"uuid\",\"type\":{\"type\":\"fixed\",\"name\":\"UUIDContainer\",\"size\":16}},{\"name\":\"records\",\"type\":{\"type\":\"map\",\"values\":\"bytes\",\"avro.java.string\":\"String\"}}]}"
+
+const int Row::CURRENT_VERSION = 0;
+const char* Row::VERSION_FIELD = "version";
 
 Row::Row()
 {
@@ -17,6 +21,8 @@ Row::Row()
     printf("Unable to create RowContainer.  Exiting.\n");
     abort();
   }
+
+  set_schema_version(CURRENT_VERSION);
   avro_value_iface_decref(rc_class);
 }
 
@@ -28,7 +34,10 @@ Row::~Row()
 
 int Row::reset()
 {
-  return avro_value_reset(&row_container);
+  int ret = 0;
+  ret |= avro_value_reset(&row_container);
+  ret |= set_schema_version(CURRENT_VERSION);
+  return ret;
 }
 
 bool Row::equals(const Row& other)
@@ -72,6 +81,15 @@ int Row::set_UUID(unsigned char* uuid_buf)
   avro_value_t uuid;
   ret |= avro_value_get_by_name(&row_container, "uuid", &uuid, NULL);
   ret |= avro_value_set_fixed(&uuid, uuid_buf, 16);
+  return ret;
+}
+
+int Row::set_schema_version(const int& version)
+{
+  int ret = 0;
+  avro_value_t schemaVersion;
+  ret |= avro_value_get_by_name(&row_container, VERSION_FIELD, &schemaVersion, NULL);
+  ret |= avro_value_set_int(&schemaVersion, version);
   return ret;
 }
 
