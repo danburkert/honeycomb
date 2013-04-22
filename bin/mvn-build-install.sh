@@ -52,11 +52,11 @@ mvn -V clean install -Dapache $mvnTestMode
 
 $HONEYCOMB_HOME/bin/install-honeycomb-jars.sh "$HONEYCOMB_HOME/HBaseAdapter" $honeycomb_lib
 
-adapter_conf=$config_path/honeycomb.xml
-if [ ! -d $config_path ]
+adapter_conf=$CONFIG_PATH/honeycomb.xml
+if [ ! -d $CONFIG_PATH ]
 then
   echo "Creating configuration path $config_path"
-  sudo mkdir $config_path
+  sudo mkdir $CONFIG_PATH
 fi
 
 if [ ! -e $adapter_conf ]

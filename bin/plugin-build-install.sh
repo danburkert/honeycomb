@@ -93,7 +93,7 @@ then
   ln -s $target $link
 fi
 
-link=$config_path/honeycomb.xsd
+link=$CONFIG_PATH/honeycomb.xsd
 target=$HONEYCOMB_HOME/honeycomb/honeycomb.xsd
 if [ ! -h $link ]
 then
