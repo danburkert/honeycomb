@@ -12,25 +12,20 @@ class Settings
     bool test_file_owned_by_mysql(const char* config_file);
   public:
     /**
-     * @brief Reads in the options from a file.
+     * @brief  Reads in the options from a file.
      *
-     * @param filename Path to xml configuration file
-     *
-     * @return Parser for file
+     * @param filename Path to xml configuration file 
+     * @param schema Path to xml schema 
      */
     Settings(const char* filename, const char* schema);
 
     /**
      * @brief Release resources held by options.
-     *
-     * @param settings Option settings
      */
     virtual ~Settings();
 
     /**
      * @brief Retrieve the JNI options found in the file.
-     *
-     * @param settings Option settings
      *
      * @return JNI options
      */
@@ -39,16 +34,12 @@ class Settings
     /**
      * @brief Retrieve the number of options found in the file.
      *
-     * @param settings Option settings
-     *
      * @return Number of options found
      */
     unsigned int get_optioncount() const;
 
     /**
      * @brief Retrieves the error message from reading. Returns NULL if there was no error.
-     *
-     * @param settings Option settings
      *
      * @return Error during reading
      */
@@ -57,13 +48,22 @@ class Settings
     /**
      * @brief Describes whether there was an error while trying to read the options.
      *
-     * @param settings Option settings
-     *
      * @return Was an error during reading
      */
     bool has_error() const;
 
+    /**
+     * @brief Retrieve the xml file name 
+     *
+     * @return XML file name
+     */
     const char* get_filename() const;
+
+    /**
+     * @brief Retrieve the xml schema file name
+     *
+     * @return XML schema file name
+     */
     const char* get_schema() const;
 };
 #endif
