@@ -51,7 +51,7 @@ mvn -V clean install -Dapache $mvnTestMode
 
 $HONEYCOMB_HOME/bin/install-honeycomb-jars.sh "$HONEYCOMB_HOME/HBaseAdapter" $honeycomb_lib
 
-conf_path=/usr/local/etc/honeycomb
+conf_path=/usr/share/mysql/honeycomb
 adapter_conf=$conf_path/honeycomb.xml
 if [ ! -d $conf_path ]
 then
