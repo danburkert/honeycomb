@@ -4,7 +4,7 @@
 : ${MYSQL_HOME?"Need to set MYSQL_HOME environmental variable to MySQL's installation directory."}
 command -v cmake >/dev/null 2>&1 || { echo >&2 "cmake is required to run $0."; exit 1; }
 command -v make >/dev/null 2>&1 || { echo >&2 "make is required to run $0."; exit 1; }
-source ./constants.sh
+source $HONEYCOMB_HOME/bin/constants.sh
 
 build_dir=$HONEYCOMB_HOME/build
 unit_test_dir=$HONEYCOMB_HOME/build/storage/honeycomb/unit-test

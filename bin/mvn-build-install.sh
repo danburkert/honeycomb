@@ -10,7 +10,7 @@ else
   honeycomb_lib=/usr/local/lib/honeycomb
 fi
 
-source ./constants.sh
+source $HONEYCOMB_HOME/bin/constants.sh
 echo -e "Running Maven build script\n"
 
 testOption=$1
