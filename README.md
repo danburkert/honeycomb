@@ -94,27 +94,30 @@ Link the honeycomb storage engine plugin source into MySQL's source directory so
 	cmake ..
 	make
 
-Move the built `ha_honeycomb.so` into MySQL's plugin directory.  $MYSQL_HOME is assumed to be the MySQL installation directory (containing the `plugin` directory), typically `usr/lib/mysql`.
+Move the built `ha_honeycomb.so` into MySQL's plugin directory.  $MYSQL_HOME is assumed to be the MySQL installation directory (containing the `plugin` directory), typically `/usr/lib/mysql`.
 
 	cp $MYSQL_SOURCE/build/storage/honeycomb/ha_honeycomb.so $MYSQL_HOME/plugin/
 
 
 ###  Setup System Directories
-Honeycomb stores logs in `/var/log/honeycomb`, configuration in `/usr/local/etc/honeycomb`, and Java artifacts in `/usr/local/lib/honeycomb`.  Create these directories and give the `mysql` user ownership (the `mysql` user should be substituted with the user who owns the MySQL process):
+Honeycomb stores configuration and java libraries in `/usr/share/mysql/honeycomb`.  Create these directories and give the `mysql` user ownership (the `mysql` user should be substituted with the user who owns the MySQL process):
 
-	sudo mkdir -p /usr/local/etc/honeycomb   # Configuration
-	sudo mkdir -p /var/log/honeycomb         # Logs
-	sudo mkdir -p /usr/local/lib/honeycomb   # Jars
-	sudo chown mysql:mysql /usr/local/etc/honeycomb
-	sudo chown mysql:mysql /var/log/honeycomb
-	sudo chown mysql:mysql /usr/local/lib/honeycomb
+	sudo mkdir -p /usr/share/mysql/honeycomb
+	sudo chown mysql:mysql /usr/share/mysql/honeycomb
+
 
 ### Install Honeycomb Java Libraries
-Honeycomb relies on Java libraries to connect to HBase.  The Jar must be built and moved to the `/usr/local/lib/honeycomb` directory:
+Honeycomb relies on Java libraries to connect to HBase.  The Jar must be built and moved to the `/usr/share/mysql/honeycomb` directory:
 
 	cd $HONEYCOMB_SOURCE/HBaseAdapater
 	mvn clean package assembly:single
-	cp $HONEYCOMB_SOURCE/HBaseAdapter/target/mysqlengine-0.1-jar-with-dependencies.jar /usr/local/lib/honeycomb/
+	cp $HONEYCOMB_SOURCE/HBaseAdapter/target/mysqlengine-0.1-jar-with-dependencies.jar /usr/share/mysql/honeycomb/
+
+### Configure Honeycomb
+Honeycomb requires its configuration file, `honeycomb.xml` to be placed in `/usr/share/mysql/honeycomb`, along with `honeycomb.xsd`.  An example `honeycomb.xml` can be found at `HONEYCOMB_SOURCE/honeycomb/honeycomb-example.xml`.
+
+	cp $HONEYCOMB_SOURCE/honeycomb/honeycomb-example.xml /usr/share/mysql/honeycomb/honeycomb.xml
+	cp $HONEYCOMB_SOURCE/honeycomb/honeycomb.xsd /usr/share/mysql/honeycomb/
 
 Testing the Storage Engine Plugin
 -----------------------------
