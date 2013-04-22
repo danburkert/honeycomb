@@ -2,6 +2,7 @@ package com.nearinfinity.honeycomb.mysql;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -13,6 +14,8 @@ import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import com.google.common.base.Objects;
+import com.google.common.base.Objects.ToStringHelper;
 import com.nearinfinity.honeycomb.mysql.gen.AvroRow;
 import com.nearinfinity.honeycomb.mysql.gen.UUIDContainer;
 import com.nearinfinity.honeycomb.mysql.schema.versioning.RowSchemaInfo;
@@ -133,14 +136,15 @@ public class Row {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(String.format("Version: %d\n", row.getVersion()));
-        sb.append(String.format("UUID: %s\n", getUUID().toString()));
-        for (Map.Entry<String, ByteBuffer> entry : getRecords().entrySet()) {
-            sb.append(entry.getKey());
-            sb.append(": ");
-            sb.append(Bytes.toStringBinary(entry.getValue()));
+        final ToStringHelper toString = Objects.toStringHelper(this.getClass());
+
+        toString.add("Version", row.getVersion())
+                .add("UUID", getUUID());
+
+        for (final Map.Entry<String, ByteBuffer> entry : getRecords().entrySet()) {
+            toString.add("Record", format("%s: %s", entry.getKey(), Bytes.toStringBinary(entry.getValue())));
         }
-        return sb.toString();
+
+        return toString.toString();
     }
 }
