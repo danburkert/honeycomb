@@ -10,6 +10,7 @@ else
   honeycomb_lib=/usr/local/lib/honeycomb
 fi
 
+source ./constants.sh
 echo -e "Running Maven build script\n"
 
 testOption=$1
@@ -51,12 +52,11 @@ mvn -V clean install -Dapache $mvnTestMode
 
 $HONEYCOMB_HOME/bin/install-honeycomb-jars.sh "$HONEYCOMB_HOME/HBaseAdapter" $honeycomb_lib
 
-conf_path=/usr/share/mysql/honeycomb
-adapter_conf=$conf_path/honeycomb.xml
-if [ ! -d $conf_path ]
+adapter_conf=$config_path/honeycomb.xml
+if [ ! -d $config_path ]
 then
-  echo "Creating configuration path $conf_path"
-  sudo mkdir $conf_path
+  echo "Creating configuration path $config_path"
+  sudo mkdir $config_path
 fi
 
 if [ ! -e $adapter_conf ]

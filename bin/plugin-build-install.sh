@@ -4,6 +4,7 @@
 : ${MYSQL_HOME?"Need to set MYSQL_HOME environmental variable to MySQL's installation directory."}
 command -v cmake >/dev/null 2>&1 || { echo >&2 "cmake is required to run $0."; exit 1; }
 command -v make >/dev/null 2>&1 || { echo >&2 "make is required to run $0."; exit 1; }
+source ./constants.sh
 
 build_dir=$HONEYCOMB_HOME/build
 unit_test_dir=$HONEYCOMB_HOME/build/storage/honeycomb/unit-test
@@ -88,14 +89,14 @@ then
     rm $link
   fi
 
-  echo "Creating a symbolic link from $link to $target"
+  echo "Creating a symbolic link from $target to $link "
   ln -s $target $link
 fi
 
-link=/usr/local/etc/honeycomb/honeycomb.xsd
+link=$config_path/honeycomb.xsd
 target=$HONEYCOMB_HOME/honeycomb/honeycomb.xsd
 if [ ! -h $link ]
 then
-  echo "Creating a symbolic link from $link to $target"
+  echo "Creating a symbolic link from $target to $link "
   sudo ln -s $target $link
 fi
