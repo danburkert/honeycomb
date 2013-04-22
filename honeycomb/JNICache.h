@@ -87,6 +87,7 @@ class JNICache
     jclass RowNotFoundException;
     jclass StoreNotFoundException;
     jclass RuntimeIOException;
+    jclass UnknownSchemaVersionException;
 
     JNICache(JavaVM* jvm);
     ~JNICache();

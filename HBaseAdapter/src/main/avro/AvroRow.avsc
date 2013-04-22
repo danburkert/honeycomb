@@ -4,6 +4,8 @@
     "namespace": "com.nearinfinity.honeycomb.mysql.gen",
     "fields":
      [
+        {"name": "version", "type": "int", "default": 0, "doc": "Schema version number"},
+     
         {"name": "uuid", "type": {"type": "fixed", "name": "UUIDContainer", "size": 16}},
         {"name": "records", "type": {"type": "map", "values": "bytes"}}
      ]
