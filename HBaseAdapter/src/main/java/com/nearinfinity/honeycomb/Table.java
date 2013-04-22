@@ -46,7 +46,7 @@ public interface Table extends Closeable {
      * @throws com.nearinfinity.honeycomb.exceptions.RowNotFoundException
      *
      */
-    void delete(UUID uuid);
+    void delete(Row row);
 
     /**
      * Deletes the index corresponding to the specified index name from the table

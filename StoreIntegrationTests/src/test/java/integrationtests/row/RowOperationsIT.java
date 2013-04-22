@@ -102,8 +102,7 @@ public class RowOperationsIT extends HoneycombIntegrationTest {
         final QueryKey key = ITUtils.createKey(INDEX_COL_VALUE, QueryType.EXACT_KEY);
         proxy.startIndexScan(key.serialize());
 
-        final Row r = Row.deserialize(proxy.getNextRow());
-        proxy.deleteRow(Util.UUIDToBytes(r.getUUID()));
+        proxy.deleteRow(proxy.getNextRow());
         proxy.flush();
     }
 

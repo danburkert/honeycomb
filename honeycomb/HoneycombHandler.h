@@ -101,7 +101,7 @@ class HoneycombHandler : public handler
     int read_bytes_into_mysql(jbyteArray row_bytes, uchar* buf);
     int full_index_scan(uchar* buf, QueryKey::QueryType query);
     int retrieve_value_from_index(uchar* buf);
-    int unpack_row(uchar *buf, Row *row);
+    int unpack_row(uchar *buf, Row& row);
     void store_field_value(Field *field, const char* val, int length);
 
     /* DDL helper methods */
@@ -113,7 +113,7 @@ class HoneycombHandler : public handler
 
     /* IUD helper methods*/
     bool violates_uniqueness(jbyteArray serialized_row);
-    int pack_row(uchar *buf, TABLE* table, Row* row);
+    int pack_row(uchar *buf, TABLE* table, Row& row);
 
 
   public:

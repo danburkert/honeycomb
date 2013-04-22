@@ -10,10 +10,10 @@
  * @param table MySQL TABLE object holding fields to be packed
  * @param row Row object to be packed
  */
-int HoneycombHandler::pack_row(uchar *buf, TABLE* table, Row* row)
+int HoneycombHandler::pack_row(uchar *buf, TABLE* table, Row& row)
 {
   int ret = 0;
-  ret |= row->reset();
+  ret |= row.reset();
   if(table->next_number_field && buf == table->record[0])
   {
     ret |= update_auto_increment();
@@ -130,7 +130,7 @@ int HoneycombHandler::pack_row(uchar *buf, TABLE* table, Row* row)
       memcpy(byte_val, field->ptr, actualFieldSize);
       break;
     }
-    row->set_bytes_record(field->field_name, byte_val, actualFieldSize);
+    row.set_bytes_record(field->field_name, byte_val, actualFieldSize);
     MY_FREE(byte_val);
     field->move_field_offset(-offset);
   }
@@ -182,7 +182,7 @@ int HoneycombHandler::write_row(uchar *buf)
   }
 
   my_bitmap_map *old_map = dbug_tmp_use_all_columns(table, table->read_set);
-  rc |= pack_row(buf, table, row);
+  rc |= pack_row(buf, table, *row);
   dbug_tmp_restore_column_map(table->read_set, old_map);
 
   jbyteArray serialized_row = serialize_to_java(env, *row);
@@ -216,7 +216,7 @@ int HoneycombHandler::update_row(const uchar *old_row, uchar *new_row)
 
   row->reset();
   my_bitmap_map *old_map = dbug_tmp_use_all_columns(table, table->read_set);
-  rc |= pack_row(new_row, table, row);
+  rc |= pack_row(new_row, table, *row);
   dbug_tmp_restore_column_map(table->read_set, old_map);
   rc |= row->set_UUID(this->ref);
   if (rc)
@@ -235,8 +235,8 @@ int HoneycombHandler::update_row(const uchar *old_row, uchar *new_row)
     }
   }
 
-  env->CallVoidMethod(handler_proxy, cache->handler_proxy().update_row,
-      serialized_row);
+  env->CallVoidMethod(handler_proxy, cache->handler_proxy().update_row, 
+       serialized_row);
   rc |= check_exceptions(env, cache, "HoneycombHandler::update_row");
   if (rc) {
     DBUG_RETURN(rc);
@@ -255,10 +255,15 @@ int HoneycombHandler::delete_row(const uchar *buf)
   DBUG_ENTER("HoneycombHandler::delete_row");
   ha_statistic_increment(&SSV::ha_delete_count);
 
+  Row row;
   JavaFrame frame(env, 1);
-  jbyteArray pos = convert_value_to_java_bytes(ref, 16, env);
+  my_bitmap_map *old_map = dbug_tmp_use_all_columns(table, table->read_set);
+  pack_row(const_cast<uchar*>(buf), table, row);
+  dbug_tmp_restore_column_map(table->read_set, old_map);
+  row.set_UUID(ref);
+  jbyteArray serialized_row = serialize_to_java(env, row);
 
-  this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().delete_row, pos);
+  this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().delete_row, serialized_row);
   DBUG_RETURN(check_exceptions(env, cache, "HoneycombHandler::delete_row"));
 }
 

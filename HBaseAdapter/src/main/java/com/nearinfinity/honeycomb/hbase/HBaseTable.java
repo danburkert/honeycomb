@@ -94,9 +94,8 @@ public class HBaseTable implements Table {
     }
 
     @Override
-    public void delete(final UUID uuid) {
-        checkNotNull(uuid);
-        Row row = get(uuid);  // TODO: Should be passed in from C++ side
+    public void delete(final Row row) {
+        checkNotNull(row);
         HBaseOperations.performDelete(hTable, mutationFactory.delete(tableId, row));
     }
 

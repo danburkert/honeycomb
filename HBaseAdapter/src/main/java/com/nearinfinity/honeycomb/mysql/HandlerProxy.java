@@ -273,9 +273,10 @@ public class HandlerProxy {
         }
     }
 
-    public void deleteRow(byte[] uuidBytes) {
+    public void deleteRow(byte[] rowBytes) {
         checkTableOpen();
-        table.delete(Util.bytesToUUID(uuidBytes));
+        Row row = Row.deserialize(rowBytes);
+        table.delete(row);
     }
 
     public void updateRow(byte[] rowBytes) {

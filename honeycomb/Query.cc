@@ -229,7 +229,7 @@ int HoneycombHandler::read_row(uchar *buf)
 {
   store_uuid_ref(this->row);
 
-  if (unpack_row(buf, this->row))
+  if (unpack_row(buf, *this->row))
   {
     this->table->status = STATUS_NOT_READ;
     return HA_ERR_INTERNAL_ERROR;
@@ -282,7 +282,7 @@ static int retrieve_query_flag(enum ha_rkey_function find_flag, QueryKey::QueryT
  * @param row Avro row
  * @return 0 on success
  */
-int HoneycombHandler::unpack_row(uchar* buf, Row* row)
+int HoneycombHandler::unpack_row(uchar* buf, Row& row)
 {
   my_bitmap_map *orig_bitmap;
   orig_bitmap = dbug_tmp_use_all_columns(table, table->write_set);
@@ -293,7 +293,7 @@ int HoneycombHandler::unpack_row(uchar* buf, Row* row)
   {
     Field *field = table->field[i];
     const char* key = field->field_name;
-    row->get_bytes_record(key, &value, &size);
+    row.get_bytes_record(key, &value, &size);
     if (value == NULL)
     {
       field->set_null();
