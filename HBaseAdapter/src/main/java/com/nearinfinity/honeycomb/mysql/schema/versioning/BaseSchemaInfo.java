@@ -5,10 +5,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 import org.apache.avro.Schema;
 
 /**
- * Base class used by {@link SchemaInfo} implementations to provided standard
+ * Base class used by {@link SchemaInfo} implementations to provide standard
  * schema lookup behavior
  */
-public class BaseSchemaInfo implements SchemaInfo {
+public abstract class BaseSchemaInfo implements SchemaInfo {
 
     /**
      * Default container used for versioned schema retrievals
