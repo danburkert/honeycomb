@@ -1,7 +1,6 @@
 package com.nearinfinity.honeycomb.mysql.schema.versioning;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 
 import org.apache.log4j.Logger;
@@ -34,13 +33,12 @@ public abstract class SchemaVersionUtils {
      * Processes the provided version byte to ensure that it represents a supported
      * schema version for a serialized container type.
      *
-     * @param versionByte The byte representation of the encoded version, not null
+     * @param versionByte The byte representation of the encoded version
      * @param supportedVersion The currently supported schema version, non-negative
      * @return True if and only if the processed schema version matches the supported schema version
      * @throws UnknownSchemaVersionException Thrown if the processed schema version is not supported
      */
     public static boolean processSchemaVersion(final byte versionByte, final int supportedVersion) {
-        checkNotNull(versionByte);
         checkArgument(supportedVersion >= 0, "The supported schema version is invalid");
 
         final int writerSchemaVersion = decodeAvroSchemaVersion(versionByte);
@@ -59,13 +57,12 @@ public abstract class SchemaVersionUtils {
      * Attempts to decode the provided schema version byte represented by an Avro
      * binary encoded integer
      *
-     * @param versionByte The byte representation of the encoded version, not null and an even value in the range of [0x00,0x7E]
+     * @param versionByte The byte representation of the encoded version, must be an even value in the range of [0x00,0x7E]
      * @return The decoded version number, in the valid range of 0 to 63
      *
      * @see <a href="https://avro.apache.org/docs/current/spec.html#binary_encoding">Avro Binary Encoding</a>
      */
-    private static int decodeAvroSchemaVersion(final byte versionByte) {
-        checkNotNull(versionByte);
+    public static int decodeAvroSchemaVersion(final byte versionByte) {
         checkArgument((versionByte >= MIN_ENCODED_VERSION && versionByte <= MAX_ENCODED_VERSION)
                        && versionByte % 2 == 0);
         /*
