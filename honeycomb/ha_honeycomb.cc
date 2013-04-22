@@ -20,6 +20,7 @@
 #include "IndexSchema.h"
 #include "ColumnSchema.h"
 #include "Java.h"
+#include "Settings.h"
 
 #define SETTINGS_BASE "/usr/share/mysql/honeycomb/"
 #define CONFIG_FILE SETTINGS_BASE "honeycomb.xml"
