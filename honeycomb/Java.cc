@@ -70,6 +70,9 @@ int check_exceptions(JNIEnv* env, JNICache* cache, const char* location)
     if (env->IsInstanceOf(e, cache->RuntimeIOException))
     {
       ret = HA_ERR_INTERNAL_ERROR;
+    } else if (env->IsInstanceOf(e, cache->UnknownSchemaVersionException))
+    {
+      ret = HA_ERR_INTERNAL_ERROR;
     } else if (env->IsInstanceOf(e, cache->TableNotFoundException))
     {
       ret = HA_ERR_NO_SUCH_TABLE;

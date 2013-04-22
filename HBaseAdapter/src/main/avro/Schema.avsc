@@ -4,6 +4,8 @@
     "namespace": "com.nearinfinity.honeycomb.mysql.gen",
     "fields":
     [
+        {"name": "version", "type": "int", "default": 0, "doc": "Schema version number"},
+    
         {"name": "columns", "type": {"type": "map", "values":
             {
                 "type": "record",
