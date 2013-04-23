@@ -176,6 +176,7 @@
                                 <version>2.6</version>
                                 <reports>
                                     <report>index</report>
+                                    <report>license</report>
                                     <report>dependencies</report>
                                     <report>dependency-management</report>
                                     <report>plugins</report>
