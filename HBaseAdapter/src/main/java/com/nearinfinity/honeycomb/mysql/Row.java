@@ -1,29 +1,27 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.nio.ByteBuffer;
-import java.util.Map;
-import java.util.UUID;
-
+import com.nearinfinity.honeycomb.mysql.gen.AvroRow;
+import com.nearinfinity.honeycomb.mysql.gen.UUIDContainer;
+import com.nearinfinity.honeycomb.mysql.schema.versioning.RowSchemaInfo;
+import com.nearinfinity.honeycomb.mysql.schema.versioning.SchemaVersionUtils;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import com.nearinfinity.honeycomb.mysql.gen.AvroRow;
-import com.nearinfinity.honeycomb.mysql.gen.UUIDContainer;
-import com.nearinfinity.honeycomb.mysql.schema.versioning.RowSchemaInfo;
-import com.nearinfinity.honeycomb.mysql.schema.versioning.SchemaVersionUtils;
+import java.nio.ByteBuffer;
+import java.util.Map;
+import java.util.UUID;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Row {
     private static final DatumWriter<AvroRow> writer =
             new SpecificDatumWriter<AvroRow>(AvroRow.class);
     private static final DatumReader<AvroRow> reader =
             new SpecificDatumReader<AvroRow>(AvroRow.class);
-
     private final AvroRow row;
 
     /**
@@ -73,6 +71,10 @@ public class Row {
      */
     public UUID getUUID() {
         return Util.bytesToUUID(row.getUuid().bytes());
+    }
+
+    public void setUUID(UUID uuid) {
+        row.setUuid(new UUIDContainer(Util.UUIDToBytes(uuid)));
     }
 
     /**

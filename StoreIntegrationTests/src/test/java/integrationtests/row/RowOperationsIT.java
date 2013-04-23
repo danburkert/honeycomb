@@ -122,7 +122,7 @@ public class RowOperationsIT extends HoneycombIntegrationTest {
 
         map.put(TestConstants.COLUMN1, ITUtils.encodeValue(3));
         final Row newRow = new Row(map, r.getUUID());
-        proxy.updateRow(newRow.serialize());
+        proxy.updateRow(r.serialize(), newRow.serialize());
         proxy.flush();
 
         final byte[] result = proxy.getRow(Util.UUIDToBytes(r.getUUID()));
@@ -164,7 +164,7 @@ public class RowOperationsIT extends HoneycombIntegrationTest {
             proxy.endScan();
 
             for (Row r : rows) {
-                proxy.updateRow(r.serialize());
+                proxy.updateRow(r.serialize(), r.serialize());
             }
 
             proxy.flush();

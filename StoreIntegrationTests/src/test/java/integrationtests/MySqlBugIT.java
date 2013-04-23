@@ -90,10 +90,11 @@ public class MySqlBugIT extends HoneycombIntegrationTest {
         proxy.flush();
 
         proxy.startTableScan();
-        row = Row.deserialize(proxy.getNextRow());
+        byte[] nextRow = proxy.getNextRow();
+        row = Row.deserialize(nextRow);
         proxy.endScan();
         row.getRecords().put(TestConstants.COLUMN2, ITUtils.encodeValue(2)); // update t1 set c2=2 where c1 is null
-        proxy.updateRow(row.serialize());
+        proxy.updateRow(nextRow, row.serialize());
 
         Map<String, ByteBuffer> searchMap = Maps.newHashMap();
         searchMap.put(TestConstants.COLUMN1, null);

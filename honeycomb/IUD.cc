@@ -214,9 +214,14 @@ int HoneycombHandler::update_row(const uchar *old_row, uchar *new_row)
     table->timestamp_field->set_time();
   }
 
+  Row old_sql_row;
   row->reset();
   my_bitmap_map *old_map = dbug_tmp_use_all_columns(table, table->read_set);
   rc |= pack_row(new_row, table, *row);
+  dbug_tmp_restore_column_map(table->read_set, old_map);
+
+  old_map = dbug_tmp_use_all_columns(table, table->read_set);
+  rc |= pack_row(const_cast<uchar*>(old_row), table, old_sql_row);
   dbug_tmp_restore_column_map(table->read_set, old_map);
   rc |= row->set_UUID(this->ref);
   if (rc)
@@ -224,8 +229,9 @@ int HoneycombHandler::update_row(const uchar *old_row, uchar *new_row)
     DBUG_RETURN(HA_ERR_INTERNAL_ERROR);
   }
 
-  JavaFrame frame(env, 1);
+  JavaFrame frame(env, 2);
   jbyteArray serialized_row = serialize_to_java(env, *row);
+  jbyteArray old_serialized_row = serialize_to_java(env, old_sql_row);
 
   if (thd_sql_command(ha_thd()) == SQLCOM_UPDATE) // Taken when actual update, not an ON DUPLICATE KEY UPDATE
   {
@@ -236,7 +242,7 @@ int HoneycombHandler::update_row(const uchar *old_row, uchar *new_row)
   }
 
   env->CallVoidMethod(handler_proxy, cache->handler_proxy().update_row, 
-       serialized_row);
+       old_serialized_row, serialized_row);
   rc |= check_exceptions(env, cache, "HoneycombHandler::update_row");
   if (rc) {
     DBUG_RETURN(rc);

@@ -279,12 +279,13 @@ public class HandlerProxy {
         table.delete(row);
     }
 
-    public void updateRow(byte[] rowBytes) {
+    public void updateRow(byte[] oldRowBytes, byte[] rowBytes) {
         checkTableOpen();
         checkNotNull(rowBytes);
         Row updatedRow = Row.deserialize(rowBytes);
         TableSchema schema = store.getSchema(tableName);
-        Row oldRow = table.get(updatedRow.getUUID());
+        Row oldRow = Row.deserialize(oldRowBytes);
+        oldRow.setUUID(updatedRow.getUUID());
         ImmutableList<IndexSchema> changedIndices = Util.getChangedIndices(schema.getIndices(), oldRow.getRecords(), updatedRow.getRecords());
         table.update(oldRow, updatedRow, changedIndices);
         if (schema.hasUniqueIndices()) {

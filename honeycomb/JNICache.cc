@@ -34,7 +34,7 @@ JNICache::JNICache(JavaVM* jvm)
   handler_proxy_.drop_index               = get_method_id(env, handler_proxy_.clazz, "dropIndex", "(Ljava/lang/String;)V");
   handler_proxy_.index_contains_duplicate = get_method_id(env, handler_proxy_.clazz, "indexContainsDuplicate", "(Ljava/lang/String;[B)Z");
   handler_proxy_.insert_row               = get_method_id(env, handler_proxy_.clazz, "insertRow", "([B)V");
-  handler_proxy_.update_row               = get_method_id(env, handler_proxy_.clazz, "updateRow", "([B)V");
+  handler_proxy_.update_row               = get_method_id(env, handler_proxy_.clazz, "updateRow", "([B[B)V");
   handler_proxy_.delete_row               = get_method_id(env, handler_proxy_.clazz, "deleteRow", "([B)V");
   handler_proxy_.delete_all_rows          = get_method_id(env, handler_proxy_.clazz, "deleteAllRows", "()V");
   handler_proxy_.truncate_table           = get_method_id(env, handler_proxy_.clazz, "truncateTable", "()V");
