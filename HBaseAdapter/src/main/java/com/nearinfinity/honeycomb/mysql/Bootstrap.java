@@ -1,5 +1,17 @@
 package com.nearinfinity.honeycomb.mysql;
 
+import static java.lang.String.format;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Enumeration;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.log4j.Appender;
+import org.apache.log4j.FileAppender;
+import org.apache.log4j.Logger;
+
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.inject.AbstractModule;
@@ -10,17 +22,7 @@ import com.nearinfinity.honeycomb.config.ConfigurationHolder;
 import com.nearinfinity.honeycomb.config.ConfigurationParser;
 import com.nearinfinity.honeycomb.config.Constants;
 import com.nearinfinity.honeycomb.hbase.HBaseModule;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.log4j.Appender;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Logger;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.Enumeration;
-
-import static java.lang.String.format;
+import com.nearinfinity.honeycomb.util.Verify;
 
 
 public final class Bootstrap extends AbstractModule {
@@ -37,9 +39,14 @@ public final class Bootstrap extends AbstractModule {
     /**
      * The initial function called by JNI to wire-up the required object graph dependencies
      *
+     * @param configFilename The path to the configuration file, not null or empty
+     * @param configSchema  The path to the schema used to validate the configuration file, not null or empty
      * @return {@link HandlerProxyFactory} with all dependencies setup
      */
     public static HandlerProxyFactory startup(String configFilename, String configSchema) {
+        Verify.isNotNullOrEmpty(configFilename);
+        Verify.isNotNullOrEmpty(configSchema);
+
         ensureLoggingPathsCorrect();
         Bootstrap bootstrap = new Bootstrap(configFilename, configSchema);
         bootstrap.readConfiguration();
