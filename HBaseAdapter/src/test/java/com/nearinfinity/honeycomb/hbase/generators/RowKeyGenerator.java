@@ -112,9 +112,9 @@ public class RowKeyGenerator implements Generator<RowKey> {
         public RowKey next() {
             if (RAND.nextBoolean()) {
                 return new ColumnsRowKey(randIdGen.next());
-            } else {
-                return new IndicesRowKey(randIdGen.next());
             }
+
+            return new IndicesRowKey(randIdGen.next());
         }
     }
 

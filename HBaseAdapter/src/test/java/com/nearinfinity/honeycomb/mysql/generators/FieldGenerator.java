@@ -1,12 +1,13 @@
 package com.nearinfinity.honeycomb.mysql.generators;
 
-import com.google.common.primitives.Longs;
-import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
+import java.nio.ByteBuffer;
+
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.CombinedGenerators;
 import net.java.quickcheck.generator.PrimitiveGenerators;
 
-import java.nio.ByteBuffer;
+import com.google.common.primitives.Longs;
+import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 
 public class FieldGenerator implements Generator<ByteBuffer> {
     Generator<byte[]> generator;
@@ -45,11 +46,12 @@ public class FieldGenerator implements Generator<ByteBuffer> {
     public ByteBuffer next() {
         byte[] next = generator.next();
         if (next == null) { return null; }
-        else { return ByteBuffer.wrap(next); }
+
+        return ByteBuffer.wrap(next);
     }
 
     private class LongBytesGenerator implements Generator<byte[]> {
-        private Generator<Long> longs = PrimitiveGenerators.longs();
+        private final Generator<Long> longs = PrimitiveGenerators.longs();
         @Override
         public byte[] next() {
             return Longs.toByteArray(longs.next());
@@ -57,7 +59,7 @@ public class FieldGenerator implements Generator<ByteBuffer> {
     }
 
     private class DoubleBytesGenerator implements Generator<byte[]> {
-        private Generator<Double> doubles = PrimitiveGenerators.doubles();
+        private final Generator<Double> doubles = PrimitiveGenerators.doubles();
         @Override
         public byte[] next() {
             return Longs.toByteArray(Double.doubleToLongBits(doubles.next()));
@@ -65,7 +67,7 @@ public class FieldGenerator implements Generator<ByteBuffer> {
     }
 
     private class StringBytesGenerator implements Generator<byte[]> {
-        private Generator<String> strings;
+        private final Generator<String> strings;
         public StringBytesGenerator(int maxLength) {
             strings = PrimitiveGenerators.strings(maxLength);
         }
