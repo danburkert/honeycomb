@@ -168,6 +168,7 @@
                     <version>3.2</version>
                     <configuration>
                         <attach>true</attach>
+                        <relativizeDecorationLinks>false</relativizeDecorationLinks>
                         <reportPlugins>
                             <plugin>
                                 <groupId>org.apache.maven.plugins</groupId>
