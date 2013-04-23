@@ -12,19 +12,38 @@
 
 package com.nearinfinity.honeycomb;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.NavigableMap;
+import java.util.NavigableSet;
+import java.util.NoSuchElementException;
+import java.util.TreeMap;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.client.Append;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Increment;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Row;
+import org.apache.hadoop.hbase.client.RowLock;
+import org.apache.hadoop.hbase.client.RowMutations;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.Filter.ReturnCode;
 import org.apache.hadoop.hbase.ipc.CoprocessorProtocol;
 import org.apache.hadoop.hbase.util.Bytes;
-
-import java.io.IOException;
-import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * Mock implementation of HTableInterface. Holds any supplied data in a
@@ -111,7 +130,7 @@ public class MockHTable implements HTableInterface {
     /**
      * This is all the data for a MockHTable instance
      */
-    private NavigableMap<byte[], NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>>> data = new TreeMap<byte[], NavigableMap<byte[],NavigableMap<byte[],NavigableMap<Long,byte[]>>>>(Bytes.BYTES_COMPARATOR);
+    private final NavigableMap<byte[], NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>>> data = new TreeMap<byte[], NavigableMap<byte[],NavigableMap<byte[],NavigableMap<Long,byte[]>>>>(Bytes.BYTES_COMPARATOR);
 
     /**
      * Helper method to convert some data into a list of KeyValue's
@@ -348,9 +367,11 @@ public class MockHTable implements HTableInterface {
 
         return new ResultScanner() {
             private final Iterator<Result> iterator = ret.iterator();
+            @Override
             public Iterator<Result> iterator() {
                 return iterator;
             }
+            @Override
             public Result[] next(int nbRows) throws IOException {
                 ArrayList<Result> resultSets = new ArrayList<Result>(nbRows);
                 for(int i = 0; i < nbRows; i++) {
@@ -363,6 +384,7 @@ public class MockHTable implements HTableInterface {
                 }
                 return resultSets.toArray(new Result[resultSets.size()]);
             }
+            @Override
             public Result next() throws IOException {
                 try {
                     return iterator().next();
@@ -370,6 +392,7 @@ public class MockHTable implements HTableInterface {
                     return null;
                 }
             }
+            @Override
             public void close() {}
         };
     }
@@ -451,12 +474,12 @@ public class MockHTable implements HTableInterface {
             return ! data.containsKey(row) ||
                     ! data.get(row).containsKey(family) ||
                     ! data.get(row).get(family).containsKey(qualifier);
-        else
-            return data.containsKey(row) &&
-                    data.get(row).containsKey(family) &&
-                    data.get(row).get(family).containsKey(qualifier) &&
-                    ! data.get(row).get(family).get(qualifier).isEmpty() &&
-                    Arrays.equals(data.get(row).get(family).get(qualifier).lastEntry().getValue(), value);
+
+        return data.containsKey(row) &&
+                data.get(row).containsKey(family) &&
+                data.get(row).get(family).containsKey(qualifier) &&
+                ! data.get(row).get(family).get(qualifier).isEmpty() &&
+                Arrays.equals(data.get(row).get(family).get(qualifier).lastEntry().getValue(), value);
     }
 
     @Override
@@ -722,7 +745,7 @@ public class MockHTable implements HTableInterface {
      * </pre>
      *
      * @param dump
-     * @return
+     * @return Mock table pre-loaded with provided data
      */
     public static MockHTable with(String[][] dump){
         MockHTable ret = new MockHTable();

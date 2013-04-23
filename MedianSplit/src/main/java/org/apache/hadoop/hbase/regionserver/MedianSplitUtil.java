@@ -20,7 +20,7 @@ public class MedianSplitUtil {
     /**
      * Sample region store files for median split key and size in bytes
      * @param region
-     * @return
+     * @return A list of samples
      */
     static List<Pair<byte[], Long>> sampleRegion(HRegion region) {
         LOG.info("Sampling region " + region.getRegionNameAsString());
@@ -52,7 +52,7 @@ public class MedianSplitUtil {
      * Because samples are byte arrays, they must be normalized to the
      * length of the longest sample array.
      * @param samples
-     * @return
+     * @return Combined values
      */
     static byte[] combineSamples(List<Pair<byte[], Long>> samples) {
 
