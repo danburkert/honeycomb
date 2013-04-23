@@ -1,5 +1,15 @@
 package com.nearinfinity.honeycomb.hbase;
 
+import static org.junit.Assert.assertTrue;
+
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
+import net.java.quickcheck.collection.Pair;
+
+import org.junit.Test;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.UnsignedBytes;
@@ -10,14 +20,6 @@ import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
-import net.java.quickcheck.collection.Pair;
-import org.junit.Test;
-
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-
-import static org.junit.Assert.assertTrue;
 
 public class EncodingTest {
     private static final String COLUMN = "c1";
@@ -36,7 +38,7 @@ public class EncodingTest {
         for (int i = 0; i < 200; i++) {
             pair = rowKeyGen.nextWithQueryKey();
             if (pair.getSecond().getKeys().get(COLUMN) != null) {
-                rows.add(new Pair(
+                rows.add(new Pair<Long, byte[]>(
                         pair.getSecond().getKeys().get(COLUMN).getLong(),
                         pair.getFirst().encode()));
             } else {
@@ -62,7 +64,7 @@ public class EncodingTest {
         for (int i = 0; i < 200; i++) {
             pair = rowKeyGen.nextWithQueryKey();
             if (pair.getSecond().getKeys().get(COLUMN) != null) {
-                rows.add(new Pair(
+                rows.add(new Pair<Long, byte[]>(
                     pair.getSecond().getKeys().get(COLUMN).getLong(),
                     pair.getFirst().encode()));
             } else {

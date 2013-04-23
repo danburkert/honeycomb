@@ -177,7 +177,7 @@ public class RowKeyGenerator implements Generator<RowKey> {
                     .withQueryKey(queryKey, tableSchema)
                     .withSortOrder(order.next())
                     .build();
-            return new Pair(rowKey, queryKey);
+            return new Pair<IndexRowKey, QueryKey>(rowKey, queryKey);
         }
     }
 }
