@@ -185,6 +185,7 @@
                                     <report>modules</report>
                                 </reports>
                                 <configuration>
+                                    <dependencyDetailsEnabled>false</dependencyDetailsEnabled> 
                                     <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
                                 </configuration>
                             </plugin>
