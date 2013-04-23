@@ -106,6 +106,7 @@
                         <stylesheetfile>${basedir}/${javadoc.stylesheetfile}</stylesheetfile>
                         <show>package</show>
                         <failOnError>false</failOnError>
+                        <quiet>true</quiet>
                         <footer>Generated ${maven.build.timestamp}</footer>
                     </configuration>
                     <executions>
