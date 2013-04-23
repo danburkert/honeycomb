@@ -1,5 +1,14 @@
 package com.nearinfinity.honeycomb.hbase;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.UUID;
+
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Put;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.nearinfinity.honeycomb.config.Constants;
@@ -7,18 +16,10 @@ import com.nearinfinity.honeycomb.hbase.rowkey.DataRowKey;
 import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowKeyBuilder;
 import com.nearinfinity.honeycomb.hbase.rowkey.RowKey;
 import com.nearinfinity.honeycomb.hbase.rowkey.SortOrder;
-import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.Row;
+import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import com.nearinfinity.honeycomb.util.Verify;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Put;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Creates put and delete lists for various operations.  Meant to have no
@@ -43,7 +44,7 @@ public class MutationFactory {
      *
      * @param tableId
      * @param row
-     * @return
+     * @return The list of put mutations
      */
     public List<Put> insert(long tableId, final Row row) {
         return insert(tableId, row, store.getSchema(tableId).getIndices());
@@ -55,7 +56,7 @@ public class MutationFactory {
      * @param tableId
      * @param row
      * @param indices
-     * @return
+     * @return The list of put mutations
      */
     public List<Put> insert(long tableId, final Row row,
                             final Collection<IndexSchema> indices) {
@@ -78,7 +79,7 @@ public class MutationFactory {
      * @param tableId
      * @param row
      * @param indices
-     * @return
+     * @return The list of put mutations
      */
     public List<Put> insertIndices(long tableId, final Row row,
                                    final Collection<IndexSchema> indices) {
@@ -100,7 +101,7 @@ public class MutationFactory {
      *
      * @param tableId
      * @param row
-     * @return
+     * @return The list of delete mutations
      */
     public List<Delete> delete(long tableId, final Row row) {
         List<Delete> deletes = deleteIndices(tableId, row);
@@ -113,7 +114,7 @@ public class MutationFactory {
      *
      * @param tableId
      * @param row
-     * @return
+     * @return The list of delete mutations
      */
     public List<Delete> deleteIndices(long tableId, final Row row) {
         Verify.isValidId(tableId);
@@ -127,7 +128,8 @@ public class MutationFactory {
      *
      * @param tableId
      * @param row
-     * @return
+     * @param indices
+     * @return The list of delete mutations
      */
     public List<Delete> deleteIndices(long tableId, final Row row,
                                       final Collection<IndexSchema> indices) {
