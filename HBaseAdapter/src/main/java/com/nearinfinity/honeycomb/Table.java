@@ -1,12 +1,12 @@
 package com.nearinfinity.honeycomb;
 
-import com.nearinfinity.honeycomb.mysql.QueryKey;
-import com.nearinfinity.honeycomb.mysql.Row;
-import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
-
 import java.io.Closeable;
 import java.util.Collection;
 import java.util.UUID;
+
+import com.nearinfinity.honeycomb.mysql.QueryKey;
+import com.nearinfinity.honeycomb.mysql.Row;
+import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 
 /**
  * A Table handles operations for a single MySQL table. It must support "insert",
@@ -42,7 +42,7 @@ public interface Table extends Closeable {
     /**
      * Remove row with given UUID from the table
      *
-     * @param uuid UUID of row to be deleted
+     * @param row The row to be deleted
      * @throws com.nearinfinity.honeycomb.exceptions.RowNotFoundException
      *
      */
