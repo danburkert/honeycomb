@@ -1,6 +1,29 @@
 package com.nearinfinity.honeycomb.hbase.generators;
 
-import com.nearinfinity.honeycomb.hbase.rowkey.*;
+import static com.google.common.base.Preconditions.checkState;
+
+import java.util.Collection;
+import java.util.Random;
+import java.util.UUID;
+
+import net.java.quickcheck.FrequencyGenerator;
+import net.java.quickcheck.Generator;
+import net.java.quickcheck.collection.Pair;
+import net.java.quickcheck.generator.CombinedGenerators;
+import net.java.quickcheck.generator.PrimitiveGenerators;
+import net.java.quickcheck.generator.support.DefaultFrequencyGenerator;
+
+import com.nearinfinity.honeycomb.hbase.rowkey.AutoIncRowKey;
+import com.nearinfinity.honeycomb.hbase.rowkey.ColumnsRowKey;
+import com.nearinfinity.honeycomb.hbase.rowkey.DataRowKey;
+import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowKey;
+import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowKeyBuilder;
+import com.nearinfinity.honeycomb.hbase.rowkey.IndicesRowKey;
+import com.nearinfinity.honeycomb.hbase.rowkey.RowKey;
+import com.nearinfinity.honeycomb.hbase.rowkey.RowsRowKey;
+import com.nearinfinity.honeycomb.hbase.rowkey.SchemaRowKey;
+import com.nearinfinity.honeycomb.hbase.rowkey.SortOrder;
+import com.nearinfinity.honeycomb.hbase.rowkey.TablesRowKey;
 import com.nearinfinity.honeycomb.mysql.QueryKey;
 import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.mysql.generators.QueryKeyGenerator;
@@ -9,18 +32,6 @@ import com.nearinfinity.honeycomb.mysql.generators.TableSchemaGenerator;
 import com.nearinfinity.honeycomb.mysql.generators.UUIDGenerator;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
-import net.java.quickcheck.FrequencyGenerator;
-import net.java.quickcheck.Generator;
-import net.java.quickcheck.collection.Pair;
-import net.java.quickcheck.generator.CombinedGenerators;
-import net.java.quickcheck.generator.PrimitiveGenerators;
-import net.java.quickcheck.generator.support.DefaultFrequencyGenerator;
-
-import java.util.Collection;
-import java.util.Random;
-import java.util.UUID;
-
-import static com.google.common.base.Preconditions.checkState;
 
 public class RowKeyGenerator implements Generator<RowKey> {
     private static final Random RAND = new Random();
@@ -139,28 +150,23 @@ public class RowKeyGenerator implements Generator<RowKey> {
             this.tableSchema = tableSchema;
             Collection<IndexSchema> indices = this.tableSchema.getIndices();
             checkState(indices.size() > 0, "Generated table schema must have an index.");
-            this.indexSchemas = PrimitiveGenerators.fixedValues(indices);
-            this.rows = new RowGenerator(this.tableSchema);
-            this.queryKeys = new QueryKeyGenerator(this.tableSchema);
+            indexSchemas = PrimitiveGenerators.fixedValues(indices);
+            rows = new RowGenerator(this.tableSchema);
+            queryKeys = new QueryKeyGenerator(this.tableSchema);
             this.order = order;
         }
 
         @Override
         public RowKey next() {
             IndexRowKeyBuilder builder;
-            if (true) {
-                Row row = rows.next();
-                builder = IndexRowKeyBuilder
-                        .newBuilder(tableIds.next(), indexIds.next())
-                        .withRow(row,
-                                indexSchemas.next().getIndexName(),
-                                tableSchema)
-                        .withUUID(row.getUUID());
-            } else {
-                builder = IndexRowKeyBuilder
-                        .newBuilder(tableIds.next(), indexIds.next())
-                        .withQueryKey(queryKeys.next(), tableSchema);
-            }
+            Row row = rows.next();
+            builder = IndexRowKeyBuilder
+                    .newBuilder(tableIds.next(), indexIds.next())
+                    .withRow(row,
+                            indexSchemas.next().getIndexName(),
+                            tableSchema)
+                    .withUUID(row.getUUID());
+
             return builder.withSortOrder(order.next()).build();
         }
 
