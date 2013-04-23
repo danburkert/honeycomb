@@ -7,7 +7,7 @@
     <artifactId>mysqlengine</artifactId>
     <version>0.1</version>
 
-    <name>mysqlengine</name>
+    <name>Honeycomb Core</name>
 
     <parent>
         <groupId>com.nearinfinity.honeycomb</groupId>
