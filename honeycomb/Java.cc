@@ -4,6 +4,7 @@
 #include "Logging.h"
 #include "Serializable.h"
 #include <string.h>
+#include "JNICache.h"
 
 bool print_java_exception(JNIEnv* env)
 {

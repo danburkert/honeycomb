@@ -94,16 +94,16 @@ static jobject handler_factory(JNIEnv* env)
 
 bool test_directory(const char* path)
 {
-  const char* missing_message = "Path %s must exist. Ensure that the full path exists and is owned by MySQL's user. %s";
-  const char* wrong_owner_message = "Path %s must be owned by %s. Currently owner %s. %s\n";
   if (!does_path_exist(path))
   {
+    const char* missing_message = "Path %s must exist. Ensure that the full path exists and is owned by MySQL's user. %s";
     fprintf(stderr, missing_message, path, strerror(errno));
     return false;
   }
 
   if (!is_owned_by_mysql(path))
   {
+    const char* wrong_owner_message = "Path %s must be owned by %s. Currently owner %s. %s\n";
     char owner[256], current[256];
     get_current_user_group(owner, sizeof(owner));
     get_file_user_group(path, current, sizeof(current));

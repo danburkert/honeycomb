@@ -4,6 +4,8 @@
 #include "Logging.h"
 #include "Macros.h"
 #include "QueryKey.h"
+#include "Row.h"
+#include "JNICache.h"
 
 static int retrieve_query_flag(enum ha_rkey_function find_flag, QueryKey::QueryType* query_type);
 
