@@ -10,14 +10,13 @@ namespace Logging
   static FILE* log_file;
   static pthread_mutex_t log_lock;
 
-  char* time_string()
+  void time_string(char* buffer)
   {
     time_t current_time;
     time(&current_time);
-    char* time_string = ctime(&current_time);
-    int time_length = strlen(time_string);
-    time_string[time_length - 1] = '\0';
-    return time_string;
+    ctime_r(&current_time, buffer);
+    int time_length = strlen(buffer);
+    buffer[time_length - 1] = '\0';
   }
 
   bool try_setup_logging(const char* path)
@@ -33,7 +32,7 @@ namespace Logging
     }
 
     pthread_mutex_init(&log_lock, NULL);
-    info("%s - Log opened", time_string());
+    info("Log opened");
     return true;
   }
 
@@ -48,8 +47,10 @@ namespace Logging
 
   void vlog_print(const char* level, const char* format, va_list args)
   {
+    char time_str[128];
     pthread_mutex_lock(&log_lock);
-    fprintf(log_file, "%s %s - ", level, time_string());
+    time_string(time_str);
+    fprintf(log_file, "%s %s - ", level, time_str);
     vfprintf(log_file, format, args);
     fprintf(log_file, "\n");
     fflush(log_file);
