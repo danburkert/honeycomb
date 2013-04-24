@@ -1,7 +1,11 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
-#include <jni.h>
+
+struct JavaVMOption;
+typedef JavaVMOption JavaVMOption;
+
 class SettingsPrivate;
+
 class Settings
 {
   private:
@@ -14,8 +18,8 @@ class Settings
     /**
      * @brief  Reads in the options from a file.
      *
-     * @param filename Path to xml configuration file 
-     * @param schema Path to xml schema 
+     * @param filename Path to xml configuration file
+     * @param schema Path to xml schema
      */
     Settings(const char* filename, const char* schema);
 
@@ -53,7 +57,7 @@ class Settings
     bool has_error() const;
 
     /**
-     * @brief Retrieve the xml file name 
+     * @brief Retrieve the xml file name
      *
      * @return XML file name
      */

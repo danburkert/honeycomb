@@ -1,6 +1,8 @@
 #include "TableSchema.h"
 #include "AvroUtil.h"
-#include <stdio.h>
+#include "IndexSchema.h"
+#include "ColumnSchema.h"
+#include <cstdio>
 
 const char INDICES_MAP[] = "indices";
 const char COLUMNS_MAP[] = "columns";

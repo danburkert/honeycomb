@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <cctype>
 #include <pwd.h>
+#include <jni.h>
 
 #include <unistd.h>
 #include <sys/stat.h>
