@@ -2,10 +2,9 @@
 #define JAVA_H
 
 #include <jni.h>
-#include "my_global.h"
-#include "my_base.h"
-#include "JNICache.h"
-#include "Serializable.h"
+
+class JNICache;
+class Serializable;
 
 bool print_java_exception(JNIEnv* jni_env);
 int check_exceptions(JNIEnv* env, JNICache* cache, const char* location);
