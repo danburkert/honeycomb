@@ -20,8 +20,10 @@ const char **HoneycombHandler::bas_ext() const
 HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_share,
     mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm, JNICache* cache, jobject handler_proxy)
 : handler(hton, table_share),
+  share(NULL),
   honeycomb_mutex(mutex),
   honeycomb_open_tables(open_tables),
+  env(NULL),
   jvm(jvm),
   cache(cache),
   handler_proxy(handler_proxy),
