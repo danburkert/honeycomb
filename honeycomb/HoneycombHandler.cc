@@ -109,7 +109,7 @@ int HoneycombHandler::external_lock(THD *thd, int lock_type)
     ret |= this->flush();
     detach_thread(jvm);
   }
-  DBUG_RETURN(0);
+  DBUG_RETURN(ret);
 }
 
 THR_LOCK_DATA **HoneycombHandler::store_lock(THD *thd, THR_LOCK_DATA **to,
