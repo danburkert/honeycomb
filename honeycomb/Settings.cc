@@ -219,6 +219,13 @@ void Settings::read_options()
   xmlDocPtr doc;
   xmlNodeSetPtr option_nodes;
 
+  if (settings == NULL)
+  {
+    const char* error = "Could not allocate memory.";
+    format_error(settings, strlen(error) + 1, error);
+    goto cleanup;
+  }
+
   xmlInitParser();
   doc = xmlParseFile(settings->filename);
   if (doc == NULL) { goto error; }
@@ -233,12 +240,6 @@ void Settings::read_options()
   option_nodes = jvm_options->nodesetval;
   settings->count = option_nodes->nodeNr;
   settings->options = (JavaVMOption*)malloc(settings->count * sizeof(JavaVMOption));
-  if (settings == NULL)
-  {
-    const char* error = "Could not allocate memory.";
-    format_error(settings, strlen(error) + 1, error);
-    goto cleanup;
-  }
 
   extract_values(settings, doc, option_nodes);
   goto cleanup;
