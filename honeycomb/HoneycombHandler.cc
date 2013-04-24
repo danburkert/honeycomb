@@ -23,6 +23,8 @@ HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_share,
   share(NULL),
   honeycomb_mutex(mutex),
   honeycomb_open_tables(open_tables),
+  rows_written(0),
+  failed_key_index(0),
   env(NULL),
   jvm(jvm),
   cache(cache),
@@ -30,8 +32,6 @@ HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_share,
   row(new Row())
 {
   this->ref_length = 16;
-  this->rows_written = 0;
-  this->failed_key_index = 0;
 }
 
 HoneycombHandler::~HoneycombHandler()
