@@ -36,7 +36,7 @@
   (let [[cli-opts _ banner]
         (cli/cli args
                  ["-h" "--help" "Show this menu" :flag true :default false]
-                 ["-c" "--columns" "Column types to output in CSV form.  Required."]
+                 ["-c" "--columns" "Column types to output in CSV form.  Required. In form: {:columns [:first-name :last-name]}"]
                  ["-r" "--rows" "Number of rows to output." :default 1000 :parse-fn #(Integer. %)]
                  ["-o" "--out" "Path to file where results will be appended.  Defaults to writing output to stdout."]
                  ["-a" "--append" "Append to output file instead of overwrite." :flag true :default true]
