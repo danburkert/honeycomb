@@ -222,7 +222,7 @@ public class HandlerProxy {
 
         try {
             while (scanner.hasNext()) {
-                Row next = scanner.next();
+                Row next = Row.deserialize(scanner.next());
                 if (!next.getUUID().equals(row.getUUID())) {
                     // Special case for inserting nulls
                     for (String column : indexSchema.getColumns()) {
@@ -371,7 +371,7 @@ public class HandlerProxy {
             return null;
         }
 
-        return currentScanner.next().serialize();
+        return Row.updateSerializedSchema(currentScanner.next());
     }
 
     public byte[] getRow(byte[] uuid) {

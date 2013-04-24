@@ -68,6 +68,20 @@ public class Row {
         return new Row(Util.deserializeAvroObject(serializedRow, reader));
     }
 
+    public static byte[] updateSerializedSchema(byte[] row) {
+        byte version = row[0];
+        if (isMostRecentVersion(version)) {
+            return row;
+        }
+
+        // Bring the row up to most recent version
+        return Row.deserialize(row).serialize();
+    }
+
+    private static boolean isMostRecentVersion(byte version) {
+        return SchemaVersionUtils.decodeAvroSchemaVersion(version) == RowSchemaInfo.VER_CURRENT;
+    }
+
     /**
      * Returns the {@link UUID} of this Row.
      *
