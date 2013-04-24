@@ -65,7 +65,7 @@ public class HBaseTable implements Table {
         final Scanner scanner = tableScan();
         while (scanner.hasNext()) {
             HBaseOperations.performPut(hTable,
-                    mutationFactory.insertIndices(tableId, scanner.next(), indices));
+                    mutationFactory.insertIndices(tableId, Row.deserialize(scanner.next()), indices));
         }
 
         Util.closeQuietly(scanner);
@@ -220,7 +220,7 @@ public class HBaseTable implements Table {
         final List<Delete> deletes = Lists.newLinkedList();
 
         while (dataScanner.hasNext()) {
-            final Row row = dataScanner.next();
+            final Row row = Row.deserialize(dataScanner.next());
 
             if (deleteRow) {
                 deletes.addAll(mutationFactory.delete(tableId, row));

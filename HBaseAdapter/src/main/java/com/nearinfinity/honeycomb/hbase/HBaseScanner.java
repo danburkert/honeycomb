@@ -2,7 +2,6 @@ package com.nearinfinity.honeycomb.hbase;
 
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.config.Constants;
-import com.nearinfinity.honeycomb.mysql.Row;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 
@@ -32,8 +31,8 @@ public class HBaseScanner implements Scanner {
     }
 
     @Override
-    public Row next() {
-        return Row.deserialize(resultIterator.next().getValue(Constants.DEFAULT_COLUMN_FAMILY, new byte[0]));
+    public byte[] next() {
+        return resultIterator.next().getValue(Constants.DEFAULT_COLUMN_FAMILY, new byte[0]);
     }
 
     @Override
