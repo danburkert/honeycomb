@@ -7,7 +7,6 @@
 
 #include "HoneycombShare.h"
 #include "Util.h"
-#include "Row.h"
 #include "TableSchema.h"
 #include "ColumnSchema.h"
 #include "IndexSchema.h"
@@ -22,6 +21,8 @@
 #include "probes_mysql.h"
 
 class JNICache;
+class Row;
+
 
 class HoneycombHandler : public handler
 {

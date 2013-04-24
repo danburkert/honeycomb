@@ -10,6 +10,7 @@
 #include "Logging.h"
 #include "Macros.h"
 #include "Java.h"
+#include "Row.h"
 
 const char **HoneycombHandler::bas_ext() const
 {

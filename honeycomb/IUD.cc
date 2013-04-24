@@ -3,6 +3,7 @@
 #include "Logging.h"
 #include "Java.h"
 #include "Macros.h"
+#include "Row.h"
 
 /**
  * Pack the MySQL formatted row contained in buf and table into the Avro format.
@@ -241,7 +242,7 @@ int HoneycombHandler::update_row(const uchar *old_row, uchar *new_row)
     }
   }
 
-  env->CallVoidMethod(handler_proxy, cache->handler_proxy().update_row, 
+  env->CallVoidMethod(handler_proxy, cache->handler_proxy().update_row,
        old_serialized_row, serialized_row);
   rc |= check_exceptions(env, cache, "HoneycombHandler::update_row");
   if (rc) {
