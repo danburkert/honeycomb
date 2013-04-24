@@ -1,10 +1,6 @@
 package com.nearinfinity.honeycomb.hbase.bulkload;
 
-import com.google.common.primitives.Longs;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
-import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
-import org.apache.commons.lang.time.DateUtils;
-import org.apache.hadoop.hbase.util.Bytes;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -15,7 +11,12 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import org.apache.commons.lang.time.DateUtils;
+import org.apache.hadoop.hbase.util.Bytes;
+
+import com.google.common.primitives.Longs;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
+import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 
 public class FieldParser {
     public static ByteBuffer parse(String val, ColumnSchema schema) throws ParseException {
@@ -28,10 +29,10 @@ public class FieldParser {
                 && type != ColumnType.BINARY) {
             if (schema.getIsNullable()) {
                 return null;
-            } else {
-                throw new IllegalArgumentException("Expected a value for a" +
-                        " non-null SQL column, but no value was given.");
             }
+
+            throw new IllegalArgumentException("Expected a value for a" +
+                    " non-null SQL column, but no value was given.");
         }
 
         switch (type) {

@@ -1,17 +1,18 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import com.google.inject.Provider;
-import com.nearinfinity.honeycomb.Store;
+import static org.junit.Assert.assertEquals;
+import static org.powermock.api.mockito.PowerMockito.when;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import static junit.framework.Assert.assertEquals;
-import static org.powermock.api.mockito.PowerMockito.when;
+import com.google.inject.Provider;
+import com.nearinfinity.honeycomb.Store;
 
 public class StoreFactoryTest {
     @Mock
