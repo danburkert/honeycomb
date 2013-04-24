@@ -7,11 +7,7 @@
 
 #include "HoneycombShare.h"
 #include "Util.h"
-#include "TableSchema.h"
-#include "ColumnSchema.h"
-#include "IndexSchema.h"
 #include "QueryKey.h"
-#include "Serializable.h"
 
 #include "my_global.h"          /* ulonglong */
 #include "thr_lock.h"           /* THR_LOCK, THR_LOCK_DATA */
@@ -22,6 +18,8 @@
 
 class JNICache;
 class Row;
+class ColumnSchema;
+class IndexSchema;
 
 
 class HoneycombHandler : public handler
