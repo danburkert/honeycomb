@@ -1,19 +1,9 @@
 #include "JNISetup.h"
-#include <signal.h>
-#include <pthread.h>
-#include <cstdlib>
-#include <cstring>
-#include <ctype.h>
-#include <jni.h>
-#include "Logging.h"
-#include "my_global.h"
-
 #include "Macros.h"
-#include "Util.h"
 #include "Java.h"
 #include "JavaFrame.h"
-#include "JNICache.h"
 #include "Settings.h"
+#include <jni.h>
 
 static __thread int thread_attach_count=0;
 static JavaVMAttachArgs attach_args = {JNI_VERSION_1_6, NULL, NULL};
