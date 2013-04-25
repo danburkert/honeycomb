@@ -1,7 +1,6 @@
 #include "Settings.h"
 
-#include <libxml/tree.h>
-#include <libxml/parser.h>
+#include "Util.h"
 #include <libxml/xpath.h>
 #include <libxml/xmlschemas.h>
 #include <cstring>
@@ -9,12 +8,6 @@
 #include <cctype>
 #include <pwd.h>
 #include <jni.h>
-
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include "Macros.h"
-#include "Util.h"
 
 class SettingsPrivate
 {
