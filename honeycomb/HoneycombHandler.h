@@ -5,7 +5,6 @@
 #pragma Interface               /* gcc class implementation */
 #endif
 
-#include "HoneycombShare.h"
 #include "Util.h"
 #include "QueryKey.h"
 
@@ -13,12 +12,14 @@
 #include "thr_lock.h"           /* THR_LOCK, THR_LOCK_DATA */
 #include "handler.h"            /* handler */
 #include "my_base.h"            /* ha_rows */
-#include "probes_mysql.h"
 
 class JNICache;
 class Row;
 class ColumnSchema;
 class IndexSchema;
+
+struct st_honeycomb_share;
+typedef st_honeycomb_share HoneycombShare;
 
 struct JavaVM_;
 typedef JavaVM_ JavaVM;

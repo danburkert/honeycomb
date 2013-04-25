@@ -5,6 +5,7 @@
 #include "Macros.h"
 #include "Row.h"
 #include "JNICache.h"
+#include "HoneycombShare.h"
 #include <jni.h>
 
 /**
