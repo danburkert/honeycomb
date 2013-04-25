@@ -13,6 +13,7 @@ typedef _jstring *jstring;
 class _jbyteArray;
 typedef _jbyteArray *jbyteArray;
 
+#include "my_global.h"
 
 bool print_java_exception(JNIEnv* jni_env);
 int check_exceptions(JNIEnv* env, JNICache* cache, const char* location);
