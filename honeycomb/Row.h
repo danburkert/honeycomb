@@ -2,7 +2,6 @@
 #define ROW_H
 
 #include <avro.h>
-#include <stdlib.h>
 #include "Serializable.h"
 
 class Row : public Serializable
