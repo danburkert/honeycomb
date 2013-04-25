@@ -2,25 +2,14 @@
 #pragma implementation        // gcc: Class implementation
 #endif
 
-#include "sql_priv.h"
-#include "sql_class.h"           // MYSQL_HANDLERTON_INTERFACE_VERSION
-#include "probes_mysql.h"
-#include "sql_plugin.h"
-#include <cstdlib>
-
 #include "HoneycombHandler.h"
 #include "HoneycombShare.h"
-#include "Util.h"
 #include "Macros.h"
 #include "JNISetup.h"
-#include "Logging.h"
 #include "JNICache.h"
-#include "Row.h"
-#include "TableSchema.h"
-#include "IndexSchema.h"
-#include "ColumnSchema.h"
 #include "Java.h"
 #include "Settings.h"
+#include <cstdlib>
 #include <jni.h>
 
 #define SETTINGS_BASE "/usr/share/mysql/honeycomb/"
