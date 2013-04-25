@@ -6,6 +6,7 @@
 #include "QueryKey.h"
 #include "Row.h"
 #include "JNICache.h"
+#include <jni.h>
 
 static int retrieve_query_flag(enum ha_rkey_function find_flag, QueryKey::QueryType* query_type);
 

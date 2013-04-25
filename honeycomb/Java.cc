@@ -3,8 +3,9 @@
 #include "Macros.h"
 #include "Logging.h"
 #include "Serializable.h"
-#include <string.h>
+#include <cstring>
 #include "JNICache.h"
+#include <jni.h>
 
 bool print_java_exception(JNIEnv* env)
 {

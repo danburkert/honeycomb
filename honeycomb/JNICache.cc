@@ -3,6 +3,7 @@
 #include "JavaFrame.h"
 #include "Logging.h"
 #include "Macros.h"
+#include <jni.h>
 
 
 JNICache::JNICache(JavaVM* jvm)

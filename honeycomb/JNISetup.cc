@@ -1,9 +1,10 @@
 #include "JNISetup.h"
 #include <signal.h>
 #include <pthread.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 #include <ctype.h>
+#include <jni.h>
 #include "Logging.h"
 #include "my_global.h"
 

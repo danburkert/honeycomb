@@ -13,13 +13,24 @@
 #include "thr_lock.h"           /* THR_LOCK, THR_LOCK_DATA */
 #include "handler.h"            /* handler */
 #include "my_base.h"            /* ha_rows */
-#include <jni.h>
 #include "probes_mysql.h"
 
 class JNICache;
 class Row;
 class ColumnSchema;
 class IndexSchema;
+
+struct JavaVM_;
+typedef JavaVM_ JavaVM;
+
+struct JNIEnv_;
+typedef JNIEnv_ JNIEnv;
+
+class _jobject;
+typedef _jobject *jobject;
+
+class _jbyteArray;
+typedef _jbyteArray *jbyteArray;
 
 
 class HoneycombHandler : public handler

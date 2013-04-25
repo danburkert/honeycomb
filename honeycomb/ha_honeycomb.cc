@@ -6,7 +6,7 @@
 #include "sql_class.h"           // MYSQL_HANDLERTON_INTERFACE_VERSION
 #include "probes_mysql.h"
 #include "sql_plugin.h"
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "HoneycombHandler.h"
 #include "HoneycombShare.h"
@@ -21,6 +21,7 @@
 #include "ColumnSchema.h"
 #include "Java.h"
 #include "Settings.h"
+#include <jni.h>
 
 #define SETTINGS_BASE "/usr/share/mysql/honeycomb/"
 #define CONFIG_FILE SETTINGS_BASE "honeycomb.xml"
