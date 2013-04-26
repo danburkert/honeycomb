@@ -1,4 +1,7 @@
-package com.nearinfinity.honeycomb.config;
+package com.nearinfinity.honeycomb.hbase.config;
+
+import com.nearinfinity.honeycomb.config.AdaptorType;
+import com.nearinfinity.honeycomb.config.Constants;
 
 /**
  * Stores the name of the configuration option tags in honeycomb.xml
@@ -9,7 +12,7 @@ public final class ConfigConstants {
         throw new AssertionError();
     }
 
-    private static final String NAMESPACE = Constants.HONEYCOMB_NAMESPACE + "." + StoreType.HBASE.getName() + ".";
+    private static final String NAMESPACE = Constants.HONEYCOMB_NAMESPACE + "." + AdaptorType.HBASE.getName() + ".";
 
     public static final String AUTO_FLUSH = NAMESPACE + "flushChangesImmediately";
 

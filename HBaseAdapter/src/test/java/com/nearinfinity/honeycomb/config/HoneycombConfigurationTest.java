@@ -1,5 +1,6 @@
 package com.nearinfinity.honeycomb.config;
 
+import com.nearinfinity.honeycomb.hbase.config.ConfigConstants;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -15,7 +16,7 @@ public class HoneycombConfigurationTest {
     }};
 
     private static Map<String, Map<String, String>> adapterConfigs = new HashMap<String, Map<String, String>>() {{
-        put(StoreType.HBASE.getName(), hbaseConfigs);
+        put(AdaptorType.HBASE.getName(), hbaseConfigs);
     }};
 
     private HoneycombConfiguration configuration;
@@ -27,7 +28,7 @@ public class HoneycombConfigurationTest {
 
     @Test
     public void testIsAdapterConfigured() throws Exception {
-        Assert.assertTrue(configuration.isAdapterConfigured(StoreType.HBASE.getName()));
+        Assert.assertTrue(configuration.isAdapterConfigured(AdaptorType.HBASE.getName()));
     }
 
     @Test
@@ -37,6 +38,6 @@ public class HoneycombConfigurationTest {
 
     @Test
     public void testGetAdapterOptions() throws Exception {
-        Assert.assertEquals(hbaseConfigs, configuration.getAdapterOptions(StoreType.HBASE.getName()));
+        Assert.assertEquals(hbaseConfigs, configuration.getAdapterOptions(AdaptorType.HBASE.getName()));
     }
 }

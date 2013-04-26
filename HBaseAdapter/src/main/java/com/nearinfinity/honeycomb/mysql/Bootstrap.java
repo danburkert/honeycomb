@@ -5,7 +5,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.nearinfinity.honeycomb.config.ConfigurationParser;
 import com.nearinfinity.honeycomb.config.HoneycombConfiguration;
-import com.nearinfinity.honeycomb.config.StoreType;
+import com.nearinfinity.honeycomb.config.AdaptorType;
 import com.nearinfinity.honeycomb.hbase.HBaseModule;
 import com.nearinfinity.honeycomb.util.Verify;
 import org.apache.log4j.Appender;
@@ -78,9 +78,9 @@ public final class Bootstrap extends AbstractModule {
         bind(HoneycombConfiguration.class).toInstance(configuration);
 
         // Setup the HBase bindings only if the adapter has been configured
-        if (configuration.isAdapterConfigured(StoreType.HBASE.getName())) {
+        if (configuration.isAdapterConfigured(AdaptorType.HBASE.getName())) {
             try {
-                HBaseModule hBaseModule = new HBaseModule(configuration.getAdapterOptions(StoreType.HBASE.getName()));
+                HBaseModule hBaseModule = new HBaseModule(configuration.getAdapterOptions(AdaptorType.HBASE.getName()));
                 install(hBaseModule);
             } catch (IOException e) {
                 logger.fatal("Failure during HBase initialization.", e);

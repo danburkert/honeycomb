@@ -3,9 +3,9 @@ package com.nearinfinity.honeycomb.mysql;
 import com.google.common.collect.Maps;
 import com.google.inject.Provider;
 import com.nearinfinity.honeycomb.Store;
-import com.nearinfinity.honeycomb.config.ConfigConstants;
+import com.nearinfinity.honeycomb.config.AdaptorType;
+import com.nearinfinity.honeycomb.hbase.config.ConfigConstants;
 import com.nearinfinity.honeycomb.config.HoneycombConfiguration;
-import com.nearinfinity.honeycomb.config.StoreType;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -30,7 +30,7 @@ public class StoreFactoryTest {
     }};
 
     private static Map<String, Map<String, String>> adapterConfigs = new HashMap<String, Map<String, String>>() {{
-        put(StoreType.HBASE.getName(), hbaseConfigs);
+        put(AdaptorType.HBASE.getName(), hbaseConfigs);
     }};
 
     @Before
@@ -47,8 +47,8 @@ public class StoreFactoryTest {
 
     private StoreFactory createFactory() {
         HoneycombConfiguration configurationHolder = new HoneycombConfiguration(adapterConfigs);
-        Map<StoreType, Provider<Store>> map = Maps.newHashMap();
-        map.put(StoreType.HBASE, storeProvider);
+        Map<AdaptorType, Provider<Store>> map = Maps.newHashMap();
+        map.put(AdaptorType.HBASE, storeProvider);
         when(storeProvider.get()).thenReturn(store);
         return new StoreFactory(map, configurationHolder);
     }

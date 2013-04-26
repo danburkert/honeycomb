@@ -1,7 +1,7 @@
 package com.nearinfinity.honeycomb.hbase;
 
 import com.google.inject.Provider;
-import com.nearinfinity.honeycomb.config.ConfigConstants;
+import com.nearinfinity.honeycomb.hbase.config.ConfigConstants;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.HTablePool;

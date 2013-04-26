@@ -1,6 +1,6 @@
 package com.nearinfinity.honeycomb.hbase;
 
-import com.nearinfinity.honeycomb.config.ConfigConstants;
+import com.nearinfinity.honeycomb.hbase.config.ConfigConstants;
 import com.nearinfinity.honeycomb.config.Constants;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;

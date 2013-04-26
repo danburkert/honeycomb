@@ -6,7 +6,7 @@ import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Table;
-import com.nearinfinity.honeycomb.config.ConfigConstants;
+import com.nearinfinity.honeycomb.hbase.config.ConfigConstants;
 import com.nearinfinity.honeycomb.config.Constants;
 import com.nearinfinity.honeycomb.exceptions.RowNotFoundException;
 import com.nearinfinity.honeycomb.hbase.rowkey.DataRowKey;
