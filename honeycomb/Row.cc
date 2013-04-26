@@ -8,6 +8,8 @@ const int Row::CURRENT_VERSION = 0;
 const char* Row::VERSION_FIELD = "version";
 
 Row::Row()
+: row_container_schema(),
+  row_container()
 {
   if (avro_schema_from_json_literal(ROW_CONTAINER_SCHEMA, &row_container_schema))
   {
