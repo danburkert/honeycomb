@@ -5,23 +5,34 @@
 #pragma Interface               /* gcc class implementation */
 #endif
 
-#include "HoneycombShare.h"
 #include "Util.h"
-#include "Row.h"
-#include "TableSchema.h"
-#include "ColumnSchema.h"
-#include "IndexSchema.h"
 #include "QueryKey.h"
-#include "Serializable.h"
 
 #include "my_global.h"          /* ulonglong */
 #include "thr_lock.h"           /* THR_LOCK, THR_LOCK_DATA */
 #include "handler.h"            /* handler */
 #include "my_base.h"            /* ha_rows */
-#include <jni.h>
-#include "probes_mysql.h"
 
 class JNICache;
+class Row;
+class ColumnSchema;
+class IndexSchema;
+
+struct st_honeycomb_share;
+typedef st_honeycomb_share HoneycombShare;
+
+struct JavaVM_;
+typedef JavaVM_ JavaVM;
+
+struct JNIEnv_;
+typedef JNIEnv_ JNIEnv;
+
+class _jobject;
+typedef _jobject *jobject;
+
+class _jbyteArray;
+typedef _jbyteArray *jbyteArray;
+
 
 class HoneycombHandler : public handler
 {
@@ -101,7 +112,7 @@ class HoneycombHandler : public handler
     int read_bytes_into_mysql(jbyteArray row_bytes, uchar* buf);
     int full_index_scan(uchar* buf, QueryKey::QueryType query);
     int retrieve_value_from_index(uchar* buf);
-    int unpack_row(uchar *buf, Row *row);
+    int unpack_row(uchar *buf, Row& row);
     void store_field_value(Field *field, const char* val, int length);
 
     /* DDL helper methods */
@@ -113,7 +124,7 @@ class HoneycombHandler : public handler
 
     /* IUD helper methods*/
     bool violates_uniqueness(jbyteArray serialized_row);
-    int pack_row(uchar *buf, TABLE* table, Row* row);
+    int pack_row(uchar *buf, TABLE* table, Row& row);
 
 
   public:

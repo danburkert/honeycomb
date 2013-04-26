@@ -30,8 +30,6 @@ test_link $tests_path
 
 copy_jar HBaseAdapter
 copy_jar MedianSplit
-copy_jar DataCreator
-copy_jar BulkLoadMapper
 
 echo "Running mysql-restart.sh"
 $SETUID/mysql-restart.sh

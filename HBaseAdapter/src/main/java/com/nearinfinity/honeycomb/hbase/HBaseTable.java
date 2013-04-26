@@ -7,15 +7,15 @@ import com.google.inject.assistedinject.Assisted;
 import com.google.inject.name.Named;
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Table;
-import com.nearinfinity.honeycomb.config.ConfigConstants;
-import com.nearinfinity.honeycomb.config.Constants;
 import com.nearinfinity.honeycomb.exceptions.RowNotFoundException;
+import com.nearinfinity.honeycomb.hbase.config.ConfigConstants;
 import com.nearinfinity.honeycomb.hbase.rowkey.DataRowKey;
 import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowKey;
 import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowKeyBuilder;
 import com.nearinfinity.honeycomb.hbase.rowkey.SortOrder;
-import com.nearinfinity.honeycomb.mysql.*;
+import com.nearinfinity.honeycomb.mysql.QueryKey;
 import com.nearinfinity.honeycomb.mysql.Row;
+import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
@@ -36,20 +36,35 @@ public class HBaseTable implements Table {
     private final HBaseStore store;
     private final long tableId;
     private final MutationFactory mutationFactory;
-    private long writeBufferSize = ConfigConstants.DEFAULT_WRITE_BUFFER_SIZE;
+    private long writeBufferSize;
+    private String columnFamily;
 
     @Inject
-    public HBaseTable(HTableInterface hTable, HBaseStore store, @Assisted Long tableId) {
+    public HBaseTable(HTableInterface hTable, HBaseStore store, MutationFactory mutationFactory, @Assisted Long tableId) {
         Verify.isValidId(tableId);
         this.hTable = checkNotNull(hTable);
         this.store = checkNotNull(store);
         this.tableId = tableId;
-        this.mutationFactory = new MutationFactory(store);
+        this.mutationFactory = mutationFactory;
     }
 
+    /**
+     * Sets the write buffer size.  Cannot be injected into the constructor directly
+     * because of a bug in Cobertura.  Called automatically by Guice.
+     * @param bufferSize
+     */
     @Inject
-    public void setWriterBufferSize(final @Named(ConfigConstants.PROP_WRITE_BUFFER_SIZE) Long bufferSize) {
-        writeBufferSize = bufferSize;
+    public void setWriterBufferSize(final @Named(ConfigConstants.WRITE_BUFFER) Long bufferSize) {
+        this.writeBufferSize = bufferSize;
+    }
+
+    /**
+     * Sets the column family.  Cannot be injected into the constructor directly
+     * because of a bug in Cobertura.  Called automatically by Guice.
+     */
+    @Inject
+    public void setColumnFamily(final @Named(ConfigConstants.COLUMN_FAMILY) String columnFamily) {
+        this.columnFamily = columnFamily;
     }
 
     @Override
@@ -65,7 +80,7 @@ public class HBaseTable implements Table {
         final Scanner scanner = tableScan();
         while (scanner.hasNext()) {
             HBaseOperations.performPut(hTable,
-                    mutationFactory.insertIndices(tableId, scanner.next(), indices));
+                    mutationFactory.insertIndices(tableId, Row.deserialize(scanner.next()), indices));
         }
 
         Util.closeQuietly(scanner);
@@ -94,9 +109,8 @@ public class HBaseTable implements Table {
     }
 
     @Override
-    public void delete(final UUID uuid) {
-        checkNotNull(uuid);
-        Row row = get(uuid);  // TODO: Should be passed in from C++ side
+    public void delete(final Row row) {
+        checkNotNull(row);
         HBaseOperations.performDelete(hTable, mutationFactory.delete(tableId, row));
     }
 
@@ -118,8 +132,7 @@ public class HBaseTable implements Table {
         if (result.isEmpty()) {
             throw new RowNotFoundException(uuid);
         }
-        return Row.deserialize(result.getValue(Constants.DEFAULT_COLUMN_FAMILY,
-                new byte[0]));
+        return Row.deserialize(result.getValue(columnFamily.getBytes(), new byte[0]));
     }
 
     @Override
@@ -221,7 +234,7 @@ public class HBaseTable implements Table {
         final List<Delete> deletes = Lists.newLinkedList();
 
         while (dataScanner.hasNext()) {
-            final Row row = dataScanner.next();
+            final Row row = Row.deserialize(dataScanner.next());
 
             if (deleteRow) {
                 deletes.addAll(mutationFactory.delete(tableId, row));
@@ -258,7 +271,7 @@ public class HBaseTable implements Table {
     private Scanner createScannerForRange(byte[] start, byte[] end) {
         Scan scan = new Scan(start, end);
         ResultScanner scanner = HBaseOperations.getScanner(hTable, scan);
-        return new HBaseScanner(scanner);
+        return new HBaseScanner(scanner, columnFamily);
     }
 }
 

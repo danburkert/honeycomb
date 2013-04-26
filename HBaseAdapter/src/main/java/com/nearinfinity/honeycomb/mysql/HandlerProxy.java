@@ -40,7 +40,7 @@ public class HandlerProxy {
         Verify.isNotNullOrEmpty(tableName);
         checkNotNull(serializedTableSchema);
 
-        store = storeFactory.createStore();
+        store = storeFactory.createStore(tableName);
         checkNotNull(serializedTableSchema, "Schema cannot be null");
         TableSchema tableSchema = TableSchema.deserialize(serializedTableSchema);
         Verify.isValidTableSchema(tableSchema);
@@ -56,7 +56,7 @@ public class HandlerProxy {
      */
     public void dropTable(String tableName) {
         Verify.isNotNullOrEmpty(tableName);
-        Store store = storeFactory.createStore();
+        Store store = storeFactory.createStore(tableName);
         Table table = store.openTable(tableName);
 
         table.deleteAllRows();
@@ -67,7 +67,7 @@ public class HandlerProxy {
     public void openTable(String tableName) {
         Verify.isNotNullOrEmpty(tableName);
         this.tableName = tableName;
-        store = storeFactory.createStore();
+        store = storeFactory.createStore(tableName);
         table = store.openTable(this.tableName);
     }
 
@@ -96,7 +96,7 @@ public class HandlerProxy {
         Verify.isNotNullOrEmpty(newName, "New table name must have value.");
         checkArgument(!originalName.equals(newName), "New table name must be different than original.");
 
-        Store store = storeFactory.createStore();
+        Store store = storeFactory.createStore(originalName);
         store.renameTable(originalName, newName);
         tableName = newName;
     }
@@ -178,6 +178,7 @@ public class HandlerProxy {
 
         store.addIndex(tableName, schema);
         table.insertTableIndex(schema);
+        table.flush();
     }
 
     /**
@@ -221,7 +222,7 @@ public class HandlerProxy {
 
         try {
             while (scanner.hasNext()) {
-                Row next = scanner.next();
+                Row next = Row.deserialize(scanner.next());
                 if (!next.getUUID().equals(row.getUUID())) {
                     // Special case for inserting nulls
                     for (String column : indexSchema.getColumns()) {
@@ -272,17 +273,19 @@ public class HandlerProxy {
         }
     }
 
-    public void deleteRow(byte[] uuidBytes) {
+    public void deleteRow(byte[] rowBytes) {
         checkTableOpen();
-        table.delete(Util.bytesToUUID(uuidBytes));
+        Row row = Row.deserialize(rowBytes);
+        table.delete(row);
     }
 
-    public void updateRow(byte[] rowBytes) {
+    public void updateRow(byte[] oldRowBytes, byte[] rowBytes) {
         checkTableOpen();
         checkNotNull(rowBytes);
         Row updatedRow = Row.deserialize(rowBytes);
         TableSchema schema = store.getSchema(tableName);
-        Row oldRow = table.get(updatedRow.getUUID());
+        Row oldRow = Row.deserialize(oldRowBytes);
+        oldRow.setUUID(updatedRow.getUUID());
         ImmutableList<IndexSchema> changedIndices = Util.getChangedIndices(schema.getIndices(), oldRow.getRecords(), updatedRow.getRecords());
         table.update(oldRow, updatedRow, changedIndices);
         if (schema.hasUniqueIndices()) {
@@ -368,7 +371,7 @@ public class HandlerProxy {
             return null;
         }
 
-        return currentScanner.next().serialize();
+        return Row.updateSerializedSchema(currentScanner.next());
     }
 
     public byte[] getRow(byte[] uuid) {

@@ -1,11 +1,19 @@
 #ifndef JAVA_H
 #define JAVA_H
 
-#include <jni.h>
+class JNICache;
+class Serializable;
+
+struct JNIEnv_;
+typedef JNIEnv_ JNIEnv;
+
+class _jstring;
+typedef _jstring *jstring;
+
+class _jbyteArray;
+typedef _jbyteArray *jbyteArray;
+
 #include "my_global.h"
-#include "my_base.h"
-#include "JNICache.h"
-#include "Serializable.h"
 
 bool print_java_exception(JNIEnv* jni_env);
 int check_exceptions(JNIEnv* env, JNICache* cache, const char* location);

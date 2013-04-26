@@ -3,19 +3,29 @@
 
 #include <avro.h>
 #include "Serializable.h"
-#include "ColumnSchema.h"
-#include "IndexSchema.h"
 
-#define TABLE_SCHEMA "{\"type\":\"record\",\"name\":\"TableSchema\",\"namespace\":\"com.nearinfinity.honeycomb.mysql.gen\",\"fields\":[{\"name\":\"columns\",\"type\":{\"type\":\"map\",\"values\":" COLUMN_SCHEMA ",\"avro.java.string\":\"String\"}},{\"name\":\"indices\",\"type\":{\"type\":\"map\",\"values\":" INDEX_SCHEMA ",\"avro.java.string\":\"String\"}}]}"
+class ColumnSchema;
+class IndexSchema;
+
+#define TABLE_SCHEMA "{\"type\":\"record\",\"name\":\"AvroTableSchema\",\"namespace\":\"com.nearinfinity.honeycomb.mysql.gen\",\"fields\":[{\"name\":\"version\",\"type\":\"int\",\"doc\":\"Schema version number\",\"default\":0},{\"name\":\"columns\",\"type\":{\"type\":\"map\",\"values\":" COLUMN_SCHEMA ",\"avro.java.string\":\"String\"}},{\"name\":\"indices\",\"type\":{\"type\":\"map\",\"values\":" INDEX_SCHEMA ",\"avro.java.string\":\"String\"}}]}"
 
 class TableSchema : public Serializable
 {
   private:
     avro_schema_t table_schema_schema;
     avro_value_t table_schema;
+    static const int CURRENT_VERSION;
+    static const char* VERSION_FIELD;
 
     int add_to_map_field(const char* field_name, const char* key, avro_value_t* value);
     int get_from_map_field(const char* field_name, const char* key, avro_value_t* value);
+
+    /**
+     * @brief Set the schema version of the table schema
+     * @param version  The version used during serialization.
+     * @return Error code
+     */
+    int set_schema_version(const int& version);
 
   public:
     TableSchema();

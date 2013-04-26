@@ -2,13 +2,15 @@ package com.nearinfinity.honeycomb.hbase;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.nearinfinity.honeycomb.config.Constants;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
+import com.nearinfinity.honeycomb.hbase.config.ConfigConstants;
 import com.nearinfinity.honeycomb.hbase.rowkey.DataRowKey;
 import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowKeyBuilder;
 import com.nearinfinity.honeycomb.hbase.rowkey.RowKey;
 import com.nearinfinity.honeycomb.hbase.rowkey.SortOrder;
-import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.Row;
+import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import com.nearinfinity.honeycomb.util.Verify;
 import org.apache.hadoop.hbase.client.Delete;
@@ -26,15 +28,26 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class MutationFactory {
     private final HBaseStore store;
+    private byte[] columnFamily;
 
+    @Inject
     public MutationFactory(HBaseStore store) {
         super();
         this.store = store;
     }
 
-    private static Put emptyQualifierPut(final RowKey rowKey,
+    /**
+     * Sets the column family.  Cannot be injected into the constructor directly
+     * because of a bug in Cobertura.  Called automatically by Guice.
+     */
+    @Inject
+    public void setColumnFamily(final @Named(ConfigConstants.COLUMN_FAMILY) String columnFamily) {
+        this.columnFamily = columnFamily.getBytes();
+    }
+
+    private Put emptyQualifierPut(final RowKey rowKey,
                                          final byte[] serializedRow) {
-        return new Put(rowKey.encode()).add(Constants.DEFAULT_COLUMN_FAMILY,
+        return new Put(rowKey.encode()).add(columnFamily,
                 new byte[0], serializedRow);
     }
 
@@ -43,7 +56,7 @@ public class MutationFactory {
      *
      * @param tableId
      * @param row
-     * @return
+     * @return The list of put mutations
      */
     public List<Put> insert(long tableId, final Row row) {
         return insert(tableId, row, store.getSchema(tableId).getIndices());
@@ -55,7 +68,7 @@ public class MutationFactory {
      * @param tableId
      * @param row
      * @param indices
-     * @return
+     * @return The list of put mutations
      */
     public List<Put> insert(long tableId, final Row row,
                             final Collection<IndexSchema> indices) {
@@ -78,7 +91,7 @@ public class MutationFactory {
      * @param tableId
      * @param row
      * @param indices
-     * @return
+     * @return The list of put mutations
      */
     public List<Put> insertIndices(long tableId, final Row row,
                                    final Collection<IndexSchema> indices) {
@@ -100,7 +113,7 @@ public class MutationFactory {
      *
      * @param tableId
      * @param row
-     * @return
+     * @return The list of delete mutations
      */
     public List<Delete> delete(long tableId, final Row row) {
         List<Delete> deletes = deleteIndices(tableId, row);
@@ -113,7 +126,7 @@ public class MutationFactory {
      *
      * @param tableId
      * @param row
-     * @return
+     * @return The list of delete mutations
      */
     public List<Delete> deleteIndices(long tableId, final Row row) {
         Verify.isValidId(tableId);
@@ -127,7 +140,8 @@ public class MutationFactory {
      *
      * @param tableId
      * @param row
-     * @return
+     * @param indices
+     * @return The list of delete mutations
      */
     public List<Delete> deleteIndices(long tableId, final Row row,
                                       final Collection<IndexSchema> indices) {

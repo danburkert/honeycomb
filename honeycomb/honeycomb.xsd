@@ -9,23 +9,10 @@
         </xs:sequence>
     </xs:complexType>
 
-
-    <xs:complexType name="configurationType">
-        <xs:all>
-            <xs:element name="tableName" type="xs:string" />
-            <xs:element name="columnFamily" type="xs:string" />
-            <xs:element name="tablePoolSize" type="xs:nonNegativeInteger" />
-            <xs:element name="zookeeperQuorum" type="xs:string" />
-            <xs:element name="flushChangesImmediately" type="xs:boolean" />
-            <xs:element name="tableScanCacheRows" type="xs:nonNegativeInteger" />
-            <xs:element name="writeBufferSize" type="xs:nonNegativeInteger" />
-        </xs:all>
-    </xs:complexType>
-
-
     <xs:simpleType name="supported_adapters">
         <xs:restriction base="xs:string">
             <xs:enumeration value="hbase" />
+            <xs:enumeration value="memory" />
         </xs:restriction>
     </xs:simpleType>
 
@@ -36,7 +23,7 @@
                 <xs:complexType>
                     <xs:all>
                         <xs:element name="configuration"
-                            maxOccurs="1" type="configurationType" />
+                            maxOccurs="1" />
                     </xs:all>
                     <xs:attribute name="name" type="supported_adapters"
                         use="required" />

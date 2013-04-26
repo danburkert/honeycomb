@@ -35,7 +35,7 @@ import static org.mockito.Mockito.when;
 public class HBaseMetadataTest {
     private static final Generator<TableSchema> TABLE_SCHEMA_GEN = new TableSchemaGenerator();
     private static final Generator<Long> LONG_GEN = PrimitiveGenerators.longs();
-    private static final String TABLE_NAME = "foo";
+    private static final String TABLE_NAME = "hbase/foo";
     private static final String COLUMN_NAME = "columnA";
     private static final String INDEX_NAME = "indexA";
     private static final long INVALID_TABLE_ID = -1;
@@ -58,6 +58,7 @@ public class HBaseMetadataTest {
         MockitoAnnotations.initMocks(this);
 
         hbaseMetadata = new HBaseMetadata(provider);
+        hbaseMetadata.setColumnFamily("nic");
 
         table = MockHTable.create();
         when(provider.get()).thenReturn(table);

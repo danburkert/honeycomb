@@ -21,6 +21,7 @@ restart-mysql.sh
 *.iml
 *.classpath
 *.project
+*.cproject
 *.settings
 repl-port
 gen/

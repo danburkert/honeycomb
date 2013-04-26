@@ -1,9 +1,14 @@
-#include "HoneycombHandler.h"
+//#include "HoneycombHandler.h"
 #include "Java.h"
 #include "Macros.h"
 #include "Logging.h"
 #include "Serializable.h"
-#include <string.h>
+#include <cstring>
+#include "JNICache.h"
+#include <jni.h>
+#include "my_base.h"
+#include "my_sys.h"
+#include "mysqld_error.h"
 
 bool print_java_exception(JNIEnv* env)
 {
@@ -68,6 +73,9 @@ int check_exceptions(JNIEnv* env, JNICache* cache, const char* location)
   if (e)
   {
     if (env->IsInstanceOf(e, cache->RuntimeIOException))
+    {
+      ret = HA_ERR_INTERNAL_ERROR;
+    } else if (env->IsInstanceOf(e, cache->UnknownSchemaVersionException))
     {
       ret = HA_ERR_INTERNAL_ERROR;
     } else if (env->IsInstanceOf(e, cache->TableNotFoundException))

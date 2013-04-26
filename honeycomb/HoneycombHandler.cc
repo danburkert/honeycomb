@@ -6,10 +6,13 @@
 #include "JNICache.h"
 #include "JNISetup.h"
 #include "JavaFrame.h"
-#include <string.h>
+#include <cstring>
+#include <jni.h>
 #include "Logging.h"
 #include "Macros.h"
 #include "Java.h"
+#include "Row.h"
+#include "HoneycombShare.h"
 
 const char **HoneycombHandler::bas_ext() const
 {
@@ -20,20 +23,23 @@ const char **HoneycombHandler::bas_ext() const
 HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_share,
     mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm, JNICache* cache, jobject handler_proxy)
 : handler(hton, table_share),
+  share(NULL),
   honeycomb_mutex(mutex),
   honeycomb_open_tables(open_tables),
+  rows_written(0),
+  failed_key_index(0),
+  env(NULL),
   jvm(jvm),
   cache(cache),
   handler_proxy(handler_proxy),
   row(new Row())
 {
   this->ref_length = 16;
-  this->rows_written = 0;
-  this->failed_key_index = 0;
 }
 
 HoneycombHandler::~HoneycombHandler()
 {
+  delete row;
   attach_thread(this->jvm, &(this->env), "HoneycombHandler::~HoneycombHandler");
   env->DeleteGlobalRef(handler_proxy);
   detach_thread(this->jvm);
@@ -106,7 +112,7 @@ int HoneycombHandler::external_lock(THD *thd, int lock_type)
     ret |= this->flush();
     detach_thread(jvm);
   }
-  DBUG_RETURN(0);
+  DBUG_RETURN(ret);
 }
 
 THR_LOCK_DATA **HoneycombHandler::store_lock(THD *thd, THR_LOCK_DATA **to,
@@ -238,7 +244,7 @@ int HoneycombHandler::info(uint flag)
 HoneycombShare *HoneycombHandler::get_share(const char *table_name, TABLE *table)
 {
   HoneycombShare *share;
-  char *tmp_path_name;
+  char *tmp_path_name = "";
   uint path_length;
 
   mysql_mutex_lock(honeycomb_mutex);

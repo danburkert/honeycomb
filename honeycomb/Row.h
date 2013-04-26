@@ -2,7 +2,6 @@
 #define ROW_H
 
 #include <avro.h>
-#include <stdlib.h>
 #include "Serializable.h"
 
 class Row : public Serializable
@@ -10,6 +9,9 @@ class Row : public Serializable
   private:
     avro_schema_t row_container_schema;
     avro_value_t row_container;
+    static const int CURRENT_VERSION;
+    static const char* VERSION_FIELD;
+
   public:
 
   Row();
@@ -55,6 +57,13 @@ class Row : public Serializable
    * @return Error code
    */
   int set_UUID(unsigned char* uuid_buf);
+
+  /**
+   * @brief Set the schema version of the Row
+   * @param version  The version used during serialization.
+   * @return Error code
+   */
+  int set_schema_version(const int& version);
 
   /**
    * @brief Get the bytes of a record in the Row.  The value byte buffer will

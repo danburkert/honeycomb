@@ -1,9 +1,14 @@
 #include "TableSchema.h"
 #include "AvroUtil.h"
-#include <stdio.h>
+#include "IndexSchema.h"
+#include "ColumnSchema.h"
+#include <cstdio>
 
 const char INDICES_MAP[] = "indices";
 const char COLUMNS_MAP[] = "columns";
+
+const int TableSchema::CURRENT_VERSION = 0;
+const char* TableSchema::VERSION_FIELD = "version";
 
 int TableSchema::add_to_map_field(const char* field_name, const char* key, avro_value_t* value)
 {
@@ -31,6 +36,8 @@ int TableSchema::get_from_map_field(const char* field_name, const char* key, avr
 };
 
 TableSchema::TableSchema()
+: table_schema_schema(),
+  table_schema()
 {
   if (avro_schema_from_json_literal(TABLE_SCHEMA, &table_schema_schema))
   {
@@ -43,6 +50,8 @@ TableSchema::TableSchema()
     printf("Unable to create TableSchema.  Exiting.\n");
     abort();
   }
+
+  set_schema_version(CURRENT_VERSION);
   avro_value_iface_decref(rc_class);
 }
 
@@ -54,7 +63,10 @@ TableSchema::~TableSchema()
 
 int TableSchema::reset()
 {
-  return avro_value_reset(&table_schema);
+  int ret = 0;
+  ret |= avro_value_reset(&table_schema);
+  ret |= set_schema_version(CURRENT_VERSION);
+  return ret;
 }
 
 bool TableSchema::equals(const TableSchema& other)
@@ -87,6 +99,16 @@ int TableSchema::get_column(const char* name, ColumnSchema* column_schema)
   ret |= column_schema->set_avro_value(&column);
   return ret;
 };
+
+
+int TableSchema::set_schema_version(const int& version)
+{
+  int ret = 0;
+  avro_value_t schemaVersion;
+  ret |= avro_value_get_by_name(&table_schema, VERSION_FIELD, &schemaVersion, NULL);
+  ret |= avro_value_set_int(&schemaVersion, version);
+  return ret;
+}
 
 int TableSchema::add_index(const char* name, IndexSchema* schema)
 {

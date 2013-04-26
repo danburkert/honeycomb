@@ -1,7 +1,11 @@
 package com.nearinfinity.honeycomb.mysql;
 
+import com.google.common.collect.Maps;
 import com.google.inject.Provider;
 import com.nearinfinity.honeycomb.Store;
+import com.nearinfinity.honeycomb.config.AdaptorType;
+import com.nearinfinity.honeycomb.hbase.config.ConfigConstants;
+import com.nearinfinity.honeycomb.config.HoneycombConfiguration;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -10,14 +14,24 @@ import org.mockito.MockitoAnnotations;
 import java.util.HashMap;
 import java.util.Map;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 public class StoreFactoryTest {
     @Mock
     Provider<Store> storeProvider;
-    @Mock
     Store store;
+
+    String tableName = "foo/bar";
+
+    private static Map<String, String> hbaseConfigs = new HashMap<String, String>() {{
+        put(ConfigConstants.TABLE_NAME, "sql");
+        put(ConfigConstants.COLUMN_FAMILY, "nic");
+    }};
+
+    private static Map<String, Map<String, String>> adapterConfigs = new HashMap<String, Map<String, String>>() {{
+        put(AdaptorType.HBASE.getName(), hbaseConfigs);
+    }};
 
     @Before
     public void testSetup() {
@@ -26,16 +40,16 @@ public class StoreFactoryTest {
 
     @Test
     public void testDefaultTablespaceIsUsed() {
-        String tablespace = "default";
-        StoreFactory factory = createFactory(tablespace);
-        Store store = factory.createStore();
-        assertEquals(store, this.store);
+        StoreFactory factory = createFactory();
+        Store returnedStore = factory.createStore(tableName);
+        assertEquals(returnedStore, this.store);
     }
 
-    private StoreFactory createFactory(String tablespace) {
-        Map<String, Provider<Store>> map = new HashMap<String, Provider<Store>>();
-        map.put(tablespace, storeProvider);
+    private StoreFactory createFactory() {
+        HoneycombConfiguration configurationHolder = new HoneycombConfiguration(adapterConfigs);
+        Map<AdaptorType, Provider<Store>> map = Maps.newHashMap();
+        map.put(AdaptorType.HBASE, storeProvider);
         when(storeProvider.get()).thenReturn(store);
-        return new StoreFactory(map, tablespace);
+        return new StoreFactory(map, configurationHolder);
     }
 }

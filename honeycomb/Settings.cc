@@ -1,19 +1,13 @@
 #include "Settings.h"
 
-#include <libxml/tree.h>
-#include <libxml/parser.h>
+#include "Util.h"
 #include <libxml/xpath.h>
 #include <libxml/xmlschemas.h>
 #include <cstring>
 #include <cstdlib>
 #include <cctype>
 #include <pwd.h>
-
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include "Macros.h"
-#include "Util.h"
+#include <jni.h>
 
 class SettingsPrivate
 {
@@ -25,6 +19,8 @@ class SettingsPrivate
   xmlErrorPtr error;
   const char* filename;
   const char* schema;
+  SettingsPrivate() : options(NULL), count(0), has_error(false), error_message(NULL), error(NULL), filename(NULL), schema(NULL)
+  {}
 };
 
 static void print_perm(const char* file)
@@ -217,6 +213,13 @@ void Settings::read_options()
   xmlDocPtr doc;
   xmlNodeSetPtr option_nodes;
 
+  if (settings == NULL)
+  {
+    const char* error = "Could not allocate memory.";
+    format_error(settings, strlen(error) + 1, error);
+    goto cleanup;
+  }
+
   xmlInitParser();
   doc = xmlParseFile(settings->filename);
   if (doc == NULL) { goto error; }
@@ -231,12 +234,6 @@ void Settings::read_options()
   option_nodes = jvm_options->nodesetval;
   settings->count = option_nodes->nodeNr;
   settings->options = (JavaVMOption*)malloc(settings->count * sizeof(JavaVMOption));
-  if (settings == NULL)
-  {
-    const char* error = "Could not allocate memory.";
-    format_error(settings, strlen(error) + 1, error);
-    goto cleanup;
-  }
 
   extract_values(settings, doc, option_nodes);
   goto cleanup;
@@ -283,6 +280,16 @@ const char* Settings::get_errormessage() const
 bool Settings::has_error() const
 {
   return settings->has_error;
+}
+
+const char* Settings::get_filename() const
+{
+  return settings->filename;
+}
+
+const char* Settings::get_schema() const
+{
+  return settings->schema;
 }
 
 Settings::Settings(const char* filename, const char* schema) : settings(new SettingsPrivate)

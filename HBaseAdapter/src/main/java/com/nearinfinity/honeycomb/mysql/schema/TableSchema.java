@@ -1,5 +1,17 @@
 package com.nearinfinity.honeycomb.mysql.schema;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+
+import org.apache.avro.io.DatumReader;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.avro.specific.SpecificDatumWriter;
+
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -7,18 +19,9 @@ import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.gen.AvroColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.AvroIndexSchema;
 import com.nearinfinity.honeycomb.mysql.gen.AvroTableSchema;
+import com.nearinfinity.honeycomb.mysql.schema.versioning.SchemaVersionUtils;
+import com.nearinfinity.honeycomb.mysql.schema.versioning.TableSchemaInfo;
 import com.nearinfinity.honeycomb.util.Verify;
-import org.apache.avro.io.DatumReader;
-import org.apache.avro.io.DatumWriter;
-import org.apache.avro.specific.SpecificDatumReader;
-import org.apache.avro.specific.SpecificDatumWriter;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class TableSchema {
     private static final DatumWriter<AvroTableSchema> writer =
@@ -53,7 +56,11 @@ public class TableSchema {
             }
         }
 
-        avroTableSchema = new AvroTableSchema(columnSchemaMap, indexSchemaMap);
+        avroTableSchema = AvroTableSchema.newBuilder()
+                .setColumns(columnSchemaMap)
+                .setIndices(indexSchemaMap)
+                .build();
+
         this.columns = columns;
         this.indices = indices;
     }
@@ -61,14 +68,14 @@ public class TableSchema {
     private TableSchema(AvroTableSchema avroTableSchema) {
         this.avroTableSchema = avroTableSchema;
 
-        this.columns = Lists.newArrayList();
+        columns = Lists.newArrayList();
         for (Map.Entry<String, AvroColumnSchema> entry : avroTableSchema.getColumns().entrySet()) {
-            this.columns.add(new ColumnSchema(entry.getKey(), entry.getValue()));
+            columns.add(new ColumnSchema(entry.getKey(), entry.getValue()));
         }
 
-        this.indices = Lists.newArrayList();
+        indices = Lists.newArrayList();
         for (Map.Entry<String, AvroIndexSchema> entry : avroTableSchema.getIndices().entrySet()) {
-            this.indices.add(new IndexSchema(entry.getKey(), entry.getValue()));
+            indices.add(new IndexSchema(entry.getKey(), entry.getValue()));
             if (entry.getValue().getIsUnique()) {
                 uniqueIndexCount++;
             }
@@ -83,6 +90,10 @@ public class TableSchema {
      */
     public static TableSchema deserialize(byte[] serializedTableSchema) {
         checkNotNull(serializedTableSchema);
+        checkArgument(serializedTableSchema.length > 0);
+
+        SchemaVersionUtils.processSchemaVersion(serializedTableSchema[0], TableSchemaInfo.VER_CURRENT);
+
         return new TableSchema(Util.deserializeAvroObject(serializedTableSchema, reader));
     }
 
@@ -220,6 +231,7 @@ public class TableSchema {
     @Override
     public String toString() {
         return Objects.toStringHelper(this.getClass())
+                .add("Version", avroTableSchema.getVersion())
                 .add("Columns", avroTableSchema.getColumns())
                 .add("Indices", avroTableSchema.getIndices())
                 .toString();

@@ -1,11 +1,15 @@
 package com.nearinfinity.honeycomb.hbase;
 
 import com.google.common.base.Charsets;
-import com.google.common.collect.*;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.ImmutableBiMap;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import com.nearinfinity.honeycomb.config.Constants;
+import com.google.inject.name.Named;
 import com.nearinfinity.honeycomb.exceptions.TableNotFoundException;
+import com.nearinfinity.honeycomb.hbase.config.ConfigConstants;
 import com.nearinfinity.honeycomb.hbase.rowkey.*;
 import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
@@ -26,14 +30,23 @@ import static com.google.common.base.Preconditions.*;
  * row & autoincrement counters to and from HBase.
  */
 public class HBaseMetadata {
-    private static final byte[] COLUMN_FAMILY = Constants.DEFAULT_COLUMN_FAMILY;
-    private final Provider<HTableInterface> provider;
+    private byte[] columnFamily;
+    private Provider<HTableInterface> provider;
 
     @Inject
     public HBaseMetadata(final Provider<HTableInterface> provider) {
         checkNotNull(provider);
 
         this.provider = provider;
+    }
+
+    /**
+     * Sets the column family.  Cannot be injected into the constructor directly
+     * because of a bug in Cobertura.  Called automatically by Guice.
+     */
+    @Inject
+    public void setColumnFamily(final @Named(ConfigConstants.COLUMN_FAMILY) String columnFamily) {
+        this.columnFamily = columnFamily.getBytes();
     }
 
     /**
@@ -48,14 +61,14 @@ public class HBaseMetadata {
 
         final byte[] serializedName = serializeName(tableName);
         final Get get = new Get(new TablesRowKey().encode());
-        get.addColumn(COLUMN_FAMILY, serializedName);
+        get.addColumn(columnFamily, serializedName);
 
         final HTableInterface hTable = getHTable();
 
         try {
             final Result result = HBaseOperations.performGet(hTable, get);
 
-            final byte[] tableIdBytes = result.getValue(COLUMN_FAMILY, serializedName);
+            final byte[] tableIdBytes = result.getValue(columnFamily, serializedName);
             if (tableIdBytes == null) {
                 throw new TableNotFoundException(tableName);
             }
@@ -104,14 +117,14 @@ public class HBaseMetadata {
 
         final byte[] serializedTableId = serializeId(tableId);
         final Get get = new Get(new SchemaRowKey().encode());
-        get.addColumn(COLUMN_FAMILY, serializedTableId);
+        get.addColumn(columnFamily, serializedTableId);
 
         final HTableInterface hTable = getHTable();
 
         try {
             final Result result = HBaseOperations.performGet(hTable, get);
 
-            final byte[] serializedSchema = result.getValue(COLUMN_FAMILY, serializedTableId);
+            final byte[] serializedSchema = result.getValue(columnFamily, serializedTableId);
             if (serializedSchema == null) {
                 throw new TableNotFoundException(tableId);
             }
@@ -220,7 +233,7 @@ public class HBaseMetadata {
         final Delete indicesIdsDelete = new Delete(new IndicesRowKey(tableId).encode());
 
         final Delete rowsDelete = new Delete(new RowsRowKey().encode());
-        rowsDelete.deleteColumns(COLUMN_FAMILY, serializedId);
+        rowsDelete.deleteColumns(columnFamily, serializedId);
 
         deletes.add(deleteTableId(tableName));
         deletes.add(columnIdsDelete);
@@ -265,7 +278,7 @@ public class HBaseMetadata {
     public void setAutoInc(long tableId, long value) {
         Verify.isValidId(tableId);
         Put put = new Put(new AutoIncRowKey().encode());
-        put.add(COLUMN_FAMILY, serializeId(tableId), Bytes.toBytes(value));
+        put.add(columnFamily, serializeId(tableId), Bytes.toBytes(value));
         HTableInterface hTable = getHTable();
         try {
             performMutations(ImmutableList.<Delete>of(), ImmutableList.of(put));
@@ -294,13 +307,13 @@ public class HBaseMetadata {
         HTableInterface hTable = getHTable();
         try {
             Get get = new Get(encodedRow);
-            get.addFamily(COLUMN_FAMILY);
+            get.addFamily(columnFamily);
             Result result = HBaseOperations.performGet(hTable, get);
             if (result.isEmpty()) {
                 throw new TableNotFoundException(tableId);
             }
 
-            Map<byte[], byte[]> serializedNameIds = result.getFamilyMap(COLUMN_FAMILY);
+            Map<byte[], byte[]> serializedNameIds = result.getFamilyMap(columnFamily);
             Map<String, Long> nameToId = new HashMap<String, Long>(serializedNameIds.size());
 
             for (Map.Entry<byte[], byte[]> entry : serializedNameIds.entrySet()) {
@@ -317,10 +330,10 @@ public class HBaseMetadata {
     }
 
     private long getCounter(byte[] row, byte[] identifier) {
-        Get get = new Get(row).addColumn(COLUMN_FAMILY, identifier);
+        Get get = new Get(row).addColumn(columnFamily, identifier);
         HTableInterface hTable = getHTable();
         try {
-            byte[] value = HBaseOperations.performGet(hTable, get).getValue(COLUMN_FAMILY, identifier);
+            byte[] value = HBaseOperations.performGet(hTable, get).getValue(columnFamily, identifier);
             return value == null ? 0 : Bytes.toLong(value);
         } finally {
             HBaseOperations.closeTable(hTable);
@@ -331,7 +344,7 @@ public class HBaseMetadata {
         final HTableInterface hTable = getHTable();
 
         try {
-            return HBaseOperations.performIncrementColumnValue(hTable, row, COLUMN_FAMILY, identifier, amount);
+            return HBaseOperations.performIncrementColumnValue(hTable, row, columnFamily, identifier, amount);
         } finally {
             HBaseOperations.closeTable(hTable);
         }
@@ -351,33 +364,33 @@ public class HBaseMetadata {
 
     private Delete deleteTableId(String tableName) {
         return new Delete(new TablesRowKey().encode())
-                .deleteColumns(COLUMN_FAMILY, serializeName(tableName));
+                .deleteColumns(columnFamily, serializeName(tableName));
     }
 
     private Delete deleteAutoIncCounter(long tableId) {
         return new Delete(new AutoIncRowKey().encode())
-                .deleteColumns(COLUMN_FAMILY, serializeId(tableId));
+                .deleteColumns(columnFamily, serializeId(tableId));
     }
 
     private Delete deleteRowsCounter(long tableId) {
         return new Delete(new RowsRowKey().encode())
-                .deleteColumns(COLUMN_FAMILY, serializeId(tableId));
+                .deleteColumns(columnFamily, serializeId(tableId));
     }
 
     private Put putTableSchema(long tableId, TableSchema schema) {
         return new Put(new SchemaRowKey().encode())
-                .add(COLUMN_FAMILY, serializeId(tableId),
+                .add(columnFamily, serializeId(tableId),
                         schema.serialize());
     }
 
     private Delete deleteTableSchema(long tableId) {
         return new Delete(new SchemaRowKey().encode())
-                .deleteColumns(COLUMN_FAMILY, serializeId(tableId));
+                .deleteColumns(columnFamily, serializeId(tableId));
     }
 
     private Delete generateIndexDelete(final long tableId, final String indexName) {
         return new Delete(new IndicesRowKey(tableId).encode())
-                .deleteColumns(COLUMN_FAMILY, serializeName(indexName));
+                .deleteColumns(columnFamily, serializeName(indexName));
     }
 
     private Put putColumnIds(long tableId, Collection<ColumnSchema> columns) {
@@ -385,7 +398,7 @@ public class HBaseMetadata {
         Put put = new Put(new ColumnsRowKey(tableId).encode());
 
         for (ColumnSchema columnEntry : columns) {
-            put.add(COLUMN_FAMILY, serializeName(columnEntry.getColumnName()),
+            put.add(columnFamily, serializeName(columnEntry.getColumnName()),
                     serializeId(columnId--));
         }
         return put;
@@ -397,7 +410,7 @@ public class HBaseMetadata {
         Put put = new Put(new IndicesRowKey(tableId).encode());
 
         for (IndexSchema columnEntry : indices) {
-            put.add(COLUMN_FAMILY, serializeName(columnEntry.getIndexName()),
+            put.add(columnFamily, serializeName(columnEntry.getIndexName()),
                     serializeId(indexId--));
         }
         return put;
@@ -405,7 +418,7 @@ public class HBaseMetadata {
 
     private Put putTableId(String tableName, long tableId) {
         Put idPut = new Put(new TablesRowKey().encode());
-        idPut.add(COLUMN_FAMILY, serializeName(tableName), serializeId(tableId));
+        idPut.add(columnFamily, serializeName(tableName), serializeId(tableId));
         return idPut;
     }
 

@@ -1,18 +1,19 @@
 package com.nearinfinity.honeycomb.mysql.schema;
 
-import com.google.common.base.Objects;
-import com.nearinfinity.honeycomb.mysql.Util;
-import com.nearinfinity.honeycomb.mysql.gen.AvroColumnSchema;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
-import com.nearinfinity.honeycomb.util.Verify;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import net.jcip.annotations.Immutable;
+
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.base.Objects;
+import com.nearinfinity.honeycomb.mysql.Util;
+import com.nearinfinity.honeycomb.mysql.gen.AvroColumnSchema;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
+import com.nearinfinity.honeycomb.util.Verify;
 
 @Immutable
 public class ColumnSchema {
@@ -173,7 +174,10 @@ public class ColumnSchema {
     }
 
     /**
-     * Create a ColumnSchema builder with given column name and type.
+     * Create a {@link ColumnSchema} builder with given column name and type.
+     * @param columnName
+     * @param type
+     * @return A builder object used for schema creation
      */
     public static Builder builder(String columnName, ColumnType type) {
         return new Builder(columnName, type);
@@ -194,6 +198,8 @@ public class ColumnSchema {
 
         /**
          * Default constructor, equivalent to ColumnSchema.builder().
+         * @param columnName
+         * @param type
          */
         public Builder(String columnName, ColumnType type) {
             this.columnName = columnName;

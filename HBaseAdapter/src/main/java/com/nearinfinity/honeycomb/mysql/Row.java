@@ -1,7 +1,12 @@
 package com.nearinfinity.honeycomb.mysql;
 
+
+import com.google.common.base.Objects;
+import com.google.common.base.Objects.ToStringHelper;
 import com.nearinfinity.honeycomb.mysql.gen.AvroRow;
 import com.nearinfinity.honeycomb.mysql.gen.UUIDContainer;
+import com.nearinfinity.honeycomb.mysql.schema.versioning.RowSchemaInfo;
+import com.nearinfinity.honeycomb.mysql.schema.versioning.SchemaVersionUtils;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.specific.SpecificDatumReader;
@@ -12,14 +17,15 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.UUID;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 
 public class Row {
     private static final DatumWriter<AvroRow> writer =
             new SpecificDatumWriter<AvroRow>(AvroRow.class);
     private static final DatumReader<AvroRow> reader =
             new SpecificDatumReader<AvroRow>(AvroRow.class);
-
     private final AvroRow row;
 
     /**
@@ -31,7 +37,11 @@ public class Row {
     public Row(Map<String, ByteBuffer> records, UUID uuid) {
         checkNotNull(records, "records must not be null.");
         // uuid nullity will be checked by UUIDToBytes
-        row = new AvroRow(new UUIDContainer(Util.UUIDToBytes(uuid)), records);
+
+        row = AvroRow.newBuilder()
+                .setUuid(new UUIDContainer(Util.UUIDToBytes(uuid)))
+                .setRecords(records)
+                .build();
     }
 
     /**
@@ -50,7 +60,26 @@ public class Row {
      * @return new Row instance from serializedRow
      */
     public static Row deserialize(byte[] serializedRow) {
+        checkNotNull(serializedRow);
+        checkArgument(serializedRow.length > 0);
+
+        SchemaVersionUtils.processSchemaVersion(serializedRow[0], RowSchemaInfo.VER_CURRENT);
+
         return new Row(Util.deserializeAvroObject(serializedRow, reader));
+    }
+
+    public static byte[] updateSerializedSchema(byte[] row) {
+        byte version = row[0];
+        if (isMostRecentVersion(version)) {
+            return row;
+        }
+
+        // Bring the row up to most recent version
+        return Row.deserialize(row).serialize();
+    }
+
+    private static boolean isMostRecentVersion(byte version) {
+        return SchemaVersionUtils.decodeAvroSchemaVersion(version) == RowSchemaInfo.VER_CURRENT;
     }
 
     /**
@@ -60,6 +89,10 @@ public class Row {
      */
     public UUID getUUID() {
         return Util.bytesToUUID(row.getUuid().bytes());
+    }
+
+    public void setUUID(UUID uuid) {
+        row.setUuid(new UUIDContainer(Util.UUIDToBytes(uuid)));
     }
 
     /**
@@ -120,13 +153,15 @@ public class Row {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(String.format("UUID: %s\n", getUUID().toString()));
-        for (Map.Entry<String, ByteBuffer> entry : getRecords().entrySet()) {
-            sb.append(entry.getKey());
-            sb.append(": ");
-            sb.append(Bytes.toStringBinary(entry.getValue()));
+        final ToStringHelper toString = Objects.toStringHelper(this.getClass());
+
+        toString.add("Version", row.getVersion())
+                .add("UUID", getUUID());
+
+        for (final Map.Entry<String, ByteBuffer> entry : getRecords().entrySet()) {
+            toString.add("Record", format("%s: %s", entry.getKey(), Bytes.toStringBinary(entry.getValue())));
         }
-        return sb.toString();
+
+        return toString.toString();
     }
 }

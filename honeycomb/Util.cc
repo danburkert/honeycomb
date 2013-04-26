@@ -1,10 +1,5 @@
 #include "Util.h"
 #include <tztime.h>
-#include "my_global.h"
-
-#include <sys/stat.h>
-#include <sys/types.h>
-#include "Logging.h"
 #include <pwd.h>
 #include <grp.h>
 
@@ -44,14 +39,7 @@ bool does_path_exist(const char* path)
 
 bool is_owned_by_mysql(const char* path)
 {
-  struct stat fstat;
-  uid_t user_id = getuid();
-  gid_t group_id = getgid();
-  int ret = stat(path, &fstat);
-  if (ret == -1)
-    return false;
-
-  return fstat.st_uid == user_id && fstat.st_gid == group_id; 
+  return access(path, R_OK|W_OK) == 0;
 }
 
 uint64_t bswap64(uint64_t x)
@@ -213,7 +201,7 @@ uchar* create_key_copy(Field* index_field, const uchar* key, uint* key_len, THD*
     case MYSQL_TYPE_YEAR:
       {
         key_copy = new uchar[sizeof(long long)];
-        uint32_t int_val; 
+        uint32_t int_val;
         if(key[0] == 0)
         {
           int_val = 0;

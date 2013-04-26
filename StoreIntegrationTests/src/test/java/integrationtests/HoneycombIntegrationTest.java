@@ -30,7 +30,7 @@ public abstract class HoneycombIntegrationTest {
 
     @BeforeClass
     public static void setupFramework() {
-        factory = Bootstrap.startup();
+        factory = Bootstrap.startup("/usr/share/mysql/honeycomb/honeycomb.xml", "/usr/share/mysql/honeycomb/honeycomb.xsd");
         System.out.println("Initialized application framework");
     }
 

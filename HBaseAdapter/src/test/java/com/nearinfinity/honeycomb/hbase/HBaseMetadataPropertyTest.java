@@ -37,6 +37,7 @@ public class HBaseMetadataPropertyTest {
         when(provider.get()).thenReturn(table);
 
         hbaseMetadata = new HBaseMetadata(provider);
+        hbaseMetadata.setColumnFamily("nic");
 
         for (int i = 0; i < 20; i++) {
             TableSchema schema = tableSchemaGen.next();

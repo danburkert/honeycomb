@@ -1,7 +1,21 @@
 #ifndef JNICACHE_H
 #define JNICACHE_H
 
-#include <jni.h>
+struct JNIEnv_;
+typedef JNIEnv_ JNIEnv;
+
+struct JavaVM_;
+typedef JavaVM_ JavaVM;
+
+struct _jmethodID;
+typedef _jmethodID *jmethodID;
+
+struct _jfieldID;
+typedef _jfieldID *jfieldID;
+
+class _jclass;
+typedef _jclass *jclass;
+
 
 /* JNICache holds jmethodID's and jclass global refs to be used in later JNI
  * invocations by Honeycomb.  Upon creation, JNICache asks the JVM for
@@ -87,6 +101,7 @@ class JNICache
     jclass RowNotFoundException;
     jclass StoreNotFoundException;
     jclass RuntimeIOException;
+    jclass UnknownSchemaVersionException;
 
     JNICache(JavaVM* jvm);
     ~JNICache();

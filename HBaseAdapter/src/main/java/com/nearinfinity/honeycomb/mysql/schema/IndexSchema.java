@@ -1,19 +1,21 @@
 package com.nearinfinity.honeycomb.mysql.schema;
 
-import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableList;
-import com.nearinfinity.honeycomb.mysql.Util;
-import com.nearinfinity.honeycomb.mysql.gen.AvroIndexSchema;
-import com.nearinfinity.honeycomb.util.Verify;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.util.List;
+
 import net.jcip.annotations.Immutable;
+
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
 
-import java.util.List;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableList;
+import com.nearinfinity.honeycomb.mysql.Util;
+import com.nearinfinity.honeycomb.mysql.gen.AvroIndexSchema;
+import com.nearinfinity.honeycomb.util.Verify;
 
 @Immutable
 public class IndexSchema {
@@ -109,9 +111,9 @@ public class IndexSchema {
 
         if (avroIndexSchema == null) {
             return that.avroIndexSchema == null;
-        } else {
-            return avroIndexSchema.equals(that.avroIndexSchema);
         }
+
+        return avroIndexSchema.equals(that.avroIndexSchema);
     }
 
     @Override

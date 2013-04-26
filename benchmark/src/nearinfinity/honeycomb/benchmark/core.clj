@@ -78,11 +78,12 @@
   (doseq [query queries
           table tables
           clients clients]
-    (let [query-op (get (ns-publics 'nearinfinity.honeycomb.benchmark.query) query)]
+    (if-let [query-op (get (ns-publics 'nearinfinity.honeycomb.benchmark.query) query)]
       (-> (benchmark db-spec (query-op table) clients warmup bench)
           flatten
           (aggregate-timesteps resolution)
-          (print-results table query clients bench resolution)))))
+          (print-results table query clients bench resolution))
+      (throw (RuntimeException. (str query " was not available\n"))))))
 
 (defn- benchmark-ddls
   "Run benchmarks against different configurations of storage engines,

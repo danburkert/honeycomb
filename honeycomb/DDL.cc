@@ -6,6 +6,8 @@
 #include "Java.h"
 #include "Macros.h"
 #include "JavaFrame.h"
+#include "JNICache.h"
+#include <jni.h>
 
 /**
  * @brief Stop creation of table and return message to user.
@@ -263,7 +265,7 @@ int HoneycombHandler::delete_table(const char *path)
   { // destruct frame before detaching
     JavaFrame frame(env, 2);
     jstring table_name = string_to_java_string(env,
-        extract_table_name_from_path(path)); 
+        extract_table_name_from_path(path));
     this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().drop_table,
         table_name);
     ret |= check_exceptions(env, cache, location);

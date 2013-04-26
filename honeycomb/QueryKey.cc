@@ -17,7 +17,7 @@ int QueryKey::get_record(const char* column_name, const char* type, avro_value_t
   avro_value_t entry_union;
   avro_schema_t union_schema;
 
-  // Get the records map 
+  // Get the records map
   ret |= avro_value_get_by_name(&container_schema, "records", &records_map, NULL);
   // Get the entry associated with the column name
   ret |= avro_value_get_by_name(&records_map, column_name, &entry_union, NULL);
@@ -73,6 +73,8 @@ int QueryKey::set_record(const char* column_name, const char* type, avro_value_t
 }
 
 QueryKey::QueryKey()
+: container_schema_schema(),
+  container_schema()
 {
   if (avro_schema_from_json_literal(INDEX_CONTAINER_SCHEMA, &container_schema_schema))
   {

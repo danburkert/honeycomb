@@ -1,7 +1,7 @@
 package com.nearinfinity.honeycomb.hbase;
 
-import com.nearinfinity.honeycomb.config.ConfigurationHolder;
-import com.nearinfinity.honeycomb.config.Constants;
+import com.nearinfinity.honeycomb.hbase.config.ConfigConstants;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MasterNotRunningException;
@@ -19,14 +19,15 @@ public class TableCreator {
     /**
      * Creates a table in HBase to store all Honeycomb tables
      *
+     *
      * @param configuration Configuration of the HTable
      * @throws IOException
      */
-    public static void createTable(ConfigurationHolder configuration)
+    public static void createTable(Configuration configuration)
             throws IOException {
         HTableDescriptor tableDescriptor;
         try {
-            HBaseAdmin.checkHBaseAvailable(configuration.getConfiguration());
+            HBaseAdmin.checkHBaseAvailable(configuration);
         } catch (MasterNotRunningException e) {
             logger.fatal("HMaster doesn't appear to be running.", e);
             throw e;
@@ -35,10 +36,11 @@ public class TableCreator {
             throw e;
         }
 
-        HColumnDescriptor columnDescriptor = new HColumnDescriptor(Constants.DEFAULT_COLUMN_FAMILY);
-        HBaseAdmin admin = new HBaseAdmin(configuration.getConfiguration());
+        String columnFamily = configuration.get(ConfigConstants.COLUMN_FAMILY);
+        byte[] tableName = configuration.get(ConfigConstants.TABLE_NAME).getBytes();
 
-        byte[] tableName = configuration.getStorageTableName().getBytes();
+        HColumnDescriptor columnDescriptor = new HColumnDescriptor(columnFamily);
+        HBaseAdmin admin = new HBaseAdmin(configuration);
 
         columnDescriptor.setBloomFilterType(StoreFile.BloomType.ROW)
                 .setDataBlockEncoding(DataBlockEncoding.PREFIX)
@@ -54,7 +56,7 @@ public class TableCreator {
         }
 
         tableDescriptor = admin.getTableDescriptor(tableName);
-        if (!tableDescriptor.hasFamily(Constants.DEFAULT_COLUMN_FAMILY)) {
+        if (!tableDescriptor.hasFamily(columnFamily.getBytes())) {
             logger.info("Adding column family to HBase table");
 
             if (!admin.isTableDisabled(tableName)) {

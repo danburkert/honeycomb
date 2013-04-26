@@ -1,5 +1,5 @@
 #include "AvroUtil.h"
-#include <stdio.h>
+#include <avro.h>
 
 int serialize_object(avro_value_t* obj, const char** buf, size_t* len)
 {

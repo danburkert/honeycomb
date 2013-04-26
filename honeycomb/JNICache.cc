@@ -3,7 +3,21 @@
 #include "JavaFrame.h"
 #include "Logging.h"
 #include "Macros.h"
-JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
+#include <jni.h>
+
+JNICache::JNICache(JavaVM* jvm)
+: jvm(jvm),
+  error(false),
+  handler_proxy_(),
+  throwable_(),
+  print_writer_(),
+  string_writer_(),
+  handler_proxy_factory_(),
+  TableNotFoundException(NULL),
+  RowNotFoundException(NULL),
+  StoreNotFoundException(NULL),
+  RuntimeIOException(NULL),
+  UnknownSchemaVersionException(NULL)
 {
   JNIEnv* env;
   attach_thread(jvm, &env, "JNICache::JNICache");
@@ -11,7 +25,9 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   // (dburkert:) I do not recommend editing this section without javap -s,
   // editor macros, and tabular.vim
 
+
   handler_proxy_.clazz                    = get_class_ref(env, HONEYCOMB "mysql/HandlerProxy");
+
   handler_proxy_.create_table             = get_method_id(env, handler_proxy_.clazz, "createTable", "(Ljava/lang/String;[BJ)V");
   handler_proxy_.drop_table               = get_method_id(env, handler_proxy_.clazz, "dropTable", "(Ljava/lang/String;)V");
   handler_proxy_.rename_table             = get_method_id(env, handler_proxy_.clazz, "renameTable", "(Ljava/lang/String;Ljava/lang/String;)V");
@@ -28,7 +44,7 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   handler_proxy_.drop_index               = get_method_id(env, handler_proxy_.clazz, "dropIndex", "(Ljava/lang/String;)V");
   handler_proxy_.index_contains_duplicate = get_method_id(env, handler_proxy_.clazz, "indexContainsDuplicate", "(Ljava/lang/String;[B)Z");
   handler_proxy_.insert_row               = get_method_id(env, handler_proxy_.clazz, "insertRow", "([B)V");
-  handler_proxy_.update_row               = get_method_id(env, handler_proxy_.clazz, "updateRow", "([B)V");
+  handler_proxy_.update_row               = get_method_id(env, handler_proxy_.clazz, "updateRow", "([B[B)V");
   handler_proxy_.delete_row               = get_method_id(env, handler_proxy_.clazz, "deleteRow", "([B)V");
   handler_proxy_.delete_all_rows          = get_method_id(env, handler_proxy_.clazz, "deleteAllRows", "()V");
   handler_proxy_.truncate_table           = get_method_id(env, handler_proxy_.clazz, "truncateTable", "()V");
@@ -37,10 +53,12 @@ JNICache::JNICache(JavaVM* jvm) : jvm(jvm)
   handler_proxy_.get_auto_increment       = get_method_id(env, handler_proxy_.clazz, "getAutoIncrement", "()J");
   handler_proxy_.set_auto_increment       = get_method_id(env, handler_proxy_.clazz, "setAutoIncrement", "(J)V");
 
-  TableNotFoundException = get_class_ref(env, HONEYCOMB "exceptions/TableNotFoundException");
-  RowNotFoundException   = get_class_ref(env, HONEYCOMB "exceptions/RowNotFoundException");
-  StoreNotFoundException = get_class_ref(env, HONEYCOMB "exceptions/StoreNotFoundException");
-  RuntimeIOException     = get_class_ref(env, HONEYCOMB "exceptions/RuntimeIOException");
+
+  TableNotFoundException        = get_class_ref(env, HONEYCOMB "exceptions/TableNotFoundException");
+  RowNotFoundException          = get_class_ref(env, HONEYCOMB "exceptions/RowNotFoundException");
+  StoreNotFoundException        = get_class_ref(env, HONEYCOMB "exceptions/StoreNotFoundException");
+  RuntimeIOException            = get_class_ref(env, HONEYCOMB "exceptions/RuntimeIOException");
+  UnknownSchemaVersionException = get_class_ref(env, HONEYCOMB "exceptions/UnknownSchemaVersionException");
 
   throwable_.clazz             = get_class_ref(env, "java/lang/Throwable");
   throwable_.print_stack_trace = get_method_id(env, throwable_.clazz, "printStackTrace", "(Ljava/io/PrintWriter;)V");
@@ -74,6 +92,7 @@ JNICache::~JNICache()
   DELETE_REF(env, RowNotFoundException);
   DELETE_REF(env, RuntimeIOException);
   DELETE_REF(env, StoreNotFoundException);
+  DELETE_REF(env, UnknownSchemaVersionException);
 
   detach_thread(jvm);
 }
@@ -93,7 +112,7 @@ jclass JNICache::get_class_ref(JNIEnv* env, const char* clazz)
     snprintf(log_buffer, sizeof(log_buffer),
         "JNICache: Failed to find class %s", clazz);
     Logging::fatal(log_buffer);
-    perror("Failure during JNI class lookup. Check honeycomb.log for details.");
+    perror("Failure during JNI class lookup. Check log file for details.");
     env->ExceptionDescribe();
     this->error = true;
     return NULL;
@@ -106,7 +125,7 @@ jclass JNICache::get_class_ref(JNIEnv* env, const char* clazz)
     snprintf(log_buffer, sizeof(log_buffer),
         "JNICache: Not enough JVM memory to create global reference to class %s", clazz);
     Logging::fatal(log_buffer);
-    perror("Failure during JNI reference creation. Check honeycomb.log for details.");
+    perror("Failure during JNI reference creation. Check log file for details.");
     env->ExceptionDescribe();
     this->error = true;
   }
@@ -129,7 +148,7 @@ jmethodID JNICache::get_method_id(JNIEnv* env, jclass clazz, const char* method,
     snprintf(log_buffer, sizeof(log_buffer),
         "JNICache: Failed to find method %s with signature %s", method, signature);
     Logging::fatal(log_buffer);
-    perror("Failure during JNI method id lookup. Check honeycomb.log for details.");
+    perror("Failure during JNI method id lookup. Check log file for details.");
     this->error = true;
   }
   return method_id;
@@ -150,7 +169,7 @@ jmethodID JNICache::get_static_method_id(JNIEnv* env, jclass clazz, const char* 
     snprintf(log_buffer, sizeof(log_buffer),
         "JNICache: Failed to find method %s with signature %s", method, signature);
     Logging::fatal(log_buffer);
-    perror("Failure during JNI static method id lookup. Check honeycomb.log for details.");
+    perror("Failure during JNI static method id lookup. Check log file for details.");
     this->error = true;
   }
   return method_id;
@@ -172,7 +191,7 @@ jfieldID JNICache::get_static_field_id(JNIEnv* env, jclass clazz, const char* fi
     snprintf(log_buffer, sizeof(log_buffer),
         "JNICache: Failed to find static field %s with type %s", field, type);
     Logging::fatal(log_buffer);
-    perror("Failure during JNI static field id lookup. Check honeycomb.log for details.");
+    perror("Failure during JNI static field id lookup. Check log file for details.");
     this->error = true;
   }
   return field_id;

@@ -1,103 +1,90 @@
 package com.nearinfinity.honeycomb.mysql;
 
-import com.google.common.io.Files;
-import com.google.common.io.InputSupplier;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.name.Names;
-import com.nearinfinity.honeycomb.config.ConfigurationHolder;
 import com.nearinfinity.honeycomb.config.ConfigurationParser;
+import com.nearinfinity.honeycomb.config.HoneycombConfiguration;
+import com.nearinfinity.honeycomb.config.AdaptorType;
 import com.nearinfinity.honeycomb.hbase.HBaseModule;
-import com.nearinfinity.honeycomb.config.Constants;
-import org.apache.hadoop.conf.Configuration;
+import com.nearinfinity.honeycomb.util.Verify;
+import org.apache.log4j.Appender;
+import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-
-import static java.lang.String.format;
+import java.util.Enumeration;
 
 
 public final class Bootstrap extends AbstractModule {
-    private static final String CONFIG_PATH = "/usr/local/etc/honeycomb";
-    private static final String CONFIG_FILENAME = "honeycomb.xml";
-    private static final String CONFIG_SCHEMA_FILENAME = "honeycomb.xsd";
     private static final Logger logger = Logger.getLogger(Bootstrap.class);
-    private ConfigurationHolder configHolder;
+    private final HoneycombConfiguration configuration;
 
-    private Bootstrap() {
+    private Bootstrap(HoneycombConfiguration configuration) {
+        this.configuration = configuration;
     }
 
     /**
      * The initial function called by JNI to wire-up the required object graph dependencies
      *
+     * @param configFilename The path to the configuration file, not null or empty
+     * @param configSchema  The path to the schema used to validate the configuration file, not null or empty
      * @return {@link HandlerProxyFactory} with all dependencies setup
      */
-    public static HandlerProxyFactory startup() {
-        Bootstrap bootstrap = new Bootstrap();
-        bootstrap.readConfiguration();
+    public static HandlerProxyFactory startup(String configFilename, String configSchema) {
+        Verify.isNotNullOrEmpty(configFilename);
+        Verify.isNotNullOrEmpty(configSchema);
+
+        ensureLoggingPathsCorrect();
+        HoneycombConfiguration configuration =
+                ConfigurationParser.parseConfiguration(configFilename, configSchema);
+
+        Bootstrap bootstrap = new Bootstrap(configuration);
 
         Injector injector = Guice.createInjector(bootstrap);
         return injector.getInstance(HandlerProxyFactory.class);
     }
 
-    @Override
-    protected void configure() {
-        bind(String.class).annotatedWith(Names.named(Constants.DEFAULT_TABLESPACE)).toInstance(Constants.HBASE_TABLESPACE);
-
-        // Setup the HBase bindings only if the adapter has been configured
-        if (configHolder.isAdapterConfigured(Constants.HBASE_TABLESPACE)) {
-            try {
-                HBaseModule hBaseModule = new HBaseModule(configHolder);
-                install(hBaseModule);
-            } catch (IOException e) {
-                logger.fatal("Failure during HBase initialization.", e);
-                throw new RuntimeException(e);
+    private static void ensureLoggingPathsCorrect() {
+        Enumeration allAppenders = Logger.getRootLogger().getAllAppenders();
+        while (allAppenders.hasMoreElements()) {
+            Appender appender = (Appender) allAppenders.nextElement();
+            if (appender instanceof FileAppender) {
+                FileAppender fileAppender = (FileAppender) appender;
+                File f = new File(fileAppender.getFile());
+                System.err.println("Testing: " + f.getName());
+                if (f.exists()) {
+                    if (!f.canWrite())
+                        System.err.println("Cannot write to " + f.getName());
+                } else {
+                    String createFailure = "Could not create logging file " + f.getName();
+                    try {
+                        if (!f.createNewFile()) {
+                            System.err.println(createFailure);
+                            throw new RuntimeException(createFailure);
+                        }
+                    } catch (IOException e) {
+                        System.err.println(createFailure);
+                        throw new RuntimeException(createFailure, e);
+                    }
+                }
             }
         }
     }
 
-    /**
-     * Determines if the specified file is accessible and available for reading
-     *
-     * @param file The file to inspect
-     * @return True if file is available, False otherwise
-     */
-    private static boolean isFileAvailable(final File file) {
-        if (!(file.exists() && file.canRead() && file.isFile())) {
-            final String errorMsg = format("File is not available: %s", file.getAbsolutePath());
-            logger.fatal(errorMsg);
-            throw new RuntimeException(errorMsg);
-        }
+    @Override
+    protected void configure() {
+        bind(HoneycombConfiguration.class).toInstance(configuration);
 
-        return true;
-    }
-
-    /**
-     * Initiates the process for reading the application configuration data
-     */
-    private void readConfiguration() {
-        final File configFile = new File(CONFIG_PATH, CONFIG_FILENAME);
-        final File configSchemaFile = new File(CONFIG_PATH, CONFIG_SCHEMA_FILENAME);
-
-        if (isFileAvailable(configFile) && isFileAvailable(configSchemaFile)) {
-
-            final InputSupplier<FileInputStream> schemaSupplier = Files.newInputStreamSupplier(configSchemaFile);
-            final InputSupplier<FileInputStream> configSupplier = Files.newInputStreamSupplier(configFile);
-
-            if (ConfigurationParser.validateConfiguration(schemaSupplier, configSupplier)) {
-                final ConfigurationParser configParser = new ConfigurationParser();
-                configHolder = configParser.parseConfiguration(configSupplier, new Configuration());
-
-                logger.info(String.format("Honeycomb configuration: %s", configHolder.toString()));
-                logger.debug(format("Read %d configuration properties ",
-                        configHolder.getConfiguration().size()));
-            } else {
-                final String errorMsg = format("Configuration file validation failed. Check %s for correctness.", configFile.getPath());
-                logger.fatal(errorMsg);
-                throw new RuntimeException(errorMsg);
+        // Setup the HBase bindings only if the adapter has been configured
+        if (configuration.isAdapterConfigured(AdaptorType.HBASE.getName())) {
+            try {
+                HBaseModule hBaseModule = new HBaseModule(configuration.getAdapterOptions(AdaptorType.HBASE.getName()));
+                install(hBaseModule);
+            } catch (IOException e) {
+                logger.fatal("Failure during HBase initialization.", e);
+                throw new RuntimeException(e);
             }
         }
     }

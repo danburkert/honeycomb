@@ -1,19 +1,17 @@
 package com.nearinfinity.honeycomb.config;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
-import net.jcip.annotations.NotThreadSafe;
-import org.apache.hadoop.conf.Configuration;
+import com.nearinfinity.honeycomb.util.Verify;
 import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
@@ -22,155 +20,193 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
-import java.io.IOException;
+import java.io.File;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 
 /**
- * Provides capabilities for validation and parsing of the application configuration content
+ * Configuration object which holds configuration options for the Honeycomb
+ * system, not an individual adapter.
  */
-@NotThreadSafe
 public class ConfigurationParser {
-
     private static final Logger logger = Logger.getLogger(ConfigurationParser.class);
-    /**
-     * XPath expression for extracting the adapter names from the document
-     */
-    private static final String XPATH_ADAPTER_NAME_ATTR = "/options/adapters/adapter/@name";
-    /**
-     * XPath expression for extracting the configuration details for a specific adapter
-     */
-    private static final String XPATH_ADAPTER_CONFIG_NODES = "/options/adapters/adapter[@name='%s']/configuration/*";
-    private final DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
-    private final XPath xpath = XPathFactory.newInstance().newXPath();
 
     /**
-     * Performs validation on the configuration content supplied by the configuration supplier against
-     * the schema document provided by the validation supplier
+     * XPath query to find adapter names from document.
+     */
+    private static final String QUERY_ADAPTER_NAMES = "/options/adapters/adapter/@name";
+
+    /**
+     * XPath query to find adapter configuration options from document
+     */
+    private static final String QUERY_ADAPTER_CONFIG_NODES = "/options/adapters/adapter[@name='%s']/configuration/*";
+
+    private static final XPath xPath = XPathFactory.newInstance().newXPath();
+
+    private ConfigurationParser() {}
+
+    /**
+     * Create a HoneycombConfiguration from a configuration file path and configuration
+     * schema validator path.
      *
-     * @param validationSupplier The supplier that provides the schema used to inspect the configuration, not null
-     * @param configSupplier     The supplier that provides the configuration to inspect, not null
+     * @param configPath Path to configuration file to be parsed
+     * @param schemaPath Path to schema file to be validated against
+     * @return ConfigurationParser object holding configuration options
+     */
+    public static HoneycombConfiguration parseConfiguration(String configPath,
+                                                            String schemaPath) {
+        Verify.isNotNullOrEmpty(configPath);
+        Verify.isNotNullOrEmpty(schemaPath);
+
+        final File configFile = new File(configPath);
+        final File schemaFile = new File(schemaPath);
+
+        checkFileAvailable(configFile);
+        checkFileAvailable(schemaFile);
+
+        final InputSupplier<? extends InputStream> configSupplier =
+                Files.newInputStreamSupplier(configFile);
+        final InputSupplier<? extends InputStream> schemaSupplier =
+                Files.newInputStreamSupplier(schemaFile);
+
+        checkValidConfig(configSupplier, schemaSupplier);
+        Document doc = parseDocument(configSupplier);
+        Map<String, Map<String, String>> adapters = parseAdapters(doc);
+        return new HoneycombConfiguration(adapters);
+    }
+
+    /**
+     * Performs validation on the configuration content supplied by the
+     * configuration supplier against the schema document provided by the
+     * validation supplier.  Throws Runtime exception if validation fails.
+     *
+     * @param configSupplier The supplier that provides the configuration to inspect, not null
+     * @param schemaSupplier The supplier that provides the schema used to inspect the configuration, not null
      * @return True if the configuration is validated, False otherwise
      */
-    public static boolean validateConfiguration(final InputSupplier<? extends InputStream> validationSupplier,
-                                                final InputSupplier<? extends InputStream> configSupplier) {
-        checkNotNull(validationSupplier, "The validation supplier is invalid");
-        checkNotNull(configSupplier, "The configuration supplier is invalid");
-
-        boolean validated = false;
-
+    private static void checkValidConfig(final InputSupplier<? extends InputStream> configSupplier,
+                                         final InputSupplier<? extends InputStream> schemaSupplier) {
         try {
             final SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-            final Schema schema = schemaFactory.newSchema(new StreamSource(validationSupplier.getInput()));
+            final Schema schema = schemaFactory.newSchema(new StreamSource(schemaSupplier.getInput()));
             final Validator validator = schema.newValidator();
             validator.validate(new StreamSource(configSupplier.getInput()));
-            validated = true;
-        } catch (SAXException e) {
-            logger.error("Parse error occurred during validation", e);
-        } catch (IOException e) {
-            logger.error("IO error occurred while processing the source being validated", e);
+        } catch (Exception e) {
+            logger.error("Unable to validate honeycomb configuration.", e);
+            throw new RuntimeException("Exception while validating honeycomb configuration.", e);
         }
-
-        return validated;
     }
 
     /**
-     * Performs the operations necessary to parse the configuration content supplied by the
-     * configuration supplier and stores the resultant data in the provided configuration container
+     * Checks if the file is accessible and available for reading
      *
-     * @param configSupplier The supplier that provides the configuration to parse, not null
-     * @param config         The container used to store the parsed data, not null
-     * @return A {@link ConfigurationHolder} object that holds the parsed information
+     * @param file The file to inspect
+     * @return True if file is available, False otherwise
      */
-    public ConfigurationHolder parseConfiguration(final InputSupplier<? extends InputStream> configSupplier,
-                                                  final Configuration config) {
-        checkNotNull(configSupplier, "The configuration supplier is invalid");
-        checkNotNull(config, "The configuration container is invalid");
+    private static boolean checkFileAvailable(final File file) {
+        if (!(file.exists() && file.canRead() && file.isFile())) {
+            final String errorMsg = format("%s is not readable.", file.getAbsolutePath());
+            logger.fatal(errorMsg);
+            throw new RuntimeException(errorMsg);
+        }
 
+        return true;
+    }
+
+    /**
+     * Parse the honeycomb configuration and return the XML document.
+     * @param configSupplier File supplier containing honeycomb configuration
+     * @return XML Document
+     */
+    private static Document parseDocument(final InputSupplier<? extends InputStream> configSupplier) {
         try {
-            final DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
-            final Document doc = docBuilder.parse(configSupplier.getInput());
-            final NodeList adapterAttrs = (NodeList) xpath.evaluate(XPATH_ADAPTER_NAME_ATTR, doc, XPathConstants.NODESET);
+            return DocumentBuilderFactory
+                    .newInstance()
+                    .newDocumentBuilder()
+                    .parse(configSupplier.getInput());
 
-            parseAdapterDetails(doc, adapterAttrs, config);
+        } catch (Exception e) {
+            logger.error("Unable to parse honeycomb configuration.", e);
+            throw new RuntimeException("Exception while parsing honeycomb configuration.", e);
+        }
+    }
+
+    /**
+     * Determines if the option name is already namespaced (contains a '.').
+     * @param optionName
+     * @return
+     */
+    private static boolean isNamespaced(String optionName) {
+        return optionName.contains(".");
+    }
+
+    /**
+     * Namespaces the given option name by "honeycomb" and the adapter type.
+     * @param adapterName
+     * @param optionName
+     * @return
+     */
+    private static String prependNamespace(String adapterName, String optionName) {
+        return new StringBuilder()
+                .append(Constants.HONEYCOMB_NAMESPACE)
+                .append(".")
+                .append(adapterName)
+                .append(".")
+                .append(optionName)
+                .toString();
+    }
+
+    private static Map<String, String> parseOptions(String adapterName, Document doc) {
+        String optionsQuery = String.format(QUERY_ADAPTER_CONFIG_NODES, adapterName);
+        NodeList optionNodes = null;
+        try {
+            optionNodes = (NodeList) xPath.evaluate(optionsQuery, doc, XPathConstants.NODESET);
         } catch (XPathExpressionException e) {
-            logger.error("XPath expression could not be evaluated: " + XPATH_ADAPTER_NAME_ATTR, e);
-        } catch (SAXException e) {
-            logger.error("Parse error occurred while parsing the config file", e);
-        } catch (IOException e) {
-            logger.error("IO error occurred while parsing the config file", e);
-        } catch (ParserConfigurationException e) {
-            logger.error("The XML parser was not configured properly", e);
+            logger.error("Unable to parse options for " + adapterName + " adapter.", e);
+            throw new RuntimeException("Exception while parsing options for " + adapterName + " adapter.", e);
         }
+        ImmutableMap.Builder<String, String> options = ImmutableMap.builder();
 
-        return new ConfigurationHolder(config);
-    }
-
-    /**
-     * Parses the configuration information for the specified adapter from the provided document details
-     *
-     * @param configNode  The configuration node details
-     * @param config      The container used to store the parsed data
-     * @param adapterName The name of the adapter being parsed
-     */
-    private static void parseAdapterConfigProperties(final NodeList configNode, final Configuration config, final String adapterName) {
-        for (int index = 0; index < configNode.getLength(); index++) {
-            final Node propertyNode = configNode.item(index);
-
-            if (propertyNode.getNodeType() == Node.ELEMENT_NODE) {
-                // Prefix the property with the adapter name to avoid collisions
-                final String propertyName = String.format("%s.%s", adapterName, propertyNode.getNodeName());
-                final String propertyValue = propertyNode.getTextContent();
-
-                // Check to see if the property has already been configured
-                if (config.get(propertyName) == null) {
-                    config.set(propertyName, propertyValue);
-                    logger.debug(String.format("Set configuration property %s = %s", propertyName, propertyValue));
-                } else {
-                    logger.warn(String.format("Unable to set configuration property: %s (It has already been set to %s)", propertyName, config.get(propertyName)));
-                }
+        for (int i = 0; i < optionNodes.getLength(); i++) {
+            Node optionNode = optionNodes.item(i);
+            if (optionNode.getNodeType() == Node.ELEMENT_NODE) {
+                String optionName = optionNode.getNodeName();
+                String namespacedOptionName = isNamespaced(optionName)
+                        ? optionName
+                        : prependNamespace(adapterName, optionName);
+                options.put(namespacedOptionName, optionNode.getTextContent());
             }
         }
+
+        return options.build();
     }
 
-    /**
-     * Parses the pertinent adapter attribute information from the provided document details
-     *
-     * @param doc          The document that is being parsed
-     * @param adapterAttrs The node details of the extracted adapter attributes
-     * @param config       The container used to store the parsed data
-     */
-    private void parseAdapterDetails(final Document doc, final NodeList adapterAttrs, final Configuration config) {
-        final List<String> adapters = Lists.newArrayList();
-        final int adapterCount = adapterAttrs.getLength();
-
-        if (adapterCount > 0) {
-            logger.debug(String.format("Found %d configured adapters", adapterCount));
-
-            for (int index = 0; index < adapterCount; index++) {
-                final Node node = adapterAttrs.item(index);
-
-                if (node.getNodeType() == Node.ATTRIBUTE_NODE) {
-                    final String adapterName = node.getNodeValue();
-                    adapters.add(adapterName);
-
-                    // Attempt to parse the configuration options for this adapter
-                    final String xpathExpr = String.format(XPATH_ADAPTER_CONFIG_NODES, adapterName);
-                    try {
-                        NodeList configOpts = (NodeList) xpath.evaluate(xpathExpr, doc, XPathConstants.NODESET);
-
-                        logger.debug("Parsing configuration options for adapter: " + adapterName);
-                        parseAdapterConfigProperties(configOpts, config, adapterName);
-                    } catch (XPathExpressionException e) {
-                        logger.error("XPath expression could not be evaluated: " + xpathExpr, e);
-                    }
-                }
-            }
-
-            // Store the adapter names in the configuration
-            config.setStrings(ConfigConstants.PROP_CONFIGURED_ADAPTERS, adapters.toArray(new String[0]));
+    private static Map<String, Map<String, String>> parseAdapters(Document doc) {
+        // Extract adapter names from document
+        NodeList adapterNameNodes = null;
+        try {
+            adapterNameNodes = (NodeList) xPath.evaluate(QUERY_ADAPTER_NAMES, doc, XPathConstants.NODESET);
+        } catch (XPathExpressionException e) {
+            logger.error("Unable to parse adapter names from honeycomb configuration.", e);
+            throw new RuntimeException("Exception while parsing adapter names from honeycomb configuration.", e);
         }
+        List<String> adapterNames = Lists.newArrayList();
+        for (int i = 0; i < adapterNameNodes.getLength(); i++) {
+            Node adapterNameNode = adapterNameNodes.item(i);
+            if (adapterNameNode.getNodeType() == Node.ATTRIBUTE_NODE) {
+                adapterNames.add(adapterNameNode.getNodeValue());
+            }
+        }
+
+        // Extract individual adapter options from the document
+        ImmutableMap.Builder<String, Map<String, String>> adapters = ImmutableMap.builder();
+        for (String adapterName : adapterNames) {
+            adapters.put(adapterName, parseOptions(adapterName, doc));
+        }
+
+        return adapters.build();
     }
 }
