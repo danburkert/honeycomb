@@ -27,9 +27,8 @@ public final class ConfigConstants {
 
     public static final String TABLE_NAME = NAMESPACE + "tableName";
 
-    public static final String COLUMN_FAMILY = NAMESPACE + "columnFamily";
-
-    public static final String DEFAULT_COLUMN_FAMILY = NAMESPACE + "nic";
+    // This needs to change whenever NAMESPACE changes. Due to Guice issues with injecting named non-consts.
+    public static final String COLUMN_FAMILY = "honeycomb.hbase.columnFamily";
 
     public static final String WRITE_BUFFER = "hbase.client.write.buffer";
 

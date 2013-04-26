@@ -1,17 +1,10 @@
 package com.nearinfinity.honeycomb.hbase;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
-
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Put;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.nearinfinity.honeycomb.config.Constants;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
+import com.nearinfinity.honeycomb.hbase.config.ConfigConstants;
 import com.nearinfinity.honeycomb.hbase.rowkey.DataRowKey;
 import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowKeyBuilder;
 import com.nearinfinity.honeycomb.hbase.rowkey.RowKey;
@@ -20,6 +13,14 @@ import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import com.nearinfinity.honeycomb.util.Verify;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Put;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.UUID;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Creates put and delete lists for various operations.  Meant to have no
@@ -27,15 +28,26 @@ import com.nearinfinity.honeycomb.util.Verify;
  */
 public class MutationFactory {
     private final HBaseStore store;
+    private byte[] columnFamily;
 
+    @Inject
     public MutationFactory(HBaseStore store) {
         super();
         this.store = store;
     }
 
-    private static Put emptyQualifierPut(final RowKey rowKey,
+    /**
+     * Sets the column family.  Cannot be injected into the constructor directly
+     * because of a bug in Cobertura.  Called automatically by Guice.
+     */
+    @Inject
+    public void setColumnFamily(final @Named(ConfigConstants.COLUMN_FAMILY) String columnFamily) {
+        this.columnFamily = columnFamily.getBytes();
+    }
+
+    private Put emptyQualifierPut(final RowKey rowKey,
                                          final byte[] serializedRow) {
-        return new Put(rowKey.encode()).add(Constants.DEFAULT_COLUMN_FAMILY,
+        return new Put(rowKey.encode()).add(columnFamily,
                 new byte[0], serializedRow);
     }
 

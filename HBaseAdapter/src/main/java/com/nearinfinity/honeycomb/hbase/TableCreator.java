@@ -1,7 +1,6 @@
 package com.nearinfinity.honeycomb.hbase;
 
 import com.nearinfinity.honeycomb.hbase.config.ConfigConstants;
-import com.nearinfinity.honeycomb.config.Constants;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -37,10 +36,11 @@ public class TableCreator {
             throw e;
         }
 
-        HColumnDescriptor columnDescriptor = new HColumnDescriptor(Constants.DEFAULT_COLUMN_FAMILY);
-        HBaseAdmin admin = new HBaseAdmin(configuration);
-
+        String columnFamily = configuration.get(ConfigConstants.COLUMN_FAMILY);
         byte[] tableName = configuration.get(ConfigConstants.TABLE_NAME).getBytes();
+
+        HColumnDescriptor columnDescriptor = new HColumnDescriptor(columnFamily);
+        HBaseAdmin admin = new HBaseAdmin(configuration);
 
         columnDescriptor.setBloomFilterType(StoreFile.BloomType.ROW)
                 .setDataBlockEncoding(DataBlockEncoding.PREFIX)
@@ -56,7 +56,7 @@ public class TableCreator {
         }
 
         tableDescriptor = admin.getTableDescriptor(tableName);
-        if (!tableDescriptor.hasFamily(Constants.DEFAULT_COLUMN_FAMILY)) {
+        if (!tableDescriptor.hasFamily(columnFamily.getBytes())) {
             logger.info("Adding column family to HBase table");
 
             if (!admin.isTableDisabled(tableName)) {

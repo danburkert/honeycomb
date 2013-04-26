@@ -4,11 +4,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import com.google.inject.name.Named;
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Table;
-import com.nearinfinity.honeycomb.hbase.config.ConfigConstants;
-import com.nearinfinity.honeycomb.config.Constants;
 import com.nearinfinity.honeycomb.exceptions.RowNotFoundException;
+import com.nearinfinity.honeycomb.hbase.config.ConfigConstants;
 import com.nearinfinity.honeycomb.hbase.rowkey.DataRowKey;
 import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowKey;
 import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowKeyBuilder;
@@ -36,15 +36,35 @@ public class HBaseTable implements Table {
     private final HBaseStore store;
     private final long tableId;
     private final MutationFactory mutationFactory;
-    private long writeBufferSize = ConfigConstants.DEFAULT_WRITE_BUFFER;
+    private long writeBufferSize;
+    private String columnFamily;
 
     @Inject
-    public HBaseTable(HTableInterface hTable, HBaseStore store, @Assisted Long tableId) {
+    public HBaseTable(HTableInterface hTable, HBaseStore store, MutationFactory mutationFactory, @Assisted Long tableId) {
         Verify.isValidId(tableId);
         this.hTable = checkNotNull(hTable);
         this.store = checkNotNull(store);
         this.tableId = tableId;
-        this.mutationFactory = new MutationFactory(store);
+        this.mutationFactory = mutationFactory;
+    }
+
+    /**
+     * Sets the write buffer size.  Cannot be injected into the constructor directly
+     * because of a bug in Cobertura.  Called automatically by Guice.
+     * @param bufferSize
+     */
+    @Inject
+    public void setWriterBufferSize(final @Named(ConfigConstants.WRITE_BUFFER) Long bufferSize) {
+        this.writeBufferSize = bufferSize;
+    }
+
+    /**
+     * Sets the column family.  Cannot be injected into the constructor directly
+     * because of a bug in Cobertura.  Called automatically by Guice.
+     */
+    @Inject
+    public void setColumnFamily(final @Named(ConfigConstants.COLUMN_FAMILY) String columnFamily) {
+        this.columnFamily = columnFamily;
     }
 
     @Override
@@ -112,8 +132,7 @@ public class HBaseTable implements Table {
         if (result.isEmpty()) {
             throw new RowNotFoundException(uuid);
         }
-        return Row.deserialize(result.getValue(Constants.DEFAULT_COLUMN_FAMILY,
-                new byte[0]));
+        return Row.deserialize(result.getValue(columnFamily.getBytes(), new byte[0]));
     }
 
     @Override
@@ -252,7 +271,7 @@ public class HBaseTable implements Table {
     private Scanner createScannerForRange(byte[] start, byte[] end) {
         Scan scan = new Scan(start, end);
         ResultScanner scanner = HBaseOperations.getScanner(hTable, scan);
-        return new HBaseScanner(scanner);
+        return new HBaseScanner(scanner, columnFamily);
     }
 }
 

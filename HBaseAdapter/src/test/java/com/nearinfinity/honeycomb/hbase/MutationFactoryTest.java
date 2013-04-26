@@ -69,10 +69,12 @@ public class MutationFactoryTest {
         when(provider.get()).thenReturn(table);
 
         HBaseMetadata metadata = new HBaseMetadata(provider);
+        metadata.setColumnFamily("nic");
         MetadataCache cache = new MetadataCache(metadata);
 
         HBaseStore store = new HBaseStore(metadata, tableFactory, cache);
         factory = new MutationFactory(store);
+        factory.setColumnFamily("nic");
 
         TableSchema schema = new TableSchema(COLUMNS, INDICES);
 

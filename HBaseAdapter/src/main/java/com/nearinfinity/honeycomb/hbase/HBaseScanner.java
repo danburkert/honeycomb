@@ -1,7 +1,6 @@
 package com.nearinfinity.honeycomb.hbase;
 
 import com.nearinfinity.honeycomb.Scanner;
-import com.nearinfinity.honeycomb.config.Constants;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 
@@ -13,11 +12,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class HBaseScanner implements Scanner {
     private final ResultScanner scanner;
     private final Iterator<Result> resultIterator;
+    private final byte[] columnFamily;
 
-    public HBaseScanner(ResultScanner scanner) {
+    public HBaseScanner(ResultScanner scanner, String columnFamily) {
         checkNotNull(scanner, "Result scanner cannot be null.");
         this.scanner = scanner;
         this.resultIterator = this.scanner.iterator();
+        this.columnFamily = columnFamily.getBytes();
     }
 
     @Override
@@ -32,7 +33,7 @@ public class HBaseScanner implements Scanner {
 
     @Override
     public byte[] next() {
-        return resultIterator.next().getValue(Constants.DEFAULT_COLUMN_FAMILY, new byte[0]);
+        return resultIterator.next().getValue(columnFamily, new byte[0]);
     }
 
     @Override

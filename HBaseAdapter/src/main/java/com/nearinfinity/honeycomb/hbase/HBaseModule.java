@@ -3,9 +3,11 @@ package com.nearinfinity.honeycomb.hbase;
 import com.google.inject.AbstractModule;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
+import com.google.inject.name.Names;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.config.AdaptorType;
+import com.nearinfinity.honeycomb.hbase.config.ConfigConstants;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HTableInterface;
@@ -17,25 +19,26 @@ import java.util.Map;
 public class HBaseModule extends AbstractModule {
     private static final Logger logger = Logger.getLogger(HBaseModule.class);
     private final HTableProvider hTableProvider;
+    private final Configuration configuration;
 
     public HBaseModule(final Map<String, String> options) throws IOException {
         // Add the HBase resources to the core application configuration
-        Configuration hBaseConfiguration = HBaseConfiguration.create();
+        configuration = HBaseConfiguration.create();
 
         for (Map.Entry<String, String> option : options.entrySet()) {
-            hBaseConfiguration.set(option.getKey(), option.getValue());
+            configuration.set(option.getKey(), option.getValue());
         }
 
-        hTableProvider = new HTableProvider(hBaseConfiguration);
+        hTableProvider = new HTableProvider(configuration);
 
         try {
-            TableCreator.createTable(hBaseConfiguration);
+            TableCreator.createTable(configuration);
         } catch (IOException e) {
             logger.fatal("Could not create HBaseStore. Aborting initialization.");
-            logger.fatal(hBaseConfiguration.toString());
+            logger.fatal(configuration.toString());
             throw e;
         } catch (Exception e) {
-            logger.fatal(hBaseConfiguration.toString());
+            logger.fatal(configuration.toString());
             throw new RuntimeException(e);
         }
     }
@@ -53,5 +56,11 @@ public class HBaseModule extends AbstractModule {
 
         bind(HTableProvider.class).toInstance(hTableProvider);
         bind(HTableInterface.class).toProvider(hTableProvider);
+
+        bind(Long.class).annotatedWith(Names.named(ConfigConstants.WRITE_BUFFER))
+                .toInstance(configuration.getLong(ConfigConstants.WRITE_BUFFER,
+                        ConfigConstants.DEFAULT_WRITE_BUFFER));
+        bind(String.class).annotatedWith(Names.named(ConfigConstants.COLUMN_FAMILY))
+                .toInstance(configuration.get(ConfigConstants.COLUMN_FAMILY));
     }
 }
