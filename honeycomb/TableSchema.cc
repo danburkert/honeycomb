@@ -36,6 +36,8 @@ int TableSchema::get_from_map_field(const char* field_name, const char* key, avr
 };
 
 TableSchema::TableSchema()
+: table_schema_schema(),
+  table_schema()
 {
   if (avro_schema_from_json_literal(TABLE_SCHEMA, &table_schema_schema))
   {

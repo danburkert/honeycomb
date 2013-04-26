@@ -6,11 +6,13 @@
 #include "JNICache.h"
 #include "JNISetup.h"
 #include "JavaFrame.h"
-#include <string.h>
+#include <cstring>
+#include <jni.h>
 #include "Logging.h"
 #include "Macros.h"
 #include "Java.h"
 #include "Row.h"
+#include "HoneycombShare.h"
 
 const char **HoneycombHandler::bas_ext() const
 {

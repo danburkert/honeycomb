@@ -3,11 +3,21 @@
 #include "JavaFrame.h"
 #include "Logging.h"
 #include "Macros.h"
-
+#include <jni.h>
 
 JNICache::JNICache(JavaVM* jvm)
 : jvm(jvm),
-  error(false)
+  error(false),
+  handler_proxy_(),
+  throwable_(),
+  print_writer_(),
+  string_writer_(),
+  handler_proxy_factory_(),
+  TableNotFoundException(NULL),
+  RowNotFoundException(NULL),
+  StoreNotFoundException(NULL),
+  RuntimeIOException(NULL),
+  UnknownSchemaVersionException(NULL)
 {
   JNIEnv* env;
   attach_thread(jvm, &env, "JNICache::JNICache");

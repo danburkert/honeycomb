@@ -7,6 +7,7 @@
 #include "Macros.h"
 #include "JavaFrame.h"
 #include "JNICache.h"
+#include <jni.h>
 
 /**
  * @brief Stop creation of table and return message to user.

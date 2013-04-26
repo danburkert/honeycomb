@@ -5,6 +5,8 @@
 const char IS_UNIQUE[] = "isUnique";
 
 IndexSchema::IndexSchema()
+: index_schema_schema(),
+  index_schema()
 {
   if (avro_schema_from_json_literal(INDEX_SCHEMA, &index_schema_schema))
   {

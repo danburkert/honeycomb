@@ -5,6 +5,8 @@
 #include "Macros.h"
 #include "Row.h"
 #include "JNICache.h"
+#include "HoneycombShare.h"
+#include <jni.h>
 
 /**
  * Pack the MySQL formatted row contained in buf and table into the Avro format.

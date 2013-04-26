@@ -1,10 +1,5 @@
 #include "Util.h"
 #include <tztime.h>
-#include "my_global.h"
-
-#include <sys/stat.h>
-#include <sys/types.h>
-#include "Logging.h"
 #include <pwd.h>
 #include <grp.h>
 
@@ -206,7 +201,7 @@ uchar* create_key_copy(Field* index_field, const uchar* key, uint* key_len, THD*
     case MYSQL_TYPE_YEAR:
       {
         key_copy = new uchar[sizeof(long long)];
-        uint32_t int_val; 
+        uint32_t int_val;
         if(key[0] == 0)
         {
           int_val = 0;

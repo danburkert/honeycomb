@@ -1,10 +1,14 @@
-#include "HoneycombHandler.h"
+//#include "HoneycombHandler.h"
 #include "Java.h"
 #include "Macros.h"
 #include "Logging.h"
 #include "Serializable.h"
-#include <string.h>
+#include <cstring>
 #include "JNICache.h"
+#include <jni.h>
+#include "my_base.h"
+#include "my_sys.h"
+#include "mysqld_error.h"
 
 bool print_java_exception(JNIEnv* env)
 {

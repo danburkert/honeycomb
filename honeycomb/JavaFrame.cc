@@ -1,6 +1,7 @@
 #include "JavaFrame.h"
 #include "Logging.h"
 #include "Macros.h"
+#include <jni.h>
 
 /**
  * Create JNI Stack Frame.  If enough memory is not able to be allocated, log
