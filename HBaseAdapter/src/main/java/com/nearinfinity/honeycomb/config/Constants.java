@@ -9,7 +9,5 @@ public final class Constants {
 
     public static final UUID FULL_UUID = UUID.fromString("ffffffff-ffff-ffff-ffff-ffffffffffff");
 
-    public static final String HBASE_TABLESPACE = "hbase";
-
-    public static final String DEFAULT_TABLESPACE = "Default Tablespace";
+    public static final String HONEYCOMB_NAMESPACE = "honeycomb";
 }

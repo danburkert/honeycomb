@@ -15,6 +15,7 @@ then
 else
     : ${MYSQL_SOURCE_PATH?"Need to set MYSQL_SOURCE_PATH if you want to run this script without arguments."}
     mysql_path=$MYSQL_SOURCE_PATH
+    echo $mysql_path
 fi
 
 honeycomb_link=$mysql_path/storage/honeycomb

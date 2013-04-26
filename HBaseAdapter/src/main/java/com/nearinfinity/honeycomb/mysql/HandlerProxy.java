@@ -40,7 +40,7 @@ public class HandlerProxy {
         Verify.isNotNullOrEmpty(tableName);
         checkNotNull(serializedTableSchema);
 
-        store = storeFactory.createStore();
+        store = storeFactory.createStore(tableName);
         checkNotNull(serializedTableSchema, "Schema cannot be null");
         TableSchema tableSchema = TableSchema.deserialize(serializedTableSchema);
         Verify.isValidTableSchema(tableSchema);
@@ -56,7 +56,7 @@ public class HandlerProxy {
      */
     public void dropTable(String tableName) {
         Verify.isNotNullOrEmpty(tableName);
-        Store store = storeFactory.createStore();
+        Store store = storeFactory.createStore(tableName);
         Table table = store.openTable(tableName);
 
         table.deleteAllRows();
@@ -67,7 +67,7 @@ public class HandlerProxy {
     public void openTable(String tableName) {
         Verify.isNotNullOrEmpty(tableName);
         this.tableName = tableName;
-        store = storeFactory.createStore();
+        store = storeFactory.createStore(tableName);
         table = store.openTable(this.tableName);
     }
 
@@ -96,7 +96,7 @@ public class HandlerProxy {
         Verify.isNotNullOrEmpty(newName, "New table name must have value.");
         checkArgument(!originalName.equals(newName), "New table name must be different than original.");
 
-        Store store = storeFactory.createStore();
+        Store store = storeFactory.createStore(originalName);
         store.renameTable(originalName, newName);
         tableName = newName;
     }

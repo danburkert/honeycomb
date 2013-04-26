@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
-import com.google.inject.name.Named;
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.config.ConfigConstants;
@@ -14,8 +13,9 @@ import com.nearinfinity.honeycomb.hbase.rowkey.DataRowKey;
 import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowKey;
 import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowKeyBuilder;
 import com.nearinfinity.honeycomb.hbase.rowkey.SortOrder;
-import com.nearinfinity.honeycomb.mysql.*;
+import com.nearinfinity.honeycomb.mysql.QueryKey;
 import com.nearinfinity.honeycomb.mysql.Row;
+import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
@@ -36,7 +36,7 @@ public class HBaseTable implements Table {
     private final HBaseStore store;
     private final long tableId;
     private final MutationFactory mutationFactory;
-    private long writeBufferSize = ConfigConstants.DEFAULT_WRITE_BUFFER_SIZE;
+    private long writeBufferSize = ConfigConstants.DEFAULT_WRITE_BUFFER;
 
     @Inject
     public HBaseTable(HTableInterface hTable, HBaseStore store, @Assisted Long tableId) {
@@ -45,11 +45,6 @@ public class HBaseTable implements Table {
         this.store = checkNotNull(store);
         this.tableId = tableId;
         this.mutationFactory = new MutationFactory(store);
-    }
-
-    @Inject
-    public void setWriterBufferSize(final @Named(ConfigConstants.PROP_WRITE_BUFFER_SIZE) Long bufferSize) {
-        writeBufferSize = bufferSize;
     }
 
     @Override

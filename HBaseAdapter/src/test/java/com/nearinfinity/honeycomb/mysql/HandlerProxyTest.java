@@ -34,7 +34,7 @@ public class HandlerProxyTest {
 
     @Test
     public void testRenameTable() throws Exception {
-        when(storeFactory.createStore()).thenReturn(storageMock);
+        when(storeFactory.createStore(DUMMY_TABLE_NAME)).thenReturn(storageMock);
         when(storageMock.openTable(anyString())).thenReturn(tableMock);
 
         final String renamedTableName = "bar/baz";

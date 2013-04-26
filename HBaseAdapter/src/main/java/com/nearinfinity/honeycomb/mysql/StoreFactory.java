@@ -2,34 +2,36 @@ package com.nearinfinity.honeycomb.mysql;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import com.google.inject.name.Named;
 import com.nearinfinity.honeycomb.Store;
-import com.nearinfinity.honeycomb.config.Constants;
-import com.nearinfinity.honeycomb.exceptions.StoreNotFoundException;
-import com.nearinfinity.honeycomb.util.Verify;
+import com.nearinfinity.honeycomb.config.HoneycombConfiguration;
+import com.nearinfinity.honeycomb.config.StoreType;
 
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class StoreFactory {
-    private final String defaultTableSpace;
-    private final Map<String, Provider<Store>> storeMap;
+    private final Map<StoreType, Provider<Store>> storeProviders;
+    private final HoneycombConfiguration configuration;
 
     @Inject
-    public StoreFactory(Map<String, Provider<Store>> storeMap, @Named(Constants.DEFAULT_TABLESPACE) String defaultTableSpace) {
+    public StoreFactory(Map<StoreType, Provider<Store>> storeMap, HoneycombConfiguration configuration) {
         checkNotNull(storeMap);
-        Verify.isNotNullOrEmpty(defaultTableSpace);
+        checkNotNull(configuration);
 
-        this.storeMap = storeMap;
-        this.defaultTableSpace = defaultTableSpace;
+        this.storeProviders = storeMap;
+        this.configuration = configuration;
     }
 
-    public Store createStore() {
-        Provider<Store> storeProvider = this.storeMap.get(defaultTableSpace);
-        if (storeProvider == null) {
-            throw new StoreNotFoundException(defaultTableSpace);
+    public Store createStore(String tableName) {
+        if (databaseName(tableName).equals(StoreType.MEMORY.getName())) {
+            return storeProviders.get(StoreType.MEMORY).get();
+        } else {
+            return storeProviders.get(StoreType.HBASE).get();
         }
-        return storeProvider.get();
+    }
+
+    private static String databaseName(String tableName) {
+        return tableName.substring(0, tableName.indexOf("/"));
     }
 }
