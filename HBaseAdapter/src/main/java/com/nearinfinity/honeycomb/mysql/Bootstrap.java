@@ -7,6 +7,7 @@ import com.nearinfinity.honeycomb.config.ConfigurationParser;
 import com.nearinfinity.honeycomb.config.HoneycombConfiguration;
 import com.nearinfinity.honeycomb.config.AdaptorType;
 import com.nearinfinity.honeycomb.hbase.HBaseModule;
+import com.nearinfinity.honeycomb.memory.MemoryModule;
 import com.nearinfinity.honeycomb.util.Verify;
 import org.apache.log4j.Appender;
 import org.apache.log4j.FileAppender;
@@ -86,6 +87,11 @@ public final class Bootstrap extends AbstractModule {
                 logger.fatal("Failure during HBase initialization.", e);
                 throw new RuntimeException(e);
             }
+        }
+
+        if (configuration.isAdapterConfigured(AdaptorType.MEMORY.getName())) {
+            MemoryModule memoryModule = new MemoryModule(configuration.getAdapterOptions(AdaptorType.HBASE.getName()));
+            install(memoryModule);
         }
     }
 }
