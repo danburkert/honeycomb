@@ -39,8 +39,6 @@ TEST_F(IndexSchemaTest, AddColumn)
 {
   ASSERT_FALSE(schema.reset());
   ASSERT_FALSE(schema.add_column("foobar"));
-  const char* str;
-  size_t len;
   ASSERT_STREQ("foobar", schema.get_column(0));
 };
 
@@ -61,7 +59,6 @@ void rand_columns_add(IndexSchema* schema)
     ASSERT_FALSE(schema->add_column(column_names[i]));
   }
 
-  const char* val;
   for (int i = 0; i < num_columns; i++)
   {
     ASSERT_STREQ(column_names[i], schema->get_column(i));

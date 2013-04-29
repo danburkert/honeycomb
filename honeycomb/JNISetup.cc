@@ -4,6 +4,7 @@
 #include "JavaFrame.h"
 #include "Settings.h"
 #include <jni.h>
+#include <my_pthread.h>
 
 static __thread int thread_attach_count=0;
 static JavaVMAttachArgs attach_args = {JNI_VERSION_1_6, NULL, NULL};
@@ -81,13 +82,17 @@ static void log_java_classpath(JNIEnv* env)
  */
 extern bool volatile abort_loop;
 #if defined(__APPLE__)
+extern "C" pthread_attr_t connection_attrib;
 extern "C" pthread_handler_t kill_server_thread(void *arg __attribute__((unused)));
 static void handler(int sig)
 {
   abort_loop = true;
   pthread_t tmp;
   if (mysql_thread_create(0, &tmp, &connection_attrib, kill_server_thread, (void*) &sig))
-    sql_print_error("Can't create thread to kill server");
+  {
+    fprintf(stderr, "Can't create thread to kill server. Exiting the hard way.\n");
+    exit(0);
+  }
 }
 #elif defined(__linux__)
 extern void kill_mysql(void);
