@@ -27,18 +27,11 @@ public class TableCreator {
         HTableDescriptor tableDescriptor;
         try {
             HBaseAdmin.checkHBaseAvailable(configuration);
-        } catch (RuntimeException e) {
-            if (e.getCause() instanceof MasterNotRunningException) {
-                logger.fatal(String.format("HMaster doesn't appear to be running. Zookeeper quorum: %s", configuration.get("hbase.zookeeper.quorum")), e);
-            } else if (e.getCause() instanceof ZooKeeperConnectionException) {
-                logger.fatal("Failed to connect to zookeeper when checking HBase. Zookeeper quorum: " + configuration.get("hbase.zookeeper.quorum"), e);
-            }
-            throw e;
         } catch (MasterNotRunningException e) {
-            logger.fatal("HMaster doesn't appear to be running.", e);
+            logger.fatal(String.format("HMaster doesn't appear to be running. Zookeeper quorum: %s", configuration.get("hbase.zookeeper.quorum")), e);
             throw e;
         } catch (ZooKeeperConnectionException e) {
-            logger.fatal("Failed to connect to zookeeper when checking HBase.", e);
+            logger.fatal("Failed to connect to zookeeper when checking HBase. Zookeeper quorum: " + configuration.get("hbase.zookeeper.quorum"), e);
             throw e;
         }
 
