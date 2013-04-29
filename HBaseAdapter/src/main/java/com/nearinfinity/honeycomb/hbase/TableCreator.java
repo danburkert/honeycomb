@@ -19,7 +19,6 @@ public class TableCreator {
     /**
      * Creates a table in HBase to store all Honeycomb tables
      *
-     *
      * @param configuration Configuration of the HTable
      * @throws IOException
      */
@@ -29,10 +28,10 @@ public class TableCreator {
         try {
             HBaseAdmin.checkHBaseAvailable(configuration);
         } catch (MasterNotRunningException e) {
-            logger.fatal("HMaster doesn't appear to be running.", e);
+            logger.fatal(String.format("HMaster doesn't appear to be running. Zookeeper quorum: %s", configuration.get("hbase.zookeeper.quorum")), e);
             throw e;
         } catch (ZooKeeperConnectionException e) {
-            logger.fatal("Failed to connect to zookeeper when checking HBase.", e);
+            logger.fatal("Failed to connect to zookeeper when checking HBase. Zookeeper quorum: " + configuration.get("hbase.zookeeper.quorum"), e);
             throw e;
         }
 
