@@ -6,9 +6,15 @@
             [nearinfinity.clj-faker.phone :as phone]
             )
   (:gen-class))
+(def id-gen (atom 0))
+
+(defn next-id []
+  (let [next @id-gen]
+    (swap! id-gen inc)))
 
 (defn gen-fake [column]
   (condp = column
+    :id (next-id)
     :name (name/name)
     :first-name (name/first-name)
     :last-name (name/last-name)
