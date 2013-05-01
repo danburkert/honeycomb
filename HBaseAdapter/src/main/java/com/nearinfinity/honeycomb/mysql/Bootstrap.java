@@ -3,11 +3,11 @@ package com.nearinfinity.honeycomb.mysql;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Module;
+import com.nearinfinity.honeycomb.config.AdaptorType;
 import com.nearinfinity.honeycomb.config.ConfigurationParser;
 import com.nearinfinity.honeycomb.config.HoneycombConfiguration;
-import com.nearinfinity.honeycomb.config.AdaptorType;
 import com.nearinfinity.honeycomb.hbase.HBaseModule;
-import com.nearinfinity.honeycomb.memory.MemoryModule;
 import com.nearinfinity.honeycomb.util.Verify;
 import org.apache.log4j.Appender;
 import org.apache.log4j.FileAppender;
@@ -15,7 +15,9 @@ import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.util.Enumeration;
+import java.util.Map;
 
 
 public final class Bootstrap extends AbstractModule {
@@ -90,8 +92,16 @@ public final class Bootstrap extends AbstractModule {
         }
 
         if (configuration.isAdapterConfigured(AdaptorType.MEMORY.getName())) {
-            MemoryModule memoryModule = new MemoryModule(configuration.getAdapterOptions(AdaptorType.HBASE.getName()));
-            install(memoryModule);
+            try {
+                Class memoryModuleClass = Class.forName("com.nearinfinity.honeycomb.memory.MemoryModule");
+                Constructor memoryModuleCTor = memoryModuleClass.getConstructor(Map.class);
+                Object memoryModule = memoryModuleCTor.newInstance(configuration.getAdapterOptions(AdaptorType.MEMORY.getName()));
+                install((Module) memoryModule);
+            } catch (ClassNotFoundException e) {
+                logger.error("The memory adaptor is configured, but could not be found on the classpath.");
+            } catch (Exception e) {
+                logger.error("Exception while attempting to reflect on the memory adaptor.", e);
+            }
         }
     }
 }

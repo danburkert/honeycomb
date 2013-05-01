@@ -20,7 +20,7 @@
   (let [map-binder (MapBinder/newMapBinder (.binderSuper this) AdaptorType Store)
         memory-store (mem-store/memory-store)]
     (-> map-binder
-        (.addBinding AdaptorType/HBASE)
+        (.addBinding AdaptorType/MEMORY)
         (.to com.nearinfinity.honeycomb.memory.memory_store.MemoryStore))
     (-> this
         (.bindSuper com.nearinfinity.honeycomb.memory.memory_store.MemoryStore)
