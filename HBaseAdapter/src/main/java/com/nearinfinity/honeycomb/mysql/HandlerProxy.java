@@ -363,7 +363,7 @@ public class HandlerProxy {
                 throw new IllegalArgumentException(format("Not a supported type of query %s", queryType));
         }
 
-    }
+      }
 
     public byte[] getNextRow() {
         checkNotNull(currentScanner, "Scanner cannot be null to get next row.");

@@ -1,28 +1,28 @@
-autoincrement :
-bigint :
-binary :
-char :
-date :
-datetime :
-decimal :
-double :
-encoding_collation :
-enum :
-explain :
-float :
-foreign_key :
-group_by :
+autoincrement : foo
+bigint : foo
+binary : foo
+char : foo
+date : foo
+datetime : foo
+decimal : foo
+double : foo
+encoding_collation : foo
+enum : foo
+explain : foo
+float : foo
+foreign_key : foo
+group_by : foo
 int :
-issues :
-join_del_upd :
-joins :
-mediumint :
-partition:
-primary_key :
-smallint :
-time :
-timestamp :
-tinyint :
-varbinary :
-varchar :
-year :
+issues : foo
+join_del_upd : foo
+joins : foo
+mediumint : foo
+partition: foo
+primary_key : foo
+smallint : foo
+time : foo
+timestamp : foo
+tinyint : foo
+varbinary : foo
+varchar : foo
+year : foo

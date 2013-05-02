@@ -1,6 +1,7 @@
 (ns com.nearinfinity.honeycomb.memory.memory-store
   (:require [com.nearinfinity.honeycomb.memory.memory-table :as table])
   (:import [com.nearinfinity.honeycomb Store Table]
+           [com.nearinfinity.honeycomb.mysql.schema TableSchema]
            [com.nearinfinity.honeycomb.exceptions TableNotFoundException]))
 
 (defrecord MemoryStore [metadata tables]
@@ -48,14 +49,16 @@
   (addIndex [this table-name index-schema]
     (dosync
       (.getSchema this table-name) ;; check table exists
-      (alter metadata update-in [table-name :schema] #(doto (.schemaCopy %)
-                                                          (.addIndices [index-schema])))))
+      (alter metadata update-in [table-name :schema] (fn [^TableSchema schema]
+                                                       (doto (.schemaCopy schema)
+                                                         (.addIndices [index-schema]))))))
 
   (dropIndex [this table-name index-name]
     (dosync
       (.getSchema this table-name) ;; check table exists
-      (alter metadata update-in [table-name :schema] #(doto (.schemaCopy %)
-                                                          (.removeIndex index-name)))))
+      (alter metadata update-in [table-name :schema] (fn [^TableSchema schema]
+                                                       (doto (.schemaCopy schema)
+                                                         (.removeIndex index-name))))))
 
   (getAutoInc [this table-name]
     (if-let [table-metadata (get @metadata table-name)]

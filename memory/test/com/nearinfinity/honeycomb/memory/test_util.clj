@@ -17,7 +17,7 @@
       (.putDouble n)
       .rewind))
 
-(defn string-bb [s]
+(defn string-bb [^String s]
   (-> s .getBytes ByteBuffer/wrap))
 
 (defn create-index-schema
@@ -43,6 +43,9 @@
 
 (defn create-query-key [index-name & {:as keys}]
   (QueryKey. index-name QueryType/EXACT_KEY keys))
+
+(defn row->query-key [index-name row]
+  (QueryKey. index-name QueryType/EXACT_KEY (.getRecords row)))
 
 (defn count-results [scan]
   (count @(:rows scan)))

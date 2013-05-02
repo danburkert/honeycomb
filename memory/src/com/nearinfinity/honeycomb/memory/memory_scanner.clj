@@ -1,5 +1,6 @@
 (ns com.nearinfinity.honeycomb.memory.memory-scanner
-  (:import [com.nearinfinity.honeycomb Scanner]))
+  (:import [com.nearinfinity.honeycomb Scanner]
+           [com.nearinfinity.honeycomb.mysql Row]))
 
 (defrecord MemoryScanner [rows]
   java.io.Closeable
@@ -13,7 +14,7 @@
     (not (empty? @rows)))
 
   (next [this] ;; NOT THREAD SAFE
-    (let [next (first @rows)]
+    (let [^Row next (first @rows)]
       (swap! rows rest)
       (.serialize  next)))
 

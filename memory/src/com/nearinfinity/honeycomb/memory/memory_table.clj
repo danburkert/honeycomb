@@ -1,22 +1,24 @@
 (ns com.nearinfinity.honeycomb.memory.memory-table
   (:require [com.nearinfinity.honeycomb.memory.memory-scanner :refer :all])
   (:import [java.util UUID]
-           [com.nearinfinity.honeycomb Table]
+           [com.nearinfinity.honeycomb Store Table]
+           [com.nearinfinity.honeycomb.mysql.schema TableSchema IndexSchema]
            [com.nearinfinity.honeycomb.exceptions RowNotFoundException]
-           [com.nearinfinity.honeycomb.mysql Row]
+           [com.nearinfinity.honeycomb.mysql Row QueryKey]
            [com.nearinfinity.honeycomb.mysql.gen ColumnType QueryType]
-           [com.google.common.primitives UnsignedBytes]))
+           [com.google.common.primitives UnsignedBytes]
+           [java.nio ByteBuffer]))
 
 (defn- query-key->row-after
   "Takes a query key and returns the row that would fall directly after the
    query key in sorted order."
-  [query-key]
+  [^QueryKey query-key]
   (Row. (.getKeys query-key) (UUID. (Long/MAX_VALUE) (Long/MAX_VALUE))))
 
 (defn- query-key->row-before
   "Takes a query key and returns the row that would fall directly before the
    query key in sorted order."
-  [query-key]
+  [^QueryKey query-key]
   (Row. (.getKeys query-key) (UUID. (Long/MIN_VALUE) (Long/MIN_VALUE))))
 
 (defn- update-indices
@@ -28,11 +30,11 @@
           indices
           (keys indices)))
 
-(defn- row-uuid-comparator [row1 row2]
+(defn- row-uuid-comparator [^Row row1 ^Row row2]
   (compare (.getUUID row1)
            (.getUUID row2)))
 
-(defn- field-comparator [column-type field1 field2]
+(defn- field-comparator [column-type ^ByteBuffer field1 ^ByteBuffer field2]
   (if (or (nil? field1) (nil? field2))
     (if (and (nil? field1) (nil? field2))
       0
@@ -43,10 +45,16 @@
                          (.rewind field1)
                          (.rewind field2)
                          comparison)
-      ColumnType/TIME  (compare (.getLong field1)
-                                (.getLong field2))
-      ColumnType/DOUBLE (compare (.getDouble field1)
-                                 (.getDouble field2))
+      ColumnType/TIME  (let [comparison (compare (.getLong field1)
+                                                 (.getLong field2))]
+                         (.rewind field1)
+                         (.rewind field2)
+                         comparison)
+      ColumnType/DOUBLE (let [comparison (compare (.getDouble field1)
+                                                  (.getDouble field2))]
+                          (.rewind field1)
+                          (.rewind field2)
+                          comparison)
       (let [comparator (UnsignedBytes/lexicographicalComparator)
             bytes1 (.array field1)
             bytes2 (.array field2)]
@@ -55,14 +63,14 @@
 (defn- schema->row-index-comparator
   "Takes an index name and a table schema, and returns a comparator which takes
    two rows and compares them on their fields in index order, and finally, by UUID."
-  [index-name table-schema]
+  [index-name ^TableSchema table-schema]
   (let [index-schema (.getIndexSchema table-schema index-name)
         column-names (.getColumns index-schema)
         column-types (map (fn [column-name]
                             (-> table-schema (.getColumnSchema column-name) .getType))
                           column-names)
         column-names-types (map vector column-names column-types)]
-    (fn [row1 row2]
+    (fn [^Row row1 ^Row row2]
       (let [fields1 (.getRecords row1)
             fields2 (.getRecords row2)
             compare-reducer (fn [comparison [column-name column-type]]
@@ -83,7 +91,7 @@
 ;; Memory table holds a reference to a store, its table name, a ref which contains
 ;; a sorted set of its rows, and an indices ref which holds a map of index name to
 ;; sorted set of rows.
-(deftype MemoryTable [store table-name rows indices]
+(deftype MemoryTable [^Store store table-name rows indices]
   java.io.Closeable
 
   (close [this]
@@ -130,13 +138,15 @@
       (throw (RowNotFoundException. uuid))))
 
   (tableScan [this]
-    (->MemoryScanner (atom @rows)))
+    (->MemoryScanner (atom (seq @rows))))
 
   (ascendingIndexScanAt [this key]
-    (let [index-name (.getIndexName key)
-          start-row (query-key->row-before key)
-          rows (subseq (get @indices index-name) >= start-row)]
-      (->MemoryScanner (atom rows))))
+    (let [index-name (.getIndexName key)]
+      (if (= (.getQueryType key) QueryType/INDEX_FIRST)
+        (->MemoryScanner (atom (seq (get @indices index-name))))
+        (let [start-row (query-key->row-before key)
+              rows (subseq (get @indices index-name) >= start-row)]
+          (->MemoryScanner (atom rows))))))
 
   (ascendingIndexScanAfter [this key]
     (let [index-name (.getIndexName key)
@@ -145,10 +155,12 @@
       (->MemoryScanner (atom rows))))
 
   (descendingIndexScanAt [this key]
-    (let [index-name (.getIndexName key)
-          start-row (query-key->row-after key)
-          rows (rsubseq (get @indices index-name) <= start-row)]
-      (->MemoryScanner (atom rows))))
+    (let [index-name (.getIndexName key)]
+      (if (= (.getQueryType key) QueryType/INDEX_LAST)
+        (->MemoryScanner (atom (rseq (get @indices index-name))))
+        (let [start-row (query-key->row-after key)
+              rows (rsubseq (get @indices index-name) <= start-row)]
+          (->MemoryScanner (atom rows))))))
 
   (descendingIndexScanAfter [this key]
     (let [index-name (.getIndexName key)
@@ -168,8 +180,8 @@
       (alter rows empty)
       (alter indices update-indices empty))))
 
-(defn memory-table [store table-name table-schema]
-  (let [add-index (fn [indices index]
+(defn memory-table [store table-name ^TableSchema table-schema]
+  (let [add-index (fn [indices ^IndexSchema index]
                     (let [index-name (.getIndexName index)]
                       (assoc indices
                              index-name
@@ -183,89 +195,28 @@
 
 (comment
 
-  (import [com.nearinfinity.honeycomb Table]
-          [com.nearinfinity.honeycomb.mysql Row]
-          [com.nearinfinity.honeycomb.mysql.gen ColumnType]
-          [com.nearinfinity.honeycomb.mysql.schema ColumnSchema ColumnSchema$Builder IndexSchema TableSchema]
-          [java.nio ByteBuffer]
-          [java.util UUID])
-
-  (defn- long-bb [n]
-    (-> (ByteBuffer/allocate 8)
-        (.putLong n)
-        .rewind))
-
-  (defn- double-bb [n]
-    (-> (ByteBuffer/allocate 8)
-        (.putDouble n)
-        .rewind))
-
-  (defn- string-bb [s]
-    (-> s .getBytes ByteBuffer/wrap))
-
-  (defn- create-schema [columns indices]
-    (let [create-column (fn [{:keys [name type nullable autoincrement max-length scale precision]}]
-                          (cond-> (ColumnSchema$Builder. name type)
-                            (not nullable) (.setIsNullable true)
-                            autoincrement (.setIsAutoIncrement true)
-                            max-length (.setMaxLength max-length)
-                            scale (.setScale scale)
-                            precision (.setPrecision precision)
-                            true .build))
-          create-index (fn [{:keys [name columns unique] :or {unique false}}]
-                         (IndexSchema. name columns unique))]
-      (TableSchema. (map create-column columns)
-                    (map create-index indices))))
+  (use 'com.nearinfinity.honeycomb.memory.test-util)
+  (use 'com.nearinfinity.honeycomb.memory.memory-store)
 
   (defn- table []
-    (let [store (com.nearinfinity.honeycomb.memory.memory-store/memory-store)
+    (let [store (memory-store)
           table-name "t1"
           table-schema (create-schema [{:name "c1" :type ColumnType/LONG}]
                                       [{:name "i1" :columns ["c1"]}])]
       (.createTable store table-name table-schema)
       (.openTable store table-name)))
 
-  (defn- row [& {:keys [n] :or {n (rand-int 1000)}}]
-    (com.nearinfinity.honeycomb.mysql.Row. {"c1" (long-bb n)}
-                                           (java.util.UUID/randomUUID)))
+  (defn- row [] (create-row "c1" (long-bb (rand-int 10000000))))
 
-  (defn- row->query-key [index-name row]
-    (com.nearinfinity.honeycomb.mysql.QueryKey. index-name
-                                                QueryType/EXACT_KEY
-                                                (.getRecords row)))
+  (let [table (table)
+        rows [(row)]]
+    (doseq [row rows] (.insert table row))
+    (.ascendingIndexScanAt table (row->query-key "i1" (get rows 0))))
 
-  (let [table (table)]
-    (.insert table (row))
-    table
-    )
+  (row->query-key "i1" (row))
 
-  (let [table (table)]
-    (.insert table (row))
-    (.insert table (row))
-    (.insert table (row))
-    (.tableScan table))
+(let [table (table)
+      rows [(row)]]
+  (.indexScanExact table (row->query-key "i1" (first rows))))
 
-  (let [table (table)]
-    (.insert table (row :n 1))
-    (.insert table (row :n 2))
-    (.insert table (row :n 3))
-    (.insert table (row :n 4))
-    (.insert table (row :n 5))
-    (let [
-          ;scan (.ascendingIndexScanAfter table (row->query-key "i1" (row :n 2)))
-          scan (.tableScan table)
-          ]
-      (prn (.next scan))
-      (prn (.next scan))
-      (prn (.next scan))
-      (prn (.next scan))
-      (prn (.next scan))
-      (prn (.next scan))
-      (prn (.next scan))
-      ))
-
-  (let [rows (atom [1 2 3 4 5])]
-    (swap! rows rest)
-    @rows
-    )
   )
