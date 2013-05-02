@@ -1,50 +1,12 @@
 (ns com.nearinfinity.honeycomb.memory.memory-table-test
   (:require [clojure.test :refer :all]
+            [com.nearinfinity.honeycomb.memory.test-util :refer :all]
             [com.nearinfinity.honeycomb.memory.memory-table :refer :all]
             [com.nearinfinity.honeycomb.memory.memory-store :as store])
-  (:import [com.nearinfinity.honeycomb Table]
-           [com.nearinfinity.honeycomb.exceptions RowNotFoundException]
-           [com.nearinfinity.honeycomb.mysql Row QueryKey]
-           [com.nearinfinity.honeycomb.mysql.gen ColumnType QueryType]
-           [com.nearinfinity.honeycomb.mysql.schema ColumnSchema ColumnSchema$Builder IndexSchema TableSchema]
-           [java.nio ByteBuffer]
+  (:import [com.nearinfinity.honeycomb.exceptions RowNotFoundException]
+           [com.nearinfinity.honeycomb.mysql Row]
+           [com.nearinfinity.honeycomb.mysql.gen ColumnType]
            [java.util UUID]))
-
-(defn- long-bb [n]
-  (-> (ByteBuffer/allocate 8)
-      (.putLong n)
-      .rewind))
-
-(defn- double-bb [n]
-  (-> (ByteBuffer/allocate 8)
-      (.putDouble n)
-      .rewind))
-
-(defn- string-bb [s]
-  (-> s .getBytes ByteBuffer/wrap))
-
-(defn- create-schema [columns indices]
-  (let [create-column (fn [{:keys [name type nullable autoincrement max-length scale precision]}]
-                        (cond-> (ColumnSchema$Builder. name type)
-                          (not nullable) (.setIsNullable true)
-                          autoincrement (.setIsAutoIncrement true)
-                          max-length (.setMaxLength max-length)
-                          scale (.setScale scale)
-                          precision (.setPrecision precision)
-                          true .build))
-        create-index (fn [{:keys [name columns unique] :or {unique false}}]
-                       (IndexSchema. name columns unique))]
-    (TableSchema. (map create-column columns)
-                  (map create-index indices))))
-
-(defn- create-row [& {:as fields}]
-  (Row. fields (UUID/randomUUID)))
-
-(defn- create-query-key [index-name & {:as keys}]
-  (QueryKey. index-name QueryType/EXACT_KEY keys))
-
-(defn- count-results [scan]
-  (count @(:rows scan)))
 
 
 (def ^:private field-comparator
@@ -250,7 +212,7 @@
 (deftest add-index
   (let [table-name "t1"
         table-schema (create-schema [{:name "c1" :type ColumnType/LONG}] nil)
-        index-schema (IndexSchema. "i1" ["c1"] false)
+        index-schema (create-index-schema {:name "i1" :columns ["c1"] :unique false})
         store (store/memory-store)
         _ (.createTable store table-name table-schema)
         table (.openTable store table-name)
@@ -262,7 +224,7 @@
       (is (= (count-results (.tableScan table)) (count rows)))
       (.addIndex store "t1" index-schema)
       (.insertTableIndex table index-schema)
-      (is (= (count-results (.ascendingIndexScanAt (create-query-key "i1" "c1" (long-bb 0))))
+      (is (= (count-results (.ascendingIndexScanAt table (create-query-key "i1" "c1" (long-bb 0))))
              (count rows))))))
 
 (run-tests)

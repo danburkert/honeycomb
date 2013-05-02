@@ -84,6 +84,13 @@
 ;; a sorted set of its rows, and an indices ref which holds a map of index name to
 ;; sorted set of rows.
 (deftype MemoryTable [store table-name rows indices]
+  java.io.Closeable
+
+  (close [this]
+    (dosync
+      (ref-set rows nil)
+      (ref-set indices nil)))
+
   Table
 
   (insert [this row]
@@ -96,7 +103,7 @@
       (let [rows (ensure rows)
             table-schema (.getSchema store table-name)
             index-name (.getIndexName index-schema)]
-        (commute indices assoc index-name
+        (alter indices assoc index-name
                  (into (sorted-set-by
                          (schema->row-index-comparator index-name table-schema))
                        rows)))))
@@ -108,12 +115,12 @@
 
   (delete [this row]
     (dosync
-      (commute rows disj row)
-      (commute indices update-indices disj row)))
+      (alter rows disj row)
+      (alter indices update-indices disj row)))
 
   (deleteTableIndex [this index-schema]
     (dosync
-      (commute indices dissoc (.getIndexName index-schema))))
+      (alter indices dissoc (.getIndexName index-schema))))
 
   (flush [this])
 
@@ -158,8 +165,8 @@
 
   (deleteAllRows [this]
     (dosync
-      (commute rows empty)
-      (commute indices update-indices empty))))
+      (alter rows empty)
+      (alter indices update-indices empty))))
 
 (defn memory-table [store table-name table-schema]
   (let [add-index (fn [indices index]

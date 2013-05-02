@@ -14,14 +14,14 @@
   (createTable [this table-name schema]
     (dosync
       (let [table (table/memory-table this table-name schema)]
-        (commute tables assoc table-name table)
-        (commute metadata assoc table-name {:rows 0 :autoincrement 0 :schema schema}))))
+        (alter tables assoc table-name table)
+        (alter metadata assoc table-name {:rows 0 :autoincrement 0 :schema schema}))))
 
   (deleteTable [this table-name]
     (dosync
-      (when (.openTable this table-name) ;; check table exists
-        (commute tables dissoc table-name)
-        (commute metadata assoc table-name))))
+      (.openTable this table-name) ;; check table exists
+      (alter tables dissoc table-name)
+      (alter metadata dissoc table-name)))
 
   (renameTable [this cur-table-name new-table-name]
     (dosync
@@ -29,15 +29,15 @@
             table-metadata (get (ensure metadata) cur-table-name)]
         (if (and table table-metadata)
           (do
-            (commute tables assoc new-table-name table)
-            (commute metadata assoc new-table-name table-metadata)
-            (commute tables dissoc cur-table-name)
-            (commute metadata dissoc cur-table-name))
+            (alter tables assoc new-table-name table)
+            (alter metadata assoc new-table-name table-metadata)
+            (alter tables dissoc cur-table-name)
+            (alter metadata dissoc cur-table-name))
           (throw (TableNotFoundException. cur-table-name))))))
 
   ;; getSchema needs the dosync because it is called during other transactions
   ;; that need the ensure in order to make sure the table's schema does not
-  ;; change out from under them (ex. addIndex).
+  ;; change out from under them.
   (getSchema [this table-name]
     (dosync
       (if-let [table-metadata (get (ensure metadata) table-name)]
@@ -47,19 +47,15 @@
 
   (addIndex [this table-name index-schema]
     (dosync
-      (let [table-schema (.. this
-                             (getSchema table-name)
-                             (schemaCopy)
-                             (addIndices [index-schema]))]
-        (commute metadata assoc table-name table-schema))))
+      (.getSchema this table-name) ;; check table exists
+      (alter metadata update-in [table-name :schema] #(doto (.schemaCopy %)
+                                                          (.addIndices [index-schema])))))
 
   (dropIndex [this table-name index-name]
     (dosync
-      (let [table-schema (.. this
-                             (getSchema table-name)
-                             (schemaCopy)
-                             (removeIndex index-name))]
-        (commute metadata assoc table-name table-schema))))
+      (.getSchema this table-name) ;; check table exists
+      (alter metadata update-in [table-name :schema] #(doto (.schemaCopy %)
+                                                          (.removeIndex index-name)))))
 
   (getAutoInc [this table-name]
     (if-let [table-metadata (get @metadata table-name)]
@@ -69,20 +65,20 @@
   (setAutoInc [this table-name value]
     (dosync
       (if (contains? (ensure metadata) table-name)
-        (commute metadata update-in [table-name :autoincrement] max value)
+        (alter metadata update-in [table-name :autoincrement] max value)
         (throw (TableNotFoundException. table-name)))))
 
   (incrementAutoInc [this table-name amount]
     (dosync
       (if (contains? (ensure metadata) table-name)
-        (get-in (commute metadata update-in [table-name :autoincrement] + amount)
-                [table-name :autoincrement])
+        (-> (alter metadata update-in [table-name :autoincrement] + amount)
+            (get-in [table-name :autoincrement]))
         (throw (TableNotFoundException. table-name)))))
 
   (truncateAutoInc [this table-name]
     (dosync
       (if (contains? (ensure metadata) table-name)
-        (commute metadata assoc-in [table-name :autoincrement] 0)
+        (alter metadata assoc-in [table-name :autoincrement] 0)
         (throw (TableNotFoundException. table-name)))))
 
   (getRowCount [this table-name]
@@ -93,46 +89,15 @@
   (incrementRowCount [this table-name amount]
     (dosync
       (if (contains? (ensure metadata) table-name)
-        (commute metadata update-in [table-name :rows] + amount)
+        (-> (alter metadata update-in [table-name :rows] + amount)
+            (get-in [table-name :rows]))
         (throw (TableNotFoundException. table-name)))))
 
   (truncateRowCount [this table-name]
     (dosync
       (if (contains? (ensure metadata) table-name)
-        (commute metadata assoc-in [table-name :rows] 0)
+        (alter metadata assoc-in [table-name :rows] 0)
         (throw (TableNotFoundException. table-name))))))
 
 (defn memory-store []
   (->MemoryStore (ref {}) (ref {})))
-
-(comment
-  (defn- long-bb [n]
-    (-> (java.nio.ByteBuffer/allocate 8)
-        (.putLong n)
-        .rewind))
-
-  (defn- double-bb [n]
-    (-> (java.nio.ByteBuffer/allocate 8)
-        (.putDouble n)
-        .rewind))
-
-  (defn- string-bb [s]
-    (-> s .getBytes java.nio.ByteBuffer/wrap))
-
-  (defn- table-schema []
-    (let [column-schemas [(-> (com.nearinfinity.honeycomb.mysql.schema.ColumnSchema$Builder.
-                                "c1"
-                                com.nearinfinity.honeycomb.mysql.gen.ColumnType/LONG) .build)]
-          index-schemas []]
-      (com.nearinfinity.honeycomb.mysql.schema.TableSchema. column-schemas index-schemas)))
-
-  (defn- table []
-    (let [store (memory-store)
-          table-name "t1"
-          table-schema (table-schema)]
-      (.createTable store table-name table-schema)
-      (.openTable store table-name)))
-
-  (table)
-
-  )

@@ -4,16 +4,20 @@
 (defrecord MemoryScanner [rows]
   java.io.Closeable
 
-  (close [this])
+  (close [this]
+    (swap! rows (constantly nil)))
 
   java.util.Iterator
 
   (hasNext [this]
-    (seq @rows))
+    (not (empty? @rows)))
 
   (next [this] ;; NOT THREAD SAFE
     (let [next (first @rows)]
       (swap! rows rest)
-      next))
+      (.serialize  next)))
+
+  (remove [this]
+    (throw UnsupportedOperationException))
 
   Scanner)

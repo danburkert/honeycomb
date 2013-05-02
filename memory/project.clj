@@ -8,4 +8,5 @@
                  [com.google.guava/guava "14.0.1"]
                  [com.google.inject/guice "3.0"]
                  [com.google.inject.extensions/guice-multibindings "3.0"]]
+  :global-vars {*warn-on-reflection* true}
   :aot :all)

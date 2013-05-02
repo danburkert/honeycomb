@@ -24,11 +24,13 @@ public class StoreFactory {
     }
 
     public Store createStore(String tableName) {
-        if (databaseName(tableName).equals(AdaptorType.MEMORY.getName())) {
-            return storeProviders.get(AdaptorType.MEMORY).get();
-        } else {
-            return storeProviders.get(AdaptorType.HBASE).get();
-        }
+        return storeProviders.get(AdaptorType.MEMORY).get();
+
+//        if (databaseName(tableName).equals(AdaptorType.MEMORY.getName())) {
+//            return storeProviders.get(AdaptorType.MEMORY).get();
+//        } else {
+//            return storeProviders.get(AdaptorType.HBASE).get();
+//        }
     }
 
     private static String databaseName(String tableName) {
