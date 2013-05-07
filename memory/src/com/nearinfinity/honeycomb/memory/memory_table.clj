@@ -107,10 +107,7 @@
 (deftype MemoryTable [^Store store table-name rows indices]
   java.io.Closeable
 
-  (close [this]
-    (dosync
-      (ref-set rows nil)
-      (ref-set indices nil)))
+  (close [this])
 
   Table
 
@@ -186,7 +183,6 @@
   (indexScanExact [this key]
     (let [index-name (.getIndexName key)
           start-row (query-key->row-before key)
-          end-row (query-key->row-after key)
           rows (take-while (query-key->row-pred key)
                            (subseq (get @indices index-name) >= start-row))]
       (->MemoryScanner (atom rows))))
@@ -203,10 +199,11 @@
                              index-name
                              (sorted-set-by
                                (schema->row-index-comparator index-name table-schema)))))
+        rows (sorted-set-by row-uuid-comparator)
         indices (reduce add-index {} (.getIndices table-schema))]
     (->MemoryTable store
                    table-name
-                   (ref (sorted-set-by row-uuid-comparator))
+                   (ref rows)
                    (ref indices))))
 
 (comment
