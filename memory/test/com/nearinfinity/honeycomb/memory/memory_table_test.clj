@@ -227,4 +227,41 @@
       (is (= (count-results (.ascendingIndexScanAt table (create-query-key "i1" "c1" (long-bb 0))))
              (count rows))))))
 
+(deftest multi-column-index
+  (let [column-names ["c1" "c2"]
+        index-name "i1"
+        table-name "t1"
+        table-schema (create-schema [{:name (first column-names) :type ColumnType/LONG}
+                                     {:name (second column-names) :type ColumnType/LONG}]
+                                    [{:name index-name :columns column-names}])
+        store (store/memory-store)
+        _ (.createTable store table-name table-schema)
+        table (.openTable store table-name)
+        rows [(create-row (first column-names) (long-bb 0) (second column-names) (long-bb 0))
+              (create-row (first column-names) (long-bb 1) (second column-names) (long-bb 1))
+              (create-row (first column-names) (long-bb 2) (second column-names) (long-bb 2))
+              (create-row (first column-names) (long-bb 3) (second column-names) (long-bb 3))
+              (create-row (first column-names) (long-bb 4) (second column-names) (long-bb 4))
+              (create-row (first column-names) (long-bb 5) (second column-names) (long-bb 5))]]
+    (dorun (map #(.insert table %) rows))
+
+    (testing "table scan"
+      (is (every? (set rows) @(:rows (.tableScan table))))
+      (is (= (count-results (.tableScan table)) (count rows))))
+
+    (testing "ascending index scan at"
+      (let [query-key (create-query-key index-name (first column-names) (long-bb 2))]
+        (is (every? (set (nthnext rows 2)) @(:rows (.ascendingIndexScanAt table query-key))))
+        (is (= (count-results (.ascendingIndexScanAt table query-key)) 4))))
+
+    (testing "index scan exact"
+      (let [query-key (create-query-key index-name (first column-names) (long-bb 2))]
+        (is (every? (set [(nth rows 2)]) @(:rows (.indexScanExact table query-key))))
+        (is (= (count-results (.indexScanExact table query-key)) 1))))
+
+    (testing "descending scan at"
+      (let [query-key (create-query-key index-name (first column-names) (long-bb 2))]
+        (is (every? (set (take 3 rows)) @(:rows (.descendingIndexScanAt table query-key))))
+        (is (= (count-results (.descendingIndexScanAt table query-key)) 3))))))
+
 (run-tests)

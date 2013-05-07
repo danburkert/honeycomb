@@ -7,7 +7,8 @@
            [com.nearinfinity.honeycomb.mysql Row QueryKey]
            [com.nearinfinity.honeycomb.mysql.gen ColumnType QueryType]
            [com.google.common.primitives UnsignedBytes]
-           [java.nio ByteBuffer]))
+           [java.nio ByteBuffer]
+           [java.math BigInteger]))
 
 (defn- query-key->row-after
   "Takes a query key and returns the row that would fall directly after the
@@ -15,7 +16,7 @@
   [^QueryKey query-key]
   (Row. (.getKeys query-key) (UUID. (Long/MAX_VALUE) (Long/MAX_VALUE))))
 
-(defn- query-key->row-before
+(defn query-key->row-before
   "Takes a query key and returns the row that would fall directly before the
    query key in sorted order."
   [^QueryKey query-key]
@@ -83,6 +84,18 @@
         (if (zero? comparison)
           (row-uuid-comparator row1 row2)
           comparison)))))
+
+(defn- query-key->row-pred
+  "Takes a query-key and returns a predicate function that takes a row and returns
+   true when the query-key's records match the records in the row"
+  [^QueryKey query-key]
+  (let [keys (.getKeys query-key)]
+    (fn [^Row row]
+      (let [records (.getRecords row)]
+        (reduce (fn [result [column value]]
+                  (and result (= value (get records column))))
+                true
+                keys)))))
 
 ;; MemoryTable must use deftype instead of defrecord because
 ;; the Table protocol has a get method.
@@ -159,8 +172,10 @@
       (if (= (.getQueryType key) QueryType/INDEX_LAST)
         (->MemoryScanner (atom (rseq (get @indices index-name))))
         (let [start-row (query-key->row-after key)
-              rows (rsubseq (get @indices index-name) <= start-row)]
-          (->MemoryScanner (atom rows))))))
+              eq-rows (reverse (take-while (query-key->row-pred key)
+                                              (subseq (get @indices index-name) > start-row)))
+              lt-rows (rsubseq (get @indices index-name) <= start-row)]
+          (->MemoryScanner (atom (concat eq-rows lt-rows)))))))
 
   (descendingIndexScanAfter [this key]
     (let [index-name (.getIndexName key)
@@ -172,7 +187,8 @@
     (let [index-name (.getIndexName key)
           start-row (query-key->row-before key)
           end-row (query-key->row-after key)
-          rows (subseq (get @indices index-name) >= start-row <= end-row)]
+          rows (take-while (query-key->row-pred key)
+                           (subseq (get @indices index-name) >= start-row))]
       (->MemoryScanner (atom rows))))
 
   (deleteAllRows [this]
