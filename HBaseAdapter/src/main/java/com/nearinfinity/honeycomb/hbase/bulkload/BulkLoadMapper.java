@@ -12,8 +12,6 @@ import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.HTablePool;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
@@ -63,7 +61,10 @@ public class BulkLoadMapper
         checkNotNull(columns, SQL_COLUMNS + NOT_SET_ERROR);
         checkNotNull(hbaseTable, HBASE_TABLE + NOT_SET_ERROR);
 
-        final HTableInterface table = new HTable(conf, hbaseTable);
+        LOG.info("Zookeeper " + conf.get(HConstants.ZOOKEEPER_QUORUM));
+        LOG.info("SQL Table " + sqlTable);
+        LOG.info("HBase Table " + hbaseTable);
+
         final HTablePool pool = new HTablePool(conf, 1);
         HBaseMetadata metadata = new HBaseMetadata(new PoolHTableProvider(hbaseTable, pool));
         HBaseStore store = new HBaseStore(metadata, null, new MetadataCache(metadata));

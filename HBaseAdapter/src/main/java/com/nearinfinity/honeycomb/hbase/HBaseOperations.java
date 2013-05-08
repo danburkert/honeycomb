@@ -90,7 +90,9 @@ public class HBaseOperations {
         String configSettings = Objects.toStringHelper(configuration)
                 .add(HConstants.ZOOKEEPER_QUORUM, configuration.get(HConstants.ZOOKEEPER_QUORUM))
                 .toString();
-        logger.error(errorMessage + " " + configSettings, e);
-        return new RuntimeIOException(errorMessage, e);
+        final String hTableName = new String(hTable.getTableName());
+        String format = String.format("%s %s (HTable name %s)", errorMessage, configSettings, hTableName);
+        logger.error(format, e);
+        return new RuntimeIOException(format, e);
     }
 }
