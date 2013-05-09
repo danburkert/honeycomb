@@ -367,11 +367,10 @@ public class HandlerProxy {
 
     public byte[] getNextRow() {
         checkNotNull(currentScanner, "Scanner cannot be null to get next row.");
-        if (!currentScanner.hasNext()) {
+        byte[] next = currentScanner.next();
+        if (next == null)
             return null;
-        }
-
-        return Row.updateSerializedSchema(currentScanner.next());
+        return Row.updateSerializedSchema(next);
     }
 
     public byte[] getRow(byte[] uuid) {
