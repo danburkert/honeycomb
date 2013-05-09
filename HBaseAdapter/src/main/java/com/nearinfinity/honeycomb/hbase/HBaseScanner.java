@@ -33,7 +33,12 @@ public class HBaseScanner implements Scanner {
 
     @Override
     public byte[] next() {
-        return resultIterator.next().getValue(columnFamily, new byte[0]);
+        Result next = resultIterator.next();
+        if (next == null) {
+            return null;
+        }
+
+        return next.getValue(columnFamily, new byte[0]);
     }
 
     @Override
