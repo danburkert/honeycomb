@@ -147,6 +147,11 @@
     (testing "index scan exact"
       (let [query-key (create-query-key "i1" "c1" (long-bb 2))]
         (is (every? (set [(nth rows 2)]) @(:rows (.indexScanExact table query-key))))
+        (is (= (count-results (.indexScanExact table query-key)) 1))))
+
+    (testing "index scan exact with unused fields in query-key"
+      (let [query-key (create-query-key "i1" "c1" (long-bb 2) "foo" (long-bb 99))]
+        (is (every? (set [(nth rows 2)]) @(:rows (.indexScanExact table query-key))))
         (is (= (count-results (.indexScanExact table query-key)) 1))))))
 
 (deftest get-test

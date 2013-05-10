@@ -86,14 +86,18 @@
           comparison)))))
 
 (defn- query-key->row-pred
-  "Takes a query-key and returns a predicate function that takes a row and returns
-   true when the query-key's records match the records in the row"
-  [^QueryKey query-key]
-  (let [keys (.getKeys query-key)]
+  "Takes an index schema and query key and returns a predicate function that
+   takes a row and returns true when the query-key's records match the records
+   in the row.  Ignores any extraneous keys in the query-key."
+  [^IndexSchema index-schema ^QueryKey query-key]
+  (let [keys (.getKeys query-key)
+        column-set (set (.getColumns index-schema))]
     (fn [^Row row]
       (let [records (.getRecords row)]
         (reduce (fn [result [column value]]
-                  (and result (= value (get records column))))
+                  (if (column-set column)
+                    (and result (= value (get records column)))
+                    result))
                 true
                 keys)))))
 
@@ -168,9 +172,10 @@
     (let [index-name (.getIndexName key)]
       (if (= (.getQueryType key) QueryType/INDEX_LAST)
         (->MemoryScanner (atom (rseq (get @indices index-name))))
-        (let [start-row (query-key->row-after key)
-              eq-rows (reverse (take-while (query-key->row-pred key)
-                                              (subseq (get @indices index-name) > start-row)))
+        (let [index-schema (.. store (getSchema table-name) (getIndexSchema index-name))
+              start-row (query-key->row-after key)
+              eq-rows (reverse (take-while (query-key->row-pred index-schema key)
+                                           (subseq (get @indices index-name) > start-row)))
               lt-rows (rsubseq (get @indices index-name) <= start-row)]
           (->MemoryScanner (atom (concat eq-rows lt-rows)))))))
 
@@ -182,8 +187,9 @@
 
   (indexScanExact [this key]
     (let [index-name (.getIndexName key)
+          index-schema (.. store (getSchema table-name) (getIndexSchema index-name))
           start-row (query-key->row-before key)
-          rows (take-while (query-key->row-pred key)
+          rows (take-while (query-key->row-pred index-schema key)
                            (subseq (get @indices index-name) >= start-row))]
       (->MemoryScanner (atom rows))))
 

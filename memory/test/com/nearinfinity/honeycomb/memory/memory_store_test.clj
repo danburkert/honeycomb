@@ -104,7 +104,12 @@
   (testing "truncate auto increment"
     (.setAutoInc store table-name 123)
     (.truncateAutoInc store table-name)
-    (is (= 0 (.getAutoInc store table-name)))))
+    (is (= 0 (.getAutoInc store table-name))))
+  (testing "autoIncrement upper boundary"
+    (.setAutoInc store table-name Long/MAX_VALUE)
+    (is (= Long/MAX_VALUE (.getAutoInc store table-name)))
+    (.incrementAutoInc store table-name 1)
+    (is (= Long/MAX_VALUE (.getAutoInc store table-name)))))
 
 (deftest row-count
   (testing "defaults to 0"
