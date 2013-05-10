@@ -6,6 +6,7 @@
         <!-- <jvmoption>-Dlog4j.configuration=file:///etc/mysql/debug.properties</jvmoption> -->
         <!-- If MySQL won't stop try: <jvmoption>-Xrs</jvmoption> -->
     </jvmoptions>
+    <defaultAdapter>memory</defaultAdapter>
     <adapters>
         <adapter name="hbase">
             <configuration>

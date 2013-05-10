@@ -153,7 +153,10 @@ public class HandlerProxy {
             throw new IllegalArgumentException(format("Table %s does not contain an auto increment column.", tableName));
         }
 
-        return store.incrementAutoInc(getTableName(), amount) - amount;
+        long current = store.incrementAutoInc(getTableName(), amount);
+        long next = current - amount;
+
+        return next;
     }
 
     public void truncateAutoIncrement() {
@@ -363,7 +366,7 @@ public class HandlerProxy {
                 throw new IllegalArgumentException(format("Not a supported type of query %s", queryType));
         }
 
-    }
+      }
 
     public byte[] getNextRow() {
         checkNotNull(currentScanner, "Scanner cannot be null to get next row.");

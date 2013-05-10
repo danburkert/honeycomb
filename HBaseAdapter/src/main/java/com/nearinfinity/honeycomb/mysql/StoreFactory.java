@@ -3,7 +3,7 @@ package com.nearinfinity.honeycomb.mysql;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.nearinfinity.honeycomb.Store;
-import com.nearinfinity.honeycomb.config.AdaptorType;
+import com.nearinfinity.honeycomb.config.AdapterType;
 import com.nearinfinity.honeycomb.config.HoneycombConfiguration;
 
 import java.util.Map;
@@ -11,11 +11,12 @@ import java.util.Map;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class StoreFactory {
-    private final Map<AdaptorType, Provider<Store>> storeProviders;
+    private final Map<AdapterType, Provider<Store>> storeProviders;
     private final HoneycombConfiguration configuration;
 
     @Inject
-    public StoreFactory(Map<AdaptorType, Provider<Store>> storeMap, HoneycombConfiguration configuration) {
+    public StoreFactory(Map<AdapterType, Provider<Store>> storeMap,
+                        HoneycombConfiguration configuration) {
         checkNotNull(storeMap);
         checkNotNull(configuration);
 
@@ -23,11 +24,17 @@ public class StoreFactory {
         this.configuration = configuration;
     }
 
+    /**
+     * Returns a store implementation for a given table name.  Returns the store
+     * matching the database name, or if that does not exist, the default adapter.
+     * @param tableName
+     * @return
+     */
     public Store createStore(String tableName) {
-        if (databaseName(tableName).equals(AdaptorType.MEMORY.getName())) {
-            return storeProviders.get(AdaptorType.MEMORY).get();
-        } else {
-            return storeProviders.get(AdaptorType.HBASE).get();
+        try {
+            return storeProviders.get(AdapterType.valueOf(databaseName(tableName).toUpperCase())).get();
+        } catch (IllegalArgumentException e) {
+            return storeProviders.get(configuration.getDefaultAdapter()).get();
         }
     }
 

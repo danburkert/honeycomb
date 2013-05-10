@@ -1,19 +1,18 @@
 package com.nearinfinity.honeycomb.mysql.schema;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import net.jcip.annotations.Immutable;
-
-import org.apache.avro.io.DatumReader;
-import org.apache.avro.io.DatumWriter;
-import org.apache.avro.specific.SpecificDatumReader;
-import org.apache.avro.specific.SpecificDatumWriter;
-
 import com.google.common.base.Objects;
 import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.gen.AvroColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.util.Verify;
+import net.jcip.annotations.Immutable;
+import org.apache.avro.io.DatumReader;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.avro.specific.SpecificDatumWriter;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 @Immutable
 public class ColumnSchema {
@@ -165,6 +164,7 @@ public class ColumnSchema {
     public String toString() {
         return Objects.toStringHelper(this.getClass())
                 .add("name", columnName)
+                .add("type", avroColumnSchema.getType())
                 .add("isNullable", avroColumnSchema.getIsNullable())
                 .add("isAutoIncrement", avroColumnSchema.getIsAutoIncrement())
                 .add("maxLength", avroColumnSchema.getMaxLength())

@@ -1,12 +1,12 @@
 package com.nearinfinity.honeycomb.config;
 
-public enum AdaptorType {
+public enum AdapterType {
     HBASE ("hbase"),
     MEMORY ("memory");
 
     private String name;
 
-    AdaptorType(String name) {
+    AdapterType(String name) {
         this.name = name;
     }
 

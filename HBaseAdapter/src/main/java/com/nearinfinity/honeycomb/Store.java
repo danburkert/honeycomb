@@ -18,8 +18,7 @@ public interface Store {
     public Table openTable(String tableName);
 
     /**
-     * Create a table, or if the table already exists with the same name and
-     * columns, open it.
+     * Create a table
      *
      * @param tableName
      * @param schema

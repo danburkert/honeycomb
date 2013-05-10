@@ -4,8 +4,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Longs;
+import com.nearinfinity.honeycomb.config.AdapterType;
 import com.nearinfinity.honeycomb.config.Constants;
-import com.nearinfinity.honeycomb.config.AdaptorType;
 import com.nearinfinity.honeycomb.mysql.HandlerProxy;
 import com.nearinfinity.honeycomb.mysql.QueryKey;
 import com.nearinfinity.honeycomb.mysql.Row;
@@ -139,7 +139,7 @@ public class RowOperationsIT extends HoneycombIntegrationTest {
         columns.add(ColumnSchema.builder(TestConstants.COLUMN1, ColumnType.LONG).build());
         TableSchema schema = new TableSchema(columns, indices);
 
-        String tableName = AdaptorType.HBASE.getName() + "/t1";
+        String tableName = AdapterType.HBASE.getName() + "/t1";
 
         int iterations = 10;
 

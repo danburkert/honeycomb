@@ -1,6 +1,6 @@
 package com.nearinfinity.honeycomb.hbase.config;
 
-import com.nearinfinity.honeycomb.config.AdaptorType;
+import com.nearinfinity.honeycomb.config.AdapterType;
 import com.nearinfinity.honeycomb.config.Constants;
 
 /**
@@ -12,7 +12,7 @@ public final class ConfigConstants {
         throw new AssertionError();
     }
 
-    private static final String NAMESPACE = Constants.HONEYCOMB_NAMESPACE + "." + AdaptorType.HBASE.getName() + ".";
+    private static final String NAMESPACE = Constants.HONEYCOMB_NAMESPACE + "." + AdapterType.HBASE.getName() + ".";
 
     public static final String AUTO_FLUSH = NAMESPACE + "flushChangesImmediately";
 

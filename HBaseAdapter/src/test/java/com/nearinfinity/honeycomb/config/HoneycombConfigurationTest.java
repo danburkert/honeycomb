@@ -16,28 +16,28 @@ public class HoneycombConfigurationTest {
     }};
 
     private static Map<String, Map<String, String>> adapterConfigs = new HashMap<String, Map<String, String>>() {{
-        put(AdaptorType.HBASE.getName(), hbaseConfigs);
+        put(AdapterType.HBASE.getName(), hbaseConfigs);
     }};
 
     private HoneycombConfiguration configuration;
 
     @Before
     public void setupTests() {
-        configuration = new HoneycombConfiguration(adapterConfigs);
+        configuration = new HoneycombConfiguration(adapterConfigs, "hbase");
     }
 
     @Test
     public void testIsAdapterConfigured() throws Exception {
-        Assert.assertTrue(configuration.isAdapterConfigured(AdaptorType.HBASE.getName()));
+        Assert.assertTrue(configuration.isAdapterConfigured(AdapterType.HBASE));
     }
 
     @Test
     public void testIsAdapterNotConfigured() throws Exception {
-        Assert.assertFalse(configuration.isAdapterConfigured("fooz,bazzle,etc"));
+        Assert.assertFalse(configuration.isAdapterConfigured(AdapterType.MEMORY));
     }
 
     @Test
     public void testGetAdapterOptions() throws Exception {
-        Assert.assertEquals(hbaseConfigs, configuration.getAdapterOptions(AdaptorType.HBASE.getName()));
+        Assert.assertEquals(hbaseConfigs, configuration.getAdapterOptions(AdapterType.HBASE));
     }
 }

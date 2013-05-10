@@ -1,5 +1,6 @@
 package com.nearinfinity.honeycomb.mysql;
 
+import com.google.common.base.Objects;
 import com.nearinfinity.honeycomb.mysql.gen.AvroQueryKey;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.util.Verify;
@@ -7,11 +8,13 @@ import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 
 public class QueryKey {
     private static final DatumWriter<AvroQueryKey> writer =
@@ -51,5 +54,19 @@ public class QueryKey {
 
     public QueryType getQueryType() {
         return this.avroQueryKey.getQueryType();
+    }
+
+    @Override
+    public String toString() {
+        final Objects.ToStringHelper toString = Objects.toStringHelper(this.getClass());
+
+        toString.add("Index", avroQueryKey.getIndexName())
+                .add("Type", avroQueryKey.getQueryType());
+
+        for (final Map.Entry<String, ByteBuffer> entry : getKeys().entrySet()) {
+            toString.add("Key", format("%s: %s", entry.getKey(), entry.getValue()));
+        }
+
+        return toString.toString();
     }
 }
