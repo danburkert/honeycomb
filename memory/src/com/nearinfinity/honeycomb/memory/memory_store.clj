@@ -26,11 +26,12 @@
 
   (renameTable [this cur-table-name new-table-name]
     (dosync
-      (let [table (get (ensure tables) cur-table-name)
+      (let [cur-table (get (ensure tables) cur-table-name)
+            new-table (table/->MemoryTable this new-table-name (.getRows cur-table) (.getIndices cur-table))
             table-metadata (get (ensure metadata) cur-table-name)]
-        (if (and table table-metadata)
+        (if (and cur-table new-table table-metadata)
           (do
-            (alter tables assoc new-table-name table)
+            (alter tables assoc new-table-name new-table)
             (alter metadata assoc new-table-name table-metadata)
             (alter tables dissoc cur-table-name)
             (alter metadata dissoc cur-table-name))
@@ -82,7 +83,7 @@
   (truncateAutoInc [this table-name]
     (dosync
       (if (contains? (ensure metadata) table-name)
-        (alter metadata assoc-in [table-name :autoincrement] 0)
+        (alter metadata assoc-in [table-name :autoincrement] 1)
         (throw (TableNotFoundException. table-name)))))
 
   (getRowCount [this table-name]

@@ -101,6 +101,11 @@
                 true
                 keys)))))
 
+;; Necessary so the MemoryStore can get the rows of a MemoryTable
+(defprotocol RowContainer
+  (getRows [this])
+  (getIndices [this]))
+
 ;; MemoryTable must use deftype instead of defrecord because
 ;; the Table protocol has a get method.
 ;; See https://groups.google.com/forum/?fromgroups=#!topic/clojure/pdfj13ppwik
@@ -196,7 +201,11 @@
   (deleteAllRows [this]
     (dosync
       (alter rows empty)
-      (alter indices update-indices empty))))
+      (alter indices update-indices empty)))
+
+  RowContainer
+  (getRows [this] rows)
+  (getIndices [this] indices))
 
 (defn memory-table [store table-name ^TableSchema table-schema]
   (let [add-index (fn [indices ^IndexSchema index]
