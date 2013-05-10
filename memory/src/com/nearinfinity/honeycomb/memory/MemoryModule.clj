@@ -3,7 +3,7 @@
   (:import [com.google.inject AbstractModule Guice]
            [com.google.inject.multibindings MapBinder]
            [com.nearinfinity.honeycomb Store]
-           [com.nearinfinity.honeycomb.config AdaptorType])
+           [com.nearinfinity.honeycomb.config AdapterType])
   (:gen-class
     :extends com.google.inject.AbstractModule
     :init init
@@ -17,10 +17,10 @@
   [[] config])
 
 (defn -configure [this]
-  (let [map-binder (MapBinder/newMapBinder (.binderSuper this) AdaptorType Store)
+  (let [map-binder (MapBinder/newMapBinder (.binderSuper this) AdapterType Store)
         memory-store (mem-store/memory-store)]
     (-> map-binder
-        (.addBinding AdaptorType/MEMORY)
+        (.addBinding AdapterType/MEMORY)
         (.to com.nearinfinity.honeycomb.memory.memory_store.MemoryStore))
     (-> this
         (.bindSuper com.nearinfinity.honeycomb.memory.memory_store.MemoryStore)

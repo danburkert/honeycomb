@@ -4,9 +4,10 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.nearinfinity.honeycomb.config.AdaptorType;
+import com.nearinfinity.honeycomb.config.AdapterType;
 import com.nearinfinity.honeycomb.config.ConfigurationParser;
 import com.nearinfinity.honeycomb.config.HoneycombConfiguration;
+import com.nearinfinity.honeycomb.hbase.HBaseModule;
 import com.nearinfinity.honeycomb.util.Verify;
 import org.apache.log4j.Appender;
 import org.apache.log4j.FileAppender;
@@ -80,21 +81,21 @@ public final class Bootstrap extends AbstractModule {
         bind(HoneycombConfiguration.class).toInstance(configuration);
 
         // Setup the HBase bindings only if the adapter has been configured
-//        if (configuration.isAdapterConfigured(AdaptorType.HBASE.getName())) {
-//            try {
-//                HBaseModule hBaseModule = new HBaseModule(configuration.getAdapterOptions(AdaptorType.HBASE.getName()));
-//                install(hBaseModule);
-//            } catch (IOException e) {
-//                logger.fatal("Failure during HBase initialization.", e);
-//                throw new RuntimeException(e);
-//            }
-//        }
+        if (configuration.isAdapterConfigured(AdapterType.HBASE)) {
+            try {
+                HBaseModule hBaseModule = new HBaseModule(configuration.getAdapterOptions(AdapterType.HBASE));
+                install(hBaseModule);
+            } catch (IOException e) {
+                logger.fatal("Failure during HBase initialization.", e);
+                throw new RuntimeException(e);
+            }
+        }
 
-        if (configuration.isAdapterConfigured(AdaptorType.MEMORY.getName())) {
+        if (configuration.isAdapterConfigured(AdapterType.MEMORY)) {
             try {
                 Class memoryModuleClass = Class.forName("com.nearinfinity.honeycomb.memory.MemoryModule");
                 Constructor memoryModuleCTor = memoryModuleClass.getConstructor(Map.class);
-                Object memoryModule = memoryModuleCTor.newInstance(configuration.getAdapterOptions(AdaptorType.MEMORY.getName()));
+                Object memoryModule = memoryModuleCTor.newInstance(configuration.getAdapterOptions(AdapterType.MEMORY));
                 install((Module) memoryModule);
             } catch (ClassNotFoundException e) {
                 logger.error("The memory adaptor is configured, but could not be found on the classpath.");

@@ -44,6 +44,8 @@ public class ConfigurationParser {
      */
     private static final String QUERY_ADAPTER_CONFIG_NODES = "/options/adapters/adapter[@name='%s']/configuration/*";
 
+    private static final String QUERY_DEFAULT_ADAPTER = "/options/defaultAdapter";
+
     private static final XPath xPath = XPathFactory.newInstance().newXPath();
 
     private ConfigurationParser() {}
@@ -75,7 +77,8 @@ public class ConfigurationParser {
         checkValidConfig(configSupplier, schemaSupplier);
         Document doc = parseDocument(configSupplier);
         Map<String, Map<String, String>> adapters = parseAdapters(doc);
-        return new HoneycombConfiguration(adapters);
+        String defaultAdapter = parseDefaultAdapter(doc);
+        return new HoneycombConfiguration(adapters, defaultAdapter);
     }
 
     /**
@@ -85,7 +88,6 @@ public class ConfigurationParser {
      *
      * @param configSupplier The supplier that provides the configuration to inspect, not null
      * @param schemaSupplier The supplier that provides the schema used to inspect the configuration, not null
-     * @return True if the configuration is validated, False otherwise
      */
     private static void checkValidConfig(final InputSupplier<? extends InputStream> configSupplier,
                                          final InputSupplier<? extends InputStream> schemaSupplier) {
@@ -150,18 +152,12 @@ public class ConfigurationParser {
      * @return
      */
     private static String prependNamespace(String adapterName, String optionName) {
-        return new StringBuilder()
-                .append(Constants.HONEYCOMB_NAMESPACE)
-                .append(".")
-                .append(adapterName)
-                .append(".")
-                .append(optionName)
-                .toString();
+        return Constants.HONEYCOMB_NAMESPACE + "." + adapterName + "." + optionName;
     }
 
     private static Map<String, String> parseOptions(String adapterName, Document doc) {
         String optionsQuery = String.format(QUERY_ADAPTER_CONFIG_NODES, adapterName);
-        NodeList optionNodes = null;
+        NodeList optionNodes;
         try {
             optionNodes = (NodeList) xPath.evaluate(optionsQuery, doc, XPathConstants.NODESET);
         } catch (XPathExpressionException e) {
@@ -186,7 +182,7 @@ public class ConfigurationParser {
 
     private static Map<String, Map<String, String>> parseAdapters(Document doc) {
         // Extract adapter names from document
-        NodeList adapterNameNodes = null;
+        NodeList adapterNameNodes;
         try {
             adapterNameNodes = (NodeList) xPath.evaluate(QUERY_ADAPTER_NAMES, doc, XPathConstants.NODESET);
         } catch (XPathExpressionException e) {
@@ -208,5 +204,14 @@ public class ConfigurationParser {
         }
 
         return adapters.build();
+    }
+
+    private static String parseDefaultAdapter(Document doc) {
+        try {
+            Node defaultAdapterNode = (Node) xPath.evaluate(QUERY_DEFAULT_ADAPTER, doc, XPathConstants.NODE);
+            return defaultAdapterNode.getTextContent();
+        } catch (XPathExpressionException e) {
+            logger.error("Unable to parse default adapter from honeycomb configuration.", e);
+            throw new RuntimeException("Exception while parsing default adapter from honeycomb configuration.", e);        }
     }
 }

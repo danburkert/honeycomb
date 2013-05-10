@@ -6,7 +6,7 @@ import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Names;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
-import com.nearinfinity.honeycomb.config.AdaptorType;
+import com.nearinfinity.honeycomb.config.AdapterType;
 import com.nearinfinity.honeycomb.hbase.config.ConfigConstants;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -45,10 +45,10 @@ public class HBaseModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        final MapBinder<AdaptorType, Store> storeMapBinder =
-                MapBinder.newMapBinder(binder(), AdaptorType.class, Store.class);
+        final MapBinder<AdapterType, Store> storeMapBinder =
+                MapBinder.newMapBinder(binder(), AdapterType.class, Store.class);
 
-        storeMapBinder.addBinding(AdaptorType.HBASE).to(HBaseStore.class);
+        storeMapBinder.addBinding(AdapterType.HBASE).to(HBaseStore.class);
 
         install(new FactoryModuleBuilder()
                 .implement(Table.class, HBaseTable.class)

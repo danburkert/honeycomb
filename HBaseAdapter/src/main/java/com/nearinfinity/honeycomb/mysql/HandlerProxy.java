@@ -153,7 +153,10 @@ public class HandlerProxy {
             throw new IllegalArgumentException(format("Table %s does not contain an auto increment column.", tableName));
         }
 
-        return store.incrementAutoInc(getTableName(), amount) - amount;
+        long current = store.incrementAutoInc(getTableName(), amount);
+        long next = current - amount;
+
+        return next;
     }
 
     public void truncateAutoIncrement() {

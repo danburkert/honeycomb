@@ -75,11 +75,8 @@
     (dosync
       (let [metadata-val (ensure metadata)]
         (if (contains? metadata-val table-name)
-          (try
-            (-> (alter metadata update-in [table-name :autoincrement] + amount)
-                (get-in [table-name :autoincrement]))
-            (catch ArithmeticException _
-              (get-in metadata-val [table-name :autoincrement])))
+          (-> (alter metadata update-in [table-name :autoincrement] #(unchecked-add (long amount) (long %)))
+              (get-in [table-name :autoincrement]))
           (throw (TableNotFoundException. table-name))))))
 
   (truncateAutoInc [this table-name]

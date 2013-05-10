@@ -16,7 +16,6 @@
         </xs:restriction>
     </xs:simpleType>
 
-
     <xs:complexType name="adaptersType">
         <xs:sequence>
             <xs:element name="adapter" maxOccurs="unbounded">
@@ -36,6 +35,7 @@
     <xs:complexType name="optionsType">
         <xs:sequence>
             <xs:element type="jvmOptionsType" name="jvmoptions" />
+            <xs:element type="xs:string" name="defaultAdapter" />
             <xs:element type="adaptersType" name="adapters" />
         </xs:sequence>
     </xs:complexType>
