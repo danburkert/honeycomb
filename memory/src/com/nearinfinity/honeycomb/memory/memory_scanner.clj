@@ -5,8 +5,7 @@
 (defrecord MemoryScanner [rows]
   java.io.Closeable
 
-  (close [this]
-    (swap! rows (constantly nil)))
+  (close [this])
 
   java.util.Iterator
 
@@ -16,7 +15,8 @@
   (next [this] ;; NOT THREAD SAFE
     (let [^Row next (first @rows)]
       (swap! rows rest)
-      (.serialize  next)))
+      (when next
+        (.serialize next))))
 
   (remove [this]
     (throw UnsupportedOperationException))

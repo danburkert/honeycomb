@@ -40,26 +40,20 @@
     (if (and (nil? field1) (nil? field2))
       0
       (if (nil? field1) -1 1))
-    (condp = column-type
-      ColumnType/LONG  (let [comparison (compare (.getLong field1)
-                                                 (.getLong field2))]
-                         (.rewind field1)
-                         (.rewind field2)
-                         comparison)
-      ColumnType/TIME  (let [comparison (compare (.getLong field1)
-                                                 (.getLong field2))]
-                         (.rewind field1)
-                         (.rewind field2)
-                         comparison)
-      ColumnType/DOUBLE (let [comparison (compare (.getDouble field1)
-                                                  (.getDouble field2))]
-                          (.rewind field1)
-                          (.rewind field2)
-                          comparison)
-      (let [comparator (UnsignedBytes/lexicographicalComparator)
-            bytes1 (.array field1)
-            bytes2 (.array field2)]
-        (.compare comparator bytes1 bytes2)))))
+    (let [field1' (.duplicate field1)
+          field2' (.duplicate field2)
+          comparison (condp = column-type
+                       ColumnType/LONG (compare (.getLong field1')
+                                                (.getLong field2'))
+                       ColumnType/TIME (compare (.getLong field1')
+                                                (.getLong field2'))
+                       ColumnType/DOUBLE (compare (.getDouble field1')
+                                                  (.getDouble field2'))
+                       (let [comparator (UnsignedBytes/lexicographicalComparator)
+                             bytes1 (.array field1')
+                             bytes2 (.array field2')]
+                         (.compare comparator bytes1 bytes2)))]
+      comparison)))
 
 (defn- schema->row-index-comparator
   "Takes an index name and a table schema, and returns a comparator which takes
