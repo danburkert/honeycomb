@@ -18,5 +18,9 @@
                 <hbase.client.write.buffer>5242880</hbase.client.write.buffer>
             </configuration>
         </adapter>
+        <adapter name="memory">
+          <configuration>
+          </configuration>
+        </adapter>
     </adapters>
 </options>
