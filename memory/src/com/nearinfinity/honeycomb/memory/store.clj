@@ -1,5 +1,5 @@
-(ns com.nearinfinity.honeycomb.memory.memory-store
-  (:require [com.nearinfinity.honeycomb.memory.memory-table :as table])
+(ns com.nearinfinity.honeycomb.memory.store
+  (:require [com.nearinfinity.honeycomb.memory.table :as table])
   (:import [com.nearinfinity.honeycomb Store Table]
            [com.nearinfinity.honeycomb.mysql.schema TableSchema]
            [com.nearinfinity.honeycomb.exceptions TableNotFoundException]))
@@ -29,11 +29,10 @@
       (if-let [cur-table (get (ensure tables) cur-table-name)]
         (if-let [table-metadata (get (ensure metadata) cur-table-name)]
           (let [new-table (table/->MemoryTable this new-table-name (:rows cur-table) (:indices cur-table))]
-            (do
-              (alter tables assoc new-table-name new-table)
-              (alter metadata assoc new-table-name table-metadata)
-              (alter tables dissoc cur-table-name)
-              (alter metadata dissoc cur-table-name)))
+            (alter tables assoc new-table-name new-table)
+            (alter metadata assoc new-table-name table-metadata)
+            (alter tables dissoc cur-table-name)
+            (alter metadata dissoc cur-table-name))
           (throw (TableNotFoundException. cur-table-name)))
         (throw (TableNotFoundException. cur-table-name)))))
 

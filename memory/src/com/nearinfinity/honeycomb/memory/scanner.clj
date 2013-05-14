@@ -1,4 +1,4 @@
-(ns com.nearinfinity.honeycomb.memory.memory-scanner
+(ns com.nearinfinity.honeycomb.memory.scanner
   (:import [com.nearinfinity.honeycomb Scanner]
            [com.nearinfinity.honeycomb.mysql Row]))
 

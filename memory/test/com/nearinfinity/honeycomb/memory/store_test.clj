@@ -1,4 +1,4 @@
-(ns com.nearinfinity.honeycomb.memory.memory-store-test
+(ns com.nearinfinity.honeycomb.memory.store-test
   (:require [clojure.test :refer :all]
             [com.nearinfinity.honeycomb.memory.test-util :refer :all]
             [com.nearinfinity.honeycomb.memory.memory-store :refer :all])

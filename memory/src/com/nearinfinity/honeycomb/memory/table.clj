@@ -1,5 +1,5 @@
-(ns com.nearinfinity.honeycomb.memory.memory-table
-  (:require [com.nearinfinity.honeycomb.memory.memory-scanner :refer :all])
+(ns com.nearinfinity.honeycomb.memory.table
+  (:require [com.nearinfinity.honeycomb.memory.scanner :refer :all])
   (:import [java.util UUID]
            [com.nearinfinity.honeycomb Store Table]
            [com.nearinfinity.honeycomb.mysql.schema TableSchema IndexSchema]

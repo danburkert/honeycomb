@@ -1,5 +1,5 @@
 (ns com.nearinfinity.honeycomb.memory.MemoryModule
-  (:require [com.nearinfinity.honeycomb.memory.memory-store :as mem-store])
+  (:require [com.nearinfinity.honeycomb.memory.store :as mem-store])
   (:import [com.google.inject AbstractModule Guice]
            [com.google.inject.multibindings MapBinder]
            [com.nearinfinity.honeycomb Store]
@@ -19,12 +19,12 @@
 (defn -configure [this]
   (let [map-binder (MapBinder/newMapBinder (.binderSuper this) AdapterType Store)
         memory-store (mem-store/memory-store)]
-    (-> map-binder
-        (.addBinding AdapterType/MEMORY)
-        (.to com.nearinfinity.honeycomb.memory.memory_store.MemoryStore))
-    (-> this
-        (.bindSuper com.nearinfinity.honeycomb.memory.memory_store.MemoryStore)
-        (.toInstance memory-store))))
+    (.. map-binder
+        (addBinding AdapterType/MEMORY)
+        (to (class memory-store)))
+    (.. this
+        (bindSuper (class memory-store))
+        (toInstance memory-store))))
 
 (comment
 (let [module (com.nearinfinity.honeycomb.memory.MemoryModule. {})]
