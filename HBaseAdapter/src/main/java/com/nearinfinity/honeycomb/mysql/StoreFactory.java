@@ -25,8 +25,9 @@ public class StoreFactory {
     }
 
     /**
-     * Returns a store implementation for a given table name.  Returns the store
-     * matching the database name, or if that does not exist, the default adapter.
+     * Returns a store implementation for a given table name.  Returns a store type
+     * for the adapter matching the database name, or if that does not exist,
+     * the default adapter.
      * @param tableName
      * @return
      */

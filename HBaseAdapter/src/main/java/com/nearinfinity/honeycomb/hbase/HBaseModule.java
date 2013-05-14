@@ -7,6 +7,7 @@ import com.google.inject.name.Names;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.config.AdapterType;
+import com.nearinfinity.honeycomb.exceptions.RuntimeIOException;
 import com.nearinfinity.honeycomb.hbase.config.ConfigConstants;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -21,7 +22,7 @@ public class HBaseModule extends AbstractModule {
     private final HTableProvider hTableProvider;
     private final Configuration configuration;
 
-    public HBaseModule(final Map<String, String> options) throws IOException {
+    public HBaseModule(final Map<String, String> options) {
         // Add the HBase resources to the core application configuration
         configuration = HBaseConfiguration.create();
 
@@ -34,12 +35,9 @@ public class HBaseModule extends AbstractModule {
         try {
             TableCreator.createTable(configuration);
         } catch (IOException e) {
-            logger.fatal("Could not create HBaseStore. Aborting initialization.");
+            logger.fatal("Could not create HBase table. Aborting initialization.");
             logger.fatal(configuration.toString());
-            throw e;
-        } catch (Exception e) {
-            logger.fatal(configuration.toString());
-            throw new RuntimeException(e);
+            throw new RuntimeIOException(e);
         }
     }
 
