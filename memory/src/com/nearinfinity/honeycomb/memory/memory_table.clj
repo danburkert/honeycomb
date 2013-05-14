@@ -35,7 +35,7 @@
            (.getUUID row2)))
 
 (defmacro compare-byte-buffer [left right field]
-  `(compare (. (.duplicate ~left) ~field) (. (.duplicate ~right) ~field)))
+  `(compare (.. ~left duplicate ~field) (.. ~right duplicate ~field)))
 
 (defn- field-comparator [column-type ^ByteBuffer field1 ^ByteBuffer field2]
   (if (or (nil? field1) (nil? field2))
