@@ -12,6 +12,7 @@ tags
 *.jar
 restart-mysql.sh
 *.swp
+*.swo
 *.reject
 /.project
 /mysql-*/.cproject
