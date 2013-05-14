@@ -1,5 +1,21 @@
 package com.nearinfinity.honeycomb.hbase;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.util.Bytes;
+
 import com.google.common.base.Charsets;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
@@ -10,20 +26,16 @@ import com.google.inject.Provider;
 import com.google.inject.name.Named;
 import com.nearinfinity.honeycomb.exceptions.TableNotFoundException;
 import com.nearinfinity.honeycomb.hbase.config.ConfigConstants;
-import com.nearinfinity.honeycomb.hbase.rowkey.*;
+import com.nearinfinity.honeycomb.hbase.rowkey.AutoIncRowKey;
+import com.nearinfinity.honeycomb.hbase.rowkey.ColumnsRowKey;
+import com.nearinfinity.honeycomb.hbase.rowkey.IndicesRowKey;
+import com.nearinfinity.honeycomb.hbase.rowkey.RowsRowKey;
+import com.nearinfinity.honeycomb.hbase.rowkey.SchemaRowKey;
+import com.nearinfinity.honeycomb.hbase.rowkey.TablesRowKey;
 import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import com.nearinfinity.honeycomb.util.Verify;
-import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.util.Bytes;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static com.google.common.base.Preconditions.*;
 
 /**
  * Manages writing and reading table & column schemas, table & column ids, and
@@ -31,7 +43,7 @@ import static com.google.common.base.Preconditions.*;
  */
 public class HBaseMetadata {
     private byte[] columnFamily;
-    private Provider<HTableInterface> provider;
+    private final Provider<HTableInterface> provider;
 
     @Inject
     public HBaseMetadata(final Provider<HTableInterface> provider) {
@@ -43,6 +55,8 @@ public class HBaseMetadata {
     /**
      * Sets the column family.  Cannot be injected into the constructor directly
      * because of a bug in Cobertura.  Called automatically by Guice.
+     *
+     * @param columnFamily The column family to use
      */
     @Inject
     public void setColumnFamily(final @Named(ConfigConstants.COLUMN_FAMILY) String columnFamily) {
