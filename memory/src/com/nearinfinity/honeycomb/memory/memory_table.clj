@@ -34,25 +34,22 @@
   (compare (.getUUID row1)
            (.getUUID row2)))
 
+(defmacro compare-byte-buffer [left right field]
+  `(compare (. (.duplicate ~left) ~field) (. (.duplicate ~right) ~field)))
+
 (defn- field-comparator [column-type ^ByteBuffer field1 ^ByteBuffer field2]
   (if (or (nil? field1) (nil? field2))
     (if (and (nil? field1) (nil? field2))
       0
       (if (nil? field1) -1 1))
-    (let [field1' (.duplicate field1)
-          field2' (.duplicate field2)
-          comparison (condp = column-type
-                       ColumnType/LONG (compare (.getLong field1')
-                                                (.getLong field2'))
-                       ColumnType/TIME (compare (.getLong field1')
-                                                (.getLong field2'))
-                       ColumnType/DOUBLE (compare (.getDouble field1')
-                                                  (.getDouble field2'))
-                       (let [comparator (UnsignedBytes/lexicographicalComparator)
-                             bytes1 (.array field1')
-                             bytes2 (.array field2')]
-                         (.compare comparator bytes1 bytes2)))]
-      comparison)))
+    (condp = column-type
+      ColumnType/LONG (compare-byte-buffer field1 field2 getLong)
+      ColumnType/TIME (compare-byte-buffer field1 field2 getLong)
+      ColumnType/DOUBLE (compare-byte-buffer field1 field2 getDouble)
+      (let [comparator (UnsignedBytes/lexicographicalComparator)
+            bytes1 (.array field1)
+            bytes2 (.array field2)]
+        (.compare comparator bytes1 bytes2)))))
 
 (defn- schema->row-index-comparator
   "Takes an index name and a table schema, and returns a comparator which takes
