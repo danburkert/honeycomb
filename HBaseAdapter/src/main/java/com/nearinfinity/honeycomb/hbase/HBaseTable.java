@@ -1,5 +1,21 @@
 package com.nearinfinity.honeycomb.hbase;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.math.BigInteger;
+import java.util.Collection;
+import java.util.List;
+import java.util.UUID;
+
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
+import org.apache.log4j.Logger;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
@@ -19,15 +35,6 @@ import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import com.nearinfinity.honeycomb.util.Verify;
-import org.apache.hadoop.hbase.client.*;
-import org.apache.log4j.Logger;
-
-import java.math.BigInteger;
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class HBaseTable implements Table {
     private static final Logger logger = Logger.getLogger(HBaseTable.class);
@@ -54,12 +61,14 @@ public class HBaseTable implements Table {
      */
     @Inject
     public void setWriterBufferSize(final @Named(ConfigConstants.WRITE_BUFFER) Long bufferSize) {
-        this.writeBufferSize = bufferSize;
+        writeBufferSize = bufferSize;
     }
 
     /**
      * Sets the column family.  Cannot be injected into the constructor directly
      * because of a bug in Cobertura.  Called automatically by Guice.
+     *
+     * @param columnFamily The column family to use
      */
     @Inject
     public void setColumnFamily(final @Named(ConfigConstants.COLUMN_FAMILY) String columnFamily) {

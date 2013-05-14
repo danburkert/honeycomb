@@ -1,12 +1,12 @@
 package com.nearinfinity.honeycomb;
 
-import com.nearinfinity.honeycomb.mysql.QueryKey;
-import com.nearinfinity.honeycomb.mysql.Row;
-import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
-
 import java.io.Closeable;
 import java.util.Collection;
 import java.util.UUID;
+
+import com.nearinfinity.honeycomb.mysql.QueryKey;
+import com.nearinfinity.honeycomb.mysql.Row;
+import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 
 /**
  * A Table handles operations for a single MySQL table. It must support "insert",
@@ -83,6 +83,9 @@ public interface Table extends Closeable {
 
     /**
      * Return a scanner over the full index in ascending sort order.
+     *
+     * @param key
+     * @return Scanner over index
      */
     Scanner ascendingIndexScan(QueryKey key);
 
@@ -105,8 +108,9 @@ public interface Table extends Closeable {
 
     /**
      * Return a scanner over the full index in descending sort order.
-     * @param indexName
-     * @return
+     *
+     * @param key
+     * @return Scanner over index
      */
     Scanner descendingIndexScan(QueryKey key);
 
