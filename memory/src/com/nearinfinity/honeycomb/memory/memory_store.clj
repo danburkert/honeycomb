@@ -26,16 +26,16 @@
 
   (renameTable [this cur-table-name new-table-name]
     (dosync
-      (let [cur-table (get (ensure tables) cur-table-name)
-            new-table (table/->MemoryTable this new-table-name (.getRows cur-table) (.getIndices cur-table))
-            table-metadata (get (ensure metadata) cur-table-name)]
-        (if (and cur-table new-table table-metadata)
-          (do
-            (alter tables assoc new-table-name new-table)
-            (alter metadata assoc new-table-name table-metadata)
-            (alter tables dissoc cur-table-name)
-            (alter metadata dissoc cur-table-name))
-          (throw (TableNotFoundException. cur-table-name))))))
+      (if-let [cur-table (get (ensure tables) cur-table-name)]
+        (if-let [table-metadata (get (ensure metadata) cur-table-name)]
+          (let [new-table (table/->MemoryTable this new-table-name (.getRows cur-table) (.getIndices cur-table))]
+            (do
+              (alter tables assoc new-table-name new-table)
+              (alter metadata assoc new-table-name table-metadata)
+              (alter tables dissoc cur-table-name)
+              (alter metadata dissoc cur-table-name)))
+          (throw (TableNotFoundException. cur-table-name)))
+        (throw (TableNotFoundException. cur-table-name)))))
 
   ;; getSchema needs the dosync because it is called during other transactions
   ;; that need the ensure in order to make sure the table's schema does not
