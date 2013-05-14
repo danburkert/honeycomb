@@ -82,8 +82,12 @@ public interface Table extends Closeable {
     Scanner tableScan();
 
     /**
-     * Return a scanner over the table's index at the specified key / values in
-     * ascending sort.
+     * Return a scanner over the full index in ascending sort order.
+     */
+    Scanner ascendingIndexScan(QueryKey key);
+
+    /**
+     * Return a scanner over the table's index at the key in ascending sort order.
      *
      * @param key
      * @return Scanner over index
@@ -91,8 +95,8 @@ public interface Table extends Closeable {
     Scanner ascendingIndexScanAt(QueryKey key);
 
     /**
-     * Return a scanner over the table's index after the specified key / values
-     * in ascending sort.
+     * Return a scanner over the table's index after the specified key in
+     * ascending sort order.
      *
      * @param key
      * @return Scanner over index
@@ -100,8 +104,15 @@ public interface Table extends Closeable {
     Scanner ascendingIndexScanAfter(QueryKey key);
 
     /**
-     * Return a scanner over the table's index at the specified key / values in
-     * descending sort.
+     * Return a scanner over the full index in descending sort order.
+     * @param indexName
+     * @return
+     */
+    Scanner descendingIndexScan(QueryKey key);
+
+    /**
+     * Return a scanner over the table's index at the specified key in descending
+     * sort order.
      *
      * @param key
      * @return Scanner over index
@@ -109,8 +120,8 @@ public interface Table extends Closeable {
     Scanner descendingIndexScanAt(QueryKey key);
 
     /**
-     * Return a scanner over the table's index after the specified key / values
-     * in descending sort.
+     * Return a scanner over the table's index after the specified key in
+     * descending sort.
      *
      * @param key
      * @return Scanner over index
@@ -118,7 +129,7 @@ public interface Table extends Closeable {
     Scanner descendingIndexScanBefore(QueryKey key);
 
     /**
-     * Return a scanner over the rows in the table with the specified key /values
+     * Return a scanner over the rows in the table with the specified key
      *
      * @param key
      * @return Scanner over index

@@ -16,7 +16,6 @@ import com.nearinfinity.honeycomb.hbase.rowkey.SortOrder;
 import com.nearinfinity.honeycomb.mysql.QueryKey;
 import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.mysql.Util;
-import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import com.nearinfinity.honeycomb.util.Verify;
@@ -143,68 +142,122 @@ public class HBaseTable implements Table {
     }
 
     @Override
-    public Scanner ascendingIndexScanAt(QueryKey key) {
-        IndexRowKey startRow = indexPrefixedForTable(key)
+    public Scanner ascendingIndexScan(QueryKey key) {
+        long indexId = store.getIndexId(tableId, key.getIndexName());
+
+        IndexRowKey startRow = IndexRowKeyBuilder
+                .newBuilder(tableId, indexId)
                 .withSortOrder(SortOrder.Ascending)
                 .build();
-
-        long indexId = store.getIndexId(tableId, key.getIndexName());
 
         IndexRowKey endRow = IndexRowKeyBuilder
                 .newBuilder(tableId, indexId + 1)
                 .withSortOrder(SortOrder.Ascending)
                 .build();
+
+        return createScannerForRange(startRow.encode(), endRow.encode());
+    }
+
+    @Override
+    public Scanner ascendingIndexScanAt(QueryKey key) {
+        final TableSchema schema = store.getSchema(tableId);
+        long indexId = store.getIndexId(tableId, key.getIndexName());
+
+        IndexRowKey startRow = IndexRowKeyBuilder
+                .newBuilder(tableId, indexId)
+                .withQueryKey(key, schema)
+                .withSortOrder(SortOrder.Ascending)
+                .build();
+
+        IndexRowKey endRow = IndexRowKeyBuilder
+                .newBuilder(tableId, indexId + 1)
+                .withSortOrder(SortOrder.Ascending)
+                .build();
+
         return createScannerForRange(startRow.encode(), endRow.encode());
     }
 
     @Override
     public Scanner ascendingIndexScanAfter(QueryKey key) {
-        IndexRowKey startRow = indexPrefixedForTable(key)
-                .withSortOrder(SortOrder.Ascending)
-                .build();
-
+        final TableSchema schema = store.getSchema(tableId);
         long indexId = store.getIndexId(tableId, key.getIndexName());
 
-        IndexRowKey endRow = IndexRowKeyBuilder
-                .newBuilder(tableId, indexId + 1)
+        IndexRowKey startRow = IndexRowKeyBuilder
+                .newBuilder(tableId, indexId)
+                .withQueryKey(key, schema)
                 .withSortOrder(SortOrder.Ascending)
                 .build();
+
+        IndexRowKey endRow = IndexRowKeyBuilder.newBuilder(tableId, indexId + 1)
+                .withSortOrder(SortOrder.Ascending)
+                .build();
+
         return createScannerForRange(incrementRowKey(startRow.encode()), endRow.encode());
     }
 
     @Override
-    public Scanner descendingIndexScanAt(QueryKey key) {
-        IndexRowKey startRow = indexPrefixedForTable(key)
+    public Scanner descendingIndexScan(QueryKey key) {
+        long indexId = store.getIndexId(tableId, key.getIndexName());
+
+        IndexRowKey startRow = IndexRowKeyBuilder.newBuilder(tableId, indexId)
                 .withSortOrder(SortOrder.Descending)
                 .build();
 
+        IndexRowKey endRow = IndexRowKeyBuilder.newBuilder(tableId, indexId + 1)
+                .withSortOrder(SortOrder.Descending)
+                .build();
+
+        return createScannerForRange(startRow.encode(), endRow.encode());
+    }
+
+    @Override
+    public Scanner descendingIndexScanAt(QueryKey key) {
+        final TableSchema schema = store.getSchema(tableId);
         long indexId = store.getIndexId(tableId, key.getIndexName());
+
+        IndexRowKey startRow = IndexRowKeyBuilder
+                .newBuilder(tableId, indexId)
+                .withQueryKey(key, schema)
+                .withSortOrder(SortOrder.Descending)
+                .build();
 
         IndexRowKey endRow = IndexRowKeyBuilder
                 .newBuilder(tableId, indexId + 1)
                 .withSortOrder(SortOrder.Descending)
                 .build();
+
         return createScannerForRange(startRow.encode(), endRow.encode());
     }
 
     @Override
     public Scanner descendingIndexScanBefore(QueryKey key) {
-        IndexRowKey startRow = indexPrefixedForTable(key)
+        final TableSchema schema = store.getSchema(tableId);
+        long indexId = store.getIndexId(tableId, key.getIndexName());
+
+        IndexRowKey startRow = IndexRowKeyBuilder
+                .newBuilder(tableId, indexId)
+                .withQueryKey(key, schema)
                 .withSortOrder(SortOrder.Descending)
                 .build();
-
-        long indexId = store.getIndexId(tableId, key.getIndexName());
 
         IndexRowKey endRow = IndexRowKeyBuilder
                 .newBuilder(tableId, indexId + 1)
                 .withSortOrder(SortOrder.Descending)
                 .build();
+
         return createScannerForRange(incrementRowKey(startRow.encode()), endRow.encode());
     }
 
     @Override
     public Scanner indexScanExact(QueryKey key) {
-        IndexRowKey row = indexPrefixedForTable(key).withSortOrder(SortOrder.Ascending).build();
+        final TableSchema schema = store.getSchema(tableId);
+        long indexId = store.getIndexId(tableId, key.getIndexName());
+
+        IndexRowKey row = IndexRowKeyBuilder
+                .newBuilder(tableId, indexId)
+                .withQueryKey(key, schema)
+                .withSortOrder(SortOrder.Ascending)
+                .build();
 
         // Scan is [start, end) : increment to set end to next possible row
         return createScannerForRange(row.encode(), incrementRowKey(row.encode()));
@@ -216,8 +269,7 @@ public class HBaseTable implements Table {
     }
 
     private static byte[] incrementRowKey(byte[] key) {
-        BigInteger integer = new BigInteger(key);
-        return integer.add(new BigInteger("1")).toByteArray();
+        return new BigInteger(key).add(BigInteger.ONE).toByteArray();
     }
 
     /**
@@ -252,20 +304,6 @@ public class HBaseTable implements Table {
 
         Util.closeQuietly(dataScanner);
         HBaseOperations.performDelete(hTable, deletes);
-    }
-
-    private IndexRowKeyBuilder indexPrefixedForTable(final QueryKey key) {
-        final TableSchema schema = store.getSchema(tableId);
-        final long indexId = store.getIndexId(tableId, key.getIndexName());
-        final IndexRowKeyBuilder indexRowBuilder =
-                IndexRowKeyBuilder.newBuilder(tableId, indexId);
-
-        if (key.getQueryType() == QueryType.INDEX_LAST
-                || key.getQueryType() == QueryType.INDEX_FIRST) {
-            return indexRowBuilder;
-        }
-
-        return indexRowBuilder.withQueryKey(key, schema);
     }
 
     private Scanner createScannerForRange(byte[] start, byte[] end) {

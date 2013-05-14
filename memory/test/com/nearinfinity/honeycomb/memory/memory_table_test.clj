@@ -124,6 +124,11 @@
       (is (every? (set rows) @(:rows (.tableScan table))))
       (is (= (count-results (.tableScan table)) (count rows))))
 
+    (testing "ascending full index scan"
+      (let [query-key (create-query-key "i1")]
+        (is (every? (set rows) @(:rows (.ascendingIndexScan table query-key))))
+        (is (= (count-results (.ascendingIndexScanAt table query-key)) (count rows)))))
+
     (testing "ascending index scan at"
       (let [query-key (create-query-key "i1" "c1" (long-bb 2))]
         (is (every? (set (nthnext rows 2)) @(:rows (.ascendingIndexScanAt table query-key))))
@@ -133,6 +138,11 @@
       (let [query-key (create-query-key "i1" "c1" (long-bb 2))]
         (is (every? (set (nthnext rows 3)) @(:rows (.ascendingIndexScanAfter table query-key))))
         (is (= (count-results (.ascendingIndexScanAfter table query-key)) 3))))
+
+    (testing "descending full index scan"
+      (let [query-key (create-query-key "i1")]
+        (is (every? (set rows) @(:rows (.descendingIndexScan table query-key))))
+        (is (= (count-results (.ascendingIndexScanAt table query-key)) (count rows)))))
 
     (testing "descending index scan before"
       (let [query-key (create-query-key "i1" "c1" (long-bb 2))]

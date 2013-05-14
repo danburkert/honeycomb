@@ -42,7 +42,7 @@
   (Row. fields (UUID/randomUUID)))
 
 (defn create-query-key [index-name & {:as keys}]
-  (QueryKey. index-name QueryType/EXACT_KEY keys))
+  (QueryKey. index-name QueryType/EXACT_KEY (or keys {})))
 
 (defn row->query-key [index-name row]
   (QueryKey. index-name QueryType/EXACT_KEY (.getRecords row)))
