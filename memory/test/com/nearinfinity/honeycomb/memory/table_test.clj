@@ -1,8 +1,8 @@
-(ns com.nearinfinity.honeycomb.memory.memory-table-test
+(ns com.nearinfinity.honeycomb.memory.table-test
   (:require [clojure.test :refer :all]
             [com.nearinfinity.honeycomb.memory.test-util :refer :all]
-            [com.nearinfinity.honeycomb.memory.memory-table :refer :all]
-            [com.nearinfinity.honeycomb.memory.memory-store :as store])
+            [com.nearinfinity.honeycomb.memory.table :refer :all]
+            [com.nearinfinity.honeycomb.memory.store :as store])
   (:import [com.nearinfinity.honeycomb.exceptions RowNotFoundException]
            [com.nearinfinity.honeycomb.mysql Row]
            [com.nearinfinity.honeycomb.mysql.gen ColumnType]
@@ -10,15 +10,15 @@
 
 
 (def ^:private field-comparator
-  (ns-resolve 'com.nearinfinity.honeycomb.memory.memory-table
+  (ns-resolve 'com.nearinfinity.honeycomb.memory.table
               'field-comparator))
 
 (def ^:private row-uuid-comparator
-  (ns-resolve 'com.nearinfinity.honeycomb.memory.memory-table
+  (ns-resolve 'com.nearinfinity.honeycomb.memory.table
               'row-uuid-comparator))
 
 (def ^:private schema->row-index-comparator
-  (ns-resolve 'com.nearinfinity.honeycomb.memory.memory-table
+  (ns-resolve 'com.nearinfinity.honeycomb.memory.table
               'schema->row-index-comparator))
 
 (deftest field-comparator-test

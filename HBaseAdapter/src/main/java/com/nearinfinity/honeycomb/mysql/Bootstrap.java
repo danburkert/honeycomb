@@ -7,7 +7,6 @@ import com.google.inject.Module;
 import com.nearinfinity.honeycomb.config.AdapterType;
 import com.nearinfinity.honeycomb.config.ConfigurationParser;
 import com.nearinfinity.honeycomb.config.HoneycombConfiguration;
-import com.nearinfinity.honeycomb.hbase.HBaseModule;
 import com.nearinfinity.honeycomb.util.Verify;
 import org.apache.log4j.Appender;
 import org.apache.log4j.FileAppender;
@@ -80,27 +79,20 @@ public final class Bootstrap extends AbstractModule {
     protected void configure() {
         bind(HoneycombConfiguration.class).toInstance(configuration);
 
-        // Setup the HBase bindings only if the adapter has been configured
-        if (configuration.isAdapterConfigured(AdapterType.HBASE)) {
-            try {
-                HBaseModule hBaseModule = new HBaseModule(configuration.getAdapterOptions(AdapterType.HBASE));
-                install(hBaseModule);
-            } catch (IOException e) {
-                logger.fatal("Failure during HBase initialization.", e);
-                throw new RuntimeException(e);
-            }
-        }
-
-        if (configuration.isAdapterConfigured(AdapterType.MEMORY)) {
-            try {
-                Class memoryModuleClass = Class.forName("com.nearinfinity.honeycomb.memory.MemoryModule");
-                Constructor memoryModuleCTor = memoryModuleClass.getConstructor(Map.class);
-                Object memoryModule = memoryModuleCTor.newInstance(configuration.getAdapterOptions(AdapterType.MEMORY));
-                install((Module) memoryModule);
-            } catch (ClassNotFoundException e) {
-                logger.error("The memory adaptor is configured, but could not be found on the classpath.");
-            } catch (Exception e) {
-                logger.error("Exception while attempting to reflect on the memory adaptor.", e);
+        for (AdapterType adapter : AdapterType.values()) {
+            if (configuration.isAdapterConfigured(adapter)) {
+                try {
+                    Class moduleClass = Class.forName(adapter.getModuleClass());
+                    Constructor moduleCtor = moduleClass.getConstructor(Map.class);
+                    Object module = moduleCtor.newInstance(configuration.getAdapterOptions(adapter));
+                    install((Module) module);
+                } catch (ClassNotFoundException e) {
+                    logger.error("The " + adapter.getName() + " adaptor is" +
+                            " configured, but could not be found on the classpath.");
+                } catch (Exception e) {
+                    logger.error("Exception while attempting to reflect on the "
+                            + adapter.getName() + " adaptor.", e);
+                }
             }
         }
     }

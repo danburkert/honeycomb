@@ -1,5 +1,5 @@
 (ns com.nearinfinity.honeycomb.memory.test-util
-  (:require [com.nearinfinity.honeycomb.memory.memory-table :as table])
+  (:require [com.nearinfinity.honeycomb.memory.table :as table])
   (:import [com.nearinfinity.honeycomb.mysql Row QueryKey]
            [com.nearinfinity.honeycomb.mysql.gen QueryType]
            [com.nearinfinity.honeycomb.mysql.schema ColumnSchema ColumnSchema$Builder IndexSchema TableSchema]
