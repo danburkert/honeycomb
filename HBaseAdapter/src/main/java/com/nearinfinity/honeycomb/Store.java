@@ -54,7 +54,7 @@ public interface Store {
      * @param tableName The name of the table to be altered, not null or empty
      * @param schema    The schema of the index, not null
      */
-    public void addIndex(final String tableName, final IndexSchema schema);
+    public void addIndex(String tableName, IndexSchema schema);
 
     /**
      * Drop the specified index from the table specified by the table name
@@ -62,7 +62,7 @@ public interface Store {
      * @param tableName The name of the table to be altered, not null or empty
      * @param indexName The name of the index to be dropped, not null or empty
      */
-    public void dropIndex(final String tableName, final String indexName);
+    public void dropIndex(String tableName, String indexName);
 
     /**
      * Gets the current value of the auto increment column in the table

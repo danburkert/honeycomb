@@ -68,7 +68,7 @@ public class HBaseTable implements Table {
     }
 
     @Override
-    public void insert(Row row) {
+    public void insertRow(Row row) {
         checkNotNull(row);
         HBaseOperations.performPut(hTable, mutationFactory.insert(tableId, row));
     }
@@ -94,7 +94,7 @@ public class HBaseTable implements Table {
     }
 
     @Override
-    public void update(Row oldRow, Row newRow, Collection<IndexSchema> changedIndices) {
+    public void updateRow(Row oldRow, Row newRow, Collection<IndexSchema> changedIndices) {
         checkNotNull(newRow);
 
         // Delete indices that have changed
@@ -109,7 +109,7 @@ public class HBaseTable implements Table {
     }
 
     @Override
-    public void delete(final Row row) {
+    public void deleteRow(final Row row) {
         checkNotNull(row);
         HBaseOperations.performDelete(hTable, mutationFactory.delete(tableId, row));
     }
@@ -125,7 +125,7 @@ public class HBaseTable implements Table {
     }
 
     @Override
-    public Row get(UUID uuid) {
+    public Row getRow(UUID uuid) {
         DataRowKey dataRow = new DataRowKey(tableId, uuid);
         Get get = new Get(dataRow.encode());
         Result result = HBaseOperations.performGet(hTable, get);

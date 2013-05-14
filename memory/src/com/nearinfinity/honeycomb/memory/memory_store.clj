@@ -28,7 +28,7 @@
     (dosync
       (if-let [cur-table (get (ensure tables) cur-table-name)]
         (if-let [table-metadata (get (ensure metadata) cur-table-name)]
-          (let [new-table (table/->MemoryTable this new-table-name (.getRows cur-table) (.getIndices cur-table))]
+          (let [new-table (table/->MemoryTable this new-table-name (:rows cur-table) (:indices cur-table))]
             (do
               (alter tables assoc new-table-name new-table)
               (alter metadata assoc new-table-name table-metadata)

@@ -118,7 +118,7 @@
               (create-row "c1" (long-bb 3))
               (create-row "c1" (long-bb 4))
               (create-row "c1" (long-bb 5))]]
-    (dorun (map #(.insert table %) rows))
+    (dorun (map #(.insertRow table %) rows))
 
     (testing "table scan"
       (is (every? (set rows) @(:rows (.tableScan table))))
@@ -166,16 +166,16 @@
               (create-row "c1" (long-bb 3))
               (create-row "c1" (long-bb 4))
               (create-row "c1" (long-bb 5))]]
-    (dorun (map #(.insert table %) rows))
+    (dorun (map #(.insertRow table %) rows))
 
     (testing "returns inserted rows"
       (doseq [row rows]
         (let [uuid (.getUUID row)]
-          (is (= (.get table uuid) row)))))
+          (is (= (.getRow table uuid) row)))))
 
     (testing "Throws RowNotFoundException"
       (is (thrown? RowNotFoundException
-                   (.get table (UUID/randomUUID)))))))
+                   (.getRow table (UUID/randomUUID)))))))
 
 (deftest delete-test
   (let [table-name "t1"
@@ -185,17 +185,17 @@
         table (.openTable store table-name)
         rows [(create-row "c1" (long-bb 0))
               (create-row "c1" (long-bb 0))]]
-    (dorun (map #(.insert table %) rows))
+    (dorun (map #(.insertRow table %) rows))
 
     (testing "removes row"
       (is (= (count-results (.tableScan table)) (count rows)))
-      (.delete table (first rows))
+      (.deleteRow table (first rows))
       (is (= (count-results (.tableScan table)) (dec (count rows)))))
 
     (testing "remove all rows"
       (.deleteAllRows table)
       (is (= (count-results (.tableScan table)) 0))
-      (dorun (map #(.insert table %) rows))
+      (dorun (map #(.insertRow table %) rows))
       (is (= (count-results (.tableScan table)) (count rows))))))
 
 (deftest update-test
@@ -207,12 +207,12 @@
         uuid (UUID/randomUUID)
         row (Row. {"c1" (long-bb 123)} uuid)
         row' (Row. {"c1" (long-bb 456)} uuid)]
-    (.insert table row)
+    (.insertRow table row)
 
     (testing "updates row"
-      (is (= (.get table uuid) row))
-      (.update table row row' nil)
-      (is (= (.get table uuid) row')))))
+      (is (= (.getRow table uuid) row))
+      (.updateRow table row row' nil)
+      (is (= (.getRow table uuid) row')))))
 
 (deftest add-index
   (let [table-name "t1"
@@ -223,7 +223,7 @@
         table (.openTable store table-name)
         rows [(create-row "c1" (long-bb 0))
               (create-row "c1" (long-bb 0))]]
-    (dorun (map #(.insert table %) rows))
+    (dorun (map #(.insertRow table %) rows))
 
     (testing "adding index"
       (is (= (count-results (.tableScan table)) (count rows)))
@@ -248,7 +248,7 @@
               (create-row (first column-names) (long-bb 3) (second column-names) (long-bb 3))
               (create-row (first column-names) (long-bb 4) (second column-names) (long-bb 4))
               (create-row (first column-names) (long-bb 5) (second column-names) (long-bb 5))]]
-    (dorun (map #(.insert table %) rows))
+    (dorun (map #(.insertRow table %) rows))
 
     (testing "table scan"
       (is (every? (set rows) @(:rows (.tableScan table))))

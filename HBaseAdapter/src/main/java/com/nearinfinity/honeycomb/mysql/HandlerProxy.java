@@ -270,7 +270,7 @@ public class HandlerProxy {
             }
         }
 
-        table.insert(row);
+        table.insertRow(row);
         if (schema.hasUniqueIndices()) {
             table.flush();
         }
@@ -279,7 +279,7 @@ public class HandlerProxy {
     public void deleteRow(byte[] rowBytes) {
         checkTableOpen();
         Row row = Row.deserialize(rowBytes);
-        table.delete(row);
+        table.deleteRow(row);
     }
 
     public void updateRow(byte[] oldRowBytes, byte[] rowBytes) {
@@ -290,7 +290,7 @@ public class HandlerProxy {
         Row oldRow = Row.deserialize(oldRowBytes);
         oldRow.setUUID(updatedRow.getUUID());
         ImmutableList<IndexSchema> changedIndices = Util.getChangedIndices(schema.getIndices(), oldRow.getRecords(), updatedRow.getRecords());
-        table.update(oldRow, updatedRow, changedIndices);
+        table.updateRow(oldRow, updatedRow, changedIndices);
         if (schema.hasUniqueIndices()) {
             table.flush();
         }
@@ -378,7 +378,7 @@ public class HandlerProxy {
     public byte[] getRow(byte[] uuid) {
         checkTableOpen();
         checkNotNull(uuid, "Get row cannot have a null UUID.");
-        return table.get(Util.bytesToUUID(uuid)).serialize();
+        return table.getRow(Util.bytesToUUID(uuid)).serialize();
     }
 
     public void endScan() {

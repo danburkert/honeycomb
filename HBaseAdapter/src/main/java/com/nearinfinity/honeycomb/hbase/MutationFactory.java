@@ -23,7 +23,7 @@ import java.util.UUID;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Creates put and delete lists for various operations.  Meant to have no
+ * Creates put and deleteRow lists for various operations.  Meant to have no
  * side effects except for requesting metadata from the store.
  */
 public class MutationFactory {

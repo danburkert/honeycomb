@@ -95,26 +95,17 @@
                 true
                 keys)))))
 
-;; Necessary so the MemoryStore can get the rows of a MemoryTable
-(defprotocol RowContainer
-  (getRows [this])
-  (getIndices [this]))
-
-;; MemoryTable must use deftype instead of defrecord because
-;; the Table protocol has a get method.
-;; See https://groups.google.com/forum/?fromgroups=#!topic/clojure/pdfj13ppwik
-;;
 ;; Memory table holds a reference to a store, its table name, a ref which contains
 ;; a sorted set of its rows, and an indices ref which holds a map of index name to
 ;; sorted set of rows.
-(deftype MemoryTable [^Store store table-name rows indices]
+(defrecord MemoryTable [^Store store table-name rows indices]
   java.io.Closeable
 
   (close [this])
 
   Table
 
-  (insert [this row]
+  (insertRow [this row]
     (dosync
       (commute rows conj row)
       (commute indices update-indices conj row)))
@@ -129,12 +120,12 @@
                          (schema->row-index-comparator index-name table-schema))
                        rows)))))
 
-  (update [this oldRow newRow changed-indices]
+  (updateRow [this oldRow newRow changed-indices]
     (dosync
-      (.delete this oldRow)
-      (.insert this newRow)))
+      (.deleteRow this oldRow)
+      (.insertRow this newRow)))
 
-  (delete [this row]
+  (deleteRow [this row]
     (dosync
       (alter rows disj row)
       (alter indices update-indices disj row)))
@@ -145,7 +136,7 @@
 
   (flush [this])
 
-  (get [this uuid]
+  (getRow [this uuid]
     (if-let [row (@rows (Row. {} uuid))]
       row
       (throw (RowNotFoundException. uuid))))
@@ -195,11 +186,7 @@
   (deleteAllRows [this]
     (dosync
       (alter rows empty)
-      (alter indices update-indices empty)))
-
-  RowContainer
-  (getRows [this] rows)
-  (getIndices [this] indices))
+      (alter indices update-indices empty))))
 
 (defn memory-table [store table-name ^TableSchema table-schema]
   (let [add-index (fn [indices ^IndexSchema index]
@@ -232,13 +219,13 @@
 
   (let [table (table)
         rows [(row)]]
-    (doseq [row rows] (.insert table row))
+    (doseq [row rows] (.insertRow table row))
     (.ascendingIndexScanAt table (row->query-key "i1" (get rows 0))))
 
   (row->query-key "i1" (row))
 
-(let [table (table)
-      rows [(row)]]
-  (.indexScanExact table (row->query-key "i1" (first rows))))
+  (let [table (table)
+        rows [(row)]]
+    (.indexScanExact table (row->query-key "i1" (first rows))))
 
   )

@@ -10,7 +10,8 @@ import java.util.UUID;
 
 /**
  * A Table handles operations for a single MySQL table. It must support "insert",
- * "update", "delete" and "get" operations on rows, as well as table and index scans
+ * "updateRow", "deleteRow" and "getRow" operations on rows, table and index scans,
+ * and building and removing indices.
  */
 public interface Table extends Closeable {
     /**
@@ -18,7 +19,27 @@ public interface Table extends Closeable {
      *
      * @param row Row to be inserted
      */
-    void insert(Row row);
+    void insertRow(Row row);
+
+    /**
+     * Update row in table
+     *
+     * @param oldRow         The old row
+     * @param newRow         The new row
+     * @param changedIndices List of indices with updated values.
+     * @throws com.nearinfinity.honeycomb.exceptions.RowNotFoundException
+     *
+     */
+    void updateRow(Row oldRow, Row newRow, Collection<IndexSchema> changedIndices);
+
+    /**
+     * Remove row from the table
+     *
+     * @param row The row to be deleted
+     * @throws com.nearinfinity.honeycomb.exceptions.RowNotFoundException
+     *
+     */
+    void deleteRow(Row row);
 
     /**
      * Inserts an index on the table
@@ -28,32 +49,16 @@ public interface Table extends Closeable {
     void insertTableIndex(final IndexSchema indexSchema);
 
     /**
-     * Update row in table
-     *
-     *
-     * @param oldRow         The old row
-     * @param newRow         The new row
-     * @param changedIndices List of indices with updated values.
-     * @throws com.nearinfinity.honeycomb.exceptions.RowNotFoundException
-     *
-     */
-    void update(Row oldRow, Row newRow, Collection<IndexSchema> changedIndices);
-
-    /**
-     * Remove row from the table
-     *
-     * @param row The row to be deleted
-     * @throws com.nearinfinity.honeycomb.exceptions.RowNotFoundException
-     *
-     */
-    void delete(Row row);
-
-    /**
      * Deletes the index corresponding to the specified index name from the table
      *
      * @param indexSchema The {@link com.nearinfinity.honeycomb.mysql.schema.IndexSchema} representing the index details, not null
      */
     void deleteTableIndex(final IndexSchema indexSchema);
+
+    /**
+     * Remove all rows from the table.
+     */
+    void deleteAllRows();
 
     /**
      * Flush all inserts, updates, and deletes to the table. IUD operations are
@@ -67,7 +72,7 @@ public interface Table extends Closeable {
      * @param uuid UUID of requested row
      * @return Row with given UUID
      */
-    Row get(UUID uuid);
+    Row getRow(UUID uuid);
 
     /**
      * Create a scanner for an unordered full table scan
@@ -119,9 +124,4 @@ public interface Table extends Closeable {
      * @return Scanner over index
      */
     Scanner indexScanExact(QueryKey key);
-
-    /**
-     * Remove all rows from the table.
-     */
-    void deleteAllRows();
 }
