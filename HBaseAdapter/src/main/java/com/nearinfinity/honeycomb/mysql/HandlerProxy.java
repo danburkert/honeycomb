@@ -348,7 +348,7 @@ public class HandlerProxy {
                 currentScanner = table.ascendingIndexScanAfter(key);
                 break;
             case BEFORE_KEY:
-                currentScanner = table.descendingIndexScanAfter(key);
+                currentScanner = table.descendingIndexScanBefore(key);
                 break;
             case INDEX_FIRST:
                 currentScanner = table.ascendingIndexScanAt(key);

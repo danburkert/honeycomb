@@ -136,8 +136,8 @@
 
     (testing "descending index scan before"
       (let [query-key (create-query-key "i1" "c1" (long-bb 2))]
-        (is (every? (set (take 2 rows)) @(:rows (.descendingIndexScanAfter table query-key))))
-        (is (= (count-results (.descendingIndexScanAfter table query-key)) 2))))
+        (is (every? (set (take 2 rows)) @(:rows (.descendingIndexScanBefore table query-key))))
+        (is (= (count-results (.descendingIndexScanBefore table query-key)) 2))))
 
     (testing "descending index scan at"
       (let [query-key (create-query-key "i1" "c1" (long-bb 2))]

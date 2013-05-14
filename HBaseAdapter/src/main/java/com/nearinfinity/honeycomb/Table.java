@@ -115,7 +115,7 @@ public interface Table extends Closeable {
      * @param key
      * @return Scanner over index
      */
-    Scanner descendingIndexScanAfter(QueryKey key);
+    Scanner descendingIndexScanBefore(QueryKey key);
 
     /**
      * Return a scanner over the rows in the table with the specified key /values

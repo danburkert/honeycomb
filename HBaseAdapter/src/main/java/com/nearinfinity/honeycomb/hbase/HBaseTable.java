@@ -188,7 +188,7 @@ public class HBaseTable implements Table {
     }
 
     @Override
-    public Scanner descendingIndexScanAfter(QueryKey key) {
+    public Scanner descendingIndexScanBefore(QueryKey key) {
         IndexRowKey startRow = indexPrefixedForTable(key)
                 .withSortOrder(SortOrder.Descending)
                 .build();

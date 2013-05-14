@@ -168,7 +168,7 @@
               lt-rows (rsubseq (get @indices index-name) <= start-row)]
           (->MemoryScanner (atom (concat eq-rows lt-rows)))))))
 
-  (descendingIndexScanAfter [this key]
+  (descendingIndexScanBefore [this key]
     (let [index-name (.getIndexName key)
           start-row (query-key->row-before key)
           rows (rsubseq (get @indices index-name) < start-row)]
