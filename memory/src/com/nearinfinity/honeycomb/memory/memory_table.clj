@@ -7,8 +7,7 @@
            [com.nearinfinity.honeycomb.mysql Row QueryKey]
            [com.nearinfinity.honeycomb.mysql.gen ColumnType QueryType]
            [com.google.common.primitives UnsignedBytes]
-           [java.nio ByteBuffer]
-           [java.math BigInteger]))
+           [java.nio ByteBuffer]))
 
 (defn- query-key->row-after
   "Takes a query key and returns the row that would fall directly after the
