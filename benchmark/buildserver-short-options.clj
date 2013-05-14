@@ -2,7 +2,7 @@
  :warmup 30
  :bench 60
  :clients [1 8 16]
- :queries [iscan-firstname-10]
+ :queries [iscan-firstname]
  :append false
  :out "benchmark-short.ssv"
  :db {:classname "com.mysql.jdbc.Driver"
