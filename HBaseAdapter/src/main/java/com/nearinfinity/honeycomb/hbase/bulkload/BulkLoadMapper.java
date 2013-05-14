@@ -38,7 +38,6 @@ public class BulkLoadMapper
     private TableSchema schema;
     private MutationFactory mutationFactory;
 
-    private static final String HBASE_TABLE = "honeycomb.hbase.table";
     private static final String SQL_TABLE = "honeycomb.sql.table";
     private static final String SQL_COLUMNS = "honeycomb.sql.columns";
     private static final String SEPARATOR = "importtsv.separator";
@@ -53,7 +52,7 @@ public class BulkLoadMapper
         char separator  = conf.get(SEPARATOR, " ").charAt(0);
         columns = conf.getStrings(SQL_COLUMNS);
         String sqlTable = conf.get(SQL_TABLE);
-        String hbaseTable  = conf.get(HBASE_TABLE);
+        String hbaseTable  = conf.get(ConfigConstants.TABLE_NAME);
         String columnFamily = conf.get(ConfigConstants.COLUMN_FAMILY);
 
         // Check that necessary configuration variables are set
@@ -61,12 +60,13 @@ public class BulkLoadMapper
                 HConstants.ZOOKEEPER_QUORUM + NOT_SET_ERROR);
         checkNotNull(sqlTable, SQL_TABLE + NOT_SET_ERROR);
         checkNotNull(columns, SQL_COLUMNS + NOT_SET_ERROR);
-        checkNotNull(hbaseTable, HBASE_TABLE + NOT_SET_ERROR);
+        checkNotNull(hbaseTable, ConfigConstants.TABLE_NAME + NOT_SET_ERROR);
         checkNotNull(columnFamily, ConfigConstants.COLUMN_FAMILY + NOT_SET_ERROR);
 
         LOG.info("Zookeeper " + conf.get(HConstants.ZOOKEEPER_QUORUM));
         LOG.info("SQL Table " + sqlTable);
         LOG.info("HBase Table " + hbaseTable);
+        LOG.info("HBase Column Family " + columnFamily);
 
         final HTablePool pool = new HTablePool(conf, 1);
         HBaseMetadata metadata = new HBaseMetadata(new PoolHTableProvider(hbaseTable, pool));
