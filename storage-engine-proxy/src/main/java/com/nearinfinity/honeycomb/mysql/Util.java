@@ -18,7 +18,6 @@ import org.apache.avro.io.Decoder;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
 
 import com.google.common.collect.ImmutableList;
@@ -155,7 +154,7 @@ public class Util {
     private static <T> RuntimeException deserializationError(byte[] serializedData, IOException e, Class<T> clazz) {
         String clazzMessage = clazz == null ? "" : "of class type " + clazz.getName();
         String format = String.format("Deserialization failed for data (%s) " + clazzMessage,
-                Bytes.toStringBinary(serializedData));
+                Util.generateHexString(serializedData));
         logger.error(format, e);
         return new RuntimeException(format, e);
     }

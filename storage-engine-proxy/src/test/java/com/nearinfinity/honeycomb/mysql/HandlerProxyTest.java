@@ -1,7 +1,7 @@
 package com.nearinfinity.honeycomb.mysql;
 
+import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
-import com.nearinfinity.honeycomb.hbase.HBaseStore;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -21,7 +21,7 @@ public class HandlerProxyTest {
 
     private static final String DUMMY_TABLE_NAME = "foo/bar";
     @Mock
-    private HBaseStore storageMock;
+    private Store storageMock;
     @Mock
     private StoreFactory storeFactory;
     @Mock

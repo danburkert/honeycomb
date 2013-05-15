@@ -4,8 +4,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.nearinfinity.honeycomb</groupId>
-    <artifactId>honeycomb</artifactId>
-    <version>0.1</version>
+    <artifactId>honeycomb-parent</artifactId>
+    <version>0.1-SNAPSHOT</version>
     <name>Honeycomb Parent Project</name>
     <packaging>pom</packaging>
 
@@ -292,8 +292,7 @@
     </dependencyManagement>
 
     <modules>
-        <module>HBaseAdapter</module>
-        <module>MedianSplit</module>
-        <module>StoreIntegrationTests</module>
+        <module>storage-engine-proxy</module>
+        <!--<module>StoreIntegrationTests</module>-->
     </modules>
 </project>
