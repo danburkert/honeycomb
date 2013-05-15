@@ -293,6 +293,8 @@
 
     <modules>
         <module>storage-engine-proxy</module>
-        <!--<module>StoreIntegrationTests</module>-->
+        <module>storage-engine-backends/hbase</module>
+        <module>storage-engine-backends/memory</module>
+        <module>proxy-integration-tests</module>
     </modules>
 </project>
