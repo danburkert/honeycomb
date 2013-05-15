@@ -1,1 +1,1 @@
-bin/vagrant/ubuntu/Vagrantfile
+config/vagrant/ubuntu/Vagrantfile
