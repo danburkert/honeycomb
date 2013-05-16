@@ -72,7 +72,7 @@ public final class Bootstrap extends AbstractModule {
     }
 
     private static void ensureLoggingPathsCorrect() {
-        Enumeration allAppenders = Logger.getRootLogger().getAllAppenders();
+        Enumeration<?> allAppenders = Logger.getRootLogger().getAllAppenders();
         while (allAppenders.hasMoreElements()) {
             Appender appender = (Appender) allAppenders.nextElement();
             if (appender instanceof FileAppender) {
@@ -105,8 +105,8 @@ public final class Bootstrap extends AbstractModule {
         for (AdapterType adapter : AdapterType.values()) {
             if (configuration.isAdapterConfigured(adapter)) {
                 try {
-                    Class moduleClass = Class.forName(adapter.getModuleClass());
-                    Constructor moduleCtor = moduleClass.getConstructor(Map.class);
+                    Class<?> moduleClass = Class.forName(adapter.getModuleClass());
+                    Constructor<?> moduleCtor = moduleClass.getConstructor(Map.class);
                     Object module = moduleCtor.newInstance(configuration.getAdapterOptions(adapter));
                     install((Module) module);
                 } catch (ClassNotFoundException e) {
