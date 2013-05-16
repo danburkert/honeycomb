@@ -21,6 +21,7 @@
         <powermock.version>1.5</powermock.version>
         <maven.build.timestamp.format>EEE MMM dd HH:mm z yyyy</maven.build.timestamp.format>
         <javadoc.stylesheetfile>config/maven/javadoc/stylesheet.css</javadoc.stylesheetfile>
+        <site.config.location>config/maven/site</site.config.location>
     </properties>
 
     <distributionManagement>
@@ -167,6 +168,7 @@
                     <artifactId>maven-site-plugin</artifactId>
                     <version>3.2</version>
                     <configuration>
+                        <siteDirectory>${user.dir}/${site.config.location}</siteDirectory>
                         <attach>true</attach>
                         <relativizeDecorationLinks>false</relativizeDecorationLinks>
                         <reportPlugins>

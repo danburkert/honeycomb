@@ -45,6 +45,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-site-plugin</artifactId>
+                <configuration>
+                    <siteDirectory>${basedir}/../${site.config.location}</siteDirectory>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.avro</groupId>
