@@ -65,22 +65,6 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>cobertura-maven-plugin</artifactId>
-                <configuration>
-                    <instrumentation>
-                        <ignores>
-                            <ignore>com.nearinfinity.honeycomb.mysql.gen.*</ignore>
-                        </ignores>
-                        <excludes>
-                            <exclude>com/nearinfinity/honeycomb/mysql/gen/**/*.class</exclude>
-
-                            <!-- Excluded due to Java 6 bug: http://bugs.sun.com/view_bug.do?bug_id=6889255 
-                                The usage of the @Named annotation in the StoreFactory constructor is at 
-                                fault -->
-                            <exclude>com/nearinfinity/honeycomb/mysql/StoreFactory.class</exclude>
-                            <exclude>com/nearinfinity/honeycomb/mysql/StoreFactoryTest.class</exclude>
-                        </excludes>
-                    </instrumentation>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
