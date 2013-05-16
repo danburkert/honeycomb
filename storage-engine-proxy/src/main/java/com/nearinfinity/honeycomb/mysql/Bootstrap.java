@@ -15,12 +15,22 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- * 
+ *
  * Copyright 2013 Altamira Corporation.
  */
 
 
 package com.nearinfinity.honeycomb.mysql;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.util.Enumeration;
+import java.util.Map;
+
+import org.apache.log4j.Appender;
+import org.apache.log4j.FileAppender;
+import org.apache.log4j.Logger;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -30,15 +40,6 @@ import com.nearinfinity.honeycomb.config.AdapterType;
 import com.nearinfinity.honeycomb.config.ConfigurationParser;
 import com.nearinfinity.honeycomb.config.HoneycombConfiguration;
 import com.nearinfinity.honeycomb.util.Verify;
-import org.apache.log4j.Appender;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Logger;
-
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.util.Enumeration;
-import java.util.Map;
 
 
 public final class Bootstrap extends AbstractModule {
@@ -109,7 +110,7 @@ public final class Bootstrap extends AbstractModule {
                     Object module = moduleCtor.newInstance(configuration.getAdapterOptions(adapter));
                     install((Module) module);
                 } catch (ClassNotFoundException e) {
-                    logger.error("The " + adapter.getName() + " adaptor is" +
+                    logger.error("The " + adapter.getName() + " adapter is" +
                             " configured, but could not be found on the classpath.");
                 } catch (Exception e) {
                     logger.error("Exception while attempting to reflect on the "
