@@ -33,11 +33,11 @@
 
 
     <xs:complexType name="optionsType">
-        <xs:sequence>
+        <xs:all>
             <xs:element type="jvmOptionsType" name="jvmoptions" />
             <xs:element type="xs:string" name="defaultAdapter" />
             <xs:element type="adaptersType" name="adapters" />
-        </xs:sequence>
+        </xs:all>
     </xs:complexType>
 
 
