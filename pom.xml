@@ -20,7 +20,7 @@
         <hbase.version>0.94.2-cdh4.2.0</hbase.version>
         <powermock.version>1.5</powermock.version>
         <maven.build.timestamp.format>EEE MMM dd HH:mm z yyyy</maven.build.timestamp.format>
-        <javadoc.stylesheetfile>src/main/javadoc/stylesheet.css</javadoc.stylesheetfile>
+        <javadoc.stylesheetfile>config/maven/javadoc/stylesheet.css</javadoc.stylesheetfile>
     </properties>
 
     <distributionManagement>
