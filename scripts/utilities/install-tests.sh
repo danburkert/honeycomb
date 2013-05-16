@@ -4,7 +4,7 @@
 : ${HONEYCOMB_HOME?"Need to set HONEYCOMB_HOME environmental variable."; exit 1; }
 
 test_link=$MYSQL_HOME/mysql-test/suite/honeycomb-test
-source=$HONEYCOMB_HOME/honeycomb/honeycomb-test
+source=$HONEYCOMB_HOME/storage-engine/mysql-test-suites
 if [ ! -e $source ]
 then
   echo "Could not find $source path. Not creating a link."

@@ -4,7 +4,7 @@
 : ${MYSQL_HOME?"Need to set MYSQL_HOME environmental variable to MySQL's installation directory."}
 command -v cmake >/dev/null 2>&1 || { echo >&2 "cmake is required to run $0."; exit 1; }
 command -v make >/dev/null 2>&1 || { echo >&2 "make is required to run $0."; exit 1; }
-source $HONEYCOMB_HOME/bin/constants.sh
+source $HONEYCOMB_HOME/scripts/utilities/constants.sh
 
 build_dir=$HONEYCOMB_HOME/build
 unit_test_dir=$HONEYCOMB_HOME/build/storage/honeycomb/unit-test
@@ -22,7 +22,7 @@ honeycomb_link=$mysql_path/storage/honeycomb
 if [ ! -L $honeycomb_link ]
 then
     echo "Creating symbolic link to $honeycomb_link"
-    ln -s $HONEYCOMB_HOME/honeycomb $honeycomb_link
+    ln -s $HONEYCOMB_HOME/storage-engine $honeycomb_link
 fi
 
 if [ ! -d $build_dir ]
@@ -53,7 +53,7 @@ fi
 cd $unit_test_dir
 if [ ! -e CMakeCache.txt ]
 then
-  cmake $HONEYCOMB_HOME/honeycomb/unit-test -DHONEYCOMB_SOURCE_DIR=$HONEYCOMB_HOME/honeycomb
+  cmake $HONEYCOMB_HOME/storage-engine/unit-test -DHONEYCOMB_SOURCE_DIR=$HONEYCOMB_HOME/storage-engine
   [ $? -ne 0 ] && { "CMake failed on unit tests.\n*** Don't forget to delete CMakeCache.txt in the unit test directory before running again.***"; exit 1; }
 fi
 make
@@ -95,7 +95,7 @@ then
 fi
 
 link=$CONFIG_PATH/honeycomb.xsd
-target=$HONEYCOMB_HOME/honeycomb/honeycomb.xsd
+target=$HONEYCOMB_HOME/config/honeycomb.xsd
 if [ ! -h $link ]
 then
   echo "Creating a symbolic link from $target to $link "
