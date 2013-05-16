@@ -114,7 +114,7 @@ public final class Bootstrap extends AbstractModule {
                             " configured, but could not be found on the classpath.");
                 } catch (Exception e) {
                     logger.error("Exception while attempting to reflect on the "
-                            + adapter.getName() + " adaptor.", e);
+                            + adapter.getName() + " adapter.", e);
                 }
             }
         }
