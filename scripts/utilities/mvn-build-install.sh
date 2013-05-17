@@ -7,7 +7,7 @@ if [ ! -z "$HONEYCOMB_LIB" ]
 then
   honeycomb_lib=$HONEYCOMB_LIB
 else
-  honeycomb_lib=/usr/local/lib/honeycomb
+  honeycomb_lib=$DEFAULT_HONEYCOMB_LIB
 fi
 
 script_dir=$HONEYCOMB_HOME/scripts/utilities
@@ -16,6 +16,9 @@ echo -e "Running Maven build script\n"
 
 testOption=$1
 mvnTestMode="-DskipIntTests"
+adapter_conf=$CONFIG_PATH/$CONFIG_NAME
+jar=honeycomb-hbase-0.1-SNAPSHOT.jar
+classpath=$HBASE_BACKEND/target/classpath
 
 if [ -n "$testOption" ]
 then
@@ -44,16 +47,13 @@ else
     echo "Test running mode not specified"
 fi
 
-
-
 cd $HONEYCOMB_HOME
 
 mvn -V clean install -Dapache $mvnTestMode
 [ $? -ne 0 ] && { exit 1; }
 
-$script_dir/install-honeycomb-jars.sh "$HONEYCOMB_HOME/storage-engine-backends/hbase" $honeycomb_lib
+$script_dir/install-honeycomb-jars.sh "$HBASE_BACKEND" $honeycomb_lib
 
-adapter_conf=$CONFIG_PATH/honeycomb.xml
 if [ ! -d $CONFIG_PATH ]
 then
   echo "Creating configuration path $config_path"
@@ -63,11 +63,9 @@ fi
 if [ ! -e $adapter_conf ]
 then
   echo "Creating the honeycomb.xml from the repository."
-  sudo cp $HONEYCOMB_HOME/config/honeycomb.xml $adapter_conf
+  sudo cp $HONEYCOMB_CONFIG/$CONFIG_NAME $adapter_conf
 fi
 
-jar=honeycomb-hbase-0.1-SNAPSHOT.jar
-classpath=$HONEYCOMB_HOME/storage-engine-backends/hbase/target/classpath
 if [ "$($script_dir/check-honeycomb-xml.rb "$classpath" $jar)" == "Update" ]
 then
   echo "Updating honeycomb.xml, it's out of date"
