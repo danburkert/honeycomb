@@ -58,13 +58,13 @@
         <!--  Including this dependency directly appears to cause a problem
               with dependency resolution for creating the test classpath.
               Transitive resolution works fine.
+        -->
         <dependency>
             <groupId>com.nearinfinity.honeycomb</groupId>
             <artifactId>honeycomb</artifactId>
             <version>0.1-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
-        -->
         <dependency>
             <groupId>com.nearinfinity.honeycomb.hbase</groupId>
             <artifactId>honeycomb-hbase</artifactId>

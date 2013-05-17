@@ -102,7 +102,7 @@
                         <excludes>
                             <exclude>com/nearinfinity/honeycomb/mysql/gen/**/*.class</exclude>
 
-                            <!-- Excluded due to Java 6 bug: http://bugs.sun.com/view_bug.do?bug_id=6889255 
+                            <!-- Excluded due to Java 6 bug: http://bugs.sun.com/view_bug.do?bug_id=6889255
                                 The usage of the @Named annotation in the StoreFactory constructor is at fault -->
                             <exclude>com/nearinfinity/honeycomb/mysql/StoreFactory.class</exclude>
                             <exclude>com/nearinfinity/honeycomb/mysql/StoreFactoryTest.class</exclude>
@@ -139,6 +139,12 @@
             <groupId>org.apache.avro</groupId>
             <artifactId>avro</artifactId>
             <version>1.7.4</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>log4j</groupId>

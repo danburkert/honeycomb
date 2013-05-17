@@ -22,7 +22,7 @@ usage ()
 while getopts ":t:" option
 do
   case "${option}" in
-        t) 
+        t)
             MAVEN_TEST_MODE=${OPTARG}
             [[ -n "$MAVEN_TEST_MODE" ]] || { echo "You must supply a valid test mode argument "; usage; }  
             ;;
