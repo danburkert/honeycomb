@@ -6,5 +6,5 @@ command -v mvn >/dev/null 2>&1 || { echo >&2 "mvn is required to run $0."; exit 
 source $HONEYCOMB_HOME/scripts/utilities/constants.sh
 echo -e "Building memory adaptor leiningen project\n"
 
-cd $HONEYCOMB_HOME/memory
+cd $MEMORY_BACKEND
 lein do clean, check, compile, jar, install

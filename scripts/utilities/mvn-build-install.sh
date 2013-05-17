@@ -1,7 +1,30 @@
 #!/bin/bash
 
+function install_jars
+{
+  src=$1
+  lib=$2
+  if [ ! -d $lib ]
+  then
+    echo "Creating $lib directory." 
+    current_user=`whoami`
+    sudo mkdir -p $lib
+    sudo chown -R $current_user:$current_user $lib
+  fi
+
+  echo "Moving jars into $lib"
+  cp -R $src/target/lib $lib
+  cp $src/target/*.jar $lib
+
+  echo "Making $lib jars executable"
+  chmod a+x $lib/lib/*.jar
+  chmod a+x $lib/*.jar
+}
+
 : ${HONEYCOMB_HOME?"Need to set HONEYCOMB_HOME environmental variable to the top of the project."}
 command -v mvn >/dev/null 2>&1 || { echo >&2 "mvn is required to run $0."; exit 1; }
+script_dir=$HONEYCOMB_HOME/scripts/utilities
+source $script_dir/constants.sh
 
 if [ ! -z "$HONEYCOMB_LIB" ]
 then
@@ -9,15 +32,12 @@ then
 else
   honeycomb_lib=$DEFAULT_HONEYCOMB_LIB
 fi
-
-script_dir=$HONEYCOMB_HOME/scripts/utilities
-source $script_dir/constants.sh
 echo -e "Running Maven build script\n"
 
 testOption=$1
 mvnTestMode="-DskipIntTests"
 adapter_conf=$CONFIG_PATH/$CONFIG_NAME
-jar=honeycomb-hbase-0.1-SNAPSHOT.jar
+hbase_jar=$HBASE_BACKEND_NAME-$ARTIFACT_ID.jar
 classpath=$HBASE_BACKEND/target/classpath
 
 if [ -n "$testOption" ]
@@ -52,7 +72,7 @@ cd $HONEYCOMB_HOME
 mvn -V clean install -Dapache $mvnTestMode
 [ $? -ne 0 ] && { exit 1; }
 
-$script_dir/install-honeycomb-jars.sh "$HBASE_BACKEND" $honeycomb_lib
+install_jars "$HBASE_BACKEND" $honeycomb_lib
 
 if [ ! -d $CONFIG_PATH ]
 then
@@ -66,10 +86,10 @@ then
   sudo cp $HONEYCOMB_CONFIG/$CONFIG_NAME $adapter_conf
 fi
 
-if [ "$($script_dir/check-honeycomb-xml.rb "$classpath" $jar)" == "Update" ]
+if [ "$($script_dir/check-honeycomb-xml.rb "$classpath" $hbase_jar)" == "Update" ]
 then
   echo "Updating honeycomb.xml, it's out of date"
-  sudo $script_dir/update-honeycomb-xml.rb "$classpath" $jar
+  sudo $script_dir/update-honeycomb-xml.rb "$classpath" $hbase_jar
 fi
 
 echo "*** Don't forget to restart MySQL. The JVM doesn't autoreload the jar from the disk. ***"

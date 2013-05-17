@@ -14,6 +14,9 @@ BUILD_OUTPUT=$BUILD_DIR/storage/honeycomb
 SO_NAME=ha_honeycomb.so
 SCHEMA_NAME=honeycomb.xsd
 CONFIG_NAME=honeycomb.xml
+PROXY_JAR_NAME=honeycomb
+HBASE_BACKEND_NAME=honeycomb-hbase
+ARTIFACT_ID=0.1-SNAPSHOT
 
 function take_dir 
 {
