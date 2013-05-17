@@ -9,7 +9,7 @@ This backend allows you to use and test Honeycomb without having access to an HB
 The backend can be build with either maven or [leiningen](https://github.com/technomancy/leiningen):
 
 ```Bash
-mvn clean compile package
+mvn clean package
 # OR
 lein do clean, compile
 ```
@@ -39,7 +39,7 @@ insert into in-mem values (123);
 
 ## Contributing
 
-The memory backend is written in Clojure.  We maintain a `project.clj` for building with Leiningen which is conveinent for Clojure developers, as well as a `pom.xml` suitable for building directly from maven.  Please ensure that any changes to the version or dependencies take place in both files.
+The memory backend is written in Clojure.  We maintain a `project.clj` for building with Leiningen which is convenient for Clojure developers, as well as a `pom.xml` suitable for building directly from maven.  Please ensure that any changes to the version or dependencies take place in both files.
 
 ### Testing
 
