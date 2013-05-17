@@ -66,7 +66,7 @@ then
   sudo cp $HONEYCOMB_HOME/config/honeycomb.xml $adapter_conf
 fi
 
-jar=mysqlengine-0.1.jar
+jar=honeycomb-hbase-0.1-SNAPSHOT.jar
 classpath=$HONEYCOMB_HOME/storage-engine-backends/hbase/target/classpath
 if [ "$($script_dir/check-honeycomb-xml.rb "$classpath" $jar)" == "Update" ]
 then
