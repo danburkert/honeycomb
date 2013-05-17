@@ -4,6 +4,7 @@ CONFIG_PATH=/usr/share/mysql/honeycomb
 DEFAULT_HONEYCOMB_LIB=/usr/local/lib/honeycomb
 
 BACKENDS=$HONEYCOMB_HOME/storage-engine-backends
+PROXY=$HONEYCOMB_HOME/storage-engine-proxy
 HBASE_BACKEND=$BACKENDS/hbase
 MEMORY_BACKEND=$BACKENDS/memory
 STORAGE_ENGINE=$HONEYCOMB_HOME/storage-engine
@@ -17,6 +18,18 @@ CONFIG_NAME=honeycomb.xml
 PROXY_JAR_NAME=honeycomb
 HBASE_BACKEND_NAME=honeycomb-hbase
 ARTIFACT_ID=0.1-SNAPSHOT
+
+function take_ownership
+{
+  current_user=`whoami`
+  sudo chown -R $current_user $1
+}
+
+function create_dir_with_ownership
+{
+  sudo mkdir -p $1
+  take_ownership $1
+}
 
 function take_dir 
 {
