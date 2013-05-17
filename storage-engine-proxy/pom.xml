@@ -103,8 +103,7 @@
                             <exclude>com/nearinfinity/honeycomb/mysql/gen/**/*.class</exclude>
 
                             <!-- Excluded due to Java 6 bug: http://bugs.sun.com/view_bug.do?bug_id=6889255 
-                                The usage of the @Named annotation in the StoreFactory constructor is at 
-                                fault -->
+                                The usage of the @Named annotation in the StoreFactory constructor is at fault -->
                             <exclude>com/nearinfinity/honeycomb/mysql/StoreFactory.class</exclude>
                             <exclude>com/nearinfinity/honeycomb/mysql/StoreFactoryTest.class</exclude>
                         </excludes>
@@ -152,17 +151,14 @@
         <dependency>
             <groupId>com.google.inject</groupId>
             <artifactId>guice</artifactId>
-            <version>3.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.inject.extensions</groupId>
             <artifactId>guice-multibindings</artifactId>
-            <version>3.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.inject.extensions</groupId>
             <artifactId>guice-assistedinject</artifactId>
-            <version>3.0</version>
         </dependency>
         <dependency>
             <groupId>net.jcip</groupId>

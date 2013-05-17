@@ -187,7 +187,7 @@
                                     <report>modules</report>
                                 </reports>
                                 <configuration>
-                                    <dependencyDetailsEnabled>false</dependencyDetailsEnabled> 
+                                    <dependencyDetailsEnabled>false</dependencyDetailsEnabled>
                                     <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
                                 </configuration>
                             </plugin>
@@ -258,6 +258,25 @@
                 <version>1.0</version>
                 <scope>compile</scope>
             </dependency>
+            <dependency>
+                <groupId>com.google.inject</groupId>
+                <artifactId>guice</artifactId>
+                <version>3.0</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.google.inject.extensions</groupId>
+                <artifactId>guice-multibindings</artifactId>
+                <version>3.0</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.google.inject.extensions</groupId>
+                <artifactId>guice-assistedinject</artifactId>
+                <version>3.0</version>
+                <scope>compile</scope>
+            </dependency>
+
 
             <!-- Test Dependencies -->
             <dependency>
