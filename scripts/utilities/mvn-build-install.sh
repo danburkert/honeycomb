@@ -9,11 +9,7 @@ function install_jars
 {
   src=$1
   lib=$2
-  if [ ! -d $lib ]
-  then
-    echo "Creating $lib directory." 
-    create_dir_with_ownership $lib
-  fi
+  create_dir_with_ownership $lib
 
   echo "Moving jars into $lib"
   cp $src/target/*-$ARTIFACT_ID-jar-with-dependencies.jar $lib
@@ -70,11 +66,7 @@ install_jars "$HBASE_BACKEND" $honeycomb_lib
 install_jars "$MEMORY_BACKEND" $honeycomb_lib
 install_jars "$PROXY" $honeycomb_lib
 
-if [ ! -d $CONFIG_PATH ]
-then
-  echo "Creating configuration path $CONFIG_PATH"
-  create_dir_with_ownership $CONFIG_PATH
-fi
+create_dir_with_ownership $CONFIG_PATH
 
 if [ ! -e $adapter_conf ]
 then
