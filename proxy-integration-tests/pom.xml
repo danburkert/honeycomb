@@ -51,14 +51,14 @@
                 <configuration>
                     <siteDirectory>${basedir}/../${site.config.location}</siteDirectory>
                 </configuration>
-            </plugin> 
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+            </plugin>            
         </plugins>
     </build>
     <dependencies>
-        <!--  Including this dependency directly appears to cause a problem
-              with dependency resolution for creating the test classpath.
-              Transitive resolution works fine.
-        -->
         <dependency>
             <groupId>com.nearinfinity.honeycomb</groupId>
             <artifactId>honeycomb</artifactId>
