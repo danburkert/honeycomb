@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 : ${MYSQL_HOME?"Need to set MYSQL_HOME environmental variable."; exit 1; }
 : ${HONEYCOMB_HOME?"Need to set HONEYCOMB_HOME environmental variable."; exit 1; }

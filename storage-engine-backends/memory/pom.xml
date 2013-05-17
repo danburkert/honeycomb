@@ -14,7 +14,7 @@
   <packaging>clojure</packaging>
   <version>0.1-SNAPSHOT</version>
 
-  <name>honeycomb-memory</name>
+  <name>Honeycomb Memory Backend</name>
   <description>In-memory backend for the Honeycomb storage engine</description>
   <url>http://www.github.com/nearinfinity/honeycomb</url>
   <licenses>

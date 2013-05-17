@@ -1,5 +1,10 @@
 #!/bin/bash
 
+: ${HONEYCOMB_HOME?"Need to set HONEYCOMB_HOME environmental variable to the top of the project."}
+command -v mvn >/dev/null 2>&1 || { echo >&2 "mvn is required to run $0."; exit 1; }
+script_dir=$HONEYCOMB_HOME/scripts/utilities
+source $script_dir/constants.sh
+
 function install_jars
 {
   src=$1
@@ -7,24 +12,15 @@ function install_jars
   if [ ! -d $lib ]
   then
     echo "Creating $lib directory." 
-    current_user=`whoami`
-    sudo mkdir -p $lib
-    sudo chown -R $current_user:$current_user $lib
+    create_dir_with_ownership $lib
   fi
 
   echo "Moving jars into $lib"
-  cp -R $src/target/lib $lib
-  cp $src/target/*.jar $lib
+  cp $src/target/*-$ARTIFACT_ID-jar-with-dependencies.jar $lib
 
   echo "Making $lib jars executable"
-  chmod a+x $lib/lib/*.jar
   chmod a+x $lib/*.jar
 }
-
-: ${HONEYCOMB_HOME?"Need to set HONEYCOMB_HOME environmental variable to the top of the project."}
-command -v mvn >/dev/null 2>&1 || { echo >&2 "mvn is required to run $0."; exit 1; }
-script_dir=$HONEYCOMB_HOME/scripts/utilities
-source $script_dir/constants.sh
 
 if [ ! -z "$HONEYCOMB_LIB" ]
 then
@@ -37,8 +33,6 @@ echo -e "Running Maven build script\n"
 testOption=$1
 mvnTestMode="-DskipIntTests"
 adapter_conf=$CONFIG_PATH/$CONFIG_NAME
-hbase_jar=$HBASE_BACKEND_NAME-$ARTIFACT_ID.jar
-classpath=$HBASE_BACKEND/target/classpath
 
 if [ -n "$testOption" ]
 then
@@ -73,23 +67,20 @@ mvn -V clean install -Dapache $mvnTestMode
 [ $? -ne 0 ] && { exit 1; }
 
 install_jars "$HBASE_BACKEND" $honeycomb_lib
+install_jars "$MEMORY_BACKEND" $honeycomb_lib
+install_jars "$PROXY" $honeycomb_lib
 
 if [ ! -d $CONFIG_PATH ]
 then
-  echo "Creating configuration path $config_path"
-  sudo mkdir $CONFIG_PATH
+  echo "Creating configuration path $CONFIG_PATH"
+  create_dir_with_ownership $CONFIG_PATH
 fi
 
 if [ ! -e $adapter_conf ]
 then
   echo "Creating the honeycomb.xml from the repository."
   sudo cp $HONEYCOMB_CONFIG/$CONFIG_NAME $adapter_conf
-fi
-
-if [ "$($script_dir/check-honeycomb-xml.rb "$classpath" $hbase_jar)" == "Update" ]
-then
-  echo "Updating honeycomb.xml, it's out of date"
-  sudo $script_dir/update-honeycomb-xml.rb "$classpath" $hbase_jar
+  take_ownership $adapter_conf
 fi
 
 echo "*** Don't forget to restart MySQL. The JVM doesn't autoreload the jar from the disk. ***"
