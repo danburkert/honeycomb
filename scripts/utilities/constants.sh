@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 CONFIG_PATH=/usr/share/mysql/honeycomb
 DEFAULT_HONEYCOMB_LIB=/usr/local/lib/honeycomb
@@ -24,11 +24,16 @@ function take_ownership
   current_user=`whoami`
   sudo chown -R $current_user $1
 }
-
+# Create directory if it doesn't exist and 
+# change ownership to current user
 function create_dir_with_ownership
 {
-  sudo mkdir -p $1
-  take_ownership $1
+  if [ ! -d $1 ]
+  then
+    echo "Creating configuration path $1"
+    sudo mkdir -p $1
+    take_ownership $1
+  fi
 }
 
 function take_dir 
