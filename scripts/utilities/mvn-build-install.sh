@@ -1,8 +1,8 @@
 #!/bin/bash
 
-: ${HONEYCOMB_HOME?"Need to set HONEYCOMB_HOME environmental variable to the top of the project."}
+: ${HONEYCOMB_SOURCE?"Need to set HONEYCOMB_SOURCE environmental variable to the top of the project."}
 command -v mvn >/dev/null 2>&1 || { echo >&2 "mvn is required to run $0."; exit 1; }
-script_dir=$HONEYCOMB_HOME/scripts/utilities
+script_dir=$HONEYCOMB_SOURCE/scripts/utilities
 source $script_dir/constants.sh
 
 function install_jars
@@ -13,9 +13,6 @@ function install_jars
 
   echo "Moving jars into $lib"
   cp $src/target/*-$ARTIFACT_ID-jar-with-dependencies.jar $lib
-
-  echo "Making $lib jars executable"
-  chmod a+x $lib/*.jar
 }
 
 if [ ! -z "$HONEYCOMB_LIB" ]
@@ -57,7 +54,7 @@ else
     echo "Test running mode not specified"
 fi
 
-cd $HONEYCOMB_HOME
+cd $HONEYCOMB_SOURCE
 
 mvn -V clean install -Dapache $mvnTestMode
 [ $? -ne 0 ] && { exit 1; }

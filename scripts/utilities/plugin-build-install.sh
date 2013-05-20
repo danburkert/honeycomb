@@ -10,8 +10,8 @@ if [ $# -eq 1 ]
 then
     mysql_path=$1
 else
-    : ${MYSQL_SOURCE_PATH?"Need to set MYSQL_SOURCE_PATH if you want to run this script without arguments."}
-    mysql_path=$MYSQL_SOURCE_PATH
+    : ${MYSQL_SOURCE?"Need to set MYSQL_SOURCE if you want to run this script without arguments."}
+    mysql_path=$MYSQL_SOURCE
     echo $mysql_path
 fi
 
@@ -22,31 +22,42 @@ take_dir $BUILD_DIR
 
 if [ ! -e CMakeCache.txt ]
 then
-  echo "Running cmake with debug enabled."
-  cmake -DWITH_DEBUG=1 -DMYSQL_MAINTAINER_MODE=0 $mysql_path
-  [ $? -ne 0 ] && { echo "CMake failed stopping the script.\n*** Don't forget to delete CMakeCache.txt before running again.***"; exit 1; }
+  if $DEV_MODE; then
+    with_debug=1;
+    echo "Running CMake with debug enabled."
+  else
+    with_debug=0;
+    echo "Running CMake."
+  fi
+
+  cmake -DWITH_DEBUG=$with_debug -DMYSQL_MAINTAINER_MODE=0 $mysql_path
+  [ $? -ne 0 ] && { echo "Failure during CMake step.  Exiting build.";
+                    rm CMakeCache.txt;
+                    exit 1; }
 fi
 
 echo "Running make in $BUILD_DIR"
 make
-[ $? -ne 0 ] && { echo "Make failed stopping the script."; exit 1; }
+[ $? -ne 0 ] && { echo "Failure during make step.  Exiting build."; exit 1; }
 
 take_dir $unit_test_dir
 
 if [ ! -e CMakeCache.txt ]
 then
   cmake $STORAGE_ENGINE/unit-test -DHONEYCOMB_SOURCE_DIR=$STORAGE_ENGINE
-  [ $? -ne 0 ] && { "CMake failed on unit tests.\n*** Don't forget to delete CMakeCache.txt in the unit test directory before running again.***"; exit 1; }
+  [ $? -ne 0 ] && { "Failure during CMake step on unit tests.  Exiting build.";
+                    rm CMakeCache.txt;
+                    exit 1; }
 fi
 make
-[ $? -ne 0 ] && { exit 1; }
+[ $? -ne 0 ] && { "Failure during make step on unit tests.  Exiting build."; exit 1; }
 echo "Running Honeycomb unit tests"
 make test
-[ $? -ne 0 ] && { echo "Unit test failed. Stopping Build. Execute build/storage/honeycomb/unit-test/runUnitTests for more details."; exit 1; }
+[ $? -ne 0 ] && { echo "Unit test failed. Exiting Build. Execute build/storage/honeycomb/unit-test/runUnitTests for more details."; exit 1; }
 
 if [ ! -d $MYSQL_HOME ]
 then
-  echo "Installing and setting up mysql."
+  echo "Installing and Configuring MySQL."
   sudo make install
   current_user=`whoami`
   current_group=`groups | awk '{ print $1 }'`
@@ -56,10 +67,10 @@ then
   echo "Creating grant tables"
   pushd $MYSQL_HOME
   scripts/mysql_install_db --user=$current_user
-  [ $? -ne 0 ] && { echo "mysql_install_db failed stopping the script."; exit 1; }
-  echo "Starting up MySQL"
+  [ $? -ne 0 ] && { echo "mysql_install_db failed.  Exiting build."; exit 1; }
+  echo "Starting MySQL"
   support-files/mysql.server start
-  [ $? -ne 0 ] && { echo "Starting MySQL server failed, stopping the script."; exit 1; }
+  [ $? -ne 0 ] && { echo "Starting MySQL server failed.  Exiting build."; exit 1; }
   popd
 fi
 

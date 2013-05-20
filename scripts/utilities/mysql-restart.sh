@@ -7,4 +7,3 @@ dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 mysql.server stop
 mysql.server start --character-set-server=utf8 --collation-server=utf8_bin --plugin-load=Honeycomb=ha_honeycomb.so --default-storage-engine=Honeycomb
-

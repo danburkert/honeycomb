@@ -1,6 +1,6 @@
 #!/bin/bash
 
-: ${HONEYCOMB_HOME?"Need to set HONEYCOMB_HOME environmental variable to the top of the project."}
+: ${HONEYCOMB_SOURCE?"Need to set HONEYCOMB_SOURCE environmental variable to the root of the honeycomb source directory."}
 : ${MYSQL_HOME?"Need to set MYSQL_HOME environmental variable to MySQL's installation directory."}
 command -v mvn >/dev/null 2>&1 || { echo >&2 "mvn is required to run $0."; exit 1; }
 command -v cmake >/dev/null 2>&1 || { echo >&2 "cmake is required to run $0."; exit 1; }

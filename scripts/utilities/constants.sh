@@ -3,13 +3,13 @@
 CONFIG_PATH=/usr/share/mysql/honeycomb
 DEFAULT_HONEYCOMB_LIB=/usr/local/lib/honeycomb
 
-BACKENDS=$HONEYCOMB_HOME/storage-engine-backends
-PROXY=$HONEYCOMB_HOME/storage-engine-proxy
+BACKENDS=$HONEYCOMB_SOURCE/storage-engine-backends
+PROXY=$HONEYCOMB_SOURCE/storage-engine-proxy
 HBASE_BACKEND=$BACKENDS/hbase
 MEMORY_BACKEND=$BACKENDS/memory
-STORAGE_ENGINE=$HONEYCOMB_HOME/storage-engine
-HONEYCOMB_CONFIG=$HONEYCOMB_HOME/config
-BUILD_DIR=$HONEYCOMB_HOME/build
+STORAGE_ENGINE=$HONEYCOMB_SOURCE/storage-engine
+HONEYCOMB_CONFIG=$HONEYCOMB_SOURCE/config
+BUILD_DIR=$HONEYCOMB_SOURCE/build
 BUILD_OUTPUT=$BUILD_DIR/storage/honeycomb
 
 SO_NAME=ha_honeycomb.so
@@ -24,7 +24,8 @@ function take_ownership
   current_user=`whoami`
   sudo chown -R $current_user $1
 }
-# Create directory if it doesn't exist and 
+
+# Create directory if it doesn't exist and
 # change ownership to current user
 function create_dir_with_ownership
 {
@@ -36,7 +37,7 @@ function create_dir_with_ownership
   fi
 }
 
-function take_dir 
+function take_dir
 {
   dir=$1
   if [ ! -d $dir ]
