@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 # Update aptitude
-sudo echo "Acquire::http::Proxy \"http://192.168.31.55:8080\";" >> /etc/apt/apt.conf.d/01proxy
 apt-get update
 
 #install oracle java 6
@@ -38,7 +37,8 @@ sudo -E -u hdfs hadoop fs -chown -R mapred /var/lib/hadoop-hdfs/cache/mapred
 echo "127.0.0.1 precise64" >> /etc/hosts
 apt-get install -y hbase hbase-master hbase-regionserver
 
-cp /vagrant/bin/vagrant/ubuntu/hbase-site.xml /etc/hbase/conf/
+cp /vagrant/config/vagrant/ubuntu/hbase-site.xml /etc/hbase/conf/
+
 echo "export HBASE_MANAGES_ZK=true" >> /etc/hbase/conf/hbase-env.sh
 
 sudo -E -u hdfs hadoop fs -mkdir /hbase
@@ -54,24 +54,13 @@ apt-get -y install dpkg-dev cmake maven libncurses5-dev libxml2-dev git vim
 apt-get source mysql-5.5
 rm /home/vagrant/*.tar.gz
 rm /home/vagrant/*.dsc
-mv mysql-5.5-5.5.29 /usr/local/mysql-5.5
+mv mysql-5.5-5.5.31 /usr/local/mysql-5.5
 mkdir /usr/local/mysql-5.5/build
 chown -R vagrant:vagrant /usr/local/mysql-5.5
-ln -s /vagrant/honeycomb /usr/local/mysql-5.5/storage/
+ln -s /vagrant/storage-engine /usr/local/mysql-5.5/storage/honeycomb
 
 # Install MySQL
 export DEBIAN_FRONTEND=noninteractive
 apt-get -q -y install mysql-server
-
 sudo mkdir -p /usr/share/mysql/honeycomb
 sudo chown mysql:mysql /usr/share/mysql/honeycomb
-
-wget http://mirror.sdunix.com/apache/avro/avro-1.7.4/c/avro-c-1.7.4.tar.gz
-tar zxf avro-c-1.7.4.tar.gz
-rm avro-c-1.7.4.tar.gz
-mv avro-c-1.7.4 /usr/local/
-mkdir /usr/local/avro-c-1.7.4/build
-cd /usr/local/avro-c-1.7.4/build
-cmake .. -DCMAKE_INSTALL_PREFIX=/usr
-make
-make install
