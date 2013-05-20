@@ -15,7 +15,7 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- * 
+ *
  * Copyright 2013 Altamira Corporation.
  */
 
@@ -36,7 +36,6 @@ public class DataRowKeyTest {
     private static final long TABLE_ID = 1;
     private static final byte DATA_ROW_PREFIX = 0x06;
 
-    @SuppressWarnings("unused")
     @Test(expected = IllegalArgumentException.class)
     public void testConstructDataRowInvalidTableId() {
         final long invalidTableId = -1;

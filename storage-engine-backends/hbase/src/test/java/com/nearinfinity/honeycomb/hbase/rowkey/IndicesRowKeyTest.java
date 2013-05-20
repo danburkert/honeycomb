@@ -15,7 +15,7 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- * 
+ *
  * Copyright 2013 Altamira Corporation.
  */
 
@@ -32,7 +32,6 @@ public class IndicesRowKeyTest {
     private static final long TABLE_ID = 1;
     private static final byte INDICES_ROW_PREFIX = 0x02;
 
-    @SuppressWarnings("unused")
     @Test(expected = IllegalArgumentException.class)
     public void testConstructIndicesRowInvalidTableId() {
         final long invalidTableId = -1;
