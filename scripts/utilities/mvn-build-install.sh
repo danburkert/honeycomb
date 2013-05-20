@@ -13,9 +13,6 @@ function install_jars
 
   echo "Moving jars into $lib"
   cp $src/target/*-$ARTIFACT_ID-jar-with-dependencies.jar $lib
-
-  echo "Making $lib jars executable"
-  chmod a+x $lib/*.jar
 }
 
 if [ ! -z "$HONEYCOMB_LIB" ]
