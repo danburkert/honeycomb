@@ -59,10 +59,9 @@ ExternalProject_Add(LibAvro
   INSTALL_COMMAND ""
 )
 SET(LIBAVRO_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/avro/source/src)
-SET(LIBAVRO_LIBRARIES ${CMAKE_CURRENT_BINARY_DIR}/avro/build/src)
 INCLUDE_DIRECTORIES(${LIBAVRO_INCLUDE_DIR})
-LINK_DIRECTORIES(${LIBAVRO_LIBRARIES})
-LINK_LIBRARIES(libavro.a)
+add_library(avro STATIC IMPORTED GLOBAL)
+set_target_properties(avro PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/avro/build/src/libavro.a")
 
 SET(HONEYCOMB_PLUGIN_DYNAMIC "ha_honeycomb")
 SET(HONEYCOMB_SOURCES HoneycombHandler.cc DDL.cc ha_honeycomb.cc
@@ -71,3 +70,4 @@ SET(HONEYCOMB_SOURCES HoneycombHandler.cc DDL.cc ha_honeycomb.cc
   QueryKey.cc Query.cc IUD.cc)
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-error -g -Wextra -Wno-unused-parameter -Wswitch-default -Wcast-qual -Weffc++ -Wwrite-strings -Winit-self -Winline -Wmissing-noreturn -Wredundant-decls -Wpointer-arith -Wstrict-overflow=5 -Wstrict-aliasing=2 -Wno-deprecated-declarations -Wno-unknown-pragmas -Wctor-dtor-privacy -Woverloaded-virtual")
 MYSQL_ADD_PLUGIN(honeycomb ${HONEYCOMB_SOURCES} STORAGE_ENGINE MODULE_ONLY)
+target_link_libraries(honeycomb LINK_PRIVATE avro)
