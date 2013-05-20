@@ -10,8 +10,8 @@ if [ $# -eq 1 ]
 then
     mysql_path=$1
 else
-    : ${MYSQL_SOURCE_PATH?"Need to set MYSQL_SOURCE_PATH if you want to run this script without arguments."}
-    mysql_path=$MYSQL_SOURCE_PATH
+    : ${MYSQL_SOURCE?"Need to set MYSQL_SOURCE if you want to run this script without arguments."}
+    mysql_path=$MYSQL_SOURCE
     echo $mysql_path
 fi
 
