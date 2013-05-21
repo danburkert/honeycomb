@@ -56,7 +56,7 @@ fi
 
 cd $HONEYCOMB_SOURCE
 
-mvn -V clean install -Dapache $mvnTestMode
+mvn -V clean install $mvnTestMode
 [ $? -ne 0 ] && { exit 1; }
 
 install_jars "$HBASE_BACKEND" $honeycomb_lib
