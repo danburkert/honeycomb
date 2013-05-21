@@ -1,6 +1,6 @@
 #!/bin/bash
 
-: ${HONEYCOMB_SOURCE?"Need to set HONEYCOMB_HOME environmental variable to the top of the project."}
+: ${HONEYCOMB_SOURCE?"Need to set HONEYCOMB_SOURCE environmental variable to the top of the project."}
 : ${MYSQL_SOURCE?"Need to set MYSQL_HOME environmental variable to MySQL's installation directory."}
 command -v cmake >/dev/null 2>&1 || { echo >&2 "cmake is required to run $0."; exit 1; }
 command -v make >/dev/null 2>&1 || { echo >&2 "make is required to run $0."; exit 1; }
