@@ -125,15 +125,7 @@ bool test_directory(const char* path)
   return true;
 }
 
-char* format_path(const char* path, const char* file_name)
-{
-    size_t size = strlen(path) + strlen(file_name) + 2;
-    char* buffer = new char[size];
-    snprintf(buffer, size, "%s/%s", path, file_name);
-    return buffer;
-}
-
-void find_config_file(Settings& settings)
+static void find_config_file(Settings& settings)
 {
   const int path_count = 2;
   const char* paths[] = {
@@ -148,8 +140,8 @@ void find_config_file(Settings& settings)
       continue;
 
     Logging::info("Looking in %s for the honeycomb configuration.", path);
-    char* config_buffer = format_path(path, CONFIG_FILE);
-    char* schema_buffer = format_path(path, SCHEMA);
+    char* config_buffer = format_directory_file_path(path, CONFIG_FILE);
+    char* schema_buffer = format_directory_file_path(path, SCHEMA);
     bool success = settings.try_load(config_buffer, schema_buffer);
 
     delete[] config_buffer;
@@ -174,9 +166,9 @@ static bool try_setup()
   }
 
   fprintf(stderr, "Detailed logging output configured to: %s%s\n", DEFAULT_LOG_PATH, DEFAULT_LOG_FILE);
-
-  if (!test_directory(SETTINGS_BASE))
-    return false;
+  char* cwd = getcwd(NULL, 0);
+  Logging::info("Honeycomb's current directory: %s", cwd);
+  free(cwd);
 
   Settings settings;
   find_config_file(settings);

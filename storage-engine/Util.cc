@@ -336,3 +336,10 @@ int count_fields(TABLE* table)
   return count;
 }
 
+char* format_directory_file_path(const char* path, const char* file_name)
+{
+    size_t size = strlen(path) + strlen(file_name) + 2;
+    char* buffer = new char[size];
+    snprintf(buffer, size, "%s/%s", path, file_name);
+    return buffer;
+}

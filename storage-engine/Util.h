@@ -41,4 +41,5 @@ bool does_path_exist(const char* path);
 bool is_owned_by_mysql(const char* path);
 void get_current_user_group(char* buffer, size_t buf_size);
 void get_file_user_group(const char* file, char* buffer, size_t buf_size);
+char* format_directory_file_path(const char* path, const char* file_name);
 #endif
