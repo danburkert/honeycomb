@@ -44,7 +44,7 @@ take_dir $unit_test_dir
 
 if [ ! -e CMakeCache.txt ]
 then
-  cmake $STORAGE_ENGINE/unit-test -DHONEYCOMB_SOURCE_DIR=$STORAGE_ENGINE
+  cmake $STORAGE_ENGINE/unit-test -DHONEYCOMB_SOURCE_DIR=$STORAGE_ENGINE -DCMAKE_INSTALL_PREFIX=$MYSQL_HOME
   [ $? -ne 0 ] && { "Failure during CMake step on unit tests.  Exiting build.";
                     rm CMakeCache.txt;
                     exit 1; }
