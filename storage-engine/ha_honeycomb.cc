@@ -127,9 +127,12 @@ bool test_directory(const char* path)
 
 static void find_config_file(Settings& settings)
 {
-  const int path_count = 2;
+  char* cwd = getcwd(NULL, 0);
+  const int path_count = 4;
   const char* paths[] = {
     honeycomb_configuration_path,
+    getenv("HONEYCOMB_CONFIGURATION"),
+    cwd,
     SETTINGS_BASE
   };
 
@@ -150,11 +153,14 @@ static void find_config_file(Settings& settings)
     if (success)
     {
       Logging::info("Honeycomb configuration found in %s", path);
-      return;
+      goto cleanup;
     }
 
     Logging::warn("Honeycomb configuration was not found in %s. Error trying to load files: %s", path, settings.get_errormessage());
   }
+
+cleanup:
+  free(cwd);
 }
 
 static bool try_setup()
