@@ -29,6 +29,10 @@
 #include <pwd.h>
 #include <jni.h>
 
+#define safe_free(var, free) do{\
+  if (var != NULL)\
+    free(var), var = NULL;\
+}while(0);
 class SettingsPrivate
 {
   public:
@@ -37,10 +41,24 @@ class SettingsPrivate
   bool has_error;
   char* error_message;
   xmlErrorPtr error;
-  const char* filename;
-  const char* schema;
-  SettingsPrivate() : options(NULL), count(0), has_error(false), error_message(NULL), error(NULL), filename(NULL), schema(NULL)
+  char* filename;
+  char* schema;
+  bool is_loaded;
+  SettingsPrivate() : options(NULL), count(0), has_error(false), error_message(NULL), error(NULL), filename(NULL), schema(NULL), is_loaded(false)
   {}
+
+  ~SettingsPrivate()
+  {
+    for(unsigned int i = 0; i < count; i++)
+    {
+        safe_free(options[i].optionString, xmlFree);
+    }
+
+    safe_free(options, free);
+    safe_free(filename, free);
+    safe_free(schema, free);
+    safe_free(error_message, free);
+  }
 };
 
 static void print_perm(const char* file)
@@ -312,27 +330,35 @@ const char* Settings::get_schema() const
   return settings->schema;
 }
 
-Settings::Settings(const char* filename, const char* schema) : settings(new SettingsPrivate)
+Settings::Settings() : settings(new SettingsPrivate)
 {
+  settings->has_error = true;
+}
+
+bool Settings::try_load(char* filename, char* schema)
+{
+  if (settings->is_loaded)
+  {
+    delete settings;
+    settings = new SettingsPrivate;
+  }
+
   if (test_config_file(filename) && test_config_file(schema))
   {
-    settings->filename = filename;
-    settings->schema = schema;
+    settings->filename = strdup(filename);
+    settings->schema = strdup(schema);
     settings->has_error = false;
-    read_options();
+    this->read_options();
+    settings->is_loaded = true;
+    return !settings->has_error;
+  }
+  else
+  {
+    return false;
   }
 }
 
 Settings::~Settings()
 {
-  for(unsigned int i = 0; i < settings->count; i++)
-  {
-    if (settings->options[i].optionString != NULL)
-    {
-      xmlFree(settings->options[i].optionString);
-    }
-  }
-
-  free(settings->options);
   delete settings;
 }

@@ -33,13 +33,14 @@
 #include <jni.h>
 
 #define SETTINGS_BASE "/usr/share/mysql/honeycomb/"
-#define CONFIG_FILE SETTINGS_BASE "honeycomb.xml"
-#define SCHEMA SETTINGS_BASE "honeycomb.xsd"
+#define CONFIG_FILE "honeycomb.xml"
+#define SCHEMA "honeycomb.xsd"
 #define DEFAULT_LOG_FILE "honeycomb-c.log"
 #define DEFAULT_LOG_PATH "/var/log/mysql/"
 
 static handler *honeycomb_create_handler(handlerton *hton,
     TABLE_SHARE *table, MEM_ROOT *mem_root);
+static char* honeycomb_configuration_path = NULL;
 
 handlerton *honeycomb_hton;
 
@@ -124,6 +125,44 @@ bool test_directory(const char* path)
   return true;
 }
 
+char* format_path(const char* path, const char* file_name)
+{
+    size_t size = strlen(path) + strlen(file_name) + 2;
+    char* buffer = new char[size];
+    snprintf(buffer, size, "%s/%s", path, file_name);
+    return buffer;
+}
+
+void find_config_file(Settings& settings)
+{
+  const int path_count = 2;
+  const char* paths[] = {
+    honeycomb_configuration_path,
+    SETTINGS_BASE
+  };
+
+  for (int i = 0; i < path_count; i++)
+  {
+    const char* path = paths[i];
+    if (path == NULL)
+      continue;
+
+    Logging::info("Looking in %s for the honeycomb configuration.", path);
+    char* config_buffer = format_path(path, CONFIG_FILE);
+    char* schema_buffer = format_path(path, SCHEMA);
+    bool success = settings.try_load(config_buffer, schema_buffer);
+
+    delete[] config_buffer;
+    delete[] schema_buffer;
+
+    if (success)
+    {
+      Logging::info("Honeycomb configuration found in %s", path);
+      return;
+    }
+  }
+}
+
 static bool try_setup()
 {
   if (!test_directory(DEFAULT_LOG_PATH))
@@ -139,7 +178,8 @@ static bool try_setup()
   if (!test_directory(SETTINGS_BASE))
     return false;
 
-  Settings settings(CONFIG_FILE, SCHEMA);
+  Settings settings;
+  find_config_file(settings);
   if (settings.has_error())
   {
     const char* error_message = settings.get_errormessage();
@@ -149,7 +189,6 @@ static bool try_setup()
   } else {
     Logging::info("Finished reading configuration settings");
   }
-
 
   if (!try_initialize_jvm(&jvm, settings, &handler_proxy_factory))
   {
@@ -231,6 +270,16 @@ struct st_mysql_storage_engine honeycomb_storage_engine=
   MYSQL_HANDLERTON_INTERFACE_VERSION
 };
 
+static MYSQL_SYSVAR_STR(configuration_path, honeycomb_configuration_path, 
+    PLUGIN_VAR_READONLY|PLUGIN_VAR_RQCMDARG, "The path to the directory containing honeycomb.xml", NULL, NULL, NULL);
+
+// System variables are formed by prepending the storage engine name on the front
+// e.g. to set configuration_path use --honeycomb_configuration_path=<Some path>
+static struct st_mysql_sys_var* honeycomb_system_variables[] = {
+  MYSQL_SYSVAR(configuration_path),
+  NULL
+};
+
 mysql_declare_plugin(honeycomb)
 {
   MYSQL_STORAGE_ENGINE_PLUGIN,
@@ -239,12 +288,12 @@ mysql_declare_plugin(honeycomb)
     "Near Infinity Corporation",
     "HBase storage engine",
     PLUGIN_LICENSE_GPL,
-    honeycomb_init_func, /* Plugin Init */
-    honeycomb_done_func, /* Plugin Deinit */
-    0x0001               /* 0.1 */,
-    NULL,                /* status variables */
-    NULL,                /* system variables */
-    NULL,                /* config options */
-    NULL,                /* flags */
+    honeycomb_init_func,        /* Plugin Init */
+    honeycomb_done_func,        /* Plugin Deinit */
+    0x0001                      /* 0.1 */,
+    NULL,                       /* status variables */
+    honeycomb_system_variables, /* system variables */
+    NULL,                       /* config options */
+    NULL,                       /* flags */
 }
 mysql_declare_plugin_end;

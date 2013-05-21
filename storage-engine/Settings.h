@@ -35,18 +35,23 @@ class Settings
     bool test_file_readable(const char* config_file);
     bool test_file_owned_by_mysql(const char* config_file);
   public:
-    /**
-     * @brief  Reads in the options from a file.
-     *
-     * @param filename Path to xml configuration file
-     * @param schema Path to xml schema
-     */
-    Settings(const char* filename, const char* schema);
+    Settings();
 
     /**
      * @brief Release resources held by options.
      */
     virtual ~Settings();
+
+    
+    /**
+     * @brief Try to load settings from a file and schema
+     *
+     * @param filename
+     * @param schema
+     *
+     * @return 
+     */
+    bool try_load(char* filename, char* schema);
 
     /**
      * @brief Retrieve the JNI options found in the file.
