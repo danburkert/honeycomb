@@ -13,17 +13,16 @@
 
 ```
 
-
 ## Supported versions
 
 * Cloudera:
-      * CDH 4.2+
+  * CDH 4.2+
 
 * Apache:
-      * Hadoop 1.0+
-      * HBase 0.94+
+  * Hadoop 1.0+
+  * HBase 0.94+
 * MySQL 5.5.x
-
+* Oracle Java 6
 
 ## Building From Source
 
