@@ -12,6 +12,11 @@
         <fluidoSkin>
             <topBarEnabled>false</topBarEnabled>
             <sideBarEnabled>true</sideBarEnabled>
+            <gitHub>
+                <projectId>nearinfinity/honeycomb</projectId>
+                <ribbonOrientation>right</ribbonOrientation>
+                <ribbonColor>orange</ribbonColor>
+            </gitHub>            
         </fluidoSkin>
     </custom>
 
