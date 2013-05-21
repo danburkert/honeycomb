@@ -15,6 +15,15 @@
     <version>0.1-SNAPSHOT</version>
 
     <name>Storage Engine Proxy Integration Tests</name>
+    <description>Integration test suite run to ensure proper execution against the supported backend implementation(s)</description>
+    <url>https://github.com/nearinfinity/honeycomb</url>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
 
     <build>
         <plugins>

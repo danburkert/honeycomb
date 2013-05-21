@@ -3,17 +3,26 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.nearinfinity.honeycomb</groupId>
-    <artifactId>honeycomb</artifactId>
-    <version>0.1-SNAPSHOT</version>
-
-    <name>Honeycomb Storage Engine Proxy</name>
-
     <parent>
         <groupId>com.nearinfinity.honeycomb</groupId>
         <artifactId>honeycomb-parent</artifactId>
         <version>0.1-SNAPSHOT</version>
     </parent>
+
+    <groupId>com.nearinfinity.honeycomb</groupId>
+    <artifactId>honeycomb</artifactId>
+    <version>0.1-SNAPSHOT</version>
+
+    <name>Honeycomb Storage Engine Proxy</name>
+    <description>Proxy component used to interact between storage engine plugin and backend implementation(s)</description>
+    <url>https://github.com/nearinfinity/honeycomb</url>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
 
     <build>
         <plugins>
@@ -121,11 +130,11 @@
                 </configuration>
                 <executions>
                     <execution>
-                      <id>make-assembly</id>
-                      <phase>package</phase>
-                      <goals>
-                          <goal>single</goal>
-                      </goals>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>

@@ -3,18 +3,27 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.nearinfinity.honeycomb.hbase</groupId>
-    <artifactId>honeycomb-hbase</artifactId>
-    <version>0.1-SNAPSHOT</version>
-
-    <name>Honeycomb HBase Backend</name>
-
     <parent>
         <groupId>com.nearinfinity.honeycomb</groupId>
         <artifactId>honeycomb-parent</artifactId>
         <version>0.1-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
+
+    <groupId>com.nearinfinity.honeycomb.hbase</groupId>
+    <artifactId>honeycomb-hbase</artifactId>
+    <version>0.1-SNAPSHOT</version>
+
+    <name>Honeycomb HBase Backend</name>
+    <description>HBase backend for the Honeycomb storage engine</description>
+    <url>https://github.com/nearinfinity/honeycomb</url>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
 
     <build>
         <plugins>
@@ -66,11 +75,11 @@
                 </configuration>
                 <executions>
                     <execution>
-                      <id>make-assembly</id>
-                      <phase>package</phase>
-                      <goals>
-                          <goal>single</goal>
-                      </goals>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
@@ -79,10 +88,10 @@
 
     <dependencies>
         <dependency>
-          <groupId>com.nearinfinity.honeycomb</groupId>
-          <artifactId>honeycomb</artifactId>
-          <version>0.1-SNAPSHOT</version>
-          <scope>provided</scope>
+            <groupId>com.nearinfinity.honeycomb</groupId>
+            <artifactId>honeycomb</artifactId>
+            <version>0.1-SNAPSHOT</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>

@@ -6,8 +6,34 @@
     <groupId>com.nearinfinity.honeycomb</groupId>
     <artifactId>honeycomb-parent</artifactId>
     <version>0.1-SNAPSHOT</version>
-    <name>Honeycomb Parent Project</name>
     <packaging>pom</packaging>
+
+    <name>Honeycomb Parent Project</name>
+    <description>Honeycomb is an open source storage engine plugin for MySQL that enables MySQL to store and query tables directly in HBase</description>
+    <url>https://github.com/nearinfinity/honeycomb</url>
+
+    <scm>
+        <connection>scm:git:ssh://git@github.com/nearinfinity/honeycomb.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/nearinfinity/honeycomb.git</developerConnection>
+        <url>git:ssh://git@github.com/nearinfinity/honeycomb.git</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+        <license>
+            <name>GNU General Public License (GPL), Version 2.0</name>
+            <url>https://www.gnu.org/licenses/gpl-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <organization>
+        <name>Altamira Corporation</name>
+        <url>https://www.nearinfinity.com</url>
+    </organization>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -15,13 +41,13 @@
         <skipTests>false</skipTests>
         <skipIntTests>${skipTests}</skipIntTests>
         <skipUnitTests>${skipTests}</skipUnitTests>
+        <maven.build.timestamp.format>EEE MMM dd HH:mm z yyyy</maven.build.timestamp.format>
+        <javadoc.stylesheetfile>config/maven/javadoc/stylesheet.css</javadoc.stylesheetfile>
+        <site.config.location>config/maven/site</site.config.location>
         <hadoop.artifactId>hadoop-client</hadoop.artifactId>
         <hadoop.version>2.0.0-mr1-cdh4.2.0</hadoop.version>
         <hbase.version>0.94.2-cdh4.2.0</hbase.version>
         <powermock.version>1.5</powermock.version>
-        <maven.build.timestamp.format>EEE MMM dd HH:mm z yyyy</maven.build.timestamp.format>
-        <javadoc.stylesheetfile>config/maven/javadoc/stylesheet.css</javadoc.stylesheetfile>
-        <site.config.location>config/maven/site</site.config.location>
     </properties>
 
     <distributionManagement>
@@ -165,13 +191,14 @@
                                 <version>2.6</version>
                                 <reports>
                                     <report>index</report>
+                                    <report>summary</report>
                                     <report>license</report>
+                                    <report>scm</report>
+                                    <report>modules</report>
                                     <report>dependencies</report>
                                     <report>dependency-management</report>
                                     <report>plugins</report>
                                     <report>plugin-management</report>
-                                    <report>summary</report>
-                                    <report>modules</report>
                                 </reports>
                                 <configuration>
                                     <dependencyDetailsEnabled>false</dependencyDetailsEnabled>
