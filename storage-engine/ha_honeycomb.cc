@@ -152,6 +152,8 @@ static void find_config_file(Settings& settings)
       Logging::info("Honeycomb configuration found in %s", path);
       return;
     }
+
+    Logging::warn("Honeycomb configuration was not found in %s. Error trying to load files: %s", path, settings.get_errormessage());
   }
 }
 

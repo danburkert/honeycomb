@@ -101,7 +101,7 @@ bool Settings::test_file_owned_by_mysql(const char* config_file)
   struct stat fStat;
   if (stat(config_file, &fStat) == -1)
   {
-    const char* message = "Could not stat %s. It mostly likely doesn't exist. Check the path";
+    const char* message = "Could not find %s. It mostly likely doesn't exist. Check the path";
     int size = strlen(message) + strlen(config_file) + 1;
     format_error(settings, size, message, config_file);
     return false;
@@ -113,7 +113,7 @@ bool Settings::test_file_owned_by_mysql(const char* config_file)
     struct passwd* temp;
     char buffer[256];
     getpwuid_r(getuid(), &passwd_entry, buffer, sizeof(buffer), &temp);
-    const char* message = "The file %s must be owned by %s";
+    const char* message = "The file %s must be readable by %s";
     int size = strlen(message) + strlen(config_file) + strlen(passwd_entry.pw_name) + 1;
     format_error(settings, size, message, config_file, passwd_entry.pw_name);
     return false;
