@@ -38,7 +38,7 @@ Public functions/methods and non-obvious private methods should have [Doxygen](h
 
 ### Java
 
-Public methods and non-obvious private methods should have [JavaDoc](https://en.wikipedia.org/wiki/Javadoc)) style documentation.  Java code should conform to the following style guidelines:
+Public methods and non-obvious private methods should have [JavaDoc](https://en.wikipedia.org/wiki/Javadoc) style documentation.  Java code should conform to the following style guidelines:
 
 * opening braces on same line
 * four space indent
