@@ -18,6 +18,11 @@
         <url>https://${repository.domain}/${repository.user}/${repository.name}</url>
         <tag>HEAD</tag>
     </scm>
+    
+    <issueManagement>
+        <url>https://${repository.domain}/${repository.user}/${repository.name}/issues</url>
+        <system>GitHub Issues</system>
+    </issueManagement>    
 
     <licenses>
         <license>
@@ -204,6 +209,7 @@
                                     <report>summary</report>
                                     <report>license</report>
                                     <report>scm</report>
+                                    <report>issue-tracking</report>
                                     <report>modules</report>
                                     <report>dependencies</report>
                                     <report>dependency-management</report>
