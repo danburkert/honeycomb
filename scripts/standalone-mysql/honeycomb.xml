@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<options>
+  <jvmoptions>
+    <jvmoption>-Djava.class.path=honeycomb/honeycomb-0.1-SNAPSHOT-jar-with-dependencies.jar:honeycomb/honeycomb-hbase-0.1-SNAPSHOT-jar-with-dependencies.jar:honeycomb/honeycomb-memory-0.1-SNAPSHOT-jar-with-dependencies.jar</jvmoption>
+    <jvmoption>-Xmx2G</jvmoption>
+    <jvmoption>-server</jvmoption>
+    <jvmoption>-XX:+UseConcMarkSweepGC</jvmoption>
+    <jvmoption>-Xrs</jvmoption>
+  </jvmoptions>
+  <defaultAdapter>hbase</defaultAdapter>
+  <adapters>
+    <adapter name="hbase">
+      <configuration>
+        <tableName>test</tableName>
+        <columnFamily>cf</columnFamily>
+        <tablePoolSize>5</tablePoolSize>
+        <flushChangesImmediately>false</flushChangesImmediately>
+        <hbase.client.scanner.caching>2500</hbase.client.scanner.caching>
+        <hbase.client.write.buffer>5242880</hbase.client.write.buffer>
+        <hbase.zookeeper.quorum>{FILL IN ZOOKEEPER QUORUM}</hbase.zookeeper.quorum>
+      </configuration>
+    </adapter>
+    <adapter name="memory">
+      <configuration>
+      </configuration>
+    </adapter>
+  </adapters>
+</options>

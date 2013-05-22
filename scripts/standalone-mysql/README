@@ -1,0 +1,10 @@
+Honeycomb 
+
+In order to get start running 
+
+1. Replace {FILL IN ZOOKEEPER QUORUM} in honeycomb.xml with the url of your Zookeeper quorum.
+2. Set JAVA_HOME to either a JDK or JRE path.
+3. Run ./mysql-with-honeycomb.sh in the expanded MySQL directory.
+
+Notes:
+The honeycomb.xml is set to create an HTable named "test". This can be changed by setting the tag <tableName>. 
