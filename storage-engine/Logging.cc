@@ -24,7 +24,7 @@
 namespace Logging
 {
   static FILE* log_file;
-  static pthread_mutex_t log_lock = PTHREAD_MUTEX_INITIALIZER;
+  static pthread_mutex_t log_lock;
 
   void time_string(char* buffer)
   {
@@ -48,6 +48,7 @@ namespace Logging
       fprintf(stderr, "Detailed logging output configured to: %s\n", path);
     }
 
+    pthread_mutex_init(&log_lock, NULL);
     info("Log opened");
   }
 
@@ -57,6 +58,8 @@ namespace Logging
     {
       fclose(log_file);
     }
+
+    pthread_mutex_destroy(&log_lock);
   }
 
   void vlog_print(const char* level, const char* format, va_list args)
