@@ -15,22 +15,19 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- * 
+ *
  * Copyright 2013 Altamira Corporation.
  */
 
 
 package com.nearinfinity.honeycomb.config;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.io.Files;
-import com.google.common.io.InputSupplier;
-import com.nearinfinity.honeycomb.util.Verify;
-import org.apache.log4j.Logger;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+import static java.lang.String.format;
+
+import java.io.File;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -42,16 +39,20 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
-import java.io.File;
-import java.io.InputStream;
-import java.util.List;
-import java.util.Map;
 
-import static java.lang.String.format;
+import org.apache.log4j.Logger;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.io.Files;
+import com.google.common.io.InputSupplier;
+import com.nearinfinity.honeycomb.util.Verify;
 
 /**
- * Configuration object which holds configuration options for the Honeycomb
- * system, not an individual adapter.
+ * Provides capabilities for validation and parsing of the application configuration content
  */
 public class ConfigurationParser {
     private static final Logger logger = Logger.getLogger(ConfigurationParser.class);
@@ -73,7 +74,7 @@ public class ConfigurationParser {
     private ConfigurationParser() {}
 
     /**
-     * Create a HoneycombConfiguration from a configuration file path and configuration
+     * Create a {@link HoneycombConfiguration} from a configuration file path and configuration
      * schema validator path.
      *
      * @param configPath Path to configuration file to be parsed

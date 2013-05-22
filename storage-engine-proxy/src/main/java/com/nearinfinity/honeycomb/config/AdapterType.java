@@ -15,13 +15,17 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- * 
+ *
  * Copyright 2013 Altamira Corporation.
  */
 
 
 package com.nearinfinity.honeycomb.config;
 
+/**
+ * Defines the available storage engine backend adapters that may be used
+ * by the storage proxy component
+ */
 public enum AdapterType {
     HBASE ("hbase", "com.nearinfinity.honeycomb.hbase.HBaseModule"),
     MEMORY ("memory", "com.nearinfinity.honeycomb.memory.MemoryModule");
@@ -29,6 +33,11 @@ public enum AdapterType {
     private String name;
     private String moduleClass;
 
+    /**
+     * Creates a storage engine backend adapter type
+     * @param name The name used to represent this adapter
+     * @param moduleClass The fully qualified path to the class used to load this adapter
+     */
     AdapterType(String name, String moduleClass) {
         this.name = name;
         this.moduleClass = moduleClass;

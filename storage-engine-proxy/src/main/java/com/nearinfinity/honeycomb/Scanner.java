@@ -15,7 +15,7 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- * 
+ *
  * Copyright 2013 Altamira Corporation.
  */
 
@@ -25,5 +25,9 @@ package com.nearinfinity.honeycomb;
 import java.io.Closeable;
 import java.util.Iterator;
 
+/**
+ * Provides the interface for interacting with a result set obtained from a
+ * storage engine backend implementation.
+ */
 public interface Scanner extends Iterator<byte[]>, Closeable {
 }

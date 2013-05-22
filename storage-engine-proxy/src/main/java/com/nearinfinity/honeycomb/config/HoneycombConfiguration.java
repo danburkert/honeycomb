@@ -15,17 +15,21 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- * 
+ *
  * Copyright 2013 Altamira Corporation.
  */
 
 
 package com.nearinfinity.honeycomb.config;
 
-import java.util.Map;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.Map;
+
+/**
+ * Configuration object which holds configuration options for the Honeycomb
+ * system, not an individual adapter.
+ */
 public class HoneycombConfiguration {
     private final Map<String, Map<String, String>> adapters;
     private AdapterType defaultAdapter;
