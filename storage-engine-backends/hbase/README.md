@@ -12,7 +12,7 @@ mvn clean package
 
 ## Configuration
 
-Add the following to your `honeycomb.xml`:
+Add the following to your `honeycomb.xml`, along with configuration options:
 
 ```XML
 <adapter name="hbase">
