@@ -23,7 +23,7 @@
 
 namespace Logging
 {
-  bool try_setup_logging(const char* path);
+  void setup_logging(const char* path);
   void close_logging();
   void print(const char* level, const char* format, ...);
   void info(const char* format, ...);

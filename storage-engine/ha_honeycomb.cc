@@ -107,7 +107,7 @@ bool test_directory(const char* path)
 {
   if (!does_path_exist(path))
   {
-    const char* missing_message = "Path %s must exist. Ensure that the full path exists and is owned by MySQL's user. %s";
+    const char* missing_message = "Path %s must exist. Ensure that the full path exists and is owned by MySQL's user. %s\n";
     fprintf(stderr, missing_message, path, strerror(errno));
     return false;
   }
@@ -165,15 +165,8 @@ cleanup:
 
 static bool try_setup()
 {
-  if (!test_directory(DEFAULT_LOG_PATH))
-    return false;
+  Logging::setup_logging(DEFAULT_LOG_PATH DEFAULT_LOG_FILE);
 
-  if (!Logging::try_setup_logging(DEFAULT_LOG_PATH DEFAULT_LOG_FILE))
-  {
-    return false;
-  }
-
-  fprintf(stderr, "Detailed logging output configured to: %s%s\n", DEFAULT_LOG_PATH, DEFAULT_LOG_FILE);
   char* cwd = getcwd(NULL, 0);
   Logging::info("Honeycomb's current directory: %s", cwd);
   free(cwd);
