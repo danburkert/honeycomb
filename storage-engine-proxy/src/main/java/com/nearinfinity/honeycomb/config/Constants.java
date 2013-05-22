@@ -15,19 +15,20 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- * 
+ *
  * Copyright 2013 Altamira Corporation.
  */
 
 
 package com.nearinfinity.honeycomb.config;
 
-import java.util.UUID;
-
-public final class Constants {
-    public static final UUID ZERO_UUID = new UUID(0L, 0L);
-
-    public static final UUID FULL_UUID = UUID.fromString("ffffffff-ffff-ffff-ffff-ffffffffffff");
-
+/**
+ * Configuration constants available for use throughout the application
+ */
+public abstract class Constants {
     public static final String HONEYCOMB_NAMESPACE = "honeycomb";
+
+    private Constants() {
+
+    }
 }

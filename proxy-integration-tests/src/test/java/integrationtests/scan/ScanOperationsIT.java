@@ -1,6 +1,5 @@
 package integrationtests.scan;
 
-import com.nearinfinity.honeycomb.mysql.QueryKey;
 import integrationtests.HoneycombIntegrationTest;
 import integrationtests.ITUtils;
 import integrationtests.TestConstants;
@@ -11,7 +10,7 @@ import java.util.Map;
 import org.junit.Test;
 
 import com.google.common.collect.Maps;
-import com.nearinfinity.honeycomb.config.Constants;
+import com.nearinfinity.honeycomb.mysql.QueryKey;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 
 public class ScanOperationsIT extends HoneycombIntegrationTest {
@@ -29,8 +28,8 @@ public class ScanOperationsIT extends HoneycombIntegrationTest {
 
     @Test
     public void testAfterKeyScan() {
-        ITUtils.insertData(proxy, 1, INDEX_COL_VALUE, Constants.FULL_UUID);
-        ITUtils.insertData(proxy, 1, INDEX_COL_VALUE + 1, Constants.ZERO_UUID);
+        ITUtils.insertData(proxy, 1, INDEX_COL_VALUE, TestConstants.FULL_UUID);
+        ITUtils.insertData(proxy, 1, INDEX_COL_VALUE + 1, TestConstants.ZERO_UUID);
         ITUtils.insertData(proxy, ROW_COUNT, INDEX_COL_VALUE + 1);
 
         final QueryKey key = ITUtils.createKey(INDEX_COL_VALUE, QueryType.AFTER_KEY);
@@ -39,8 +38,8 @@ public class ScanOperationsIT extends HoneycombIntegrationTest {
 
     @Test
     public void testBeforeKeyScan() {
-        ITUtils.insertData(proxy, 1, INDEX_COL_VALUE, Constants.FULL_UUID);
-        ITUtils.insertData(proxy, 1, INDEX_COL_VALUE - 1, Constants.ZERO_UUID);
+        ITUtils.insertData(proxy, 1, INDEX_COL_VALUE, TestConstants.FULL_UUID);
+        ITUtils.insertData(proxy, 1, INDEX_COL_VALUE - 1, TestConstants.ZERO_UUID);
         ITUtils.insertData(proxy, ROW_COUNT, INDEX_COL_VALUE - 1);
 
         final QueryKey key = ITUtils.createKey(INDEX_COL_VALUE, QueryType.BEFORE_KEY);
@@ -49,8 +48,8 @@ public class ScanOperationsIT extends HoneycombIntegrationTest {
 
     @Test
     public void testKeyOrNextScan() {
-        ITUtils.insertData(proxy, 1, INDEX_COL_VALUE, Constants.FULL_UUID);
-        ITUtils.insertData(proxy, 1, INDEX_COL_VALUE + 1, Constants.ZERO_UUID);
+        ITUtils.insertData(proxy, 1, INDEX_COL_VALUE, TestConstants.FULL_UUID);
+        ITUtils.insertData(proxy, 1, INDEX_COL_VALUE + 1, TestConstants.ZERO_UUID);
         ITUtils.insertData(proxy, ROW_COUNT, INDEX_COL_VALUE + 1);
 
         final QueryKey key = ITUtils.createKey(INDEX_COL_VALUE, QueryType.KEY_OR_NEXT);
@@ -59,8 +58,8 @@ public class ScanOperationsIT extends HoneycombIntegrationTest {
 
     @Test
     public void testKeyOrPreviousScan() {
-        ITUtils.insertData(proxy, 1, INDEX_COL_VALUE, Constants.FULL_UUID);
-        ITUtils.insertData(proxy, 1, INDEX_COL_VALUE - 1, Constants.ZERO_UUID);
+        ITUtils.insertData(proxy, 1, INDEX_COL_VALUE, TestConstants.FULL_UUID);
+        ITUtils.insertData(proxy, 1, INDEX_COL_VALUE - 1, TestConstants.ZERO_UUID);
         ITUtils.insertData(proxy, ROW_COUNT, INDEX_COL_VALUE - 1);
 
         final QueryKey key = ITUtils.createKey(INDEX_COL_VALUE, QueryType.KEY_OR_PREVIOUS);
@@ -69,8 +68,8 @@ public class ScanOperationsIT extends HoneycombIntegrationTest {
 
     @Test
     public void testIndexLastScan() {
-        ITUtils.insertData(proxy, 1, INDEX_COL_VALUE, Constants.FULL_UUID);
-        ITUtils.insertData(proxy, 1, INDEX_COL_VALUE - 1, Constants.ZERO_UUID);
+        ITUtils.insertData(proxy, 1, INDEX_COL_VALUE, TestConstants.FULL_UUID);
+        ITUtils.insertData(proxy, 1, INDEX_COL_VALUE - 1, TestConstants.ZERO_UUID);
         ITUtils.insertData(proxy, ROW_COUNT, INDEX_COL_VALUE - 1);
 
         final QueryKey key = new QueryKey(TestConstants.INDEX1, QueryType.INDEX_LAST, Maps.<String, ByteBuffer>newHashMap());
@@ -80,8 +79,8 @@ public class ScanOperationsIT extends HoneycombIntegrationTest {
     @Test
     public void testIndexFirstScan() {
         ITUtils.insertNullData(proxy, 2);
-        ITUtils.insertData(proxy, 1, INDEX_COL_VALUE, Constants.FULL_UUID);
-        ITUtils.insertData(proxy, 1, INDEX_COL_VALUE + 1, Constants.ZERO_UUID);
+        ITUtils.insertData(proxy, 1, INDEX_COL_VALUE, TestConstants.FULL_UUID);
+        ITUtils.insertData(proxy, 1, INDEX_COL_VALUE + 1, TestConstants.ZERO_UUID);
         ITUtils.insertData(proxy, ROW_COUNT, INDEX_COL_VALUE + 1);
 
         final QueryKey key = new QueryKey(TestConstants.INDEX1, QueryType.INDEX_FIRST, Maps.<String, ByteBuffer>newHashMap());

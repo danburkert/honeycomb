@@ -1,5 +1,7 @@
 package integrationtests;
 
+import java.util.UUID;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
@@ -7,7 +9,10 @@ import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 
-public final class TestConstants {
+public abstract class TestConstants {
+    public static final UUID ZERO_UUID = new UUID(0L, 0L);
+    public static final UUID FULL_UUID = UUID.fromString("ffffffff-ffff-ffff-ffff-ffffffffffff");
+
     public static final String COLUMN1 = "c1";
     public static final String COLUMN2 = "c2";
     public static final String INDEX3 = "i3";
@@ -29,4 +34,8 @@ public final class TestConstants {
                                             TestConstants.COLUMN2), false)
                     )
             );
+
+    private TestConstants() {
+
+    }
 }

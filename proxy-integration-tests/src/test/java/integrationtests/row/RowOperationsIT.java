@@ -1,11 +1,26 @@
 package integrationtests.row;
 
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
+import integrationtests.HoneycombIntegrationTest;
+import integrationtests.ITUtils;
+import integrationtests.TestConstants;
+
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import org.junit.Test;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Longs;
 import com.nearinfinity.honeycomb.config.AdapterType;
-import com.nearinfinity.honeycomb.config.Constants;
 import com.nearinfinity.honeycomb.mysql.HandlerProxy;
 import com.nearinfinity.honeycomb.mysql.QueryKey;
 import com.nearinfinity.honeycomb.mysql.Row;
@@ -15,19 +30,6 @@ import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
-import integrationtests.HoneycombIntegrationTest;
-import integrationtests.ITUtils;
-import integrationtests.TestConstants;
-import org.junit.Test;
-
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.*;
 
 public class RowOperationsIT extends HoneycombIntegrationTest {
 
@@ -145,7 +147,7 @@ public class RowOperationsIT extends HoneycombIntegrationTest {
 
         proxy.createTable(tableName, schema.serialize(), 0);
         proxy.openTable(tableName);
-        Row row = new Row(Maps.<String, ByteBuffer>newHashMap(), Constants.ZERO_UUID);
+        Row row = new Row(Maps.<String, ByteBuffer>newHashMap(), TestConstants.ZERO_UUID);
 
         List<Row> rows = new ArrayList<Row>();
 
