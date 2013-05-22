@@ -15,13 +15,20 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- * 
+ *
  * Copyright 2013 Altamira Corporation.
  */
 
 
 package com.nearinfinity.honeycomb.exceptions;
 
+import com.google.common.base.Objects;
+
+
+/**
+ * Runtime exception used to indicate that a table could not be found
+ * for a specific table name or table identifier
+ */
 public class TableNotFoundException extends RuntimeException {
     private String name;
     private long id;
@@ -31,11 +38,14 @@ public class TableNotFoundException extends RuntimeException {
     }
 
     public TableNotFoundException(Long tableId) {
-        this.id = tableId;
+        id = tableId;
     }
 
     @Override
     public String toString() {
-        return String.format("TableNotFoundException{name='%s', id=%d}", name, id);
+        return Objects.toStringHelper(this.getClass())
+                .add("Name", name)
+                .add("Id", id)
+                .toString();
     }
 }

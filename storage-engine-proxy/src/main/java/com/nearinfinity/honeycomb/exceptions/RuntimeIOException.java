@@ -15,13 +15,19 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- * 
+ *
  * Copyright 2013 Altamira Corporation.
  */
 
 
 package com.nearinfinity.honeycomb.exceptions;
 
+import java.io.IOException;
+
+/**
+ * Runtime exception used to indicate that an {@link IOException} has occurred
+ * during operation
+ */
 public class RuntimeIOException extends RuntimeException {
     public RuntimeIOException(Throwable cause) {
         super(cause);

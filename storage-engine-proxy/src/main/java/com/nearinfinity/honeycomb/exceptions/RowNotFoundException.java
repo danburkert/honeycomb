@@ -15,7 +15,7 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- * 
+ *
  * Copyright 2013 Altamira Corporation.
  */
 
@@ -24,6 +24,12 @@ package com.nearinfinity.honeycomb.exceptions;
 
 import java.util.UUID;
 
+import com.google.common.base.Objects;
+
+/**
+ * Runtime exception used to indicate that a row could not be found
+ * for a specific {@link UUID}
+ */
 public class RowNotFoundException extends RuntimeException {
     private UUID uuid;
 
@@ -33,6 +39,8 @@ public class RowNotFoundException extends RuntimeException {
 
     @Override
     public String toString() {
-        return String.format("RowNotFoundException{uuid=%s}", uuid);
+        return Objects.toStringHelper(this.getClass())
+                .add("UUID:", uuid)
+                .toString();
     }
 }
