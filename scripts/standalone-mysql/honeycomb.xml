@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <options>
   <jvmoptions>
-    <jvmoption>-Djava.class.path=honeycomb/honeycomb-0.1-SNAPSHOT-jar-with-dependencies.jar:honeycomb/honeycomb-hbase-0.1-SNAPSHOT-jar-with-dependencies.jar:honeycomb/honeycomb-memory-0.1-SNAPSHOT-jar-with-dependencies.jar</jvmoption>
+    <jvmoption>-Djava.class.path=../honeycomb/honeycomb-0.1-SNAPSHOT-jar-with-dependencies.jar:../honeycomb/honeycomb-hbase-0.1-SNAPSHOT-jar-with-dependencies.jar:../honeycomb/honeycomb-memory-0.1-SNAPSHOT-jar-with-dependencies.jar</jvmoption>
     <jvmoption>-Xmx2G</jvmoption>
     <jvmoption>-server</jvmoption>
     <jvmoption>-XX:+UseConcMarkSweepGC</jvmoption>
