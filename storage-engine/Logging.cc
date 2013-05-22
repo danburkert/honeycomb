@@ -24,7 +24,7 @@
 namespace Logging
 {
   static FILE* log_file;
-  static pthread_mutex_t log_lock;
+  static pthread_mutex_t log_lock = PTHREAD_MUTEX_INITIALIZER;
 
   void time_string(char* buffer)
   {
@@ -35,21 +35,20 @@ namespace Logging
     buffer[time_length - 1] = '\0';
   }
 
-  bool try_setup_logging(const char* path)
+  void setup_logging(const char* path)
   {
     log_file = fopen(path, "a");
     if (log_file == NULL)
     {
-      char owner[256],current[256];
-      get_current_user_group(owner, sizeof(owner));
-      get_file_user_group(path, current, sizeof(current));
-      fprintf(stderr, "Error trying to open log file %s. Current process %s file %s. %s\n", path, owner, current, strerror(errno));
-      return false;
+      fprintf(stderr, "Error %s trying to open log file %s. Falling back to stderr.\n", strerror(errno), path);
+      log_file = stderr;
+    }
+    else
+    {
+      fprintf(stderr, "Detailed logging output configured to: %s\n", path);
     }
 
-    pthread_mutex_init(&log_lock, NULL);
     info("Log opened");
-    return true;
   }
 
   void close_logging()
@@ -58,7 +57,6 @@ namespace Logging
     {
       fclose(log_file);
     }
-    pthread_mutex_destroy(&log_lock);
   }
 
   void vlog_print(const char* level, const char* format, va_list args)
