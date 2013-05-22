@@ -125,19 +125,21 @@ bool test_directory(const char* path)
   return true;
 }
 
+#define PATH_COUNT 7
 static void find_config_file(Settings& settings)
 {
   char* cwd = getcwd(NULL, 0);
-  const int path_count = 5;
-  const char* paths[] = {
+  const char* paths[PATH_COUNT] = {
     honeycomb_configuration_path,
     getenv("HONEYCOMB_CONFIGURATION"),
+    "/etc",
+    "/etc/mysql",
     getenv("MYSQL_HOME"),
     cwd,
     SETTINGS_BASE
   };
 
-  for (int i = 0; i < path_count; i++)
+  for (int i = 0; i < PATH_COUNT; i++)
   {
     const char* path = paths[i];
     if (path == NULL)
