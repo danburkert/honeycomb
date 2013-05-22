@@ -15,7 +15,7 @@
         <columnFamily>cf</columnFamily>
         <tablePoolSize>5</tablePoolSize>
         <flushChangesImmediately>false</flushChangesImmediately>
-        <hbase.client.scanner.caching>2500</hbase.client.scanner.caching>
+        <hbase.client.scanner.caching>100</hbase.client.scanner.caching>
         <hbase.client.write.buffer>5242880</hbase.client.write.buffer>
         <hbase.zookeeper.quorum>{FILL IN ZOOKEEPER QUORUM}</hbase.zookeeper.quorum>
       </configuration>
