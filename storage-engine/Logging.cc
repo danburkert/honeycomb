@@ -40,10 +40,7 @@ namespace Logging
     log_file = fopen(path, "a");
     if (log_file == NULL)
     {
-      char owner[256],current[256];
-      get_current_user_group(owner, sizeof(owner));
-      get_file_user_group(path, current, sizeof(current));
-      fprintf(stderr, "Error %s trying to open log file %s. Falling back to stderr. Current process %s file %s.\n", strerror(errno), path, owner, current);
+      fprintf(stderr, "Error %s trying to open log file %s. Falling back to stderr.\n", strerror(errno), path);
       log_file = stderr;
     }
     else
