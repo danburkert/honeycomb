@@ -104,9 +104,8 @@ int check_exceptions(JNIEnv* env, JNICache* cache, const char* location)
     } else if (env->IsInstanceOf(e, cache->RowNotFoundException))
     {
       ret = HA_ERR_KEY_NOT_FOUND;
-    } else if (env->IsInstanceOf(e, cache->StoreNotFoundException))
+    } else if (env->IsInstanceOf(e, cache->StorageBackendCreationException))
     {
-      my_printf_error(ER_ILLEGAL_HA, "Unable to open tablespace.", MYF(0));
       ret = HA_ERR_INTERNAL_ERROR;
     } else {
       ret = HA_ERR_GENERIC;

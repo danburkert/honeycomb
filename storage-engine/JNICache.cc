@@ -35,7 +35,7 @@ JNICache::JNICache(JavaVM* jvm)
   handler_proxy_factory_(),
   TableNotFoundException(NULL),
   RowNotFoundException(NULL),
-  StoreNotFoundException(NULL),
+  StorageBackendCreationException(NULL),
   RuntimeIOException(NULL),
   UnknownSchemaVersionException(NULL)
 {
@@ -74,11 +74,11 @@ JNICache::JNICache(JavaVM* jvm)
   handler_proxy_.set_auto_increment       = get_method_id(env, handler_proxy_.clazz, "setAutoIncrement", "(J)V");
 
 
-  TableNotFoundException        = get_class_ref(env, HONEYCOMB "exceptions/TableNotFoundException");
-  RowNotFoundException          = get_class_ref(env, HONEYCOMB "exceptions/RowNotFoundException");
-  StoreNotFoundException        = get_class_ref(env, HONEYCOMB "exceptions/StoreNotFoundException");
-  RuntimeIOException            = get_class_ref(env, HONEYCOMB "exceptions/RuntimeIOException");
-  UnknownSchemaVersionException = get_class_ref(env, HONEYCOMB "exceptions/UnknownSchemaVersionException");
+  TableNotFoundException          = get_class_ref(env, HONEYCOMB "exceptions/TableNotFoundException");
+  RowNotFoundException            = get_class_ref(env, HONEYCOMB "exceptions/RowNotFoundException");
+  StorageBackendCreationException = get_class_ref(env, HONEYCOMB "exceptions/StorageBackendCreationException");
+  RuntimeIOException              = get_class_ref(env, HONEYCOMB "exceptions/RuntimeIOException");
+  UnknownSchemaVersionException   = get_class_ref(env, HONEYCOMB "exceptions/UnknownSchemaVersionException");
 
   throwable_.clazz             = get_class_ref(env, "java/lang/Throwable");
   throwable_.print_stack_trace = get_method_id(env, throwable_.clazz, "printStackTrace", "(Ljava/io/PrintWriter;)V");
@@ -111,7 +111,7 @@ JNICache::~JNICache()
   DELETE_REF(env, TableNotFoundException);
   DELETE_REF(env, RowNotFoundException);
   DELETE_REF(env, RuntimeIOException);
-  DELETE_REF(env, StoreNotFoundException);
+  DELETE_REF(env, StorageBackendCreationException);
   DELETE_REF(env, UnknownSchemaVersionException);
 
   detach_thread(jvm);

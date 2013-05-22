@@ -22,6 +22,16 @@
 
 package com.nearinfinity.honeycomb.mysql;
 
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.util.Enumeration;
+import java.util.Map;
+
+import org.apache.log4j.Appender;
+import org.apache.log4j.FileAppender;
+import org.apache.log4j.Logger;
+
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -29,16 +39,8 @@ import com.google.inject.Module;
 import com.nearinfinity.honeycomb.config.AdapterType;
 import com.nearinfinity.honeycomb.config.ConfigurationParser;
 import com.nearinfinity.honeycomb.config.HoneycombConfiguration;
+import com.nearinfinity.honeycomb.exceptions.StorageBackendCreationException;
 import com.nearinfinity.honeycomb.util.Verify;
-import org.apache.log4j.Appender;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Logger;
-
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.util.Enumeration;
-import java.util.Map;
 
 
 public final class Bootstrap extends AbstractModule {
@@ -77,13 +79,15 @@ public final class Bootstrap extends AbstractModule {
             if (appender instanceof FileAppender) {
                 FileAppender fileAppender = (FileAppender) appender;
                 String file = fileAppender.getFile();
-                if (file == null)
+                if (file == null) {
                     continue;
+                }
                 File f = new File(file);
                 System.err.println("Testing: " + f.getName());
                 if (f.exists()) {
-                    if (!f.canWrite())
+                    if (!f.canWrite()) {
                         System.err.println("Cannot write to " + f.getName());
+                    }
                 } else {
                     String createFailure = "Could not create logging file " + f.getName();
                     try {
@@ -114,9 +118,11 @@ public final class Bootstrap extends AbstractModule {
                 } catch (ClassNotFoundException e) {
                     logger.error("The " + adapter.getName() + " adapter is" +
                             " configured, but could not be found on the classpath.");
+                    throw new StorageBackendCreationException(adapter.getName(), e);
                 } catch (Exception e) {
                     logger.error("Exception while attempting to reflect on the "
                             + adapter.getName() + " adapter.", e);
+                    throw new StorageBackendCreationException(adapter.getName(), e);
                 }
             }
         }

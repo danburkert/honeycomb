@@ -119,7 +119,7 @@ class JNICache
 
     jclass TableNotFoundException;
     jclass RowNotFoundException;
-    jclass StoreNotFoundException;
+    jclass StorageBackendCreationException;
     jclass RuntimeIOException;
     jclass UnknownSchemaVersionException;
 

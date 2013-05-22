@@ -15,15 +15,22 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- * 
+ *
  * Copyright 2013 Altamira Corporation.
  */
 
 
 package com.nearinfinity.honeycomb.exceptions;
 
-public class StoreNotFoundException extends RuntimeException {
-    public StoreNotFoundException(String tablespace) {
-        super("Could not find adapter for tablespace: " + tablespace);
+public class StorageBackendCreationException extends RuntimeException {
+
+    private static final String MESSAGE = "Could not create storage backend adapter: ";
+
+    public StorageBackendCreationException(final String backendName) {
+        super(MESSAGE + backendName);
+    }
+
+    public StorageBackendCreationException(final String backendName, final Throwable reason) {
+        super(MESSAGE + backendName, reason);
     }
 }
