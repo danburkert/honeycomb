@@ -22,6 +22,10 @@
 
 package com.nearinfinity.honeycomb.exceptions;
 
+/**
+ * Runtime exception used to indicate that a storage backend implementation
+ * could not be constructed for use
+ */
 public class StorageBackendCreationException extends RuntimeException {
 
     private static final String MESSAGE = "Could not create storage backend adapter: ";
