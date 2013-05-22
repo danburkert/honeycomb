@@ -16,8 +16,15 @@
 
     <name>Honeycomb HBase Backend</name>
     <description>HBase backend for the Honeycomb storage engine</description>
-    <url>https://github.com/nearinfinity/honeycomb</url>
-
+    <url>${repository.url}</url>
+    
+    <scm>
+        <connection>${project.parent.scm.connection}</connection>
+        <developerConnection>${project.parent.scm.developerConnection}</developerConnection>
+        <url>${project.parent.scm.url}</url>
+        <tag>${project.parent.scm.tag}</tag>
+    </scm>
+    
     <licenses>
         <license>
             <name>Apache License, Version 2.0</name>

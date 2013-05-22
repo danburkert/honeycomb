@@ -16,7 +16,14 @@
 
     <name>Storage Engine Proxy Integration Tests</name>
     <description>Integration test suite run to ensure proper execution against the supported backend implementation(s)</description>
-    <url>https://github.com/nearinfinity/honeycomb</url>
+    <url>${repository.url}</url>
+    
+    <scm>
+        <connection>${project.parent.scm.connection}</connection>
+        <developerConnection>${project.parent.scm.developerConnection}</developerConnection>
+        <url>${project.parent.scm.url}</url>
+        <tag>${project.parent.scm.tag}</tag>
+    </scm>    
 
     <licenses>
         <license>
