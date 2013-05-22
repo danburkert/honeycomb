@@ -22,16 +22,6 @@
 
 package com.nearinfinity.honeycomb.mysql;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.util.Enumeration;
-import java.util.Map;
-
-import org.apache.log4j.Appender;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Logger;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -40,6 +30,15 @@ import com.nearinfinity.honeycomb.config.AdapterType;
 import com.nearinfinity.honeycomb.config.ConfigurationParser;
 import com.nearinfinity.honeycomb.config.HoneycombConfiguration;
 import com.nearinfinity.honeycomb.util.Verify;
+import org.apache.log4j.Appender;
+import org.apache.log4j.FileAppender;
+import org.apache.log4j.Logger;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.util.Enumeration;
+import java.util.Map;
 
 
 public final class Bootstrap extends AbstractModule {
@@ -77,7 +76,10 @@ public final class Bootstrap extends AbstractModule {
             Appender appender = (Appender) allAppenders.nextElement();
             if (appender instanceof FileAppender) {
                 FileAppender fileAppender = (FileAppender) appender;
-                File f = new File(fileAppender.getFile());
+                String file = fileAppender.getFile();
+                if (file == null)
+                    continue;
+                File f = new File(file);
                 System.err.println("Testing: " + f.getName());
                 if (f.exists()) {
                     if (!f.canWrite())
