@@ -10,12 +10,12 @@
 
     <name>Honeycomb Parent Project</name>
     <description>Honeycomb is an open source storage engine plugin for MySQL that enables MySQL to store and query tables directly in HBase</description>
-    <url>https://github.com/nearinfinity/honeycomb</url>
+    <url>https://${repository.domain}/${repository.user}/${repository.name}</url>
 
     <scm>
-        <connection>scm:git:ssh://git@github.com/nearinfinity/honeycomb.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/nearinfinity/honeycomb.git</developerConnection>
-        <url>git:ssh://git@github.com/nearinfinity/honeycomb.git</url>
+        <connection>scm:git:ssh://git@${repository.domain}/${repository.user}/${repository.name}.git</connection>
+        <developerConnection>scm:git:ssh://git@${repository.domain}/${repository.user}/${repository.name}.git</developerConnection>
+        <url>https://${repository.domain}/${repository.user}/${repository.name}</url>
         <tag>HEAD</tag>
     </scm>
 
@@ -41,6 +41,9 @@
         <skipTests>false</skipTests>
         <skipIntTests>${skipTests}</skipIntTests>
         <skipUnitTests>${skipTests}</skipUnitTests>
+        <repository.domain>github.com</repository.domain>
+        <repository.name>honeycomb</repository.name>
+        <repository.user>nearinfinity</repository.user>
         <maven.build.timestamp.format>EEE MMM dd HH:mm z yyyy</maven.build.timestamp.format>
         <javadoc.stylesheetfile>config/maven/javadoc/stylesheet.css</javadoc.stylesheetfile>
         <site.config.location>config/maven/site</site.config.location>
@@ -53,7 +56,7 @@
     <distributionManagement>
         <site>
             <id>site-docs</id>
-            <url>http://www.foo.xyz</url>
+            <url>file:///</url>
         </site>
     </distributionManagement>
 
