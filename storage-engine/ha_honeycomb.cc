@@ -128,10 +128,11 @@ bool test_directory(const char* path)
 static void find_config_file(Settings& settings)
 {
   char* cwd = getcwd(NULL, 0);
-  const int path_count = 4;
+  const int path_count = 5;
   const char* paths[] = {
     honeycomb_configuration_path,
     getenv("HONEYCOMB_CONFIGURATION"),
+    getenv("MYSQL_HOME"),
     cwd,
     SETTINGS_BASE
   };
