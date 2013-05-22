@@ -28,12 +28,19 @@ function find_file
 
 base_dir="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 
+honeycomb_xml=$(find_file $base_dir "honeycomb.xml")
 install_db=$(find_file $base_dir "mysql_install_db")
 mysql_client=$(find_file $base_dir "mysql")
 install_db_run=$(find $base_dir -path "*data/mysql" -type d | head -1)
 if [ -z "$install_db_run" ]
 then
     $install_db --user=$(whoami)
+fi
+
+if [ ! -z "$(grep '{FILL IN ZOOKEEPER QUORUM}' $honeycomb_xml)"]
+then
+    echo "$honeycomb_xml is missing a zookeeper quorum"
+    exit 1
 fi
 
 mysql_start=$(find_file $base_dir "mysqld_safe")
@@ -62,7 +69,7 @@ do
     echo -n "."
 done
 
-test_file=$base_dir/honeycomb-installed
+test_file="$base_dir/honeycomb-installed"
 if [ ! -e $test_file ]
 then
     honeycomb_install=/tmp/honeycomb-install
