@@ -39,7 +39,7 @@
                 <columnFamily>nic</columnFamily>
                 <tablePoolSize>5</tablePoolSize>
                 <flushChangesImmediately>true</flushChangesImmediately>
-                <hbase.client.scanner.caching>2500</hbase.client.scanner.caching>
+                <hbase.client.scanner.caching>100</hbase.client.scanner.caching>
                 <hbase.client.write.buffer>5242880</hbase.client.write.buffer>
             </configuration>
         </adapter>
