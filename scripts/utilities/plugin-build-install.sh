@@ -18,6 +18,8 @@ fi
 unit_test_dir=$BUILD_OUTPUT/unit-test
 honeycomb_link=$mysql_path/storage/honeycomb
 
+link $STORAGE_ENGINE $honeycomb_link
+
 take_dir $BUILD_DIR
 
 if [ ! -e CMakeCache.txt ]
@@ -74,6 +76,5 @@ then
   popd
 fi
 
-link $STORAGE_ENGINE $honeycomb_link
 link $BUILD_OUTPUT/$SO_NAME $MYSQL_HOME/lib/plugin/$SO_NAME
 link $HONEYCOMB_CONFIG/$SCHEMA_NAME $CONFIG_PATH/$SCHEMA_NAME use_admin

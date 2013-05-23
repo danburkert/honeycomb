@@ -29,10 +29,11 @@
                    The available Honeycomb tags for hbase adapter are:
                    tableName, columnFamily, tablePoolSize, flushChangesImmediately
 
-                   See http://??? for more information about what each tag does.
+                   For more information about what each tag does see: 
+                   https://github.com/nearinfinity/honeycomb/blob/develop/storage-engine-backends/hbase/README.md 
 
                    Note: Any HBase/Hadoop properties are valid here.
-                   e.g. To configure the HBase client scanner caching add the following line:
+                   e.g. To configure HBase client scanner caching add the following line:
                         <hbase.client.scanner.caching>2500</hbase.client.scanner.caching>
                 -->
                 <tableName>sql</tableName>
