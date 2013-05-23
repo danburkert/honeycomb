@@ -40,7 +40,7 @@ namespace Logging
     log_file = fopen(path, "a");
     if (log_file == NULL)
     {
-      fprintf(stderr, "Error %s trying to open log file %s. Falling back to stderr.\n", strerror(errno), path);
+      fprintf(stderr, "Error \"%s\" while trying to open log file %s. Falling back to stderr.\n", strerror(errno), path);
       log_file = stderr;
     }
     else

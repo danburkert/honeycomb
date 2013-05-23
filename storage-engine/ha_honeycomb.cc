@@ -125,7 +125,7 @@ bool test_directory(const char* path)
   return true;
 }
 
-#define PATH_COUNT 7
+#define PATH_COUNT 8
 static void find_config_file(Settings& settings)
 {
   char* cwd = getcwd(NULL, 0);
@@ -135,6 +135,7 @@ static void find_config_file(Settings& settings)
     "/etc",
     "/etc/mysql",
     getenv("MYSQL_HOME"),
+    getenv("HOME"),
     cwd,
     SETTINGS_BASE
   };

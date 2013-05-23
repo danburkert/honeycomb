@@ -101,7 +101,7 @@ bool Settings::test_file_owned_by_mysql(const char* config_file)
   struct stat fStat;
   if (stat(config_file, &fStat) == -1)
   {
-    const char* message = "Could not find %s. It mostly likely doesn't exist.";
+    const char* message = "Could not find %s. It likely doesn't exist.";
     int size = strlen(message) + strlen(config_file) + 1;
     format_error(settings, size, message, config_file);
     return false;
