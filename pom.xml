@@ -211,7 +211,6 @@
                                     <report>license</report>
                                     <report>scm</report>
                                     <report>issue-tracking</report>
-                                    <report>modules</report>
                                     <report>dependencies</report>
                                     <report>dependency-management</report>
                                     <report>plugins</report>

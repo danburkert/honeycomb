@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/DECORATION/1.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/DECORATION/1.0.0 http://maven.apache.org/xsd/decoration-1.0.0.xsd"
-    name="${project.artifactId}">
+<project xmlns="http://maven.apache.org/DECORATION/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/DECORATION/1.0.0 http://maven.apache.org/xsd/decoration-1.0.0.xsd">
     <skin>
         <groupId>org.apache.maven.skins</groupId>
         <artifactId>maven-fluido-skin</artifactId>
@@ -16,16 +14,16 @@
                 <projectId>nearinfinity/honeycomb</projectId>
                 <ribbonOrientation>right</ribbonOrientation>
                 <ribbonColor>orange</ribbonColor>
-            </gitHub>            
+            </gitHub>
         </fluidoSkin>
     </custom>
 
     <bannerLeft>
         <src>http://nearinfinity.github.io/honeycomb/resources/images/project_logo.png</src>
     </bannerLeft>
-  
-    <publishDate/>
-    <version position="right"/>
+
+    <publishDate />
+    <version position="right" />
 
     <poweredBy>
         <logo name="Near Infinity" href="https://www.nearinfinity.com/"
