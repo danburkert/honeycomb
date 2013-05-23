@@ -20,6 +20,10 @@
         </fluidoSkin>
     </custom>
 
+    <bannerLeft>
+        <src>http://nearinfinity.github.io/honeycomb/resources/images/project_logo.png</src>
+    </bannerLeft>
+  
     <publishDate/>
     <version position="right"/>
 
@@ -29,9 +33,6 @@
     </poweredBy>
 
     <body>
-        <links>
-            <item name="GitHub Repo" href="https://github.com/nearinfinity/honeycomb" />
-        </links>
         <menu ref="modules" />
         <menu ref="reports" />
     </body>
