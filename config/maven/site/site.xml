@@ -21,6 +21,10 @@
     <bannerLeft>
         <src>http://nearinfinity.github.io/honeycomb/resources/images/project_logo.png</src>
     </bannerLeft>
+    
+    <bannerRight>
+        <src>http://nearinfinity.github.io/honeycomb/resources/images/hexgrid.png</src>
+    </bannerRight>
 
     <publishDate />
     <version position="right" />
