@@ -15,7 +15,7 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- * 
+ *
  * Copyright 2013 Altamira Corporation.
  */
 
@@ -32,6 +32,9 @@ import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.config.AdapterType;
 import com.nearinfinity.honeycomb.config.HoneycombConfiguration;
 
+/**
+ * Factory class used to construct {@link Store} instances
+ */
 public class StoreFactory {
     private final Map<AdapterType, Provider<Store>> storeProviders;
     private final HoneycombConfiguration configuration;

@@ -15,28 +15,33 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- * 
+ *
  * Copyright 2013 Altamira Corporation.
  */
 
 
 package com.nearinfinity.honeycomb.mysql;
 
-import com.google.common.base.Objects;
-import com.nearinfinity.honeycomb.mysql.gen.AvroQueryKey;
-import com.nearinfinity.honeycomb.mysql.gen.QueryType;
-import com.nearinfinity.honeycomb.util.Verify;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
+
+import java.nio.ByteBuffer;
+import java.util.Map;
+
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
 
-import java.nio.ByteBuffer;
-import java.util.Map;
+import com.google.common.base.Objects;
+import com.nearinfinity.honeycomb.mysql.gen.AvroQueryKey;
+import com.nearinfinity.honeycomb.mysql.gen.QueryType;
+import com.nearinfinity.honeycomb.util.Verify;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.String.format;
-
+/**
+ * Represents the information required to execute a {@link QueryType} for an index
+ * Internal application type used to wrap the serialized {@link AvroQueryKey} type
+ */
 public class QueryKey {
     private static final DatumWriter<AvroQueryKey> writer =
             new SpecificDatumWriter<AvroQueryKey>(AvroQueryKey.class);
@@ -49,11 +54,11 @@ public class QueryKey {
         checkNotNull(queryType);
         Verify.isNotNullOrEmpty(indexName);
 
-        this.avroQueryKey = new AvroQueryKey(indexName, queryType, fields);
+        avroQueryKey = new AvroQueryKey(indexName, queryType, fields);
     }
 
     private QueryKey(AvroQueryKey AvroQueryKey) {
-        this.avroQueryKey = AvroQueryKey;
+        avroQueryKey = AvroQueryKey;
     }
 
     public static QueryKey deserialize(byte[] serializedIndexKey) {
@@ -66,15 +71,15 @@ public class QueryKey {
     }
 
     public Map<String, ByteBuffer> getKeys() {
-        return this.avroQueryKey.getRecords();
+        return avroQueryKey.getRecords();
     }
 
     public String getIndexName() {
-        return this.avroQueryKey.getIndexName();
+        return avroQueryKey.getIndexName();
     }
 
     public QueryType getQueryType() {
-        return this.avroQueryKey.getQueryType();
+        return avroQueryKey.getQueryType();
     }
 
     @Override

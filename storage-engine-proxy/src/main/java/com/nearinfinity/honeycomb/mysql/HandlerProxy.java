@@ -15,7 +15,7 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- * 
+ *
  * Copyright 2013 Altamira Corporation.
  */
 
@@ -40,6 +40,10 @@ import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import com.nearinfinity.honeycomb.util.Verify;
 
+/**
+ * Represents the proxy interaction between the storage engine and storage
+ * engine backend implementation used to execute operations
+ */
 public class HandlerProxy {
     private static final Logger logger = Logger.getLogger(HandlerProxy.class);
     private final StoreFactory storeFactory;
@@ -395,8 +399,9 @@ public class HandlerProxy {
     public byte[] getNextRow() {
         checkNotNull(currentScanner, "Scanner cannot be null to get next row.");
         byte[] next = currentScanner.next();
-        if (next == null)
+        if (next == null) {
             return null;
+        }
         return Row.updateSerializedSchema(next);
     }
 

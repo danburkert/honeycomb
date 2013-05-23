@@ -15,7 +15,7 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- * 
+ *
  * Copyright 2013 Altamira Corporation.
  */
 
@@ -23,25 +23,30 @@
 package com.nearinfinity.honeycomb.mysql;
 
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
+
+import java.nio.ByteBuffer;
+import java.util.Map;
+import java.util.UUID;
+
+import org.apache.avro.io.DatumReader;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.avro.specific.SpecificDatumWriter;
+
 import com.google.common.base.Objects;
 import com.google.common.base.Objects.ToStringHelper;
 import com.nearinfinity.honeycomb.mysql.gen.AvroRow;
 import com.nearinfinity.honeycomb.mysql.gen.UUIDContainer;
 import com.nearinfinity.honeycomb.mysql.schema.versioning.RowSchemaInfo;
 import com.nearinfinity.honeycomb.mysql.schema.versioning.SchemaVersionUtils;
-import org.apache.avro.io.DatumReader;
-import org.apache.avro.io.DatumWriter;
-import org.apache.avro.specific.SpecificDatumReader;
-import org.apache.avro.specific.SpecificDatumWriter;
 
-import java.nio.ByteBuffer;
-import java.util.Map;
-import java.util.UUID;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.String.format;
-
+/**
+ * Stores the row metadata information for a row defined in a table.
+ * Internal application type used to wrap the serialized {@link AvroRow} type
+ */
 public class Row {
     private static final DatumWriter<AvroRow> writer =
             new SpecificDatumWriter<AvroRow>(AvroRow.class);

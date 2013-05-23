@@ -43,6 +43,10 @@ import com.nearinfinity.honeycomb.exceptions.StorageBackendCreationException;
 import com.nearinfinity.honeycomb.util.Verify;
 
 
+/**
+ * Serves as the initial starting point of the storage engine proxy that is
+ * used to store the configuration and bootstrap the application
+ */
 public final class Bootstrap extends AbstractModule {
     private static final Logger logger = Logger.getLogger(Bootstrap.class);
     private final HoneycombConfiguration configuration;

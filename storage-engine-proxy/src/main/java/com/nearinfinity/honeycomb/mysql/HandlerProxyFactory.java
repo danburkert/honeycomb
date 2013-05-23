@@ -15,7 +15,7 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- * 
+ *
  * Copyright 2013 Altamira Corporation.
  */
 
@@ -24,6 +24,9 @@ package com.nearinfinity.honeycomb.mysql;
 
 import com.google.inject.Inject;
 
+/**
+ * Factory class used to construct {@link HandlerProxy} instances
+ */
 public class HandlerProxyFactory {
     private final StoreFactory storeFactory;
 
