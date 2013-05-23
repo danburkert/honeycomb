@@ -41,7 +41,7 @@
     perror("Failure during JNI call: " message); \
     Logging::fatal(message); \
     env->ExceptionDescribe(); \
-    perror("Failure during JNI call. Check honeycomb.log for details."); \
+    perror("Failure during JNI call. Check the log file for details."); \
     abort(); \
   }} while(0)
 

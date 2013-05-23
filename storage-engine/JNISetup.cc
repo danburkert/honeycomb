@@ -56,8 +56,7 @@ static bool try_bootstrap(JavaVM* jvm, jobject* factory, const Settings& setting
 
   if (print_java_exception(env))
   {
-    Logging::fatal("Startup failed with an error. Check"
-        "HBaseAdapter.log and honeycomb.log for more information.");
+    Logging::fatal("Startup failed with an error. Check the log file for more information.");
     return false;
   }
 
