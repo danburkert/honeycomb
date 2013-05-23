@@ -15,7 +15,7 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- * 
+ *
  * Copyright 2013 Altamira Corporation.
  */
 
@@ -45,6 +45,10 @@ import com.nearinfinity.honeycomb.mysql.schema.versioning.SchemaVersionUtils;
 import com.nearinfinity.honeycomb.mysql.schema.versioning.TableSchemaInfo;
 import com.nearinfinity.honeycomb.util.Verify;
 
+/**
+ * Stores the column and index metadata information defined on a table.
+ * Internal application type used to wrap the serialized {@link AvroTableSchema} type
+ */
 public class TableSchema {
     private static final DatumWriter<AvroTableSchema> writer =
             new SpecificDatumWriter<AvroTableSchema>(AvroTableSchema.class);
@@ -236,8 +240,12 @@ public class TableSchema {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         TableSchema that = (TableSchema) o;
 

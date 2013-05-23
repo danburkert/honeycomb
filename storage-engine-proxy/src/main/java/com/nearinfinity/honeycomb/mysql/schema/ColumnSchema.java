@@ -15,27 +15,32 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- * 
+ *
  * Copyright 2013 Altamira Corporation.
  */
 
 
 package com.nearinfinity.honeycomb.mysql.schema;
 
-import com.google.common.base.Objects;
-import com.nearinfinity.honeycomb.mysql.Util;
-import com.nearinfinity.honeycomb.mysql.gen.AvroColumnSchema;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
-import com.nearinfinity.honeycomb.util.Verify;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import net.jcip.annotations.Immutable;
+
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.base.Objects;
+import com.nearinfinity.honeycomb.mysql.Util;
+import com.nearinfinity.honeycomb.mysql.gen.AvroColumnSchema;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
+import com.nearinfinity.honeycomb.util.Verify;
 
+/**
+ * Stores the column metadata details for a column in a table.
+ * Internal application type used to wrap the serialized {@link AvroColumnSchema} type
+ */
 @Immutable
 public class ColumnSchema {
     private static final DatumWriter<AvroColumnSchema> writer =
@@ -153,13 +158,18 @@ public class ColumnSchema {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         ColumnSchema that = (ColumnSchema) o;
 
-        if (avroColumnSchema != null ? !avroColumnSchema.equals(that.avroColumnSchema) : that.avroColumnSchema != null)
+        if (avroColumnSchema != null ? !avroColumnSchema.equals(that.avroColumnSchema) : that.avroColumnSchema != null) {
             return false;
+        }
 
         return true;
     }

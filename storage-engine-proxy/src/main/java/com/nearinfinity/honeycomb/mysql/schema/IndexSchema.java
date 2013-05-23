@@ -15,7 +15,7 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- * 
+ *
  * Copyright 2013 Altamira Corporation.
  */
 
@@ -39,6 +39,10 @@ import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.gen.AvroIndexSchema;
 import com.nearinfinity.honeycomb.util.Verify;
 
+/**
+ * Stores the index information for indexed column(s) in a table.
+ * Internal application type used to wrap the serialized {@link AvroIndexSchema} type
+ */
 @Immutable
 public class IndexSchema {
     private static final DatumWriter<AvroIndexSchema> writer =
@@ -126,8 +130,12 @@ public class IndexSchema {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         IndexSchema that = (IndexSchema) o;
 
