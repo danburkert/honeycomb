@@ -302,5 +302,27 @@ REPLACE INTO t1(c1,c2) VALUES(1,2);
 #INSERT INTO t1 VALUES (9223372036854775807);
 #SELECT * FROM t1 WHERE c1 <> 9223372036854775808;
 
+### 160
+DROP TABLE IF EXISTS users, posts, posts_users;
+
+CREATE TABLE users (
+  id int,
+  PRIMARY KEY (id));
+
+CREATE TABLE posts (
+  id int);
+
+CREATE TABLE posts_users (
+  id int,
+  user_id int,
+  post_id int);
+
+INSERT INTO posts values (1);
+
+SELECT posts.*
+FROM posts LEFT OUTER JOIN posts_users ON posts_users.post_id = posts.id
+LEFT OUTER JOIN users ON users.id = posts_users.user_id;
+
+DROP TABLE IF EXISTS users, posts, posts_users;
 ### CLEANUP
 DROP TABLE IF EXISTS t1, t2;

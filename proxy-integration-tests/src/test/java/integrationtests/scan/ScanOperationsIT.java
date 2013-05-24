@@ -1,17 +1,15 @@
 package integrationtests.scan;
 
-import integrationtests.HoneycombIntegrationTest;
-import integrationtests.ITUtils;
-import integrationtests.TestConstants;
-
-import java.nio.ByteBuffer;
-import java.util.Map;
-
-import org.junit.Test;
-
 import com.google.common.collect.Maps;
 import com.nearinfinity.honeycomb.mysql.QueryKey;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
+import integrationtests.HoneycombIntegrationTest;
+import integrationtests.ITUtils;
+import integrationtests.TestConstants;
+import org.junit.Test;
+
+import java.nio.ByteBuffer;
+import java.util.Map;
 
 public class ScanOperationsIT extends HoneycombIntegrationTest {
 
@@ -104,5 +102,11 @@ public class ScanOperationsIT extends HoneycombIntegrationTest {
     public void testFullTableScan() {
         ITUtils.insertData(proxy, ROW_COUNT, INDEX_COL_VALUE);
         ITUtils.assertReceivingDifferentRows(proxy, ROW_COUNT);
+    }
+
+    @Test
+    public void testCloseNonExistentScanNoException() {
+        proxy.endScan();
+        proxy.endScan();
     }
 }
