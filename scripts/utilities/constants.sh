@@ -3,6 +3,8 @@
 CONFIG_PATH=/usr/share/mysql/honeycomb
 DEFAULT_HONEYCOMB_LIB=/usr/local/lib/honeycomb
 
+APP_LOGGING_PATH=/var/log/mysql
+
 BACKENDS=$HONEYCOMB_SOURCE/storage-engine-backends
 PROXY=$HONEYCOMB_SOURCE/storage-engine-proxy
 HBASE_BACKEND=$BACKENDS/hbase
