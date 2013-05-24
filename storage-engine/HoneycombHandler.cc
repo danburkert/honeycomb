@@ -264,7 +264,7 @@ int HoneycombHandler::info(uint flag)
 HoneycombShare *HoneycombHandler::get_share(const char *table_name, TABLE *table)
 {
   HoneycombShare *share;
-  char *tmp_path_name = "";
+  const char *tmp_path_name = "";
   uint path_length;
 
   mysql_mutex_lock(honeycomb_mutex);
@@ -287,7 +287,7 @@ HoneycombShare *HoneycombHandler::get_share(const char *table_name, TABLE *table
 
   share->use_count = 0;
   share->table_path_length = path_length;
-  share->path_to_table = tmp_path_name;
+  share->path_to_table = const_cast<char*>(tmp_path_name);
   share->crashed = FALSE;
   share->rows_recorded = 0;
 
