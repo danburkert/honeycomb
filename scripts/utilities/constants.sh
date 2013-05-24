@@ -71,9 +71,9 @@ function link
     echo "Creating a symbolic link from $target to $link "
     if $admin
     then
-      ln -Fs $target $link
+      ln -s $target $link
     else
-      sudo ln -Fs $target $link
+      sudo ln -s $target $link
     fi
   fi
 }
