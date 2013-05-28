@@ -57,7 +57,7 @@ bool does_path_exist(const char* path)
   return stat(path, &fstat) != -1 && S_ISDIR(fstat.st_mode);
 }
 
-bool is_owned_by_mysql(const char* path)
+bool can_read_write(const char* path)
 {
   return access(path, R_OK|W_OK) == 0;
 }
