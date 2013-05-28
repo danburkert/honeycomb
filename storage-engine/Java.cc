@@ -18,7 +18,7 @@
  */
 
 
-//#include "HoneycombHandler.h"
+#include "my_global.h"
 #include "Java.h"
 #include "Macros.h"
 #include "Logging.h"
