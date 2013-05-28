@@ -40,6 +40,7 @@ The following dependencies are necessary to build MySQL and Honeycomb from sourc
 
 * [libncurses](https://www.gnu.org/software/ncurses/)
 * [Libxml2](http://www.xmlsoft.org/)
+* [bison](https://www.gnu.org/software/bison/)
 * [cmake](http://www.cmake.org/)
 * C++ compiler
 * [Java Development Kit](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
