@@ -405,3 +405,131 @@ int HoneycombHandler::flush()
   this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().flush);
   return check_exceptions(env, cache, "HoneycombHandler::flush");
 }
+
+bool HoneycombHandler::is_date_or_time_field(enum_field_types field_type)
+{
+  return (field_type == MYSQL_TYPE_DATE
+      || field_type == MYSQL_TYPE_DATETIME
+      || field_type == MYSQL_TYPE_TIME
+      || field_type == MYSQL_TYPE_TIMESTAMP
+      || field_type == MYSQL_TYPE_NEWDATE);
+}
+
+bool HoneycombHandler::is_floating_point_field(enum_field_types field_type)
+{
+  return (field_type == MYSQL_TYPE_FLOAT || field_type == MYSQL_TYPE_DOUBLE);
+}
+
+bool HoneycombHandler::is_integral_field(enum_field_types field_type)
+{
+  return (field_type == MYSQL_TYPE_LONG
+      || field_type == MYSQL_TYPE_SHORT
+      || field_type == MYSQL_TYPE_TINY
+      || field_type == MYSQL_TYPE_LONGLONG
+      || field_type == MYSQL_TYPE_INT24
+      || field_type == MYSQL_TYPE_ENUM
+      || field_type == MYSQL_TYPE_YEAR);
+}
+
+bool HoneycombHandler::is_decimal_field(enum_field_types field_type)
+{
+  return (field_type == MYSQL_TYPE_DECIMAL || field_type == MYSQL_TYPE_NEWDECIMAL);
+}
+
+bool HoneycombHandler::is_byte_field(enum_field_types field_type)
+{
+  return (field_type == MYSQL_TYPE_VARCHAR
+      || field_type == MYSQL_TYPE_VAR_STRING
+      || field_type == MYSQL_TYPE_STRING
+      || field_type == MYSQL_TYPE_BLOB
+      || field_type == MYSQL_TYPE_TINY_BLOB
+      || field_type == MYSQL_TYPE_MEDIUM_BLOB
+      || field_type == MYSQL_TYPE_LONG_BLOB);
+}
+bool HoneycombHandler::is_unsupported_field(enum_field_types field_type)
+{
+  return (field_type == MYSQL_TYPE_NULL
+      || field_type == MYSQL_TYPE_BIT
+      || field_type == MYSQL_TYPE_SET
+      || field_type == MYSQL_TYPE_GEOMETRY);
+}
+const char* HoneycombHandler::table_type() const
+{
+  return "Honeycomb";
+}
+
+const char *HoneycombHandler::index_type(uint inx)
+{
+  return "BTREE";
+}
+
+uint HoneycombHandler::alter_table_flags(uint flags)
+{
+  if (ht->alter_table_flags)
+  {
+    return ht->alter_table_flags(flags);
+  }
+
+  return 0;
+}
+
+ulonglong HoneycombHandler::table_flags() const
+{
+  return HA_FAST_KEY_READ |
+    HA_BINLOG_STMT_CAPABLE |
+    HA_REC_NOT_IN_SEQ |
+    HA_NO_TRANSACTIONS |
+    HA_NULL_IN_KEY | // Nulls in indexed columns are allowed
+    HA_TABLE_SCAN_ON_INDEX;
+}
+
+ulong HoneycombHandler::index_flags(uint inx, uint part, bool all_parts) const
+{
+  return HA_READ_NEXT | HA_READ_ORDER | HA_READ_RANGE
+    | HA_READ_PREV;
+}
+
+uint HoneycombHandler::max_supported_record_length() const
+{
+  return HA_MAX_REC_LENGTH;
+}
+
+uint HoneycombHandler::max_supported_keys() const
+{
+  return MAX_INDEXES;
+}
+
+uint HoneycombHandler::max_supported_key_length() const
+{
+  return UINT_MAX;
+}
+
+uint HoneycombHandler::max_supported_key_part_length() const
+{
+  return UINT_MAX;
+}
+
+uint HoneycombHandler::max_supported_key_parts() const
+{
+  return MAX_REF_PARTS;
+}
+
+double HoneycombHandler::scan_time()
+{
+  return 200 + stats.records * 20;
+}
+
+double HoneycombHandler::read_time(uint index, uint ranges, ha_rows rows)
+{
+  return scan_time() / 20;
+}
+
+int HoneycombHandler::final_add_index(handler_add_index *add, bool commit)
+{
+  return 0;
+}
+
+int HoneycombHandler::final_drop_index(TABLE *table_arg)
+{
+  return 0;
+}
