@@ -57,7 +57,7 @@ echo "Running Honeycomb unit tests"
 make test
 [ $? -ne 0 ] && { echo "Unit test failed. Exiting Build. Execute build/storage/honeycomb/unit-test/runUnitTests for more details."; exit 1; }
 
-if [ ! -d $MYSQL_HOME -o "$(ls -A $MYSQL_HOME)" ]
+if [ ! -d $MYSQL_HOME -o -z "$(ls -A $MYSQL_HOME)" ]
 then
   echo "Installing and Configuring MySQL."
   sudo make install
