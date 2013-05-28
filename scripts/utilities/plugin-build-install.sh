@@ -58,6 +58,8 @@ make test
 [ $? -ne 0 ] && { echo "Unit test failed. Exiting Build. Execute build/storage/honeycomb/unit-test/runUnitTests for more details."; exit 1; }
 
 cd $BUILD_DIR
+
+# If the MySQL home directory doesn't exist or is empty, build and install to it
 if [ ! -d $MYSQL_HOME -o -z "$(ls -A $MYSQL_HOME)" ]
 then
   echo "Installing and Configuring MySQL."
