@@ -39,6 +39,7 @@ class Row : public Serializable
 
   /**
    * @brief Resets the Row to a fresh state with a no UUID and an empty row map.
+   *
    * Reseting an existing Row is much faster than creating a new one.
    * @return Error code
    */
@@ -48,16 +49,26 @@ class Row : public Serializable
 
   /**
    * @brief Serialize Row to buf and set serialized length in len
+   *
    * @param buf Pointer to a byte buffer holding the serialized Row.  The caller
    * is responsible for delete[] the buffer after finishing with it.
    * @return Error code
    */
   int serialize(const char** buf, size_t* len);
 
+  /**
+   * @brief Deserialize Row from a buffer
+   *
+   * @param buf Buffer of serialized row
+   * @param len Length of buffer
+   *
+   * @return Success
+   */
   int deserialize(const char* buf, int64_t len);
 
   /**
    * @brief set count to the number of records in the row
+   *
    * @param the count
    * @return Error code
    */
@@ -65,22 +76,28 @@ class Row : public Serializable
 
   /**
    * @brief Get the UUID of the Row
+   *
    * @param buf A pointer to a char buffer.  Upon return the pointer will point
    *            to a byte buffer containing the UUID's bytes.
+   *
    * @return Error code
    */
   int get_UUID(const char** buf);
 
   /**
    * @brief Set the UUID of the Row
+   *
    * @param uuid_buf  byte buffer holding new UUID value. Must be 16 bytes long.
+   *
    * @return Error code
    */
   int set_UUID(unsigned char* uuid_buf);
 
   /**
    * @brief Set the schema version of the Row
+   *
    * @param version  The version used during serialization.
+   *
    * @return Error code
    */
   int set_schema_version(const int& version);
