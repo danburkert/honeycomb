@@ -71,9 +71,6 @@ then
   pushd $MYSQL_HOME
   scripts/mysql_install_db --user=$current_user
   [ $? -ne 0 ] && { echo "mysql_install_db failed.  Exiting build."; exit 1; }
-  echo "Starting MySQL"
-  support-files/mysql.server start
-  [ $? -ne 0 ] && { echo "Starting MySQL server failed.  Exiting build."; exit 1; }
   popd
 fi
 
