@@ -32,7 +32,7 @@ then
     echo "Running CMake."
   fi
 
-  cmake -DWITH_DEBUG=$with_debug -DMYSQL_MAINTAINER_MODE=0 $mysql_path
+  cmake -DWITH_DEBUG=$with_debug -DMYSQL_MAINTAINER_MODE=0 $mysql_path -DCMAKE_INSTALL_PREFIX=$MYSQL_HOME
   [ $? -ne 0 ] && { echo "Failure during CMake step.  Exiting build.";
                     rm CMakeCache.txt;
                     exit 1; }
@@ -46,7 +46,7 @@ take_dir $unit_test_dir
 
 if [ ! -e CMakeCache.txt ]
 then
-  cmake $STORAGE_ENGINE/unit-test -DHONEYCOMB_SOURCE_DIR=$STORAGE_ENGINE -DCMAKE_INSTALL_PREFIX=$MYSQL_HOME
+  cmake $STORAGE_ENGINE/unit-test -DHONEYCOMB_SOURCE_DIR=$STORAGE_ENGINE
   [ $? -ne 0 ] && { "Failure during CMake step on unit tests.  Exiting build.";
                     rm CMakeCache.txt;
                     exit 1; }
