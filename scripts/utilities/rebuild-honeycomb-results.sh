@@ -21,7 +21,6 @@ datetime      \
 decimal       \
 double        \
 enum          \
-explain       \
 float         \
 group_by      \
 int           \
@@ -36,6 +35,14 @@ tinyint       \
 varbinary     \
 varchar       \
 year          \
+
+./mtr --suite=honeycomb-test/honeycomb           \
+  --mysqld=--plugin-load=Honeycomb=ha_honeycomb.so \
+  --mysqld=--default-storage-engine=Honeycomb \
+  --mysqld=--character-set-server=utf8     \
+  --mysqld=--collation-server=utf8_bin     \
+  --record                                 \
+explain          \
 
 # Move test results that are manually built
 cp $MYSQL_HOME/mysql-test/suite/honeycomb-test/honeycomb/t/manual_results/* \

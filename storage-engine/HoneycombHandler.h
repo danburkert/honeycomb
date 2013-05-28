@@ -211,12 +211,12 @@ class HoneycombHandler : public handler
 
     virtual double scan_time()
     {
-      return ((stats.records+stats.deleted) / 20.0) + 10;
+      return 200 + stats.records * 20;
     }
 
-    virtual double read_time(uint, uint, ha_rows rows)
+    virtual double read_time(uint index, uint ranges, ha_rows rows)
     {
-      return (rows / 20.0) + 1;
+      return scan_time() / 20;
     }
 
     virtual int final_add_index(handler_add_index *add, bool commit)
