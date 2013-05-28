@@ -73,54 +73,12 @@ class HoneycombHandler : public handler
     jobject handler_proxy;
     Row* row;
 
-    bool is_integral_field(enum_field_types field_type)
-    {
-      return (field_type == MYSQL_TYPE_LONG
-          || field_type == MYSQL_TYPE_SHORT
-          || field_type == MYSQL_TYPE_TINY
-          || field_type == MYSQL_TYPE_LONGLONG
-          || field_type == MYSQL_TYPE_INT24
-          || field_type == MYSQL_TYPE_ENUM
-          || field_type == MYSQL_TYPE_YEAR);
-    }
-
-    bool is_date_or_time_field(enum_field_types field_type)
-    {
-      return (field_type == MYSQL_TYPE_DATE
-          || field_type == MYSQL_TYPE_DATETIME
-          || field_type == MYSQL_TYPE_TIME
-          || field_type == MYSQL_TYPE_TIMESTAMP
-          || field_type == MYSQL_TYPE_NEWDATE);
-    }
-
-    bool is_floating_point_field(enum_field_types field_type)
-    {
-      return (field_type == MYSQL_TYPE_FLOAT || field_type == MYSQL_TYPE_DOUBLE);
-    }
-
-    bool is_decimal_field(enum_field_types field_type)
-    {
-      return (field_type == MYSQL_TYPE_DECIMAL || field_type == MYSQL_TYPE_NEWDECIMAL);
-    }
-
-    bool is_byte_field(enum_field_types field_type)
-    {
-      return (field_type == MYSQL_TYPE_VARCHAR
-    || field_type == MYSQL_TYPE_VAR_STRING
-    || field_type == MYSQL_TYPE_STRING
-    || field_type == MYSQL_TYPE_BLOB
-    || field_type == MYSQL_TYPE_TINY_BLOB
-    || field_type == MYSQL_TYPE_MEDIUM_BLOB
-    || field_type == MYSQL_TYPE_LONG_BLOB);
-    }
-
-    bool is_unsupported_field(enum_field_types field_type)
-    {
-      return (field_type == MYSQL_TYPE_NULL
-      || field_type == MYSQL_TYPE_BIT
-      || field_type == MYSQL_TYPE_SET
-      || field_type == MYSQL_TYPE_GEOMETRY);
-    }
+    bool is_integral_field(enum_field_types field_type);
+    bool is_date_or_time_field(enum_field_types field_type);
+    bool is_floating_point_field(enum_field_types field_type);
+    bool is_decimal_field(enum_field_types field_type);
+    bool is_byte_field(enum_field_types field_type);
+    bool is_unsupported_field(enum_field_types field_type);
 
     /* HoneycombHandler helper methods */
     void store_uuid_ref(Row* row);
@@ -146,89 +104,7 @@ class HoneycombHandler : public handler
     bool violates_uniqueness(jbyteArray serialized_row);
     int pack_row(uchar *buf, TABLE* table, Row& row);
 
-
   public:
-    const char *table_type() const
-    {
-      return "Honeycomb";
-    }
-
-    const char *index_type(uint inx)
-    {
-      return "BTREE";
-    }
-
-    uint alter_table_flags(uint flags)
-    {
-      if (ht->alter_table_flags)
-      {
-        return ht->alter_table_flags(flags);
-      }
-
-      return 0;
-    }
-
-    ulonglong table_flags() const
-    {
-      return HA_FAST_KEY_READ |
-        HA_BINLOG_STMT_CAPABLE |
-        HA_REC_NOT_IN_SEQ |
-        HA_NO_TRANSACTIONS |
-        HA_NULL_IN_KEY | // Nulls in indexed columns are allowed
-        HA_TABLE_SCAN_ON_INDEX;
-    }
-
-    ulong index_flags(uint inx, uint part, bool all_parts) const
-    {
-      return HA_READ_NEXT | HA_READ_ORDER | HA_READ_RANGE
-        | HA_READ_PREV;
-    }
-
-    uint max_supported_record_length() const
-    {
-      return HA_MAX_REC_LENGTH;
-    }
-
-    uint max_supported_keys() const
-    {
-      return MAX_INDEXES;
-    }
-
-    uint max_supported_key_length() const
-    {
-      return UINT_MAX;
-    }
-
-    uint max_supported_key_part_length() const
-    {
-      return UINT_MAX;
-    }
-
-    uint max_supported_key_parts() const
-    {
-      return MAX_REF_PARTS;
-    }
-
-    virtual double scan_time()
-    {
-      return 200 + stats.records * 20;
-    }
-
-    virtual double read_time(uint index, uint ranges, ha_rows rows)
-    {
-      return scan_time() / 20;
-    }
-
-    virtual int final_add_index(handler_add_index *add, bool commit)
-    {
-      return 0;
-    }
-
-    virtual int final_drop_index(TABLE *table_arg)
-    {
-      return 0;
-    }
-
     /* HoneycombHandler */
     HoneycombHandler(handlerton *hton, TABLE_SHARE *table_share,
         mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm, JNICache* cache, jobject handler_proxy);
@@ -248,6 +124,20 @@ class HoneycombHandler : public handler
     ha_rows records_in_range(uint inx, key_range *min_key, key_range *max_key);
     int analyze(THD* thd, HA_CHECK_OPT* check_opt);
     ha_rows estimate_rows_upper_bound();
+    const char *table_type() const;
+    const char *index_type(uint inx);
+    uint alter_table_flags(uint flags);
+    ulonglong table_flags() const;
+    ulong index_flags(uint inx, uint part, bool all_parts) const;
+    uint max_supported_record_length() const;
+    uint max_supported_keys() const;
+    uint max_supported_key_length() const;
+    uint max_supported_key_part_length() const;
+    uint max_supported_key_parts() const;
+    virtual double scan_time();
+    virtual double read_time(uint index, uint ranges, ha_rows rows);
+    virtual int final_add_index(handler_add_index *add, bool commit);
+    virtual int final_drop_index(TABLE *table_arg);
 
     /* Query */
     int index_init(uint idx, bool sorted);

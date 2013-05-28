@@ -23,12 +23,58 @@
 
 namespace Logging
 {
+  /**
+   * @brief Open the logger to the specified path. If the path cannot
+   * be open then fallback to stderr
+   *
+   * @param path Logging path
+   */
   void setup_logging(const char* path);
+
+  /**
+   * @brief Close the current logger
+   */
   void close_logging();
+
+  /**
+   * @brief Print to the log file a message
+   *
+   * @param level Level of logging
+   * @param format Printf format for the log message
+   * @param ... Arguments for the format
+   */
   void print(const char* level, const char* format, ...);
+
+  /**
+   * @brief Print to the log file a info message
+   *
+   * @param format Printf format for the log message
+   * @param ... Arguments for the format
+   */
   void info(const char* format, ...);
+
+  /**
+   * @brief Print to the log file a warning message
+   *
+   * @param format Printf format for the log message
+   * @param ... Arguments for the format
+   */
   void warn(const char* format, ...);
+
+  /**
+   * @brief Print to the log file a error message
+   *
+   * @param format Printf format for the log message
+   * @param ... Arguments for the format
+   */
   void error(const char* format, ...);
+
+  /**
+   * @brief Print to the log file a fatal message
+   *
+   * @param format Printf format for the log message
+   * @param ... Arguments for the format
+   */
   void fatal(const char* format, ...);
 }
 

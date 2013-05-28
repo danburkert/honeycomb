@@ -61,19 +61,12 @@ function link
     admin=true
   fi
 
-  if [ ! -h $link ]
-  then
-    if [ -e $link ]; then
-      echo "Changing file to symbolic link"
-      rm $link
-    fi
 
-    echo "Creating a symbolic link from $target to $link "
-    if $admin
-    then
-      ln -s $target $link
-    else
-      sudo ln -s $target $link
-    fi
+  echo "Creating a symbolic link from $target to $link "
+  if $admin
+  then
+      ln -fFs $target $link
+  else
+      sudo ln -Ffs $target $link
   fi
 }

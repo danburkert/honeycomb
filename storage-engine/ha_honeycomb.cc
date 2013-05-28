@@ -38,17 +38,13 @@
 #define DEFAULT_LOG_FILE "honeycomb-c.log"
 #define DEFAULT_LOG_PATH "/var/log/mysql/"
 
-static handler *honeycomb_create_handler(handlerton *hton,
-    TABLE_SHARE *table, MEM_ROOT *mem_root);
-static char* honeycomb_configuration_path = NULL;
-
-handlerton *honeycomb_hton;
-
-mysql_mutex_t honeycomb_mutex;
 static JavaVM* jvm;
 static JNICache* cache;
 static HASH honeycomb_open_tables;
+static handlerton *honeycomb_hton;
+static mysql_mutex_t honeycomb_mutex;
 static jobject handler_proxy_factory = NULL;
+static char* honeycomb_configuration_path = NULL;
 
 static uchar* honeycomb_get_key(HoneycombShare *share, size_t *length,
     my_bool not_used __attribute__((unused)))
@@ -101,28 +97,6 @@ static jobject handler_factory(JNIEnv* env)
   NULL_CHECK_ABORT(handler_proxy, "Out of Memory while creating global ref to HandlerProxy");
   env->DeleteLocalRef(handler_proxy_local);
   return handler_proxy;
-}
-
-bool test_directory(const char* path)
-{
-  if (!does_path_exist(path))
-  {
-    const char* missing_message = "Path %s must exist. Ensure that the full path exists and is owned by MySQL's user. %s\n";
-    fprintf(stderr, missing_message, path, strerror(errno));
-    return false;
-  }
-
-  if (!can_read_write(path))
-  {
-    const char* wrong_owner_message = "Path %s must be owned by %s. Currently owner %s. %s\n";
-    char owner[256], current[256];
-    get_current_user_group(owner, sizeof(owner));
-    get_file_user_group(path, current, sizeof(current));
-    fprintf(stderr, wrong_owner_message, path, owner, current, strerror(errno));
-    return false;
-  }
-
-  return true;
 }
 
 #define PATH_COUNT 8
@@ -210,6 +184,17 @@ static bool try_setup()
   return true;
 }
 
+static handler* honeycomb_create_handler(handlerton *hton, TABLE_SHARE *table_share,
+    MEM_ROOT *mem_root)
+{
+  JNIEnv* env;
+  attach_thread(jvm, &env);
+  jobject handler_proxy = handler_factory(env);
+  detach_thread(jvm);
+  return new (mem_root) HoneycombHandler(hton, table_share, &honeycomb_mutex,
+      &honeycomb_open_tables, jvm, cache, handler_proxy);
+}
+
 static int honeycomb_init_func(void *p)
 {
   DBUG_ENTER("ha_honeycomb::honeycomb_init_func");
@@ -251,16 +236,6 @@ static int honeycomb_done_func(void *p)
   DBUG_RETURN(error);
 }
 
-static handler* honeycomb_create_handler(handlerton *hton, TABLE_SHARE *table_share,
-    MEM_ROOT *mem_root)
-{
-  JNIEnv* env;
-  attach_thread(jvm, &env);
-  jobject handler_proxy = handler_factory(env);
-  detach_thread(jvm);
-  return new (mem_root) HoneycombHandler(hton, table_share, &honeycomb_mutex,
-      &honeycomb_open_tables, jvm, cache, handler_proxy);
-}
 
 struct st_mysql_storage_engine honeycomb_storage_engine=
 {
