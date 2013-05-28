@@ -2,10 +2,6 @@
 
 : ${MYSQL_HOME?"Need to set MYSQL_HOME environment variable to the MySQL installation location."}
 
-dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# hbase_processes=`$dir/hbase-processes.sh | wc -l`
-# [ $hbase_processes -eq 3 ] || { echo >&2 "HBase is not running or not running correctly. Only $hbase_processes processes found."; exit 1; }
-
 MYSQL_STARTUP_SCRIPT=$MYSQL_HOME/support-files/mysql.server
 
 if [ ! -x $MYSQL_STARTUP_SCRIPT ]
