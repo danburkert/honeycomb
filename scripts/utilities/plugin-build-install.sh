@@ -57,15 +57,14 @@ echo "Running Honeycomb unit tests"
 make test
 [ $? -ne 0 ] && { echo "Unit test failed. Exiting Build. Execute build/storage/honeycomb/unit-test/runUnitTests for more details."; exit 1; }
 
+cd $BUILD_DIR
 if [ ! -d $MYSQL_HOME -o -z "$(ls -A $MYSQL_HOME)" ]
 then
   echo "Installing and Configuring MySQL."
   sudo make install
-  current_user=`whoami`
-  current_group=`groups | awk '{ print $1 }'`
 
   echo "Changing the owner of $MYSQL_HOME to $current_user:$current_group"
-  sudo chown -R $current_user:$current_group $MYSQL_HOME
+  take_ownership $MYSQL_HOME
   echo "Creating grant tables"
   pushd $MYSQL_HOME
   scripts/mysql_install_db --user=$current_user
