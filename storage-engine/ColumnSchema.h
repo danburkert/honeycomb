@@ -77,38 +77,145 @@ class ColumnSchema
      */
     int reset();
 
+    /**
+     * @brief Compare this ColumnSchema with another
+     *
+     * @param other Other ColumnSchema
+     *
+     * @return Equal?
+     */
     bool equals(const ColumnSchema& other);
 
+    /**
+     * @brief Serialize this ColumnSchema into a buffer
+     *
+     * @param buf Buffer to hold the serialized data
+     * @param len Length of the serialized data
+     *
+     * @return Success
+     */
     int serialize(const char** buf, size_t* len);
 
+    /**
+     * @brief Deserialize a buffer into this ColumnSchema
+     *
+     * @param buf Buffer containing the serialized ColumnSchema
+     * @param len Length of the data in buf
+     *
+     * @return Success
+     */
     int deserialize(const char* buf, int64_t len);
 
+    /**
+     * @brief Retrieve the type of the column
+     *
+     * @return Column type
+     */
     ColumnType get_type();
 
+    /**
+     * @brief Set the type of the column
+     *
+     * @param type Column type
+     *
+     * @return Success
+     */
     int set_type(ColumnType type);
 
+    /**
+     * @brief Retrieve whether the column is nullable
+     *
+     * @return Is nullable column?
+     */
     bool get_is_nullable();
 
+    /**
+     * @brief Set the column nullable
+     *
+     * @param is_nullable Is column nullable
+     *
+     * @return Success
+     */
     int set_is_nullable(bool is_nullable);
 
+    /**
+     * @brief Retrieve whether the column is an auto increment 
+     *
+     * @return Is auto increment column?
+     */
     bool get_is_auto_increment();
 
+    /**
+     * @brief Set the column as auto increment
+     *
+     * @param is_nullable Is auto increment
+     *
+     * @return Success
+     */
     int set_is_auto_increment(bool is_nullable);
 
+    /**
+     * @brief Retrieve the max length of the column
+     *
+     * @return Max length of the column
+     */
     int get_max_length();
 
+    /**
+     * @brief Set the max length of the column
+     *
+     * @param length Column max length
+     *
+     * @return Success
+     */
     int set_max_length(int length);
 
+    /**
+     * @brief Retrieve the scale of the column
+     *
+     * @return Column scale
+     */
     int get_scale();
 
+    /**
+     * @brief Set the scale of the column
+     *
+     * @param scale Scale of the column
+     *
+     * @return Success
+     */
     int set_scale(int scale);
 
+    /**
+     * @brief Retrieve the precision of the column
+     *
+     * @return Precision of the column
+     */
     int get_precision();
 
+    /**
+     * @brief Set the precision of the column
+     *
+     * @param precision Column precision
+     *
+     * @return Success
+     */
     int set_precision(int precision);
 
+    /**
+     * @brief Retrieve the underlying avro object for this column
+     *
+     * @return Avro object
+     */
     avro_value_t* get_avro_value();
 
+    /**
+     * @brief Set the underlying avro object for this column
+     *
+     * @param avro_value_t New avro object
+     *
+     * @return Success
+     */
     int set_avro_value(avro_value_t*);
 };
 #endif
