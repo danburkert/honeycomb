@@ -112,7 +112,7 @@ bool test_directory(const char* path)
     return false;
   }
 
-  if (!is_owned_by_mysql(path))
+  if (!can_read_write(path))
   {
     const char* wrong_owner_message = "Path %s must be owned by %s. Currently owner %s. %s\n";
     char owner[256], current[256];

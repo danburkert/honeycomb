@@ -107,7 +107,7 @@ bool Settings::test_file_owned_by_mysql(const char* config_file)
     return false;
   }
 
-  if (!is_owned_by_mysql(config_file))
+  if (!can_read_write(config_file))
   {
     struct passwd passwd_entry;
     struct passwd* temp;
