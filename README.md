@@ -19,7 +19,6 @@ Honeycomb is an open-source storage engine for MySQL that allows MySQL to store 
 
 The following system requirements must be installed and configured for Honeycomb execution:
 
-* MySQL 5.5.x
 * Oracle Java 6
 * Hadoop 
   * Apache 1.0+ or CDH 4.2+ 	
@@ -52,14 +51,14 @@ insert into foo values (1, 'Testing Honeycomb');
 select * from foo;
 ```
 
-### What if HBase is not local?
+## What if HBase is not local?
 To configure Honeycomb to use a remote HBase replace the following in honeycomb.xml with your Zookeeper Quorum address
 
 ```
 <hbase.zookeeper.quorum>{ZOOKEEPER QUORUM}</hbase.zookeeper.quorum>
 ```
 
-### What if I don't have HBase?
+## What if I don't have HBase?
 To configure Honeycomb to run in-memory replace the following in honeycomb.xml
 
 ```
