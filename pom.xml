@@ -18,11 +18,11 @@
         <url>${repository.url}</url>
         <tag>HEAD</tag>
     </scm>
-    
+
     <issueManagement>
         <url>https://${repository.domain}/${repository.user}/${repository.name}/issues</url>
         <system>GitHub Issues</system>
-    </issueManagement>    
+    </issueManagement>
 
     <licenses>
         <license>
@@ -53,9 +53,6 @@
         <maven.build.timestamp.format>EEE MMM dd HH:mm z yyyy</maven.build.timestamp.format>
         <javadoc.stylesheetfile>config/maven/javadoc/stylesheet.css</javadoc.stylesheetfile>
         <site.config.location>config/maven/site</site.config.location>
-        <hadoop.artifactId>hadoop-client</hadoop.artifactId>
-        <hadoop.version>2.0.0-mr1-cdh4.2.0</hadoop.version>
-        <hbase.version>0.94.2-cdh4.2.0</hbase.version>
         <powermock.version>1.5</powermock.version>
     </properties>
 
