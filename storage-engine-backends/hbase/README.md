@@ -46,7 +46,7 @@ insert into in-hbase values (123);
 
 ### Testing
 
-The HBase backend contains its own unit tests which can be run with `lein test`.  Additionally, the integration tests will be run against the HBase backend iff the `defaultAdapter` is configured as `hbase` in `honeycomb.xml`.  Please ensure these tests pass before contributing changes.
+The HBase backend contains its own unit tests which can be run with `mvn test`.  Additionally, the integration tests will be run against the HBase backend iff the `defaultAdapter` is configured as `hbase` in `honeycomb.xml`.  Please ensure these tests pass before contributing changes.
 
 ## License
 
