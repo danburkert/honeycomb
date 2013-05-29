@@ -28,7 +28,7 @@ We accept pull requests to the [Honeycomb GitHub repository](https://github.com/
 
 ### C++
 
-Public functions/methods and non-obvious private methods should have [Doxygen](https://en.wikipedia.org/wiki/Doxygen) style documentation.  C/C++ code should conform to the following the style guidelines (if not specified below defer to the [Google C++ Style Guide](https://google-styleguide.googlecode.com/svn/trunk/cppguide.xml)):
+Public functions/methods and non-obvious private methods should have [Doxygen](http://www.stack.nl/~dimitri/doxygen/) style documentation.  C/C++ code should conform to the following the style guidelines (if not specified below defer to the [Google C++ Style Guide](https://google-styleguide.googlecode.com/svn/trunk/cppguide.xml)):
 
 * opening braces on own line
 * two space indent
@@ -38,7 +38,7 @@ Public functions/methods and non-obvious private methods should have [Doxygen](h
 
 ### Java
 
-Public methods and non-obvious private methods should have [JavaDoc](https://en.wikipedia.org/wiki/Javadoc) style documentation.  Java code should conform to the following style guidelines:
+Public methods and non-obvious private methods should have [JavaDoc](http://docs.oracle.com/javase/6/docs/technotes/guides/javadoc/) style documentation.  Java code should conform to the following style guidelines:
 
 * opening braces on same line
 * four space indent
@@ -48,9 +48,9 @@ Public methods and non-obvious private methods should have [JavaDoc](https://en.
 
 ### Exceptions
 
-Honeycomb spawns a JVM inside a native process without exception handling, so catching and dealing with Java exceptions can be complex.  The guidelines below describe how and where Honeycomb throws and handles exceptions.
+Honeycomb spawns a JVM inside a native process without exception handling, so catching and dealing with Java exceptions can be complex.  The guidelines below describe how and where Honeycomb throws and handles exceptions:
 
-* The barrier for checked exceptions is between the interfaces Store, Table and Scanner. All exceptions coming out of those interfaces must be RuntimeExceptions.
+* The barrier for checked exceptions is between the interfaces Store, Table, and Scanner. All exceptions coming out of those interfaces must be RuntimeExceptions.
 * Exception logging should happen as close to the source as possible, with logging containing maximum detail, including source, reason, and stack trace. Log the context of the operation that caused the exception to occur.
 * Typed runtime exceptions should only be added if they enable better error handling / recognition on the C++ side. I.E. a typed runtime exception should only be added if it translates to something other than a generic HA_ERROR code.
 * IOExceptions should be wrapped in RuntimeIOException, which indicates to the C++ side an IOException occurred.
