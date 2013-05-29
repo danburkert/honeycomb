@@ -1,8 +1,8 @@
 # Honeycomb
 
-Honeycomb is a MySQL storage engine which stores MySQL tables into an external data store, or backend.  Currently, Honeycomb includes backends for HBase, as well as an in-memory backend.  Honeycomb provides a high level Java interface so that developing additional backends is straight-forward, with no need to understand MySQL internals.
+Honeycomb is a MySQL storage engine which stores MySQL tables into an external data store, or backend.  Currently, Honeycomb includes backends for HBase and an in-memory backend.  Honeycomb provides a high level Java interface so that developing additional backends is straight-forward, with no need to understand MySQL internals.
 
-With Honeycomb, MySQL is able to take advantage of the scalability, fault-tolerance, and capacity of the underlying backend, while preserving the familiar relational data model and SQL interface.  The HBase backend provides access to the underlying data in offline map/reduce jobs without having to extract or duplicate the data.
+With Honeycomb, MySQL is able to take advantage of the scalability, fault-tolerance, and tools of the underlying backend, while preserving the familiar relational data model and SQL interface.  The HBase backend provides access to the underlying data in offline map/reduce jobs without having to extract or duplicate the data.  Existing applications using MySQL as a backend can be transitioned to use HBase with Honeycomb on a table-by-table basis, with no changes to application code.
 
 Feature comparison between Honeycomb with the HBase backend, and InnoDB (the default MySQL storage engine):
 
