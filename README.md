@@ -35,7 +35,7 @@ The following directions can be used to install a bundled Honeycomb:
 4. Execute `run-mysql-with-honeycomb-installed.sh`
 
 
-The complete commands are:
+Or run following commands in a shell:
 
 ```
 curl -O https://s3.amazonaws.com/Honeycomb/releases/mysql-5.5.31-honeycomb-0.1-SNAPSHOT-linux-64bit.tar.gz
