@@ -85,10 +85,11 @@ public class BulkLoadMapper
         checkNotNull(hbaseTable, ConfigConstants.TABLE_NAME + NOT_SET_ERROR);
         checkNotNull(columnFamily, ConfigConstants.COLUMN_FAMILY + NOT_SET_ERROR);
 
-        LOG.info("Zookeeper " + conf.get(HConstants.ZOOKEEPER_QUORUM));
-        LOG.info("SQL Table " + sqlTable);
-        LOG.info("HBase Table " + hbaseTable);
-        LOG.info("HBase Column Family " + columnFamily);
+        LOG.info("Zookeeper: " + conf.get(HConstants.ZOOKEEPER_QUORUM));
+        LOG.info("SQL Table: " + sqlTable);
+        LOG.info("HBase Table: " + hbaseTable);
+        LOG.info("HBase Column Family: " + columnFamily);
+        LOG.info("Input separator: '" + separator + "'");
 
         final HTablePool pool = new HTablePool(conf, 1);
         HBaseMetadata metadata = new HBaseMetadata(new PoolHTableProvider(hbaseTable, pool));
