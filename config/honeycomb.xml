@@ -33,8 +33,10 @@
                    https://github.com/nearinfinity/honeycomb/blob/develop/storage-engine-backends/hbase/README.md 
 
                    Note: Any HBase/Hadoop properties are valid here.
-                   e.g. To configure HBase client scanner caching add the following line:
+                   e.g. To configure HBase client scanner caching add:
                         <hbase.client.scanner.caching>2500</hbase.client.scanner.caching>
+                   e.g. To configure the HBase zookeeper quorum add: 
+                        <hbase.zookeeper.quorum>{ZOOKEEPER QUORUM}</hbase.zookeeper.quorum>
                 -->
                 <tableName>sql</tableName>
                 <columnFamily>nic</columnFamily>
@@ -42,6 +44,7 @@
                 <flushChangesImmediately>true</flushChangesImmediately>
                 <hbase.client.scanner.caching>100</hbase.client.scanner.caching>
                 <hbase.client.write.buffer>5242880</hbase.client.write.buffer>
+                <!-- <hbase.zookeeper.quorum>{ZOOKEEPER QUORUM}</hbase.zookeeper.quorum>-->
             </configuration>
         </adapter>
         <adapter name="memory">
