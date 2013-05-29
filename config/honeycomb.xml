@@ -52,9 +52,9 @@
     </adapters>
     <!-- 
          The <defaultAdapter> tag specifies the default backend for a MySQL table.
-         If the name of the MySQL database is the same as an adapter below then the default adapter is ignored.
+         If the name of the MySQL database is the same as an adapter then the default adapter is ignored.
          Otherwise, the MySQL table will use the backend specified by the tag.
-         It is recommended to match the name of the database with an adapter below.
+         It is recommended to match the name of the database with an adapter.
 
          Examples:
          A MySQL database called "hbase" will use the <adapter name="hbase"> regardless 
