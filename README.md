@@ -54,14 +54,14 @@ select * from foo;
 ```
 
 ## What if HBase is not local?
-To configure Honeycomb to use a remote HBase replace the following in `honeycomb.xml` with your Zookeeper Quorum address
+To configure Honeycomb to use a remote HBase replace the following in `mysql-5.5.31-honeycomb-0.1-SNAPSHOT/honeycomb.xml` with your Zookeeper Quorum address
 
 ```
 <hbase.zookeeper.quorum>{ZOOKEEPER QUORUM}</hbase.zookeeper.quorum>
 ```
 
 ## What if I don't have HBase?
-To configure Honeycomb to run in-memory replace the following in `honeycomb.xml`
+To configure Honeycomb to run in-memory replace the following in `mysql-5.5.31-honeycomb-0.1-SNAPSHOT/honeycomb.xml`
 
 ```
 <defaultAdapter>hbase</defaultAdapter>
