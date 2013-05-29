@@ -29,6 +29,16 @@ class IndexSchema;
 
 #define TABLE_SCHEMA "{\"type\":\"record\",\"name\":\"AvroTableSchema\",\"namespace\":\"com.nearinfinity.honeycomb.mysql.gen\",\"fields\":[{\"name\":\"version\",\"type\":\"int\",\"doc\":\"Schema version number\",\"default\":0},{\"name\":\"columns\",\"type\":{\"type\":\"map\",\"values\":" COLUMN_SCHEMA ",\"avro.java.string\":\"String\"}},{\"name\":\"indices\",\"type\":{\"type\":\"map\",\"values\":" INDEX_SCHEMA ",\"avro.java.string\":\"String\"}}]}"
 
+/**
+ * @brief A serializable container that stores metadata for a MySQL table's indices and columns.
+ * For example, a MySQL table:
+ * @code{.sql}
+ * create table foo (x int, index (x));
+ * @endcode
+ * will have a TableSchema containing one ColumnSchema and IndexSchema. The ColumnSchema will contain information such
+ * as the type \c int and column name \c x. The IndexSchema will contain information such as a uniqueness constraint
+ * and column name.
+ */
 class TableSchema : public Serializable
 {
   private:

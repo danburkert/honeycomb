@@ -37,7 +37,8 @@ class _jclass;
 typedef _jclass *jclass;
 
 
-/* JNICache holds jmethodID's and jclass global refs to be used in later JNI
+/*  
+ * @brief JNICache holds jmethodID's and jclass global refs to be used in later JNI
  * invocations by Honeycomb.  Upon creation, JNICache asks the JVM for
  * the jmethodID's and jclass refs it needs, and caches them.
  */
