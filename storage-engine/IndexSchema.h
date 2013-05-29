@@ -26,6 +26,9 @@
 
 #define INDEX_SCHEMA "{\"type\":\"record\",\"name\":\"AvroIndexSchema\",\"fields\":[{\"name\":\"columns\",\"type\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"avro.java.string\":\"String\"}}},{\"name\":\"isUnique\",\"type\":\"boolean\",\"default\":false}]}"
 
+/**
+ * @brief A container that stores metadata for a MySQL table's index. See TableSchema for more information.
+ */
 class IndexSchema : public Serializable
 {
   private:

@@ -70,7 +70,7 @@ int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
     bool is_null_field = field->is_real_null();
     if (is_null_field && key_ptr[0] == 1) // Key is nullable and is actually null
     {
-      index_key.set_bytes_record(field->field_name, NULL, 0);
+      index_key.set_value(field->field_name, NULL, 0);
       key_ptr += key_part->store_length;
       key_part++;
       keypart_map >>= 1;
@@ -80,7 +80,7 @@ int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
     // If it is a null field then we have to move past the null byte.
     uchar* key_offset = is_null_field ? key_ptr + 1 : key_ptr;
     uchar* key_copy = create_key_copy(field, key_offset, &key_length, table->in_use);
-    index_key.set_bytes_record(field->field_name, (char*)key_copy, key_length);
+    index_key.set_value(field->field_name, (char*)key_copy, key_length);
     ARRAY_DELETE(key_copy);
     key_ptr += key_part->store_length;
     key_part++;
@@ -317,7 +317,7 @@ int HoneycombHandler::unpack_row(uchar* buf, Row& row)
   {
     Field *field = table->field[i];
     const char* key = field->field_name;
-    row.get_bytes_record(key, &value, &size);
+    row.get_value(key, &value, &size);
     if (value == NULL)
     {
       field->set_null();

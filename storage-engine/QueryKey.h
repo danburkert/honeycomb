@@ -25,6 +25,16 @@
 #include <stdlib.h>
 #include "Serializable.h"
 
+/**
+ * @brief A serializable container to hold the keys in a query over an index and type of query.
+ * Effectively, the QueryKey is a map of column name to predicate value.
+ * For example, in the following query:
+ * @code{.sql}
+ * create table foo (col1 int, col2 int, index (col1,col2));
+ * select * from foo where col1 = 2 and col2 = 5;
+ * @endcode
+ * the QueryKey would hold the value {col1 -> 2, col2 -> 5} and type EXACT_KEY. 
+ */
 class QueryKey : public Serializable
 {
   private:
@@ -43,27 +53,73 @@ class QueryKey : public Serializable
       INDEX_FIRST,
       INDEX_LAST
     };
+
     QueryKey();
+    
     ~QueryKey();
+
     int reset();
+
     bool equals(const QueryKey& other);
 
     int serialize(const char** buf, size_t* len);
 
     int deserialize(const char* buf, int64_t len);
 
-    int set_bytes_record(const char* column_name, char* value, size_t size);
+    /**
+     * @brief Associate a value with a column in the query key.
+     *
+     * @param column_name Name of the indexed column
+     * @param value Value of the key
+     * @param size Size of the value
+     *
+     * @return Success if 0 else error code
+     */
+    int set_value(const char* column_name, char* value, size_t size);
 
-    int get_bytes_record(const char* column_name, const char** value, size_t* size);
+    /**
+     * @brief Retrieve the value associated to a column in the query key.
+     *
+     * @param column_name Column name to look up the value with
+     * @param value Value associated with the column
+     * @param size Size of the value
+     *
+     * @return Success if 0 else error code
+     */
+    int get_value(const char* column_name, const char** value, size_t* size);
 
+    /**
+     * @brief Set the type of the query key. See QueryType for possible values.
+     *
+     * @param type Query type
+     *
+     * @return Success if 0 else error code
+     */
     int set_type(QueryType type);
 
+    /**
+     * @brief Retrieve the type of the query key.
+     *
+     * @return Query type
+     */
     QueryType get_type();
 
     int record_count(size_t* count);
 
+    /**
+     * @brief Set the name of the index containing the columns.
+     *
+     * @param index_name Index name
+     *
+     * @return Success if 0 else error code
+     */
     int set_name(const char* index_name);
 
+    /**
+     * @brief Retrieve the name of the index.
+     *
+     * @return Index name
+     */
     const char* get_name();
 };
 

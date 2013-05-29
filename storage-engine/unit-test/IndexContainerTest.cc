@@ -74,7 +74,7 @@ TEST_F(QueryKeyTest, CanHaveNullValue)
   index.reset();
   const char* value;
 
-  ASSERT_EQ(index.set_bytes_record("test", NULL, 0), 0);
-  ASSERT_EQ(index.get_bytes_record("test", &value, NULL), 0);
+  ASSERT_EQ(index.set_value("test", NULL, 0), 0);
+  ASSERT_EQ(index.get_value("test", &value, NULL), 0);
   ASSERT_TRUE(value == NULL);
 }
