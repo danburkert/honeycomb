@@ -137,7 +137,7 @@ int QueryKey::deserialize(const char* buf, int64_t len)
   return deserialize_object(&container_schema, buf, len);
 }
 
-int QueryKey::set_bytes_record(const char* column_name, char* value, size_t size)
+int QueryKey::set_value(const char* column_name, char* value, size_t size)
 {
   int ret = 0;
   avro_value_t record;
@@ -153,7 +153,7 @@ int QueryKey::set_bytes_record(const char* column_name, char* value, size_t size
   return ret;
 }
 
-int QueryKey::get_bytes_record(const char* column_name, const char** value, size_t* size)
+int QueryKey::get_value(const char* column_name, const char** value, size_t* size)
 {
   int ret;
   avro_value_t record;

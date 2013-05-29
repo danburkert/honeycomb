@@ -112,7 +112,7 @@ class Row : public Serializable
    *
    * @return  Error code
    */
-  int get_bytes_record(const char* column_name, const char** value, size_t* size);
+  int get_value(const char* column_name, const char** value, size_t* size);
 
   /**
    * @brief Set record in Row to given value and size.
@@ -123,6 +123,6 @@ class Row : public Serializable
    *
    * @return Error code
    */
-  int set_bytes_record(const char* column_name, char* value, size_t size);
+  int set_value(const char* column_name, char* value, size_t size);
 };
 #endif
