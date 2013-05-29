@@ -15,8 +15,10 @@
 
 Honeycomb is an open-source storage engine for MySQL that allows MySQL to store and retrieve data from HBase.
 
-## Supported versions
+## System Requirements
 
+The following system requirements must be installed and configured for Honeycomb execution:
+ 
 * Apache:
   * Hadoop 1.0+
   * HBase 0.94+
@@ -25,7 +27,7 @@ Honeycomb is an open-source storage engine for MySQL that allows MySQL to store 
 * MySQL 5.5.x
 * Oracle Java 6
 
-## Installing
+## Installation
 
 1. Download [tarball]()
 2. untar
