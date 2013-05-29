@@ -1,6 +1,7 @@
 # Proxy Integration Tests
 
-This project contains the integration test suite run to ensure proper execution against the supported backend implementations.
+This project contains the integration test suite that is run by the storage engine proxy 
+on a storage engine backend to ensure expected behavior from supported backend implementations.
 
 ## Running Tests
 
@@ -15,7 +16,7 @@ mvn verify
 To run the test suite against a specific backend implementation, the `defaultAdapter` property in the
 application configuration file must be configured to the desired backend.
 
-For example, to run the integration tests against the HBase backend ensure that the `honeycomb.xml` contains:
+For example, to run the integration tests against the HBase backend ensure that the `honeycomb.xml` file contains:
 
 ```XML
 <defaultAdapter>hbase</defaultAdapter>
