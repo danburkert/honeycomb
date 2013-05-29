@@ -27,6 +27,7 @@ The following system requirements must be installed and configured for Honeycomb
 
 ## Getting Started
 
+The following directions can be used to install a bundled Honeycomb:
 
 1. Download the Linux 64-bit [tarball](https://s3.amazonaws.com/Honeycomb/releases/mysql-5.5.31-honeycomb-0.1-SNAPSHOT-linux-64bit.tar.gz)
 2. Run `tar xzf mysql-5.5.31-honeycomb-0.1-SNAPSHOT-linux-64bit.tar.gz`
