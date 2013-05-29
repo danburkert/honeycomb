@@ -29,19 +29,22 @@ The following system requirements must be installed and configured for Honeycomb
 
 The following directions can be used to install a bundled Honeycomb:
 
-1. Download the Linux 64-bit [tarball](https://s3.amazonaws.com/Honeycomb/releases/mysql-5.5.31-honeycomb-0.1-SNAPSHOT-linux-64bit.tar.gz)
-2. Run `tar xzf mysql-5.5.31-honeycomb-0.1-SNAPSHOT-linux-64bit.tar.gz`
-3. Change directory to `mysql-5.5.31-honeycomb-0.1-SNAPSHOT`
-4. Execute `run-mysql-with-honeycomb-installed.sh`
+1. Export JAVA_HOME environment variable
+2. Download the Linux 64-bit [tarball](https://s3.amazonaws.com/Honeycomb/releases/mysql-5.5.31-honeycomb-0.1-SNAPSHOT-linux-64bit.tar.gz)
+3. Run `tar xzf mysql-5.5.31-honeycomb-0.1-SNAPSHOT-linux-64bit.tar.gz`
+4. Change directory to `mysql-5.5.31-honeycomb-0.1-SNAPSHOT`
+5. Execute `run-mysql-with-honeycomb-installed.sh`
+6. Execute `bin/mysql -u root --socket=mysql.sock`
 
 
-The complete commands are:
+Or run following commands in a shell:
 
 ```
 curl -O https://s3.amazonaws.com/Honeycomb/releases/mysql-5.5.31-honeycomb-0.1-SNAPSHOT-linux-64bit.tar.gz
 tar xzf mysql-5.5.31-honeycomb-0.1-SNAPSHOT-linux-64bit.tar.gz
 cd mysql-5.5.31-honeycomb-0.1-SNAPSHOT
 ./run-mysql-with-honeycomb-installed.sh
+bin/mysql -u root --socket=mysql.sock
 ```
 
 > *The project may be built from source using these [build instructions](https://github.com/nearinfinity/honeycomb/wiki/Building-From-Source)*
