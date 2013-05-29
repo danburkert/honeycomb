@@ -46,7 +46,7 @@ cd mysql-5.5.31-honeycomb-0.1-SNAPSHOT
 
 > *The project may be built from source using these [build instructions](https://github.com/nearinfinity/honeycomb/wiki/Building-From-Source)*
 
-Once Honeycomb is up and running, test it out with:
+Once Honeycomb is up and running, test it with:
 
 ```
 create table foo (x int, y varchar(20)) character set utf8 collate utf8_bin engine=honeycomb;
