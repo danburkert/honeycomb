@@ -43,6 +43,8 @@ cd mysql-5.5.31-honeycomb-0.1-SNAPSHOT
 ./run-mysql-with-honeycomb-installed.sh
 ```
 
+> *If desired, the project may be built from source using these [build instructions](https://github.com/nearinfinity/honeycomb/wiki/Building-From-Source)*
+
 Once Honeycomb is up and running, test it out with:
 
 ```
