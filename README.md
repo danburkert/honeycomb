@@ -31,7 +31,7 @@ The following system requirements must be installed and configured for Honeycomb
 1. Download the Linux 64-bit [tarball](https://s3.amazonaws.com/Honeycomb/releases/mysql-5.5.31-honeycomb-0.1-SNAPSHOT-linux-64bit.tar.gz)
 2. Run `tar xzf mysql-5.5.31-honeycomb-0.1-SNAPSHOT-linux-64bit.tar.gz`
 3. Change directory to `mysql-5.5.31-honeycomb-0.1-SNAPSHOT`
-4. Run `mysql-with-honeycomb.sh`
+4. Execute `run-mysql-with-honeycomb-installed.sh`
 
 
 The complete commands are:
@@ -40,7 +40,7 @@ The complete commands are:
 curl -O https://s3.amazonaws.com/Honeycomb/releases/mysql-5.5.31-honeycomb-0.1-SNAPSHOT-linux-64bit.tar.gz
 tar xzf mysql-5.5.31-honeycomb-0.1-SNAPSHOT-linux-64bit.tar.gz
 cd mysql-5.5.31-honeycomb-0.1-SNAPSHOT
-./mysql-with-honeycomb.sh
+./run-mysql-with-honeycomb-installed.sh
 ```
 
 Once Honeycomb is up and running, test it out with:
