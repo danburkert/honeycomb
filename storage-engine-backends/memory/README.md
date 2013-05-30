@@ -43,7 +43,7 @@ The memory backend is written in Clojure.  We maintain a `project.clj` for build
 
 ### Testing
 
-The memory backend contains its own unit tests which can be run with `lein test`.  Additionally, the integration tests will be run against the memory backend iff the `defaultAdapter` is configured as `memory` in `honeycomb.xml`.  Please ensure these tests pass before contributing changes.
+The memory backend contains its own unit tests which can be run with `lein test`.  Additionally, the integration tests will be run against the memory backend if the `defaultAdapter` is configured as `memory` in `honeycomb.xml`.  Please ensure these tests pass before contributing changes.
 
 ## License
 
