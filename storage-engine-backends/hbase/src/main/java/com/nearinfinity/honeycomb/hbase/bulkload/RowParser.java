@@ -33,19 +33,39 @@ import java.text.ParseException;
 import java.util.UUID;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
+/**
+ * Parser to turn CSV lines into Honeycomb rows
+ */
 public class RowParser {
     private final TableSchema schema;
     private final String[] columns;
     private final CSVParser csvParser;
 
+    /**
+     * Construct a row parser for a specific table format.
+     *
+     * @param schema Schema of the table to parse data for
+     * @param columns Names of the columns in the table
+     * @param separator Character separator for the data received.
+     */
     public RowParser(TableSchema schema, String[] columns, char separator) {
         this.schema = schema;
         this.columns = columns;
         this.csvParser = new CSVParser(separator);
     }
 
+    /**
+     * Parse a line of a CSV into a Honeycomb {@link Row}
+     *
+     * @param line CSV line
+     * @return Honeycomb {@link Row}
+     * @throws IOException    The CSV line was improperly formed
+     * @throws ParseException The CSV line contained invalid data.
+     */
     public Row parseRow(String line) throws IOException, ParseException {
+        checkNotNull(line);
         String[] unparsedFields = csvParser.parseLine(line);
         checkArgument((schema.getColumns().size() == unparsedFields.length),
                 "Line contains wrong number of columns.");
