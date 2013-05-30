@@ -22,7 +22,11 @@
 
 package com.nearinfinity.honeycomb.hbase.bulkload;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.primitives.Longs;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
+import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
+import org.apache.commons.lang.time.DateUtils;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -33,14 +37,25 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import org.apache.commons.lang.time.DateUtils;
-import org.apache.hadoop.hbase.util.Bytes;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.primitives.Longs;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
-import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
+/**
+ * Parser for reading data from string into byte string according
+ * to the column type.
+ */
+public final class FieldParser {
+    private FieldParser() {
+        throw new AssertionError("This should not be constructed.");
+    }
 
-public class FieldParser {
+    /**
+     * Try to parse a string into a byte string based on a column type.
+     *
+     * @param val    String value
+     * @param schema Column schema to base value parsing on.
+     * @return Byte string
+     * @throws ParseException The string value could not be parsed into the column type.
+     */
     public static ByteBuffer parse(String val, ColumnSchema schema) throws ParseException {
         checkNotNull(val, "Should not be parsing null. Something went terribly wrong.");
         checkNotNull(schema, "Column metadata is null.");
@@ -69,13 +84,13 @@ public class FieldParser {
             case DOUBLE:
                 return ByteBuffer.wrap(Bytes.toBytes(Double.parseDouble(val)));
             case DATE:
-                return  extractDate(val, "yyyy-MM-dd",
+                return extractDate(val, "yyyy-MM-dd",
                         "yyyy-MM-dd",
                         "yyyy/MM/dd",
                         "yyyy.MM.dd",
                         "yyyyMMdd");
             case TIME:
-                return  extractDate(val, "HH:mm:ss",
+                return extractDate(val, "HH:mm:ss",
                         "HH:mm:ss",
                         "HHmmss");
             case DATETIME:
@@ -85,7 +100,7 @@ public class FieldParser {
                         "yyyy.MM.dd HH:mm:ss",
                         "yyyyMMdd HHmmss");
             case DECIMAL:
-                return extractDecimal(val, schema);
+                return extractDecimal(val, schema.getPrecision(), schema.getScale());
             case STRING:
             case BINARY:
             default:
@@ -93,17 +108,28 @@ public class FieldParser {
         }
     }
 
+    /**
+     * Counts the number of bytes based on the number of digits.
+     *
+     * @param digits Number of digits
+     * @return Number of bytes
+     */
+    static int bytesFromDigits(int digits) {
+        int ret = 0;
+        ret += 4 * (digits / 9);
+        ret += (digits % 9 + 1) / 2;
+        return ret;
+    }
+
     private static ByteBuffer extractDate(String val, String dateFormat,
-                                      String... parseFormats)
+                                          String... parseFormats)
             throws ParseException {
         Date d = DateUtils.parseDateStrictly(val, parseFormats);
         SimpleDateFormat format = new SimpleDateFormat(dateFormat);
         return ByteBuffer.wrap(format.format(d).getBytes());
     }
 
-    private static ByteBuffer extractDecimal(String val, ColumnSchema schema) {
-        int precision = schema.getPrecision();
-        int right_scale = schema.getScale();
+    private static ByteBuffer extractDecimal(String val, int precision, int right_scale) {
         int left_scale = precision - 2;
         BigDecimal x = new BigDecimal(val);
         boolean is_negative = x.compareTo(BigDecimal.ZERO) == -1;
@@ -130,12 +156,5 @@ public class FieldParser {
             }
         }
         return ByteBuffer.wrap(buff);
-    }
-
-    public static int bytesFromDigits(int digits) {
-        int ret = 0;
-        ret += 4 * (digits / 9);
-        ret += (digits % 9 + 1) / 2;
-        return ret;
     }
 }

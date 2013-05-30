@@ -28,6 +28,9 @@ import org.apache.hadoop.hbase.client.HTablePool;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+/**
+ * Provider of HTables from a pool.
+ */
 public class PoolHTableProvider implements Provider<HTableInterface> {
     private final HTablePool pool;
     private final String tableName;
