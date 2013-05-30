@@ -33,6 +33,9 @@ import org.apache.log4j.Logger;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * Encapsulate HBase actions such as Get, Put and Delete
+ */
 public class HBaseOperations {
     private static final Logger logger = Logger.getLogger(HBaseOperations.class);
 
@@ -41,15 +44,6 @@ public class HBaseOperations {
             hTable.put(puts);
         } catch (IOException e) {
             throw createException("HBase table put list failed", e, hTable);
-        }
-    }
-
-    public static void performPut(HTableInterface hTable, Put put) {
-        try {
-            hTable.put(put);
-        } catch (IOException e) {
-            String msg = String.format("HBase table put failed for put %s", put.toString());
-            throw createException(msg, e, hTable);
         }
     }
 

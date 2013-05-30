@@ -24,6 +24,9 @@ package com.nearinfinity.honeycomb.hbase;
 
 import com.nearinfinity.honeycomb.Table;
 
+/**
+ * Creates {@link Table}s backed by HBase
+ */
 public interface HBaseTableFactory {
     Table createTable(final Long tableId);
 }

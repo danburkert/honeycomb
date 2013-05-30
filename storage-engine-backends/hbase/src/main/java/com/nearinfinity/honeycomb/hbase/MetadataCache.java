@@ -35,6 +35,9 @@ import org.apache.log4j.Logger;
 
 import java.util.Map;
 
+/**
+ * Caches metadata about tables to reduce HBase lookups.
+ */
 @Singleton
 @ThreadSafe
 public class MetadataCache {

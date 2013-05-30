@@ -31,6 +31,9 @@ import java.util.Iterator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+/**
+ * Iterates through HBase rows
+ */
 public class HBaseScanner implements Scanner {
     private final ResultScanner scanner;
     private final Iterator<Result> resultIterator;

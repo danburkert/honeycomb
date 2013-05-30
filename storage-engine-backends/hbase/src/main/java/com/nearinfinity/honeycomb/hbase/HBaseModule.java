@@ -39,6 +39,9 @@ import org.apache.log4j.Logger;
 import java.io.IOException;
 import java.util.Map;
 
+/**
+ * Wires up the required classes for the HBase backend
+ */
 public class HBaseModule extends AbstractModule {
     private static final Logger logger = Logger.getLogger(HBaseModule.class);
     private final HTableProvider hTableProvider;

@@ -28,6 +28,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.HTablePool;
 
+/**
+ * Constructs new {@link HTableInterface} instances from a pool.
+ */
 public class HTableProvider implements Provider<HTableInterface> {
 
     private final HTablePool tablePool;

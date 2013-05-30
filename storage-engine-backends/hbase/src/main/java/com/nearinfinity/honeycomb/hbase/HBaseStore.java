@@ -35,6 +35,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+/**
+ * An HBase backed {@link Store}
+ */
 public class HBaseStore implements Store {
     private final HBaseMetadata metadata;
     private final HBaseTableFactory tableFactory;

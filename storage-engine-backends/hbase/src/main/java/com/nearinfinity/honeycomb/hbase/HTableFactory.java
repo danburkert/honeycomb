@@ -29,6 +29,9 @@ import org.apache.hadoop.hbase.client.HTableInterfaceFactory;
 
 import java.io.IOException;
 
+/**
+ * Constructs new HTables
+ */
 public class HTableFactory implements HTableInterfaceFactory {
     private final long writeBufferSize;
     private final boolean autoFlush;

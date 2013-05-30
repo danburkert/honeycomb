@@ -35,6 +35,9 @@ import org.apache.log4j.Logger;
 
 import java.io.IOException;
 
+/**
+ * Creates the HTable used by Honeycomb
+ */
 public class TableCreator {
     private static final Logger logger = Logger.getLogger(TableCreator.class);
 

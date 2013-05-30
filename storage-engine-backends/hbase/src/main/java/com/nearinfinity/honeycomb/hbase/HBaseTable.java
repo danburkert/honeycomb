@@ -47,7 +47,6 @@ import org.apache.hadoop.hbase.coprocessor.example.BulkDeleteResponse;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
-import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -57,8 +56,10 @@ import java.util.UUID;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+/**
+ * An HBase backed {@link Table}
+ */
 public class HBaseTable implements Table {
-    private static final Logger logger = Logger.getLogger(HBaseTable.class);
     private final HTableInterface hTable;
     private final HBaseStore store;
     private final long tableId;
