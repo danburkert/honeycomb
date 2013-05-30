@@ -90,4 +90,4 @@ The Honeycomb storage engine plugin (the C++ library) is released under [GPL v2.
 
 ## Issues & Contributing
 
-Check out the [contribution guidelines](https://github.com/nearinfinity/honeycomb/blob/develop/CONTRIBUTING.md)
+Check out the [contributor guidelines](https://github.com/nearinfinity/honeycomb/blob/develop/CONTRIBUTING.md)
