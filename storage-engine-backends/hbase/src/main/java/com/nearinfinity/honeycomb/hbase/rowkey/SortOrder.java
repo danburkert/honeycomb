@@ -22,6 +22,9 @@
 
 package com.nearinfinity.honeycomb.hbase.rowkey;
 
+/**
+ * Specifies the order of the index to be built.
+ */
 public enum SortOrder {
     Ascending,
     Descending

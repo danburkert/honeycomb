@@ -22,6 +22,9 @@
 
 package com.nearinfinity.honeycomb.hbase.rowkey;
 
+/**
+ * Represents an index metadata row in HBase.
+ */
 public class IndicesRowKey extends TableIDRowKey {
     private static final byte PREFIX = 0x02;
 

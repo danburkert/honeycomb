@@ -27,15 +27,21 @@ package com.nearinfinity.honeycomb.config;
  * by the storage proxy component
  */
 public enum AdapterType {
-    HBASE ("hbase", "com.nearinfinity.honeycomb.hbase.HBaseModule"),
-    MEMORY ("memory", "com.nearinfinity.honeycomb.memory.MemoryModule");
-
+    /**
+     * HBase adapter
+     */
+    HBASE("hbase", "com.nearinfinity.honeycomb.hbase.HBaseModule"),
+    /**
+     * In-memory adapter
+     */
+    MEMORY("memory", "com.nearinfinity.honeycomb.memory.MemoryModule");
     private String name;
     private String moduleClass;
 
     /**
      * Creates a storage engine backend adapter type
-     * @param name The name used to represent this adapter
+     *
+     * @param name        The name used to represent this adapter
      * @param moduleClass The fully qualified path to the class used to load this adapter
      */
     AdapterType(String name, String moduleClass) {
@@ -43,10 +49,20 @@ public enum AdapterType {
         this.moduleClass = moduleClass;
     }
 
+    /**
+     * Retrieve the name of this adapter.
+     *
+     * @return Adapter name
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Retrieve the class path of this adapter
+     *
+     * @return Class path string
+     */
     public String getModuleClass() {
         return moduleClass;
     }
