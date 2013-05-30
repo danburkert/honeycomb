@@ -50,7 +50,7 @@ const char* table_creation_errors[] = {
 };
 
 /**
- * Called by MySQL during CREATE TABLE statements.  Converts the table's
+ * @brief Called by MySQL during CREATE TABLE statements.  Converts the table's
  * schema into a TableSchema object and hands it off to the HandlerProxy.
  *
  * @param path  path to file MySQL assumes we will use.  We use it to extract

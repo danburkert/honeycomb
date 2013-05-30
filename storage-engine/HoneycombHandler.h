@@ -54,6 +54,10 @@ class _jbyteArray;
 typedef _jbyteArray *jbyteArray;
 
 
+/**
+ * @brief The primary interface between the storage engine and MySQL. 
+ * The class is composed of ddl, dml and table cursor methods.
+ */
 class HoneycombHandler : public handler
 {
   private:
