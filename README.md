@@ -21,9 +21,9 @@ The following system requirements must be installed and configured for Honeycomb
 
 * Oracle Java 6
 * Hadoop 
-  * Apache 1.0+ or CDH 4.2+ 	
+  * Apache 1.0+ or CDH 4.3+ 	
 * HBase 
-  * Apache 0.94+ or CDH 4.2+
+  * Apache 0.94.3+ or CDH 4.3+
 
 ## Getting Started
 
