@@ -13,7 +13,7 @@
 
 ```
 
-Honeycomb is an open-source storage engine for MySQL that allows MySQL to store and retrieve data from HBase.
+Honeycomb is an open source MySQL storage engine which stores tables into an external data store, or backend.  Honeycomb currently supports storing tables to HBase and an in-memory store.  See the [project page](http://nearinfinity.github.io/honeycomb/) for more details.
 
 ## System Requirements
 
@@ -27,58 +27,67 @@ The following system requirements must be installed and configured for Honeycomb
 
 ## Getting Started
 
-The following directions can be used to install a bundled Honeycomb:
+**Install MySQL and Honeycomb binaries**
 
 1. Export JAVA_HOME environment variable
 2. Download the Linux 64-bit [tarball](https://s3.amazonaws.com/Honeycomb/releases/mysql-5.5.31-honeycomb-0.1-SNAPSHOT-linux-64bit.tar.gz)
 3. Run `tar xzf mysql-5.5.31-honeycomb-0.1-SNAPSHOT-linux-64bit.tar.gz`
 4. Change directory to `mysql-5.5.31-honeycomb-0.1-SNAPSHOT`
-5. Execute `run-mysql-with-honeycomb-installed.sh`
-6. Execute `bin/mysql -u root --socket=mysql.sock`
 
+or, run the following in a shell:
 
-Or run following commands in a shell:
-
-```
+```bash
 curl -O https://s3.amazonaws.com/Honeycomb/releases/mysql-5.5.31-honeycomb-0.1-SNAPSHOT-linux-64bit.tar.gz
 tar xzf mysql-5.5.31-honeycomb-0.1-SNAPSHOT-linux-64bit.tar.gz
 cd mysql-5.5.31-honeycomb-0.1-SNAPSHOT
+```
+
+**Configure Honeycomb**
+
+Honeycomb reads configuration from `honeycomb.xml`, located in the top level of the install binary
+
+* If using the HBase backend, add the following to the `hbase-site.xml` on each HBase region server and restart the region server:
+
+```XML
+  <property>
+    <name>hbase.coprocessor.region.classes</name>
+    <value>org.apache.hadoop.hbase.coprocessor.example.BulkDeleteEndpoint</value>
+  </property>
+```
+
+* If connecting to a remote HBase cluster, change the value of the `hbase.zookeeper.quorum` tag in the hbase backend configuration section of `honeycomb.xml` to the quorum location
+* If you want to use the in-memory backend, change the value of the `defaultAdapter` element in `honeycomb.xml` to `memory`
+
+**Start MySQL**
+
+5. Execute `run-mysql-with-honeycomb-installed.sh`
+6. Execute `bin/mysql -u root --socket=mysql.sock` 
+
+or,
+
+```bash
 ./run-mysql-with-honeycomb-installed.sh
 bin/mysql -u root --socket=mysql.sock
 ```
 
-> *The project may be built from source using these [build instructions](https://github.com/nearinfinity/honeycomb/wiki/Building-From-Source)*
-
 Once Honeycomb is up and running, test it with:
 
-```
+```SQL
 create table foo (x int, y varchar(20)) character set utf8 collate utf8_bin engine=honeycomb;
 insert into foo values (1, 'Testing Honeycomb');
 select * from foo;
 ```
 
-## What if HBase is not local?
-To configure Honeycomb to use a remote HBase, change the `{ZOOKEEPER QUORUM}` in `mysql-5.5.31-honeycomb-0.1-SNAPSHOT/honeycomb.xml` on the line
+## Documentation
 
-```
-<hbase.zookeeper.quorum>{ZOOKEEPER QUORUM}</hbase.zookeeper.quorum>
-```
-to your Zookeeper quorum address and make sure the line is uncommented.
+* [building from source](https://github.com/nearinfinity/honeycomb/wiki/Building-From-Source)
+* [user documentation](https://github.com/nearinfinity/honeycomb/wiki)
+* [developer documentation](https://github.com/nearinfinity/honeycomb/wiki/Developer-Resources)
 
-## What if I don't have HBase?
-To configure Honeycomb to run in-memory, replace
+## License
 
-```
-<defaultAdapter>hbase</defaultAdapter>
-```
-in `mysql-5.5.31-honeycomb-0.1-SNAPSHOT/honeycomb.xml` with
+The Honeycomb storage engine plugin (the C++ library) is released under [GPL v2.0](https://www.gnu.org/licenses/gpl-2.0.html).  The Honeycomb proxy and backends (the JVM libraries) are released under [Apache v2.0](https://www.apache.org/licenses/LICENSE-2.0.html).
 
-```
-<defaultAdapter>memory</defaultAdapter>
-```
+## Issues & Contributing
 
-
-
-
-
-
+Check out the [contribution guidelines](https://github.com/nearinfinity/honeycomb/blob/develop/CONTRIBUTING.md)
