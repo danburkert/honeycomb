@@ -35,7 +35,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * manner.
  */
 public class VarEncoder {
-
+    /**
+     * Variable length encodes a long.
+     *
+     * @param value Long value
+     * @return Variable length encoded bytes
+     */
     public static byte[] encodeULong(long value) {
         checkArgument(value >= 0, "Encoded long must be non-negative");
         int size = varLongSize(value);
@@ -48,6 +53,12 @@ public class VarEncoder {
         return encodedValue;
     }
 
+    /**
+     * Decode a variable length encoded long in a byte array
+     *
+     * @param encodedValue Encoded byte string
+     * @return Long value
+     */
     public static long decodeULong(final byte[] encodedValue) {
         checkNotNull(encodedValue);
         long value = 0;
@@ -60,6 +71,12 @@ public class VarEncoder {
         return value;
     }
 
+    /**
+     * Combine many byte arrays into one
+     *
+     * @param arrays List of byte arrays
+     * @return Combined byte array
+     */
     public static byte[] appendByteArrays(List<byte[]> arrays) {
         checkNotNull(arrays);
         int size = 0;
@@ -73,6 +90,13 @@ public class VarEncoder {
         return bb.array();
     }
 
+    /**
+     * Combine many byte arrays into one with a prefix at the beginning of the combined array.
+     *
+     * @param prefix Byte prefix
+     * @param arrays Many byte arrays
+     * @return Combined byte array
+     */
     public static byte[] appendByteArraysWithPrefix(byte prefix, byte[]... arrays) {
         checkNotNull(prefix);
         List<byte[]> elements = new ArrayList<byte[]>();
