@@ -24,6 +24,10 @@
 #include "my_global.h"
 #include "thr_lock.h"           /* THR_LOCK, THR_LOCK_DATA */
 #include "my_base.h"
+
+/**
+ * @brief Holds MySQL information shared across tables.
+ */
 typedef struct st_honeycomb_share {
   char *table_name;
   uint table_name_length;

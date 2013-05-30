@@ -21,6 +21,9 @@
 #ifndef LOGGING_H
 #define LOGGING_H
 
+/**
+ * @brief Holds logging functionality together
+ */
 namespace Logging
 {
   /**

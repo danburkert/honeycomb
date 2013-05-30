@@ -22,12 +22,36 @@
 
 #define SERIALIZABLE_H
 
+/**
+ * @brief Interface to mark a class able to serialize and deserialize.
+ */
 class Serializable
 {
   public:
+
+    /**
+     * @brief Virtual destructor
+     */
     virtual ~Serializable(){}
+
+    /**
+     * @brief Serialize this class into a buffer
+     *
+     * @param buf Buffer
+     * @param len Length of serialized class
+     *
+     * @return Success if 0 else error code
+     */
     virtual int serialize(const char** buf, size_t* len) = 0;
 
+    /**
+     * @brief Deserialize this class from a buffer
+     *
+     * @param buf Buffer
+     * @param len Length of buffer
+     *
+     * @return Success if 0 else error code
+     */
     virtual int deserialize(const char* buf, int64_t len) = 0;
 };
 

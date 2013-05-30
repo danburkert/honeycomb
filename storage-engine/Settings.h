@@ -26,6 +26,9 @@ typedef JavaVMOption JavaVMOption;
 
 class SettingsPrivate;
 
+/**
+ * @brief Holds settings read from a configuration file.
+ */
 class Settings
 {
   private:

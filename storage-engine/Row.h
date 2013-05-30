@@ -24,6 +24,9 @@
 #include <avro.h>
 #include "Serializable.h"
 
+/**
+ * @brief A serializable container to hold a MySQL row 
+ */
 class Row : public Serializable
 {
   private:

@@ -33,6 +33,10 @@
   if (var != NULL)\
     free(var), var = NULL;\
 }while(0);
+
+/**
+ * @brief Holds the structure of Settings
+ */
 class SettingsPrivate
 {
   public:

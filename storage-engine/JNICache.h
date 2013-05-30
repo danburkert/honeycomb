@@ -37,14 +37,18 @@ class _jclass;
 typedef _jclass *jclass;
 
 
-/*  
- * @brief JNICache holds jmethodID's and jclass global refs to be used in later JNI
+/**
+ * @brief Holds jmethodID's and jclass global refs to be used in later JNI
  * invocations by Honeycomb.  Upon creation, JNICache asks the JVM for
  * the jmethodID's and jclass refs it needs, and caches them.
  */
 class JNICache
 {
   public:
+
+    /**
+     * @brief Holds jmethodID's and the jclass for HandlerProxy
+     */
     struct HandlerProxy
     {
       jclass clazz;
@@ -73,22 +77,34 @@ class JNICache
                 set_auto_increment,
                 increment_auto_increment;
     };
+    /**
+     * @brief Holds jmethodID's and the jclass for Throwable
+     */
     struct Throwable
     {
       jclass clazz;
       jmethodID print_stack_trace;
     };
+    /**
+     * @brief Holds jmethodID's and the jclass for PrintWriter
+     */
     struct PrintWriter
     {
       jclass clazz;
       jmethodID init;
     };
+    /**
+     * @brief Holds jmethodID's and the jclass for StringWriter
+     */
     struct StringWriter
     {
       jclass clazz;
       jmethodID init,
                 to_string;
     };
+    /**
+     * @brief Holds jmethodID's and the jclass for HandlerProxyFactory
+     */
     struct HandlerProxyFactory
     {
       jclass clazz;

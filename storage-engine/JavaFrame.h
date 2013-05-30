@@ -37,7 +37,18 @@ class JavaFrame
   private:
     JNIEnv* env;
   public:
+
+    /**
+     * @brief Create a new JNI frame with capacity. 
+     *
+     * @param env Java environment
+     * @param capacity JNI frame capacity
+     */
     JavaFrame(JNIEnv* env, int capacity = 10);
+
+    /**
+     * @brief Pop the frame and remove all local JNI references created in the frame.
+     */
     ~JavaFrame();
 };
 
