@@ -15,21 +15,22 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- * 
+ *
  * Copyright 2013 Altamira Corporation.
  */
 
 
 package com.nearinfinity.honeycomb.util;
 
+import java.util.List;
+
+import org.junit.Test;
+
 import com.google.common.collect.ImmutableList;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
-import org.junit.Test;
-
-import java.util.List;
 
 public class VerifyTest {
 
@@ -70,6 +71,14 @@ public class VerifyTest {
     @Test(expected = NullPointerException.class)
     public void testIsValidTableSchemaNullSchema() {
         Verify.isValidTableSchema(null);
+    }
+
+    @Test
+    public void testIsValidTableSchemaValidSchema() {
+        final List<ColumnSchema> columns = ImmutableList.<ColumnSchema>of(
+                ColumnSchema.builder(COLUMN_B, ColumnType.LONG).setIsAutoIncrement(true).build());
+
+        Verify.isValidTableSchema(new TableSchema(columns, ImmutableList.<IndexSchema>of()));
     }
 
     @Test(expected = NullPointerException.class)
