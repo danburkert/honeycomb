@@ -142,8 +142,8 @@ public class ConfigurationParser {
     }
 
     /**
-     * Parse the honeycomb configuration and return the XML document.
-     * @param configSupplier File supplier containing honeycomb configuration
+     * Parses the application configuration and returns the XML document.
+     * @param configSupplier File supplier containing application configuration
      * @return XML Document
      */
     private static Document parseDocument(final InputSupplier<? extends InputStream> configSupplier) {
@@ -169,7 +169,7 @@ public class ConfigurationParser {
     }
 
     /**
-     * Namespaces the given option name by "honeycomb" and the adapter type.
+     * Namespaces the given option name by {@value Constants#HONEYCOMB_NAMESPACE} and the adapter type.
      * @param adapterName
      * @param optionName
      * @return
