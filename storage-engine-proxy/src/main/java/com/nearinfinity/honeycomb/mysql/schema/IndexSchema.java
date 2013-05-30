@@ -167,8 +167,8 @@ public final class IndexSchema {
                 .add("name", indexName);
 
         if( avroIndexSchema != null ) {
-            helper.add("columns", avroIndexSchema.getColumns());
-            helper.add("isUnique", avroIndexSchema.getIsUnique());
+            helper.add("columns", avroIndexSchema.getColumns())
+                  .add("isUnique", avroIndexSchema.getIsUnique());
         }
 
         return helper.toString();

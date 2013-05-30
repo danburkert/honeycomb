@@ -264,9 +264,9 @@ public final class TableSchema {
         final ToStringHelper helper = Objects.toStringHelper(this.getClass());
 
         if( avroTableSchema != null ) {
-            helper.add("Version", avroTableSchema.getVersion());
-            helper.add("Columns", avroTableSchema.getColumns());
-            helper.add("Indices", avroTableSchema.getIndices());
+            helper.add("Version", avroTableSchema.getVersion())
+                  .add("Columns", avroTableSchema.getColumns())
+                  .add("Indices", avroTableSchema.getIndices());
         }
 
         return helper.toString();
