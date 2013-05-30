@@ -32,6 +32,7 @@ import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
 
 import com.google.common.base.Objects;
+import com.google.common.base.Objects.ToStringHelper;
 import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.gen.AvroColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
@@ -42,7 +43,7 @@ import com.nearinfinity.honeycomb.util.Verify;
  * Internal application type used to wrap the serialized {@link AvroColumnSchema} type
  */
 @Immutable
-public class ColumnSchema {
+public final class ColumnSchema {
     private static final DatumWriter<AvroColumnSchema> writer =
             new SpecificDatumWriter<AvroColumnSchema>(AvroColumnSchema.class);
     private static final DatumReader<AvroColumnSchema> reader =
@@ -194,15 +195,19 @@ public class ColumnSchema {
 
     @Override
     public String toString() {
-        return Objects.toStringHelper(this.getClass())
-                .add("name", columnName)
-                .add("type", avroColumnSchema.getType())
-                .add("isNullable", avroColumnSchema.getIsNullable())
-                .add("isAutoIncrement", avroColumnSchema.getIsAutoIncrement())
-                .add("maxLength", avroColumnSchema.getMaxLength())
-                .add("precision", avroColumnSchema.getPrecision())
-                .add("scale", avroColumnSchema.getScale())
-                .toString();
+        final ToStringHelper helper = Objects.toStringHelper(this.getClass())
+                .add("name", columnName);
+
+        if( avroColumnSchema != null ) {
+            helper.add("type", avroColumnSchema.getType());
+            helper.add("isNullable", avroColumnSchema.getIsNullable());
+            helper.add("isAutoIncrement", avroColumnSchema.getIsAutoIncrement());
+            helper.add("maxLength", avroColumnSchema.getMaxLength());
+            helper.add("precision", avroColumnSchema.getPrecision());
+            helper.add("scale", avroColumnSchema.getScale());
+        }
+
+        return helper.toString();
     }
 
     /**

@@ -16,14 +16,14 @@
     <name>Honeycomb Storage Engine Proxy</name>
     <description>Proxy component used to interact between storage engine plugin and backend implementation(s)</description>
     <url>${repository.url}</url>
-    
+
     <scm>
         <connection>${project.parent.scm.connection}</connection>
         <developerConnection>${project.parent.scm.developerConnection}</developerConnection>
         <url>${project.parent.scm.url}</url>
         <tag>${project.parent.scm.tag}</tag>
     </scm>
-    
+
     <licenses>
         <license>
             <name>Apache License, Version 2.0</name>
@@ -107,7 +107,7 @@
                         <excludes>
                             <exclude>com/nearinfinity/honeycomb/mysql/gen/**/*.class</exclude>
 
-                            <!-- Excluded due to Java 6 bug: http://bugs.sun.com/view_bug.do?bug_id=6889255
+                            <!-- Excluded due to Java 6 bug: http://bugs.sun.com/view_bug.do?bug_id=6889255 
                                 The usage of the @Named annotation in the StoreFactory constructor is at fault -->
                             <exclude>com/nearinfinity/honeycomb/mysql/StoreFactory.class</exclude>
                             <exclude>com/nearinfinity/honeycomb/mysql/StoreFactoryTest.class</exclude>
@@ -199,6 +199,12 @@
         <dependency>
             <groupId>org.powermock</groupId>
             <artifactId>powermock-api-mockito</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>nl.jqno.equalsverifier</groupId>
+            <artifactId>equalsverifier</artifactId>
+            <version>1.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

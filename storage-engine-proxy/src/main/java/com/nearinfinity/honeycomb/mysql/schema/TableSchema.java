@@ -35,6 +35,7 @@ import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
 
 import com.google.common.base.Objects;
+import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.nearinfinity.honeycomb.mysql.Util;
@@ -49,7 +50,7 @@ import com.nearinfinity.honeycomb.util.Verify;
  * Stores the column and index metadata information defined on a table.
  * Internal application type used to wrap the serialized {@link AvroTableSchema} type
  */
-public class TableSchema {
+public final class TableSchema {
     private static final DatumWriter<AvroTableSchema> writer =
             new SpecificDatumWriter<AvroTableSchema>(AvroTableSchema.class);
     private static final DatumReader<AvroTableSchema> reader =
@@ -260,10 +261,14 @@ public class TableSchema {
 
     @Override
     public String toString() {
-        return Objects.toStringHelper(this.getClass())
-                .add("Version", avroTableSchema.getVersion())
-                .add("Columns", avroTableSchema.getColumns())
-                .add("Indices", avroTableSchema.getIndices())
-                .toString();
+        final ToStringHelper helper = Objects.toStringHelper(this.getClass());
+
+        if( avroTableSchema != null ) {
+            helper.add("Version", avroTableSchema.getVersion());
+            helper.add("Columns", avroTableSchema.getColumns());
+            helper.add("Indices", avroTableSchema.getIndices());
+        }
+
+        return helper.toString();
     }
 }

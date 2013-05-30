@@ -34,6 +34,7 @@ import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
 
 import com.google.common.base.Objects;
+import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.collect.ImmutableList;
 import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.gen.AvroIndexSchema;
@@ -44,7 +45,7 @@ import com.nearinfinity.honeycomb.util.Verify;
  * Internal application type used to wrap the serialized {@link AvroIndexSchema} type
  */
 @Immutable
-public class IndexSchema {
+public final class IndexSchema {
     private static final DatumWriter<AvroIndexSchema> writer =
             new SpecificDatumWriter<AvroIndexSchema>(AvroIndexSchema.class);
     private static final DatumReader<AvroIndexSchema> reader =
@@ -162,10 +163,14 @@ public class IndexSchema {
 
     @Override
     public String toString() {
-        return Objects.toStringHelper(this.getClass())
-                .add("name", indexName)
-                .add("columns", avroIndexSchema.getColumns())
-                .add("isUnique", avroIndexSchema.getIsUnique())
-                .toString();
+        final ToStringHelper helper = Objects.toStringHelper(this.getClass())
+                .add("name", indexName);
+
+        if( avroIndexSchema != null ) {
+            helper.add("columns", avroIndexSchema.getColumns());
+            helper.add("isUnique", avroIndexSchema.getIsUnique());
+        }
+
+        return helper.toString();
     }
 }
