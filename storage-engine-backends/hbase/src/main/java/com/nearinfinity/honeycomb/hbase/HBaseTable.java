@@ -23,7 +23,6 @@
 package com.nearinfinity.honeycomb.hbase;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.name.Named;
@@ -42,11 +41,15 @@ import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import com.nearinfinity.honeycomb.util.Verify;
 import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.client.coprocessor.Batch;
+import org.apache.hadoop.hbase.coprocessor.example.BulkDeleteProtocol;
+import org.apache.hadoop.hbase.coprocessor.example.BulkDeleteResponse;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 import org.apache.log4j.Logger;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
@@ -116,7 +119,14 @@ public class HBaseTable implements Table {
     public void deleteTableIndex(final IndexSchema indexSchema) {
         checkNotNull(indexSchema, "The index schema is invalid");
 
-        batchDeleteData(tableScan(), ImmutableList.of(indexSchema), false);
+        long indexId = store.getIndexId(tableId, indexSchema.getIndexName());
+
+        deleteRowsInRange(
+                IndexRowKeyBuilder.newBuilder(tableId, indexId).withSortOrder(SortOrder.Ascending).build().encode(),
+                IndexRowKeyBuilder.newBuilder(tableId, indexId + 1).withSortOrder(SortOrder.Ascending).build().encode());
+        deleteRowsInRange(
+                IndexRowKeyBuilder.newBuilder(tableId, indexId).withSortOrder(SortOrder.Descending).build().encode(),
+                IndexRowKeyBuilder.newBuilder(tableId, indexId + 1).withSortOrder(SortOrder.Descending).build().encode());
     }
 
     @Override
@@ -306,60 +316,28 @@ public class HBaseTable implements Table {
     }
 
     /**
-     * Perform a batch delete operation over the rows obtained from the
-     * specified data scanner
-     *
-     * @param dataScanner The {@link Scanner} used to gather rows
-     * @param indices     The table index mapping to use during this operation
-     * @param deleteRow   Indicate that each row obtained from the data scanner should be deleted
+     * Delete rows in specified range.  Requires the BulkDeleteEndpoint
+     * coprocessor to be installed on each regionserver serving regions within
+     * the range.
      */
-    private void batchDeleteData(final Scanner dataScanner, final Collection<IndexSchema> indices, boolean deleteRow) {
-        long numDeletes = 0;
-        int deletesPerRow = 2 * indices.size() + (deleteRow ? 1 : 0);
-        final List<Delete> deletes = Lists.newLinkedList();
-
-        while (dataScanner.hasNext()) {
-            final Row row = Row.deserialize(dataScanner.next());
-
-            if (deleteRow) {
-                deletes.addAll(mutationFactory.delete(tableId, row));
-            } else {
-                deletes.addAll(mutationFactory.deleteIndices(tableId, row, indices));
-            }
-
-            numDeletes += deletesPerRow;
-
-            if (numDeletes > writeBufferSize) {
-                HBaseOperations.performDelete(hTable, deletes);
-                numDeletes = 0;
-            }
-        }
-
-        Util.closeQuietly(dataScanner);
-        HBaseOperations.performDelete(hTable, deletes);
-    }
-
     private void deleteRowsInRange(byte[] start, byte[] end) {
-        long numDeletes = 0;
-        Scan scan = new Scan(start, end).setFilter(
-                        new FilterList(
-                                new FirstKeyOnlyFilter(),
-                                new KeyOnlyFilter()));
-        ResultScanner scanner = HBaseOperations.getScanner(hTable, scan);
+        final Scan scan = new Scan(start, end).setFilter(
+                new FilterList(
+                        new FirstKeyOnlyFilter(),
+                        new KeyOnlyFilter()));
 
-        List<Delete> deletes = Lists.newArrayList();
-
-        for (Result result : scanner) {
-            deletes.add(new Delete(result.getRow()));
-
-            if (++numDeletes > writeBufferSize) {
-                HBaseOperations.performDelete(hTable, deletes);
-                deletes.clear();
-            }
+        try {
+            hTable.coprocessorExec(
+                    BulkDeleteProtocol.class, start, end, new Batch.Call<BulkDeleteProtocol, BulkDeleteResponse>() {
+                        @Override
+                        public BulkDeleteResponse call(BulkDeleteProtocol instance) throws IOException {
+                            return instance.delete(scan, BulkDeleteProtocol.DeleteType.ROW, Long.MAX_VALUE, (int) writeBufferSize);
+                        }
+                    });
+        } catch (Throwable throwable) {
+            throwable.printStackTrace();
+            throw new RuntimeException(throwable);
         }
-
-        HBaseOperations.performDelete(hTable, deletes);
-        deletes.clear();
     }
 
     private Scanner createScannerForRange(byte[] start, byte[] end) {
