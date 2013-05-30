@@ -110,6 +110,17 @@ class HoneycombHandler : public handler
 
   public:
     /* HoneycombHandler */
+    /**
+     * @brief Construct a new HoneycombHandler
+     *
+     * @param hton The storage engine's handlerton 
+     * @param table_share Shared table data
+     * @param mutex Table lock?
+     * @param open_tables Hash of open MySQL tables
+     * @param jvm Java VM
+     * @param cache Cache of JNI class objects
+     * @param handler_proxy Constructed HandlerProxy
+     */
     HoneycombHandler(handlerton *hton, TABLE_SHARE *table_share,
         mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm, JNICache* cache, jobject handler_proxy);
     ~HoneycombHandler();

@@ -46,14 +46,33 @@ class IndexSchema : public Serializable
      */
     int reset();
 
+    /**
+     * @brief Compare this IndexSchema to another for equality
+     *
+     * @param other IndexSchema
+     *
+     * @return Are equal indices
+     */
     bool equals(const IndexSchema& other);
 
     int serialize(const char** buf, size_t* len);
 
     int deserialize(const char* buf, int64_t len);
 
+    /**
+     * @brief Retrieve whether the index has a uniqueness constraint
+     *
+     * @return Unique index
+     */
     bool get_is_unique();
 
+    /**
+     * @brief Set the uniqueness of the index
+     *
+     * @param is_unique Is unique
+     *
+     * @return Success if 0 else error code
+     */
     int set_is_unique(bool is_unique);
 
     /**

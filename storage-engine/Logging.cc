@@ -23,7 +23,14 @@
 
 namespace Logging
 {
+  /**
+   * @brief File to log out to
+   */
   static FILE* log_file;
+
+  /**
+   * @brief Logging lock
+   */
   static pthread_mutex_t log_lock;
 
   void time_string(char* buffer)

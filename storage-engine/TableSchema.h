@@ -70,16 +70,58 @@ class TableSchema : public Serializable
 
     int deserialize(const char* buf, int64_t len);
 
+    /**
+     * @brief Add a column to the table.
+     *
+     * @param name Name of the column
+     * @param schema Schema of the column
+     *
+     * @return Success if 0 else error code
+     */
     int add_column(const char* name, ColumnSchema* schema);
 
+    /**
+     * @brief Retrieve a column in the table
+     *
+     * @param name Name of the column
+     * @param schema Container to store the column [out]
+     *
+     * @return Success if 0 else error code
+     */
     int get_column(const char* name, ColumnSchema* schema);
 
+    /**
+     * @brief Add an index to the table
+     *
+     * @param name Index name
+     * @param schema Index schema
+     *
+     * @return Success if 0 else error code
+     */
     int add_index(const char* name, IndexSchema* schema);
 
+    /**
+     * @brief Retrieve an index in the table
+     *
+     * @param name Index name 
+     * @param schema Index schema container [out]
+     *
+     * @return Success if 0 else error code
+     */
     int get_index(const char* name, IndexSchema* schema);
 
+    /**
+     * @brief Number of columns in the table
+     *
+     * @return Column count
+     */
     size_t column_count();
 
+    /**
+     * @brief Number of indices in the table
+     *
+     * @return Indice count
+     */
     size_t index_count();
 };
 #endif

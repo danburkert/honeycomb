@@ -45,12 +45,34 @@ class QueryKey : public Serializable
   public:
     enum QueryType
     {
+
+      /**
+       * @brief Search for an exact match
+       */
       EXACT_KEY,
+      /**
+       * @brief Search for everything after the key
+       */
       AFTER_KEY,
+      /**
+       * @brief Search for an exact match or after the key
+       */
       KEY_OR_NEXT,
+      /**
+       * @brief Search for an exact match or before the key
+       */
       KEY_OR_PREVIOUS,
+      /**
+       * @brief Search for everything before the key
+       */
       BEFORE_KEY,
+      /**
+       * @brief Search through the whole ascending index 
+       */
       INDEX_FIRST,
+      /**
+       * @brief Search through the whole descending index
+       */
       INDEX_LAST
     };
 

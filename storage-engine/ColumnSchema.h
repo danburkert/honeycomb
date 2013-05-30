@@ -59,14 +59,42 @@ class ColumnSchema
 
     enum ColumnType
     {
+
+      /**
+       * @brief Corresponds to MySQL VARCHAR, TEXT and CHAR data types
+       */
       STRING,
+      /**
+       * @brief Corresponds to MySQL VARBINARY, BLOB and BINARY data types
+       */
       BINARY,
+      /**
+       * @brief Corresponds to MySQL unsigned INTEGER, INT, SMALLINT, TINYINT, MEDIUMINT and BIGINT data types
+       */
       ULONG,
+      /**
+       * @brief Corresponds to MySQL signed INTEGER, INT, SMALLINT, TINYINT, MEDIUMINT, BIGINT and TIMESTAMP data types
+       */
       LONG,
+      /**
+       * @brief Corresponds to MySQL FLOAT and DOUBLE data types
+       */
       DOUBLE,
+      /**
+       * @brief Corresponds to MySQL DECIMAL and NUMERIC data type
+       */
       DECIMAL,
+      /**
+       * @brief Corresponds to MySQL TIME data type
+       */
       TIME,
+      /**
+       * @brief Corresponds to MySQL DATE data type
+       */
       DATE,
+      /**
+       * @brief Corresponds to MySQL DATETIME data type
+       */
       DATETIME
     };
 
