@@ -35,6 +35,11 @@ public class HandlerProxyFactory {
         this.storeFactory = storeFactory;
     }
 
+    /**
+     * Construct a new {@link HandlerProxy}
+     *
+     * @return {@link HandlerProxy}
+     */
     public HandlerProxy createHandlerProxy() {
         return new HandlerProxy(storeFactory);
     }

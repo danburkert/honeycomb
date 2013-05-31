@@ -22,21 +22,20 @@
 
 package com.nearinfinity.honeycomb.mysql.schema;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import net.jcip.annotations.Immutable;
-
-import org.apache.avro.io.DatumReader;
-import org.apache.avro.io.DatumWriter;
-import org.apache.avro.specific.SpecificDatumReader;
-import org.apache.avro.specific.SpecificDatumWriter;
-
 import com.google.common.base.Objects;
 import com.google.common.base.Objects.ToStringHelper;
 import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.mysql.gen.AvroColumnSchema;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.util.Verify;
+import net.jcip.annotations.Immutable;
+import org.apache.avro.io.DatumReader;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.avro.specific.SpecificDatumWriter;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Stores the column metadata details for a column in a table.
@@ -72,7 +71,7 @@ public final class ColumnSchema {
         Verify.isNotNullOrEmpty(columnName);
         checkNotNull(type);
 
-        if(type == ColumnType.DECIMAL) {
+        if (type == ColumnType.DECIMAL) {
             checkArgument(scale >= 0, "Scale may not be null or negative.");
             checkArgument(precision >= 0, "Precision may not be null or negative.");
         } else {
@@ -80,16 +79,16 @@ public final class ColumnSchema {
             checkArgument(precision == null, "Precision must be null for non-decimal column.");
         }
 
-        if(type == ColumnType.BINARY || type == ColumnType.STRING) {
+        if (type == ColumnType.BINARY || type == ColumnType.STRING) {
             checkArgument(maxLength >= 0, "maxLength may not be null or negative.");
         } else {
             checkArgument(maxLength == null, "maxLength must be null for non-variable length column");
         }
 
-        if(isAutoIncrement) {
+        if (isAutoIncrement) {
             checkArgument(type == ColumnType.LONG
-                       || type == ColumnType.DOUBLE
-                       || type == ColumnType.ULONG,
+                    || type == ColumnType.DOUBLE
+                    || type == ColumnType.ULONG,
                     "Only integer or floating-point columns may be auto-increment.");
         }
 
@@ -122,6 +121,17 @@ public final class ColumnSchema {
         checkNotNull(serializedColumnSchema);
         Verify.isNotNullOrEmpty(columnName);
         return new ColumnSchema(columnName, Util.deserializeAvroObject(serializedColumnSchema, reader));
+    }
+
+    /**
+     * Create a {@link ColumnSchema} builder with given column name and type.
+     *
+     * @param columnName
+     * @param type
+     * @return A builder object used for schema creation
+     */
+    public static Builder builder(String columnName, ColumnType type) {
+        return new Builder(columnName, type);
     }
 
     public ColumnType getType() {
@@ -198,26 +208,16 @@ public final class ColumnSchema {
         final ToStringHelper helper = Objects.toStringHelper(this.getClass())
                 .add("name", columnName);
 
-        if( avroColumnSchema != null ) {
+        if (avroColumnSchema != null) {
             helper.add("type", avroColumnSchema.getType())
-                  .add("isNullable", avroColumnSchema.getIsNullable())
-                  .add("isAutoIncrement", avroColumnSchema.getIsAutoIncrement())
-                  .add("maxLength", avroColumnSchema.getMaxLength())
-                  .add("precision", avroColumnSchema.getPrecision())
-                  .add("scale", avroColumnSchema.getScale());
+                    .add("isNullable", avroColumnSchema.getIsNullable())
+                    .add("isAutoIncrement", avroColumnSchema.getIsAutoIncrement())
+                    .add("maxLength", avroColumnSchema.getMaxLength())
+                    .add("precision", avroColumnSchema.getPrecision())
+                    .add("scale", avroColumnSchema.getScale());
         }
 
         return helper.toString();
-    }
-
-    /**
-     * Create a {@link ColumnSchema} builder with given column name and type.
-     * @param columnName
-     * @param type
-     * @return A builder object used for schema creation
-     */
-    public static Builder builder(String columnName, ColumnType type) {
-        return new Builder(columnName, type);
     }
 
     /**
@@ -225,16 +225,17 @@ public final class ColumnSchema {
      * non auto increment.
      */
     public static class Builder {
-        final String columnName;
-        final ColumnType type;
-        boolean isNullable = true;
-        boolean isAutoIncrement = false;
-        Integer maxLength = null;
-        Integer scale = null;
-        Integer precision = null;
+        private final String columnName;
+        private final ColumnType type;
+        private boolean isNullable = true;
+        private boolean isAutoIncrement = false;
+        private Integer maxLength = null;
+        private Integer scale = null;
+        private Integer precision = null;
 
         /**
          * Default constructor, equivalent to ColumnSchema.builder().
+         *
          * @param columnName
          * @param type
          */
@@ -243,31 +244,66 @@ public final class ColumnSchema {
             this.type = type;
         }
 
+        /**
+         * Set the column schema nullable
+         *
+         * @param isNullable Nullable column schema
+         * @return Builder
+         */
         public Builder setIsNullable(boolean isNullable) {
             this.isNullable = isNullable;
             return this;
         }
 
+        /**
+         * Set the column schema autoincrement
+         *
+         * @param isAutoIncrement Autoincrement column schema
+         * @return Builder
+         */
         public Builder setIsAutoIncrement(boolean isAutoIncrement) {
             this.isAutoIncrement = isAutoIncrement;
             return this;
         }
 
+        /**
+         * Set the column schema max length
+         *
+         * @param maxLength Column schema max length
+         * @return Builder
+         */
         public Builder setMaxLength(int maxLength) {
             this.maxLength = maxLength;
             return this;
         }
 
+        /**
+         * Set the column schema scale
+         *
+         * @param scale Column schema scale
+         * @return Builder
+         */
         public Builder setScale(int scale) {
             this.scale = scale;
             return this;
         }
 
+        /**
+         * Set the column schema precision
+         *
+         * @param precision Column schema precision
+         * @return Builder
+         */
         public Builder setPrecision(int precision) {
             this.precision = precision;
             return this;
         }
 
+        /**
+         * Create a {@link ColumnSchema} based on fields in the builder.
+         *
+         * @return Column Schema
+         */
         public ColumnSchema build() {
             return new ColumnSchema(columnName, type, isNullable,
                     isAutoIncrement, maxLength, scale, precision);

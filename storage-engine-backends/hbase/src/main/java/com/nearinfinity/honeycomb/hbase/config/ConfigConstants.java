@@ -35,24 +35,38 @@ public final class ConfigConstants {
     }
 
     private static final String NAMESPACE = Constants.HONEYCOMB_NAMESPACE + "." + AdapterType.HBASE.getName() + ".";
-
+    /**
+     * Property name of auto flushing writes to HBase
+     */
     public static final String AUTO_FLUSH = NAMESPACE + "flushChangesImmediately";
-
+    /**
+     * Default behavior for auto flushing
+     */
     public static final boolean DEFAULT_AUTO_FLUSH = false;
-
+    /**
+     * Property name for setting the HTable pool size
+     */
     public static final String TABLE_POOL_SIZE = NAMESPACE + "tablePoolSize";
 
     /**
      * Default number of references to keep active for a table
      */
     public static final int DEFAULT_TABLE_POOL_SIZE = 5;
-
+    /**
+     * Property name for setting the name of the HTable
+     */
     public static final String TABLE_NAME = NAMESPACE + "tableName";
-
+    /**
+     * Property name for setting the column family of the HBase HTable
+     */
     // This needs to change whenever NAMESPACE changes. Due to Guice issues with injecting named non-consts.
     public static final String COLUMN_FAMILY = "honeycomb.hbase.columnFamily";
-
+    /**
+     * Property name for setting the HBase write buffer
+     */
     public static final String WRITE_BUFFER = "hbase.client.write.buffer";
-
+    /**
+     * Default value of the HBase write buffer
+     */
     public static final long DEFAULT_WRITE_BUFFER = 2097152;
 }

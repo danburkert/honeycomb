@@ -28,6 +28,11 @@ package com.nearinfinity.honeycomb.hbase.rowkey;
 public class ColumnsRowKey extends TableIDRowKey {
     private static final byte PREFIX = 0x01;
 
+    /**
+     * Construct a row key for a specific table ID.
+     *
+     * @param tableId Table ID
+     */
     public ColumnsRowKey(long tableId) {
         super(PREFIX, tableId);
     }
