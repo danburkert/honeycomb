@@ -22,8 +22,11 @@
 
 package com.nearinfinity.honeycomb.mysql;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.collect.*;
+import com.nearinfinity.honeycomb.exceptions.RuntimeIOException;
+import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
+import org.apache.avro.io.*;
+import org.apache.log4j.Logger;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
@@ -34,21 +37,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import org.apache.avro.io.DatumReader;
-import org.apache.avro.io.DatumWriter;
-import org.apache.avro.io.Decoder;
-import org.apache.avro.io.DecoderFactory;
-import org.apache.avro.io.Encoder;
-import org.apache.avro.io.EncoderFactory;
-import org.apache.log4j.Logger;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.MapDifference;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-import com.nearinfinity.honeycomb.exceptions.RuntimeIOException;
-import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Utility class containing helper functions.
@@ -124,6 +114,12 @@ public class Util {
         }
     }
 
+    /**
+     * Create a hex string for a byte string. The string will be formatted {@code "A2BE"}
+     *
+     * @param bytes Byte string
+     * @return Hex string
+     */
     public static String generateHexString(final byte[] bytes) {
         StringBuilder sb = new StringBuilder();
         for (byte b : bytes) {
@@ -147,6 +143,14 @@ public class Util {
         }
     }
 
+    /**
+     * Retrieve from a list of indices which ones have been changed.
+     *
+     * @param indices    Table indices
+     * @param oldRecords Old MySQL row
+     * @param newRecords New MySQL row
+     * @return List of changed indices
+     */
     public static ImmutableList<IndexSchema> getChangedIndices(Collection<IndexSchema> indices,
                                                                Map<String, ByteBuffer> oldRecords,
                                                                Map<String, ByteBuffer> newRecords) {
