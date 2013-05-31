@@ -6,6 +6,6 @@
 source $HONEYCOMB_SOURCE/scripts/utilities/constants.sh
 
 test_link=$MYSQL_HOME/mysql-test/suite/honeycomb-test
-source=$STORAGE_ENGINE/mysql-test-suites
+src=$STORAGE_ENGINE/mysql-test-suites
 
-link $source $test_link
+link $src $test_link
