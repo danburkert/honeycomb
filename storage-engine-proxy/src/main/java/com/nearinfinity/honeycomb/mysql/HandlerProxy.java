@@ -35,6 +35,7 @@ import com.google.common.collect.ImmutableList;
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
+import com.nearinfinity.honeycomb.mysql.gen.AvroTableSchema;
 import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
@@ -61,7 +62,7 @@ public class HandlerProxy {
      * this is called.
      *
      * @param tableName             Name of the table
-     * @param serializedTableSchema Serialized TableSchema avro object
+     * @param serializedTableSchema Serialized {@link AvroTableSchema} avro object
      * @param autoInc               Initial auto increment value
      */
     public void createTable(String tableName,
