@@ -53,8 +53,8 @@ function take_dir
 
 function link
 {
-  target=$1
-  link=$2
+  src=$1
+  dest=$2
   admin=false
   if [ $# -eq 3 ]
   then
@@ -62,11 +62,11 @@ function link
   fi
 
 
-  echo "Creating a symbolic link from $target to $link "
+  echo "Creating a symbolic link from $src to $dest "
   if $admin
   then
-      ln -fFs $target $link
+      ln -hfFs $src $dest
   else
-      sudo ln -Ffs $target $link
+      sudo ln -hfFs $src $dest
   fi
 }
