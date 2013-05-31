@@ -80,9 +80,9 @@ select * from foo;
 
 ## Documentation
 
-* [building from source](https://github.com/nearinfinity/honeycomb/wiki/Building-From-Source)
-* [user documentation](https://github.com/nearinfinity/honeycomb/wiki)
-* [developer documentation](https://github.com/nearinfinity/honeycomb/wiki/Developer-Resources)
+* [Building from source](https://github.com/nearinfinity/honeycomb/wiki/Building-From-Source)
+* [User documentation](https://github.com/nearinfinity/honeycomb/wiki)
+* [Developer documentation](https://github.com/nearinfinity/honeycomb/wiki/Developer-Resources)
 
 ## License
 
