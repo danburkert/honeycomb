@@ -1,19 +1,15 @@
 package com.nearinfinity.honeycomb.mysql.schema;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import java.util.List;
-
-import nl.jqno.equalsverifier.EqualsVerifier;
-
-import org.junit.Before;
-import org.junit.Test;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
+import nl.jqno.equalsverifier.EqualsVerifier;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.List;
+
+import static org.junit.Assert.*;
 
 public class TableSchemaTest {
 
@@ -103,7 +99,7 @@ public class TableSchemaTest {
 
     @Test
     public void testRemoveIndexValidIndexName() {
-        final TableSchema schema = new TableSchema(Lists.newArrayList(COLUMNS), Lists.newArrayList(INDICES));
+        final TableSchema schema = new TableSchema(COLUMNS, INDICES);
         assertEquals(INDICES.size(), schema.getIndices().size());
 
         // Remove all of the indexes from the schema
