@@ -22,22 +22,6 @@
 
 package com.nearinfinity.honeycomb.hbase;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.util.Bytes;
-
 import com.google.common.base.Charsets;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
@@ -48,24 +32,28 @@ import com.google.inject.Provider;
 import com.google.inject.name.Named;
 import com.nearinfinity.honeycomb.exceptions.TableNotFoundException;
 import com.nearinfinity.honeycomb.hbase.config.ConfigConstants;
-import com.nearinfinity.honeycomb.hbase.rowkey.AutoIncRowKey;
-import com.nearinfinity.honeycomb.hbase.rowkey.ColumnsRowKey;
-import com.nearinfinity.honeycomb.hbase.rowkey.IndicesRowKey;
-import com.nearinfinity.honeycomb.hbase.rowkey.RowsRowKey;
-import com.nearinfinity.honeycomb.hbase.rowkey.SchemaRowKey;
-import com.nearinfinity.honeycomb.hbase.rowkey.TablesRowKey;
+import com.nearinfinity.honeycomb.hbase.rowkey.*;
 import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import com.nearinfinity.honeycomb.util.Verify;
+import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.util.Bytes;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static com.google.common.base.Preconditions.*;
 
 /**
  * Manages writing and reading table & column schemas, table & column ids, and
  * row & autoincrement counters to and from HBase.
  */
 public class HBaseMetadata {
-    private byte[] columnFamily;
     private final Provider<HTableInterface> provider;
+    private byte[] columnFamily;
 
     @Inject
     public HBaseMetadata(final Provider<HTableInterface> provider) {
@@ -300,17 +288,36 @@ public class HBaseMetadata {
         performMutations(deletes, puts);
     }
 
+    /**
+     * Retrieve the current auto increment value for a table by its ID.
+     *
+     * @param tableId Table ID
+     * @return Auto increment value
+     */
     public long getAutoInc(long tableId) {
         Verify.isValidId(tableId);
         return getCounter(new AutoIncRowKey().encode(), serializeId(tableId));
     }
 
+    /**
+     * Increment a table's autoincrement value by an amount
+     *
+     * @param tableId Table ID
+     * @param amount  Increment amount
+     * @return New auto increment value
+     */
     public long incrementAutoInc(long tableId, long amount) {
         Verify.isValidId(tableId);
         return incrementCounter(new AutoIncRowKey().encode(),
                 serializeId(tableId), amount);
     }
 
+    /**
+     * Set a table's autoincrement value to a specified value
+     *
+     * @param tableId Table ID
+     * @param value   New autoincrement value
+     */
     public void setAutoInc(long tableId, long value) {
         Verify.isValidId(tableId);
         Put put = new Put(new AutoIncRowKey().encode());
@@ -323,16 +330,34 @@ public class HBaseMetadata {
         }
     }
 
+    /**
+     * Retrieve number of rows in a table
+     *
+     * @param tableId Table ID
+     * @return Rows in the table
+     */
     public long getRowCount(long tableId) {
         Verify.isValidId(tableId);
         return getCounter(new RowsRowKey().encode(), serializeId(tableId));
     }
 
+    /**
+     * Increment a table's row count by an amount
+     *
+     * @param tableId Table ID
+     * @param amount  Amount to increment
+     * @return New row count
+     */
     public long incrementRowCount(long tableId, long amount) {
         Verify.isValidId(tableId);
         return incrementCounter(new RowsRowKey().encode(), serializeId(tableId), amount);
     }
 
+    /**
+     * Reset a table's row count back to zero
+     *
+     * @param tableId Table ID
+     */
     public void truncateRowCount(long tableId) {
         Verify.isValidId(tableId);
         performMutations(Lists.<Delete>newArrayList(deleteRowsCounter(tableId)),

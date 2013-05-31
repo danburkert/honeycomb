@@ -39,6 +39,12 @@ import java.util.List;
 public class HBaseOperations {
     private static final Logger logger = Logger.getLogger(HBaseOperations.class);
 
+    /**
+     * Execute put on a list of {@link Put}
+     *
+     * @param hTable HTable
+     * @param puts   List of {@link Put}
+     */
     public static void performPut(HTableInterface hTable, List<Put> puts) {
         try {
             hTable.put(puts);
@@ -47,6 +53,12 @@ public class HBaseOperations {
         }
     }
 
+    /**
+     * Execute delete on a list of {@link Delete}
+     *
+     * @param hTable  HTable
+     * @param deletes List of {@link Delete}
+     */
     public static void performDelete(HTableInterface hTable, List<Delete> deletes) {
         try {
             hTable.delete(deletes);
@@ -55,6 +67,11 @@ public class HBaseOperations {
         }
     }
 
+    /**
+     * Execute flush on an HTable.
+     *
+     * @param hTable HTable
+     */
     public static void performFlush(HTableInterface hTable) {
         try {
             hTable.flushCommits();
@@ -63,6 +80,11 @@ public class HBaseOperations {
         }
     }
 
+    /**
+     * Close an HTable
+     *
+     * @param hTable HTable
+     */
     public static void closeTable(HTableInterface hTable) {
         try {
             hTable.close();
@@ -71,6 +93,13 @@ public class HBaseOperations {
         }
     }
 
+    /**
+     * Execute get on a list of {@link Get}
+     *
+     * @param hTable HTable
+     * @param get    {@link Get}
+     * @return {@link Result} from the get call
+     */
     public static Result performGet(HTableInterface hTable, Get get) {
         try {
             return hTable.get(get);
@@ -80,6 +109,16 @@ public class HBaseOperations {
         }
     }
 
+    /**
+     * Execute incrementColumnValue
+     *
+     * @param row          The row that contains the cell to increment.
+     * @param columnFamily The column family of the cell to increment.
+     * @param identifier   The column qualifier of the cell to increment.
+     * @param amount       The amount to increment the cell with (or decrement, if the
+     *                     amount is negative).
+     * @return The new value, post increment.
+     */
     public static long performIncrementColumnValue(HTableInterface hTable, byte[] row, byte[] columnFamily, byte[] identifier, long amount) {
         try {
             return hTable.incrementColumnValue(row, columnFamily, identifier, amount);
@@ -93,6 +132,13 @@ public class HBaseOperations {
         }
     }
 
+    /**
+     * Execute getScanner on a {@link HTableInterface}
+     *
+     * @param hTable HTable
+     * @param scan   {@link Scan}
+     * @return {@link ResultScanner}
+     */
     public static ResultScanner getScanner(HTableInterface hTable, Scan scan) {
         try {
             return hTable.getScanner(scan);
