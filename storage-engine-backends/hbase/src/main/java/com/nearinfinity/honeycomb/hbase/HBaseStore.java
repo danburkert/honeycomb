@@ -22,7 +22,6 @@
 
 package com.nearinfinity.honeycomb.hbase;
 
-import com.google.common.collect.BiMap;
 import com.google.inject.Inject;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
@@ -39,13 +38,19 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * An HBase backed {@link Store}
  */
 public class HBaseStore implements Store {
+    private final static ReadWriteLock rowsLock = new ReentrantReadWriteLock();
+    private final static ReadWriteLock autoIncrementLock = new ReentrantReadWriteLock();
     private final HBaseMetadata metadata;
     private final HBaseTableFactory tableFactory;
     private final MetadataCache cache;
 
-    private final static ReadWriteLock rowsLock = new ReentrantReadWriteLock();
-    private final static ReadWriteLock autoIncrementLock = new ReentrantReadWriteLock();
-
+    /**
+     * Construct a HBase store with metadata, a table factory and metadata cache.
+     *
+     * @param metadata     Table metadata backed by HBase
+     * @param tableFactory Table factory
+     * @param cache        Metadata cache
+     */
     @Inject
     public HBaseStore(HBaseMetadata metadata, HBaseTableFactory tableFactory, MetadataCache cache) {
         this.metadata = metadata;
@@ -53,18 +58,33 @@ public class HBaseStore implements Store {
         this.cache = cache;
     }
 
+    /**
+     * Retrieve a table's ID by its table name.
+     *
+     * @param tableName Table name
+     * @return Table ID
+     */
     public long getTableId(String tableName) {
         return metadata.getTableId(tableName);
     }
 
-    public BiMap<String, Long> getColumns(long tableId) {
-        return cache.columnsCacheGet(tableId);
-    }
-
+    /**
+     * Retrieve the index ID for a specific table by its name.
+     *
+     * @param tableId   Table ID
+     * @param indexName Index name
+     * @return Index ID
+     */
     public long getIndexId(long tableId, String indexName) {
         return cache.indicesCacheGet(tableId).get(indexName);
     }
 
+    /**
+     * Retrieve the schema for a table by its ID.
+     *
+     * @param tableId Table ID
+     * @return Table schema
+     */
     public TableSchema getSchema(Long tableId) {
         return cache.schemaCacheGet(tableId);
     }
