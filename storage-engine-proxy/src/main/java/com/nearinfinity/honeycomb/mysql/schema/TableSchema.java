@@ -22,18 +22,6 @@
 
 package com.nearinfinity.honeycomb.mysql.schema;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-
-import org.apache.avro.io.DatumReader;
-import org.apache.avro.io.DatumWriter;
-import org.apache.avro.specific.SpecificDatumReader;
-import org.apache.avro.specific.SpecificDatumWriter;
-
 import com.google.common.base.Objects;
 import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.collect.Lists;
@@ -45,6 +33,18 @@ import com.nearinfinity.honeycomb.mysql.gen.AvroTableSchema;
 import com.nearinfinity.honeycomb.mysql.schema.versioning.SchemaVersionUtils;
 import com.nearinfinity.honeycomb.mysql.schema.versioning.TableSchemaInfo;
 import com.nearinfinity.honeycomb.util.Verify;
+import org.apache.avro.io.DatumReader;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.avro.specific.SpecificDatumWriter;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.Map;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Stores the column and index metadata information defined on a table.
@@ -88,8 +88,8 @@ public final class TableSchema {
                 .setIndices(indexSchemaMap)
                 .build();
 
-        this.columns = columns;
-        this.indices = indices;
+        this.columns = new LinkedList<ColumnSchema>(columns);
+        this.indices = new LinkedList<IndexSchema>(indices);
     }
 
     private TableSchema(AvroTableSchema avroTableSchema) {
