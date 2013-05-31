@@ -22,6 +22,15 @@
 
 package com.nearinfinity.honeycomb.mysql;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static java.lang.String.format;
+
+import java.nio.ByteBuffer;
+
+import org.apache.log4j.Logger;
+
 import com.google.common.collect.ImmutableList;
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Store;
@@ -30,12 +39,6 @@ import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import com.nearinfinity.honeycomb.util.Verify;
-import org.apache.log4j.Logger;
-
-import java.nio.ByteBuffer;
-
-import static com.google.common.base.Preconditions.*;
-import static java.lang.String.format;
 
 /**
  * Represents the proxy interaction between the storage engine and storage
@@ -64,10 +67,9 @@ public class HandlerProxy {
     public void createTable(String tableName,
                             byte[] serializedTableSchema, long autoInc) {
         Verify.isNotNullOrEmpty(tableName);
-        checkNotNull(serializedTableSchema);
+        checkNotNull(serializedTableSchema, "Schema cannot be null");
 
         store = storeFactory.createStore(tableName);
-        checkNotNull(serializedTableSchema, "Schema cannot be null");
         TableSchema tableSchema = TableSchema.deserialize(serializedTableSchema);
         Verify.isValidTableSchema(tableSchema);
         store.createTable(tableName, tableSchema);
