@@ -199,12 +199,12 @@ public final class ColumnSchema {
                 .add("name", columnName);
 
         if( avroColumnSchema != null ) {
-            helper.add("type", avroColumnSchema.getType());
-            helper.add("isNullable", avroColumnSchema.getIsNullable());
-            helper.add("isAutoIncrement", avroColumnSchema.getIsAutoIncrement());
-            helper.add("maxLength", avroColumnSchema.getMaxLength());
-            helper.add("precision", avroColumnSchema.getPrecision());
-            helper.add("scale", avroColumnSchema.getScale());
+            helper.add("type", avroColumnSchema.getType())
+                  .add("isNullable", avroColumnSchema.getIsNullable())
+                  .add("isAutoIncrement", avroColumnSchema.getIsAutoIncrement())
+                  .add("maxLength", avroColumnSchema.getMaxLength())
+                  .add("precision", avroColumnSchema.getPrecision())
+                  .add("scale", avroColumnSchema.getScale());
         }
 
         return helper.toString();
