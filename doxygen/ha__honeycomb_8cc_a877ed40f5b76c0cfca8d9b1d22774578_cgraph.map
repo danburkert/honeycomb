@@ -1,0 +1,26 @@
+<map id="try_setup" name="try_setup">
+<area shape="rect" id="node3" href="$namespaceLogging.html#a228845a112e820ba4506372bc6e69cd3" title="Open the logger to the specified path. If the path cannot be open then fallback to stderr..." alt="" coords="131,315,290,343"/>
+<area shape="rect" id="node5" href="$namespaceLogging.html#a8dd2be9f2f4a491d11fb1a832ef03773" title="Print to the log file a info message. " alt="" coords="602,262,700,290"/>
+<area shape="rect" id="node12" href="$ha__honeycomb_8cc.html#a303c81700cf927903394e1be3fd53428" title="find_config_file" alt="" coords="156,134,266,162"/>
+<area shape="rect" id="node22" href="$classSettings.html#aceeeecc60ebe8e3a42696947fb9216ed" title="Retrieves the error message from reading. Returns NULL if there was no error. " alt="" coords="339,211,525,239"/>
+<area shape="rect" id="node24" href="$classSettings.html#a1765946269913ccede8ec4207b76c9cb" title="Describes whether there was an error while trying to read the options. " alt="" coords="144,367,278,395"/>
+<area shape="rect" id="node27" href="$namespaceLogging.html#a9434b59d4291a94a376c2c9347750cbb" title="Print to the log file a fatal message. " alt="" coords="779,626,880,654"/>
+<area shape="rect" id="node30" href="$JNISetup_8cc.html#a308020ae7008acc85da9e8209f6e67e9" title="Try to create and initialize a new JVM based on the settings passed in. The settings are passed into ..." alt="" coords="151,470,270,498"/>
+<area shape="rect" id="node61" href="$classJNICache.html#a9ccba5f86db2aa01051ec70a6bd053e7" title="JNICache::has_error" alt="" coords="138,779,283,807"/>
+<area shape="rect" id="node7" href="$namespaceLogging.html#a77ecd8cc49be70583da64c29abdd99d0" title="Logging::vlog_print" alt="" coords="932,314,1066,342"/>
+<area shape="rect" id="node9" href="$namespaceLogging.html#a5e06f1046792d751337c016686843e21" title="Logging::time_string" alt="" coords="1115,314,1256,342"/>
+<area shape="rect" id="node15" href="$Util_8cc.html#aaf303947e4249450ac5261035f8d169f" title="Format a path + file name such that it is file accessable. " alt="" coords="344,57,520,85"/>
+<area shape="rect" id="node17" href="$classSettings.html#acc7206e3a2614586b0fbd838f25e85f9" title="Try to load settings from a file and schema. " alt="" coords="370,5,494,33"/>
+<area shape="rect" id="node19" href="$namespaceLogging.html#a4c5a8043920d6985bf45732e34a4390e" title="Print to the log file a warning message. " alt="" coords="777,159,882,187"/>
+<area shape="rect" id="node33" href="$classSettings.html#ac448f32d2e93e7ac9e292c6dbbc3b1be" title="Retrieve the JNI options found in the file. " alt="" coords="359,675,505,703"/>
+<area shape="rect" id="node35" href="$classSettings.html#afeaea3e834e838198e37c95ba7c1d445" title="Retrieve the number of options found in the file. " alt="" coords="346,418,518,446"/>
+<area shape="rect" id="node37" href="$JNISetup_8cc.html#a627d074406ce4a389123466cbc1f072a" title="log_java_classpath" alt="" coords="365,366,499,394"/>
+<area shape="rect" id="node40" href="$JNISetup_8cc.html#a34677ee71a5d0137fc9b1db6bdbeaf01" title="try_bootstrap" alt="" coords="382,522,482,550"/>
+<area shape="rect" id="node58" href="$JNISetup_8cc.html#a5b717da161c7b6b181d19f97524b1fde" title="Detach thread from JVM. Will not detach unless the number of calls to detach is the same as the numbe..." alt="" coords="597,314,704,342"/>
+<area shape="rect" id="node43" href="$JNISetup_8cc.html#ab1e6f192d8ecbf2df920d0f38aa6aace" title="Attach current thread to the JVM. Assign current environment to env. Keeps track of how often the cur..." alt="" coords="599,574,702,602"/>
+<area shape="rect" id="node46" href="$Java_8cc.html#a743dee1349f51734522db1c12ecf3dd0" title="Convert a C string into a Java string. " alt="" coords="578,418,723,446"/>
+<area shape="rect" id="node48" href="$classSettings.html#a0b8488e33807af73a924679860e5b029" title="Retrieve the xml file name. " alt="" coords="574,470,727,498"/>
+<area shape="rect" id="node50" href="$classSettings.html#ab32fc5feed80a468ac0791355b4845bf" title="Retrieve the xml schema file name. " alt="" coords="576,522,725,550"/>
+<area shape="rect" id="node53" href="$Java_8cc.html#ade1c16ce016fd04450172385ead241b8" title="Prints a Java exception out to logs and stderr. " alt="" coords="579,366,722,394"/>
+<area shape="rect" id="node55" href="$namespaceLogging.html#a3c0ff41a0eba242b169e26cee61344dc" title="Print to the log file a error message. " alt="" coords="777,353,882,381"/>
+</map>

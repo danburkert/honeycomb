@@ -1,0 +1,10 @@
+<map id="Logging::info" name="Logging::info">
+<area shape="rect" id="node3" href="$ha__honeycomb_8cc.html#a303c81700cf927903394e1be3fd53428" title="find_config_file" alt="" coords="361,5,471,33"/>
+<area shape="rect" id="node5" href="$ha__honeycomb_8cc.html#a877ed40f5b76c0cfca8d9b1d22774578" title="try_setup" alt="" coords="545,83,621,111"/>
+<area shape="rect" id="node12" href="$JNISetup_8cc.html#a34677ee71a5d0137fc9b1db6bdbeaf01" title="try_bootstrap" alt="" coords="170,109,270,137"/>
+<area shape="rect" id="node17" href="$JNISetup_8cc.html#a627d074406ce4a389123466cbc1f072a" title="log_java_classpath" alt="" coords="153,161,287,189"/>
+<area shape="rect" id="node20" href="$namespaceLogging.html#a228845a112e820ba4506372bc6e69cd3" title="Open the logger to the specified path. If the path cannot be open then fallback to stderr..." alt="" coords="336,186,496,214"/>
+<area shape="rect" id="node7" href="$ha__honeycomb_8cc.html#a4a99ee80c2048616f9231e98ea4671b9" title="honeycomb_init_func" alt="" coords="670,83,818,111"/>
+<area shape="rect" id="node9" href="$ha__honeycomb_8cc.html#a6e2937fc5ee2bbba9a51472b10f52da0" title="mysql_declare_plugin" alt="" coords="868,83,1018,111"/>
+<area shape="rect" id="node14" href="$JNISetup_8h.html#abc6c7ecb857d5f99b942de392dedd429" title="Try to create and initialize a new JVM based on the settings passed in. The settings are passed into ..." alt="" coords="356,109,476,137"/>
+</map>

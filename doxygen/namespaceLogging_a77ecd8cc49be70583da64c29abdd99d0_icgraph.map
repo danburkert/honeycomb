@@ -1,0 +1,46 @@
+<map id="Logging::vlog_print" name="Logging::vlog_print">
+<area shape="rect" id="node3" href="$namespaceLogging.html#a8e0ede968da92194db63d81cc1035e00" title="Print to the log file a message. " alt="" coords="192,82,294,110"/>
+<area shape="rect" id="node5" href="$namespaceLogging.html#a8dd2be9f2f4a491d11fb1a832ef03773" title="Print to the log file a info message. " alt="" coords="568,135,666,163"/>
+<area shape="rect" id="node27" href="$namespaceLogging.html#a4c5a8043920d6985bf45732e34a4390e" title="Print to the log file a warning message. " alt="" coords="190,134,295,162"/>
+<area shape="rect" id="node30" href="$namespaceLogging.html#a3c0ff41a0eba242b169e26cee61344dc" title="Print to the log file a error message. " alt="" coords="190,1178,295,1206"/>
+<area shape="rect" id="node90" href="$namespaceLogging.html#a9434b59d4291a94a376c2c9347750cbb" title="Print to the log file a fatal message. " alt="" coords="365,289,467,317"/>
+<area shape="rect" id="node7" href="$ha__honeycomb_8cc.html#a303c81700cf927903394e1be3fd53428" title="find_config_file" alt="" coords="800,6,910,34"/>
+<area shape="rect" id="node9" href="$ha__honeycomb_8cc.html#a877ed40f5b76c0cfca8d9b1d22774578" title="try_setup" alt="" coords="1327,155,1403,183"/>
+<area shape="rect" id="node16" href="$JNISetup_8cc.html#a34677ee71a5d0137fc9b1db6bdbeaf01" title="try_bootstrap" alt="" coords="805,315,904,343"/>
+<area shape="rect" id="node21" href="$JNISetup_8cc.html#a627d074406ce4a389123466cbc1f072a" title="log_java_classpath" alt="" coords="787,161,922,189"/>
+<area shape="rect" id="node24" href="$namespaceLogging.html#a228845a112e820ba4506372bc6e69cd3" title="Open the logger to the specified path. If the path cannot be open then fallback to stderr..." alt="" coords="1044,122,1204,150"/>
+<area shape="rect" id="node11" href="$ha__honeycomb_8cc.html#a4a99ee80c2048616f9231e98ea4671b9" title="honeycomb_init_func" alt="" coords="1494,741,1642,769"/>
+<area shape="rect" id="node13" href="$ha__honeycomb_8cc.html#a6e2937fc5ee2bbba9a51472b10f52da0" title="mysql_declare_plugin" alt="" coords="1692,1031,1842,1059"/>
+<area shape="rect" id="node18" href="$JNISetup_8h.html#abc6c7ecb857d5f99b942de392dedd429" title="Try to create and initialize a new JVM based on the settings passed in. The settings are passed into ..." alt="" coords="1064,187,1184,215"/>
+<area shape="rect" id="node32" href="$ha__honeycomb_8cc.html#aa9f9efad94fba4881190434fcfde9dd8" title="honeycomb_done_func" alt="" coords="1285,1586,1445,1614"/>
+<area shape="rect" id="node35" href="$Java_8h.html#ac427e243cb4810c6a3cb96c6b778860f" title="Prints a Java exception out to logs and stderr. " alt="" coords="344,1153,488,1181"/>
+<area shape="rect" id="node37" href="$Java_8h.html#a69efea6fac65341daab09946fcae8f00" title="Check for an exception waiting in the JVM. " alt="" coords="554,1205,681,1233"/>
+<area shape="rect" id="node39" href="$classHoneycombHandler.html#aa6789e5e864ad59590b414af83525b2a" title="required " alt="" coords="763,643,946,671"/>
+<area shape="rect" id="node41" href="$classHoneycombHandler.html#a14b0ccbf867d0df4a7cb42ca997be52a" title="HoneycombHandler::delete\l_table" alt="" coords="763,695,946,739"/>
+<area shape="rect" id="node43" href="$classHoneycombHandler.html#a21b083516fa026604aa09c9355fc74f3" title="HoneycombHandler::rename\l_table" alt="" coords="759,763,951,807"/>
+<area shape="rect" id="node45" href="$classHoneycombHandler.html#a07b6a88221ec96154e18d05c6fd44a0a" title="HoneycombHandler::update\l_create_info" alt="" coords="1030,995,1218,1039"/>
+<area shape="rect" id="node47" href="$classHoneycombHandler.html#adfc7e9125c49dfbd247df4c8b0e9e2bf" title="HoneycombHandler::add\l_index" alt="" coords="770,883,939,927"/>
+<area shape="rect" id="node49" href="$classHoneycombHandler.html#a11fddc42fe785004ebc59c268dde5eaa" title="HoneycombHandler::prepare\l_drop_index" alt="" coords="758,951,951,995"/>
+<area shape="rect" id="node51" href="$ha__honeycomb_8cc.html#a0b0172379025fab9be85497d802d69d5" title="handler_factory" alt="" coords="798,1123,911,1151"/>
+<area shape="rect" id="node56" href="$classHoneycombHandler.html#a7b3cb7c91cdae72b6dcc16751e844e49" title="HoneycombHandler::open" alt="" coords="767,1019,943,1047"/>
+<area shape="rect" id="node58" href="$classHoneycombHandler.html#a970742de6d5929dbfe797c0cc58253ed" title="HoneycombHandler::close" alt="" coords="766,1071,944,1099"/>
+<area shape="rect" id="node60" href="$classHoneycombHandler.html#adab79180d315521d42f194e46aa0a028" title="required " alt="" coords="1011,1731,1237,1759"/>
+<area shape="rect" id="node62" href="$classHoneycombHandler.html#a0e2039e80936c37b2c3967a59b044a64" title="required " alt="" coords="771,831,939,859"/>
+<area shape="rect" id="node65" href="$classHoneycombHandler.html#a1eba56aa82ede6232a05e1d68dfaf298" title="HoneycombHandler::get\l_auto_increment" alt="" coords="772,1227,937,1271"/>
+<area shape="rect" id="node67" href="$classHoneycombHandler.html#a863c809e6d8bbea8e1985a3b8a2f68ea" title="HoneycombHandler::estimate\l_rows_upper_bound" alt="" coords="756,1295,953,1339"/>
+<area shape="rect" id="node69" href="$classHoneycombHandler.html#ad6c17f3852dfdd3b765c8006b12deca0" title="HoneycombHandler::flush" alt="" coords="767,1795,942,1823"/>
+<area shape="rect" id="node74" href="$classHoneycombHandler.html#ab982a7fb5c2a0c5c9b25038c08b76d62" title="HoneycombHandler::write_row" alt="" coords="753,1363,956,1391"/>
+<area shape="rect" id="node76" href="$classHoneycombHandler.html#a681f89cf4b3e8e4d49b4289dd8ccd99d" title="HoneycombHandler::update_row" alt="" coords="747,1415,963,1443"/>
+<area shape="rect" id="node78" href="$classHoneycombHandler.html#aea696fefb5c26a8b2f8bf92a2d9fcc3a" title="HoneycombHandler::delete_row" alt="" coords="749,1467,961,1495"/>
+<area shape="rect" id="node80" href="$classHoneycombHandler.html#ad3ae66f5566f3f3a9e13d5faaabf6cee" title="HoneycombHandler::delete\l_all_rows" alt="" coords="763,1519,946,1563"/>
+<area shape="rect" id="node82" href="$classHoneycombHandler.html#a76db421098e653c78dbb1612be80ef81" title="HoneycombHandler::truncate" alt="" coords="757,1587,952,1615"/>
+<area shape="rect" id="node84" href="$classHoneycombHandler.html#a2fbe8c0850009cc066cbaa18aa77dc73" title="required " alt="" coords="757,1639,952,1667"/>
+<area shape="rect" id="node86" href="$classHoneycombHandler.html#ad5f5d48e402b1c7f96cfefd7464dcc56" title="HoneycombHandler::rnd_init" alt="" coords="760,1691,950,1719"/>
+<area shape="rect" id="node53" href="$ha__honeycomb_8cc.html#add516a335a98a7e33681f6a2d779708e" title="honeycomb_create_handler" alt="" coords="1031,741,1217,769"/>
+<area shape="rect" id="node72" href="$classHoneycombHandler.html#a59a056f8a099409c42a289053abc0940" title="HoneycombHandler::release\l_auto_increment" alt="" coords="1029,1783,1219,1827"/>
+<area shape="rect" id="node93" href="$classJavaFrame.html#a8c5cf07ad5c45dcce855c8afb13bbb0b" title="Create a new JNI frame with capacity. " alt="" coords="536,366,698,394"/>
+<area shape="rect" id="node97" href="$JNISetup_8h.html#ab38a3050ecd4e2a0ab2cd36af47f87f5" title="Attach current thread to the JVM. Assign current environment to env. Keeps track of how often the cur..." alt="" coords="566,643,669,671"/>
+<area shape="rect" id="node105" href="$classHoneycombHandler.html#a0e4e26cdda9a4d24e8eb13f200b169cd" title="HoneycombHandler::\l~HoneycombHandler" alt="" coords="781,419,928,463"/>
+<area shape="rect" id="node111" href="$classJNICache.html#ae624d3e6f5a63331d0d0456ce12175a7" title="JNICache::JNICache" alt="" coords="782,487,928,515"/>
+<area shape="rect" id="node113" href="$classJNICache.html#ad7e4ba786b0ba90ce262f0772109f74e" title="JNICache::~JNICache" alt="" coords="778,539,931,567"/>
+</map>

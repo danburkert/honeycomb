@@ -1,0 +1,7 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" href="$classSerializable.html" title="Interface to mark a class able to serialize and deserialize. " alt="" coords="6,83,96,111"/>
+<area shape="rect" id="node3" href="$classIndexSchema.html" title="A container that stores metadata for a MySQL table&#39;s index. See TableSchema for more information..." alt="" coords="145,5,247,33"/>
+<area shape="rect" id="node5" href="$classQueryKey.html" title="A serializable container to hold the keys in a query over an index and type of query. Effectively, the QueryKey is a map of column name to predicate value. For example, in the following query: " alt="" coords="156,57,236,85"/>
+<area shape="rect" id="node7" href="$classRow.html" title="A serializable container to hold a MySQL row. " alt="" coords="172,109,220,137"/>
+<area shape="rect" id="node9" href="$classTableSchema.html" title="A serializable container that stores metadata for a MySQL table&#39;s indices and columns. For example, a MySQL table: " alt="" coords="145,161,247,189"/>
+</map>

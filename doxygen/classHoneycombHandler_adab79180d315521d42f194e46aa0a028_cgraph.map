@@ -1,0 +1,12 @@
+<map id="HoneycombHandler::external_lock" name="HoneycombHandler::external_lock">
+<area shape="rect" id="node3" href="$JNISetup_8cc.html#ab1e6f192d8ecbf2df920d0f38aa6aace" title="Attach current thread to the JVM. Assign current environment to env. Keeps track of how often the cur..." alt="" coords="317,5,419,33"/>
+<area shape="rect" id="node11" href="$classJNICache.html#a401710507fd2cf2fee61dafb2af81896" title="JNICache::handler_proxy" alt="" coords="505,57,677,85"/>
+<area shape="rect" id="node13" href="$Java_8cc.html#a69efea6fac65341daab09946fcae8f00" title="Check for an exception waiting in the JVM. " alt="" coords="527,109,654,137"/>
+<area shape="rect" id="node21" href="$classHoneycombHandler.html#ad6c17f3852dfdd3b765c8006b12deca0" title="HoneycombHandler::flush" alt="" coords="281,109,455,137"/>
+<area shape="rect" id="node25" href="$JNISetup_8cc.html#a5b717da161c7b6b181d19f97524b1fde" title="Detach thread from JVM. Will not detach unless the number of calls to detach is the same as the numbe..." alt="" coords="315,213,421,241"/>
+<area shape="rect" id="node5" href="$namespaceLogging.html#a9434b59d4291a94a376c2c9347750cbb" title="Print to the log file a fatal message. " alt="" coords="747,5,848,33"/>
+<area shape="rect" id="node7" href="$namespaceLogging.html#a77ecd8cc49be70583da64c29abdd99d0" title="Logging::vlog_print" alt="" coords="1070,31,1204,59"/>
+<area shape="rect" id="node9" href="$namespaceLogging.html#a5e06f1046792d751337c016686843e21" title="Logging::time_string" alt="" coords="1253,31,1395,59"/>
+<area shape="rect" id="node15" href="$Java_8cc.html#ade1c16ce016fd04450172385ead241b8" title="Prints a Java exception out to logs and stderr. " alt="" coords="726,57,869,85"/>
+<area shape="rect" id="node17" href="$namespaceLogging.html#a3c0ff41a0eba242b169e26cee61344dc" title="Print to the log file a error message. " alt="" coords="917,57,1022,85"/>
+</map>

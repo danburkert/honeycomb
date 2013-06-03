@@ -1,0 +1,7 @@
+<map id="deserialize_object" name="deserialize_object">
+<area shape="rect" id="node3" href="$classColumnSchema.html#a2a95b51af9297ad942835417c021d0ce" title="Deserialize a buffer into this ColumnSchema. " alt="" coords="182,5,370,33"/>
+<area shape="rect" id="node5" href="$classIndexSchema.html#af9a638240d52aa61a9facdffcf1a9bea" title="Deserialize this class from a buffer. " alt="" coords="189,57,363,85"/>
+<area shape="rect" id="node7" href="$classQueryKey.html#aad905fc2b4dd4a1183d32d004fc91e69" title="Deserialize this class from a buffer. " alt="" coords="200,109,352,137"/>
+<area shape="rect" id="node9" href="$classRow.html#ab4fb549a839bd78fb9000e14d9de89ab" title="Deserialize Row from a buffer. " alt="" coords="216,161,336,189"/>
+<area shape="rect" id="node11" href="$classTableSchema.html#aa1ca6ab0c6b36ae6b26705d79d0abd7f" title="Deserialize this class from a buffer. " alt="" coords="189,213,363,241"/>
+</map>

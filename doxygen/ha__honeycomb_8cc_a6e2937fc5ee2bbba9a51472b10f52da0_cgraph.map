@@ -1,0 +1,36 @@
+<map id="mysql_declare_plugin" name="mysql_declare_plugin">
+<area shape="rect" id="node3" href="$ha__honeycomb_8cc.html#a4a99ee80c2048616f9231e98ea4671b9" title="honeycomb_init_func" alt="" coords="212,215,359,243"/>
+<area shape="rect" id="node83" href="$ha__honeycomb_8cc.html#aa9f9efad94fba4881190434fcfde9dd8" title="honeycomb_done_func" alt="" coords="205,78,365,106"/>
+<area shape="rect" id="node5" href="$ha__honeycomb_8cc.html#a877ed40f5b76c0cfca8d9b1d22774578" title="try_setup" alt="" coords="469,627,545,655"/>
+<area shape="rect" id="node67" href="$ha__honeycomb_8cc.html#afa67641ba93c000184d5d56b06bea608" title="honeycomb_get_key" alt="" coords="434,215,579,243"/>
+<area shape="rect" id="node69" href="$ha__honeycomb_8cc.html#add516a335a98a7e33681f6a2d779708e" title="honeycomb_create_handler" alt="" coords="413,163,600,191"/>
+<area shape="rect" id="node81" href="$ha__honeycomb_8cc.html#a136bfd1201c2a6c1a1ec550fead32aa7" title="honeycomb_alter_table\l_flags" alt="" coords="427,267,587,311"/>
+<area shape="rect" id="node7" href="$namespaceLogging.html#a228845a112e820ba4506372bc6e69cd3" title="Open the logger to the specified path. If the path cannot be open then fallback to stderr..." alt="" coords="648,925,808,953"/>
+<area shape="rect" id="node9" href="$namespaceLogging.html#a8dd2be9f2f4a491d11fb1a832ef03773" title="Print to the log file a info message. " alt="" coords="1119,629,1217,657"/>
+<area shape="rect" id="node16" href="$ha__honeycomb_8cc.html#a303c81700cf927903394e1be3fd53428" title="find_config_file" alt="" coords="673,730,783,758"/>
+<area shape="rect" id="node26" href="$classSettings.html#aceeeecc60ebe8e3a42696947fb9216ed" title="Retrieves the error message from reading. Returns NULL if there was no error. " alt="" coords="857,886,1042,914"/>
+<area shape="rect" id="node28" href="$classSettings.html#a1765946269913ccede8ec4207b76c9cb" title="Describes whether there was an error while trying to read the options. " alt="" coords="661,395,795,423"/>
+<area shape="rect" id="node31" href="$namespaceLogging.html#a9434b59d4291a94a376c2c9347750cbb" title="Print to the log file a fatal message. " alt="" coords="1296,474,1397,502"/>
+<area shape="rect" id="node34" href="$JNISetup_8cc.html#a308020ae7008acc85da9e8209f6e67e9" title="Try to create and initialize a new JVM based on the settings passed in. The settings are passed into ..." alt="" coords="668,447,788,475"/>
+<area shape="rect" id="node65" href="$classJNICache.html#a9ccba5f86db2aa01051ec70a6bd053e7" title="JNICache::has_error" alt="" coords="656,782,800,810"/>
+<area shape="rect" id="node11" href="$namespaceLogging.html#a77ecd8cc49be70583da64c29abdd99d0" title="Logging::vlog_print" alt="" coords="1449,513,1583,541"/>
+<area shape="rect" id="node13" href="$namespaceLogging.html#a5e06f1046792d751337c016686843e21" title="Logging::time_string" alt="" coords="1632,513,1773,541"/>
+<area shape="rect" id="node19" href="$Util_8cc.html#aaf303947e4249450ac5261035f8d169f" title="Format a path + file name such that it is file accessable. " alt="" coords="862,730,1037,758"/>
+<area shape="rect" id="node21" href="$classSettings.html#acc7206e3a2614586b0fbd838f25e85f9" title="Try to load settings from a file and schema. " alt="" coords="887,782,1012,810"/>
+<area shape="rect" id="node23" href="$namespaceLogging.html#a4c5a8043920d6985bf45732e34a4390e" title="Print to the log file a warning message. " alt="" coords="1294,718,1399,746"/>
+<area shape="rect" id="node37" href="$classSettings.html#ac448f32d2e93e7ac9e292c6dbbc3b1be" title="Retrieve the JNI options found in the file. " alt="" coords="876,369,1022,397"/>
+<area shape="rect" id="node39" href="$classSettings.html#afeaea3e834e838198e37c95ba7c1d445" title="Retrieve the number of options found in the file. " alt="" coords="863,421,1035,449"/>
+<area shape="rect" id="node41" href="$JNISetup_8cc.html#a627d074406ce4a389123466cbc1f072a" title="log_java_classpath" alt="" coords="882,525,1017,553"/>
+<area shape="rect" id="node44" href="$JNISetup_8cc.html#a34677ee71a5d0137fc9b1db6bdbeaf01" title="try_bootstrap" alt="" coords="900,317,999,345"/>
+<area shape="rect" id="node62" href="$JNISetup_8cc.html#a5b717da161c7b6b181d19f97524b1fde" title="Detach thread from JVM. Will not detach unless the number of calls to detach is the same as the numbe..." alt="" coords="1115,163,1221,191"/>
+<area shape="rect" id="node47" href="$JNISetup_8cc.html#ab1e6f192d8ecbf2df920d0f38aa6aace" title="Attach current thread to the JVM. Assign current environment to env. Keeps track of how often the cur..." alt="" coords="1117,215,1219,243"/>
+<area shape="rect" id="node50" href="$Java_8cc.html#a743dee1349f51734522db1c12ecf3dd0" title="Convert a C string into a Java string. " alt="" coords="1096,371,1240,399"/>
+<area shape="rect" id="node52" href="$classSettings.html#a0b8488e33807af73a924679860e5b029" title="Retrieve the xml file name. " alt="" coords="1091,267,1245,295"/>
+<area shape="rect" id="node54" href="$classSettings.html#ab32fc5feed80a468ac0791355b4845bf" title="Retrieve the xml schema file name. " alt="" coords="1093,319,1243,347"/>
+<area shape="rect" id="node57" href="$Java_8cc.html#ade1c16ce016fd04450172385ead241b8" title="Prints a Java exception out to logs and stderr. " alt="" coords="1096,111,1240,139"/>
+<area shape="rect" id="node59" href="$namespaceLogging.html#a3c0ff41a0eba242b169e26cee61344dc" title="Print to the log file a error message. " alt="" coords="1294,86,1399,114"/>
+<area shape="rect" id="node72" href="$ha__honeycomb_8cc.html#a0b0172379025fab9be85497d802d69d5" title="handler_factory" alt="" coords="671,111,785,139"/>
+<area shape="rect" id="node74" href="$classJNICache.html#ac7e532bd1b186b41ee0c230177ca9b40" title="JNICache::handler_proxy\l_factory" alt="" coords="863,43,1035,87"/>
+<area shape="rect" id="node76" href="$Java_8cc.html#a69efea6fac65341daab09946fcae8f00" title="Check for an exception waiting in the JVM. " alt="" coords="886,111,1013,139"/>
+<area shape="rect" id="node86" href="$namespaceLogging.html#ae31ce1e151a50adae85a3c6eeeef2519" title="Close the current logger. " alt="" coords="428,78,586,106"/>
+</map>

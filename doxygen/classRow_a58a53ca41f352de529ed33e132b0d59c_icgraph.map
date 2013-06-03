@@ -1,0 +1,6 @@
+<map id="Row::set_schema_version" name="Row::set_schema_version">
+<area shape="rect" id="node3" href="$classRow.html#a5cca50abc389396e26ec68cbd3fb6596" title="Construct a new row. " alt="" coords="234,5,316,33"/>
+<area shape="rect" id="node5" href="$classRow.html#a794a00699c90da9cb090b70c951bbda7" title="Resets the Row to a fresh state with a no UUID and an empty row map. " alt="" coords="232,57,317,85"/>
+<area shape="rect" id="node7" href="$classHoneycombHandler.html#ab982a7fb5c2a0c5c9b25038c08b76d62" title="HoneycombHandler::write_row" alt="" coords="372,30,575,58"/>
+<area shape="rect" id="node9" href="$classHoneycombHandler.html#a681f89cf4b3e8e4d49b4289dd8ccd99d" title="HoneycombHandler::update_row" alt="" coords="365,82,581,110"/>
+</map>

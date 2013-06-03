@@ -1,0 +1,13 @@
+<map id="string_to_java_string" name="string_to_java_string">
+<area shape="rect" id="node3" href="$classHoneycombHandler.html#aa6789e5e864ad59590b414af83525b2a" title="required " alt="" coords="202,5,385,33"/>
+<area shape="rect" id="node5" href="$classHoneycombHandler.html#a14b0ccbf867d0df4a7cb42ca997be52a" title="HoneycombHandler::delete\l_table" alt="" coords="202,57,385,101"/>
+<area shape="rect" id="node7" href="$classHoneycombHandler.html#a21b083516fa026604aa09c9355fc74f3" title="HoneycombHandler::rename\l_table" alt="" coords="197,125,389,169"/>
+<area shape="rect" id="node9" href="$classHoneycombHandler.html#adfc7e9125c49dfbd247df4c8b0e9e2bf" title="HoneycombHandler::add\l_index" alt="" coords="209,193,378,237"/>
+<area shape="rect" id="node11" href="$classHoneycombHandler.html#a11fddc42fe785004ebc59c268dde5eaa" title="HoneycombHandler::prepare\l_drop_index" alt="" coords="197,261,390,305"/>
+<area shape="rect" id="node13" href="$classHoneycombHandler.html#a7b3cb7c91cdae72b6dcc16751e844e49" title="HoneycombHandler::open" alt="" coords="205,329,381,357"/>
+<area shape="rect" id="node15" href="$JNISetup_8cc.html#a34677ee71a5d0137fc9b1db6bdbeaf01" title="try_bootstrap" alt="" coords="244,381,343,409"/>
+<area shape="rect" id="node17" href="$JNISetup_8h.html#abc6c7ecb857d5f99b942de392dedd429" title="Try to create and initialize a new JVM based on the settings passed in. The settings are passed into ..." alt="" coords="438,381,557,409"/>
+<area shape="rect" id="node19" href="$ha__honeycomb_8cc.html#a877ed40f5b76c0cfca8d9b1d22774578" title="try_setup" alt="" coords="606,381,682,409"/>
+<area shape="rect" id="node21" href="$ha__honeycomb_8cc.html#a4a99ee80c2048616f9231e98ea4671b9" title="honeycomb_init_func" alt="" coords="732,381,879,409"/>
+<area shape="rect" id="node23" href="$ha__honeycomb_8cc.html#a6e2937fc5ee2bbba9a51472b10f52da0" title="mysql_declare_plugin" alt="" coords="929,381,1079,409"/>
+</map>

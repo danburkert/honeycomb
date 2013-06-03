@@ -1,0 +1,13 @@
+<map id="try_bootstrap" name="try_bootstrap">
+<area shape="rect" id="node3" href="$namespaceLogging.html#a8dd2be9f2f4a491d11fb1a832ef03773" title="Print to the log file a info message. " alt="" coords="358,8,456,36"/>
+<area shape="rect" id="node9" href="$JNISetup_8cc.html#ab1e6f192d8ecbf2df920d0f38aa6aace" title="Attach current thread to the JVM. Assign current environment to env. Keeps track of how often the cur..." alt="" coords="178,47,281,75"/>
+<area shape="rect" id="node11" href="$namespaceLogging.html#a9434b59d4291a94a376c2c9347750cbb" title="Print to the log file a fatal message. " alt="" coords="356,85,457,113"/>
+<area shape="rect" id="node14" href="$Java_8cc.html#a743dee1349f51734522db1c12ecf3dd0" title="Convert a C string into a Java string. " alt="" coords="157,151,302,179"/>
+<area shape="rect" id="node16" href="$classSettings.html#a0b8488e33807af73a924679860e5b029" title="Retrieve the xml file name. " alt="" coords="153,203,306,231"/>
+<area shape="rect" id="node18" href="$classSettings.html#ab32fc5feed80a468ac0791355b4845bf" title="Retrieve the xml schema file name. " alt="" coords="155,255,304,283"/>
+<area shape="rect" id="node21" href="$Java_8cc.html#ade1c16ce016fd04450172385ead241b8" title="Prints a Java exception out to logs and stderr. " alt="" coords="158,307,301,335"/>
+<area shape="rect" id="node26" href="$JNISetup_8cc.html#a5b717da161c7b6b181d19f97524b1fde" title="Detach thread from JVM. Will not detach unless the number of calls to detach is the same as the numbe..." alt="" coords="176,359,283,387"/>
+<area shape="rect" id="node5" href="$namespaceLogging.html#a77ecd8cc49be70583da64c29abdd99d0" title="Logging::vlog_print" alt="" coords="508,85,642,113"/>
+<area shape="rect" id="node7" href="$namespaceLogging.html#a5e06f1046792d751337c016686843e21" title="Logging::time_string" alt="" coords="691,85,832,113"/>
+<area shape="rect" id="node23" href="$namespaceLogging.html#a3c0ff41a0eba242b169e26cee61344dc" title="Print to the log file a error message. " alt="" coords="354,215,459,243"/>
+</map>

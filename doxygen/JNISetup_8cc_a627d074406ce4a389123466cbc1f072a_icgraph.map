@@ -1,0 +1,6 @@
+<map id="log_java_classpath" name="log_java_classpath">
+<area shape="rect" id="node3" href="$JNISetup_8h.html#abc6c7ecb857d5f99b942de392dedd429" title="Try to create and initialize a new JVM based on the settings passed in. The settings are passed into ..." alt="" coords="190,5,309,33"/>
+<area shape="rect" id="node5" href="$ha__honeycomb_8cc.html#a877ed40f5b76c0cfca8d9b1d22774578" title="try_setup" alt="" coords="358,5,434,33"/>
+<area shape="rect" id="node7" href="$ha__honeycomb_8cc.html#a4a99ee80c2048616f9231e98ea4671b9" title="honeycomb_init_func" alt="" coords="484,5,631,33"/>
+<area shape="rect" id="node9" href="$ha__honeycomb_8cc.html#a6e2937fc5ee2bbba9a51472b10f52da0" title="mysql_declare_plugin" alt="" coords="681,5,831,33"/>
+</map>

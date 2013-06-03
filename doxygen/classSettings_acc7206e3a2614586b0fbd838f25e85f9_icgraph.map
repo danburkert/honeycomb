@@ -1,0 +1,6 @@
+<map id="Settings::try_load" name="Settings::try_load">
+<area shape="rect" id="node3" href="$ha__honeycomb_8cc.html#a303c81700cf927903394e1be3fd53428" title="find_config_file" alt="" coords="180,5,290,33"/>
+<area shape="rect" id="node5" href="$ha__honeycomb_8cc.html#a877ed40f5b76c0cfca8d9b1d22774578" title="try_setup" alt="" coords="339,5,415,33"/>
+<area shape="rect" id="node7" href="$ha__honeycomb_8cc.html#a4a99ee80c2048616f9231e98ea4671b9" title="honeycomb_init_func" alt="" coords="465,5,612,33"/>
+<area shape="rect" id="node9" href="$ha__honeycomb_8cc.html#a6e2937fc5ee2bbba9a51472b10f52da0" title="mysql_declare_plugin" alt="" coords="662,5,812,33"/>
+</map>

@@ -1,0 +1,4 @@
+<map id="make_big_endian" name="make_big_endian">
+<area shape="rect" id="node3" href="$Util_8cc.html#a08173a4d0073275d4d0651fbcd2374ea" title="Check the endianness of the platform. " alt="" coords="181,5,291,33"/>
+<area shape="rect" id="node5" href="$Util_8cc.html#ae893751d26196b40900e6e63ac1e95a6" title="Reverse the bytes of a buffer. " alt="" coords="183,57,289,85"/>
+</map>
