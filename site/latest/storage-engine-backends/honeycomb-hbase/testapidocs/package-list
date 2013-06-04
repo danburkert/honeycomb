@@ -1,0 +1,5 @@
+com.nearinfinity.honeycomb
+com.nearinfinity.honeycomb.hbase
+com.nearinfinity.honeycomb.hbase.bulkload
+com.nearinfinity.honeycomb.hbase.generators
+com.nearinfinity.honeycomb.hbase.rowkey

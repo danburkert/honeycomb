@@ -1,0 +1,6 @@
+com.nearinfinity.honeycomb.config
+com.nearinfinity.honeycomb.mysql
+com.nearinfinity.honeycomb.mysql.generators
+com.nearinfinity.honeycomb.mysql.schema
+com.nearinfinity.honeycomb.mysql.schema.versioning
+com.nearinfinity.honeycomb.util

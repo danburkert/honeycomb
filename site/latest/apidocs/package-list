@@ -1,0 +1,13 @@
+com.nearinfinity.honeycomb
+com.nearinfinity.honeycomb.config
+com.nearinfinity.honeycomb.exceptions
+com.nearinfinity.honeycomb.hbase
+com.nearinfinity.honeycomb.hbase.bulkload
+com.nearinfinity.honeycomb.hbase.config
+com.nearinfinity.honeycomb.hbase.rowkey
+com.nearinfinity.honeycomb.metrics
+com.nearinfinity.honeycomb.mysql
+com.nearinfinity.honeycomb.mysql.gen
+com.nearinfinity.honeycomb.mysql.schema
+com.nearinfinity.honeycomb.mysql.schema.versioning
+com.nearinfinity.honeycomb.util

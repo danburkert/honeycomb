@@ -1,0 +1,22 @@
+/*  Stylesheet used for Javadoc formatting */
+
+body { background-color: #F5FFFA; color:black; font-size: 0.9em; font-family: "Helvetica", "Arial", sans-serif; }
+
+h1 { font-size: 1.65em; }
+
+a { text-decoration: none; color: #16569A; }
+a:hover { color: #EEEEEE; background-color: #6495ED; }
+
+table[border="1"] { border: 2px solid #DCDCDC; }
+table[border="1"] td, table[border="1"] th { border: 1px solid #DCDCDC; }
+
+
+.TableHeadingColor     { background: #16569A; color:white; }
+.TableSubHeadingColor  { background: #16569A; color:white; }
+.TableRowColor         { background: white; color:black; font-size: 1em; }
+
+.NavBarCell1    { background-color:#DCDCDC; }
+.NavBarCell1Rev { background-color:#6495ED; color:#FFFFFF}
+
+.FrameItemFont { font-size:  0.85em; line-height: 1.25em; }
+.FrameHeadingFont { font-size:  80%; }

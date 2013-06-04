@@ -1,0 +1,4 @@
+com.nearinfinity.honeycomb.hbase
+com.nearinfinity.honeycomb.hbase.bulkload
+com.nearinfinity.honeycomb.hbase.config
+com.nearinfinity.honeycomb.hbase.rowkey
