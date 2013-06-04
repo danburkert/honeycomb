@@ -86,7 +86,9 @@ select * from foo;
 
 ## License
 
-The Honeycomb storage engine plugin (the C++ library) is released under [GPL v2.0](https://www.gnu.org/licenses/gpl-2.0.html).  The Honeycomb proxy and backends (the JVM libraries) are released under [Apache v2.0](https://www.apache.org/licenses/LICENSE-2.0.html).
+The Honeycomb storage engine plugin (the C++ library) is released under [GPL v2.0](https://www.gnu.org/licenses/gpl-2.0.html).
+
+The Honeycomb storage proxy and backends (the JVM libraries) are released under [Apache v2.0](https://www.apache.org/licenses/LICENSE-2.0.html).
 
 ## Issues & Contributing
 
