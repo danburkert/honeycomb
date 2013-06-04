@@ -1,8 +1,0 @@
-<map id="HoneycombHandler::estimate_rows_upper_bound" name="HoneycombHandler::estimate_rows_upper_bound">
-<area shape="rect" id="node3" href="$classJNICache.html#a401710507fd2cf2fee61dafb2af81896" title="JNICache::handler_proxy" alt="" coords="251,5,423,33"/>
-<area shape="rect" id="node5" href="$Java_8cc.html#a69efea6fac65341daab09946fcae8f00" title="Check for an exception waiting in the JVM. " alt="" coords="274,57,401,85"/>
-<area shape="rect" id="node7" href="$Java_8cc.html#ade1c16ce016fd04450172385ead241b8" title="Prints a Java exception out to logs and stderr. " alt="" coords="472,30,616,58"/>
-<area shape="rect" id="node9" href="$namespaceLogging.html#a3c0ff41a0eba242b169e26cee61344dc" title="Print to the log file a error message. " alt="" coords="664,57,768,85"/>
-<area shape="rect" id="node11" href="$namespaceLogging.html#a77ecd8cc49be70583da64c29abdd99d0" title="Logging::vlog_print" alt="" coords="817,57,951,85"/>
-<area shape="rect" id="node13" href="$namespaceLogging.html#a5e06f1046792d751337c016686843e21" title="Logging::time_string" alt="" coords="1000,57,1141,85"/>
-</map>

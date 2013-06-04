@@ -1,7 +1,0 @@
-<map id="Settings::get_filename" name="Settings::get_filename">
-<area shape="rect" id="node3" href="$JNISetup_8cc.html#a34677ee71a5d0137fc9b1db6bdbeaf01" title="try_bootstrap" alt="" coords="208,5,307,33"/>
-<area shape="rect" id="node5" href="$JNISetup_8h.html#abc6c7ecb857d5f99b942de392dedd429" title="Try to create and initialize a new JVM based on the settings passed in. The settings are passed into ..." alt="" coords="355,5,474,33"/>
-<area shape="rect" id="node7" href="$ha__honeycomb_8cc.html#a877ed40f5b76c0cfca8d9b1d22774578" title="try_setup" alt="" coords="523,5,599,33"/>
-<area shape="rect" id="node9" href="$ha__honeycomb_8cc.html#a4a99ee80c2048616f9231e98ea4671b9" title="honeycomb_init_func" alt="" coords="649,5,796,33"/>
-<area shape="rect" id="node11" href="$ha__honeycomb_8cc.html#a6e2937fc5ee2bbba9a51472b10f52da0" title="mysql_declare_plugin" alt="" coords="846,5,996,33"/>
-</map>

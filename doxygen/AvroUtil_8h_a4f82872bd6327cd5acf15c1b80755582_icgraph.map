@@ -1,7 +1,0 @@
-<map id="serialize_object" name="serialize_object">
-<area shape="rect" id="node3" href="$classColumnSchema.html#ac5c95c67f9e686bfa5262be410fdb605" title="Serialize this ColumnSchema into a buffer. " alt="" coords="168,5,341,33"/>
-<area shape="rect" id="node5" href="$classIndexSchema.html#a2968695674740a131215400be46a5b2c" title="Serialize this class into a buffer. " alt="" coords="175,57,334,85"/>
-<area shape="rect" id="node7" href="$classQueryKey.html#a7365594ae7e991dac8dcccb952916b7e" title="Serialize this class into a buffer. " alt="" coords="186,109,323,137"/>
-<area shape="rect" id="node9" href="$classRow.html#a28e0484d902d502da9ba52d38bd37949" title="Serialize Row to buf and set serialized length in len. " alt="" coords="203,161,307,189"/>
-<area shape="rect" id="node11" href="$classTableSchema.html#a935e9be69bae876e65faedcfc489db54" title="Serialize this class into a buffer. " alt="" coords="175,213,334,241"/>
-</map>

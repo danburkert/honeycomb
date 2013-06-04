@@ -1,6 +1,0 @@
-<map id="check_exceptions" name="check_exceptions">
-<area shape="rect" id="node3" href="$Java_8cc.html#ade1c16ce016fd04450172385ead241b8" title="Prints a Java exception out to logs and stderr. " alt="" coords="182,5,325,33"/>
-<area shape="rect" id="node5" href="$namespaceLogging.html#a3c0ff41a0eba242b169e26cee61344dc" title="Print to the log file a error message. " alt="" coords="373,31,478,59"/>
-<area shape="rect" id="node7" href="$namespaceLogging.html#a77ecd8cc49be70583da64c29abdd99d0" title="Logging::vlog_print" alt="" coords="526,31,660,59"/>
-<area shape="rect" id="node9" href="$namespaceLogging.html#a5e06f1046792d751337c016686843e21" title="Logging::time_string" alt="" coords="709,31,851,59"/>
-</map>

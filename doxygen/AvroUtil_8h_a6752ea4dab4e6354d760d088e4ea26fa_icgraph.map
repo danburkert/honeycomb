@@ -1,3 +1,0 @@
-<map id="get_map_value" name="get_map_value">
-<area shape="rect" id="node3" href="$classRow.html#a3e11afa6050dbd973de32f04e5b35d3d" title="Get the bytes of a record in the Row. The value byte buffer will be set to NULL if the record is not ..." alt="" coords="166,5,279,33"/>
-</map>
