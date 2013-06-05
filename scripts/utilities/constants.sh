@@ -65,8 +65,8 @@ function link
   echo "Creating a symbolic link from $src to $dest "
   if $admin
   then
-      ln -nfFs $src $dest
-  else
       sudo ln -nfFs $src $dest
+  else
+      ln -nfFs $src $dest
   fi
 }
