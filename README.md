@@ -27,7 +27,7 @@ The following system requirements must be installed and configured for Honeycomb
 
 ## Getting Started
 
-**Install MySQL and Honeycomb binaries**
+**Install MySQL and Honeycomb from pre-built binaries**
 
 1. Export JAVA_HOME environment variable
 2. Download the Linux 64-bit [tarball](https://s3.amazonaws.com/Honeycomb/releases/mysql-5.5.31-honeycomb-0.1-SNAPSHOT-linux-64bit.tar.gz)
