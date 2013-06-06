@@ -29,8 +29,8 @@ The following system requirements must be installed and configured for Honeycomb
 
 **Install MySQL and Honeycomb from pre-built binaries**
 
-1. Export JAVA_HOME environment variable
-2. Download the Linux 64-bit [tarball](https://s3.amazonaws.com/Honeycomb/releases/mysql-5.5.31-honeycomb-0.1-SNAPSHOT-linux-64bit.tar.gz)
+1. Export the 'JAVA_HOME' environment variable to refer to the location of Java on the system
+2. Download the Honeycomb Linux 64-bit [tarball](https://s3.amazonaws.com/Honeycomb/releases/mysql-5.5.31-honeycomb-0.1-SNAPSHOT-linux-64bit.tar.gz)
 3. Run `tar xzf mysql-5.5.31-honeycomb-0.1-SNAPSHOT-linux-64bit.tar.gz`
 4. Change directory to `mysql-5.5.31-honeycomb-0.1-SNAPSHOT`
 
@@ -44,7 +44,7 @@ cd mysql-5.5.31-honeycomb-0.1-SNAPSHOT
 
 **Configure Honeycomb**
 
-Honeycomb reads configuration from `honeycomb.xml`, located in the top level of the install binary
+Honeycomb reads its application configuration from the `honeycomb.xml` file that is located in the top level of the install binary.
 
 * If using the HBase backend, add the following to the `hbase-site.xml` on each HBase region server and restart the region server:
 
@@ -55,8 +55,10 @@ Honeycomb reads configuration from `honeycomb.xml`, located in the top level of 
   </property>
 ```
 
-* If connecting to a remote HBase cluster, change the value of the `hbase.zookeeper.quorum` tag in the hbase backend configuration section of `honeycomb.xml` to the quorum location
-* If you want to use the in-memory backend, change the value of the `defaultAdapter` element in `honeycomb.xml` to `memory`
+* If connecting to a remote HBase cluster, change the value of the `hbase.zookeeper.quorum` tag in the HBase backend configuration section of `honeycomb.xml` to the quorum location.
+* If you want to use the in-memory backend, change the value of the `defaultAdapter` element in `honeycomb.xml` to `memory`.
+
+For more information on application configuration, refer to the [configuration](https://github.com/nearinfinity/honeycomb/wiki/Configuration-%26-Logging#configuration) page.
 
 **Start MySQL**
 
