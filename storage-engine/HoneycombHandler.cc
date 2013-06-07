@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Altamira Corporation
+ * Copyright (C) 2013 Near Infinity Corporation
  *
  * This file is part of Honeycomb Storage Engine.
  *

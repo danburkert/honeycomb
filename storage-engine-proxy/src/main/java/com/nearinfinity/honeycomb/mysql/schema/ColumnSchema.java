@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  *
- * Copyright 2013 Altamira Corporation.
+ * Copyright 2013 Near Infinity Corporation.
  */
 
 
