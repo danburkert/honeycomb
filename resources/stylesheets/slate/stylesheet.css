@@ -306,6 +306,13 @@ Full-Width Styles
   padding: 50px 10px 30px 10px;
 }
 
+#project_tagline {
+  color: #fff;
+  font-size: 24px;
+  font-weight: 575;
+  background: none;
+  text-shadow: #ff9f00 0px 0px 3px;
+}
 
 #downloads {
   position: absolute;
