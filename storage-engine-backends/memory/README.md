@@ -47,6 +47,6 @@ The memory backend contains its own unit tests which can be run with `lein test`
 
 ## License
 
-Copyright © 2013 Altamira Corporation.
+Copyright © 2013 [Near Infinity Corporation](https://www.nearinfinity.com).
 
 Distributed under the [Apache License](https://www.apache.org/licenses/LICENSE-2.0.html).

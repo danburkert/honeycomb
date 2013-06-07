@@ -26,6 +26,6 @@ For example, to run the integration tests against the HBase backend ensure that 
 
 ## License
 
-Copyright © 2013 Altamira Corporation.
+Copyright © 2013 [Near Infinity Corporation](https://www.nearinfinity.com).
 
 Distributed under the [Apache License](https://www.apache.org/licenses/LICENSE-2.0.html).
