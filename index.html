@@ -36,7 +36,7 @@
                 data storage backend.  With Honeycomb installed, MySQL is able to take advantage of the scalability, fault-tolerance, and tools of an underlying 
                 backend while preserving the familiar and powerful relational data model and SQL interface.</p>
                 
-                <p>Honeycomb currently supports storing MySQL table data in HBase and an in-memory store.  The HBase backend component 
+                <p>Honeycomb currently supports storing MySQL table data in HBase and an in-memory store.  The HBase backend layer 
                 provides access to the underlying data in offline map/reduce jobs without having to extract or duplicate the data. Existing applications 
                 using MySQL can be transitioned to use HBase with Honeycomb on a table-by-table basis with no changes to existing application code.</p>
                 
@@ -49,14 +49,14 @@
 
 
                 <h2>How It Works</h2>
-                <p>Honeycomb is organized into three distinct components: the storage engine plugin, proxy, and backend.</p>
+                <p>Honeycomb is organized into three distinct layers: the storage engine plugin, proxy, and backend.</p>
                 <p>A high-level view of their interaction is shown in this figure:
                     <img src="https://s3.amazonaws.com/Honeycomb/docs/honeycomb-architecture.png">
                 </p>
                 
                 <p>The Honeycomb storage engine plugin is loaded by MySQL and is used to provide information from the MySQL optimizer to the storage engine proxy.</p>
-                <p>The proxy component is a Java library that is responsible for communicating the MySQL information to a storage engine backend.</p>
-                <p>A backend component implements Honeycomb's Java interfaces to define how supported operations should be performed by the storage implementation (for example, HBase) to process the SQL statements issued to MySQL.</p>
+                <p>The proxy layer is a Java library responsible for communicating between MySQL and a storage engine backend.</p>
+                <p>A backend layer implements Honeycomb's interfaces to define how supported operations should be performed by the storage implementation (for example, HBase) to process the SQL statements issued to MySQL.</p>
     
                 <p>For further details, take a look at the general <a href="https://github.com/nearinfinity/honeycomb/wiki/Architecture">architecture</a> of Honeycomb.</p> 
     
