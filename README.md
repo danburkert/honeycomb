@@ -30,7 +30,7 @@ The following system requirements must be installed and configured for Honeycomb
 * Install pre-built binaries (below)
 
 **Install MySQL and Honeycomb from pre-built Linux binaries**
-> *These binaries have been tested with CentOS 6.4 and Ubuntu 13.0.4*
+> *These binaries have been tested with CentOS 6.4 and Ubuntu 13.04*
 
 1. Export the 'JAVA_HOME' environment variable to refer to the location of Java on your system
 2. Download the Honeycomb Linux 64-bit [tarball](https://github.com/nearinfinity/honeycomb/wiki/Downloads)
