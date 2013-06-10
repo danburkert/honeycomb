@@ -33,7 +33,7 @@ The following system requirements must be installed and configured for Honeycomb
 > *These binaries have been tested with CentOS 6.4 and Ubuntu 13.0.4*
 
 1. Export the 'JAVA_HOME' environment variable to refer to the location of Java on the system
-2. Download the Honeycomb Linux 64-bit [tarball](https://s3.amazonaws.com/Honeycomb/releases/mysql-5.5.31-honeycomb-0.1-linux-64bit.tar.gz)
+2. Download the Honeycomb Linux 64-bit [tarball](https://github.com/nearinfinity/honeycomb/wiki/Downloads)
 3. Run `tar xzf mysql-5.5.31-honeycomb-0.1-linux-64bit.tar.gz`
 4. Change directory to `mysql-5.5.31-honeycomb-0.1`
 
