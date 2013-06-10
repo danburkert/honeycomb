@@ -32,7 +32,7 @@ The following system requirements must be installed and configured for Honeycomb
 **Install MySQL and Honeycomb from pre-built Linux binaries**
 > *These binaries have been tested with CentOS 6.4 and Ubuntu 13.0.4*
 
-1. Export the 'JAVA_HOME' environment variable to refer to the location of Java on the system
+1. Export the 'JAVA_HOME' environment variable to refer to the location of Java on your system
 2. Download the Honeycomb Linux 64-bit [tarball](https://github.com/nearinfinity/honeycomb/wiki/Downloads)
 3. Run `tar xzf mysql-5.5.31-honeycomb-0.1-linux-64bit.tar.gz`
 4. Change directory to `mysql-5.5.31-honeycomb-0.1`
@@ -47,9 +47,9 @@ cd mysql-5.5.31-honeycomb-0.1
 
 **Configure Honeycomb**
 
-Honeycomb reads its application configuration from the `honeycomb.xml` file that is located in the top level of the install binary.
+Honeycomb reads its application configuration from the file `honeycomb.xml` that is located in the top level of the install binary.
 
-* If using the HBase backend, add the following to the `hbase-site.xml` on each HBase region server and restart the region server:
+* If using the HBase backend, add the following to each file `hbase-site.xml` on each HBase region server and restart the region servers:
 
 ```XML
   <property>
@@ -58,8 +58,8 @@ Honeycomb reads its application configuration from the `honeycomb.xml` file that
   </property>
 ```
 
-* If connecting to a remote HBase cluster, change the value of the `hbase.zookeeper.quorum` tag in the HBase backend configuration section of `honeycomb.xml` to the quorum location.
-* If you want to use the in-memory backend, change the value of the `defaultAdapter` element in `honeycomb.xml` to `memory`.
+* If connecting to a remote HBase cluster, change the value of the tag `hbase.zookeeper.quorum` in the HBase backend configuration section of `honeycomb.xml` to the quorum location.
+* If you want to use the in-memory backend, change the value of the element `defaultAdapter` in `honeycomb.xml` to `memory`.
 
 For more information on application configuration, refer to the [configuration](https://github.com/nearinfinity/honeycomb/wiki/Configuration-%26-Logging#configuration) page.
 
