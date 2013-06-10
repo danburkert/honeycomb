@@ -303,7 +303,7 @@ Full-Width Styles
 }
 
 #header_wrap .inner {
-  padding: 50px 10px 30px 10px;
+  padding: 50px 10px 5px 10px;
 }
 
 #project_tagline {
@@ -314,20 +314,11 @@ Full-Width Styles
   text-shadow: #ff9f00 0px 0px 2px;
 }
 
-#downloads {
-  position: absolute;
-  width: 120px;
-  z-index: 10;
-  bottom: -40px;
-  right: 0;
-  height: 70px;
-}
-
 #downloadme_banner {
   display: block;
   position: absolute;
 
-  top: 0;
+  top: 275px;
   right: 10px;
   z-index: 10;
   padding: 10px 10px 10px 30px;
@@ -360,10 +351,6 @@ Small Device Styles
 @media screen and (max-width: 480px) {
   body {
     font-size:14px;
-  }
-
-  #downloads {
-    display: none;
   }
 
   .inner {
