@@ -5,14 +5,14 @@
     <parent>
         <groupId>com.nearinfinity.honeycomb</groupId>
         <artifactId>honeycomb-parent</artifactId>
-        <version>0.1-SNAPSHOT</version>
+        <version>0.1</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.nearinfinity.honeycomb</groupId>
     <artifactId>proxy-integration-tests</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.1</version>
 
     <name>Storage Engine Proxy Integration Tests</name>
     <description>Integration test suite run to ensure proper execution against the supported backend implementation(s)</description>
@@ -79,19 +79,19 @@
         <dependency>
             <groupId>com.nearinfinity.honeycomb</groupId>
             <artifactId>honeycomb</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>0.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.nearinfinity.honeycomb.hbase</groupId>
             <artifactId>honeycomb-hbase</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>0.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.nearinfinity.honeycomb.memory</groupId>
             <artifactId>honeycomb-memory</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>0.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>

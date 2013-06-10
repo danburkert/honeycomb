@@ -6,12 +6,12 @@
     <parent>
         <groupId>com.nearinfinity.honeycomb</groupId>
         <artifactId>honeycomb-parent</artifactId>
-        <version>0.1-SNAPSHOT</version>
+        <version>0.1</version>
     </parent>
 
     <groupId>com.nearinfinity.honeycomb</groupId>
     <artifactId>honeycomb</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.1</version>
 
     <name>Honeycomb Storage Engine Proxy</name>
     <description>Proxy component used to interact between storage engine plugin and backend implementation(s)</description>

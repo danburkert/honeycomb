@@ -6,14 +6,14 @@
     <parent>
         <artifactId>honeycomb-parent</artifactId>
         <groupId>com.nearinfinity.honeycomb</groupId>
-        <version>0.1-SNAPSHOT</version>
+        <version>0.1</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <groupId>com.nearinfinity.honeycomb.memory</groupId>
     <artifactId>honeycomb-memory</artifactId>
     <packaging>clojure</packaging>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.1</version>
 
     <name>Honeycomb Memory Backend</name>
     <description>In-memory backend for the Honeycomb storage engine</description>
@@ -116,7 +116,7 @@
         <dependency>
             <groupId>com.nearinfinity.honeycomb</groupId>
             <artifactId>honeycomb</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>0.1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>

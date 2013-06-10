@@ -6,13 +6,13 @@
     <parent>
         <groupId>com.nearinfinity.honeycomb</groupId>
         <artifactId>honeycomb-parent</artifactId>
-        <version>0.1-SNAPSHOT</version>
+        <version>0.1</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <groupId>com.nearinfinity.honeycomb.hbase</groupId>
     <artifactId>honeycomb-hbase</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.1</version>
 
     <name>Honeycomb HBase Backend</name>
     <description>HBase backend for the Honeycomb storage engine</description>
@@ -33,7 +33,7 @@
     </licenses>
 
     <properties>
-        <storage.proxy.version>0.1-SNAPSHOT</storage.proxy.version>
+        <storage.proxy.version>0.1</storage.proxy.version>
     </properties>
 
     <build>
