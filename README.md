@@ -30,16 +30,16 @@ The following system requirements must be installed and configured for Honeycomb
 **Install MySQL and Honeycomb from pre-built binaries**
 
 1. Export the 'JAVA_HOME' environment variable to refer to the location of Java on the system
-2. Download the Honeycomb Linux 64-bit [tarball](https://s3.amazonaws.com/Honeycomb/releases/mysql-5.5.31-honeycomb-0.1-SNAPSHOT-linux-64bit.tar.gz)
-3. Run `tar xzf mysql-5.5.31-honeycomb-0.1-SNAPSHOT-linux-64bit.tar.gz`
-4. Change directory to `mysql-5.5.31-honeycomb-0.1-SNAPSHOT`
+2. Download the Honeycomb Linux 64-bit [tarball](https://s3.amazonaws.com/Honeycomb/releases/mysql-5.5.31-honeycomb-0.1-linux-64bit.tar.gz)
+3. Run `tar xzf mysql-5.5.31-honeycomb-0.1-linux-64bit.tar.gz`
+4. Change directory to `mysql-5.5.31-honeycomb-0.1`
 
 or, run the following in a shell:
 
 ```bash
-curl -O https://s3.amazonaws.com/Honeycomb/releases/mysql-5.5.31-honeycomb-0.1-SNAPSHOT-linux-64bit.tar.gz
-tar xzf mysql-5.5.31-honeycomb-0.1-SNAPSHOT-linux-64bit.tar.gz
-cd mysql-5.5.31-honeycomb-0.1-SNAPSHOT
+curl -O https://s3.amazonaws.com/Honeycomb/releases/mysql-5.5.31-honeycomb-0.1-linux-64bit.tar.gz
+tar xzf mysql-5.5.31-honeycomb-0.1-linux-64bit.tar.gz
+cd mysql-5.5.31-honeycomb-0.1
 ```
 
 **Configure Honeycomb**
