@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<options>
+<options app-version="0.1">
     <jvmoptions>
-      <!-- 
+      <!--
            Use the following section to configure the Honeycomb JVM.
            All <jvmoption></jvmoption> tags are passed to the Java JVM as command line arguments.
         -->
         <jvmoption>-XX:+UseConcMarkSweepGC</jvmoption>
-        <!-- 
+        <!--
              Use the -Djava.class.path option to setup the classpath for Honeycomb.
              honeycomb.jar and honeycomb-*.jar are needed for Honeycomb to run.
-             Notes: 
+             Notes:
              Classpath wildcards (i.e. *.jar) are not supported.
              The path to the jars should be absolute.
           -->
-        <jvmoption>-Djava.class.path=/usr/local/lib/honeycomb/honeycomb-0.1-SNAPSHOT-jar-with-dependencies.jar:/usr/local/lib/honeycomb/honeycomb-hbase-0.1-SNAPSHOT-jar-with-dependencies.jar:/usr/local/lib/honeycomb/honeycomb-memory-0.1-SNAPSHOT-jar-with-dependencies.jar</jvmoption>
+        <jvmoption>-Djava.class.path=/usr/local/lib/honeycomb/honeycomb-0.1-jar-with-dependencies.jar:/usr/local/lib/honeycomb/honeycomb-hbase-0.1-jar-with-dependencies.jar:/usr/local/lib/honeycomb/honeycomb-memory-0.1-jar-with-dependencies.jar</jvmoption>
 
         <!-- To change the log4j settings specify a readable file in the following option:-->
         <!-- <jvmoption>-Dlog4j.configuration=file:///etc/mysql/debug.properties</jvmoption> -->
@@ -24,18 +24,18 @@
     <adapters>
         <adapter name="hbase">
             <configuration>
-              <!-- 
+              <!--
                    Use the following section to configure the HBase storage engine backend.
                    The available Honeycomb tags for hbase adapter are:
                    tableName, columnFamily, tablePoolSize, flushChangesImmediately
 
-                   For more information about what each tag does see: 
-                   https://github.com/nearinfinity/honeycomb/blob/develop/storage-engine-backends/hbase/README.md 
+                   For more information about what each tag does see:
+                   https://github.com/nearinfinity/honeycomb/blob/develop/storage-engine-backends/hbase/README.md
 
                    Note: Any HBase/Hadoop properties are valid here.
                    e.g. To configure HBase client scanner caching add:
                         <hbase.client.scanner.caching>2500</hbase.client.scanner.caching>
-                   e.g. To configure the HBase zookeeper quorum add: 
+                   e.g. To configure the HBase zookeeper quorum add:
                         <hbase.zookeeper.quorum>{ZOOKEEPER QUORUM}</hbase.zookeeper.quorum>
                 -->
                 <tableName>sql</tableName>
@@ -53,17 +53,17 @@
           </configuration>
         </adapter>
     </adapters>
-    <!-- 
+    <!--
          The <defaultAdapter> tag specifies the default backend for a MySQL table.
          If the name of the MySQL database is the same as an adapter then the default adapter is ignored.
          Otherwise, the MySQL table will use the backend specified by the tag.
          It is recommended to match the name of the database with an adapter.
 
          Examples:
-         A MySQL database called "hbase" will use the <adapter name="hbase"> regardless 
+         A MySQL database called "hbase" will use the <adapter name="hbase"> regardless
          of what <defaultAdapter> is.
 
-         A MySQL database called "mysql-test" will use the <defaultAdapter> since 
+         A MySQL database called "mysql-test" will use the <defaultAdapter> since
          the name doesn't match any available adapter.
       -->
     <defaultAdapter>memory</defaultAdapter>

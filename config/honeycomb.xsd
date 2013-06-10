@@ -38,6 +38,7 @@
             <xs:element type="xs:string" name="defaultAdapter" />
             <xs:element type="adaptersType" name="adapters" />
         </xs:all>
+        <xs:attribute name="app-version" type="xs:string" use="required" />
     </xs:complexType>
 
 
