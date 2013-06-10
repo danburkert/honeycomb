@@ -66,5 +66,5 @@
          A MySQL database called "mysql-test" will use the <defaultAdapter> since
          the name doesn't match any available adapter.
       -->
-    <defaultAdapter>memory</defaultAdapter>
+    <defaultAdapter>hbase</defaultAdapter>
 </options>
