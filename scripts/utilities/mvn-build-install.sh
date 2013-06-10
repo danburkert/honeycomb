@@ -56,13 +56,6 @@ fi
 
 cd $HONEYCOMB_SOURCE
 
-mvn -V clean install $mvnTestMode
-[ $? -ne 0 ] && { exit 1; }
-
-install_jars "$HBASE_BACKEND" $honeycomb_lib
-install_jars "$MEMORY_BACKEND" $honeycomb_lib
-install_jars "$PROXY" $honeycomb_lib
-
 create_dir_with_ownership $CONFIG_PATH
 
 if [ ! -e $adapter_conf ]
@@ -71,5 +64,12 @@ then
   sudo cp $HONEYCOMB_CONFIG/$CONFIG_NAME $adapter_conf
   take_ownership $adapter_conf
 fi
+
+mvn -V clean install $mvnTestMode
+[ $? -ne 0 ] && { exit 1; }
+
+install_jars "$HBASE_BACKEND" $honeycomb_lib
+install_jars "$MEMORY_BACKEND" $honeycomb_lib
+install_jars "$PROXY" $honeycomb_lib
 
 echo "*** Don't forget to restart MySQL. The JVM doesn't autoreload the jar from the disk. ***"
