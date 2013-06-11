@@ -164,12 +164,6 @@ int HoneycombHandler::free_share(HoneycombShare *share)
   DBUG_RETURN(result_code);
 }
 
-ha_rows HoneycombHandler::records_in_range(uint inx, key_range *min_key,
-    key_range *max_key)
-{
-  return stats.records;
-}
-
 // MySQL calls this function all over the place whenever it needs you to update
 // some crucial piece of info. It expects you to use this to set information
 // about your indexes and error codes, as well as general info about your engine.
@@ -207,7 +201,7 @@ int HoneycombHandler::info(uint flag)
     stats.deleted = 0;
     stats.max_data_file_length = this->max_supported_record_length();
     stats.data_file_length = stats.records * this->table->s->reclength;
-    stats.index_file_length = this->max_supported_key_length();
+    stats.index_file_length = stats.records;
     stats.delete_length = stats.deleted * stats.mean_rec_length;
     stats.check_time = 0;
 
@@ -230,7 +224,7 @@ int HoneycombHandler::info(uint flag)
     {
       for (uint j = 0; j < table->key_info[i].key_parts; j++)
       {
-        rec_per_key = stats.records / 2;
+        rec_per_key = stats.records / 10;
 
         if (rec_per_key == 0) {
           rec_per_key = 1;
@@ -376,7 +370,6 @@ int HoneycombHandler::analyze(THD* thd, HA_CHECK_OPT* check_opt)
       this->table->key_info[i].rec_per_key[j] = 1;
     }
   }
-
   DBUG_RETURN(0);
 }
 
@@ -516,12 +509,18 @@ uint HoneycombHandler::max_supported_key_parts() const
 
 double HoneycombHandler::scan_time()
 {
-  return 200 + stats.records * 20;
+  return (double)stats.records / 3;
 }
 
 double HoneycombHandler::read_time(uint index, uint ranges, ha_rows rows)
 {
-  return scan_time() / 20;
+  double total_scan = scan_time();
+  if (stats.records < rows)
+  {
+    return total_scan;
+  }
+
+  return (ranges + ((double) rows / (double) stats.records) * total_scan);
 }
 
 int HoneycombHandler::final_add_index(handler_add_index *add, bool commit)

@@ -136,7 +136,6 @@ class HoneycombHandler : public handler
     THR_LOCK_DATA **store_lock(THD *thd, THR_LOCK_DATA **to, enum thr_lock_type lock_type);     ///< required
     int extra(enum ha_extra_function operation);
     int free_share(HoneycombShare *share);
-    ha_rows records_in_range(uint inx, key_range *min_key, key_range *max_key);
     int analyze(THD* thd, HA_CHECK_OPT* check_opt);
     ha_rows estimate_rows_upper_bound();
     const char *table_type() const;
