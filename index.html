@@ -31,16 +31,14 @@
         <div id="main_content_wrap" class="outer">
             <section id="main_content" class="inner">
                 <h2>What is Honeycomb?</h2>
-                <p>Honeycomb is an open source storage engine plugin for MySQL that enables MySQL to store and query tables directly in an external 
-                data storage backend.  With Honeycomb installed, MySQL is able to take advantage of the scalability, fault-tolerance, and tools of an underlying 
-                backend while preserving the familiar and powerful relational data model and SQL interface.</p>
                 
-                <p>Honeycomb currently supports storing MySQL table data in HBase and an in-memory store.  The HBase backend layer 
-                provides access to the underlying data in offline map/reduce jobs without having to extract or duplicate the data.</p> 
+                <p>Honeycomb is an open source storage engine plugin for MySQL that enables MySQL to store, modify, and query tables directly in HBase. 
+                With Honeycomb installed, applications can utilize the familiar and powerful relational data model and SQL interface while allowing
+                for access to data with existing Hadoop-based tools.</p>
+
+                <p>Honeycomb was designed to preserve the investment in existing relational database applications and bridge the gap to the NoSQL world.</p>
                 
-                <p>Existing applications using MySQL may be transitioned to use HBase with Honeycomb on a table-by-table basis with no changes to existing application code.</p>
-                
-                <p>Support for additional storage engine backends can be implemented without knowledge of MySQL internals through Honeycomb's high-level interfaces.</p> 
+                <p>Currently, MySQL table data can be stored in HBase and an in-memory store.  Support for additional data storage backends can be implemented without knowledge of MySQL internals through Honeycomb's high-level interfaces.</p> 
     
                 <h2>Get Honeycomb</h2>
     
@@ -62,7 +60,8 @@
     
                 <h2>Feature Comparison</h2>
         
-                <p>Honeycomb is designed to be a "drop in" replacement for the default MySQL storage engine, InnoDB.
+                <p>Honeycomb is meant to be a "drop in" replacement for the default MySQL storage engine, InnoDB.</p>
+                <p>Existing applications using MySQL may be transitioned to use HBase with Honeycomb on a table-by-table basis depending upon Honeycomb's supported feature set.</p>
                 <p>A brief feature comparison between Honeycomb with the HBase backend and MySQL with InnoDB is shown in the following table:</p>
     
                 <table>
