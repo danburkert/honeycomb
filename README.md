@@ -72,7 +72,7 @@ or,
 
 ```bash
 ./run-mysql-with-honeycomb-installed.sh
-bin/mysql -u root --socket=mysql.sock
+bin/mysql -u root --socket=mysql.sock --port=5630
 ```
 
 Once Honeycomb is up and running, test it with:
