@@ -11,8 +11,8 @@ function install_jars
   lib=$2
   create_dir_with_ownership $lib
 
-  echo "Moving jars into $lib"
-  cp $src/target/*-$ARTIFACT_ID-jar-with-dependencies.jar $lib
+  echo "Copying jars into $lib"
+  cp -v $src/target/*-$ARTIFACT_ID-jar-with-dependencies.jar $lib
 }
 
 if [ ! -z "$HONEYCOMB_LIB" ]
