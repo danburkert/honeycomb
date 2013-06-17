@@ -12,7 +12,7 @@ function install_jars
   create_dir_with_ownership $lib
 
   echo "Copying jars into $lib"
-  cp -v $src/target/*-$ARTIFACT_ID-jar-with-dependencies.jar $lib
+  cp -v $src/target/*-jar-with-dependencies.jar $lib
 }
 
 if [ ! -z "$HONEYCOMB_LIB" ]

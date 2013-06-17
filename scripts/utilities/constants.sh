@@ -19,7 +19,6 @@ SCHEMA_NAME=honeycomb.xsd
 CONFIG_NAME=honeycomb.xml
 PROXY_JAR_NAME=honeycomb
 HBASE_BACKEND_NAME=honeycomb-hbase
-ARTIFACT_ID=0.1
 
 function take_ownership
 {
