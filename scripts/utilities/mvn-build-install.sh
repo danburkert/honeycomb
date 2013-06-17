@@ -5,14 +5,12 @@ command -v mvn >/dev/null 2>&1 || { echo >&2 "mvn is required to run $0."; exit 
 script_dir=$HONEYCOMB_SOURCE/scripts/utilities
 source $script_dir/constants.sh
 
-function install_jars
+function install_artifact_jar
 {
   src=$1
-  lib=$2
-  create_dir_with_ownership $lib
 
-  echo "Copying jars into $lib"
-  cp -v $src/target/*-jar-with-dependencies.jar $lib
+  echo "Copying jars into $honeycomb_lib"
+  cp -v $src/target/*-jar-with-dependencies.jar $honeycomb_lib
 }
 
 if [ ! -z "$HONEYCOMB_LIB" ]
@@ -74,8 +72,20 @@ link $HONEYCOMB_CONFIG/$SCHEMA_NAME $CONFIG_PATH/$SCHEMA_NAME use_admin
 mvn -V clean install $mvnTestMode
 [ $? -ne 0 ] && { exit 1; }
 
-install_jars "$HBASE_BACKEND" $honeycomb_lib
-install_jars "$MEMORY_BACKEND" $honeycomb_lib
-install_jars "$PROXY" $honeycomb_lib
 
-echo "*** Don't forget to restart MySQL. The JVM doesn't autoreload the jar from the disk. ***"
+# Create the directory used to store the project artifacts, if needed
+create_dir_with_ownership $honeycomb_lib
+
+# Remove all existing jars
+if [[ -n `find $honeycomb_lib -name *.jar` ]]
+then
+  echo "Deleting all existing jars..."
+  rm -fv $honeycomb_lib/*.jar
+fi
+
+# Install current project artifacts
+install_artifact_jar "$HBASE_BACKEND"
+install_artifact_jar "$MEMORY_BACKEND"
+install_artifact_jar "$PROXY"
+
+echo "*** Don't forget to restart MySQL. The JVM doesn't auto-reload the jars from the disk. ***"
