@@ -13,7 +13,7 @@
              Classpath wildcards (i.e. *.jar) are not supported.
              The path to the jars should be absolute.
           -->
-        <jvmoption>-Djava.class.path=/usr/local/lib/honeycomb/honeycomb-0.2-SNAPSHOT-jar-with-dependencies.jar:/usr/local/lib/honeycomb/honeycomb-hbase-0.1-jar-with-dependencies.jar:/usr/local/lib/honeycomb/honeycomb-memory-0.2-SNAPSHOT-jar-with-dependencies.jar</jvmoption>
+        <jvmoption>-Djava.class.path=/usr/local/lib/honeycomb/honeycomb-0.2-SNAPSHOT-jar-with-dependencies.jar:/usr/local/lib/honeycomb/honeycomb-hbase-0.2-SNAPSHOT-jar-with-dependencies.jar:/usr/local/lib/honeycomb/honeycomb-memory-0.2-SNAPSHOT-jar-with-dependencies.jar</jvmoption>
 
         <!-- To change the log4j settings specify a readable file in the following option:-->
         <!-- <jvmoption>-Dlog4j.configuration=file:///etc/mysql/debug.properties</jvmoption> -->

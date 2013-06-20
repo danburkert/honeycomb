@@ -12,7 +12,7 @@
 
     <groupId>com.nearinfinity.honeycomb.hbase</groupId>
     <artifactId>honeycomb-hbase</artifactId>
-    <version>0.1</version>
+    <version>0.2-SNAPSHOT</version>
 
     <name>Honeycomb HBase Backend</name>
     <description>HBase backend for the Honeycomb storage engine</description>
@@ -33,7 +33,7 @@
     </licenses>
 
     <properties>
-        <storage.proxy.version>0.1</storage.proxy.version>
+        <storage.proxy.version>0.2-SNAPSHOT</storage.proxy.version>
     </properties>
 
     <build>
