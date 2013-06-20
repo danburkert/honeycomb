@@ -182,8 +182,7 @@ int HoneycombHandler::info(uint flag)
   if (flag & HA_STATUS_VARIABLE)
   {
     JavaFrame frame(env);
-    jlong row_count = this->env->CallLongMethod(handler_proxy,
-        cache->handler_proxy().get_row_count);
+    jlong row_count = 2000000;
     check_exceptions(env, cache, location);
 
     if (row_count < 0)
