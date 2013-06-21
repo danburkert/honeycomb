@@ -200,6 +200,7 @@ static int honeycomb_init_func(void *p)
   DBUG_ENTER("ha_honeycomb::honeycomb_init_func");
   if (!try_setup())
   {
+    perror("Logging setup failed.");
     DBUG_RETURN(1);
   }
 

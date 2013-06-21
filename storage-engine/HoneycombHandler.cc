@@ -46,7 +46,6 @@ HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_share,
   share(NULL),
   honeycomb_mutex(mutex),
   honeycomb_open_tables(open_tables),
-  rows_written(0),
   failed_key_index(0),
   env(NULL),
   jvm(jvm),
@@ -122,13 +121,6 @@ int HoneycombHandler::external_lock(THD *thd, int lock_type)
 
   if (lock_type == F_UNLCK)
   {
-    if (this->rows_written > 0)
-    {
-      this->env->CallVoidMethod(handler_proxy,
-          cache->handler_proxy().increment_row_count, this->rows_written);
-      check_exceptions(env, cache, location);
-      this->rows_written = 0;
-    }
     ret |= this->flush();
     detach_thread(jvm);
   }
@@ -370,23 +362,6 @@ int HoneycombHandler::analyze(THD* thd, HA_CHECK_OPT* check_opt)
     }
   }
   DBUG_RETURN(0);
-}
-
-/**
- * Estimate the number of rows contained in the table associated with this
- * handler.  Called by the optimizer.
- */
-ha_rows HoneycombHandler::estimate_rows_upper_bound()
-{
-  const char* location = "HoneycombHandler::estimate_rows_upper_bound";
-  DBUG_ENTER(location);
-  jlong row_count = this->env->CallLongMethod(handler_proxy,
-      cache->handler_proxy().get_row_count);
-  check_exceptions(env, cache, location);
-
-  // Stupid MySQL and its filesort. This must be large enough to filesort when
-  // there are less than 2 records.
-  DBUG_RETURN(row_count < 2 ? 10 : 2*row_count + 1);
 }
 
 /**

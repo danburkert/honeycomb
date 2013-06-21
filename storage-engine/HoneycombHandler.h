@@ -67,7 +67,6 @@ class HoneycombHandler : public handler
     HASH* honeycomb_open_tables;
     HoneycombShare *get_share(const char *table_name, TABLE *table);
 
-    ulonglong rows_written;
     uint failed_key_index;
 
     // JNI State:
@@ -137,7 +136,6 @@ class HoneycombHandler : public handler
     int extra(enum ha_extra_function operation);
     int free_share(HoneycombShare *share);
     int analyze(THD* thd, HA_CHECK_OPT* check_opt);
-    ha_rows estimate_rows_upper_bound();
     const char *table_type() const;
     const char *index_type(uint inx);
     uint alter_table_flags(uint flags);

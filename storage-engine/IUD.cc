@@ -224,7 +224,6 @@ int HoneycombHandler::write_row(uchar *buf)
   }
   else {
     ha_statistic_increment(&SSV::ha_write_count);
-    this->rows_written++;
     DBUG_RETURN(rc);
   }
 }
