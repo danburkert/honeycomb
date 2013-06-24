@@ -21,6 +21,6 @@
 
 
 /**
- * Contains the classes required to bulk load data into HBase.
+ * Contains helper classes for bulk importing data into Honeycomb.
  */
-package com.nearinfinity.honeycomb.hbase.bulkload;
+package com.nearinfinity.honeycomb.hbase.mapreduce.bulkimporter;

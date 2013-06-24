@@ -20,7 +20,7 @@
  */
 
 
-package com.nearinfinity.honeycomb.hbase.bulkload;
+package com.nearinfinity.honeycomb.hbase.mapreduce.bulkimporter;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
@@ -39,7 +39,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 /**
- * Provides test cases for the {@link com.nearinfinity.honeycomb.hbase.bulkload.FieldParser} class. All test values used
+ * Provides test cases for the {@link com.nearinfinity.honeycomb.hbase.mapreduce.bulkimporter.FieldParser} class. All test values used
  * for column type data comes from the valid datatype ranges of the database in
  * which the values were received from
  */

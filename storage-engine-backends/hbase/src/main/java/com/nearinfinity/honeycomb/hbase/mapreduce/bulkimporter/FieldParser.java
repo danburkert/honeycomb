@@ -20,7 +20,7 @@
  */
 
 
-package com.nearinfinity.honeycomb.hbase.bulkload;
+package com.nearinfinity.honeycomb.hbase.mapreduce.bulkimporter;
 
 import com.google.common.primitives.Longs;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;

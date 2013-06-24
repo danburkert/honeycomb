@@ -20,7 +20,7 @@
  */
 
 
-package com.nearinfinity.honeycomb.hbase.bulkload;
+package com.nearinfinity.honeycomb.hbase.mapreduce.bulkimporter;
 
 import au.com.bytecode.opencsv.CSVParser;
 import com.google.common.collect.ImmutableMap;

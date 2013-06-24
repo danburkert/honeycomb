@@ -69,4 +69,36 @@ public final class ConfigConstants {
      * Default value of the HBase write buffer
      */
     public static final long DEFAULT_WRITE_BUFFER = 2097152;
+    /**
+     * Property name for pre splitting flag
+     */
+    public static final String PRE_SPLIT = NAMESPACE + "import.preSplitTable";
+    /**
+     * Pre split tables during import by default
+     */
+    public static boolean DEFAULT_PRE_SPLIT = true;
+    /**
+     * Property name for field separator in bulk import input
+     */
+    public static final String INPUT_SEPARATOR = NAMESPACE + "import.separator";
+    /**
+     * Default input separator
+     */
+    public static final String DEFAULT_INPUT_SEPARATOR = ",";
+    /**
+     * Property name for intermediate file storage directory during bulk import
+     */
+    public static final String OUTPUT_PATH = NAMESPACE + "import.output";
+    /**
+     * Default output path for map reduce job
+     */
+    public static final String DEFAULT_OUTPUT_PATH = "hdfs:///tmp";
+    /**
+     * Property name for MySQL table columns
+     */
+    public static final String SQL_COLUMNS = NAMESPACE + "import.sql.columns";
+    /**
+     * Property name for full MySQL database / table name
+     */
+    public static final String SQL_DB_TABLE = NAMESPACE + "import.sql.db-table";
 }
