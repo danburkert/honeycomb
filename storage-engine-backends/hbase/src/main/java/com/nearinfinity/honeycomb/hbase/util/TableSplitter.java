@@ -59,9 +59,9 @@ public class TableSplitter extends Configured implements Tool {
 
         for (byte[] split : splits) {
             while(!splitExists(split, reallyGetTableRegions(admin, hbaseTable))) {
-                String msg = "Attempting to split table " + hbaseTable + " on key: " + Util.generateHexString(split);
                 if (LOG.isInfoEnabled()) {
-                    LOG.info(msg);
+                    LOG.info("Attempting to split table " + hbaseTable +
+                            " on key: " + Util.generateHexString(split));
                 }
                 admin.split(hbaseTable.getBytes(), split);
             }

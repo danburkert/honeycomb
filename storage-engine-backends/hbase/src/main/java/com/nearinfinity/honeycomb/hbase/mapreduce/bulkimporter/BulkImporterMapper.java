@@ -53,9 +53,7 @@ public class BulkImporterMapper
         extends Mapper<LongWritable, Text, ImmutableBytesWritable, Put> {
     static final Logger LOG = Logger.getLogger(BulkImporterMapper.class);
     private RowParser rowParser;
-    private String[] columns;
     private long tableId;
-    private TableSchema schema;
     private MutationFactory mutationFactory;
 
     @Override
@@ -65,7 +63,7 @@ public class BulkImporterMapper
 
         char separator  = conf.get(ConfigConstants.INPUT_SEPARATOR,
                 ConfigConstants.DEFAULT_INPUT_SEPARATOR).charAt(0);
-        columns = conf.getStrings(ConfigConstants.SQL_COLUMNS);
+        String[] columns = conf.getStrings(ConfigConstants.SQL_COLUMNS);
         String sqlTable = conf.get(ConfigConstants.SQL_DB_TABLE);
         String hbaseTable  = conf.get(ConfigConstants.TABLE_NAME);
         String columnFamily = conf.get(ConfigConstants.COLUMN_FAMILY);
@@ -76,13 +74,13 @@ public class BulkImporterMapper
         LOG.info("HBase Column Family: " + columnFamily);
         LOG.info("Input separator: '" + separator + "'");
 
-
-        HBaseMetadata metadata = new HBaseMetadata(new PoolHTableProvider(hbaseTable, new HTablePool(conf, 1)));
+        HBaseMetadata metadata = new HBaseMetadata(
+                new PoolHTableProvider(hbaseTable, new HTablePool(conf, 1)));
         metadata.setColumnFamily(conf.get(ConfigConstants.COLUMN_FAMILY));
         HBaseStore store = new HBaseStore(metadata, null, new MetadataCache(metadata));
 
         tableId = store.getTableId(sqlTable);
-        schema = store.getSchema(sqlTable);
+        TableSchema schema = store.getSchema(sqlTable);
         mutationFactory = new MutationFactory(store);
         mutationFactory.setColumnFamily(columnFamily);
 

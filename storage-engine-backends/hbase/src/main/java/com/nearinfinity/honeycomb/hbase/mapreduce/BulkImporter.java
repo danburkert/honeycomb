@@ -64,7 +64,7 @@ import java.util.List;
 import java.util.Set;
 
 public class BulkImporter extends Configured implements Tool {
-    static final Logger LOG = Logger.getLogger(TableSplitter.class);
+    static final Logger LOG = Logger.getLogger(BulkImporter.class);
 
     private static Job createJob(Configuration conf, String inputPath, String outputPath)
             throws IOException {
