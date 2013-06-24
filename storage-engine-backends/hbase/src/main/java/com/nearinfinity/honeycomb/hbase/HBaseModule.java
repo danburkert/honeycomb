@@ -31,8 +31,8 @@ import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.config.AdapterType;
 import com.nearinfinity.honeycomb.exceptions.RuntimeIOException;
 import com.nearinfinity.honeycomb.hbase.config.ConfigConstants;
+import com.nearinfinity.honeycomb.hbase.config.ConfigUtil;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.log4j.Logger;
 
@@ -48,13 +48,7 @@ public class HBaseModule extends AbstractModule {
     private final Configuration configuration;
 
     public HBaseModule(final Map<String, String> options) {
-        // Add the HBase resources to the core application configuration
-        configuration = HBaseConfiguration.create();
-
-        for (Map.Entry<String, String> option : options.entrySet()) {
-            configuration.set(option.getKey(), option.getValue());
-        }
-
+        configuration = ConfigUtil.combineConfiguration(options);
         hTableProvider = new HTableProvider(configuration);
 
         try {

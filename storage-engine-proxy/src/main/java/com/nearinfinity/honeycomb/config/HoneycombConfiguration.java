@@ -22,6 +22,10 @@
 
 package com.nearinfinity.honeycomb.config;
 
+import com.google.common.collect.Lists;
+
+import java.io.File;
+import java.util.List;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -75,5 +79,40 @@ public class HoneycombConfiguration {
      */
     public AdapterType getDefaultAdapter() {
         return defaultAdapter;
+    }
+
+    /**
+     * Load honeycomb.xml.  Checks for honeycomb.xml and honeycomb.xsd in the
+     * following locations:
+     *
+     *      /var/log/mysql
+     *      $HONEYCOMB_CONFIGURATION
+     *      /etc
+     *      /etc/mysql
+     *      $MYSQL_HOME
+     *      $HOME
+     *      cwd
+     */
+    public static HoneycombConfiguration create() {
+        List<String> paths = Lists.newArrayList("/var/log/mysql");
+        paths.add(System.getProperty("HONEYCOMB_CONFIGURATION", ""));
+        paths.add("/etc");
+        paths.add("/etc/mysql");
+        paths.add(System.getProperty("MYSQL_HOME", ""));
+        paths.add(System.getProperty("user.home", ""));
+        paths.add(System.getProperty("user.dir", ""));
+
+        File xml;
+        File xsd;
+        for (String path : paths) {
+            xml = new File(path + "/honeycomb.xml");
+            xsd = new File(path + "/honeycomb.xsd");
+
+            if (xml.exists() && xsd.exists()) {
+                return ConfigurationParser.parseConfiguration(xml.getPath(), xsd.getPath());
+            }
+        }
+
+        throw new RuntimeException("Unable to locate Honeycomb.xml or Honeycomb.xsd");
     }
 }

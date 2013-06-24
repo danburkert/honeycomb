@@ -23,10 +23,7 @@
 package com.nearinfinity.honeycomb.hbase;
 
 import com.google.common.base.Charsets;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.ImmutableBiMap;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
+import com.google.common.collect.*;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
@@ -41,7 +38,6 @@ import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -110,10 +106,10 @@ public class HBaseMetadata {
      * @param tableId The valid table identifier of the table this lookup is for
      * @return The indices mapping details for the table
      */
-    public Map<String, Long> getIndexIds(final long tableId) {
+    public BiMap<String, Long> getIndexIds(final long tableId) {
         Verify.isValidId(tableId);
-
-        return getNameToIdMap(tableId, new IndicesRowKey(tableId).encode());
+        return ImmutableBiMap.copyOf(
+                getNameToIdMap(tableId, new IndicesRowKey(tableId).encode()));
     }
 
     /**
@@ -364,7 +360,7 @@ public class HBaseMetadata {
                 ImmutableList.<Put>of());
     }
 
-    private Map<String, Long> getNameToIdMap(long tableId, byte[] encodedRow) {
+    private BiMap<String, Long> getNameToIdMap(long tableId, byte[] encodedRow) {
         HTableInterface hTable = getHTable();
         try {
             Get get = new Get(encodedRow);
@@ -375,7 +371,7 @@ public class HBaseMetadata {
             }
 
             Map<byte[], byte[]> serializedNameIds = result.getFamilyMap(columnFamily);
-            Map<String, Long> nameToId = new HashMap<String, Long>(serializedNameIds.size());
+            BiMap<String, Long> nameToId = HashBiMap.create(serializedNameIds.size());
 
             for (Map.Entry<byte[], byte[]> entry : serializedNameIds.entrySet()) {
                 if (entry.getKey().length > 0) {

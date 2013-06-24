@@ -22,6 +22,7 @@
 
 package com.nearinfinity.honeycomb.hbase;
 
+import com.google.common.collect.BiMap;
 import com.google.inject.Inject;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
@@ -77,6 +78,15 @@ public class HBaseStore implements Store {
      */
     public long getIndexId(long tableId, String indexName) {
         return cache.indicesCacheGet(tableId).get(indexName);
+    }
+
+    /**
+     * Retrieve a BiMap of index name to index id for the table.
+     * @param tableId
+     * @return
+     */
+    public BiMap<String, Long> getIndices(long tableId) {
+        return cache.indicesCacheGet(tableId);
     }
 
     /**

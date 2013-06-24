@@ -30,6 +30,7 @@ import com.nearinfinity.honeycomb.hbase.HBaseStore;
 import com.nearinfinity.honeycomb.hbase.MetadataCache;
 import com.nearinfinity.honeycomb.hbase.MutationFactory;
 import com.nearinfinity.honeycomb.hbase.config.ConfigConstants;
+import com.nearinfinity.honeycomb.hbase.util.PoolHTableProvider;
 import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;

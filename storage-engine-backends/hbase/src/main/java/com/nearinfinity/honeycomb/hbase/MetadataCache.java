@@ -33,8 +33,6 @@ import com.nearinfinity.honeycomb.util.Verify;
 import net.jcip.annotations.ThreadSafe;
 import org.apache.log4j.Logger;
 
-import java.util.Map;
-
 /**
  * Caches metadata about tables to reduce HBase lookups.
  */
@@ -47,7 +45,7 @@ public class MetadataCache {
     private final LoadingCache<Long, Long> rowsCache;
     private final LoadingCache<Long, Long> autoIncCache;
     private final LoadingCache<Long, TableSchema> schemaCache;
-    private final LoadingCache<Long, Map<String, Long>> indicesCache;
+    private final LoadingCache<Long, BiMap<String, Long>> indicesCache;
 
     @Inject
     public MetadataCache(final HBaseMetadata metadata) {
@@ -72,9 +70,9 @@ public class MetadataCache {
 
         indicesCache = CacheBuilder
                 .newBuilder()
-                .build(new CacheLoader<Long, Map<String, Long>>() {
+                .build(new CacheLoader<Long, BiMap<String, Long>>() {
                     @Override
-                    public Map<String, Long> load(Long tableId) {
+                    public BiMap<String, Long> load(Long tableId) {
                         return metadata.getIndexIds(tableId);
                     }
                 });
@@ -149,7 +147,7 @@ public class MetadataCache {
      * @param tableId Table ID
      * @return Map of index name to index ID
      */
-    public Map<String, Long> indicesCacheGet(Long tableId) {
+    public BiMap<String, Long> indicesCacheGet(Long tableId) {
         Verify.isValidId(tableId);
         return cacheGet(indicesCache, tableId);
     }

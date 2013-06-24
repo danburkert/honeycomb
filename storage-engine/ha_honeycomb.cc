@@ -243,7 +243,7 @@ struct st_mysql_storage_engine honeycomb_storage_engine=
   MYSQL_HANDLERTON_INTERFACE_VERSION
 };
 
-static MYSQL_SYSVAR_STR(configuration_path, honeycomb_configuration_path, 
+static MYSQL_SYSVAR_STR(configuration_path, honeycomb_configuration_path,
     PLUGIN_VAR_READONLY|PLUGIN_VAR_RQCMDARG, "The path to the directory containing honeycomb.xml", NULL, NULL, NULL);
 
 // System variables are formed by prepending the storage engine name on the front
