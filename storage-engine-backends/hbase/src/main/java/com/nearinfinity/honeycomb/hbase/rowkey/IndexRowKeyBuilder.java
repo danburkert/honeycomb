@@ -24,15 +24,17 @@ package com.nearinfinity.honeycomb.hbase.rowkey;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.gotometrics.orderly.*;
+import com.gotometrics.orderly.RowKey;
+import com.nearinfinity.honeycomb.exceptions.RuntimeIOException;
 import com.nearinfinity.honeycomb.mysql.QueryKey;
 import com.nearinfinity.honeycomb.mysql.Row;
-import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import com.nearinfinity.honeycomb.util.Verify;
-import org.apache.hadoop.hbase.util.Bytes;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -45,16 +47,17 @@ import static com.google.common.base.Preconditions.checkState;
  * to call {@link #build} multiple times.
  */
 public class IndexRowKeyBuilder {
-    private static final long INVERT_SIGN_MASK = 0x8000000000000000L;
-    private long tableId;
-    private long indexId;
+    private final long tableId;
+    private final long indexId;
     private SortOrder order;
     private String indexName;
     private TableSchema tableSchema;
     private Map<String, ByteBuffer> fields;
     private UUID uuid;
 
-    private IndexRowKeyBuilder() {
+    private IndexRowKeyBuilder(long tableId, long indexId) {
+        this.tableId = tableId;
+        this.indexId = indexId;
     }
 
     /**
@@ -68,45 +71,41 @@ public class IndexRowKeyBuilder {
                                                 long indexId) {
         Verify.isValidId(tableId);
         Verify.isValidId(indexId);
-        IndexRowKeyBuilder builder = new IndexRowKeyBuilder();
-        builder.tableId = tableId;
-        builder.indexId = indexId;
 
-        return builder;
+        return new IndexRowKeyBuilder(tableId, indexId);
     }
 
-    private static byte[] reverseValue(byte[] value) {
-        byte[] reversed = new byte[value.length];
-        for (int i = 0; i < value.length; i++) {
-            reversed[i] = (byte) (~value[i] & 0xFF);
-        }
-        return reversed;
-    }
-
-    private static byte[] encodeValue(final ByteBuffer value, final ColumnSchema columnSchema) {
+    private static byte[] encodeValue(final ByteBuffer value, final ColumnType columnType, Order sortOrder) {
+        RowKey encoder;
+        Object valueObject;
         try {
-            switch (columnSchema.getType()) {
+            switch (columnType) {
                 case LONG:
                 case TIME: {
-                    final long longValue = value.getLong();
-                    return Bytes.toBytes(longValue ^ INVERT_SIGN_MASK);
+                    valueObject = value.getLong();
+                    encoder = new LongRowKey();
+                    break;
                 }
                 case DOUBLE: {
-                    final double doubleValue = value.getDouble();
-                    final long longValue = Double.doubleToLongBits(doubleValue);
-                    if (doubleValue < 0.0) {
-                        return Bytes.toBytes(~longValue);
-                    }
-
-                    return Bytes.toBytes(longValue ^ INVERT_SIGN_MASK);
+                    valueObject = value.getDouble();
+                    encoder = new DoubleRowKey();
+                    break;
                 }
                 case BINARY:
                 case STRING: {
-                    return Arrays.copyOf(value.array(), columnSchema.getMaxLength());
+                    valueObject = value.array();
+                    encoder = new UTF8RowKey();
+                    encoder.setTermination(Termination.MUST);
+                    break;
                 }
                 default:
                     return value.array();
             }
+
+            encoder.setOrder(sortOrder);
+            return encoder.serialize(valueObject);
+        } catch (IOException e) {
+            throw new RuntimeIOException(e);
         } finally {
             value.rewind(); // rewind the ByteBuffer's index pointer
         }
@@ -197,10 +196,9 @@ public class IndexRowKeyBuilder {
                 ByteBuffer record = fields.get(column);
                 if (record != null) {
                     byte[] encodedRecord = encodeValue(record,
-                            tableSchema.getColumnSchema(column));
-                    encodedRecords.add(order == SortOrder.Ascending
-                            ? encodedRecord
-                            : reverseValue(encodedRecord));
+                            tableSchema.getColumnSchema(column).getType(),
+                            order == SortOrder.Ascending ? Order.ASCENDING : Order.DESCENDING);
+                    encodedRecords.add(encodedRecord);
                 } else {
                     encodedRecords.add(null);
                 }
@@ -220,8 +218,8 @@ public class IndexRowKeyBuilder {
      */
     private static class DescIndexRowKey extends IndexRowKey {
         private static final byte PREFIX = 0x08;
-        private static final byte[] NOT_NULL_BYTES = {0x00};
-        private static final byte[] NULL_BYTES = {0x01};
+        private static final byte[] NOT_NULL_BYTES = {0x02};
+        private static final byte[] NULL_BYTES = {0x03};
 
         public DescIndexRowKey(final long tableId, final long indexId,
                                final List<byte[]> records, final UUID uuid) {
@@ -235,8 +233,8 @@ public class IndexRowKeyBuilder {
      */
     private static class AscIndexRowKey extends IndexRowKey {
         private static final byte PREFIX = 0x07;
-        private static final byte[] NOT_NULL_BYTES = {0x01};
-        private static final byte[] NULL_BYTES = {0x00};
+        private static final byte[] NOT_NULL_BYTES = {0x03};
+        private static final byte[] NULL_BYTES = {0x02};
 
         public AscIndexRowKey(final long tableId, final long indexId,
                               final List<byte[]> records, final UUID uuid) {
