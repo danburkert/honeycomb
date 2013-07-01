@@ -32,7 +32,6 @@ import com.nearinfinity.honeycomb.exceptions.RuntimeIOException;
 import com.nearinfinity.honeycomb.hbase.VarEncoder;
 import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.util.Verify;
-import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 import java.util.List;
@@ -76,32 +75,6 @@ public abstract class IndexRowKey implements RowKey {
         this.sortOrder = sortOrder;
         this.notNullBytes = notNullBytes;
         this.nullBytes = nullBytes;
-    }
-
-    private static int recordsCompare(List<RowKeyValue> records1, List<RowKeyValue> records2, int nullOrder) {
-        byte[] value1, value2;
-        int compare;
-
-        for (int i = 0; i < Math.min(records1.size(), records2.size()); i++) {
-            RowKeyValue rowKeyValue = records1.get(i);
-            value1 = rowKeyValue == null ? null : rowKeyValue.serialize();
-            RowKeyValue rowKeyValue1 = records2.get(i);
-            value2 = rowKeyValue1 == null ? null : rowKeyValue1.serialize();
-            if (value1 == value2) {
-                continue;
-            }
-            if (value1 == null) {
-                return nullOrder;
-            }
-            if (value2 == null) {
-                return nullOrder * -1;
-            }
-            compare = new Bytes.ByteArrayComparator().compare(value1, value2);
-            if (compare != 0) {
-                return compare;
-            }
-        }
-        return records2.size() - records1.size();
     }
 
     @Override
@@ -153,44 +126,6 @@ public abstract class IndexRowKey implements RowKey {
                 .add("Records", records == null ? "" : recordValueStrings())
                 .add("UUID", uuid == null ? "" : Util.generateHexString(Util.UUIDToBytes(uuid)))
                 .toString();
-    }
-
-    @Override
-    public int compareTo(RowKey o) {
-        int typeCompare = getPrefix() - o.getPrefix();
-        if (typeCompare != 0) {
-            return typeCompare;
-        }
-        IndexRowKey row2 = (IndexRowKey) o;
-
-        int nullOrder = sortOrder == SortOrder.Ascending ? -1 : 1;
-
-        int compare;
-        compare = Long.signum(tableId - row2.tableId);
-        if (compare != 0) {
-            return compare;
-        }
-        compare = Long.signum(indexId - row2.indexId);
-        if (compare != 0) {
-            return compare;
-        }
-        compare = recordsCompare(records, row2.records, nullOrder);
-        if (compare != 0) {
-            return compare;
-        }
-
-        if (uuid == null) {
-            if (row2.uuid == null) {
-                return 0;
-            }
-            return -1;
-        } else if (row2.uuid == null) {
-            return 1;
-        } else {
-            return new Bytes.ByteArrayComparator().compare(
-                    Util.UUIDToBytes(uuid),
-                    Util.UUIDToBytes(row2.uuid));
-        }
     }
 
     private List<String> recordValueStrings() {

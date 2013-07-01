@@ -23,11 +23,9 @@
 package com.nearinfinity.honeycomb.hbase.rowkey;
 
 import com.google.common.base.Objects;
-import com.google.common.collect.ComparisonChain;
 import com.nearinfinity.honeycomb.hbase.VarEncoder;
 import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.util.Verify;
-import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.UUID;
 
@@ -92,18 +90,5 @@ public class DataRowKey implements RowKey {
             .add("TableId", tableId)
             .add("UUID", uuid == null ? "" : Util.generateHexString(Util.UUIDToBytes(uuid)))
             .toString();
-    }
-
-    @Override
-    public int compareTo(RowKey o) {
-        int typeCompare = getPrefix() - o.getPrefix();
-        if (typeCompare != 0) { return typeCompare; }
-        DataRowKey row2 = (DataRowKey) o;
-        return ComparisonChain.start()
-                .compare(getTableId(), row2.getTableId())
-                .compare(Util.UUIDToBytes(getUuid()),
-                        Util.UUIDToBytes(row2.getUuid()),
-                        new Bytes.ByteArrayComparator())
-                .result();
     }
 }

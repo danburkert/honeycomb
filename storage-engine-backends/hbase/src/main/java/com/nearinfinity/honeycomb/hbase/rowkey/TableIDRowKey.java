@@ -24,7 +24,6 @@ package com.nearinfinity.honeycomb.hbase.rowkey;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ComparisonChain;
 import com.nearinfinity.honeycomb.hbase.VarEncoder;
 
 /**
@@ -61,13 +60,5 @@ public class TableIDRowKey implements RowKey {
                 .add("Prefix", String.format("%02X", prefix))
                 .add("TableId", tableId)
                 .toString();
-    }
-
-    @Override
-    public int compareTo(RowKey o) {
-        int typeCompare = getPrefix() - o.getPrefix();
-        if (typeCompare != 0) { return typeCompare; }
-        TableIDRowKey row2 = (TableIDRowKey) o;
-        return ComparisonChain.start().compare(getTableId(), row2.getTableId()).result();
     }
 }

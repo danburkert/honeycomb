@@ -26,7 +26,7 @@ package com.nearinfinity.honeycomb.hbase.rowkey;
  * Implementing this interface allows an entity to represent a rowkey.  The rowkey
  * must always have an associated prefix for identification.
  */
-public interface RowKey extends Comparable<RowKey> {
+public interface RowKey {
     /**
      * Performs the necessary encoding operations to generate the byte representation for this rowkey
      *

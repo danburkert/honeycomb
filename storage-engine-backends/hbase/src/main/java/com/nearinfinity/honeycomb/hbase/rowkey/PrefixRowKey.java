@@ -61,9 +61,4 @@ public abstract class PrefixRowKey implements RowKey {
                 .add("Prefix", String.format("%02X", getPrefix()))
                 .toString();
     }
-
-    @Override
-    public int compareTo(RowKey o) {
-        return getPrefix() - o.getPrefix();
-    }
 }
