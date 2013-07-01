@@ -55,25 +55,20 @@ public abstract class IndexRowKey implements RowKey {
 
     protected IndexRowKey(final long tableId,
                           final long indexId,
-                          final List<IndexRowKey.RowKeyValue> records,
-                          final UUID uuid,
-                          final byte prefix,
-                          final byte[] notNullBytes,
-                          final byte[] nullBytes,
-                          final SortOrder sortOrder) {
+                          final List<RowKeyValue> records,
+                          final UUID uuid) {
         Verify.isValidId(tableId);
         checkArgument(indexId >= 0, "Index ID must be non-zero.");
-        checkNotNull(prefix, "Prefix cannot be null");
-        checkNotNull(notNullBytes, "Not null bytes cannot be null");
-        checkNotNull(nullBytes, "Null bytes cannot be null");
+        checkNotNull(records, "Records cannot be null");
+        this.prefix = checkNotNull(getPrefix(), "Prefix cannot be null");
+        this.sortOrder = checkNotNull(getSortOrder(), "Sort order cannot be null");
+        this.notNullBytes = checkNotNull(getNotNullBytes(), "Not null bytes cannot be null");
+        this.nullBytes = checkNotNull(getNullBytes(), "Null bytes cannot be null");
+
         this.uuid = uuid;
         this.tableId = tableId;
         this.indexId = indexId;
-        this.prefix = prefix;
         this.records = records;
-        this.sortOrder = sortOrder;
-        this.notNullBytes = notNullBytes;
-        this.nullBytes = nullBytes;
     }
 
     @Override
@@ -102,11 +97,6 @@ public abstract class IndexRowKey implements RowKey {
     }
 
     @Override
-    public byte getPrefix() {
-        return prefix;
-    }
-
-    @Override
     public String toString() {
         return Objects.toStringHelper(this.getClass())
                 .add("Prefix", String.format("%02X", prefix))
@@ -116,6 +106,12 @@ public abstract class IndexRowKey implements RowKey {
                 .add("UUID", uuid == null ? "" : Util.generateHexString(Util.UUIDToBytes(uuid)))
                 .toString();
     }
+
+    protected abstract SortOrder getSortOrder();
+
+    protected abstract byte[] getNotNullBytes();
+
+    protected abstract byte[] getNullBytes();
 
     private List<RowKeyValue> getRowKeyValues() {
         List<RowKeyValue> encodingList = Lists.newArrayList();

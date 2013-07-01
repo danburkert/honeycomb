@@ -92,10 +92,10 @@ public class IndexRowKeyBuilder {
         Order order;
         LongRowKey rowKey = new LongRowKey();
         if (sortOrder == SortOrder.Ascending) {
-            prefix = new byte[]{AscIndexRowKey.PREFIX};
+            prefix = new byte[]{(byte) 0x07};
             order = Order.ASCENDING;
         } else {
-            prefix = new byte[]{DescIndexRowKey.PREFIX};
+            prefix = new byte[]{(byte) 0x08};
             order = Order.DESCENDING;
         }
 
@@ -217,10 +217,7 @@ public class IndexRowKeyBuilder {
                 }
                 ByteBuffer record = fields.get(column);
                 if (record != null) {
-                    IndexRowKey.RowKeyValue encodedRecord = encodeValue(record,
-                            tableSchema.getColumnSchema(column).getType()
-                    );
-                    encodedRecords.add(encodedRecord);
+                    encodedRecords.add(encodeValue(record, tableSchema.getColumnSchema(column).getType()));
                 } else {
                     encodedRecords.add(null);
                 }
@@ -239,13 +236,30 @@ public class IndexRowKeyBuilder {
      * for data row content
      */
     private static class DescIndexRowKey extends IndexRowKey {
-        public static final byte PREFIX = 0x08;
-        private static final byte[] NOT_NULL_BYTES = {0x02};
-        private static final byte[] NULL_BYTES = {0x03};
 
         public DescIndexRowKey(final long tableId, final long indexId,
                                final List<IndexRowKey.RowKeyValue> records, final UUID uuid) {
-            super(tableId, indexId, records, uuid, PREFIX, NOT_NULL_BYTES, NULL_BYTES, SortOrder.Descending);
+            super(tableId, indexId, records, uuid);
+        }
+
+        @Override
+        protected SortOrder getSortOrder() {
+            return SortOrder.Descending;
+        }
+
+        @Override
+        protected byte[] getNotNullBytes() {
+            return new byte[]{0x00};
+        }
+
+        @Override
+        protected byte[] getNullBytes() {
+            return new byte[]{0x01};
+        }
+
+        @Override
+        public byte getPrefix() {
+            return (byte) 0x08;
         }
     }
 
@@ -254,13 +268,30 @@ public class IndexRowKeyBuilder {
      * for data row content
      */
     private static class AscIndexRowKey extends IndexRowKey {
-        public static final byte PREFIX = 0x07;
-        private static final byte[] NOT_NULL_BYTES = {0x03};
-        private static final byte[] NULL_BYTES = {0x02};
 
         public AscIndexRowKey(final long tableId, final long indexId,
                               final List<IndexRowKey.RowKeyValue> records, final UUID uuid) {
-            super(tableId, indexId, records, uuid, PREFIX, NOT_NULL_BYTES, NULL_BYTES, SortOrder.Ascending);
+            super(tableId, indexId, records, uuid);
+        }
+
+        @Override
+        protected SortOrder getSortOrder() {
+            return SortOrder.Ascending;
+        }
+
+        @Override
+        protected byte[] getNotNullBytes() {
+            return new byte[]{0x01};
+        }
+
+        @Override
+        protected byte[] getNullBytes() {
+            return new byte[]{0x00};
+        }
+
+        @Override
+        public byte getPrefix() {
+            return (byte) 0x07;
         }
     }
 }
