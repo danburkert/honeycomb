@@ -47,8 +47,8 @@ import static com.google.common.base.Preconditions.checkState;
  * to call {@link #build} multiple times.
  */
 public class IndexRowKeyBuilder {
-    public static final byte ASCENDING_PREFIX = 0x07;
-    public static final byte DESCENDING_PREFIX = 0x08;
+
+
     private final long tableId;
     private final long indexId;
     private SortOrder order;
@@ -85,14 +85,17 @@ public class IndexRowKeyBuilder {
      * @return Start of index for a table.
      */
     public static byte[] createDropTableIndexKey(long tableId, SortOrder sortOrder) {
+        Verify.isValidId(tableId);
+        checkNotNull(sortOrder);
+
         byte[] prefix;
         Order order;
         LongRowKey rowKey = new LongRowKey();
         if (sortOrder == SortOrder.Ascending) {
-            prefix = new byte[]{ASCENDING_PREFIX};
+            prefix = new byte[]{AscIndexRowKey.PREFIX};
             order = Order.ASCENDING;
         } else {
-            prefix = new byte[]{DESCENDING_PREFIX};
+            prefix = new byte[]{DescIndexRowKey.PREFIX};
             order = Order.DESCENDING;
         }
 
@@ -236,12 +239,13 @@ public class IndexRowKeyBuilder {
      * for data row content
      */
     private static class DescIndexRowKey extends IndexRowKey {
+        public static final byte PREFIX = 0x08;
         private static final byte[] NOT_NULL_BYTES = {0x02};
         private static final byte[] NULL_BYTES = {0x03};
 
         public DescIndexRowKey(final long tableId, final long indexId,
                                final List<IndexRowKey.RowKeyValue> records, final UUID uuid) {
-            super(tableId, indexId, records, uuid, DESCENDING_PREFIX, NOT_NULL_BYTES, NULL_BYTES, SortOrder.Descending);
+            super(tableId, indexId, records, uuid, PREFIX, NOT_NULL_BYTES, NULL_BYTES, SortOrder.Descending);
         }
     }
 
@@ -250,12 +254,13 @@ public class IndexRowKeyBuilder {
      * for data row content
      */
     private static class AscIndexRowKey extends IndexRowKey {
+        public static final byte PREFIX = 0x07;
         private static final byte[] NOT_NULL_BYTES = {0x03};
         private static final byte[] NULL_BYTES = {0x02};
 
         public AscIndexRowKey(final long tableId, final long indexId,
                               final List<IndexRowKey.RowKeyValue> records, final UUID uuid) {
-            super(tableId, indexId, records, uuid, ASCENDING_PREFIX, NOT_NULL_BYTES, NULL_BYTES, SortOrder.Ascending);
+            super(tableId, indexId, records, uuid, PREFIX, NOT_NULL_BYTES, NULL_BYTES, SortOrder.Ascending);
         }
     }
 }

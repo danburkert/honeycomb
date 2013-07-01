@@ -61,7 +61,6 @@ public abstract class IndexRowKey implements RowKey {
                           final byte[] notNullBytes,
                           final byte[] nullBytes,
                           final SortOrder sortOrder) {
-
         Verify.isValidId(tableId);
         checkArgument(indexId >= 0, "Index ID must be non-zero.");
         checkNotNull(prefix, "Prefix cannot be null");
@@ -80,18 +79,7 @@ public abstract class IndexRowKey implements RowKey {
     @Override
     public byte[] encode() {
         final byte[] prefixBytes = {prefix};
-        List<RowKeyValue> encodingList = Lists.newArrayList();
-        encodingList.add(new RowKeyValue(new LongRowKey(), tableId));
-        encodingList.add(new RowKeyValue(new LongRowKey(), indexId));
-        for (RowKeyValue record : records) {
-            encodingList.add(new RowKeyValue(new FixedByteArrayRowKey(1), record == null ? nullBytes : notNullBytes));
-            if (record != null) {
-                encodingList.add(record);
-            }
-        }
-        if (uuid != null) {
-            encodingList.add(new RowKeyValue(new FixedByteArrayRowKey(16), Util.UUIDToBytes(uuid)));
-        }
+        List<RowKeyValue> encodingList = getRowKeyValues();
 
         com.gotometrics.orderly.RowKey[] fields = new com.gotometrics.orderly.RowKey[encodingList.size()];
         Object[] objects = new Object[encodingList.size()];
@@ -127,6 +115,24 @@ public abstract class IndexRowKey implements RowKey {
                 .add("Records", records == null ? "" : recordValueStrings())
                 .add("UUID", uuid == null ? "" : Util.generateHexString(Util.UUIDToBytes(uuid)))
                 .toString();
+    }
+
+    private List<RowKeyValue> getRowKeyValues() {
+        List<RowKeyValue> encodingList = Lists.newArrayList();
+        encodingList.add(new RowKeyValue(new LongRowKey(), tableId));
+        encodingList.add(new RowKeyValue(new LongRowKey(), indexId));
+        for (RowKeyValue record : records) {
+            encodingList.add(new RowKeyValue(new FixedByteArrayRowKey(1), record == null ? nullBytes : notNullBytes));
+            if (record != null) {
+                encodingList.add(record);
+            }
+        }
+
+        if (uuid != null) {
+            encodingList.add(new RowKeyValue(new FixedByteArrayRowKey(16), Util.UUIDToBytes(uuid)));
+        }
+
+        return encodingList;
     }
 
     private List<String> recordValueStrings() {
