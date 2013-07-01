@@ -15,7 +15,7 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- *
+ * 
  * Copyright 2013 Near Infinity Corporation.
  */
 
@@ -37,17 +37,16 @@ import org.junit.Test;
 import java.util.Collections;
 import java.util.List;
 
-public class StringEncodingTest extends EncodingTest<String> {
-
+public class DoubleEncodingTest extends EncodingTest<Double> {
     private static TableSchema tableSchema =
             new TableSchema(
-                    ImmutableList.of(ColumnSchema.builder(COLUMN, ColumnType.STRING).setMaxLength(32).build()),
+                    ImmutableList.of(ColumnSchema.builder(COLUMN, ColumnType.DOUBLE).build()),
                     ImmutableList.of(new IndexSchema("i1", ImmutableList.of(COLUMN), false))
             );
 
     @Test
-    public void testAscendingCorrectlySortsStrings() {
-        List<Pair<String, byte[]>> rows = Lists.newArrayList();
+    public void testAscendingCorrectlySortsDoubles() {
+        List<Pair<Double, byte[]>> rows = Lists.newArrayList();
         RowKeyGenerator.IndexRowKeyGenerator rowKeyGen =
                 RowKeyGenerator.getAscIndexRowKeyGenerator(tableSchema);
         addPairs(rows, rowKeyGen);
@@ -55,30 +54,29 @@ public class StringEncodingTest extends EncodingTest<String> {
         Collections.sort(rows, new RowComparator());
 
         for (int i = 1; i < rows.size(); i++) {
-            Pair<String, byte[]> previous = rows.get(i - 1);
-            Pair<String, byte[]> current = rows.get(i);
-            assertTrueWithPairs(previous.getFirst().compareTo(current.getFirst()) <= 0, previous, current);
+            Pair<Double, byte[]> previous = rows.get(i - 1);
+            Pair<Double, byte[]> current = rows.get(i);
+            assertTrueWithPairs(previous.getFirst() < current.getFirst(), previous, current);
         }
     }
 
     @Test
-    public void testDescendingCorrectlySortsStrings() {
-        List<Pair<String, byte[]>> rows = Lists.newArrayList();
+    public void testDescendingCorrectlySortsDoubles() {
+        List<Pair<Double, byte[]>> rows = Lists.newArrayList();
         RowKeyGenerator.IndexRowKeyGenerator rowKeyGen =
                 RowKeyGenerator.getDescIndexRowKeyGenerator(tableSchema);
         addPairs(rows, rowKeyGen);
-
         Collections.sort(rows, new RowComparator());
 
         for (int i = 1; i < rows.size(); i++) {
-            Pair<String, byte[]> previous = rows.get(i - 1);
-            Pair<String, byte[]> current = rows.get(i);
-            assertTrueWithPairs(previous.getFirst().compareTo(current.getFirst()) >= 0, previous, current);
+            Pair<Double, byte[]> previous = rows.get(i - 1);
+            Pair<Double, byte[]> current = rows.get(i);
+            assertTrueWithPairs(previous.getFirst() > current.getFirst(), previous, current);
         }
     }
 
     @Override
-    protected String getValue(Pair<IndexRowKey, QueryKey> pair) {
-        return new String(pair.getSecond().getKeys().get(COLUMN).array());
+    protected Double getValue(Pair<IndexRowKey, QueryKey> pair) {
+        return pair.getSecond().getKeys().get(COLUMN).getDouble();
     }
 }

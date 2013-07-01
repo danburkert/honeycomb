@@ -24,7 +24,6 @@ package com.nearinfinity.honeycomb.hbase;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.primitives.UnsignedBytes;
 import com.nearinfinity.honeycomb.hbase.generators.RowKeyGenerator;
 import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowKey;
 import com.nearinfinity.honeycomb.mysql.QueryKey;
@@ -33,17 +32,12 @@ import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import net.java.quickcheck.collection.Pair;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
-import static org.junit.Assert.assertTrue;
-
-public class LongEncodingTest {
-    private static final String COLUMN = "c1";
+public class LongEncodingTest extends EncodingTest<Long> {
     private static TableSchema tableSchema =
             new TableSchema(
                     ImmutableList.of(ColumnSchema.builder(COLUMN, ColumnType.LONG).build()),
@@ -81,31 +75,8 @@ public class LongEncodingTest {
         }
     }
 
-    private void addPairs(List<Pair<Long, byte[]>> rows, RowKeyGenerator.IndexRowKeyGenerator rowKeyGen) {
-        Pair<IndexRowKey, QueryKey> pair;
-        for (int i = 0; i < 200; i++) {
-            pair = rowKeyGen.nextWithQueryKey();
-            if (pair.getSecond().getKeys().get(COLUMN) != null) {
-                rows.add(new Pair<Long, byte[]>(
-                        pair.getSecond().getKeys().get(COLUMN).getLong(),
-                        pair.getFirst().encode()));
-            } else {
-                i--;
-            }
-        }
-    }
-
-    private void assertTrueWithPairs(boolean condition, Pair<Long, byte[]> previous, Pair<Long, byte[]> current) {
-        assertTrue(previous.getFirst() + " / " +
-                Bytes.toStringBinary(previous.getSecond()) + " : " +
-                current.getFirst() + " / " +
-                Bytes.toStringBinary(current.getSecond()), condition);
-    }
-
-    private class RowComparator implements Comparator<Pair<Long, byte[]>> {
-        @Override
-        public int compare(Pair<Long, byte[]> o1, Pair<Long, byte[]> o2) {
-            return UnsignedBytes.lexicographicalComparator().compare(o1.getSecond(), o2.getSecond());
-        }
+    @Override
+    protected Long getValue(Pair<IndexRowKey, QueryKey> pair) {
+        return pair.getSecond().getKeys().get(COLUMN).getLong();
     }
 }
