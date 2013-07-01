@@ -22,16 +22,6 @@
 
 package com.nearinfinity.honeycomb.hbase;
 
-import static org.junit.Assert.assertTrue;
-
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-
-import net.java.quickcheck.collection.Pair;
-
-import org.junit.Test;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.UnsignedBytes;
@@ -42,8 +32,17 @@ import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
+import net.java.quickcheck.collection.Pair;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Test;
 
-public class EncodingTest {
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
+import static org.junit.Assert.assertTrue;
+
+public class LongEncodingTest {
     private static final String COLUMN = "c1";
     private static TableSchema tableSchema =
             new TableSchema(
@@ -56,6 +55,33 @@ public class EncodingTest {
         List<Pair<Long, byte[]>> rows = Lists.newArrayList();
         RowKeyGenerator.IndexRowKeyGenerator rowKeyGen =
                 RowKeyGenerator.getAscIndexRowKeyGenerator(tableSchema);
+        addPairs(rows, rowKeyGen);
+
+        Collections.sort(rows, new RowComparator());
+
+        for (int i = 1; i < rows.size(); i++) {
+            Pair<Long, byte[]> previous = rows.get(i - 1);
+            Pair<Long, byte[]> current = rows.get(i);
+            assertTrueWithPairs(previous.getFirst() < current.getFirst(), previous, current);
+        }
+    }
+
+    @Test
+    public void testDescendingCorrectlySortsLong() {
+        List<Pair<Long, byte[]>> rows = Lists.newArrayList();
+        RowKeyGenerator.IndexRowKeyGenerator rowKeyGen =
+                RowKeyGenerator.getDescIndexRowKeyGenerator(tableSchema);
+        addPairs(rows, rowKeyGen);
+        Collections.sort(rows, new RowComparator());
+
+        for (int i = 1; i < rows.size(); i++) {
+            Pair<Long, byte[]> previous = rows.get(i - 1);
+            Pair<Long, byte[]> current = rows.get(i);
+            assertTrueWithPairs(previous.getFirst() > current.getFirst(), previous, current);
+        }
+    }
+
+    private void addPairs(List<Pair<Long, byte[]>> rows, RowKeyGenerator.IndexRowKeyGenerator rowKeyGen) {
         Pair<IndexRowKey, QueryKey> pair;
         for (int i = 0; i < 200; i++) {
             pair = rowKeyGen.nextWithQueryKey();
@@ -67,39 +93,13 @@ public class EncodingTest {
                 i--;
             }
         }
-
-        Collections.sort(rows, new RowComparator());
-
-        for (int i = 1; i < rows.size(); i++) {
-            Pair<Long, byte[]> previous = rows.get(i - 1);
-            Pair<Long, byte[]> current = rows.get(i);
-            assertTrue(previous.getFirst() < current.getFirst());
-        }
     }
 
-    @Test
-    public void testDescendingCorrectlySortsLong() {
-        List<Pair<Long, byte[]>> rows = Lists.newArrayList();
-        RowKeyGenerator.IndexRowKeyGenerator rowKeyGen =
-                RowKeyGenerator.getDescIndexRowKeyGenerator(tableSchema);
-        Pair<IndexRowKey, QueryKey> pair;
-        for (int i = 0; i < 200; i++) {
-            pair = rowKeyGen.nextWithQueryKey();
-            if (pair.getSecond().getKeys().get(COLUMN) != null) {
-                rows.add(new Pair<Long, byte[]>(
-                    pair.getSecond().getKeys().get(COLUMN).getLong(),
-                    pair.getFirst().encode()));
-            } else {
-                i--;
-            }
-        }
-        Collections.sort(rows, new RowComparator());
-
-        for (int i = 1; i < rows.size(); i++) {
-            Pair<Long, byte[]> previous = rows.get(i - 1);
-            Pair<Long, byte[]> current = rows.get(i);
-            assertTrue(previous.getFirst() > current.getFirst());
-        }
+    private void assertTrueWithPairs(boolean condition, Pair<Long, byte[]> previous, Pair<Long, byte[]> current) {
+        assertTrue(previous.getFirst() + " / " +
+                Bytes.toStringBinary(previous.getSecond()) + " : " +
+                current.getFirst() + " / " +
+                Bytes.toStringBinary(current.getSecond()), condition);
     }
 
     private class RowComparator implements Comparator<Pair<Long, byte[]>> {

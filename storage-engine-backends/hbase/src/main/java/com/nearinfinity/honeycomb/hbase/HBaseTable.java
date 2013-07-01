@@ -23,17 +23,18 @@
 package com.nearinfinity.honeycomb.hbase;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.name.Named;
+import com.gotometrics.orderly.LongRowKey;
+import com.gotometrics.orderly.Order;
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.exceptions.RowNotFoundException;
+import com.nearinfinity.honeycomb.exceptions.RuntimeIOException;
 import com.nearinfinity.honeycomb.hbase.config.ConfigConstants;
-import com.nearinfinity.honeycomb.hbase.rowkey.DataRowKey;
-import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowKey;
-import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowKeyBuilder;
-import com.nearinfinity.honeycomb.hbase.rowkey.SortOrder;
+import com.nearinfinity.honeycomb.hbase.rowkey.*;
 import com.nearinfinity.honeycomb.mysql.QueryKey;
 import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.mysql.Util;
@@ -155,11 +156,11 @@ public class HBaseTable implements Table {
     public void deleteAllRows() {
         deleteRowsInRange(new DataRowKey(tableId).encode(), new DataRowKey(tableId + 1).encode());
         deleteRowsInRange(
-                IndexRowKeyBuilder.newBuilder(tableId, 0).withSortOrder(SortOrder.Ascending).build().encode(),
-                IndexRowKeyBuilder.newBuilder(tableId + 1, 0).withSortOrder(SortOrder.Ascending).build().encode());
+                createDropTableIndexKey(tableId, SortOrder.Ascending),
+                createDropTableIndexKey(tableId + 1, SortOrder.Ascending));
         deleteRowsInRange(
-                IndexRowKeyBuilder.newBuilder(tableId, 0).withSortOrder(SortOrder.Descending).build().encode(),
-                IndexRowKeyBuilder.newBuilder(tableId + 1, 0).withSortOrder(SortOrder.Descending).build().encode());
+                createDropTableIndexKey(tableId, SortOrder.Descending),
+                createDropTableIndexKey(tableId - 1, SortOrder.Descending));
     }
 
     @Override
@@ -345,6 +346,27 @@ public class HBaseTable implements Table {
         Scan scan = new Scan(start, end);
         ResultScanner scanner = HBaseOperations.getScanner(hTable, scan);
         return new HBaseScanner(scanner, columnFamily);
+    }
+
+    private static byte[] createDropTableIndexKey(long tableId, SortOrder sortOrder) {
+        byte[] prefix;
+        Order order;
+        LongRowKey rowKey = new LongRowKey();
+        if (sortOrder == SortOrder.Ascending) {
+            prefix = new byte[]{IndexRowKeyBuilder.ASCENDING_PREFIX};
+            order = Order.ASCENDING;
+        } else {
+            prefix = new byte[]{IndexRowKeyBuilder.DESCENDING_PREFIX};
+            order = Order.DESCENDING;
+        }
+
+        rowKey.setOrder(order);
+        try {
+            byte[] serialize = rowKey.serialize(tableId);
+            return VarEncoder.appendByteArrays(Lists.newArrayList(prefix, serialize));
+        } catch (IOException e) {
+            throw new RuntimeIOException(e);
+        }
     }
 }
 

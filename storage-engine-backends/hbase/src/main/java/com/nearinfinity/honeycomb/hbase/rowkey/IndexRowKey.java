@@ -24,11 +24,17 @@ package com.nearinfinity.honeycomb.hbase.rowkey;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
+import com.gotometrics.orderly.FixedByteArrayRowKey;
+import com.gotometrics.orderly.LongRowKey;
+import com.gotometrics.orderly.Order;
+import com.gotometrics.orderly.StructRowKey;
+import com.nearinfinity.honeycomb.exceptions.RuntimeIOException;
 import com.nearinfinity.honeycomb.hbase.VarEncoder;
 import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.util.Verify;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
@@ -42,20 +48,21 @@ public abstract class IndexRowKey implements RowKey {
     private final byte prefix;
     private final long tableId;
     private final long indexId;
+    private final UUID uuid;
+    private final List<IndexRowKey.RowKeyValue> records;
+    private final SortOrder sortOrder;
     private final byte[] notNullBytes;
     private final byte[] nullBytes;
-    private final UUID uuid;
-    private final List<byte[]> records;
-    private final SortOrder sortOrder;
 
     protected IndexRowKey(final long tableId,
-                       final long indexId,
-                       final List<byte[]> records,
-                       final UUID uuid,
-                       final byte prefix,
-                       final byte[] notNullBytes,
-                       final byte[] nullBytes,
-                       final SortOrder sortOrder) {
+                          final long indexId,
+                          final List<IndexRowKey.RowKeyValue> records,
+                          final UUID uuid,
+                          final byte prefix,
+                          final byte[] notNullBytes,
+                          final byte[] nullBytes,
+                          final SortOrder sortOrder) {
+
         Verify.isValidId(tableId);
         checkArgument(indexId >= 0, "Index ID must be non-zero.");
         checkNotNull(prefix, "Prefix cannot be null");
@@ -65,35 +72,71 @@ public abstract class IndexRowKey implements RowKey {
         this.tableId = tableId;
         this.indexId = indexId;
         this.prefix = prefix;
-        this.notNullBytes = notNullBytes;
-        this.nullBytes = nullBytes;
         this.records = records;
         this.sortOrder = sortOrder;
+        this.notNullBytes = notNullBytes;
+        this.nullBytes = nullBytes;
+    }
+
+    private static int recordsCompare(List<RowKeyValue> records1, List<RowKeyValue> records2, int nullOrder) {
+        byte[] value1, value2;
+        int compare;
+
+        for (int i = 0; i < Math.min(records1.size(), records2.size()); i++) {
+            RowKeyValue rowKeyValue = records1.get(i);
+            value1 = rowKeyValue == null ? null : rowKeyValue.serialize();
+            RowKeyValue rowKeyValue1 = records2.get(i);
+            value2 = rowKeyValue1 == null ? null : rowKeyValue1.serialize();
+            if (value1 == value2) {
+                continue;
+            }
+            if (value1 == null) {
+                return nullOrder;
+            }
+            if (value2 == null) {
+                return nullOrder * -1;
+            }
+            compare = new Bytes.ByteArrayComparator().compare(value1, value2);
+            if (compare != 0) {
+                return compare;
+            }
+        }
+        return records2.size() - records1.size();
     }
 
     @Override
     public byte[] encode() {
-        final byte[] prefixBytes = {prefix};
-        final List<byte[]> encodedParts = Lists.newArrayList();
-        encodedParts.add(prefixBytes);
-        encodedParts.add(VarEncoder.encodeULong(tableId));
-        encodedParts.add(VarEncoder.encodeULong(indexId));
-
-        if (records != null) {
-            for (final byte[] record : records) {
-                if (record == null) {
-                    encodedParts.add(nullBytes);
-                } else {
-                    encodedParts.add(notNullBytes);
-                    encodedParts.add(record);
+        try {
+            final byte[] prefixBytes = {prefix};
+            int i = 0;
+            List<RowKeyValue> encodingList = Lists.newArrayList();
+            encodingList.add(new RowKeyValue(new LongRowKey(), tableId));
+            encodingList.add(new RowKeyValue(new LongRowKey(), indexId));
+            for (RowKeyValue record : records) {
+                encodingList.add(new RowKeyValue(new FixedByteArrayRowKey(1), record == null ? nullBytes : notNullBytes));
+                if (record != null) {
+                    encodingList.add(record);
                 }
             }
-            if (uuid != null) {
-                encodedParts.add(Util.UUIDToBytes(uuid));
-            }
-        }
+            if (uuid != null)
+                encodingList.add(new RowKeyValue(new FixedByteArrayRowKey(16), Util.UUIDToBytes(uuid)));
 
-        return VarEncoder.appendByteArrays(encodedParts);
+            com.gotometrics.orderly.RowKey[] fields = new com.gotometrics.orderly.RowKey[encodingList.size()];
+            Object[] objects = new Object[encodingList.size()];
+
+            for (RowKeyValue rowKeyValue : encodingList) {
+                fields[i] = rowKeyValue.rowKey;
+                objects[i] = rowKeyValue.value;
+                i++;
+            }
+
+            StructRowKey rowKey = new StructRowKey(fields);
+            rowKey.setOrder(this.sortOrder == SortOrder.Ascending ? Order.ASCENDING : Order.DESCENDING);
+            byte[] serialize = rowKey.serialize(objects);
+            return VarEncoder.appendByteArrays(Lists.newArrayList(prefixBytes, serialize));
+        } catch (IOException e) {
+            throw new RuntimeIOException(e);
+        }
     }
 
     @Override
@@ -112,20 +155,12 @@ public abstract class IndexRowKey implements RowKey {
                 .toString();
     }
 
-    private List<String> recordValueStrings() {
-        final List<String> strings = Lists.newArrayList();
-
-        for (final byte[] bytes : records) {
-            strings.add((bytes == null) ? "null" : Util.generateHexString(bytes));
-        }
-
-        return strings;
-    }
-
     @Override
     public int compareTo(RowKey o) {
         int typeCompare = getPrefix() - o.getPrefix();
-        if (typeCompare != 0) { return typeCompare; }
+        if (typeCompare != 0) {
+            return typeCompare;
+        }
         IndexRowKey row2 = (IndexRowKey) o;
 
         int nullOrder = sortOrder == SortOrder.Ascending ? -1 : 1;
@@ -158,27 +193,34 @@ public abstract class IndexRowKey implements RowKey {
         }
     }
 
-    private static int recordsCompare(List<byte[]> records1, List<byte[]> records2, int nullOrder) {
-        byte[] value1, value2;
-        int compare;
+    private List<String> recordValueStrings() {
+        final List<String> strings = Lists.newArrayList();
 
-        for (int i = 0; i < Math.min(records1.size(), records2.size()); i++) {
-            value1 = records1.get(i);
-            value2 = records2.get(i);
-            if (value1 == value2) {
-                continue;
-            }
-            if (value1 == null) {
-                return nullOrder;
-            }
-            if (value2 == null) {
-                return nullOrder * -1;
-            }
-            compare = new Bytes.ByteArrayComparator().compare(value1, value2);
-            if (compare != 0) {
-                return compare;
+        for (final RowKeyValue bytes : records) {
+            strings.add((bytes == null) ? "null" : Util.generateHexString(bytes.serialize()));
+        }
+
+        return strings;
+    }
+
+    public static class RowKeyValue {
+        private final com.gotometrics.orderly.RowKey rowKey;
+        private final Object value;
+
+        public RowKeyValue(com.gotometrics.orderly.RowKey rowKey, Object value) {
+            this.rowKey = rowKey;
+            this.value = value;
+        }
+
+        public byte[] serialize() {
+            if (value == null)
+                return null;
+
+            try {
+                return rowKey.serialize(value);
+            } catch (IOException e) {
+                throw new RuntimeIOException(e);
             }
         }
-        return records2.size() - records1.size();
     }
 }

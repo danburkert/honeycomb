@@ -25,15 +25,12 @@ package com.nearinfinity.honeycomb.hbase.rowkey;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.gotometrics.orderly.*;
-import com.gotometrics.orderly.RowKey;
-import com.nearinfinity.honeycomb.exceptions.RuntimeIOException;
 import com.nearinfinity.honeycomb.mysql.QueryKey;
 import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import com.nearinfinity.honeycomb.util.Verify;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +44,8 @@ import static com.google.common.base.Preconditions.checkState;
  * to call {@link #build} multiple times.
  */
 public class IndexRowKeyBuilder {
+    public static final byte ASCENDING_PREFIX = 0x07;
+    public static final byte DESCENDING_PREFIX = 0x08;
     private final long tableId;
     private final long indexId;
     private SortOrder order;
@@ -73,42 +72,6 @@ public class IndexRowKeyBuilder {
         Verify.isValidId(indexId);
 
         return new IndexRowKeyBuilder(tableId, indexId);
-    }
-
-    private static byte[] encodeValue(final ByteBuffer value, final ColumnType columnType, Order sortOrder) {
-        RowKey encoder;
-        Object valueObject;
-        try {
-            switch (columnType) {
-                case LONG:
-                case TIME: {
-                    valueObject = value.getLong();
-                    encoder = new LongRowKey();
-                    break;
-                }
-                case DOUBLE: {
-                    valueObject = value.getDouble();
-                    encoder = new DoubleRowKey();
-                    break;
-                }
-                case BINARY:
-                case STRING: {
-                    valueObject = value.array();
-                    encoder = new UTF8RowKey();
-                    encoder.setTermination(Termination.MUST);
-                    break;
-                }
-                default:
-                    return value.array();
-            }
-
-            encoder.setOrder(sortOrder);
-            return encoder.serialize(valueObject);
-        } catch (IOException e) {
-            throw new RuntimeIOException(e);
-        } finally {
-            value.rewind(); // rewind the ByteBuffer's index pointer
-        }
     }
 
     /**
@@ -187,7 +150,7 @@ public class IndexRowKeyBuilder {
      */
     public IndexRowKey build() {
         checkState(order != null, "Sort order must be set on IndexRowBuilder.");
-        List<byte[]> encodedRecords = Lists.newArrayList();
+        List<IndexRowKey.RowKeyValue> encodedRecords = Lists.newArrayList();
         if (fields != null) {
             for (String column : tableSchema.getIndexSchema(indexName).getColumns()) {
                 if (!fields.containsKey(column)) {
@@ -195,9 +158,9 @@ public class IndexRowKeyBuilder {
                 }
                 ByteBuffer record = fields.get(column);
                 if (record != null) {
-                    byte[] encodedRecord = encodeValue(record,
-                            tableSchema.getColumnSchema(column).getType(),
-                            order == SortOrder.Ascending ? Order.ASCENDING : Order.DESCENDING);
+                    IndexRowKey.RowKeyValue encodedRecord = encodeValue(record,
+                            tableSchema.getColumnSchema(column).getType()
+                    );
                     encodedRecords.add(encodedRecord);
                 } else {
                     encodedRecords.add(null);
@@ -212,18 +175,41 @@ public class IndexRowKeyBuilder {
         return new DescIndexRowKey(tableId, indexId, encodedRecords, uuid);
     }
 
+    private static IndexRowKey.RowKeyValue encodeValue(final ByteBuffer value, final ColumnType columnType) {
+        try {
+            switch (columnType) {
+                case LONG:
+                case TIME: {
+                    return new IndexRowKey.RowKeyValue(new LongRowKey(), value.getLong());
+                }
+                case DOUBLE: {
+                    return new IndexRowKey.RowKeyValue(new DoubleRowKey(), value.getDouble());
+                }
+                case BINARY:
+                case STRING: {
+                    UTF8RowKey encoder = new UTF8RowKey();
+                    encoder.setTermination(Termination.MUST);
+                    return new IndexRowKey.RowKeyValue(encoder, value.array());
+                }
+                default:
+                    return new IndexRowKey.RowKeyValue(new FixedByteArrayRowKey(value.capacity()), value.array());
+            }
+        } finally {
+            value.rewind(); // rewind the ByteBuffer's index pointer
+        }
+    }
+
     /**
      * Representation of the rowkey associated with an index in descending order
      * for data row content
      */
     private static class DescIndexRowKey extends IndexRowKey {
-        private static final byte PREFIX = 0x08;
         private static final byte[] NOT_NULL_BYTES = {0x02};
         private static final byte[] NULL_BYTES = {0x03};
 
         public DescIndexRowKey(final long tableId, final long indexId,
-                               final List<byte[]> records, final UUID uuid) {
-            super(tableId, indexId, records, uuid, PREFIX, NOT_NULL_BYTES, NULL_BYTES, SortOrder.Descending);
+                               final List<IndexRowKey.RowKeyValue> records, final UUID uuid) {
+            super(tableId, indexId, records, uuid, DESCENDING_PREFIX, NOT_NULL_BYTES, NULL_BYTES, SortOrder.Descending);
         }
     }
 
@@ -232,13 +218,12 @@ public class IndexRowKeyBuilder {
      * for data row content
      */
     private static class AscIndexRowKey extends IndexRowKey {
-        private static final byte PREFIX = 0x07;
         private static final byte[] NOT_NULL_BYTES = {0x03};
         private static final byte[] NULL_BYTES = {0x02};
 
         public AscIndexRowKey(final long tableId, final long indexId,
-                              final List<byte[]> records, final UUID uuid) {
-            super(tableId, indexId, records, uuid, PREFIX, NOT_NULL_BYTES, NULL_BYTES, SortOrder.Ascending);
+                              final List<IndexRowKey.RowKeyValue> records, final UUID uuid) {
+            super(tableId, indexId, records, uuid, ASCENDING_PREFIX, NOT_NULL_BYTES, NULL_BYTES, SortOrder.Ascending);
         }
     }
 }
