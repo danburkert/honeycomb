@@ -124,7 +124,7 @@ public class HBaseTable implements Table {
                 IndexRowKeyBuilder.newBuilder(tableId, indexId + 1).withSortOrder(SortOrder.Ascending).build().encode());
         deleteRowsInRange(
                 IndexRowKeyBuilder.newBuilder(tableId, indexId).withSortOrder(SortOrder.Descending).build().encode(),
-                IndexRowKeyBuilder.newBuilder(tableId, indexId + 1).withSortOrder(SortOrder.Descending).build().encode());
+                IndexRowKeyBuilder.newBuilder(tableId, indexId - 1).withSortOrder(SortOrder.Descending).build().encode());
     }
 
     @Override
