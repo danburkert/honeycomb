@@ -79,32 +79,33 @@ public abstract class IndexRowKey implements RowKey {
 
     @Override
     public byte[] encode() {
+        final byte[] prefixBytes = {prefix};
+        List<RowKeyValue> encodingList = Lists.newArrayList();
+        encodingList.add(new RowKeyValue(new LongRowKey(), tableId));
+        encodingList.add(new RowKeyValue(new LongRowKey(), indexId));
+        for (RowKeyValue record : records) {
+            encodingList.add(new RowKeyValue(new FixedByteArrayRowKey(1), record == null ? nullBytes : notNullBytes));
+            if (record != null) {
+                encodingList.add(record);
+            }
+        }
+        if (uuid != null) {
+            encodingList.add(new RowKeyValue(new FixedByteArrayRowKey(16), Util.UUIDToBytes(uuid)));
+        }
+
+        com.gotometrics.orderly.RowKey[] fields = new com.gotometrics.orderly.RowKey[encodingList.size()];
+        Object[] objects = new Object[encodingList.size()];
+        int i = 0;
+        for (RowKeyValue rowKeyValue : encodingList) {
+            fields[i] = rowKeyValue.rowKey;
+            objects[i] = rowKeyValue.value;
+            i++;
+        }
+
+        StructRowKey rowKey = new StructRowKey(fields);
+        rowKey.setOrder(this.sortOrder == SortOrder.Ascending ? Order.ASCENDING : Order.DESCENDING);
+
         try {
-            final byte[] prefixBytes = {prefix};
-            int i = 0;
-            List<RowKeyValue> encodingList = Lists.newArrayList();
-            encodingList.add(new RowKeyValue(new LongRowKey(), tableId));
-            encodingList.add(new RowKeyValue(new LongRowKey(), indexId));
-            for (RowKeyValue record : records) {
-                encodingList.add(new RowKeyValue(new FixedByteArrayRowKey(1), record == null ? nullBytes : notNullBytes));
-                if (record != null) {
-                    encodingList.add(record);
-                }
-            }
-            if (uuid != null)
-                encodingList.add(new RowKeyValue(new FixedByteArrayRowKey(16), Util.UUIDToBytes(uuid)));
-
-            com.gotometrics.orderly.RowKey[] fields = new com.gotometrics.orderly.RowKey[encodingList.size()];
-            Object[] objects = new Object[encodingList.size()];
-
-            for (RowKeyValue rowKeyValue : encodingList) {
-                fields[i] = rowKeyValue.rowKey;
-                objects[i] = rowKeyValue.value;
-                i++;
-            }
-
-            StructRowKey rowKey = new StructRowKey(fields);
-            rowKey.setOrder(this.sortOrder == SortOrder.Ascending ? Order.ASCENDING : Order.DESCENDING);
             byte[] serialize = rowKey.serialize(objects);
             return VarEncoder.appendByteArrays(Lists.newArrayList(prefixBytes, serialize));
         } catch (IOException e) {

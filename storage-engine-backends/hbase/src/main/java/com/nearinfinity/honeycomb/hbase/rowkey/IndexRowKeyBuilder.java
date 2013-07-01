@@ -25,12 +25,15 @@ package com.nearinfinity.honeycomb.hbase.rowkey;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.gotometrics.orderly.*;
+import com.nearinfinity.honeycomb.exceptions.RuntimeIOException;
+import com.nearinfinity.honeycomb.hbase.VarEncoder;
 import com.nearinfinity.honeycomb.mysql.QueryKey;
 import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import com.nearinfinity.honeycomb.util.Verify;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
@@ -72,6 +75,59 @@ public class IndexRowKeyBuilder {
         Verify.isValidId(indexId);
 
         return new IndexRowKeyBuilder(tableId, indexId);
+    }
+
+    /**
+     * Create a key for a {@link org.apache.hadoop.hbase.client.Scan} with just a table's indices.
+     *
+     * @param tableId   Table ID
+     * @param sortOrder Ascending/Descending index
+     * @return Start of index for a table.
+     */
+    public static byte[] createDropTableIndexKey(long tableId, SortOrder sortOrder) {
+        byte[] prefix;
+        Order order;
+        LongRowKey rowKey = new LongRowKey();
+        if (sortOrder == SortOrder.Ascending) {
+            prefix = new byte[]{ASCENDING_PREFIX};
+            order = Order.ASCENDING;
+        } else {
+            prefix = new byte[]{DESCENDING_PREFIX};
+            order = Order.DESCENDING;
+        }
+
+        rowKey.setOrder(order);
+        try {
+            byte[] serialize = rowKey.serialize(tableId);
+            return VarEncoder.appendByteArrays(Lists.newArrayList(prefix, serialize));
+        } catch (IOException e) {
+            throw new RuntimeIOException(e);
+        }
+    }
+
+    private static IndexRowKey.RowKeyValue encodeValue(final ByteBuffer value, final ColumnType columnType) {
+        try {
+            switch (columnType) {
+                case LONG:
+                case TIME: {
+                    return new IndexRowKey.RowKeyValue(new LongRowKey(), value.getLong());
+                }
+                case DOUBLE: {
+                    return new IndexRowKey.RowKeyValue(new DoubleRowKey(), value.getDouble());
+                }
+                case BINARY:
+                case STRING: {
+                    UTF8RowKey encoder = new UTF8RowKey();
+                    encoder.setTermination(Termination.MUST);
+                    return new IndexRowKey.RowKeyValue(encoder, value.array());
+                }
+                default:
+                    byte[] array = value.array();
+                    return new IndexRowKey.RowKeyValue(new FixedByteArrayRowKey(array.length), array);
+            }
+        } finally {
+            value.rewind(); // rewind the ByteBuffer's index pointer
+        }
     }
 
     /**
@@ -173,30 +229,6 @@ public class IndexRowKeyBuilder {
         }
 
         return new DescIndexRowKey(tableId, indexId, encodedRecords, uuid);
-    }
-
-    private static IndexRowKey.RowKeyValue encodeValue(final ByteBuffer value, final ColumnType columnType) {
-        try {
-            switch (columnType) {
-                case LONG:
-                case TIME: {
-                    return new IndexRowKey.RowKeyValue(new LongRowKey(), value.getLong());
-                }
-                case DOUBLE: {
-                    return new IndexRowKey.RowKeyValue(new DoubleRowKey(), value.getDouble());
-                }
-                case BINARY:
-                case STRING: {
-                    UTF8RowKey encoder = new UTF8RowKey();
-                    encoder.setTermination(Termination.MUST);
-                    return new IndexRowKey.RowKeyValue(encoder, value.array());
-                }
-                default:
-                    return new IndexRowKey.RowKeyValue(new FixedByteArrayRowKey(value.capacity()), value.array());
-            }
-        } finally {
-            value.rewind(); // rewind the ByteBuffer's index pointer
-        }
     }
 
     /**
