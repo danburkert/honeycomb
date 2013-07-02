@@ -30,7 +30,10 @@ import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.exceptions.RowNotFoundException;
 import com.nearinfinity.honeycomb.hbase.config.ConfigConstants;
-import com.nearinfinity.honeycomb.hbase.rowkey.*;
+import com.nearinfinity.honeycomb.hbase.rowkey.DataRowKey;
+import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowKey;
+import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowKeyBuilder;
+import com.nearinfinity.honeycomb.hbase.rowkey.SortOrder;
 import com.nearinfinity.honeycomb.mysql.QueryKey;
 import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.mysql.Util;
@@ -73,9 +76,14 @@ public class HBaseTable implements Table {
         this.mutationFactory = mutationFactory;
     }
 
+    private static byte[] incrementRowKey(byte[] key) {
+        return new BigInteger(key).add(BigInteger.ONE).toByteArray();
+    }
+
     /**
      * Sets the write buffer size.  Cannot be injected into the constructor directly
      * because of a bug in Cobertura.  Called automatically by Guice.
+     *
      * @param bufferSize
      */
     @Inject
@@ -121,10 +129,10 @@ public class HBaseTable implements Table {
 
         deleteRowsInRange(
                 IndexRowKeyBuilder.newBuilder(tableId, indexId).withSortOrder(SortOrder.Ascending).build().encode(),
-                IndexRowKeyBuilder.newBuilder(tableId, indexId + 1).withSortOrder(SortOrder.Ascending).build().encode());
+                IndexRowKeyBuilder.newBuilder(tableId, nextAscendingValue(indexId)).withSortOrder(SortOrder.Ascending).build().encode());
         deleteRowsInRange(
                 IndexRowKeyBuilder.newBuilder(tableId, indexId).withSortOrder(SortOrder.Descending).build().encode(),
-                IndexRowKeyBuilder.newBuilder(tableId, indexId - 1).withSortOrder(SortOrder.Descending).build().encode());
+                IndexRowKeyBuilder.newBuilder(tableId, nextDescendingValue(indexId)).withSortOrder(SortOrder.Descending).build().encode());
     }
 
     @Override
@@ -153,10 +161,10 @@ public class HBaseTable implements Table {
         deleteRowsInRange(new DataRowKey(tableId).encode(), new DataRowKey(tableId + 1).encode());
         deleteRowsInRange(
                 IndexRowKeyBuilder.createDropTableIndexKey(tableId, SortOrder.Ascending),
-                IndexRowKeyBuilder.createDropTableIndexKey(tableId + 1, SortOrder.Ascending));
+                IndexRowKeyBuilder.createDropTableIndexKey(nextAscendingValue(tableId), SortOrder.Ascending));
         deleteRowsInRange(
                 IndexRowKeyBuilder.createDropTableIndexKey(tableId, SortOrder.Descending),
-                IndexRowKeyBuilder.createDropTableIndexKey(tableId - 1, SortOrder.Descending));
+                IndexRowKeyBuilder.createDropTableIndexKey(nextDescendingValue(tableId), SortOrder.Descending));
     }
 
     @Override
@@ -178,7 +186,7 @@ public class HBaseTable implements Table {
     @Override
     public Scanner tableScan() {
         DataRowKey startRow = new DataRowKey(tableId);
-        DataRowKey endRow = new DataRowKey(tableId + 1);
+        DataRowKey endRow = new DataRowKey(nextAscendingValue(tableId));
         return createScannerForRange(startRow.encode(), endRow.encode());
     }
 
@@ -192,7 +200,7 @@ public class HBaseTable implements Table {
                 .build();
 
         IndexRowKey endRow = IndexRowKeyBuilder
-                .newBuilder(tableId, indexId + 1)
+                .newBuilder(tableId, nextAscendingValue(indexId))
                 .withSortOrder(SortOrder.Ascending)
                 .build();
 
@@ -211,7 +219,7 @@ public class HBaseTable implements Table {
                 .build();
 
         IndexRowKey endRow = IndexRowKeyBuilder
-                .newBuilder(tableId, indexId + 1)
+                .newBuilder(tableId, nextAscendingValue(indexId))
                 .withSortOrder(SortOrder.Ascending)
                 .build();
 
@@ -229,7 +237,7 @@ public class HBaseTable implements Table {
                 .withSortOrder(SortOrder.Ascending)
                 .build();
 
-        IndexRowKey endRow = IndexRowKeyBuilder.newBuilder(tableId, indexId + 1)
+        IndexRowKey endRow = IndexRowKeyBuilder.newBuilder(tableId, nextAscendingValue(indexId))
                 .withSortOrder(SortOrder.Ascending)
                 .build();
 
@@ -244,7 +252,7 @@ public class HBaseTable implements Table {
                 .withSortOrder(SortOrder.Descending)
                 .build();
 
-        IndexRowKey endRow = IndexRowKeyBuilder.newBuilder(tableId, indexId + 1)
+        IndexRowKey endRow = IndexRowKeyBuilder.newBuilder(tableId, nextDescendingValue(indexId))
                 .withSortOrder(SortOrder.Descending)
                 .build();
 
@@ -263,7 +271,7 @@ public class HBaseTable implements Table {
                 .build();
 
         IndexRowKey endRow = IndexRowKeyBuilder
-                .newBuilder(tableId, indexId + 1)
+                .newBuilder(tableId, nextDescendingValue(indexId))
                 .withSortOrder(SortOrder.Descending)
                 .build();
 
@@ -282,7 +290,7 @@ public class HBaseTable implements Table {
                 .build();
 
         IndexRowKey endRow = IndexRowKeyBuilder
-                .newBuilder(tableId, indexId + 1)
+                .newBuilder(tableId, nextDescendingValue(indexId))
                 .withSortOrder(SortOrder.Descending)
                 .build();
 
@@ -309,10 +317,6 @@ public class HBaseTable implements Table {
         Util.closeQuietly(hTable);
     }
 
-    private static byte[] incrementRowKey(byte[] key) {
-        return new BigInteger(key).add(BigInteger.ONE).toByteArray();
-    }
-
     /**
      * Delete rows in specified range.  Requires the BulkDeleteEndpoint
      * coprocessor to be installed on each regionserver serving regions within
@@ -327,11 +331,11 @@ public class HBaseTable implements Table {
         try {
             hTable.coprocessorExec(
                     BulkDeleteProtocol.class, start, end, new Batch.Call<BulkDeleteProtocol, BulkDeleteResponse>() {
-                        @Override
-                        public BulkDeleteResponse call(BulkDeleteProtocol instance) throws IOException {
-                            return instance.delete(scan, BulkDeleteProtocol.DeleteType.ROW, Long.MAX_VALUE, (int) writeBufferSize);
-                        }
-                    });
+                @Override
+                public BulkDeleteResponse call(BulkDeleteProtocol instance) throws IOException {
+                    return instance.delete(scan, BulkDeleteProtocol.DeleteType.ROW, Long.MAX_VALUE, (int) writeBufferSize);
+                }
+            });
         } catch (Throwable throwable) {
             throwable.printStackTrace();
             throw new RuntimeException(throwable);
@@ -342,6 +346,14 @@ public class HBaseTable implements Table {
         Scan scan = new Scan(start, end);
         ResultScanner scanner = HBaseOperations.getScanner(hTable, scan);
         return new HBaseScanner(scanner, columnFamily);
+    }
+
+    private long nextDescendingValue(long value) {
+        return value - 1;
+    }
+
+    private long nextAscendingValue(long value) {
+        return value + 1;
     }
 }
 

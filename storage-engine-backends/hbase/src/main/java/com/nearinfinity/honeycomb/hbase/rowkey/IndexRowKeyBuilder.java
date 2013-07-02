@@ -29,12 +29,13 @@ import com.nearinfinity.honeycomb.exceptions.RuntimeIOException;
 import com.nearinfinity.honeycomb.hbase.VarEncoder;
 import com.nearinfinity.honeycomb.mysql.QueryKey;
 import com.nearinfinity.honeycomb.mysql.Row;
-import com.nearinfinity.honeycomb.mysql.gen.ColumnType;
+import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import com.nearinfinity.honeycomb.util.Verify;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -108,9 +109,9 @@ public class IndexRowKeyBuilder {
         }
     }
 
-    private static IndexRowKey.RowKeyValue encodeValue(final ByteBuffer value, final ColumnType columnType) {
+    private static IndexRowKey.RowKeyValue encodeValue(final ByteBuffer value, final ColumnSchema columnSchema) {
         try {
-            switch (columnType) {
+            switch (columnSchema.getType()) {
                 case LONG:
                 case TIME: {
                     return new IndexRowKey.RowKeyValue(new LongRowKey(), value.getLong());
@@ -118,7 +119,11 @@ public class IndexRowKeyBuilder {
                 case DOUBLE: {
                     return new IndexRowKey.RowKeyValue(new DoubleRowKey(), value.getDouble());
                 }
-                case BINARY:
+                case BINARY:{
+                    int maxLength = columnSchema.getMaxLength();
+                    byte[] bytes = Arrays.copyOf(value.array(), maxLength);
+                    return new IndexRowKey.RowKeyValue(new FixedByteArrayRowKey(maxLength), bytes);
+                }
                 case STRING: {
                     UTF8RowKey encoder = new UTF8RowKey();
                     encoder.setTermination(Termination.MUST);
@@ -217,7 +222,7 @@ public class IndexRowKeyBuilder {
                 }
                 ByteBuffer record = fields.get(column);
                 if (record != null) {
-                    encodedRecords.add(encodeValue(record, tableSchema.getColumnSchema(column).getType()));
+                    encodedRecords.add(encodeValue(record, tableSchema.getColumnSchema(column)));
                 } else {
                     encodedRecords.add(null);
                 }

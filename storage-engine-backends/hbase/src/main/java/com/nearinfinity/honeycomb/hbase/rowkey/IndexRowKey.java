@@ -24,10 +24,7 @@ package com.nearinfinity.honeycomb.hbase.rowkey;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
-import com.gotometrics.orderly.FixedByteArrayRowKey;
-import com.gotometrics.orderly.LongRowKey;
-import com.gotometrics.orderly.Order;
-import com.gotometrics.orderly.StructRowKey;
+import com.gotometrics.orderly.*;
 import com.nearinfinity.honeycomb.exceptions.RuntimeIOException;
 import com.nearinfinity.honeycomb.hbase.VarEncoder;
 import com.nearinfinity.honeycomb.mysql.Util;

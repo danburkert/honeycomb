@@ -51,7 +51,6 @@ public abstract class EncodingTest<T> {
         }
     }
 
-
     protected abstract T getValue(Pair<IndexRowKey, QueryKey> pair);
 
     protected void assertTrueWithPairs(boolean condition, Pair<T, byte[]> previous, Pair<T, byte[]> current) {
