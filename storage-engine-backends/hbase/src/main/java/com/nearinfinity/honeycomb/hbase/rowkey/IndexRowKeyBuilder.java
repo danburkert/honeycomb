@@ -253,16 +253,6 @@ public class IndexRowKeyBuilder {
         }
 
         @Override
-        protected byte[] getNotNullBytes() {
-            return new byte[]{0x00};
-        }
-
-        @Override
-        protected byte[] getNullBytes() {
-            return new byte[]{0x01};
-        }
-
-        @Override
         public byte getPrefix() {
             return (byte) 0x08;
         }
@@ -282,16 +272,6 @@ public class IndexRowKeyBuilder {
         @Override
         protected SortOrder getSortOrder() {
             return SortOrder.Ascending;
-        }
-
-        @Override
-        protected byte[] getNotNullBytes() {
-            return new byte[]{0x01};
-        }
-
-        @Override
-        protected byte[] getNullBytes() {
-            return new byte[]{0x00};
         }
 
         @Override

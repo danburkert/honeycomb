@@ -84,6 +84,7 @@ public abstract class IndexRowKey implements RowKey {
 
         StructRowKey rowKey = new StructRowKey(fields);
         rowKey.setOrder(this.sortOrder == SortOrder.Ascending ? Order.ASCENDING : Order.DESCENDING);
+        rowKey.setTermination(Termination.MUST);
 
         try {
             byte[] serialize = rowKey.serialize(objects);
@@ -106,9 +107,13 @@ public abstract class IndexRowKey implements RowKey {
 
     protected abstract SortOrder getSortOrder();
 
-    protected abstract byte[] getNotNullBytes();
+    private byte[] getNotNullBytes() {
+        return new byte[]{0x01};
+    }
 
-    protected abstract byte[] getNullBytes();
+    private byte[] getNullBytes() {
+        return new byte[]{0x00};
+    }
 
     private List<RowKeyValue> getRowKeyValues() {
         List<RowKeyValue> encodingList = Lists.newArrayList();
