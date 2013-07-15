@@ -15,33 +15,38 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- * 
+ *
  * Copyright 2013 Near Infinity Corporation.
  */
 
 
 package com.nearinfinity.honeycomb.hbase.rowkey;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.gotometrics.orderly.*;
-import com.nearinfinity.honeycomb.exceptions.RuntimeIOException;
-import com.nearinfinity.honeycomb.hbase.VarEncoder;
-import com.nearinfinity.honeycomb.mysql.QueryKey;
-import com.nearinfinity.honeycomb.mysql.Row;
-import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
-import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
-import com.nearinfinity.honeycomb.util.Verify;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.gotometrics.orderly.DoubleRowKey;
+import com.gotometrics.orderly.FixedByteArrayRowKey;
+import com.gotometrics.orderly.LongRowKey;
+import com.gotometrics.orderly.Order;
+import com.gotometrics.orderly.Termination;
+import com.gotometrics.orderly.UTF8RowKey;
+import com.gotometrics.orderly.VariableLengthByteArrayRowKey;
+import com.nearinfinity.honeycomb.exceptions.RuntimeIOException;
+import com.nearinfinity.honeycomb.mysql.QueryKey;
+import com.nearinfinity.honeycomb.mysql.Row;
+import com.nearinfinity.honeycomb.mysql.Util;
+import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
+import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
+import com.nearinfinity.honeycomb.util.Verify;
 
 /**
  * A builder for creating {@link IndexRowKey} instances.  Builder instances can be reused as it is safe
@@ -103,35 +108,33 @@ public class IndexRowKeyBuilder {
         rowKey.setOrder(order);
         try {
             byte[] serialize = rowKey.serialize(tableId);
-            return VarEncoder.appendByteArrays(Lists.newArrayList(prefix, serialize));
+            return Util.appendByteArrays(Lists.newArrayList(prefix, serialize));
         } catch (IOException e) {
             throw new RuntimeIOException(e);
         }
     }
 
-    private static IndexRowKey.RowKeyValue encodeValue(final ByteBuffer value, final ColumnSchema columnSchema) {
+    private static RowKeyValue encodeValue(final ByteBuffer value, final ColumnSchema columnSchema) {
         try {
             switch (columnSchema.getType()) {
                 case LONG:
                 case TIME: {
-                    return new IndexRowKey.RowKeyValue(new LongRowKey(), value.getLong());
+                    return new RowKeyValue(new LongRowKey(), value.getLong());
                 }
                 case DOUBLE: {
-                    return new IndexRowKey.RowKeyValue(new DoubleRowKey(), value.getDouble());
+                    return new RowKeyValue(new DoubleRowKey(), value.getDouble());
                 }
                 case BINARY:{
-                    int maxLength = columnSchema.getMaxLength();
-                    byte[] bytes = Arrays.copyOf(value.array(), maxLength);
-                    return new IndexRowKey.RowKeyValue(new FixedByteArrayRowKey(maxLength), bytes);
+                    return new RowKeyValue(new VariableLengthByteArrayRowKey(), value.array());
                 }
                 case STRING: {
                     UTF8RowKey encoder = new UTF8RowKey();
                     encoder.setTermination(Termination.MUST);
-                    return new IndexRowKey.RowKeyValue(encoder, value.array());
+                    return new RowKeyValue(encoder, value.array());
                 }
                 default:
                     byte[] array = value.array();
-                    return new IndexRowKey.RowKeyValue(new FixedByteArrayRowKey(array.length), array);
+                    return new RowKeyValue(new FixedByteArrayRowKey(array.length), array);
             }
         } finally {
             value.rewind(); // rewind the ByteBuffer's index pointer
@@ -171,7 +174,7 @@ public class IndexRowKeyBuilder {
             }
         }
 
-        this.fields = recordCopy;
+        fields = recordCopy;
         this.indexName = indexName;
         this.tableSchema = tableSchema;
         return this;
@@ -188,8 +191,8 @@ public class IndexRowKeyBuilder {
                                            TableSchema tableSchema) {
         checkNotNull(queryKey, "queryKey must not be null.");
         checkNotNull(tableSchema, "tableSchema must not be null.");
-        this.fields = queryKey.getKeys();
-        this.indexName = queryKey.getIndexName();
+        fields = queryKey.getKeys();
+        indexName = queryKey.getIndexName();
         this.tableSchema = tableSchema;
         return this;
     }
@@ -214,7 +217,7 @@ public class IndexRowKeyBuilder {
      */
     public IndexRowKey build() {
         checkState(order != null, "Sort order must be set on IndexRowBuilder.");
-        List<IndexRowKey.RowKeyValue> encodedRecords = Lists.newArrayList();
+        List<RowKeyValue> encodedRecords = Lists.newArrayList();
         if (fields != null) {
             for (String column : tableSchema.getIndexSchema(indexName).getColumns()) {
                 if (!fields.containsKey(column)) {
@@ -243,7 +246,7 @@ public class IndexRowKeyBuilder {
     private static class DescIndexRowKey extends IndexRowKey {
 
         public DescIndexRowKey(final long tableId, final long indexId,
-                               final List<IndexRowKey.RowKeyValue> records, final UUID uuid) {
+                               final List<RowKeyValue> records, final UUID uuid) {
             super(tableId, indexId, records, uuid);
         }
 
@@ -265,7 +268,7 @@ public class IndexRowKeyBuilder {
     private static class AscIndexRowKey extends IndexRowKey {
 
         public AscIndexRowKey(final long tableId, final long indexId,
-                              final List<IndexRowKey.RowKeyValue> records, final UUID uuid) {
+                              final List<RowKeyValue> records, final UUID uuid) {
             super(tableId, indexId, records, uuid);
         }
 

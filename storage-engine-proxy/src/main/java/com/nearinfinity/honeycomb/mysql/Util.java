@@ -15,30 +15,43 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- * 
+ *
  * Copyright 2013 Near Infinity Corporation.
  */
 
 
 package com.nearinfinity.honeycomb.mysql;
 
-import com.google.common.collect.*;
-import com.nearinfinity.honeycomb.exceptions.RuntimeIOException;
-import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
-import org.apache.avro.io.*;
-import org.apache.log4j.Logger;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import org.apache.avro.io.DatumReader;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.io.Decoder;
+import org.apache.avro.io.DecoderFactory;
+import org.apache.avro.io.Encoder;
+import org.apache.avro.io.EncoderFactory;
+import org.apache.log4j.Logger;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.MapDifference;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.nearinfinity.honeycomb.exceptions.RuntimeIOException;
+import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 
 /**
  * Utility class containing helper functions.
@@ -72,6 +85,42 @@ public class Util {
         checkArgument(bytes.length == UUID_WIDTH, "bytes must be of length " + UUID_WIDTH + ".");
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         return new UUID(buffer.getLong(), buffer.getLong());
+    }
+
+    /**
+     * Combine many byte arrays into one
+     *
+     * @param arrays List of byte arrays
+     * @return Combined byte array
+     */
+    public static byte[] appendByteArrays(List<byte[]> arrays) {
+        checkNotNull(arrays);
+
+        int size = 0;
+        for (byte[] array : arrays) {
+            size += array.length;
+        }
+        ByteBuffer bb = ByteBuffer.allocate(size);
+        for (byte[] array : arrays) {
+            bb.put(array);
+        }
+        return bb.array();
+    }
+
+    /**
+     * Combine many byte arrays into one with a prefix at the beginning of the combined array.
+     *
+     * @param prefix Byte prefix
+     * @param arrays Many byte arrays
+     * @return Combined byte array
+     */
+    public static byte[] appendByteArraysWithPrefix(byte prefix, byte[]... arrays) {
+        checkNotNull(prefix);
+        List<byte[]> elements = new ArrayList<byte[]>();
+        byte[] prefixBytes = {prefix};
+        elements.add(prefixBytes);
+        elements.addAll(Arrays.asList(arrays));
+        return appendByteArrays(elements);
     }
 
     /**

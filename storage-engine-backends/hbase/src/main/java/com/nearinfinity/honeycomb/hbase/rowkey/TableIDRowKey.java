@@ -15,7 +15,7 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- * 
+ *
  * Copyright 2013 Near Infinity Corporation.
  */
 
@@ -23,8 +23,9 @@
 package com.nearinfinity.honeycomb.hbase.rowkey;
 
 import com.google.common.base.Objects;
-import com.google.common.base.Preconditions;
-import com.nearinfinity.honeycomb.hbase.VarEncoder;
+import com.gotometrics.orderly.UnsignedLongRowKey;
+import com.nearinfinity.honeycomb.mysql.Util;
+import com.nearinfinity.honeycomb.util.Verify;
 
 /**
  * Super class for rowkeys that occur once per MySQL table
@@ -34,15 +35,15 @@ public class TableIDRowKey implements RowKey {
     private final long tableId;
 
     public TableIDRowKey(final byte prefix, final long tableId) {
-        Preconditions.checkArgument(tableId >= 0, "Table ID must be non-zero.");
+        Verify.isValidId(tableId, "Table ID must be non-negative.");
         this.prefix = prefix;
         this.tableId = tableId;
     }
 
     @Override
     public byte[] encode() {
-        byte[] table = VarEncoder.encodeULong(tableId);
-        return VarEncoder.appendByteArraysWithPrefix(prefix, table);
+        return Util.appendByteArraysWithPrefix(prefix,
+                new RowKeyValue(new UnsignedLongRowKey(), tableId).serialize());
     }
 
     @Override

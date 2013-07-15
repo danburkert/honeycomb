@@ -15,19 +15,19 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- * 
+ *
  * Copyright 2013 Near Infinity Corporation.
  */
 
 
 package com.nearinfinity.honeycomb.hbase.rowkey;
 
+import java.util.UUID;
+
 import com.google.common.base.Objects;
-import com.nearinfinity.honeycomb.hbase.VarEncoder;
+import com.gotometrics.orderly.UnsignedLongRowKey;
 import com.nearinfinity.honeycomb.mysql.Util;
 import com.nearinfinity.honeycomb.util.Verify;
-
-import java.util.UUID;
 
 /**
  * Representation of the rowkey associated with data row content
@@ -61,13 +61,14 @@ public class DataRowKey implements RowKey {
 
     @Override
     public byte[] encode() {
+        final byte[] serializedTableId = new RowKeyValue(new UnsignedLongRowKey(), tableId).serialize();
+
         if( uuid != null ) {
-            return VarEncoder.appendByteArraysWithPrefix(PREFIX,
-                    VarEncoder.encodeULong(tableId),
+            return Util.appendByteArraysWithPrefix(PREFIX, serializedTableId,
                     Util.UUIDToBytes(uuid));
         }
 
-        return  VarEncoder.appendByteArraysWithPrefix(PREFIX, VarEncoder.encodeULong(tableId));
+        return Util.appendByteArraysWithPrefix(PREFIX, serializedTableId);
     }
 
     public long getTableId() {

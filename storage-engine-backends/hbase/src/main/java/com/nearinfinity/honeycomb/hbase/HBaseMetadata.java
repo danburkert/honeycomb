@@ -15,12 +15,28 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- * 
+ *
  * Copyright 2013 Near Infinity Corporation.
  */
 
 
 package com.nearinfinity.honeycomb.hbase;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.BiMap;
@@ -32,20 +48,16 @@ import com.google.inject.Provider;
 import com.google.inject.name.Named;
 import com.nearinfinity.honeycomb.exceptions.TableNotFoundException;
 import com.nearinfinity.honeycomb.hbase.config.ConfigConstants;
-import com.nearinfinity.honeycomb.hbase.rowkey.*;
+import com.nearinfinity.honeycomb.hbase.rowkey.AutoIncRowKey;
+import com.nearinfinity.honeycomb.hbase.rowkey.ColumnsRowKey;
+import com.nearinfinity.honeycomb.hbase.rowkey.IndicesRowKey;
+import com.nearinfinity.honeycomb.hbase.rowkey.RowsRowKey;
+import com.nearinfinity.honeycomb.hbase.rowkey.SchemaRowKey;
+import com.nearinfinity.honeycomb.hbase.rowkey.TablesRowKey;
 import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import com.nearinfinity.honeycomb.util.Verify;
-import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.util.Bytes;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static com.google.common.base.Preconditions.*;
 
 /**
  * Manages writing and reading table & column schemas, table & column ids, and
@@ -492,11 +504,11 @@ public class HBaseMetadata {
     }
 
     private byte[] serializeId(long id) {
-        return VarEncoder.encodeULong(id);
+        return CellEncoder.serializeId(id);
     }
 
     private long deserializeId(byte[] id) {
-        return VarEncoder.decodeULong(id);
+        return CellEncoder.deserializeId(id);
     }
 
     /**

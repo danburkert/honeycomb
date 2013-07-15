@@ -19,18 +19,19 @@
  * Copyright 2013 Near Infinity Corporation.
  */
 
-
 package com.nearinfinity.honeycomb.hbase.rowkey;
 
 import static org.junit.Assert.assertArrayEquals;
 
 import org.junit.Test;
 
-import com.nearinfinity.honeycomb.hbase.VarEncoder;
+import com.gotometrics.orderly.UnsignedLongRowKey;
+import com.nearinfinity.honeycomb.mysql.Util;
 
 public class IndicesRowKeyTest {
     private static final long TABLE_ID = 1;
     private static final byte INDICES_ROW_PREFIX = 0x02;
+    private static final byte[] SERIALIZED_TABLEID = new RowKeyValue(new UnsignedLongRowKey(), TABLE_ID).serialize();
 
     @Test(expected = IllegalArgumentException.class)
     public void testConstructIndicesRowInvalidTableId() {
@@ -41,9 +42,7 @@ public class IndicesRowKeyTest {
     @Test
     public void testEncodeIndicesRow() {
         final IndicesRowKey row = new IndicesRowKey(TABLE_ID);
-
-        final byte[] expectedEncoding = VarEncoder.appendByteArraysWithPrefix(INDICES_ROW_PREFIX,
-                                    VarEncoder.encodeULong(TABLE_ID));
+        final byte[] expectedEncoding = Util.appendByteArraysWithPrefix(INDICES_ROW_PREFIX, SERIALIZED_TABLEID);
 
         assertArrayEquals(expectedEncoding, row.encode());
     }

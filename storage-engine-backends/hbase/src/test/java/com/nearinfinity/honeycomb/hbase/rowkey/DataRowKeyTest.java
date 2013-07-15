@@ -28,13 +28,14 @@ import java.util.UUID;
 
 import org.junit.Test;
 
-import com.nearinfinity.honeycomb.hbase.VarEncoder;
+import com.gotometrics.orderly.UnsignedLongRowKey;
 import com.nearinfinity.honeycomb.mysql.Util;
 
 public class DataRowKeyTest {
 
     private static final long TABLE_ID = 1;
     private static final byte DATA_ROW_PREFIX = 0x06;
+    private static final byte[] SERIALIZED_TABLEID = new RowKeyValue(new UnsignedLongRowKey(), TABLE_ID).serialize();
 
     @Test(expected = IllegalArgumentException.class)
     public void testConstructDataRowInvalidTableId() {
@@ -47,9 +48,8 @@ public class DataRowKeyTest {
         final UUID rowUUID = UUID.randomUUID();
         final DataRowKey row = new DataRowKey(TABLE_ID, rowUUID);
 
-        final byte[] expectedEncoding = VarEncoder.appendByteArraysWithPrefix(DATA_ROW_PREFIX,
-                                    VarEncoder.encodeULong(TABLE_ID),
-                                    Util.UUIDToBytes(rowUUID));
+        final byte[] expectedEncoding = Util.appendByteArraysWithPrefix(DATA_ROW_PREFIX,
+                SERIALIZED_TABLEID, Util.UUIDToBytes(rowUUID));
 
         assertArrayEquals(expectedEncoding, row.encode());
     }
@@ -57,9 +57,7 @@ public class DataRowKeyTest {
     @Test
     public void testEncodeDataRowNullUUID() {
         final DataRowKey row = new DataRowKey(TABLE_ID);
-
-        final byte[] expectedEncoding = VarEncoder.appendByteArraysWithPrefix(DATA_ROW_PREFIX,
-                                    VarEncoder.encodeULong(TABLE_ID));
+        final byte[] expectedEncoding = Util.appendByteArraysWithPrefix(DATA_ROW_PREFIX, SERIALIZED_TABLEID);
 
         assertArrayEquals(expectedEncoding, row.encode());
     }
