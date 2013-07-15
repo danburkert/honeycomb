@@ -29,7 +29,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -47,6 +46,7 @@ import org.apache.log4j.Logger;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -93,33 +93,31 @@ public class Util {
      * @param arrays List of byte arrays
      * @return Combined byte array
      */
-    public static byte[] appendByteArrays(List<byte[]> arrays) {
+    public static byte[] appendByteArrays(final List<byte[]> arrays) {
         checkNotNull(arrays);
 
         int size = 0;
-        for (byte[] array : arrays) {
+        for (final byte[] array : arrays) {
             size += array.length;
         }
-        ByteBuffer bb = ByteBuffer.allocate(size);
-        for (byte[] array : arrays) {
+        final ByteBuffer bb = ByteBuffer.allocate(size);
+        for (final byte[] array : arrays) {
             bb.put(array);
         }
         return bb.array();
     }
 
     /**
-     * Combine many byte arrays into one with a prefix at the beginning of the combined array.
+     * Combine a variable number of byte arrays into one with a prefix at the beginning of the combined array.
      *
      * @param prefix Byte prefix
-     * @param arrays Many byte arrays
+     * @param arrays Variable number of byte arrays
      * @return Combined byte array
      */
-    public static byte[] appendByteArraysWithPrefix(byte prefix, byte[]... arrays) {
-        checkNotNull(prefix);
-        List<byte[]> elements = new ArrayList<byte[]>();
-        byte[] prefixBytes = {prefix};
-        elements.add(prefixBytes);
+    public static byte[] appendByteArraysWithPrefix(final byte prefix, final byte[]... arrays) {
+        final List<byte[]> elements = Lists.newArrayList(new byte[] {prefix});
         elements.addAll(Arrays.asList(arrays));
+
         return appendByteArrays(elements);
     }
 
@@ -166,16 +164,18 @@ public class Util {
     /**
      * Create a hex string for a byte string. The string will be formatted {@code "A2BE"}
      *
-     * @param bytes Byte string
-     * @return Hex string
+     * @param bytes Byte array to be formatted as a hex string
+     * @return Hex string representation
      */
     public static String generateHexString(final byte[] bytes) {
-        StringBuilder sb = new StringBuilder();
-        for (byte b : bytes) {
-            sb.append(String.format("%02X", b));
+        checkNotNull(bytes);
+
+        final StringBuilder builder = new StringBuilder();
+        for (final byte b : bytes) {
+            builder.append(String.format("%02X", b));
         }
 
-        return sb.toString();
+        return builder.toString();
     }
 
     /**
