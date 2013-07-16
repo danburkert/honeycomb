@@ -125,10 +125,16 @@ public class RowOperationsIT extends HoneycombIntegrationTest {
         proxy.flush();
 
         final QueryKey key = ITUtils.createKey(INDEX_COL_VALUE, QueryType.EXACT_KEY);
-        proxy.startIndexScan(key.serialize());
 
+        // Verify that there are index rows
+        ITUtils.assertReceivingDifferentRows(proxy, key, 1);
+
+        proxy.startIndexScan(key.serialize());
         proxy.deleteRow(proxy.getNextRow());
         proxy.flush();
+
+        // Verify that no index rows remain
+        ITUtils.assertReceivingDifferentRows(proxy, key, 0);
     }
 
     @Test
