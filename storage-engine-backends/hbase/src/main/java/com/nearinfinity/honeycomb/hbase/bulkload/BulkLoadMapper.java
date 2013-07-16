@@ -49,6 +49,7 @@ import java.util.List;
 import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static java.lang.String.format;
 
 /**
@@ -100,6 +101,7 @@ public class BulkLoadMapper
         HBaseStore store = new HBaseStore(metadata, null, new MetadataCache(metadata));
 
         tableId = store.getTableId(sqlTable);
+        checkState(tableId != 0, "Table ID was 0");
         schema = store.getSchema(sqlTable);
         mutationFactory = new MutationFactory(store);
         mutationFactory.setColumnFamily(columnFamily);
