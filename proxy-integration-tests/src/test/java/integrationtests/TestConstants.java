@@ -15,7 +15,7 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- * 
+ *
  * Copyright 2013 Near Infinity Corporation.
  */
 
@@ -45,7 +45,7 @@ public abstract class TestConstants {
     public static final TableSchema TABLE_SCHEMA =
             new TableSchema(
                     ImmutableList.of(
-                            ColumnSchema.builder(COLUMN1, ColumnType.LONG).build(),
+                            ColumnSchema.builder(COLUMN1, ColumnType.LONG).setIsAutoIncrement(true).build(),
                             ColumnSchema.builder(COLUMN2, ColumnType.LONG).build()
                     ),
                     ImmutableList.of(

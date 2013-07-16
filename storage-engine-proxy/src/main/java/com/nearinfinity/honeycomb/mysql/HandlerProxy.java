@@ -93,6 +93,15 @@ public class HandlerProxy {
         store.deleteTable(tableName);
     }
 
+    /**
+     * Delete all rows in the table and reset the auto increment value.
+     */
+    public void truncateTable() {
+        checkTableOpen();
+        deleteAllRows();
+        store.truncateAutoInc(tableName);
+    }
+
     public void openTable(String tableName) {
         Verify.isNotNullOrEmpty(tableName);
         this.tableName = tableName;
@@ -315,15 +324,6 @@ public class HandlerProxy {
         checkTableOpen();
         store.truncateRowCount(tableName);
         table.deleteAllRows();
-    }
-
-    /**
-     * Delete all rows in the table, and reset the auto increment value.
-     */
-    public void truncateTable() {
-        checkTableOpen();
-        deleteAllRows();
-        store.truncateAutoInc(tableName);
     }
 
     public void flush() {

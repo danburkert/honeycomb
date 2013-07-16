@@ -37,6 +37,7 @@ import com.gotometrics.orderly.DoubleRowKey;
 import com.gotometrics.orderly.FixedByteArrayRowKey;
 import com.gotometrics.orderly.LongRowKey;
 import com.gotometrics.orderly.Order;
+import com.gotometrics.orderly.RowKey;
 import com.gotometrics.orderly.Termination;
 import com.gotometrics.orderly.UTF8RowKey;
 import com.gotometrics.orderly.UnsignedLongRowKey;
@@ -97,7 +98,8 @@ public class IndexRowKeyBuilder {
 
         byte[] prefix;
         Order order;
-        final UnsignedLongRowKey rowKey = new UnsignedLongRowKey();
+        final RowKey rowKey = new UnsignedLongRowKey();
+
         if (sortOrder == SortOrder.Ascending) {
             prefix = new byte[]{(byte) 0x07};
             order = Order.ASCENDING;
