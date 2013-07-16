@@ -39,6 +39,7 @@ import com.gotometrics.orderly.LongRowKey;
 import com.gotometrics.orderly.Order;
 import com.gotometrics.orderly.Termination;
 import com.gotometrics.orderly.UTF8RowKey;
+import com.gotometrics.orderly.UnsignedLongRowKey;
 import com.gotometrics.orderly.VariableLengthByteArrayRowKey;
 import com.nearinfinity.honeycomb.exceptions.RuntimeIOException;
 import com.nearinfinity.honeycomb.mysql.QueryKey;
@@ -96,7 +97,7 @@ public class IndexRowKeyBuilder {
 
         byte[] prefix;
         Order order;
-        LongRowKey rowKey = new LongRowKey();
+        final UnsignedLongRowKey rowKey = new UnsignedLongRowKey();
         if (sortOrder == SortOrder.Ascending) {
             prefix = new byte[]{(byte) 0x07};
             order = Order.ASCENDING;
