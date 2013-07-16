@@ -15,7 +15,7 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- * 
+ *
  * Copyright 2013 Near Infinity Corporation.
  */
 
@@ -129,6 +129,22 @@ public class RowOperationsIT extends HoneycombIntegrationTest {
 
         proxy.deleteRow(proxy.getNextRow());
         proxy.flush();
+    }
+
+    @Test
+    public void testDeleteAllRows() {
+        final QueryKey key = ITUtils.createKey(INDEX_COL_VALUE, QueryType.EXACT_KEY);
+
+        // Add an indexed data row
+        ITUtils.insertData(proxy, ROW_COUNT, INDEX_COL_VALUE);
+
+        proxy.deleteAllRows();
+
+        // Verify that no data rows remain
+        ITUtils.assertReceivingDifferentRows(proxy, 0);
+
+        // Verify that no index rows remain
+        ITUtils.assertReceivingDifferentRows(proxy, key, 0);
     }
 
     @Test
