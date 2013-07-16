@@ -100,6 +100,7 @@ public class BulkLoadMapper
         metadata.setColumnFamily(columnFamily);
         HBaseStore store = new HBaseStore(metadata, null, new MetadataCache(metadata));
 
+        LOG.info("Current Version: 2.0");
         tableId = store.getTableId(sqlTable);
         checkState(tableId != 0, "Table ID was 0");
         schema = store.getSchema(sqlTable);
