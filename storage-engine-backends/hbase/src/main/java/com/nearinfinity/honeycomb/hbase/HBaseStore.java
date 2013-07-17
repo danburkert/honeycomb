@@ -199,40 +199,4 @@ public class HBaseStore implements Store {
         }
     }
 
-    @Override
-    public long getRowCount(String tableName) {
-        long tableId = cache.tableCacheGet(tableName);
-        try {
-            rowsLock.readLock().lock();
-            return cache.rowsCacheGet(tableId);
-        } finally {
-            rowsLock.readLock().unlock();
-        }
-    }
-
-    @Override
-    public long incrementRowCount(String tableName, long amount) {
-        long value;
-        long tableId = cache.tableCacheGet(tableName);
-        try {
-            rowsLock.writeLock().lock();
-            value = metadata.incrementRowCount(tableId, amount);
-            cache.updateRowsCache(tableId, value);
-        } finally {
-            rowsLock.writeLock().unlock();
-        }
-        return value;
-    }
-
-    @Override
-    public void truncateRowCount(String tableName) {
-        long tableId = cache.tableCacheGet(tableName);
-        try {
-            rowsLock.writeLock().lock();
-            metadata.truncateRowCount(tableId);
-            cache.invalidateRowsCache(tableId);
-        } finally {
-            rowsLock.writeLock().unlock();
-        }
-    }
 }

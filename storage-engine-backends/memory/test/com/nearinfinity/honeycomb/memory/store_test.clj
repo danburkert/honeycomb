@@ -131,22 +131,6 @@
     (.incrementAutoInc store table-name 1)
     (is (= Long/MIN_VALUE (.getAutoInc store table-name)))))
 
-(deftest row-count
-  (testing "defaults to 0"
-    (is (= 0 (.getRowCount store table-name))))
-  (testing "increment row count"
-    (let [initial (.getRowCount store table-name)
-          increment 32]
-      (is (= (+ initial increment)
-             (.incrementRowCount store table-name increment)))))
-  (testing "truncate row count"
-    (.truncateRowCount store table-name)
-    (is (= 0 (.getRowCount store table-name)))))
-
-(deftest add-index)
-
 (use-fixtures :each
               bind-store
               create-table)
-
-(run-tests)

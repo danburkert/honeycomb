@@ -103,24 +103,6 @@
     (dosync
       (if (contains? (ensure metadata) table-name)
         (alter metadata assoc-in [table-name :autoincrement] 1)
-        (throw (TableNotFoundException. table-name)))))
-
-  (getRowCount [this table-name]
-    (if-let [metadatum (get @metadata table-name)]
-      (:rows metadatum)
-      (throw (TableNotFoundException. table-name))))
-
-  (incrementRowCount [this table-name amount]
-    (dosync
-      (if (contains? (ensure metadata) table-name)
-        (-> (alter metadata update-in [table-name :rows] + amount)
-            (get-in [table-name :rows]))
-        (throw (TableNotFoundException. table-name)))))
-
-  (truncateRowCount [this table-name]
-    (dosync
-      (if (contains? (ensure metadata) table-name)
-        (alter metadata assoc-in [table-name :rows] 0)
         (throw (TableNotFoundException. table-name))))))
 
 (defn memory-store []
