@@ -77,6 +77,6 @@ public class RowParser {
                     FieldParser.parse(unparsedFields[i],
                             schema.getColumnSchema(columns[i])));
         }
-        return new Row(fields.build(), UUID.randomUUID());
+        return new Row(fields.build(), UUID.randomUUID(), schema);
     }
 }

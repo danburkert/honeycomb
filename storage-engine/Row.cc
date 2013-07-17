@@ -22,10 +22,13 @@
 #include "AvroUtil.h"
 
 
-#define ROW_CONTAINER_SCHEMA "{\"type\":\"record\",\"name\":\"AvroRow\",\"namespace\":\"com.nearinfinity.honeycomb.mysql.gen\",\"fields\":[{\"name\":\"version\",\"type\":\"int\",\"doc\":\"Schema version number\",\"default\":0},{\"name\":\"uuid\",\"type\":{\"type\":\"fixed\",\"name\":\"UUIDContainer\",\"size\":16}},{\"name\":\"records\",\"type\":{\"type\":\"map\",\"values\":\"bytes\",\"avro.java.string\":\"String\"}}]}"
+#define ROW_CONTAINER_SCHEMA "{\"type\":\"record\",\"name\":\"AvroRow\",\"namespace\":\"com.nearinfinity.honeycomb.mysql.gen\",\"fields\":[{\"name\":\"version\",\"type\":\"int\",\"doc\":\"Schema version number\",\"default\":0},{\"name\":\"uuid\",\"type\":{\"type\":\"fixed\",\"name\":\"UUIDContainer\",\"size\":16}},{\"name\":\"records\",\"type\":{\"type\":\"array\",\"items\":[\"null\",\"bytes\"]}}]}"
 
 const int Row::CURRENT_VERSION = 0;
 const char* Row::VERSION_FIELD = "version";
+
+#define NULL_BRANCH 0
+#define VALUE_BRANCH 1
 
 Row::Row()
 : row_container_schema(),
@@ -114,12 +117,44 @@ int Row::set_schema_version(const int& version)
   return ret;
 }
 
-int Row::get_value(const char* column_name, const char** value, size_t* size)
+int Row::get_value(int index, const char** value, size_t* size)
 {
-  return get_map_value(&row_container, column_name, "records", value, size);
+  int ret = 0, disc;
+  avro_value_t array, element, branch;
+  ret |= avro_value_get_by_name(&row_container, "records", &array, NULL);
+  ret |= avro_value_get_by_index(&array, index, &element, NULL);
+  ret |= avro_value_get_discriminant(&element, &disc);
+  if (disc == NULL_BRANCH)
+  {
+    *value = NULL;
+    return ret;
+  }
+
+  // Not null, so retrieve the value from the union
+  ret |= avro_value_get_current_branch(&element, &branch);
+  ret |= avro_value_get_bytes(&branch, (const void**)value, size);
+  return ret;
 }
 
-int Row::set_value(const char* column_name, char* value, size_t size)
+int Row::add_value(char* value, size_t size)
 {
-  return set_map_value(&row_container, column_name, "records", value, size);
+  int ret = 0;
+  size_t index;
+  avro_value_t array, element, branch;
+  ret |= avro_value_get_by_name(&row_container, "records", &array, NULL);
+  ret |= avro_value_append(&array, &element, &index);
+  ret |= avro_value_set_branch(&element, VALUE_BRANCH, &branch);
+  ret |= avro_value_set_bytes(&branch, value, size);
+  return ret;
+}
+
+int Row::add_null()
+{
+  int ret = 0;
+  size_t index;
+  avro_value_t array, element, branch;
+  ret |= avro_value_get_by_name(&row_container, "records", &array, NULL);
+  ret |= avro_value_append(&array, &element, &index);
+  ret |= avro_value_set_branch(&element, NULL_BRANCH, &branch);
+  return ret;
 }

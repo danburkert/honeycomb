@@ -66,12 +66,14 @@ public class MutationFactoryTest {
         add(new IndexSchema(INDEX1, Lists.newArrayList(COLUMN1), false));
         add(new IndexSchema(INDEX2, Lists.newArrayList(COLUMN1, COLUMN2), true));
     }};
+    private static final TableSchema SCHEMA = new TableSchema(COLUMNS, INDICES);
     private static final Row row = new Row(
             new HashMap<String, ByteBuffer>() {{
                 put(COLUMN1, ByteBuffer.wrap(Longs.toByteArray(123)));
                 put(COLUMN2, ByteBuffer.wrap("foobar".getBytes()));
             }},
-            UUID.randomUUID()
+            UUID.randomUUID(),
+            SCHEMA
     );
     private static final byte DATA_PREFIX = new DataRowKey(0, null).getPrefix();
     private static final byte ASC_PREFIX = IndexRowKeyBuilder.newBuilder(0, 0)

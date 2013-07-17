@@ -30,6 +30,17 @@ const char COLUMNS_MAP[] = "columns";
 const int TableSchema::CURRENT_VERSION = 0;
 const char* TableSchema::VERSION_FIELD = "version";
 
+int TableSchema::add_to_ordered_columns(const char* column)
+{
+  int ret = 0;
+  avro_value_t array, element;
+  size_t index;
+  ret |= avro_value_get_by_name(&table_schema, "orderedColumns", &array, NULL);
+  ret |= avro_value_append(&array, &element, &index);
+  ret |= avro_value_set_string(&element, column);
+  return ret;
+}
+
 int TableSchema::add_to_map_field(const char* field_name, const char* key, avro_value_t* value)
 {
   int ret = 0;
@@ -107,7 +118,10 @@ int TableSchema::deserialize(const char* buf, int64_t len)
 
 int TableSchema::add_column(const char* name, ColumnSchema* schema)
 {
-  return add_to_map_field(COLUMNS_MAP, name, schema->get_avro_value());
+  int ret = 0;
+  ret |= add_to_ordered_columns(name);
+  ret |= add_to_map_field(COLUMNS_MAP, name, schema->get_avro_value());
+  return ret;
 };
 
 int TableSchema::get_column(const char* name, ColumnSchema* column_schema)

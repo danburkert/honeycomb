@@ -316,8 +316,7 @@ int HoneycombHandler::unpack_row(uchar* buf, Row& row)
   for (uint i = 0; i < table->s->fields; i++)
   {
     Field *field = table->field[i];
-    const char* key = field->field_name;
-    row.get_value(key, &value, &size);
+    row.get_value(i, &value, &size);
     if (value == NULL)
     {
       field->set_null();

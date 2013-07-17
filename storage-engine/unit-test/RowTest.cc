@@ -28,7 +28,6 @@
 #include "Generator.h"
 #include "gtest/gtest.h"
 #include "../Row.h"
-#include "map_test.hpp"
 
 const int ITERATIONS = 1000;
 
@@ -41,21 +40,19 @@ class RowTest : public ::testing::Test
     }
 };
 
-TEST_F(RowTest, RandRecordMap)
+TEST_F(RowTest, AddValue)
 {
-  for(int i = 0; i < ITERATIONS; i++)
-  {
-    rand_record_map(row);
-  }
-}
-
-
-TEST_F(RowTest, BytesRecord)
-{
-  for(int i = 0; i < ITERATIONS; i++)
-  {
-    bytes_record(row);
-  }
+  const char* str = "hello";
+  const char* get_val;
+  const char* null_val;
+  size_t size;
+  row.reset();
+  row.add_value((char*)str, 6);
+  row.add_null();
+  row.get_value(0, &get_val, &size);
+  row.get_value(1, &null_val, &size);
+  ASSERT_TRUE(strcmp(get_val, str) == 0);
+  ASSERT_TRUE(null_val == NULL);
 }
 
 void rand_uuid(Row& row)
@@ -84,7 +81,18 @@ void rand_ser_de(Row& row_se)
   Row* row_de = new Row();
 
   // Setup row with random records & UUID
-  rand_record_map(row_se);
+
+  int num_records = rand() % 100; // [0, 100) records
+  char** vals = new char*[num_records];
+  int* val_lens = new int[num_records];
+  for (int i = 0; i < num_records; i++)
+  {
+    val_lens[i] = rand() % 1023 + 1; // [1, 1024) bytes per record
+    vals[i] = new char[val_lens[i]];
+    gen_random_bytes(vals[i], val_lens[i]);
+    row_se.add_value(vals[i], val_lens[i]);
+  }
+
   unsigned char* uuid_buf = new unsigned char[16];
   gen_random_bytes((char*) uuid_buf, 16);
   ASSERT_FALSE(row_se.set_UUID(uuid_buf));
@@ -96,6 +104,13 @@ void rand_ser_de(Row& row_se)
   row_de->deserialize(serialized, (int64_t) size);
   ASSERT_TRUE(row_se.equals(*row_de));
 
+  for(int i = 0; i < num_records; i++)
+  {
+    delete[] vals[i];
+  }
+
+  delete[] val_lens;
+  delete[] vals;
   delete[] uuid_buf;
   delete[] serialized;
   delete row_de;

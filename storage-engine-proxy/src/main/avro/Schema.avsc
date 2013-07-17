@@ -40,6 +40,7 @@
                     {"name": "isUnique", "type": "boolean", "default": false}
                 ]
             }}
-        }
+        },
+        {"name": "orderedColumns", "type": {"type": "array", "items": "string"}}
     ]
 }

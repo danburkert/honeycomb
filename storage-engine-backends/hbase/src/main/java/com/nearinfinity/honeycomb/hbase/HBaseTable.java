@@ -113,9 +113,10 @@ public class HBaseTable implements Table {
         checkNotNull(indexSchema, "The index schema is invalid");
         final Collection<IndexSchema> indices = ImmutableList.of(indexSchema);
         final Scanner scanner = tableScan();
+        TableSchema schema = store.getSchema(tableId);
         while (scanner.hasNext()) {
             HBaseOperations.performPut(hTable,
-                    mutationFactory.insertIndices(tableId, Row.deserialize(scanner.next()), indices));
+                    mutationFactory.insertIndices(tableId, Row.deserialize(scanner.next(), schema), indices));
         }
 
         Util.closeQuietly(scanner);
@@ -180,7 +181,7 @@ public class HBaseTable implements Table {
         if (result.isEmpty()) {
             throw new RowNotFoundException(uuid);
         }
-        return Row.deserialize(result.getValue(columnFamily.getBytes(), new byte[0]));
+        return Row.deserialize(result.getValue(columnFamily.getBytes(), new byte[0]), store.getSchema(tableId));
     }
 
     @Override

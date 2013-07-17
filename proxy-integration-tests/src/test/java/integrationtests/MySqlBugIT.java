@@ -22,18 +22,6 @@
 
 package integrationtests;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import org.junit.Test;
-
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.nearinfinity.honeycomb.mysql.QueryKey;
@@ -43,6 +31,15 @@ import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
+import org.junit.Test;
+
+import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import static org.junit.Assert.*;
 
 /**
  * Integration tests for the Java side that come from MySQL integration tests.
@@ -85,7 +82,7 @@ public class MySqlBugIT extends HoneycombIntegrationTest {
         final Map<String, ByteBuffer> map = Maps.newHashMap();
         map.put(TestConstants.COLUMN1, ITUtils.encodeValue(INDEX_COL_VALUE));
 
-        final Row row = new Row(map, UUID.randomUUID());
+        final Row row = getRow(map);
         proxy.insertRow(row.serialize());
         proxy.flush();
 
@@ -110,22 +107,22 @@ public class MySqlBugIT extends HoneycombIntegrationTest {
     public void testUpdateNotChangingIndicesWhenUpdatedColumnNotInIndex() {
         Map<String, ByteBuffer> values = Maps.newHashMap();
         values.put(TestConstants.COLUMN2, ITUtils.encodeValue(1));
-        Row row = new Row(values, UUID.randomUUID());
+        Row row = getRow(values);
         proxy.insertRow(row.serialize());
         proxy.flush();
 
         proxy.startTableScan();
         byte[] nextRow = proxy.getNextRow();
-        row = Row.deserialize(nextRow);
+        row = Row.deserialize(nextRow, getTableSchema());
         proxy.endScan();
-        row.getRecords().put(TestConstants.COLUMN2, ITUtils.encodeValue(2)); // update t1 set c2=2 where c1 is null
+        row.updateColumn(TestConstants.COLUMN2, ITUtils.encodeValue(2)); // updateColumn t1 set c2=2 where c1 is null
         proxy.updateRow(nextRow, row.serialize());
 
         Map<String, ByteBuffer> searchMap = Maps.newHashMap();
         searchMap.put(TestConstants.COLUMN1, null);
         QueryKey key = new QueryKey(TestConstants.INDEX1, QueryType.EXACT_KEY, searchMap);
         proxy.startIndexScan(key.serialize());
-        Row result = Row.deserialize(proxy.getNextRow());
+        Row result = Row.deserialize(proxy.getNextRow(), getTableSchema());
         assertEquals(result.getRecords().get(TestConstants.COLUMN2).getLong(), ITUtils.encodeValue(2).getLong());
         proxy.endScan();
     }
@@ -142,10 +139,9 @@ public class MySqlBugIT extends HoneycombIntegrationTest {
         ITUtils.insertNullData(proxy, 1);
         Map<String, ByteBuffer> values = Maps.newHashMap();
         values.put(TestConstants.COLUMN2, ITUtils.encodeValue(1));
-        Row row = new Row(values, UUID.randomUUID());
+        Row row = getRow(values);
         assertFalse(proxy.indexContainsDuplicate(TestConstants.INDEX3, row.serialize()));
     }
-
 
     /**
      * Provides the {@link com.nearinfinity.honeycomb.mysql.schema.TableSchema} to use for a test case
@@ -171,5 +167,9 @@ public class MySqlBugIT extends HoneycombIntegrationTest {
         indices.add(new IndexSchema(TestConstants.INDEX3, Lists.newArrayList(TestConstants.COLUMN1), true));
 
         return new TableSchema(columns, indices);
+    }
+
+    private Row getRow(Map<String, ByteBuffer> map) {
+        return new Row(map, UUID.randomUUID(), getTableSchema());
     }
 }

@@ -41,7 +41,7 @@ public class RowTest {
     public void testSerDe() throws Exception {
         TableSchema schema = new TableSchemaGenerator().next();
         for (Row row : Iterables.toIterable(new RowGenerator(schema))) {
-            Assert.assertEquals(row, Row.deserialize(row.serialize()));
+            Assert.assertEquals(row, Row.deserialize(row.serialize(), schema));
         }
     }
 }

@@ -22,23 +22,24 @@
 
 package com.nearinfinity.honeycomb.mysql.generators;
 
-import java.nio.ByteBuffer;
-import java.util.Map;
-import java.util.UUID;
-
-import net.java.quickcheck.Generator;
-
 import com.google.common.collect.ImmutableMap;
 import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
+import net.java.quickcheck.Generator;
+
+import java.nio.ByteBuffer;
+import java.util.Map;
+import java.util.UUID;
 
 public class RowGenerator implements Generator<Row> {
     private static final Generator<UUID> uuids = new UUIDGenerator();
     private final Map<String, Generator<ByteBuffer>> recordGenerators;
+    private final TableSchema schema;
 
     public RowGenerator(TableSchema schema) {
         super();
+        this.schema = schema;
         ImmutableMap.Builder<String, Generator<ByteBuffer>> recordGenerators = ImmutableMap.builder();
         for (ColumnSchema column : schema.getColumns()) {
             recordGenerators.put(column.getColumnName(), new FieldGenerator(column));
@@ -55,6 +56,6 @@ public class RowGenerator implements Generator<Row> {
                 records.put(record.getKey(), nextValue);
             }
         }
-        return new Row(records.build(), uuids.next());
+        return new Row(records.build(), uuids.next(), schema);
     }
 }

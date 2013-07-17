@@ -27,7 +27,7 @@
 class ColumnSchema;
 class IndexSchema;
 
-#define TABLE_SCHEMA "{\"type\":\"record\",\"name\":\"AvroTableSchema\",\"namespace\":\"com.nearinfinity.honeycomb.mysql.gen\",\"fields\":[{\"name\":\"version\",\"type\":\"int\",\"doc\":\"Schema version number\",\"default\":0},{\"name\":\"columns\",\"type\":{\"type\":\"map\",\"values\":" COLUMN_SCHEMA ",\"avro.java.string\":\"String\"}},{\"name\":\"indices\",\"type\":{\"type\":\"map\",\"values\":" INDEX_SCHEMA ",\"avro.java.string\":\"String\"}}]}"
+#define TABLE_SCHEMA "{\"type\":\"record\",\"name\":\"AvroTableSchema\",\"namespace\":\"com.nearinfinity.honeycomb.mysql.gen\",\"fields\":[{\"name\":\"version\",\"type\":\"int\",\"doc\":\"Schema version number\",\"default\":0},{\"name\":\"columns\",\"type\":{\"type\":\"map\",\"values\":" COLUMN_SCHEMA ",\"avro.java.string\":\"String\"}},{\"name\":\"indices\",\"type\":{\"type\":\"map\",\"values\":" INDEX_SCHEMA ",\"avro.java.string\":\"String\"}},{\"name\":\"orderedColumns\",\"type\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"avro.java.string\":\"String\"}}}]}"
 
 /**
  * @brief A serializable container that stores metadata for a MySQL table's indices and columns.
@@ -47,6 +47,7 @@ class TableSchema : public Serializable
     static const int CURRENT_VERSION;
     static const char* VERSION_FIELD;
 
+    int add_to_ordered_columns(const char* column);
     int add_to_map_field(const char* field_name, const char* key, avro_value_t* value);
     int get_from_map_field(const char* field_name, const char* key, avro_value_t* value);
 

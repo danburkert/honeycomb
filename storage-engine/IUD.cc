@@ -58,6 +58,7 @@ int HoneycombHandler::pack_row(uchar *buf, TABLE* table, Row& row)
 
     if (field->is_null())
     {
+      row.add_null();
       field->move_field_offset(-offset);
       continue;
     }
@@ -154,7 +155,7 @@ int HoneycombHandler::pack_row(uchar *buf, TABLE* table, Row& row)
       memcpy(byte_val, field->ptr, actualFieldSize);
       break;
     }
-    row.set_value(field->field_name, byte_val, actualFieldSize);
+    row.add_value(byte_val, actualFieldSize);
     MY_FREE(byte_val);
     field->move_field_offset(-offset);
   }

@@ -119,23 +119,31 @@ class Row : public Serializable
      * @brief Get the bytes of a record in the Row.  The value byte buffer will
      * be set to NULL if the record is not in the Row.
      *
-     * @param column_name   The column of the requested record
+     * @param index   The index of the requested record
      * @param value   A pointer to the result byte buffer
      * @param size  A pointer to the size of the result byte buffer
      *
      * @return  Error code
      */
-    int get_value(const char* column_name, const char** value, size_t* size);
+    int get_value(int index, const char** value, size_t* size);
 
     /**
      * @brief Set record in Row to given value and size.
      *
-     * @param column_name Column of record
+     * @param index Index of record
      * @param value Byte buffer value of record
      * @param size Size of value
      *
      * @return Error code
      */
-    int set_value(const char* column_name, char* value, size_t size);
+    int add_value(char* value, size_t size);
+
+    
+    /**
+     * @brief Add a null to the Row
+     *
+     * @return Error code
+     */
+    int add_null();
 };
 #endif

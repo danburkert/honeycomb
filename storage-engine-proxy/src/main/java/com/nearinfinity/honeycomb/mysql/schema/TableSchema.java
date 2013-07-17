@@ -38,10 +38,7 @@ import org.apache.avro.io.DatumWriter;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -71,8 +68,10 @@ public final class TableSchema {
         checkNotNull(indices);
 
         Map<String, AvroColumnSchema> columnSchemaMap = Maps.newHashMap();
+        List<String> orderedColumns = Lists.newArrayList();
         for (ColumnSchema columnSchema : columns) {
             columnSchemaMap.put(columnSchema.getColumnName(), columnSchema.getAvroValue());
+            orderedColumns.add(columnSchema.getColumnName());
         }
 
         Map<String, AvroIndexSchema> indexSchemaMap = Maps.newHashMap();
@@ -86,6 +85,7 @@ public final class TableSchema {
         avroTableSchema = AvroTableSchema.newBuilder()
                 .setColumns(columnSchemaMap)
                 .setIndices(indexSchemaMap)
+                .setOrderedColumns(orderedColumns)
                 .build();
 
         this.columns = new LinkedList<ColumnSchema>(columns);
@@ -96,8 +96,9 @@ public final class TableSchema {
         this.avroTableSchema = avroTableSchema;
 
         columns = Lists.newArrayList();
-        for (Map.Entry<String, AvroColumnSchema> entry : avroTableSchema.getColumns().entrySet()) {
-            columns.add(new ColumnSchema(entry.getKey(), entry.getValue()));
+        Map<String, AvroColumnSchema> columnMap = avroTableSchema.getColumns();
+        for(String column : avroTableSchema.getOrderedColumns()){
+            columns.add(new ColumnSchema(column, columnMap.get(column)));
         }
 
         indices = Lists.newArrayList();
@@ -263,10 +264,10 @@ public final class TableSchema {
     public String toString() {
         final ToStringHelper helper = Objects.toStringHelper(this.getClass());
 
-        if( avroTableSchema != null ) {
+        if (avroTableSchema != null) {
             helper.add("Version", avroTableSchema.getVersion())
-                  .add("Columns", avroTableSchema.getColumns())
-                  .add("Indices", avroTableSchema.getIndices());
+                    .add("Columns", avroTableSchema.getColumns())
+                    .add("Indices", avroTableSchema.getIndices());
         }
 
         return helper.toString();

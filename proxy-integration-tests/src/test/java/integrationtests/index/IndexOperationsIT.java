@@ -96,11 +96,11 @@ public class IndexOperationsIT extends HoneycombIntegrationTest {
 
         // Verify that we can get a row from the index scan
         proxy.startIndexScan(key.serialize());
-        final Row row = Row.deserialize(proxy.getNextRow());
+        final Row row = deserialize(proxy.getNextRow());
         byte[] result = proxy.getRow(Util.UUIDToBytes(row.getUUID()));
 
         assertNotNull(row);
-        assertEquals(Row.deserialize(result).getUUID(), row.getUUID());
+        assertEquals(deserialize(result).getUUID(), row.getUUID());
 
         proxy.endScan();
 
@@ -109,9 +109,13 @@ public class IndexOperationsIT extends HoneycombIntegrationTest {
 
         // Verify that the data row is still available after the index has been removed
         result = proxy.getRow(Util.UUIDToBytes(row.getUUID()));
-        assertEquals(Row.deserialize(result).getUUID(), row.getUUID());
+        assertEquals(deserialize(result).getUUID(), row.getUUID());
 
         // Verify that the scan is unable to execute
         proxy.startIndexScan(key.serialize());
+    }
+
+    private Row deserialize(byte[] result) {
+        return Row.deserialize(result, TestConstants.TABLE_SCHEMA);
     }
 }

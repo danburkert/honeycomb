@@ -14,7 +14,7 @@
  ; KIND, either express or implied.  See the License for the
  ; specific language governing permissions and limitations
  ; under the License.
- ; 
+ ;
  ; Copyright 2013 Near Infinity Corporation.
 
 
@@ -26,6 +26,7 @@
            [java.nio ByteBuffer]
            [java.util UUID]))
 
+(def ^:dynamic schema)
 
 (defn long-bb [n]
   (-> (ByteBuffer/allocate 8)
@@ -58,8 +59,10 @@
     (TableSchema. (map create-column columns)
                   (map create-index-schema indices))))
 
-(defn create-row [& {:as fields}]
-  (Row. fields (UUID/randomUUID)))
+(defn create-row-with-uuid [schema uuid & {:as fields}]
+  (Row. fields uuid schema))
+(defn create-row [schema & {:as fields}]
+  (Row. fields (UUID/randomUUID) schema))
 
 (defn create-query-key [index-name & {:as keys}]
   (QueryKey. index-name QueryType/EXACT_KEY (or keys {})))

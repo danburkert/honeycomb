@@ -22,15 +22,6 @@
 
 package com.nearinfinity.honeycomb.mysql;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-import static java.lang.String.format;
-
-import java.nio.ByteBuffer;
-
-import org.apache.log4j.Logger;
-
 import com.google.common.collect.ImmutableList;
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Store;
@@ -40,6 +31,12 @@ import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
 import com.nearinfinity.honeycomb.util.Verify;
+import org.apache.log4j.Logger;
+
+import java.nio.ByteBuffer;
+
+import static com.google.common.base.Preconditions.*;
+import static java.lang.String.format;
 
 /**
  * Represents the proxy interaction between the storage engine and storage
@@ -235,7 +232,7 @@ public class HandlerProxy {
         Verify.isNotNullOrEmpty(indexName);
         checkNotNull(serializedRow);
 
-        Row row = Row.deserialize(serializedRow);
+        Row row = deserializeRow(serializedRow);
 
         Table t = store.openTable(tableName);
         TableSchema schema = store.getSchema(tableName);
@@ -246,7 +243,7 @@ public class HandlerProxy {
 
         try {
             while (scanner.hasNext()) {
-                Row next = Row.deserialize(scanner.next());
+                Row next = deserializeRow(scanner.next());
                 if (!next.getUUID().equals(row.getUUID())) {
                     // Special case for inserting nulls
                     for (String column : indexSchema.getColumns()) {
@@ -275,7 +272,7 @@ public class HandlerProxy {
         checkTableOpen();
         checkNotNull(rowBytes);
         TableSchema schema = store.getSchema(tableName);
-        Row row = Row.deserialize(rowBytes);
+        Row row = deserializeRow(rowBytes);
         row.setRandomUUID();
         String auto_inc_col = schema.getAutoIncrementColumn();
         if (auto_inc_col != null) {
@@ -299,16 +296,16 @@ public class HandlerProxy {
 
     public void deleteRow(byte[] rowBytes) {
         checkTableOpen();
-        Row row = Row.deserialize(rowBytes);
+        Row row = deserializeRow(rowBytes);
         table.deleteRow(row);
     }
 
     public void updateRow(byte[] oldRowBytes, byte[] rowBytes) {
         checkTableOpen();
         checkNotNull(rowBytes);
-        Row updatedRow = Row.deserialize(rowBytes);
+        Row updatedRow = deserializeRow(rowBytes);
         TableSchema schema = store.getSchema(tableName);
-        Row oldRow = Row.deserialize(oldRowBytes);
+        Row oldRow = deserializeRow(oldRowBytes);
         oldRow.setUUID(updatedRow.getUUID());
         ImmutableList<IndexSchema> changedIndices = Util.getChangedIndices(schema.getIndices(), oldRow.getRecords(), updatedRow.getRecords());
         table.updateRow(oldRow, updatedRow, changedIndices);
@@ -377,7 +374,7 @@ public class HandlerProxy {
             default:
                 throw new IllegalArgumentException(format("Not a supported type of query %s", queryType));
         }
-      }
+    }
 
     public byte[] getNextRow() {
         checkNotNull(currentScanner, "Scanner cannot be null to get next row.");
@@ -385,7 +382,7 @@ public class HandlerProxy {
         if (next == null) {
             return null;
         }
-        return Row.updateSerializedSchema(next);
+        return Row.updateSerializedSchema(next, store.getSchema(tableName));
     }
 
     public byte[] getRow(byte[] uuid) {
@@ -399,6 +396,10 @@ public class HandlerProxy {
             Util.closeQuietly(currentScanner);
             currentScanner = null;
         }
+    }
+
+    private Row deserializeRow(byte[] rowBytes) {
+        return Row.deserialize(rowBytes, store.getSchema(tableName));
     }
 
     private void checkTableOpen() {

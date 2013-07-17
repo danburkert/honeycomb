@@ -22,22 +22,6 @@
 
 package integrationtests.row;
 
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
-import integrationtests.HoneycombIntegrationTest;
-import integrationtests.ITUtils;
-import integrationtests.TestConstants;
-
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import org.junit.Test;
-
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -52,33 +36,29 @@ import com.nearinfinity.honeycomb.mysql.gen.QueryType;
 import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
+import integrationtests.HoneycombIntegrationTest;
+import integrationtests.ITUtils;
+import integrationtests.TestConstants;
+import org.junit.Test;
+
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.Assert.*;
 
 public class RowOperationsIT extends HoneycombIntegrationTest {
 
     private static final int ROW_COUNT = 1;
     private static final int INDEX_COL_VALUE = 7;
-
     private static final Map<String, ByteBuffer> fields = ImmutableMap.of(
             TestConstants.COLUMN1,
             ByteBuffer.wrap(Longs.toByteArray(1)),
             TestConstants.COLUMN2,
             ByteBuffer.wrap(Longs.toByteArray(2)));
-
-    private class InsertRows implements ITUtils.ProxyRunnable {
-        private long count;
-        public InsertRows(long count) {
-            this.count = count;
-        }
-        @Override
-        public void run(HandlerProxy proxy) {
-            byte[] row;
-            for (int i = 0; i < count; i++) {
-                row = new Row(fields, UUID.randomUUID()).serialize();
-                proxy.insertRow(row);
-            }
-            proxy.flush();
-        }
-    }
 
     @Test
     public void testInsertRows() {
@@ -107,11 +87,11 @@ public class RowOperationsIT extends HoneycombIntegrationTest {
         final QueryKey key = ITUtils.createKey(INDEX_COL_VALUE, QueryType.EXACT_KEY);
         proxy.startIndexScan(key.serialize());
 
-        final Row r = Row.deserialize(proxy.getNextRow());
+        final Row r = getDeserialize(proxy.getNextRow());
         final byte[] result = proxy.getRow(Util.UUIDToBytes(r.getUUID()));
 
         assertNotNull(result);
-        assertThat(Row.deserialize(result).getUUID(), equalTo(r.getUUID()));
+        assertThat(getDeserialize(result).getUUID(), equalTo(r.getUUID()));
     }
 
     @Test
@@ -120,7 +100,7 @@ public class RowOperationsIT extends HoneycombIntegrationTest {
         map.put(TestConstants.COLUMN1, ITUtils.encodeValue(INDEX_COL_VALUE));
         map.put(TestConstants.COLUMN2, ITUtils.encodeValue(6));
 
-        final Row row = new Row(map, UUID.randomUUID());
+        final Row row = getRow(map);
         proxy.insertRow(row.serialize());
         proxy.flush();
 
@@ -159,22 +139,34 @@ public class RowOperationsIT extends HoneycombIntegrationTest {
         map.put(TestConstants.COLUMN1, ITUtils.encodeValue(INDEX_COL_VALUE));
         map.put(TestConstants.COLUMN2, ITUtils.encodeValue(6));
 
-        final Row row = new Row(map, UUID.randomUUID());
+        final Row row = getRow(map);
         proxy.insertRow(row.serialize());
         proxy.flush();
 
         final QueryKey key = ITUtils.createKey(INDEX_COL_VALUE, QueryType.EXACT_KEY);
         proxy.startIndexScan(key.serialize());
-        final Row r = Row.deserialize(proxy.getNextRow());
+        final Row r = getDeserialize(proxy.getNextRow());
 
         map.put(TestConstants.COLUMN1, ITUtils.encodeValue(3));
-        final Row newRow = new Row(map, r.getUUID());
+        final Row newRow = getRow(map, r.getUUID());
         proxy.updateRow(r.serialize(), newRow.serialize());
         proxy.flush();
 
         final byte[] result = proxy.getRow(Util.UUIDToBytes(r.getUUID()));
 
-        assertThat(Row.deserialize(result), equalTo(newRow));
+        assertThat(getDeserialize(result), equalTo(newRow));
+    }
+
+    private Row getDeserialize(byte[] result) {
+        return Row.deserialize(result, getTableSchema());
+    }
+
+    private Row getRow(Map<String, ByteBuffer> map) {
+        return getRow(map, UUID.randomUUID());
+    }
+
+    private Row getRow(Map<String, ByteBuffer> map, UUID r) {
+        return new Row(map, r, getTableSchema());
     }
 
     @Test
@@ -191,7 +183,7 @@ public class RowOperationsIT extends HoneycombIntegrationTest {
 
         proxy.createTable(tableName, schema.serialize(), 0);
         proxy.openTable(tableName);
-        Row row = new Row(Maps.<String, ByteBuffer>newHashMap(), TestConstants.ZERO_UUID);
+        Row row = getRow(Maps.<String, ByteBuffer>newHashMap(), TestConstants.ZERO_UUID);
 
         List<Row> rows = new ArrayList<Row>();
 
@@ -204,8 +196,8 @@ public class RowOperationsIT extends HoneycombIntegrationTest {
 
             proxy.startTableScan();
             for (int i = 0; i < iterations; i++) {
-                Row deserialized = Row.deserialize(proxy.getNextRow());
-                deserialized.getRecords().put(TestConstants.COLUMN1, ITUtils.encodeValue(0));
+                Row deserialized = getDeserialize(proxy.getNextRow());
+                deserialized.updateColumn(TestConstants.COLUMN1, ITUtils.encodeValue(0));
                 rows.add(deserialized);
             }
             proxy.endScan();
@@ -222,7 +214,7 @@ public class RowOperationsIT extends HoneycombIntegrationTest {
             for (int i = 0; i < iterations; i++) {
                 byte[] bytes = proxy.getNextRow();
                 assertNotNull(bytes);
-                assertThat(Row.deserialize(bytes).getRecords().get(TestConstants.COLUMN1), equalTo(ITUtils.encodeValue(0)));
+                assertThat(getDeserialize(bytes).getRecords().get(TestConstants.COLUMN1), equalTo(ITUtils.encodeValue(0)));
             }
 
             assertNull(proxy.getNextRow());
@@ -233,5 +225,23 @@ public class RowOperationsIT extends HoneycombIntegrationTest {
 
         proxy.closeTable();
         proxy.dropTable(tableName);
+    }
+
+    private class InsertRows implements ITUtils.ProxyRunnable {
+        private long count;
+
+        public InsertRows(long count) {
+            this.count = count;
+        }
+
+        @Override
+        public void run(HandlerProxy proxy) {
+            byte[] row;
+            for (int i = 0; i < count; i++) {
+                row = getRow(fields).serialize();
+                proxy.insertRow(row);
+            }
+            proxy.flush();
+        }
     }
 }
