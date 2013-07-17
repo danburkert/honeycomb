@@ -251,21 +251,14 @@ public class HBaseMetadata {
     public void deleteTable(String tableName) {
         Verify.isNotNullOrEmpty(tableName);
 
-        List<Delete> deletes = Lists.newArrayList();
-
         final long tableId = getTableId(tableName);
-        final byte[] serializedId = serializeId(tableId);
-
+        final List<Delete> deletes = Lists.newArrayList();
         final Delete columnIdsDelete = new Delete(new ColumnsRowKey(tableId).encode());
         final Delete indicesIdsDelete = new Delete(new IndicesRowKey(tableId).encode());
-
-        final Delete rowsDelete = new Delete(new RowsRowKey().encode());
-        rowsDelete.deleteColumns(columnFamily, serializedId);
 
         deletes.add(deleteTableId(tableName));
         deletes.add(columnIdsDelete);
         deletes.add(indicesIdsDelete);
-        deletes.add(rowsDelete);
         deletes.add(deleteAutoIncCounter(tableId));
         deletes.add(deleteTableSchema(tableId));
 
@@ -331,40 +324,6 @@ public class HBaseMetadata {
         } finally {
             HBaseOperations.closeTable(hTable);
         }
-    }
-
-    /**
-     * Retrieve number of rows in a table
-     *
-     * @param tableId Table ID
-     * @return Rows in the table
-     */
-    public long getRowCount(long tableId) {
-        Verify.isValidId(tableId);
-        return getCounter(new RowsRowKey().encode(), serializeId(tableId));
-    }
-
-    /**
-     * Increment a table's row count by an amount
-     *
-     * @param tableId Table ID
-     * @param amount  Amount to increment
-     * @return New row count
-     */
-    public long incrementRowCount(long tableId, long amount) {
-        Verify.isValidId(tableId);
-        return incrementCounter(new RowsRowKey().encode(), serializeId(tableId), amount);
-    }
-
-    /**
-     * Reset a table's row count back to zero
-     *
-     * @param tableId Table ID
-     */
-    public void truncateRowCount(long tableId) {
-        Verify.isValidId(tableId);
-        performMutations(Lists.<Delete>newArrayList(deleteRowsCounter(tableId)),
-                ImmutableList.<Put>of());
     }
 
     private Map<String, Long> getNameToIdMap(long tableId, byte[] encodedRow) {
@@ -433,11 +392,6 @@ public class HBaseMetadata {
 
     private Delete deleteAutoIncCounter(long tableId) {
         return new Delete(new AutoIncRowKey().encode())
-                .deleteColumns(columnFamily, serializeId(tableId));
-    }
-
-    private Delete deleteRowsCounter(long tableId) {
-        return new Delete(new RowsRowKey().encode())
                 .deleteColumns(columnFamily, serializeId(tableId));
     }
 

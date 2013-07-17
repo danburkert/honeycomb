@@ -22,30 +22,7 @@
 
 package com.nearinfinity.honeycomb.hbase.generators;
 
-import static com.google.common.base.Preconditions.checkState;
-
-import java.util.Collection;
-import java.util.Random;
-import java.util.UUID;
-
-import net.java.quickcheck.FrequencyGenerator;
-import net.java.quickcheck.Generator;
-import net.java.quickcheck.collection.Pair;
-import net.java.quickcheck.generator.CombinedGenerators;
-import net.java.quickcheck.generator.PrimitiveGenerators;
-import net.java.quickcheck.generator.support.DefaultFrequencyGenerator;
-
-import com.nearinfinity.honeycomb.hbase.rowkey.AutoIncRowKey;
-import com.nearinfinity.honeycomb.hbase.rowkey.ColumnsRowKey;
-import com.nearinfinity.honeycomb.hbase.rowkey.DataRowKey;
-import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowKey;
-import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowKeyBuilder;
-import com.nearinfinity.honeycomb.hbase.rowkey.IndicesRowKey;
-import com.nearinfinity.honeycomb.hbase.rowkey.RowKey;
-import com.nearinfinity.honeycomb.hbase.rowkey.RowsRowKey;
-import com.nearinfinity.honeycomb.hbase.rowkey.SchemaRowKey;
-import com.nearinfinity.honeycomb.hbase.rowkey.SortOrder;
-import com.nearinfinity.honeycomb.hbase.rowkey.TablesRowKey;
+import com.nearinfinity.honeycomb.hbase.rowkey.*;
 import com.nearinfinity.honeycomb.mysql.QueryKey;
 import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.mysql.generators.QueryKeyGenerator;
@@ -54,11 +31,22 @@ import com.nearinfinity.honeycomb.mysql.generators.TableSchemaGenerator;
 import com.nearinfinity.honeycomb.mysql.generators.UUIDGenerator;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
+import net.java.quickcheck.FrequencyGenerator;
+import net.java.quickcheck.Generator;
+import net.java.quickcheck.collection.Pair;
+import net.java.quickcheck.generator.CombinedGenerators;
+import net.java.quickcheck.generator.PrimitiveGenerators;
+import net.java.quickcheck.generator.support.DefaultFrequencyGenerator;
+
+import java.util.Collection;
+import java.util.Random;
+import java.util.UUID;
+
+import static com.google.common.base.Preconditions.checkState;
 
 public class RowKeyGenerator implements Generator<RowKey> {
     private static final Random RAND = new Random();
     private static final TablesRowKey tablesRow = new TablesRowKey();
-    private static final RowsRowKey rowsRow = new RowsRowKey();
     private static final AutoIncRowKey autoIncRow = new AutoIncRowKey();
     private static final SchemaRowKey schemaRow = new SchemaRowKey();
     private static final Generator<Long> randIdGen = CombinedGenerators.uniqueValues(
@@ -118,7 +106,6 @@ public class RowKeyGenerator implements Generator<RowKey> {
                 case 0:
                     return tablesRow;
                 case 1:
-                    return rowsRow;
                 case 2:
                     return autoIncRow;
                 case 3:

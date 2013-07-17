@@ -23,30 +23,6 @@
 package com.nearinfinity.honeycomb.hbase;
 
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
-import net.java.quickcheck.Generator;
-import net.java.quickcheck.generator.PrimitiveGenerators;
-
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-import org.powermock.api.mockito.PowerMockito;
-
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -58,6 +34,25 @@ import com.nearinfinity.honeycomb.mysql.generators.TableSchemaGenerator;
 import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
+import net.java.quickcheck.Generator;
+import net.java.quickcheck.generator.PrimitiveGenerators;
+import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+import org.powermock.api.mockito.PowerMockito;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.when;
 
 public class HBaseMetadataTest {
     private static final Generator<TableSchema> TABLE_SCHEMA_GEN = new TableSchemaGenerator();
@@ -407,20 +402,4 @@ public class HBaseMetadataTest {
         assertEquals(hbaseMetadata.getAutoInc(tableId), 13);
     }
 
-    @Test
-    public void testRowCount() throws Exception {
-        TableSchema table = TABLE_SCHEMA_GEN.next();
-        final String tableName = TableSchemaGenerator.MYSQL_NAME_GEN.next();
-
-        hbaseMetadata.createTable(tableName, table);
-
-        long tableId = hbaseMetadata.getTableId(tableName);
-        long value = LONG_GEN.next();
-        assertEquals(hbaseMetadata.getRowCount(tableId), 0);
-        assertEquals(hbaseMetadata.incrementRowCount(tableId, value), value);
-        assertEquals(hbaseMetadata.getRowCount(tableId), value);
-
-        hbaseMetadata.truncateRowCount(tableId);
-        assertEquals(hbaseMetadata.getRowCount(tableId), 0);
-    }
 }
