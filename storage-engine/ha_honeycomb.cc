@@ -163,7 +163,7 @@ static bool try_setup()
 
   if (!try_initialize_jvm(&jvm, settings, &handler_proxy_factory))
   {
-	Logging::fatal("Error during JVM initialization");
+    Logging::fatal("Error during JVM initialization");
 
     return false;
   } else {
@@ -173,7 +173,7 @@ static bool try_setup()
   cache = new JNICache(jvm);
   if (cache->has_error())
   {
-	Logging::fatal("Error creating JNI cache");
+    Logging::fatal("Error creating JNI cache");
 
     delete cache;
     return false;
@@ -243,7 +243,7 @@ struct st_mysql_storage_engine honeycomb_storage_engine=
   MYSQL_HANDLERTON_INTERFACE_VERSION
 };
 
-static MYSQL_SYSVAR_STR(configuration_path, honeycomb_configuration_path, 
+static MYSQL_SYSVAR_STR(configuration_path, honeycomb_configuration_path,
     PLUGIN_VAR_READONLY|PLUGIN_VAR_RQCMDARG, "The path to the directory containing honeycomb.xml", NULL, NULL, NULL);
 
 // System variables are formed by prepending the storage engine name on the front
@@ -259,7 +259,7 @@ mysql_declare_plugin(honeycomb)
     &honeycomb_storage_engine,
     "Honeycomb",
     "Near Infinity Corporation",
-    "HBase storage engine",
+    "Honeycomb storage engine",
     PLUGIN_LICENSE_GPL,
     honeycomb_init_func,        /* Plugin Init */
     honeycomb_done_func,        /* Plugin Deinit */

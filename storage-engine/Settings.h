@@ -45,14 +45,11 @@ class Settings
      */
     virtual ~Settings();
 
-    
     /**
      * @brief Try to load settings from a file and schema
      *
      * @param filename
      * @param schema
-     *
-     * @return 
      */
     bool try_load(char* filename, char* schema);
 

@@ -27,8 +27,7 @@ package com.nearinfinity.honeycomb.config;
  */
 public abstract class Constants {
     public static final String HONEYCOMB_NAMESPACE = "honeycomb";
+    public static final String CONFIG_FILE = "honeycomb.xml";
+    public static final String SCHEMA_FILE = "honeycomb.xsd";
 
-    private Constants() {
-
-    }
 }

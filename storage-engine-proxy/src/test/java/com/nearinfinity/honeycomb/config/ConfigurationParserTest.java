@@ -24,7 +24,6 @@ package com.nearinfinity.honeycomb.config;
 
 import com.google.common.io.InputSupplier;
 import org.junit.Before;
-import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -59,15 +58,5 @@ public class ConfigurationParserTest {
     @Before
     public void setupTestCase() {
         MockitoAnnotations.initMocks(this);
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void testParseNullConfigPath() {
-        ConfigurationParser.parseConfiguration(null, "/foo");
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void testParseNullSchemaPath() {
-        ConfigurationParser.parseConfiguration("/foo", null);
     }
 }

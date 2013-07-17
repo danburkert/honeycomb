@@ -48,7 +48,7 @@ bool print_java_exception(JNIEnv* jni_env);
  * @brief Check for an exception waiting in the JVM
  *
  * @param env Java environment
- * @param cache Cache of JNI classes 
+ * @param cache Cache of JNI classes
  * @param location Where is this function being called from
  *
  * @return MySQL error code corresponding to the Java exception
@@ -80,9 +80,9 @@ char *char_array_from_java_bytes(jbyteArray java_bytes, JNIEnv* env);
  * @brief Convert a Java string into a C string
  *
  * @param env Java environment
- * @param str Java string 
+ * @param str Java string
  *
- * @return C string 
+ * @return C string
  */
 const char* java_to_string(JNIEnv* env, jstring str);
 
@@ -110,7 +110,7 @@ jbyteArray serialize_to_java(JNIEnv* env, Serializable& serializable);
  * @brief Convert a Java byte array to serializable object
  *
  * @param env Java environment
- * @param bytes Java byte array 
+ * @param bytes Java byte array
  * @param serializable Serializable object
  */
 void deserialize_from_java(JNIEnv* env, jbyteArray bytes, Serializable& serializable);

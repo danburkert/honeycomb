@@ -22,12 +22,14 @@
 
 package com.nearinfinity.honeycomb.config;
 
-import static java.lang.String.format;
-
-import java.io.File;
-import java.io.InputStream;
-import java.util.List;
-import java.util.Map;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.io.InputSupplier;
+import com.google.common.io.Resources;
+import org.apache.log4j.Logger;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -39,17 +41,10 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
-
-import org.apache.log4j.Logger;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.io.Files;
-import com.google.common.io.InputSupplier;
-import com.nearinfinity.honeycomb.util.Verify;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Provides capabilities for validation and parsing of the application configuration content
@@ -77,25 +72,17 @@ public class ConfigurationParser {
      * Create a {@link HoneycombConfiguration} from a configuration file path and configuration
      * schema validator path.
      *
-     * @param configPath Path to configuration file to be parsed
-     * @param schemaPath Path to schema file to be validated against
+     * @param configURL Path to configuration file to be parsed
+     * @param schemaURL Path to schema file to be validated against
      * @return ConfigurationParser object holding configuration options
      */
-    public static HoneycombConfiguration parseConfiguration(String configPath,
-                                                            String schemaPath) {
-        Verify.isNotNullOrEmpty(configPath);
-        Verify.isNotNullOrEmpty(schemaPath);
-
-        final File configFile = new File(configPath);
-        final File schemaFile = new File(schemaPath);
-
-        checkFileAvailable(configFile);
-        checkFileAvailable(schemaFile);
+    public static HoneycombConfiguration parseConfiguration(URL configURL,
+                                                            URL schemaURL) {
 
         final InputSupplier<? extends InputStream> configSupplier =
-                Files.newInputStreamSupplier(configFile);
+                Resources.newInputStreamSupplier(configURL);
         final InputSupplier<? extends InputStream> schemaSupplier =
-                Files.newInputStreamSupplier(schemaFile);
+                Resources.newInputStreamSupplier(schemaURL);
 
         checkValidConfig(configSupplier, schemaSupplier);
         Document doc = parseDocument(configSupplier);
@@ -123,22 +110,6 @@ public class ConfigurationParser {
             logger.error("Unable to validate honeycomb configuration.", e);
             throw new RuntimeException("Exception while validating honeycomb configuration.", e);
         }
-    }
-
-    /**
-     * Checks if the file is accessible and available for reading
-     *
-     * @param file The file to inspect
-     * @return True if file is available, False otherwise
-     */
-    private static boolean checkFileAvailable(final File file) {
-        if (!(file.exists() && file.canRead() && file.isFile())) {
-            final String errorMsg = format("%s is not readable.", file.getAbsolutePath());
-            logger.fatal(errorMsg);
-            throw new RuntimeException(errorMsg);
-        }
-
-        return true;
     }
 
     /**

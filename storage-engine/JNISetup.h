@@ -37,12 +37,12 @@ class Settings;
 
 /**
  * @brief Try to create and initialize a new JVM based on the settings passed in.
- * The settings are passed into the JVM as command line arguments. 
- * The function also creates a factory for instantiating new HandlerProxies with 
+ * The settings are passed into the JVM as command line arguments.
+ * The function also creates a factory for instantiating new HandlerProxies with
  * all dependencies satisfied.
  * If a JVM already exists then this function will fail.
  *
- * @param jvm Java VM that will be created and setup 
+ * @param jvm Java VM that will be created and setup
  * @param options Settings for the Java VM (will be passed into the command line)
  * @param factory Factory that creates the HandlerProxy class (will be created)
  *

@@ -22,26 +22,25 @@
 
 package com.nearinfinity.honeycomb.mysql;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.util.Enumeration;
-import java.util.Map;
-
-import org.apache.log4j.Appender;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Logger;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.nearinfinity.honeycomb.config.AdapterType;
 import com.nearinfinity.honeycomb.config.ConfigurationParser;
+import com.nearinfinity.honeycomb.config.Constants;
 import com.nearinfinity.honeycomb.config.HoneycombConfiguration;
 import com.nearinfinity.honeycomb.exceptions.StorageBackendCreationException;
-import com.nearinfinity.honeycomb.util.Verify;
+import org.apache.log4j.Appender;
+import org.apache.log4j.FileAppender;
+import org.apache.log4j.Logger;
 
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.net.URL;
+import java.util.Enumeration;
+import java.util.Map;
 
 /**
  * Serves as the initial starting point of the storage engine proxy that is
@@ -58,20 +57,26 @@ public final class Bootstrap extends AbstractModule {
     /**
      * The initial function called by JNI to wire-up the required object graph dependencies
      *
-     * @param configFilename The path to the configuration file, not null or empty
-     * @param configSchema  The path to the schema used to validate the configuration file, not null or empty
      * @return {@link HandlerProxyFactory} with all dependencies setup
      */
-    public static HandlerProxyFactory startup(String configFilename, String configSchema) {
-        Verify.isNotNullOrEmpty(configFilename);
-        Verify.isNotNullOrEmpty(configSchema);
-
+    public static HandlerProxyFactory startup() {
         ensureLoggingPathsCorrect();
-        HoneycombConfiguration configuration =
-                ConfigurationParser.parseConfiguration(configFilename, configSchema);
 
-        Bootstrap bootstrap = new Bootstrap(configuration);
+        ClassLoader loader = Bootstrap.class.getClassLoader();
+        URL configURL = loader.getResource(Constants.CONFIG_FILE);
+        URL schemaURL = loader.getResource(Constants.SCHEMA_FILE);
 
+        if (configURL == null || schemaURL == null) {
+            String msg = "Unable to find " + (configURL == null ?
+                    Constants.CONFIG_FILE : Constants.SCHEMA_FILE) + " on the classpath.";
+            logger.error(msg);
+            logger.info("Classpath:\n" + System.getProperty("java.class.path").replace(':', '\n'));
+            throw new Error(msg);
+        }
+
+        HoneycombConfiguration config = ConfigurationParser.parseConfiguration(configURL, schemaURL);
+
+        Bootstrap bootstrap = new Bootstrap(config);
         Injector injector = Guice.createInjector(bootstrap);
         return injector.getInstance(HandlerProxyFactory.class);
     }

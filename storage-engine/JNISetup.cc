@@ -40,11 +40,9 @@ static bool try_bootstrap(JavaVM* jvm, jobject* factory, const Settings& setting
   JNIEnv* env;
   attach_thread(jvm, &env, "JNISetup::bootstrap");
   JavaFrame frame(env, 2);
-  jstring jfilename = string_to_java_string(env, settings.get_filename());
-  jstring jschema = string_to_java_string(env, settings.get_schema());
 
   jclass bootstrap_class = env->FindClass("com/nearinfinity/honeycomb/mysql/Bootstrap");
-  jmethodID startup = env->GetStaticMethodID(bootstrap_class, "startup", "(Ljava/lang/String;Ljava/lang/String;)Lcom/nearinfinity/honeycomb/mysql/HandlerProxyFactory;");
+  jmethodID startup = env->GetStaticMethodID(bootstrap_class, "startup", "()Lcom/nearinfinity/honeycomb/mysql/HandlerProxyFactory;");
 
   if (startup == NULL)
   {
@@ -52,7 +50,7 @@ static bool try_bootstrap(JavaVM* jvm, jobject* factory, const Settings& setting
     return false;
   }
 
-  jobject handler_proxy_factory_local = env->CallStaticObjectMethod(bootstrap_class, startup, jfilename, jschema);
+  jobject handler_proxy_factory_local = env->CallStaticObjectMethod(bootstrap_class, startup);
 
   if (print_java_exception(env))
   {

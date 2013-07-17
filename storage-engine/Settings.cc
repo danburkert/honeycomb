@@ -186,6 +186,21 @@ static char* ltrim(char *string)
 }
 
 /**
+ * Get index of last slash in a path
+ */
+static int dir_index(char* path)
+{
+  for (int i = strlen(path); i >= 0; i--)
+  {
+    if (path[i] == '/')
+    {
+      return i;
+    }
+  }
+  return 0;
+}
+
+/**
  * @brief Validates an xml document against a schema
  *
  * @param doc XML document
@@ -247,6 +262,59 @@ static void extract_values(SettingsPrivate* settings, xmlDocPtr doc, xmlNodeSetP
   }
 }
 
+static void add_resources_to_classpath(SettingsPrivate* settings)
+{
+  const char* prefix = "-Djava.class.path=";
+  const char* separator = ":";
+  bool add_classpath = true;
+  int filename_len = dir_index(settings->filename);
+  int schema_len = dir_index(settings->schema);
+
+  for (int i = 0; i < settings->count; i++) {
+
+    char* current = settings->options[i].optionString;
+
+    if (strncmp(prefix, current, strlen(prefix) - 1) == 0)
+    {
+      int size = strlen(current)
+        + strlen(separator)
+        + filename_len
+        + strlen(separator)
+        + schema_len;
+
+      char* classpath = (char*)std::malloc(size);
+
+      strcat(classpath, current);
+      strcat(classpath, separator);
+      strncat(classpath, settings->filename, filename_len);
+      strcat(classpath, separator);
+      strncat(classpath, settings->schema, schema_len);
+
+      settings->options[i].optionString = classpath;
+      free(current);
+      add_classpath = false;
+      break;
+    }
+  }
+
+  if (add_classpath)
+  {
+    int size = strlen(prefix)
+      + filename_len
+      + strlen(separator)
+      + schema_len;
+
+    char* classpath = (char*)std::malloc(size);
+    strcat(classpath, prefix);
+    strncat(classpath, settings->filename, filename_len);
+    strcat(classpath, separator);
+    strncat(classpath, settings->schema, schema_len);
+
+    settings->options[settings->count].optionString = classpath;
+    settings->count++;
+  }
+}
+
 void Settings::read_options()
 {
   const xmlChar* xpath = (const xmlChar*)"/options/jvmoptions/jvmoption";
@@ -275,9 +343,12 @@ void Settings::read_options()
 
   option_nodes = jvm_options->nodesetval;
   settings->count = option_nodes->nodeNr;
-  settings->options = (JavaVMOption*)malloc(settings->count * sizeof(JavaVMOption));
+  // add 1 to options size for case where classpath must be added (instead of appended to)
+  settings->options = (JavaVMOption*)malloc(settings->count * sizeof(JavaVMOption) + 1);
 
   extract_values(settings, doc, option_nodes);
+  add_resources_to_classpath(settings);
+
   goto cleanup;
 
 error:
