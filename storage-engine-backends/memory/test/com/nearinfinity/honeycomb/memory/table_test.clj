@@ -80,17 +80,18 @@
          neg? nil (long-bb 1)
          pos? (long-bb 1) nil)))
 
-(comment (deftest row-uuid-comparator-test
-           (testing "uuids"
-             (are [pred m1 l1 m2 l2] (pred (row-uuid-comparator
-                                            (Row. {} (UUID. m1 l1))
-                                            (Row. {} (UUID. m2 l2))))
-                  zero? 1 2 1 2
-                  zero? -1 -2 -1 -2
-                  pos? (Long/MAX_VALUE) (Long/MAX_VALUE) (Long/MIN_VALUE) (Long/MIN_VALUE)
-                  neg? -1 -1 0 0
-                  neg? 0 0 1 1
-                  pos? 0 0 -10 -10))))
+(deftest row-uuid-comparator-test
+  (testing "uuids"
+    (let [table-schema (create-schema [{:name "c1" :type ColumnType/LONG}] nil)]
+      (are [pred m1 l1 m2 l2] (pred (row-uuid-comparator
+                                     (Row. {} (UUID. m1 l1) table-schema)
+                                     (Row. {} (UUID. m2 l2) table-schema)))
+           zero? 1 2 1 2
+           zero? -1 -2 -1 -2
+           pos? (Long/MAX_VALUE) (Long/MAX_VALUE) (Long/MIN_VALUE) (Long/MIN_VALUE)
+           neg? -1 -1 0 0
+           neg? 0 0 1 1
+           pos? 0 0 -10 -10))))
 
 (deftest row-index-comparator-test
   (testing "single column (LONG) index"

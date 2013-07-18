@@ -32,14 +32,14 @@
 (defn- query-key->row-after
   "Takes a query key and returns the row that would fall directly after the
    query key in sorted order."
-  [^QueryKey query-key column-schemas]
-  (Row. (.getKeys query-key) (UUID. (Long/MAX_VALUE) (Long/MAX_VALUE)) column-schemas))
+  [^QueryKey query-key table-schema]
+  (Row. (.getKeys query-key) (UUID. (Long/MAX_VALUE) (Long/MAX_VALUE)) table-schema))
 
 (defn query-key->row-before
   "Takes a query key and returns the row that would fall directly before the
    query key in sorted order."
-  [^QueryKey query-key column-schemas]
-  (Row. (.getKeys query-key) (UUID. (Long/MIN_VALUE) (Long/MIN_VALUE)) column-schemas))
+  [^QueryKey query-key table-schema]
+  (Row. (.getKeys query-key) (UUID. (Long/MIN_VALUE) (Long/MIN_VALUE)) table-schema))
 
 (defn- update-indices
   "Takes the map of indices, a function f, and arguments, and applies f to each
@@ -153,8 +153,8 @@
   (flush [this])
 
   (getRow [this uuid]
-    (let [column-schemas (.getSchema store table-name)]
-      (if-let [row (@rows (Row. {} uuid column-schemas))]
+    (let [table-schema (.getSchema store table-name)]
+      (if-let [row (@rows (Row. {} uuid table-schema))]
         row
         (throw (RowNotFoundException. uuid)))))
 
@@ -167,14 +167,15 @@
 
   (ascendingIndexScanAt [this key]
     (let [index-name (.getIndexName key)
-          column-schemas (.getSchema store table-name)
-          start-row (query-key->row-before key column-schemas)
+          table-schema (.getSchema store table-name)
+          start-row (query-key->row-before key table-schema)
           rows (subseq (get @indices index-name) >= start-row)]
       (->MemoryScanner (atom rows))))
 
   (ascendingIndexScanAfter [this key]
     (let [index-name (.getIndexName key)
-          start-row (query-key->row-after key)
+          table-schema (.getSchema store table-name)
+          start-row (query-key->row-after key table-schema)
           rows (subseq (get @indices index-name) > start-row)]
       (->MemoryScanner (atom rows))))
 
@@ -184,8 +185,9 @@
 
   (descendingIndexScanAt [this key]
     (let [index-name (.getIndexName key)
-          index-schema (.. store (getSchema table-name) (getIndexSchema index-name))
-          start-row (query-key->row-after key)
+          table-schema (.getSchema store table-name)
+          index-schema (. table-schema (getIndexSchema index-name))
+          start-row (query-key->row-after key table-schema)
           eq-rows (reverse (take-while (query-key->row-pred index-schema key)
                                        (subseq (get @indices index-name) > start-row)))
           lt-rows (rsubseq (get @indices index-name) <= start-row)]
@@ -193,15 +195,16 @@
 
   (descendingIndexScanBefore [this key]
     (let [index-name (.getIndexName key)
-          column-schemas (.getSchema store table-name)
-          start-row (query-key->row-before key column-schemas)
+          table-schema (.getSchema store table-name)
+          start-row (query-key->row-before key table-schema)
           rows (rsubseq (get @indices index-name) < start-row)]
       (->MemoryScanner (atom rows))))
 
   (indexScanExact [this key]
     (let [index-name (.getIndexName key)
-          index-schema (.. store (getSchema table-name) (getIndexSchema index-name))
-          start-row (query-key->row-before key)
+          table-schema (.getSchema store table-name)
+          index-schema (. table-schema (getIndexSchema index-name))
+          start-row (query-key->row-before key table-schema)
           rows (take-while (query-key->row-pred index-schema key)
                            (subseq (get @indices index-name) >= start-row))]
       (->MemoryScanner (atom rows))))
