@@ -44,7 +44,6 @@ public class MetadataCache {
     private static final Logger logger = Logger.getLogger(MetadataCache.class);
     private final LoadingCache<String, Long> tableCache;
     private final LoadingCache<Long, BiMap<String, Long>> columnsCache;
-    private final LoadingCache<Long, Long> rowsCache;
     private final LoadingCache<Long, Long> autoIncCache;
     private final LoadingCache<Long, TableSchema> schemaCache;
     private final LoadingCache<Long, Map<String, Long>> indicesCache;
@@ -85,16 +84,6 @@ public class MetadataCache {
                     @Override
                     public Long load(Long tableId) {
                         return metadata.getAutoInc(tableId);
-                    }
-                }
-                );
-
-        rowsCache = CacheBuilder
-                .newBuilder()
-                .build(new CacheLoader<Long, Long>() {
-                    @Override
-                    public Long load(Long tableId) {
-                        return metadata.getRowCount(tableId);
                     }
                 }
                 );
@@ -166,39 +155,6 @@ public class MetadataCache {
     }
 
     /**
-     * Retrieve the row count of a table from cache.
-     *
-     * @param tableId Table ID
-     * @return Table row count
-     */
-    public Long rowsCacheGet(final long tableId) {
-        Verify.isValidId(tableId);
-        return cacheGet(rowsCache, tableId);
-    }
-
-    /**
-     * Updates the row count in the cache for a table.
-     *
-     * @param tableId Table ID
-     * @param value   New row count
-     */
-    public void updateRowsCache(final long tableId, long value) {
-        Verify.isValidId(tableId);
-        rowsCache.put(tableId, value);
-    }
-
-    /**
-     * Evict the row count from the cache for a table.
-     *
-     * @param tableId Table ID
-     */
-    public void invalidateRowsCache(long tableId) {
-        Verify.isValidId(tableId);
-        rowsCache.invalidate(tableId);
-    }
-
-
-    /**
      * Evict the index mapping from the cache for the specified table id
      *
      * @param tableId Table ID
@@ -207,7 +163,6 @@ public class MetadataCache {
         Verify.isValidId(tableId);
         indicesCache.invalidate(tableId);
     }
-
 
     /**
      * Evict the {@link TableSchema} from the cache for the specified table id
@@ -218,7 +173,6 @@ public class MetadataCache {
         Verify.isValidId(tableId);
         schemaCache.invalidate(tableId);
     }
-
 
     /**
      * Evict a table's columns cache.

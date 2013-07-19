@@ -120,27 +120,4 @@ public interface Store {
      */
     public void truncateAutoInc(String tableName);
 
-    /**
-     * Get the table's row count
-     *
-     * @param tableName the table
-     * @return row count
-     */
-    public long getRowCount(String tableName);
-
-    /**
-     * Increment the table's row count by amount.
-     *
-     * @param tableName Name of table
-     * @param amount    Amount to increment by
-     * @return New row count
-     */
-    public long incrementRowCount(String tableName, long amount);
-
-    /**
-     * Truncate the table's row count.
-     *
-     * @param tableName Name of table
-     */
-    public void truncateRowCount(String tableName);
 }

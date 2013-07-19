@@ -319,7 +319,6 @@ public class HandlerProxy {
      */
     public void deleteAllRows() {
         checkTableOpen();
-        store.truncateRowCount(tableName);
         table.deleteAllRows();
     }
 
