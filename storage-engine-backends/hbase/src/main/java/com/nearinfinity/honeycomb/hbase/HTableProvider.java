@@ -23,7 +23,7 @@
 package com.nearinfinity.honeycomb.hbase;
 
 import com.google.inject.Provider;
-import com.nearinfinity.honeycomb.hbase.config.ConfigConstants;
+import com.nearinfinity.honeycomb.hbase.config.HBaseProperties;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.HTablePool;
@@ -37,13 +37,13 @@ public class HTableProvider implements Provider<HTableInterface> {
     private final String tableName;
 
     public HTableProvider(final Configuration configuration) {
-        String hTableName = configuration.get(ConfigConstants.TABLE_NAME);
-        long writeBufferSize = configuration.getLong(ConfigConstants.WRITE_BUFFER,
-                ConfigConstants.DEFAULT_WRITE_BUFFER);
-        int poolSize = configuration.getInt(ConfigConstants.TABLE_POOL_SIZE,
-                ConfigConstants.DEFAULT_TABLE_POOL_SIZE);
-        boolean autoFlush = configuration.getBoolean(ConfigConstants.AUTO_FLUSH,
-                ConfigConstants.DEFAULT_AUTO_FLUSH);
+        String hTableName = configuration.get(HBaseProperties.TABLE_NAME);
+        long writeBufferSize = configuration.getLong(HBaseProperties.WRITE_BUFFER,
+                HBaseProperties.DEFAULT_WRITE_BUFFER);
+        int poolSize = configuration.getInt(HBaseProperties.TABLE_POOL_SIZE,
+                HBaseProperties.DEFAULT_TABLE_POOL_SIZE);
+        boolean autoFlush = configuration.getBoolean(HBaseProperties.AUTO_FLUSH,
+                HBaseProperties.DEFAULT_AUTO_FLUSH);
 
         tableName = hTableName;
         tablePool = new HTablePool(configuration, poolSize,

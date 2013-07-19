@@ -31,7 +31,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
 import com.nearinfinity.honeycomb.exceptions.TableNotFoundException;
-import com.nearinfinity.honeycomb.hbase.config.ConfigConstants;
+import com.nearinfinity.honeycomb.hbase.config.HBaseProperties;
 import com.nearinfinity.honeycomb.hbase.rowkey.*;
 import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.IndexSchema;
@@ -69,7 +69,7 @@ public class HBaseMetadata {
      * @param columnFamily The column family to use
      */
     @Inject
-    public void setColumnFamily(final @Named(ConfigConstants.COLUMN_FAMILY) String columnFamily) {
+    public void setColumnFamily(final @Named(HBaseProperties.COLUMN_FAMILY) String columnFamily) {
         this.columnFamily = columnFamily.getBytes();
     }
 

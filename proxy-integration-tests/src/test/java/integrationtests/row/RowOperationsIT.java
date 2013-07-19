@@ -22,11 +22,27 @@
 
 package integrationtests.row;
 
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
+
+import com.nearinfinity.honeycomb.config.BackendType;
+import integrationtests.HoneycombIntegrationTest;
+import integrationtests.ITUtils;
+import integrationtests.TestConstants;
+
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import org.junit.Test;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Longs;
-import com.nearinfinity.honeycomb.config.AdapterType;
 import com.nearinfinity.honeycomb.mysql.HandlerProxy;
 import com.nearinfinity.honeycomb.mysql.QueryKey;
 import com.nearinfinity.honeycomb.mysql.Row;
@@ -177,7 +193,7 @@ public class RowOperationsIT extends HoneycombIntegrationTest {
         columns.add(ColumnSchema.builder(TestConstants.COLUMN1, ColumnType.LONG).build());
         TableSchema schema = new TableSchema(columns, indices);
 
-        String tableName = AdapterType.HBASE.getName() + "/t1";
+        String tableName = BackendType.HBASE.getName() + "/t1";
 
         int iterations = 10;
 

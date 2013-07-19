@@ -23,7 +23,6 @@ echo -e "Running Maven build script\n"
 
 testOption=$1
 mvnTestMode="-DskipIntTests"
-adapter_conf=$CONFIG_PATH/$CONFIG_NAME
 
 if [ -n "$testOption" ]
 then
@@ -37,11 +36,11 @@ then
             mvnTestMode=""
             ;;
         it)
-            echo -e "Disabling unit tests\n"
+            echo -e "Enabling integration tests\n"
             mvnTestMode="-DskipUnitTests"
             ;;
         ut)
-            echo -e "Disabling integration tests\n"
+            echo -e "Enabling unit tests\n"
             mvnTestMode="-DskipIntTests"
             ;;
         *)
@@ -54,24 +53,8 @@ fi
 
 cd $HONEYCOMB_SOURCE
 
-create_dir_with_ownership $CONFIG_PATH
-
-
-# Setup the application configuration file and its schema
- 
-if [ ! -e $adapter_conf ]
-then
-  echo "Creating the honeycomb.xml from the repository."
-  sudo cp $HONEYCOMB_CONFIG/$CONFIG_NAME $adapter_conf
-  take_ownership $adapter_conf
-fi
-
-link $HONEYCOMB_CONFIG/$SCHEMA_NAME $CONFIG_PATH/$SCHEMA_NAME use_admin
-
-
 mvn -V clean install $mvnTestMode
 [ $? -ne 0 ] && { exit 1; }
-
 
 # Create the directory used to store the project artifacts, if needed
 create_dir_with_ownership $honeycomb_lib

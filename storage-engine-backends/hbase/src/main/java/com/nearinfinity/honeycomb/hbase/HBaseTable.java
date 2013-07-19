@@ -29,7 +29,7 @@ import com.google.inject.name.Named;
 import com.nearinfinity.honeycomb.Scanner;
 import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.exceptions.RowNotFoundException;
-import com.nearinfinity.honeycomb.hbase.config.ConfigConstants;
+import com.nearinfinity.honeycomb.hbase.config.HBaseProperties;
 import com.nearinfinity.honeycomb.hbase.rowkey.DataRowKey;
 import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowKey;
 import com.nearinfinity.honeycomb.hbase.rowkey.IndexRowKeyBuilder;
@@ -87,7 +87,7 @@ public class HBaseTable implements Table {
      * @param bufferSize
      */
     @Inject
-    public void setWriterBufferSize(final @Named(ConfigConstants.WRITE_BUFFER) Long bufferSize) {
+    public void setWriterBufferSize(final @Named(HBaseProperties.WRITE_BUFFER) Long bufferSize) {
         writeBufferSize = bufferSize;
     }
 
@@ -98,7 +98,7 @@ public class HBaseTable implements Table {
      * @param columnFamily The column family to use
      */
     @Inject
-    public void setColumnFamily(final @Named(ConfigConstants.COLUMN_FAMILY) String columnFamily) {
+    public void setColumnFamily(final @Named(HBaseProperties.COLUMN_FAMILY) String columnFamily) {
         this.columnFamily = columnFamily;
     }
 

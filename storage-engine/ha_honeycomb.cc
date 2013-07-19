@@ -28,15 +28,10 @@
 #include "JNISetup.h"
 #include "JNICache.h"
 #include "Java.h"
-#include "Settings.h"
 #include <cstdlib>
 #include <jni.h>
 
-#define SETTINGS_BASE "/usr/share/mysql/honeycomb/"
-#define CONFIG_FILE "honeycomb.xml"
-#define SCHEMA "honeycomb.xsd"
-#define DEFAULT_LOG_FILE "honeycomb-c.log"
-#define DEFAULT_LOG_PATH "/var/log/mysql/"
+#define DEFAULT_LOG_PATH "/var/log/mysql/honeycomb-c.log"
 
 static JavaVM* jvm;
 static JNICache* cache;
@@ -99,71 +94,13 @@ static jobject handler_factory(JNIEnv* env)
   return handler_proxy;
 }
 
-#define PATH_COUNT 8
-static void find_config_file(Settings& settings)
-{
-  char* cwd = getcwd(NULL, 0);
-  const char* paths[PATH_COUNT] = {
-    honeycomb_configuration_path,
-    getenv("HONEYCOMB_CONFIGURATION"),
-    "/etc",
-    "/etc/mysql",
-    getenv("MYSQL_HOME"),
-    getenv("HOME"),
-    cwd,
-    SETTINGS_BASE
-  };
-
-  for (int i = 0; i < PATH_COUNT; i++)
-  {
-    const char* path = paths[i];
-    if (path == NULL)
-      continue;
-
-    Logging::info("Looking in %s for the honeycomb configuration.", path);
-    char* config_buffer = format_directory_file_path(path, CONFIG_FILE);
-    char* schema_buffer = format_directory_file_path(path, SCHEMA);
-    bool success = settings.try_load(config_buffer, schema_buffer);
-
-    delete[] config_buffer;
-    delete[] schema_buffer;
-
-    if (success)
-    {
-      Logging::info("Honeycomb configuration found in %s", path);
-      goto cleanup;
-    }
-
-    Logging::warn("Honeycomb configuration was not found in %s. Error trying to load files: %s", path, settings.get_errormessage());
-  }
-
-cleanup:
-  free(cwd);
-}
-
 static bool try_setup()
 {
-  Logging::setup_logging(DEFAULT_LOG_PATH DEFAULT_LOG_FILE);
+  Logging::setup_logging(DEFAULT_LOG_PATH);
 
-  char* cwd = getcwd(NULL, 0);
-  Logging::info("Honeycomb's current directory: %s", cwd);
-  free(cwd);
-
-  Settings settings;
-  find_config_file(settings);
-  if (settings.has_error())
+  if (!try_initialize_jvm(&jvm, &handler_proxy_factory))
   {
-    const char* error_message = settings.get_errormessage();
-    Logging::fatal("Error reading the settings during setup: %s", error_message);
-
-    return false;
-  } else {
-    Logging::info("Finished reading configuration settings");
-  }
-
-  if (!try_initialize_jvm(&jvm, settings, &handler_proxy_factory))
-  {
-	Logging::fatal("Error during JVM initialization");
+    Logging::fatal("Error during JVM initialization");
 
     return false;
   } else {
@@ -173,7 +110,7 @@ static bool try_setup()
   cache = new JNICache(jvm);
   if (cache->has_error())
   {
-	Logging::fatal("Error creating JNI cache");
+    Logging::fatal("Error creating JNI cache");
 
     delete cache;
     return false;
@@ -243,7 +180,7 @@ struct st_mysql_storage_engine honeycomb_storage_engine=
   MYSQL_HANDLERTON_INTERFACE_VERSION
 };
 
-static MYSQL_SYSVAR_STR(configuration_path, honeycomb_configuration_path, 
+static MYSQL_SYSVAR_STR(configuration_path, honeycomb_configuration_path,
     PLUGIN_VAR_READONLY|PLUGIN_VAR_RQCMDARG, "The path to the directory containing honeycomb.xml", NULL, NULL, NULL);
 
 // System variables are formed by prepending the storage engine name on the front

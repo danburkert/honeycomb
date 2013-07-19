@@ -9,7 +9,6 @@
         <version>0.1</version>
     </parent>
 
-    <groupId>com.nearinfinity.honeycomb</groupId>
     <artifactId>honeycomb</artifactId>
     <version>0.2-SNAPSHOT</version>
 

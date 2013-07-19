@@ -15,20 +15,34 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- *
+ * 
  * Copyright 2013 Near Infinity Corporation.
  */
 
 
 package com.nearinfinity.honeycomb.config;
 
-/**
- * Configuration constants available for use throughout the application
- */
-public abstract class Constants {
-    public static final String HONEYCOMB_NAMESPACE = "honeycomb";
-    public static final String HONEYCOMB_SITE = "honeycomb-site.xml";
-    public static final String HONEYCOMB_DEFAULT = "honeycomb-default.xml";
-    public static final String CONFIG_SCHEMA = "honeycomb.xsd";
-    public static final String DEFAULT_BACKEND_PROP = "honeycomb.backends.default";
+import org.junit.Before;
+import org.junit.Test;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+
+public class ConfigParserTest {
+    private URL url;
+
+    @Before
+    public void setupTestCase() throws MalformedURLException {
+        url = new URL("file:/foo");
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testParseNullConfigPath() {
+        ConfigParser.parse(null, url);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testParseNullSchemaPath() {
+        ConfigParser.parse(url, null);
+    }
 }

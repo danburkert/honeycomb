@@ -46,7 +46,7 @@ take_dir $unit_test_dir
 
 if [ ! -e CMakeCache.txt ]
 then
-  cmake $STORAGE_ENGINE/unit-test -DHONEYCOMB_SOURCE_DIR=$STORAGE_ENGINE
+  cmake $STORAGE_ENGINE/unit-test -DHONEYCOMB_SOURCE_DIR=$STORAGE_ENGINE -DWITH_DEBUG=$with_debug
   [ $? -ne 0 ] && { "Failure during CMake step on unit tests.  Exiting build.";
                     rm CMakeCache.txt;
                     exit 1; }
@@ -54,7 +54,7 @@ fi
 make
 [ $? -ne 0 ] && { "Failure during make step on unit tests.  Exiting build."; exit 1; }
 echo "Running Honeycomb unit tests"
-make test
+./runUnitTests
 [ $? -ne 0 ] && { echo "Unit test failed. Exiting Build. Execute build/storage/honeycomb/unit-test/runUnitTests for more details."; exit 1; }
 
 cd $BUILD_DIR

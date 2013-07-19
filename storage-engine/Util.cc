@@ -44,24 +44,6 @@ void get_file_user_group(const char* file, char* buffer, size_t buf_size)
   get_user_group(fstat.st_uid, fstat.st_gid, buffer, buf_size);
 }
 
-void get_current_user_group(char* buffer, size_t buf_size)
-{
-  uid_t user_id = getuid();
-  gid_t group_id = getgid();
-  get_user_group(user_id, group_id, buffer, buf_size);
-}
-
-bool does_path_exist(const char* path)
-{
-  struct stat fstat;
-  return stat(path, &fstat) != -1 && S_ISDIR(fstat.st_mode);
-}
-
-bool can_read_write(const char* path)
-{
-  return access(path, R_OK|W_OK) == 0;
-}
-
 uint64_t bswap64(uint64_t x)
 {
   return __builtin_bswap64(x);
@@ -93,21 +75,6 @@ void extract_mysql_old_date(int32 tmp, MYSQL_TIME *time)
   time->month = (int) ((uint32) tmp / 100 % 100);
   time->day = (int) ((uint32) tmp % 100);
   time->time_type = MYSQL_TIMESTAMP_DATE;
-}
-
-void extract_mysql_time(long tmp, MYSQL_TIME *time)
-{
-  bzero((void*) time, sizeof(*time));
-  if (tmp < 0)
-  {
-    time->neg = true;
-    tmp = -tmp;
-  }
-
-  time->hour = (uint) (tmp / 10000);
-  time->minute = (uint) (tmp / 100 % 100);
-  time->second = (uint) (tmp % 100);
-  time->time_type = MYSQL_TIMESTAMP_TIME;
 }
 
 void extract_mysql_datetime(longlong tmp, MYSQL_TIME *time)
@@ -323,23 +290,4 @@ uchar* create_key_copy(Field* index_field, const uchar* key, uint* key_len, THD*
   }
 
   return key_copy;
-}
-
-int count_fields(TABLE* table)
-{
-  int count = 0;
-  for (Field **field_ptr = table->field; *field_ptr; field_ptr++)
-  {
-    count++;
-  }
-
-  return count;
-}
-
-char* format_directory_file_path(const char* path, const char* file_name)
-{
-    size_t size = strlen(path) + strlen(file_name) + 2;
-    char* buffer = new char[size];
-    snprintf(buffer, size, "%s/%s", path, file_name);
-    return buffer;
 }

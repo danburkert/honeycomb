@@ -23,24 +23,25 @@
   (:import [com.google.inject AbstractModule Guice]
            [com.google.inject.multibindings MapBinder]
            [com.nearinfinity.honeycomb Store]
-           [com.nearinfinity.honeycomb.config AdapterType])
+           [com.nearinfinity.honeycomb.config BackendType])
   (:gen-class
     :extends com.google.inject.AbstractModule
     :init init
     :constructors {[java.util.Map] []}
     :state config
     :exposes-methods {binder binderSuper
-                      bind bindSuper}))
+                      bind bindSuper})
+  (:import [com.nearinfinity.honeycomb.config BackendType]))
 
 (defn -init
   [config]
   [[] config])
 
 (defn -configure [this]
-  (let [map-binder (MapBinder/newMapBinder (.binderSuper this) AdapterType Store)
+  (let [map-binder (MapBinder/newMapBinder (.binderSuper this) BackendType Store)
         memory-store (mem-store/memory-store)]
     (.. map-binder
-        (addBinding AdapterType/MEMORY)
+        (addBinding BackendType/MEMORY)
         (to (class memory-store)))
     (.. this
         (bindSuper (class memory-store))

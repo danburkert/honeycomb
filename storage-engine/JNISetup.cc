@@ -22,9 +22,13 @@
 #include "Macros.h"
 #include "Java.h"
 #include "JavaFrame.h"
-#include "Settings.h"
+#include "JVMOptions.h"
 #include <jni.h>
 #include <my_pthread.h>
+#include <string.h>
+
+#define JVM_OPTS "HONEYCOMB_JVM_OPTS"
+#define CLASSPATH "HONEYCOMB_CLASSPATH"
 
 static __thread int thread_attach_count=0;
 static JavaVMAttachArgs attach_args = {JNI_VERSION_1_6, NULL, NULL};
@@ -34,17 +38,15 @@ class JNICache;
  * Initialize Bootstrap class. This should only be called once per MySQL Server
  * instance during Handlerton initialization.
  */
-static bool try_bootstrap(JavaVM* jvm, jobject* factory, const Settings& settings)
+static bool try_bootstrap(JavaVM* jvm, jobject* factory)
 {
   Logging::info("Starting bootstrap()");
   JNIEnv* env;
   attach_thread(jvm, &env, "JNISetup::bootstrap");
   JavaFrame frame(env, 2);
-  jstring jfilename = string_to_java_string(env, settings.get_filename());
-  jstring jschema = string_to_java_string(env, settings.get_schema());
 
-  jclass bootstrap_class = env->FindClass("com/nearinfinity/honeycomb/mysql/Bootstrap");
-  jmethodID startup = env->GetStaticMethodID(bootstrap_class, "startup", "(Ljava/lang/String;Ljava/lang/String;)Lcom/nearinfinity/honeycomb/mysql/HandlerProxyFactory;");
+  jclass bootstrap_class = env->FindClass("com/nearinfinity/honeycomb/Bootstrap");
+  jmethodID startup = env->GetStaticMethodID(bootstrap_class, "startup", "()Lcom/nearinfinity/honeycomb/mysql/HandlerProxyFactory;");
 
   if (startup == NULL)
   {
@@ -52,7 +54,7 @@ static bool try_bootstrap(JavaVM* jvm, jobject* factory, const Settings& setting
     return false;
   }
 
-  jobject handler_proxy_factory_local = env->CallStaticObjectMethod(bootstrap_class, startup, jfilename, jschema);
+  jobject handler_proxy_factory_local = env->CallStaticObjectMethod(bootstrap_class, startup);
 
   if (print_java_exception(env))
   {
@@ -126,9 +128,10 @@ static void handler(int sig)
  * Creates an embedded JVM through the JNI Invocation API and calls
  * bootstrap(). This should only be called once per MySQL Server
  * instance during Handlerton initialization. Aborts process if a JVM already
- * exists. After return the current thread is NOT attached.
+ * exists. After return the current thread is NOT attached.  Reads options
+ * from environment variables.
  */
-bool try_initialize_jvm(JavaVM** jvm, const Settings& parser, jobject* factory)
+bool try_initialize_jvm(JavaVM** jvm, jobject* factory)
 {
   JavaVM* created_vms;
   jsize vm_count;
@@ -142,14 +145,17 @@ bool try_initialize_jvm(JavaVM** jvm, const Settings& parser, jobject* factory)
   {
     JNIEnv* env;
     JavaVMInitArgs vm_args;
-    vm_args.options = parser.get_options();
-    vm_args.nOptions = parser.get_optioncount();
+    JVMOptions jvm_opts;
+
     vm_args.version = JNI_VERSION_1_6;
+    vm_args.options = jvm_opts.get_options();
+    vm_args.nOptions = jvm_opts.get_options_count();
+
     thread_attach_count++; // roundabout to attach_thread
     jint result = JNI_CreateJavaVM(jvm, (void**) &env, &vm_args);
     if (result != JNI_OK)
     {
-      Logging::fatal("Failed to create JVM. Check the Java classpath.");
+      Logging::fatal("Failed to create JVM. Check the JVM options and classpath.");
       return false;
     }
     if (env == NULL)
@@ -159,7 +165,7 @@ bool try_initialize_jvm(JavaVM** jvm, const Settings& parser, jobject* factory)
     }
 
     log_java_classpath(env);
-    if (!try_bootstrap(*jvm, factory, parser))
+    if (!try_bootstrap(*jvm, factory))
       return false;
 
     detach_thread(*jvm);

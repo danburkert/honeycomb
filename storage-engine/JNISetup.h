@@ -48,7 +48,7 @@ class Settings;
  *
  * @return Was initialization successful?
  */
-bool try_initialize_jvm(JavaVM** jvm, const Settings& options, jobject* factory);
+bool try_initialize_jvm(JavaVM** jvm, jobject* factory);
 
 /**
  * @brief Attach current thread to the JVM. Assign current environment to env. Keeps

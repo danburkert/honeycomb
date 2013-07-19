@@ -23,43 +23,42 @@
 package com.nearinfinity.honeycomb.config;
 
 /**
- * Defines the available storage engine backend adapters that may be used
- * by the storage proxy component
+ * Defines the available storage engine backends
  */
-public enum AdapterType {
+public enum BackendType {
     /**
-     * HBase adapter
+     * HBase backend
      */
     HBASE("hbase", "com.nearinfinity.honeycomb.hbase.HBaseModule"),
     /**
-     * In-memory adapter
+     * In-memory backend
      */
     MEMORY("memory", "com.nearinfinity.honeycomb.memory.MemoryModule");
     private String name;
     private String moduleClass;
 
     /**
-     * Creates a storage engine backend adapter type
+     * Creates a storage engine backend
      *
-     * @param name        The name used to represent this adapter
-     * @param moduleClass The fully qualified path to the class used to load this adapter
+     * @param name        The name of the backend
+     * @param moduleClass The fully qualified path to the backend Guice module
      */
-    AdapterType(String name, String moduleClass) {
+    BackendType(String name, String moduleClass) {
         this.name = name;
         this.moduleClass = moduleClass;
     }
 
     /**
-     * Retrieve the name of this adapter.
+     * Retrieve the name of this backend
      *
-     * @return Adapter name
+     * @return Backend name
      */
     public String getName() {
         return name;
     }
 
     /**
-     * Retrieve the class path of this adapter
+     * Retrieve the class path of this backend
      *
      * @return Class path string
      */

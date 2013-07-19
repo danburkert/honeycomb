@@ -32,12 +32,6 @@ ELSE()
   MESSAGE("Unable to find Java JNI libraries.")
 ENDIF()
 
-FIND_PACKAGE(LibXml2 REQUIRED)
-IF(LIBXML2_FOUND)
-  INCLUDE_DIRECTORIES(${LIBXML2_INCLUDE_DIR})
-  LINK_LIBRARIES(${LIBXML2_LIBRARIES})
-ENDIF(LIBXML2_FOUND)
-
 include(ExternalProject)
 set(AVRO_VERSION 1.7.4)
 ExternalProject_Add(LibAvro
@@ -56,7 +50,7 @@ add_library(avro STATIC IMPORTED GLOBAL)
 set_target_properties(avro PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/avro/build/src/libavro.a")
 
 SET(HONEYCOMB_SOURCES HoneycombHandler.cc DDL.cc ha_honeycomb.cc
-  Util.cc JNISetup.cc Logging.cc Java.cc Settings.cc
+  Util.cc JNISetup.cc Logging.cc Java.cc JVMOptions.cc
   JNICache.cc JavaFrame.cc AvroUtil.cc Row.cc TableSchema.cc IndexSchema.cc ColumnSchema.cc
   QueryKey.cc Query.cc IUD.cc)
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-error -g -Wextra -Wno-unused-parameter -Wswitch-default -Wcast-qual -Weffc++ -Wwrite-strings -Winit-self -Winline -Wmissing-noreturn -Wredundant-decls -Wpointer-arith -Wstrict-overflow=5 -Wstrict-aliasing=2 -Wno-deprecated-declarations -Wno-unknown-pragmas -Wctor-dtor-privacy -Woverloaded-virtual")

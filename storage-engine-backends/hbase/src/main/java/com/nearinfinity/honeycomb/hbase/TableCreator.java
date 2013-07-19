@@ -22,7 +22,7 @@
 
 package com.nearinfinity.honeycomb.hbase;
 
-import com.nearinfinity.honeycomb.hbase.config.ConfigConstants;
+import com.nearinfinity.honeycomb.hbase.config.HBaseProperties;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -60,8 +60,8 @@ public class TableCreator {
             throw e;
         }
 
-        String columnFamily = configuration.get(ConfigConstants.COLUMN_FAMILY);
-        byte[] tableName = configuration.get(ConfigConstants.TABLE_NAME).getBytes();
+        String columnFamily = configuration.get(HBaseProperties.COLUMN_FAMILY);
+        byte[] tableName = configuration.get(HBaseProperties.TABLE_NAME).getBytes();
 
         HColumnDescriptor columnDescriptor = new HColumnDescriptor(columnFamily);
         HBaseAdmin admin = new HBaseAdmin(configuration);

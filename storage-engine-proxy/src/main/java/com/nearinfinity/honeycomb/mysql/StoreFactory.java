@@ -22,25 +22,25 @@
 
 package com.nearinfinity.honeycomb.mysql;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.util.Map;
-
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.nearinfinity.honeycomb.Store;
-import com.nearinfinity.honeycomb.config.AdapterType;
+import com.nearinfinity.honeycomb.config.BackendType;
 import com.nearinfinity.honeycomb.config.HoneycombConfiguration;
+
+import java.util.Map;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Factory class used to construct {@link Store} instances
  */
 public class StoreFactory {
-    private final Map<AdapterType, Provider<Store>> storeProviders;
+    private final Map<BackendType, Provider<Store>> storeProviders;
     private final HoneycombConfiguration configuration;
 
     @Inject
-    public StoreFactory(Map<AdapterType, Provider<Store>> storeMap,
+    public StoreFactory(Map<BackendType, Provider<Store>> storeMap,
                         HoneycombConfiguration configuration) {
         checkNotNull(storeMap);
         checkNotNull(configuration);
@@ -58,9 +58,9 @@ public class StoreFactory {
      */
     public Store createStore(String tableName) {
         try {
-            return storeProviders.get(AdapterType.valueOf(databaseName(tableName).toUpperCase())).get();
+            return storeProviders.get(BackendType.valueOf(databaseName(tableName).toUpperCase())).get();
         } catch (IllegalArgumentException e) {
-            return storeProviders.get(configuration.getDefaultAdapter()).get();
+            return storeProviders.get(configuration.getDefaultBackend()).get();
         }
     }
 

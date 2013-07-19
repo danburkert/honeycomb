@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration>
+
+  <property>
+    <name>honeycomb.backends.default</name>
+    <value>hbase</value>
+    <description>
+      Specifies the default backend for Honeycomb.  The default will be used if
+      the MySQL database name does not match any of the loaded backend names.
+
+      For example, a MySQL table created in the "hbase" database will use the
+      hbase backend, regardless of the default.  A MySQL table created in the
+      "test" database will use the default backend.
+    </description>
+  </property>
+
+  <property>
+    <name>honeycomb.hbase.enabled</name>
+    <value>true</value>
+    <description>
+      Whether the HBase backend is enabled.
+    </description>
+  </property>
+
+  <property>
+    <name>honeycomb.hbase.tableName</name>
+    <value>honeycomb</value>
+    <description>
+      The name of the HBase table which will hold all Honeycomb tables.
+    </description>
+  </property>
+
+  <property>
+    <name>honeycomb.hbase.columnFamily</name>
+    <value>c</value>
+    <description>
+      The column family in which to store Honeycomb data.  It is recommended to
+      keep this short, as the column family is stored once per row and index.
+    </description>
+  </property>
+
+  <property>
+    <name>honeycomb.hbase.tablePoolSize</name>
+    <value>5</value>
+    <description>
+      The number of HBase HTables to keep in the client pool.  This value
+      should match or be slightly bigger than the number of clients simultaneously
+      querying Honeycomb tables.
+    </description>
+  </property>
+
+  <property>
+    <name>honeycomb.hbase.flushChangesImmediately</name>
+    <value>true</value>
+    <description>
+      Whether HBase writes rows to HBase imeediately.  It is recommended to keep
+      this enabled unless you are an advanced user and are OK with data loss in
+      the event of failures.
+    </description>
+  </property>
+
+  <property>
+    <name>hbase.client.scanner.caching</name>
+    <value>100</value>
+    <description>
+      The number of rows to retrieve from the HBase cluster per RPC request.
+      Should ideally match or slightly exceed the expected row count of
+      typical queries.
+    </description>
+  </property>
+
+  <property>
+    <name>hbase.client.write.buffer</name>
+    <value>1048576</value>
+  </property>
+
+  <property>
+    <name>hbase.zookeeper.quorum</name>
+    <value>localhost</value>
+  </property>
+
+  <property>
+    <name>honeycomb.memory.enabled</name>
+    <value>false</value>
+    <description>
+      Whether the memory backend is enabled.
+    </description>
+  </property>
+
+</configuration>

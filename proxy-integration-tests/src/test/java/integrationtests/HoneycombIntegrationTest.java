@@ -22,7 +22,7 @@
 
 package integrationtests;
 
-import com.nearinfinity.honeycomb.mysql.Bootstrap;
+import com.nearinfinity.honeycomb.Bootstrap;
 import com.nearinfinity.honeycomb.mysql.HandlerProxy;
 import com.nearinfinity.honeycomb.mysql.HandlerProxyFactory;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
@@ -52,7 +52,7 @@ public abstract class HoneycombIntegrationTest {
 
     @BeforeClass
     public static void setupFramework() {
-        factory = Bootstrap.startup("/usr/share/mysql/honeycomb/honeycomb.xml", "/usr/share/mysql/honeycomb/honeycomb.xsd");
+        factory = Bootstrap.startup();
         System.out.println("Initialized application framework");
     }
 

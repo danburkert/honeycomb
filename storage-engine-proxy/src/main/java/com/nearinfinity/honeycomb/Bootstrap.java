@@ -20,27 +20,28 @@
  */
 
 
-package com.nearinfinity.honeycomb.mysql;
-
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.util.Enumeration;
-import java.util.Map;
-
-import org.apache.log4j.Appender;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Logger;
+package com.nearinfinity.honeycomb;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.nearinfinity.honeycomb.config.AdapterType;
-import com.nearinfinity.honeycomb.config.ConfigurationParser;
+import com.nearinfinity.honeycomb.config.BackendType;
+import com.nearinfinity.honeycomb.config.ConfigParser;
+import com.nearinfinity.honeycomb.config.Constants;
 import com.nearinfinity.honeycomb.config.HoneycombConfiguration;
 import com.nearinfinity.honeycomb.exceptions.StorageBackendCreationException;
-import com.nearinfinity.honeycomb.util.Verify;
+import com.nearinfinity.honeycomb.mysql.HandlerProxyFactory;
+import org.apache.log4j.Appender;
+import org.apache.log4j.FileAppender;
+import org.apache.log4j.Logger;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.net.URL;
+import java.util.Enumeration;
+import java.util.Map;
 
 
 /**
@@ -56,21 +57,36 @@ public final class Bootstrap extends AbstractModule {
     }
 
     /**
-     * The initial function called by JNI to wire-up the required object graph dependencies
+     * The initial function called by JNI to wire-up the required object graph
+     * dependencies
      *
-     * @param configFilename The path to the configuration file, not null or empty
-     * @param configSchema  The path to the schema used to validate the configuration file, not null or empty
      * @return {@link HandlerProxyFactory} with all dependencies setup
      */
-    public static HandlerProxyFactory startup(String configFilename, String configSchema) {
-        Verify.isNotNullOrEmpty(configFilename);
-        Verify.isNotNullOrEmpty(configSchema);
+    public static HandlerProxyFactory startup() {
 
         ensureLoggingPathsCorrect();
-        HoneycombConfiguration configuration =
-                ConfigurationParser.parseConfiguration(configFilename, configSchema);
+        ClassLoader loader = Bootstrap.class.getClassLoader();
+        URL configURL = loader.getResource(Constants.HONEYCOMB_SITE);
+        URL defaultURL = loader.getResource(Constants.HONEYCOMB_DEFAULT);
+        URL schemaURL = loader.getResource(Constants.CONFIG_SCHEMA);
 
-        Bootstrap bootstrap = new Bootstrap(configuration);
+        if (defaultURL == null || schemaURL == null) {
+            String msg = "Unable to find " + (defaultURL == null ?
+                    Constants.HONEYCOMB_DEFAULT : Constants.CONFIG_SCHEMA) + " on the classpath.";
+            logger.error(msg);
+            logger.info("Classpath:\n" + System.getProperty("java.class.path").replace(':', '\n'));
+            throw new Error(msg);
+        }
+
+        Map<String, String> properties = ConfigParser.parse(defaultURL, schemaURL);
+        if (configURL != null) {
+            properties.putAll(ConfigParser.parse(configURL, schemaURL));
+        } else {
+            String msg = "Unable to find " + Constants.HONEYCOMB_SITE + " on the classpath.";
+            logger.warn(msg);
+        }
+
+        Bootstrap bootstrap = new Bootstrap(new HoneycombConfiguration(properties));
 
         Injector injector = Guice.createInjector(bootstrap);
         return injector.getInstance(HandlerProxyFactory.class);
@@ -87,13 +103,12 @@ public final class Bootstrap extends AbstractModule {
                     continue;
                 }
                 File f = new File(file);
-                System.err.println("Testing: " + f.getName());
                 if (f.exists()) {
                     if (!f.canWrite()) {
-                        System.err.println("Cannot write to " + f.getName());
+                        System.err.println("Logger unable to write to " + f.getName());
                     }
                 } else {
-                    String createFailure = "Could not create logging file " + f.getName();
+                    String createFailure = "Logger unable to create file " + f.getName();
                     try {
                         if (!f.createNewFile()) {
                             System.err.println(createFailure);
@@ -112,16 +127,16 @@ public final class Bootstrap extends AbstractModule {
     protected void configure() {
         bind(HoneycombConfiguration.class).toInstance(configuration);
 
-        for (AdapterType adapter : AdapterType.values()) {
-            if (configuration.isAdapterConfigured(adapter)) {
+        for (BackendType adapter : BackendType.values()) {
+            if (configuration.isBackendEnabled(adapter)) {
                 try {
                     Class<?> moduleClass = Class.forName(adapter.getModuleClass());
                     Constructor<?> moduleCtor = moduleClass.getConstructor(Map.class);
-                    Object module = moduleCtor.newInstance(configuration.getAdapterOptions(adapter));
+                    Object module = moduleCtor.newInstance(configuration.getProperties());
                     install((Module) module);
                 } catch (ClassNotFoundException e) {
                     logger.error("The " + adapter.getName() + " adapter is" +
-                            " configured, but could not be found on the classpath.");
+                            " enabled, but could not be found on the classpath.");
                     throw new StorageBackendCreationException(adapter.getName(), e);
                 } catch (Exception e) {
                     logger.error("Exception while attempting to reflect on the "

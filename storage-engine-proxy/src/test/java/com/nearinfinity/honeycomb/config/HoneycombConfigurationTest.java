@@ -22,8 +22,13 @@
 
 package com.nearinfinity.honeycomb.config;
 
+import com.google.common.collect.Maps;
+import net.java.quickcheck.Generator;
+import net.java.quickcheck.collection.Pair;
+import net.java.quickcheck.generator.CombinedGenerators;
+import net.java.quickcheck.generator.PrimitiveGenerators;
+import net.java.quickcheck.generator.iterable.Iterables;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -31,34 +36,130 @@ import java.util.Map;
 
 public class HoneycombConfigurationTest {
 
-    private static Map<String, String> hbaseConfigs = new HashMap<String, String>() {{
-        put("option1", "value1");
-        put("option2", "value2");
-    }};
+    Map<String, String> properties;
+    HoneycombConfiguration configuration;
 
-    private static Map<String, Map<String, String>> adapterConfigs = new HashMap<String, Map<String, String>>() {{
-        put(AdapterType.HBASE.getName(), hbaseConfigs);
-    }};
+    @Test
+    public void testIsBackendEnabled() throws Exception {
+        properties = new HashMap<String, String>() {{
+            put("honeycomb.hbase.enabled", "true");
+            put("honeycomb.memory.enabled", "true");
+        }};
+        configuration = new HoneycombConfiguration(properties);
+        Assert.assertTrue(configuration.isBackendEnabled(BackendType.HBASE));
+        Assert.assertTrue(configuration.isBackendEnabled(BackendType.MEMORY));
 
-    private HoneycombConfiguration configuration;
+        properties = new HashMap<String, String>() {{
+            put("honeycomb.hbase.enabled", "TRUE");
+            put("honeycomb.memory.enabled", "TRUE");
+        }};
+        configuration = new HoneycombConfiguration(properties);
+        Assert.assertTrue(configuration.isBackendEnabled(BackendType.HBASE));
+        Assert.assertTrue(configuration.isBackendEnabled(BackendType.MEMORY));
 
-    @Before
-    public void setupTests() {
-        configuration = new HoneycombConfiguration(adapterConfigs, "hbase");
+
+        properties = new HashMap<String, String>() {{
+            put("honeycomb.hbase.enabled", "  TrUE      ");
+            put("honeycomb.memory.enabled", "  TrUE      ");
+        }};
+        configuration = new HoneycombConfiguration(properties);
+        Assert.assertTrue(configuration.isBackendEnabled(BackendType.HBASE));
+        Assert.assertTrue(configuration.isBackendEnabled(BackendType.MEMORY));
     }
 
     @Test
-    public void testIsAdapterConfigured() throws Exception {
-        Assert.assertTrue(configuration.isAdapterConfigured(AdapterType.HBASE));
+    public void testIsBackendDisabled() throws Exception {
+        properties = new HashMap<String, String>() {{
+            put("honeycomb.hbase.enabled", "false");
+            put("honeycomb.memory.enabled", "false");
+        }};
+        configuration = new HoneycombConfiguration(properties);
+        Assert.assertFalse(configuration.isBackendEnabled(BackendType.HBASE));
+        Assert.assertFalse(configuration.isBackendEnabled(BackendType.MEMORY));
+
+        properties = new HashMap<String, String>() {{
+            put("honeycomb.hbase.enabled", "FALSE");
+            put("honeycomb.memory.enabled", "FALSE");
+        }};
+        configuration = new HoneycombConfiguration(properties);
+        Assert.assertFalse(configuration.isBackendEnabled(BackendType.HBASE));
+        Assert.assertFalse(configuration.isBackendEnabled(BackendType.MEMORY));
+
+        properties = new HashMap<String, String>() {{
+            put("honeycomb.hbase.enabled", "  FaLSe   ");
+            put("honeycomb.memory.enabled", "  FaLSe   ");
+        }};
+        configuration = new HoneycombConfiguration(properties);
+        Assert.assertFalse(configuration.isBackendEnabled(BackendType.HBASE));
+        Assert.assertFalse(configuration.isBackendEnabled(BackendType.MEMORY));
     }
 
     @Test
-    public void testIsAdapterNotConfigured() throws Exception {
-        Assert.assertFalse(configuration.isAdapterConfigured(AdapterType.MEMORY));
+    public void testBackendDisabledByDefault() throws Exception {
+        properties = new HashMap<String, String>() {{
+            put("honeycomb.hbase.enabled", "");
+            put("honeycomb.memory.enabled", "");
+        }};
+        configuration = new HoneycombConfiguration(properties);
+        Assert.assertFalse(configuration.isBackendEnabled(BackendType.HBASE));
+        Assert.assertFalse(configuration.isBackendEnabled(BackendType.MEMORY));
+
+        properties = new HashMap<String, String>() {{
+            put("honeycomb.hbase.enabled", "t");
+            put("honeycomb.memory.enabled", "t");
+        }};
+        configuration = new HoneycombConfiguration(properties);
+        Assert.assertFalse(configuration.isBackendEnabled(BackendType.HBASE));
+        Assert.assertFalse(configuration.isBackendEnabled(BackendType.MEMORY));
+
+        properties = new HashMap<String, String>() {{
+            put("honeycomb.hbase.enabled", "  foooz   ");
+            put("honeycomb.memory.enabled", "  foooz   ");
+        }};
+        configuration = new HoneycombConfiguration(properties);
+        Assert.assertFalse(configuration.isBackendEnabled(BackendType.HBASE));
+        Assert.assertFalse(configuration.isBackendEnabled(BackendType.MEMORY));
     }
 
     @Test
-    public void testGetAdapterOptions() throws Exception {
-        Assert.assertEquals(hbaseConfigs, configuration.getAdapterOptions(AdapterType.HBASE));
+    public void testArbitraryProperties() throws Exception {
+        Generator<String> strings = PrimitiveGenerators.strings(1, 100);
+        Generator<Pair<String, String>> propertyGen = CombinedGenerators.pairs(strings, strings);
+
+        properties = Maps.newHashMap();
+
+        for (Pair<String, String> property : Iterables.toIterable(propertyGen)) {
+            properties.put(property.getFirst(), property.getSecond());
+        }
+
+        configuration = new HoneycombConfiguration(properties);
+        Assert.assertEquals(properties, configuration.getProperties());
+    }
+
+    @Test
+    public void testDefaultBackend() throws Exception {
+        properties = new HashMap<String, String>() {{
+            put("honeycomb.backends.default", "hbase");
+        }};
+        configuration = new HoneycombConfiguration(properties);
+        Assert.assertEquals(configuration.getDefaultBackend(), BackendType.HBASE);
+
+        properties = new HashMap<String, String>() {{
+            put("honeycomb.backends.default", "  hBasE   ");
+        }};
+        configuration = new HoneycombConfiguration(properties);
+        Assert.assertEquals(configuration.getDefaultBackend(), BackendType.HBASE);
+
+        properties = new HashMap<String, String>() {{
+            put("honeycomb.backends.default", "memory");
+        }};
+        configuration = new HoneycombConfiguration(properties);
+        Assert.assertEquals(configuration.getDefaultBackend(), BackendType.MEMORY);
+
+        properties = new HashMap<String, String>() {{
+            put("honeycomb.backends.default", "  MemORy       ");
+        }};
+        configuration = new HoneycombConfiguration(properties);
+        Assert.assertEquals(configuration.getDefaultBackend(), BackendType.MEMORY);
     }
 }

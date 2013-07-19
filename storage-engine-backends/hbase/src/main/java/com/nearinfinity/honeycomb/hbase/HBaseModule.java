@@ -28,9 +28,9 @@ import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Names;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
-import com.nearinfinity.honeycomb.config.AdapterType;
+import com.nearinfinity.honeycomb.config.BackendType;
 import com.nearinfinity.honeycomb.exceptions.RuntimeIOException;
-import com.nearinfinity.honeycomb.hbase.config.ConfigConstants;
+import com.nearinfinity.honeycomb.hbase.config.HBaseProperties;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HTableInterface;
@@ -68,10 +68,10 @@ public class HBaseModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        final MapBinder<AdapterType, Store> storeMapBinder =
-                MapBinder.newMapBinder(binder(), AdapterType.class, Store.class);
+        final MapBinder<BackendType, Store> storeMapBinder =
+                MapBinder.newMapBinder(binder(), BackendType.class, Store.class);
 
-        storeMapBinder.addBinding(AdapterType.HBASE).to(HBaseStore.class);
+        storeMapBinder.addBinding(BackendType.HBASE).to(HBaseStore.class);
 
         install(new FactoryModuleBuilder()
                 .implement(Table.class, HBaseTable.class)
@@ -80,10 +80,10 @@ public class HBaseModule extends AbstractModule {
         bind(HTableProvider.class).toInstance(hTableProvider);
         bind(HTableInterface.class).toProvider(hTableProvider);
 
-        bind(Long.class).annotatedWith(Names.named(ConfigConstants.WRITE_BUFFER))
-                .toInstance(configuration.getLong(ConfigConstants.WRITE_BUFFER,
-                        ConfigConstants.DEFAULT_WRITE_BUFFER));
-        bind(String.class).annotatedWith(Names.named(ConfigConstants.COLUMN_FAMILY))
-                .toInstance(configuration.get(ConfigConstants.COLUMN_FAMILY));
+        bind(Long.class).annotatedWith(Names.named(HBaseProperties.WRITE_BUFFER))
+                .toInstance(configuration.getLong(HBaseProperties.WRITE_BUFFER,
+                        HBaseProperties.DEFAULT_WRITE_BUFFER));
+        bind(String.class).annotatedWith(Names.named(HBaseProperties.COLUMN_FAMILY))
+                .toInstance(configuration.get(HBaseProperties.COLUMN_FAMILY));
     }
 }

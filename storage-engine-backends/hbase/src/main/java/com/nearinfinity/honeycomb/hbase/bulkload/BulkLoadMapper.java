@@ -29,7 +29,7 @@ import com.nearinfinity.honeycomb.hbase.HBaseMetadata;
 import com.nearinfinity.honeycomb.hbase.HBaseStore;
 import com.nearinfinity.honeycomb.hbase.MetadataCache;
 import com.nearinfinity.honeycomb.hbase.MutationFactory;
-import com.nearinfinity.honeycomb.hbase.config.ConfigConstants;
+import com.nearinfinity.honeycomb.hbase.config.HBaseProperties;
 import com.nearinfinity.honeycomb.mysql.Row;
 import com.nearinfinity.honeycomb.mysql.schema.ColumnSchema;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
@@ -78,16 +78,16 @@ public class BulkLoadMapper
         char separator  = conf.get(SEPARATOR, " ").charAt(0);
         columns = conf.getStrings(SQL_COLUMNS);
         String sqlTable = conf.get(SQL_TABLE);
-        String hbaseTable  = conf.get(ConfigConstants.TABLE_NAME);
-        String columnFamily = conf.get(ConfigConstants.COLUMN_FAMILY);
+        String hbaseTable  = conf.get(HBaseProperties.TABLE_NAME);
+        String columnFamily = conf.get(HBaseProperties.COLUMN_FAMILY);
 
         // Check that necessary configuration variables are set
         checkNotNull(conf.get(HConstants.ZOOKEEPER_QUORUM),
                 HConstants.ZOOKEEPER_QUORUM + NOT_SET_ERROR);
         checkNotNull(sqlTable, SQL_TABLE + NOT_SET_ERROR);
         checkNotNull(columns, SQL_COLUMNS + NOT_SET_ERROR);
-        checkNotNull(hbaseTable, ConfigConstants.TABLE_NAME + NOT_SET_ERROR);
-        checkNotNull(columnFamily, ConfigConstants.COLUMN_FAMILY + NOT_SET_ERROR);
+        checkNotNull(hbaseTable, HBaseProperties.TABLE_NAME + NOT_SET_ERROR);
+        checkNotNull(columnFamily, HBaseProperties.COLUMN_FAMILY + NOT_SET_ERROR);
 
         LOG.info("Zookeeper: " + conf.get(HConstants.ZOOKEEPER_QUORUM));
         LOG.info("SQL Table: " + sqlTable);
