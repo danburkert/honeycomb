@@ -50,7 +50,7 @@ static bool try_bootstrap(JavaVM* jvm, jobject* factory)
 
   if (startup == NULL)
   {
-    Logging::fatal("Failed to find startup method.  Aborting.");
+    Logging::fatal("Failed to find startup method. Check the classpath for the required jars. Aborting.");
     return false;
   }
 

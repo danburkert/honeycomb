@@ -19,7 +19,12 @@
 
 
 #include "Logging.h"
-#include "Util.h"
+#include <stdio.h>
+#include <pthread.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+#include <errno.h>
 
 namespace Logging
 {
@@ -44,15 +49,22 @@ namespace Logging
 
   void setup_logging(const char* path)
   {
-    log_file = fopen(path, "a");
-    if (log_file == NULL)
+    if (path == NULL)
     {
-      fprintf(stderr, "Error \"%s\" while trying to open log file %s. Falling back to stderr.\n", strerror(errno), path);
       log_file = stderr;
     }
     else
     {
-      fprintf(stderr, "Detailed logging output configured to: %s\n", path);
+      log_file = fopen(path, "a");
+      if (log_file == NULL)
+      {
+        fprintf(stderr, "Error \"%s\" while trying to open log file %s. Falling back to stderr.\n", strerror(errno), path);
+        log_file = stderr;
+      }
+      else
+      {
+        fprintf(stderr, "Detailed logging output configured to: %s\n", path);
+      }
     }
 
     pthread_mutex_init(&log_lock, NULL);

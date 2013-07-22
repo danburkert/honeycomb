@@ -5,7 +5,6 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Wrapper class for Honeycomb configuration properties.  Provides helper
@@ -27,7 +26,7 @@ public class HoneycombConfiguration {
 
     public BackendType getDefaultBackend() {
         String backend = properties.get(Constants.DEFAULT_BACKEND_PROP);
-        checkState(backend != null, "The " + Constants.DEFAULT_BACKEND_PROP + " property is not configured");
+        checkNotNull(backend, "The " + Constants.DEFAULT_BACKEND_PROP + " property is not configured");
         return BackendType.valueOf(backend.trim().toUpperCase());
     }
 
@@ -35,7 +34,7 @@ public class HoneycombConfiguration {
         checkNotNull(backend);
         String prop = Constants.HONEYCOMB_NAMESPACE + "." + backend.getName() + ".enabled";
         String val = properties.get(prop);
-        checkState(val != null, "The " + prop + " property is not configured");
+        checkNotNull(val, "The " + prop + " property is not configured");
         return val.trim().toLowerCase().equals("true");
     }
 

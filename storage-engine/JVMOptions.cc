@@ -19,12 +19,45 @@
 
 
 #include "JVMOptions.h"
-//#include "Logging.h"
+#include "Logging.h"
 
 #include <cstring>
 #include <cstdlib>
 #include <jni.h>
 #include <cctype>
+
+#define OPTION_SEPARATOR "-"
+#define CLASSPATH_PREFIX "-Djava.class.path="
+
+class JVMOptionsPrivate
+{
+  private:
+    int index;
+  public:
+    JavaVMOption* options;
+    int count;
+    JVMOptionsPrivate(int count) : 
+      index(0),
+      options(new JavaVMOption[count]), 
+      count(count)
+    {
+    }
+
+    ~JVMOptionsPrivate()
+    {
+      for(int i = 0; i < count; i++)
+      {
+        delete[] options[i].optionString;
+      }
+
+      delete[] options;
+    }
+
+    void add_option_string(char* option_string)
+    {
+      options[index++].optionString = option_string;
+    }
+};
 
 /**
  * @brief Trim whitespace from left and right of string.
@@ -45,83 +78,90 @@ static char* trim(char *string)
   return string;
 }
 
-JVMOptions::JVMOptions()
+static int calc_option_count(char* classpath, char* jvm_opts)
 {
-  index = 0;
+  int count = 0;
+  if (classpath != NULL && strlen(classpath) != 0) 
+    count++;
+  if (jvm_opts == NULL || strlen(jvm_opts) == 0) 
+    return count;
+  
+  char* saveptr, *opt;
+  char* jvm_copy = strdup(jvm_opts); //Stupid strtok_r changes original string
+  for(opt = strtok_r(jvm_copy, OPTION_SEPARATOR, &saveptr); 
+      opt;
+      opt = strtok_r(NULL, OPTION_SEPARATOR, &saveptr))
+  {
+    if (strlen(trim(opt)) != 0)
+      count++;
+  }
+
+  free(jvm_copy);
+
+  return count;
+}
+
+JVMOptions::JVMOptions() 
+{
   char* jvm_opts = trim(getenv(JVM_OPTS));
   char* classpath = trim(getenv(CLASSPATH));
-  set_options_count(classpath, jvm_opts);
-  options = (JavaVMOption*) malloc(count * sizeof(JavaVMOption));
+  int count = calc_option_count(classpath, jvm_opts);
+  internal = new JVMOptionsPrivate(count);
+  internal->options = new JavaVMOption[count];
   set_classpath(classpath);
   set_options(jvm_opts);
 }
 
 JVMOptions::~JVMOptions()
 {
-  for(int i = 0; i < count; i++)
-  {
-    free(options[i].optionString);
-  }
-
-  free(options);
+  delete internal;
 }
 
 JavaVMOption* JVMOptions::get_options()
 {
-  return options;
+  return internal->options;
 }
 
 unsigned int JVMOptions::get_options_count()
 {
-  return count;
+  return internal->count;
 }
 
 void JVMOptions::set_classpath(char* classpath)
 {
   if (classpath == NULL || strlen(classpath) == 0)
   {
-    //Logging::error(CLASSPATH " environment variable not set");
+    Logging::error(CLASSPATH " environment variable not set");
     return;
   }
 
-  const char* classpath_prefix = "-Djava.class.path=";
-  int len = 1 + strlen(classpath_prefix) + strlen(classpath);
-  char* full_classpath = (char*) malloc(sizeof(char) * len);
-  strcpy(full_classpath, classpath_prefix);
-  strcat(full_classpath, classpath);
-  options[index++].optionString = full_classpath;
+  int len = 1 + strlen(CLASSPATH_PREFIX) + strlen(classpath);
+  char* full_classpath = new char[len];
+  snprintf(full_classpath, len, "%s%s", classpath_prefix, classpath);
+  internal->add_option_string(full_classpath);
 }
 
 void JVMOptions::set_options(char* jvm_opts)
 {
   if (jvm_opts == NULL || strlen(jvm_opts) == 0)
   {
-    //Logging::warn(JVM_OPTS " environment variable not set");
+    Logging::warn(JVM_OPTS " environment variable not set");
     return;
   }
 
-  char* left = jvm_opts;
-  char* right = jvm_opts;
-
-  while((right = strstr(right, " -")))
+  const int string_pad = 2; // For dash and null terminator
+  char* saveptr;
+  for(char* opt = strtok_r(jvm_opts, OPTION_SEPARATOR, &saveptr); 
+      opt;
+      opt = strtok_r(NULL, OPTION_SEPARATOR, &saveptr))
   {
-    *right = '\0';
-    options[index++].optionString = strdup(trim(left));
-    left = right + 1;
-    right += 2;
+    char* trimmed_opt = trim(opt);
+    size_t opt_len = strlen(trimmed_opt) + string_pad;
+    if (opt_len == string_pad) // String is zero length
+      continue;
+    char* string = new char[opt_len];
+    snprintf(string, opt_len, "-%s", trimmed_opt);
+    internal->add_option_string(string);
   }
-  options[index++].optionString = strdup(trim(left));
 }
 
-void JVMOptions::set_options_count(char* classpath, char* jvm_opts)
-{
-  count = 0;
-  if (classpath != NULL && strlen(classpath) != 0) count++;
-  if (jvm_opts == NULL || strlen(jvm_opts) == 0) return;
-  while((jvm_opts = strstr(jvm_opts, " -")))
-  {
-    jvm_opts += 2;
-    count++;
-  }
-  count++;
-}

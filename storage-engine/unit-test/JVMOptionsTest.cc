@@ -22,6 +22,7 @@
 #include "gtest/gtest.h"
 #include "JVMOptions.h"
 #include <jni.h>
+#include <Logging.h>
 
 struct JavaVMOption;
 
@@ -29,6 +30,7 @@ class JVMOptionsTest : public ::testing::Test
 {
   protected:
     virtual void SetUp() {
+      Logging::setup_logging(NULL);
     }
 };
 
@@ -96,7 +98,37 @@ TEST_F(JVMOptionsTest, OptionsCount)
     JVMOptions options;
     ASSERT_EQ(3, options.get_options_count());
   }
+  {
+    setenv(JVM_OPTS, "-foo -", 1);
+    JVMOptions options;
+    ASSERT_EQ(2, options.get_options_count());
+  }
+  {
+    setenv(JVM_OPTS, "-foo -      ", 1);
+    JVMOptions options;
+    ASSERT_EQ(2, options.get_options_count());
+  }
 
+  {
+    setenv(JVM_OPTS, "-foo --bar", 1);
+    JVMOptions options;
+    ASSERT_EQ(3, options.get_options_count());
+  }
+  {
+    setenv(JVM_OPTS, "-foo -- ", 1);
+    JVMOptions options;
+    ASSERT_EQ(2, options.get_options_count());
+  }
+  {
+    setenv(JVM_OPTS, "-foo - -bar", 1);
+    JVMOptions options;
+    ASSERT_EQ(3, options.get_options_count());
+  }
+  {
+    setenv(JVM_OPTS, "-foo - -bar-foo", 1);
+    JVMOptions options;
+    ASSERT_EQ(4, options.get_options_count());
+  }
   {
     setenv(JVM_OPTS, "   -foo=     bar -baz    ", 1);
     JVMOptions options;
@@ -109,6 +141,7 @@ TEST_F(JVMOptionsTest, OptionsCount)
     JVMOptions options;
     ASSERT_EQ(0, options.get_options_count());
   }
+
 
   {
     unsetenv(CLASSPATH);

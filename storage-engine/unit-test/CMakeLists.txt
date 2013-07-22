@@ -49,7 +49,7 @@ set(PROJECT_TEST_NAME ${PROJECT_NAME_STR})
 include_directories(${GTEST_INCLUDE_DIRS} ${COMMON_INCLUDES})
 link_directories(${GTEST_LIBS_DIR})
 
-file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/*.cc ../AvroUtil.cc ../Row.cc ../TableSchema.cc ../IndexSchema.cc ../ColumnSchema.cc ../QueryKey.cc ../JVMOptions.cc)
+file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/*.cc ../AvroUtil.cc ../Row.cc ../TableSchema.cc ../IndexSchema.cc ../ColumnSchema.cc ../QueryKey.cc ../JVMOptions.cc ../Logging.cc)
 
 add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES})
 add_dependencies(${PROJECT_TEST_NAME} googletest)

@@ -75,7 +75,7 @@ public final class Bootstrap extends AbstractModule {
                     Constants.HONEYCOMB_DEFAULT : Constants.CONFIG_SCHEMA) + " on the classpath.";
             logger.error(msg);
             logger.info("Classpath:\n" + System.getProperty("java.class.path").replace(':', '\n'));
-            throw new Error(msg);
+            throw new IllegalStateException(msg);
         }
 
         Map<String, String> properties = ConfigParser.parse(defaultURL, schemaURL);

@@ -30,8 +30,7 @@
     :constructors {[java.util.Map] []}
     :state config
     :exposes-methods {binder binderSuper
-                      bind bindSuper})
-  (:import [com.nearinfinity.honeycomb.config BackendType]))
+                      bind bindSuper}))
 
 (defn -init
   [config]

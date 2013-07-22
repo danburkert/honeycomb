@@ -24,6 +24,7 @@
 #define CLASSPATH "HONEYCOMB_CLASSPATH"
 
 struct JavaVMOption;
+class JVMOptionsPrivate;
 
 /**
  * @brief Helper class for pulling JVM options from the environment and loading
@@ -37,12 +38,9 @@ class JVMOptions
 {
 
   private:
-    JavaVMOption* options;
-    int count;
-    int index;
+    JVMOptionsPrivate* internal;
 
     void set_options(char* jvm_opts);
-    void set_options_count(char* classpath, char* jvm_opts);
     void set_classpath(char* classpath);
 
   public:
