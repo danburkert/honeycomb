@@ -45,7 +45,7 @@ class JVMOptions
      *
      * @param jvm_opts String with options
      */
-    void extract_options(char* jvm_opts);
+    void extract_options(const char* jvm_opts);
 
     /**
      * @brief Extract the classpath from a string.

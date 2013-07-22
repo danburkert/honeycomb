@@ -26,8 +26,9 @@
 #include <jni.h>
 #include <cctype>
 
-#define OPTION_SEPARATOR "-"
+#define OPTION_SEPARATOR " -"
 #define CLASSPATH_PREFIX "-Djava.class.path="
+#define NEXT_ARGUMENT(arg) arg += 2
 
 class JVMOptionsPrivate
 {
@@ -47,7 +48,7 @@ class JVMOptionsPrivate
     {
       for(int i = 0; i < count; i++)
       {
-        delete[] options[i].optionString;
+        free(options[i].optionString);
       }
 
       delete[] options;
@@ -85,18 +86,13 @@ static int calc_option_count(const char* classpath, const char* jvm_opts)
     count++;
   if (jvm_opts == NULL || strlen(jvm_opts) == 0) 
     return count;
-  
-  char* saveptr, *opt;
-  char* jvm_copy = strdup(jvm_opts); //Stupid strtok_r changes original string
-  for(opt = strtok_r(jvm_copy, OPTION_SEPARATOR, &saveptr); 
-      opt;
-      opt = strtok_r(NULL, OPTION_SEPARATOR, &saveptr))
+  char* ptr = const_cast<char*>(jvm_opts);
+  while((ptr = strstr(ptr, " -")))
   {
-    if (strlen(trim(opt)) != 0)
-      count++;
+    NEXT_ARGUMENT(ptr);
+    count++;
   }
-
-  free(jvm_copy);
+  count++;
 
   return count;
 }
@@ -141,7 +137,7 @@ void JVMOptions::extract_classpath(const char* classpath)
   internal->add_option_string(full_classpath);
 }
 
-void JVMOptions::extract_options(char* jvm_opts)
+void JVMOptions::extract_options(const char* jvm_opts)
 {
   if (jvm_opts == NULL || strlen(jvm_opts) == 0)
   {
@@ -149,19 +145,17 @@ void JVMOptions::extract_options(char* jvm_opts)
     return;
   }
 
-  const int string_pad = 2; // For dash and null terminator
-  char* saveptr;
-  for(char* opt = strtok_r(jvm_opts, OPTION_SEPARATOR, &saveptr); 
-      opt;
-      opt = strtok_r(NULL, OPTION_SEPARATOR, &saveptr))
-  {
-    const char* trimmed_opt = trim(opt);
-    const size_t opt_len = strlen(trimmed_opt) + string_pad;
-    if (opt_len == string_pad) // String is zero length
-      continue;
-    char* string = new char[opt_len];
-    snprintf(string, opt_len, "-%s", trimmed_opt);
-    internal->add_option_string(string);
-  }
+   char* left = const_cast<char*>(jvm_opts);
+   char* right = const_cast<char*>(jvm_opts);
+
+   while((right = strstr(right, OPTION_SEPARATOR)))
+   {
+     *right = '\0';
+     internal->add_option_string(strdup(trim(left)));
+     left = right + 1;
+     NEXT_ARGUMENT(right);
+   }
+
+   internal->add_option_string(strdup(trim(left)));
 }
 

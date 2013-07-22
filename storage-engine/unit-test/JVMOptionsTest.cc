@@ -101,12 +101,12 @@ TEST_F(JVMOptionsTest, OptionsCount)
   {
     setenv(JVM_OPTS, "-foo -", 1);
     JVMOptions options;
-    ASSERT_EQ(2, options.get_options_count());
+    ASSERT_EQ(3, options.get_options_count());
   }
   {
     setenv(JVM_OPTS, "-foo -      ", 1);
     JVMOptions options;
-    ASSERT_EQ(2, options.get_options_count());
+    ASSERT_EQ(3, options.get_options_count());
   }
 
   {
@@ -117,12 +117,12 @@ TEST_F(JVMOptionsTest, OptionsCount)
   {
     setenv(JVM_OPTS, "-foo -- ", 1);
     JVMOptions options;
-    ASSERT_EQ(2, options.get_options_count());
+    ASSERT_EQ(3, options.get_options_count());
   }
   {
     setenv(JVM_OPTS, "-foo - -bar", 1);
     JVMOptions options;
-    ASSERT_EQ(3, options.get_options_count());
+    ASSERT_EQ(4, options.get_options_count());
   }
   {
     setenv(JVM_OPTS, "-foo - -bar-foo", 1);
@@ -202,6 +202,16 @@ TEST_F(JVMOptionsTest, Options)
     setenv(JVM_OPTS, "-XX:+UseConcMarkSweepGC -Xmx2g -Xms1g -ea -server -Xrs", 1);
     JVMOptions options;
     ASSERT_STREQ("-XX:+UseConcMarkSweepGC", options.get_options()[1].optionString);
+    ASSERT_STREQ("-Xmx2g", options.get_options()[2].optionString);
+    ASSERT_STREQ("-Xms1g", options.get_options()[3].optionString);
+    ASSERT_STREQ("-ea", options.get_options()[4].optionString);
+    ASSERT_STREQ("-server", options.get_options()[5].optionString);
+    ASSERT_STREQ("-Xrs", options.get_options()[6].optionString);
+  }
+  {
+    setenv(JVM_OPTS, "-XX:-UseConcMarkSweepGC -Xmx2g -Xms1g -ea -server -Xrs", 1);
+    JVMOptions options;
+    ASSERT_STREQ("-XX:-UseConcMarkSweepGC", options.get_options()[1].optionString);
     ASSERT_STREQ("-Xmx2g", options.get_options()[2].optionString);
     ASSERT_STREQ("-Xms1g", options.get_options()[3].optionString);
     ASSERT_STREQ("-ea", options.get_options()[4].optionString);
