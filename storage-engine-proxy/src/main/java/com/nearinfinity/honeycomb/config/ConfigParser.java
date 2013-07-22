@@ -23,6 +23,7 @@
 package com.nearinfinity.honeycomb.config;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.Resources;
 import org.apache.log4j.Logger;
@@ -39,6 +40,7 @@ import javax.xml.validation.Validator;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
+import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Map;
@@ -52,7 +54,8 @@ public class ConfigParser {
     private static final Logger logger = Logger.getLogger(ConfigParser.class);
     private static final XPath xPath = XPathFactory.newInstance().newXPath();
 
-    private ConfigParser() {}
+    private ConfigParser() {
+    }
 
     /**
      * Create a dictionary of properties from a configuration file URL.  Validates
@@ -72,17 +75,34 @@ public class ConfigParser {
         final InputSupplier<? extends InputStream> schemaSupplier =
                 Resources.newInputStreamSupplier(schemaURL);
 
+        return doParse(configURL.toString(), configSupplier, schemaSupplier);
+    }
+
+    public static Map<String, String> parse(String configPath, URL schemaURL) {
+        checkNotNull(configPath);
+        checkNotNull(schemaURL);
+
+        final InputSupplier<? extends InputStream> configSupplier =
+                Files.newInputStreamSupplier(new File(configPath));
+        final InputSupplier<? extends InputStream> schemaSupplier =
+                Resources.newInputStreamSupplier(schemaURL);
+        return doParse(configPath, configSupplier, schemaSupplier);
+    }
+
+    private static Map<String, String> doParse(String configURL,
+                                               InputSupplier<? extends InputStream> configSupplier,
+                                               InputSupplier<? extends InputStream> schemaSupplier) {
         try {
             validateConfig(configSupplier, schemaSupplier);
         } catch (Exception e) {
-            String msg = "Unable to validate " + configURL.toString();
+            String msg = "Unable to validate " + configURL;
             logger.error(msg);
             throw new RuntimeException(msg, e);
         }
         try {
             return parseProperties(configSupplier);
         } catch (Exception e) {
-            String msg = "Unable to parse " + configURL.toString();
+            String msg = "Unable to parse " + configURL;
             logger.error(msg);
             throw new RuntimeException(msg, e);
         }
@@ -91,7 +111,6 @@ public class ConfigParser {
     /**
      * Validates the configuration against the given schema.
      *
-     * @param filename The filename of the configuration being validated
      * @param configSupplier The supplier that provides the configuration to inspect
      * @param schemaSupplier The supplier that provides the schema used to inspect the configuration
      */
@@ -106,6 +125,7 @@ public class ConfigParser {
 
     /**
      * Parse the configuration file and return a map of property name to value
+     *
      * @param configSupplier Configuration file input stream
      * @return Map of properties
      * @throws Exception on parse error
@@ -145,5 +165,4 @@ public class ConfigParser {
 
         return properties.build();
     }
-
 }

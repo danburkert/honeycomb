@@ -22,6 +22,7 @@
 
 package com.nearinfinity.honeycomb;
 
+import com.google.common.collect.Maps;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -63,13 +64,48 @@ public final class Bootstrap extends AbstractModule {
      * @return {@link HandlerProxyFactory} with all dependencies setup
      */
     public static HandlerProxyFactory startup() {
-
         ensureLoggingPathsCorrect();
         ClassLoader loader = Bootstrap.class.getClassLoader();
         URL configURL = loader.getResource(Constants.HONEYCOMB_SITE);
         URL defaultURL = loader.getResource(Constants.HONEYCOMB_DEFAULT);
         URL schemaURL = loader.getResource(Constants.CONFIG_SCHEMA);
 
+        Map<String, String> properties = Maps.newHashMap();
+        tryExtractDefaultProperties(defaultURL, schemaURL, properties);
+        tryExtractClasspathProperties(configURL, schemaURL, properties);
+        tryExtractEnvironmentProperties(schemaURL, properties);
+
+        Bootstrap bootstrap = new Bootstrap(new HoneycombConfiguration(properties));
+
+        Injector injector = Guice.createInjector(bootstrap);
+        return injector.getInstance(HandlerProxyFactory.class);
+    }
+
+    private static void tryExtractEnvironmentProperties(URL schemaURL, Map<String, String> properties) {
+        try {
+            Map<String, String> env = System.getenv();
+            String filePath = env.get(Constants.HONEYCOMB_ENVIRONMENT);
+            if (filePath != null) {
+                Map<String, String> parse = ConfigParser.parse(filePath, schemaURL);
+                if (parse != null) {
+                    properties.putAll(parse);
+                }
+            }
+        } catch (Exception e) {
+            logger.warn("When trying to read from environmental variable.", e);
+        }
+    }
+
+    private static void tryExtractClasspathProperties(URL configURL, URL schemaURL, Map<String, String> properties) {
+        if (configURL != null) {
+            properties.putAll(ConfigParser.parse(configURL, schemaURL));
+        } else {
+            String msg = "Unable to find " + Constants.HONEYCOMB_SITE + " on the classpath.";
+            logger.warn(msg);
+        }
+    }
+
+    private static void tryExtractDefaultProperties(URL defaultURL, URL schemaURL, Map<String, String> properties) {
         if (defaultURL == null || schemaURL == null) {
             String msg = "Unable to find " + (defaultURL == null ?
                     Constants.HONEYCOMB_DEFAULT : Constants.CONFIG_SCHEMA) + " on the classpath.";
@@ -78,18 +114,7 @@ public final class Bootstrap extends AbstractModule {
             throw new IllegalStateException(msg);
         }
 
-        Map<String, String> properties = ConfigParser.parse(defaultURL, schemaURL);
-        if (configURL != null) {
-            properties.putAll(ConfigParser.parse(configURL, schemaURL));
-        } else {
-            String msg = "Unable to find " + Constants.HONEYCOMB_SITE + " on the classpath.";
-            logger.warn(msg);
-        }
-
-        Bootstrap bootstrap = new Bootstrap(new HoneycombConfiguration(properties));
-
-        Injector injector = Guice.createInjector(bootstrap);
-        return injector.getInstance(HandlerProxyFactory.class);
+        properties.putAll(ConfigParser.parse(defaultURL, schemaURL));
     }
 
     private static void ensureLoggingPathsCorrect() {

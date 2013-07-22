@@ -54,7 +54,7 @@
     <name>honeycomb.hbase.flushChangesImmediately</name>
     <value>true</value>
     <description>
-      Whether HBase writes rows to HBase imeediately.  It is recommended to keep
+      Whether HBase writes rows to HBase immediately.  It is recommended to keep
       this enabled unless you are an advanced user and are OK with data loss in
       the event of failures.
     </description>
