@@ -73,27 +73,11 @@ public final class Bootstrap extends AbstractModule {
         Map<String, String> properties = Maps.newHashMap();
         tryExtractDefaultProperties(defaultURL, schemaURL, properties);
         tryExtractClasspathProperties(configURL, schemaURL, properties);
-        tryExtractEnvironmentProperties(schemaURL, properties);
 
         Bootstrap bootstrap = new Bootstrap(new HoneycombConfiguration(properties));
 
         Injector injector = Guice.createInjector(bootstrap);
         return injector.getInstance(HandlerProxyFactory.class);
-    }
-
-    private static void tryExtractEnvironmentProperties(URL schemaURL, Map<String, String> properties) {
-        try {
-            Map<String, String> env = System.getenv();
-            String filePath = env.get(Constants.HONEYCOMB_ENVIRONMENT);
-            if (filePath != null) {
-                Map<String, String> parse = ConfigParser.parse(filePath, schemaURL);
-                if (parse != null) {
-                    properties.putAll(parse);
-                }
-            }
-        } catch (Exception e) {
-            logger.warn("When trying to read from environmental variable.", e);
-        }
     }
 
     private static void tryExtractClasspathProperties(URL configURL, URL schemaURL, Map<String, String> properties) {

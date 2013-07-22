@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <parent>
         <groupId>com.nearinfinity.honeycomb</groupId>
@@ -15,15 +15,19 @@
     <version>0.2-SNAPSHOT</version>
 
     <name>Storage Engine Proxy Integration Tests</name>
-    <description>Integration test suite run to ensure proper execution against the supported backend implementation(s)</description>
+    <description>Integration test suite run to ensure proper execution against the supported backend implementation(s)
+    </description>
     <url>${repository.url}</url>
-    
+    <properties>
+        <honeycomb.xml>""</honeycomb.xml>
+    </properties>
+
     <scm>
         <connection>${project.parent.scm.connection}</connection>
         <developerConnection>${project.parent.scm.developerConnection}</developerConnection>
         <url>${project.parent.scm.url}</url>
         <tag>${project.parent.scm.tag}</tag>
-    </scm>    
+    </scm>
 
     <licenses>
         <license>
@@ -41,6 +45,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
+                <configuration>
+                    <additionalClasspathElements>
+                        <!-- For CI server: integration tests need a different xml file -->
+                        <additionalClasspathElement>${honeycomb.xml}</additionalClasspathElement>
+                    </additionalClasspathElements>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

@@ -31,5 +31,4 @@ public abstract class Constants {
     public static final String HONEYCOMB_DEFAULT = "honeycomb-default.xml";
     public static final String CONFIG_SCHEMA = "honeycomb.xsd";
     public static final String DEFAULT_BACKEND_PROP = "honeycomb.backends.default";
-    public static final String HONEYCOMB_ENVIRONMENT = "HONEYCOMB_XML_LOCATION";
 }

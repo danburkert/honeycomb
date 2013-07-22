@@ -23,7 +23,6 @@
 package com.nearinfinity.honeycomb.config;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.Resources;
 import org.apache.log4j.Logger;
@@ -40,7 +39,6 @@ import javax.xml.validation.Validator;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
-import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Map;
@@ -76,17 +74,6 @@ public class ConfigParser {
                 Resources.newInputStreamSupplier(schemaURL);
 
         return doParse(configURL.toString(), configSupplier, schemaSupplier);
-    }
-
-    public static Map<String, String> parse(String configPath, URL schemaURL) {
-        checkNotNull(configPath);
-        checkNotNull(schemaURL);
-
-        final InputSupplier<? extends InputStream> configSupplier =
-                Files.newInputStreamSupplier(new File(configPath));
-        final InputSupplier<? extends InputStream> schemaSupplier =
-                Resources.newInputStreamSupplier(schemaURL);
-        return doParse(configPath, configSupplier, schemaSupplier);
     }
 
     private static Map<String, String> doParse(String configURL,

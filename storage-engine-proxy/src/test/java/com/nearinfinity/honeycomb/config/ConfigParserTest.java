@@ -42,11 +42,6 @@ public class ConfigParserTest {
     }
 
     @Test(expected = NullPointerException.class)
-    public void testParseNullEnvironmentPath() {
-        ConfigParser.parse((String)null, url);
-    }
-
-    @Test(expected = NullPointerException.class)
     public void testParseNullSchemaPath() {
         ConfigParser.parse(url, null);
     }
