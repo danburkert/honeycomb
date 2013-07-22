@@ -36,7 +36,7 @@ class JVMOptionsPrivate
   public:
     JavaVMOption* options;
     int count;
-    JVMOptionsPrivate(int count) : 
+    JVMOptionsPrivate(const int count) : 
       index(0),
       options(new JavaVMOption[count]), 
       count(count)
@@ -78,7 +78,7 @@ static char* trim(char *string)
   return string;
 }
 
-static int calc_option_count(char* classpath, char* jvm_opts)
+static int calc_option_count(const char* classpath, const char* jvm_opts)
 {
   int count = 0;
   if (classpath != NULL && strlen(classpath) != 0) 
@@ -108,8 +108,8 @@ JVMOptions::JVMOptions()
   int count = calc_option_count(classpath, jvm_opts);
   internal = new JVMOptionsPrivate(count);
   internal->options = new JavaVMOption[count];
-  set_classpath(classpath);
-  set_options(jvm_opts);
+  extract_classpath(classpath);
+  extract_options(jvm_opts);
 }
 
 JVMOptions::~JVMOptions()
@@ -117,17 +117,17 @@ JVMOptions::~JVMOptions()
   delete internal;
 }
 
-JavaVMOption* JVMOptions::get_options()
+JavaVMOption* JVMOptions::get_options() const
 {
   return internal->options;
 }
 
-unsigned int JVMOptions::get_options_count()
+unsigned int JVMOptions::get_options_count() const
 {
   return internal->count;
 }
 
-void JVMOptions::set_classpath(char* classpath)
+void JVMOptions::extract_classpath(const char* classpath)
 {
   if (classpath == NULL || strlen(classpath) == 0)
   {
@@ -135,13 +135,13 @@ void JVMOptions::set_classpath(char* classpath)
     return;
   }
 
-  int len = 1 + strlen(CLASSPATH_PREFIX) + strlen(classpath);
-  char* full_classpath = new char[len];
-  snprintf(full_classpath, len, "%s%s", classpath_prefix, classpath);
+  const int classpath_len = 1 + strlen(CLASSPATH_PREFIX) + strlen(classpath);
+  char* full_classpath = new char[classpath_len];
+  snprintf(full_classpath, classpath_len, "%s%s", CLASSPATH_PREFIX, classpath);
   internal->add_option_string(full_classpath);
 }
 
-void JVMOptions::set_options(char* jvm_opts)
+void JVMOptions::extract_options(char* jvm_opts)
 {
   if (jvm_opts == NULL || strlen(jvm_opts) == 0)
   {
@@ -155,8 +155,8 @@ void JVMOptions::set_options(char* jvm_opts)
       opt;
       opt = strtok_r(NULL, OPTION_SEPARATOR, &saveptr))
   {
-    char* trimmed_opt = trim(opt);
-    size_t opt_len = strlen(trimmed_opt) + string_pad;
+    const char* trimmed_opt = trim(opt);
+    const size_t opt_len = strlen(trimmed_opt) + string_pad;
     if (opt_len == string_pad) // String is zero length
       continue;
     char* string = new char[opt_len];

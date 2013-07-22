@@ -40,8 +40,19 @@ class JVMOptions
   private:
     JVMOptionsPrivate* internal;
 
-    void set_options(char* jvm_opts);
-    void set_classpath(char* classpath);
+    /**
+     * @brief Extract the JVM options from a string.
+     *
+     * @param jvm_opts String with options
+     */
+    void extract_options(char* jvm_opts);
+
+    /**
+     * @brief Extract the classpath from a string.
+     *
+     * @param classpath String containing classpath
+     */
+    void extract_classpath(const char* classpath);
 
   public:
     JVMOptions();
@@ -50,11 +61,11 @@ class JVMOptions
     /**
      * @brief Retrieve the JVM Options
      */
-    JavaVMOption* get_options();
+    JavaVMOption* get_options() const;
 
     /**
      * @brief Retrieve the number of JVM options
      */
-    unsigned int get_options_count();
+    unsigned int get_options_count() const;
 };
 #endif
