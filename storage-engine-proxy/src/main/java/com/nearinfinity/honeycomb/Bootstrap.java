@@ -41,7 +41,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.Enumeration;
 import java.util.Map;
 
@@ -67,12 +66,6 @@ public final class Bootstrap extends AbstractModule {
     public static HandlerProxyFactory startup() {
         ensureLoggingPathsCorrect();
         ClassLoader loader = Bootstrap.class.getClassLoader();
-        URL[] urls = ((URLClassLoader)loader).getURLs();
-
-        System.out.println("Current classpath:");
-        for(URL url: urls){
-            System.out.println(url.getFile());
-        }
 
         URL configURL = loader.getResource(Constants.HONEYCOMB_SITE);
         URL defaultURL = loader.getResource(Constants.HONEYCOMB_DEFAULT);
