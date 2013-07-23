@@ -69,6 +69,7 @@ public final class Bootstrap extends AbstractModule {
         ClassLoader loader = Bootstrap.class.getClassLoader();
         URL[] urls = ((URLClassLoader)loader).getURLs();
 
+        System.out.println("Current classpath:");
         for(URL url: urls){
             System.out.println(url.getFile());
         }
