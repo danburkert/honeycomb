@@ -46,8 +46,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <configuration>
-                    <useManifestOnlyJar>false</useManifestOnlyJar>
-                    <useSystemClassLoader>false</useSystemClassLoader>
                     <additionalClasspathElements>
                         <!-- For CI server: integration tests need a different xml file -->
                         <additionalClasspathElement>${honeycomb.xml}</additionalClasspathElement>
