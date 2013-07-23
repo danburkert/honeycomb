@@ -41,11 +41,11 @@ class JVMOptions
     JVMOptionsPrivate* internal;
 
     /**
-     * @brief Extract the JVM options from a string.
+     * @brief Extract the JVM options from a string. (Changes input string)
      *
      * @param jvm_opts String with options
      */
-    void extract_options(const char* jvm_opts);
+    void extract_options(char* jvm_opts);
 
     /**
      * @brief Extract the classpath from a string.

@@ -28,7 +28,9 @@
 
 #define OPTION_SEPARATOR " -"
 #define CLASSPATH_PREFIX "-Djava.class.path="
-#define NEXT_ARGUMENT(arg) arg += 2
+#define NEXT_ARGUMENT(arg) arg + 2
+#define OPTION_DASH(right) right + 1
+#define TERMINATE_STRING(arg) *arg = '\0'
 
 class JVMOptionsPrivate
 {
@@ -56,7 +58,8 @@ class JVMOptionsPrivate
 
     void add_option_string(char* option_string)
     {
-      options[index++].optionString = option_string;
+      if (index < count)
+        options[index++].optionString = option_string;
     }
 };
 
@@ -65,14 +68,18 @@ class JVMOptionsPrivate
  */
 static char* trim(char *string)
 {
-  if (string == NULL) return string;
+  if (string == NULL)
+    return string;
 
-  while(isspace(*string)) string++;
+  while(isspace(*string)) 
+    string++;
 
- if(*string == 0) return string;
+ if(*string == 0)
+   return string;
 
   char *right = string + strlen(string) - 1;
-  while(right > string && isspace(*right)) right--;
+  while(right > string && isspace(*right)) 
+    right--;
 
   *(right + 1) = '\0';
 
@@ -81,20 +88,20 @@ static char* trim(char *string)
 
 static int calc_option_count(const char* classpath, const char* jvm_opts)
 {
-  int count = 0;
+  int arg_count = 0;
   if (classpath != NULL && strlen(classpath) != 0) 
-    count++;
+    arg_count++;
   if (jvm_opts == NULL || strlen(jvm_opts) == 0) 
-    return count;
+    return arg_count;
   char* ptr = const_cast<char*>(jvm_opts);
-  while((ptr = strstr(ptr, " -")))
+  while((ptr = strstr(ptr, OPTION_SEPARATOR)))
   {
-    NEXT_ARGUMENT(ptr);
-    count++;
+    ptr = NEXT_ARGUMENT(ptr);
+    arg_count++;
   }
-  count++;
+  arg_count++;
 
-  return count;
+  return arg_count;
 }
 
 JVMOptions::JVMOptions() 
@@ -103,7 +110,6 @@ JVMOptions::JVMOptions()
   char* classpath = trim(getenv(CLASSPATH));
   int count = calc_option_count(classpath, jvm_opts);
   internal = new JVMOptionsPrivate(count);
-  internal->options = new JavaVMOption[count];
   extract_classpath(classpath);
   extract_options(jvm_opts);
 }
@@ -132,12 +138,12 @@ void JVMOptions::extract_classpath(const char* classpath)
   }
 
   const int classpath_len = 1 + strlen(CLASSPATH_PREFIX) + strlen(classpath);
-  char* full_classpath = new char[classpath_len];
+  char* full_classpath = (char*)malloc(classpath_len * sizeof(char));
   snprintf(full_classpath, classpath_len, "%s%s", CLASSPATH_PREFIX, classpath);
   internal->add_option_string(full_classpath);
 }
 
-void JVMOptions::extract_options(const char* jvm_opts)
+void JVMOptions::extract_options(char* jvm_opts)
 {
   if (jvm_opts == NULL || strlen(jvm_opts) == 0)
   {
@@ -145,17 +151,17 @@ void JVMOptions::extract_options(const char* jvm_opts)
     return;
   }
 
-   char* left = const_cast<char*>(jvm_opts);
-   char* right = const_cast<char*>(jvm_opts);
+   char* trailing_ptr = jvm_opts;
+   char* forward_ptr = jvm_opts;
 
-   while((right = strstr(right, OPTION_SEPARATOR)))
+   while((forward_ptr = strstr(forward_ptr, OPTION_SEPARATOR)))
    {
-     *right = '\0';
-     internal->add_option_string(strdup(trim(left)));
-     left = right + 1;
-     NEXT_ARGUMENT(right);
+     TERMINATE_STRING(forward_ptr);
+     internal->add_option_string(strdup(trim(trailing_ptr)));
+     trailing_ptr = OPTION_DASH(forward_ptr);
+     forward_ptr = NEXT_ARGUMENT(forward_ptr);
    }
 
-   internal->add_option_string(strdup(trim(left)));
+   internal->add_option_string(strdup(trim(trailing_ptr)));
 }
 
