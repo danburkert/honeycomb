@@ -58,5 +58,5 @@ MYSQL_ADD_PLUGIN(honeycomb ${HONEYCOMB_SOURCES} STORAGE_ENGINE MODULE_ONLY)
 target_link_libraries(honeycomb LINK_PRIVATE avro)
 
 IF(NOT APPLE)
-  set_target_properties(honeycomb PROPERTIES VERSION 0.1 SOVERSION 1)
+  set_target_properties(honeycomb PROPERTIES VERSION 0.2 SOVERSION 2)
 ENDIF()

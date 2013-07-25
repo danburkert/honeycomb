@@ -200,7 +200,7 @@ mysql_declare_plugin(honeycomb)
     PLUGIN_LICENSE_GPL,
     honeycomb_init_func,        /* Plugin Init */
     honeycomb_done_func,        /* Plugin Deinit */
-    0x0001                      /* 0.1 */,
+    0x0002                      /* 0.2 */,
     NULL,                       /* status variables */
     honeycomb_system_variables, /* system variables */
     NULL,                       /* config options */
