@@ -31,7 +31,7 @@
 #include <cstdlib>
 #include <jni.h>
 
-static const char* DEFAULT_LOG_PATH = "/var/log/mysql/honeycomb-c.log";
+static const char* const DEFAULT_LOG_PATH = "/var/log/mysql/honeycomb-c.log";
 
 static JavaVM* jvm;
 static JNICache* cache;
