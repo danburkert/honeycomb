@@ -31,7 +31,7 @@
 #include <cstdlib>
 #include <jni.h>
 
-#define DEFAULT_LOG_PATH "/var/log/mysql/honeycomb-c.log"
+static const char* DEFAULT_LOG_PATH = "/var/log/mysql/honeycomb-c.log";
 
 static JavaVM* jvm;
 static JNICache* cache;
@@ -44,7 +44,7 @@ static char* honeycomb_configuration_path = NULL;
 static uchar* honeycomb_get_key(HoneycombShare *share, size_t *length,
     my_bool not_used __attribute__((unused)))
 {
-  *length=share->table_path_length;
+  *length = share->table_path_length;
   return (uchar*) share->path_to_table;
 }
 
@@ -91,6 +91,7 @@ static jobject handler_factory(JNIEnv* env)
   jobject handler_proxy = env->NewGlobalRef(handler_proxy_local);
   NULL_CHECK_ABORT(handler_proxy, "Out of Memory while creating global ref to HandlerProxy");
   env->DeleteLocalRef(handler_proxy_local);
+
   return handler_proxy;
 }
 
@@ -128,13 +129,15 @@ static handler* honeycomb_create_handler(handlerton *hton, TABLE_SHARE *table_sh
   attach_thread(jvm, &env);
   jobject handler_proxy = handler_factory(env);
   detach_thread(jvm);
+
   return new (mem_root) HoneycombHandler(hton, table_share, &honeycomb_mutex,
       &honeycomb_open_tables, jvm, cache, handler_proxy);
 }
 
 static int honeycomb_init_func(void *p)
 {
-  DBUG_ENTER("ha_honeycomb::honeycomb_init_func");
+  DBUG_ENTER("honeycomb_init_func");
+
   if (!try_setup())
   {
     perror("Logging setup failed.");
@@ -147,6 +150,7 @@ static int honeycomb_init_func(void *p)
 
   honeycomb_hton = (handlerton *)p;
   mysql_mutex_init(ex_key_mutex_honeycomb, &honeycomb_mutex, MY_MUTEX_INIT_FAST);
+
   (void) my_hash_init(&honeycomb_open_tables,system_charset_info,32,0,0,
       (my_hash_get_key) honeycomb_get_key,0,0);
 
@@ -154,6 +158,7 @@ static int honeycomb_init_func(void *p)
   honeycomb_hton->create = honeycomb_create_handler;
   honeycomb_hton->flags = HTON_TEMPORARY_NOT_SUPPORTED;
   honeycomb_hton->alter_table_flags = honeycomb_alter_table_flags;
+
   DBUG_RETURN(0);
 }
 
@@ -171,6 +176,7 @@ static int honeycomb_done_func(void *p)
   Logging::close_logging();
   my_hash_free(&honeycomb_open_tables);
   mysql_mutex_destroy(&honeycomb_mutex);
+
   DBUG_RETURN(error);
 }
 
