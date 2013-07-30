@@ -5,6 +5,25 @@
 #include "handler.h"
 #include "sql_class.h"
 
+/**
+ * Convert an integral type of count bytes to a little endian long
+ * Convert a buffer of length buff_length into an equivalent long long in long_buff
+ */
+static void bytes_to_long(const uchar* buff, unsigned int buff_length,
+		const bool is_signed, uchar* long_buff)
+{
+	if (is_signed && buff[buff_length - 1] >= (uchar) 0x80)
+	{
+		memset(long_buff, 0xFF, sizeof(long));
+	}
+	else
+	{
+		memset(long_buff, 0x00, sizeof(long));
+	}
+
+	memcpy(long_buff, buff, buff_length);
+}
+
 NumericFieldEncoder::NumericFieldEncoder(Field& field) :
 		FieldEncoder(field)
 {
@@ -28,11 +47,18 @@ void NumericFieldEncoder::encode_year(uchar* key, uchar* buffer,
 void NumericFieldEncoder::encode_field_for_reading(uchar* key, uchar** buffer,
 		size_t* field_size)
 {
+	size_t key_len = *field_size;
 	*field_size = sizeof(long long);
 	*buffer = new uchar[*field_size];
 	if (field.real_type() == MYSQL_TYPE_YEAR)
 	{
 		encode_year(key, *buffer, *field_size);
+	}
+	else if (field.real_type() == MYSQL_TYPE_TIME2)
+	{
+		field.set_key_image(key, key_len);
+		long long integral_value = field.val_int();
+		memcpy(*buffer, &integral_value, *field_size);
 	}
 	else
 	{
@@ -46,13 +72,15 @@ void NumericFieldEncoder::encode_field_for_reading(uchar* key, uchar** buffer,
 void NumericFieldEncoder::encode_field_for_writing(uchar** buffer,
 		size_t* field_size)
 {
+	*field_size = sizeof(long long);
+	*buffer = (uchar*) my_malloc(*field_size, MYF(MY_WME));
+
 	long long integral_value = field.val_int();
 	if (is_little_endian())
 	{
 		integral_value = bswap64(integral_value);
 	}
-	*field_size = sizeof integral_value;
-	*buffer = (uchar*) my_malloc(*field_size, MYF(MY_WME));
+
 	memcpy(*buffer, &integral_value, *field_size);
 }
 

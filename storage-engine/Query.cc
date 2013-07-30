@@ -28,6 +28,7 @@
 #include "JNICache.h"
 #include "probes_mysql.h"
 #include <jni.h>
+#include "FieldEncoder.h"
 
 static int retrieve_query_flag(enum ha_rkey_function find_flag, QueryKey::QueryType* query_type);
 
@@ -58,13 +59,13 @@ int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
 
   KEY *key_info = table->s->key_info + this->active_index;
   KEY_PART_INFO *key_part = key_info->key_part;
-  KEY_PART_INFO *end_key_part = key_part + key_info->key_parts;
+  KEY_PART_INFO *end_key_part = key_part + key_info->actual_key_parts;
 
   index_key.set_type(query_type);
   index_key.set_name(key_info->name);
   while (key_part < end_key_part && keypart_map)
   {
-    uint key_length;
+    size_t key_length;
     Field* field = key_part->field;
     key_length = field->pack_length();
     bool is_null_field = field->is_real_null();
@@ -79,8 +80,11 @@ int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
 
     // If it is a null field then we have to move past the null byte.
     uchar* key_offset = is_null_field ? key_ptr + 1 : key_ptr;
-    uchar* key_copy = create_key_copy(field, key_offset, &key_length, table->in_use);
+    uchar* key_copy;
+    FieldEncoder* encoder = FieldEncoder::create_encoder(*field, table->in_use);
+    encoder->encode_field_for_reading(key_offset, &key_copy, &key_length);
     index_key.set_value(field->field_name, (char*)key_copy, key_length);
+    delete encoder;
     ARRAY_DELETE(key_copy);
     key_ptr += key_part->store_length;
     key_part++;
@@ -310,13 +314,13 @@ int HoneycombHandler::unpack_row(uchar* buf, Row& row)
 {
   my_bitmap_map *orig_bitmap;
   orig_bitmap = dbug_tmp_use_all_columns(table, table->write_set);
-  const char* value;
+  const uchar* value;
   size_t size;
 
   for (uint i = 0; i < table->s->fields; i++)
   {
     Field *field = table->field[i];
-    row.get_value(i, &value, &size);
+    row.get_value(i, (const char**)&value, &size);
     if (value == NULL)
     {
       field->set_null();
@@ -343,80 +347,13 @@ int HoneycombHandler::unpack_row(uchar* buf, Row& row)
  * @param val value
  * @param val_length Length of the value's buffer
  */
-void HoneycombHandler::store_field_value(Field *field, const char *val, int val_length)
+void HoneycombHandler::store_field_value(Field *field, const uchar *val, size_t val_length)
 {
   enum_field_types type = field->real_type();
+  FieldEncoder* encoder = FieldEncoder::create_encoder(*field, table->in_use);
 
   if (!is_unsupported_field(type))
   {
-    if (is_integral_field(type))
-    {
-      if (type == MYSQL_TYPE_LONGLONG)
-      {
-        memcpy(field->ptr, val, sizeof(ulonglong));
-        if (is_little_endian())
-        {
-          reverse_bytes(field->ptr, val_length);
-        }
-      }
-      else
-      {
-        long long long_value = *(long long*) val;
-        if (is_little_endian())
-        {
-          long_value = bswap64(long_value);
-        }
-
-        field->store(long_value, false);
-      }
-    }
-    else if (is_byte_field(type))
-    {
-      field->store((char*)val, val_length, &my_charset_bin);
-    }
-    else if (is_date_or_time_field(type))
-    {
-      if (type == MYSQL_TYPE_TIME || type == MYSQL_TYPE_TIME2)
-      {
-        long long long_value = *(long long*) val;
-        if (is_little_endian())
-        {
-          long_value = bswap64(long_value);
-        }
-        field->store(long_value, false);
-      }
-      else
-      {
-        MYSQL_TIME mysql_time;
-        MYSQL_TIME_STATUS was_cut;
-        str_to_datetime((char*)val, val_length, &mysql_time, TIME_FUZZY_DATE, &was_cut);
-        field->store_time(&mysql_time, mysql_time.time_type);
-      }
-    }
-    else if (is_decimal_field(type))
-    {
-      // TODO: Is this reliable? Field_decimal doesn't seem to have these members.
-      // Potential crash for old decimal types. - ABC
-      uint precision = ((Field_new_decimal*) field)->precision;
-      uint scale = ((Field_new_decimal*) field)->dec;
-      my_decimal decimal_val;
-      binary2my_decimal(0, (const uchar *) val, &decimal_val, precision, scale);
-      ((Field_new_decimal *) field)->store_value(
-          (const my_decimal*) &decimal_val);
-    }
-    else if (is_floating_point_field(type))
-    {
-      double double_value;
-      if (is_little_endian())
-      {
-        long long* long_ptr = (long long*) val;
-        longlong swapped_long = bswap64(*long_ptr);
-        double_value = *(double*) &swapped_long;
-      } else
-      {
-        double_value = *(double*) val;
-      }
-      field->store(double_value);
-    }
+	  encoder->store_field_value(const_cast<uchar*>(val), val_length);
   }
 }

@@ -29,6 +29,7 @@ FieldEncoder* FieldEncoder::create_encoder(Field& field, THD* thd)
 		case MYSQL_TYPE_YEAR:
 		case MYSQL_TYPE_ENUM:
 		case MYSQL_TYPE_TIME: // Time is a special case for sorting
+		case MYSQL_TYPE_TIME2:
 			return new NumericFieldEncoder(field);
 		case MYSQL_TYPE_FLOAT:
 		case MYSQL_TYPE_DOUBLE:
@@ -38,7 +39,9 @@ FieldEncoder* FieldEncoder::create_encoder(Field& field, THD* thd)
 			return new DecimalFieldEncoder(field);
 		case MYSQL_TYPE_DATE:
 		case MYSQL_TYPE_DATETIME:
+		case MYSQL_TYPE_DATETIME2:
 		case MYSQL_TYPE_TIMESTAMP:
+		case MYSQL_TYPE_TIMESTAMP2:
 		case MYSQL_TYPE_NEWDATE:
 			return new DateTimeFieldEncoder(field, thd);
 		case MYSQL_TYPE_VARCHAR:

@@ -373,46 +373,6 @@ int HoneycombHandler::flush()
   return check_exceptions(env, cache, "HoneycombHandler::flush");
 }
 
-bool HoneycombHandler::is_date_or_time_field(enum_field_types field_type)
-{
-  return (field_type == MYSQL_TYPE_DATE
-      || field_type == MYSQL_TYPE_DATETIME
-      || field_type == MYSQL_TYPE_TIME
-      || field_type == MYSQL_TYPE_TIMESTAMP
-      || field_type == MYSQL_TYPE_NEWDATE);
-}
-
-bool HoneycombHandler::is_floating_point_field(enum_field_types field_type)
-{
-  return (field_type == MYSQL_TYPE_FLOAT || field_type == MYSQL_TYPE_DOUBLE);
-}
-
-bool HoneycombHandler::is_integral_field(enum_field_types field_type)
-{
-  return (field_type == MYSQL_TYPE_LONG
-      || field_type == MYSQL_TYPE_SHORT
-      || field_type == MYSQL_TYPE_TINY
-      || field_type == MYSQL_TYPE_LONGLONG
-      || field_type == MYSQL_TYPE_INT24
-      || field_type == MYSQL_TYPE_ENUM
-      || field_type == MYSQL_TYPE_YEAR);
-}
-
-bool HoneycombHandler::is_decimal_field(enum_field_types field_type)
-{
-  return (field_type == MYSQL_TYPE_DECIMAL || field_type == MYSQL_TYPE_NEWDECIMAL);
-}
-
-bool HoneycombHandler::is_byte_field(enum_field_types field_type)
-{
-  return (field_type == MYSQL_TYPE_VARCHAR
-      || field_type == MYSQL_TYPE_VAR_STRING
-      || field_type == MYSQL_TYPE_STRING
-      || field_type == MYSQL_TYPE_BLOB
-      || field_type == MYSQL_TYPE_TINY_BLOB
-      || field_type == MYSQL_TYPE_MEDIUM_BLOB
-      || field_type == MYSQL_TYPE_LONG_BLOB);
-}
 bool HoneycombHandler::is_unsupported_field(enum_field_types field_type)
 {
   return (field_type == MYSQL_TYPE_NULL

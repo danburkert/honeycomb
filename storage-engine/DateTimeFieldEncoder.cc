@@ -63,30 +63,12 @@ void DateTimeFieldEncoder::encode_field_for_reading(uchar* key, uchar** buffer,
 		size_t* field_size)
 {
 	MYSQL_TIME mysql_time;
-
-	switch (field.real_type())
-	{
-		case MYSQL_TYPE_DATE:
-		case MYSQL_TYPE_NEWDATE:
-			if (*field_size == 3)
-			{
-				extract_mysql_newdate((long) uint3korr(key), &mysql_time);
-			}
-			else
-			{
-				extract_mysql_old_date((int32) uint4korr(key), &mysql_time);
-			}
-			break;
-		case MYSQL_TYPE_TIMESTAMP:
-			extract_mysql_timestamp((long) uint4korr(key), &mysql_time, thd);
-			break;
-		case MYSQL_TYPE_DATETIME:
-			extract_mysql_datetime((ulonglong) uint8korr(key), &mysql_time);
-			break;
-	}
-
 	char timeString[MAX_DATE_STRING_REP_LENGTH];
-	my_TIME_to_str(&mysql_time, timeString, MAX_DATE_STRING_REP_LENGTH);
+
+	field.set_key_image(key, *field_size);
+	field.get_time(&mysql_time);
+
+	my_TIME_to_str(&mysql_time, timeString, DATETIME_MAX_DECIMALS);
 	*field_size = strlen(timeString);
 	*buffer = new uchar[*field_size];
 	memcpy(*buffer, timeString, *field_size);
@@ -102,7 +84,7 @@ void DateTimeFieldEncoder::encode_field_for_writing(uchar** buffer,
 			&& field.real_type() == MYSQL_TYPE_TIMESTAMP)
 		mysql_time.time_type = MYSQL_TIMESTAMP_DATETIME;
 
-	my_TIME_to_str(&mysql_time, temporal_value, MAX_DATE_STRING_REP_LENGTH);
+	my_TIME_to_str(&mysql_time, temporal_value, DATETIME_MAX_DECIMALS);
 	*field_size = strlen(temporal_value);
 	*buffer = (uchar*) my_malloc(*field_size, MYF(MY_WME));
 	memcpy(*buffer, temporal_value, *field_size);

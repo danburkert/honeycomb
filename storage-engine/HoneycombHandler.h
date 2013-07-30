@@ -76,11 +76,6 @@ class HoneycombHandler : public handler
     jobject handler_proxy;
     Row* row;
 
-    bool is_integral_field(enum_field_types field_type);
-    bool is_date_or_time_field(enum_field_types field_type);
-    bool is_floating_point_field(enum_field_types field_type);
-    bool is_decimal_field(enum_field_types field_type);
-    bool is_byte_field(enum_field_types field_type);
     bool is_unsupported_field(enum_field_types field_type);
 
     /* HoneycombHandler helper methods */
@@ -94,7 +89,7 @@ class HoneycombHandler : public handler
     int full_index_scan(uchar* buf, QueryKey::QueryType query);
     int retrieve_value_from_index(uchar* buf);
     int unpack_row(uchar *buf, Row& row);
-    void store_field_value(Field *field, const char* val, int length);
+    void store_field_value(Field *field, const uchar* val, size_t length);
 
     /* DDL helper methods */
     int pack_column_schema(ColumnSchema* schema, Field* field);

@@ -173,7 +173,7 @@ int HoneycombHandler::pack_column_schema(ColumnSchema* schema, Field* field)
     case MYSQL_TYPE_LONGLONG:
     case MYSQL_TYPE_INT24:
     case MYSQL_TYPE_YEAR:
-      if (is_unsigned_field(field))
+      if (is_unsigned_field(*field))
       {
         ret |= schema->set_type(ColumnSchema::ULONG);
       }
