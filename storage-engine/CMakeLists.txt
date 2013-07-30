@@ -52,7 +52,7 @@ set_target_properties(avro PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_
 SET(HONEYCOMB_SOURCES HoneycombHandler.cc DDL.cc ha_honeycomb.cc
   Util.cc JNISetup.cc Logging.cc Java.cc JVMOptions.cc
   JNICache.cc JavaFrame.cc AvroUtil.cc Row.cc TableSchema.cc IndexSchema.cc ColumnSchema.cc
-  QueryKey.cc Query.cc IUD.cc)
+  QueryKey.cc Query.cc IUD.cc FieldEncoder.cc NumericFieldEncoder.cc DateTimeFieldEncoder.cc StringFieldEncoder.cc DoubleFieldEncoder.cc DecimalFieldEncoder.cc)
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-error -g -Wextra -Wno-unused-parameter -Wswitch-default -Wcast-qual -Weffc++ -Wwrite-strings -Winit-self -Winline -Wmissing-noreturn -Wredundant-decls -Wpointer-arith -Wstrict-overflow=5 -Wstrict-aliasing=2 -Wno-deprecated-declarations -Wno-unknown-pragmas -Wctor-dtor-privacy -Woverloaded-virtual")
 MYSQL_ADD_PLUGIN(honeycomb ${HONEYCOMB_SOURCES} STORAGE_ENGINE MODULE_ONLY)
 target_link_libraries(honeycomb LINK_PRIVATE avro)
