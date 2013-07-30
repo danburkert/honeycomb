@@ -148,8 +148,6 @@ class HoneycombHandler : public handler
     uint max_supported_key_parts() const;
     virtual double scan_time();
     virtual double read_time(uint index, uint ranges, ha_rows rows);
-    virtual int final_add_index(handler_add_index *add, bool commit);
-    virtual int final_drop_index(TABLE *table_arg);
 
     /* Query */
     int index_init(uint idx, bool sorted);
@@ -171,9 +169,11 @@ class HoneycombHandler : public handler
     int delete_table(const char *name);
     int rename_table(const char *from, const char *to);
     bool check_if_incompatible_data(HA_CREATE_INFO *create_info, uint table_changes);
-    int prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys);
-    int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add);
     void update_create_info(HA_CREATE_INFO* create_info);
+    enum_alter_inplace_result check_if_supported_inplace_alter(TABLE* altered_table, Alter_inplace_info* ha_alter_info);
+    int add_index(Alter_inplace_info* ha_alter_info);
+    int drop_index(Alter_inplace_info* ha_alter_info);
+    bool inplace_alter_table(TABLE* altered_table, Alter_inplace_info* ha_alter_info);
 
     /* IUD */
     int write_row(uchar *buf);

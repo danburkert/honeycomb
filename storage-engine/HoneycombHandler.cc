@@ -213,7 +213,7 @@ int HoneycombHandler::info(uint flag)
 
     for (uint i = 0; i < this->table->s->keys; i++)
     {
-      for (uint j = 0; j < table->key_info[i].key_parts; j++)
+      for (uint j = 0; j < table->key_info[i].actual_key_parts; j++)
       {
         rec_per_key = stats.records / 10;
 
@@ -356,7 +356,7 @@ int HoneycombHandler::analyze(THD* thd, HA_CHECK_OPT* check_opt)
 
   for (uint i = 0; i < this->table->s->keys; i++)
   {
-    for (uint j = 0; j < table->key_info[i].key_parts; j++)
+    for (uint j = 0; j < table->key_info[i].actual_key_parts; j++)
     {
       this->table->key_info[i].rec_per_key[j] = 1;
     }
@@ -495,14 +495,4 @@ double HoneycombHandler::read_time(uint index, uint ranges, ha_rows rows)
   }
 
   return (ranges + ((double) rows / (double) stats.records) * total_scan);
-}
-
-int HoneycombHandler::final_add_index(handler_add_index *add, bool commit)
-{
-  return 0;
-}
-
-int HoneycombHandler::final_drop_index(TABLE *table_arg)
-{
-  return 0;
 }

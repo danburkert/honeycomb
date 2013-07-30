@@ -116,7 +116,7 @@ int HoneycombHandler::pack_row(uchar *buf, TABLE* table, Row& row)
       if (mysql_time.time_type == MYSQL_TIMESTAMP_DATE && type == MYSQL_TYPE_TIMESTAMP)
         mysql_time.time_type = MYSQL_TIMESTAMP_DATETIME;
 
-      my_TIME_to_str(&mysql_time, temporal_value);
+      my_TIME_to_str(&mysql_time, temporal_value, MAX_DATE_STRING_REP_LENGTH);
       actualFieldSize = strlen(temporal_value);
       byte_val = (char*) my_malloc(actualFieldSize, MYF(MY_WME));
       memcpy(byte_val, temporal_value, actualFieldSize);
@@ -201,10 +201,6 @@ int HoneycombHandler::write_row(uchar *buf)
   {
     return HA_ERR_CRASHED_ON_USAGE;
   }
-  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
-  {
-    table->timestamp_field->set_time();
-  }
 
   my_bitmap_map *old_map = dbug_tmp_use_all_columns(table, table->read_set);
   rc |= pack_row(buf, table, *row);
@@ -233,10 +229,6 @@ int HoneycombHandler::update_row(const uchar *old_row, uchar *new_row)
 {
   DBUG_ENTER("HoneycombHandler::update_row");
   int rc = 0;
-  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
-  {
-    table->timestamp_field->set_time();
-  }
 
   Row old_sql_row;
   row->reset();

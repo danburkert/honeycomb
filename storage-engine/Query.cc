@@ -255,7 +255,7 @@ int HoneycombHandler::read_row(uchar *buf)
 
   if (unpack_row(buf, *this->row))
   {
-    this->table->status = STATUS_NOT_READ;
+    this->table->status = STATUS_NOT_FOUND;
     return HA_ERR_INTERNAL_ERROR;
   }
 
@@ -376,7 +376,7 @@ void HoneycombHandler::store_field_value(Field *field, const char *val, int val_
     }
     else if (is_date_or_time_field(type))
     {
-      if (type == MYSQL_TYPE_TIME)
+      if (type == MYSQL_TYPE_TIME || type == MYSQL_TYPE_TIME2)
       {
         long long long_value = *(long long*) val;
         if (is_little_endian())
@@ -388,7 +388,7 @@ void HoneycombHandler::store_field_value(Field *field, const char *val, int val_
       else
       {
         MYSQL_TIME mysql_time;
-        int was_cut;
+        MYSQL_TIME_STATUS was_cut;
         str_to_datetime((char*)val, val_length, &mysql_time, TIME_FUZZY_DATE, &was_cut);
         field->store_time(&mysql_time, mysql_time.time_type);
       }

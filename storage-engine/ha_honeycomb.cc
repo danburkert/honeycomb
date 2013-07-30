@@ -70,19 +70,6 @@ static void init_honeycomb_psi_keys()
 }
 #endif
 
-static uint honeycomb_alter_table_flags(uint flags)
-{
-  return
-    HA_INPLACE_ADD_INDEX_NO_READ_WRITE |
-    HA_INPLACE_DROP_INDEX_NO_READ_WRITE |
-    HA_INPLACE_DROP_UNIQUE_INDEX_NO_READ_WRITE |
-    HA_INPLACE_DROP_PK_INDEX_NO_READ_WRITE |
-    HA_INPLACE_ADD_INDEX_NO_WRITE |
-    HA_INPLACE_DROP_INDEX_NO_WRITE |
-    HA_INPLACE_DROP_UNIQUE_INDEX_NO_WRITE |
-    HA_INPLACE_DROP_PK_INDEX_NO_WRITE;
-}
-
 static jobject handler_factory(JNIEnv* env)
 {
   jobject handler_proxy_local = env->CallObjectMethod(handler_proxy_factory,
@@ -153,7 +140,6 @@ static int honeycomb_init_func(void *p)
   honeycomb_hton->state = SHOW_OPTION_YES;
   honeycomb_hton->create = honeycomb_create_handler;
   honeycomb_hton->flags = HTON_TEMPORARY_NOT_SUPPORTED;
-  honeycomb_hton->alter_table_flags = honeycomb_alter_table_flags;
   DBUG_RETURN(0);
 }
 
