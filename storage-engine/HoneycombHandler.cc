@@ -40,7 +40,7 @@ const char **HoneycombHandler::bas_ext() const
   return honeycomb_exts;
 }
 
-HoneycombHandler::HoneycombHandler(handlerton *hton, TABLE_SHARE *table_share,
+HoneycombHandler::HoneycombHandler(handlerton* hton, TABLE_SHARE* table_share,
     mysql_mutex_t* mutex, HASH* open_tables, JavaVM* jvm, JNICache* cache, jobject handler_proxy)
 : handler(hton, table_share),
   share(NULL),
@@ -66,7 +66,7 @@ HoneycombHandler::~HoneycombHandler()
 
 int HoneycombHandler::open(const char *path, int mode, uint test_if_locked)
 {
-  const char* location = "HoneycombHandler::open";
+  const char* const location = "HoneycombHandler::open";
   DBUG_ENTER(location);
   int rc = 0;
 
@@ -80,10 +80,9 @@ int HoneycombHandler::open(const char *path, int mode, uint test_if_locked)
   attach_thread(jvm, &env, location);
   {
     JavaFrame frame(env, 2);
-    jstring jtable_name =
-      string_to_java_string(env, extract_table_name_from_path(path));
-    this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().open_table,
-        jtable_name);
+    jstring jtable_name = string_to_java_string(env, extract_table_name_from_path(path));
+    env->CallVoidMethod(handler_proxy, cache->handler_proxy().open_table, jtable_name);
+
     rc |= check_exceptions(env, cache, location);
   }
   detach_thread(jvm);
@@ -93,24 +92,27 @@ int HoneycombHandler::open(const char *path, int mode, uint test_if_locked)
 
 int HoneycombHandler::close(void)
 {
-  const char* location = "HoneycombHandler::close";
+  const char* const location = "HoneycombHandler::close";
   DBUG_ENTER(location);
   int rc = 0;
+
   attach_thread(jvm, &env, location);
   {
     JavaFrame frame(env, 2);
-    this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().close_table);
+    env->CallVoidMethod(handler_proxy, cache->handler_proxy().close_table);
     env->DeleteGlobalRef(handler_proxy);
+
     rc |= check_exceptions(env, cache, location);
     handler_proxy = NULL;
   }
   detach_thread(jvm);
+
   DBUG_RETURN(rc | free_share(share));
 }
 
 int HoneycombHandler::external_lock(THD *thd, int lock_type)
 {
-  const char* location = "HoneycombHandler::external_lock";
+  const char* const location = "HoneycombHandler::external_lock";
   DBUG_ENTER(location);
   int ret = 0;
 
@@ -124,6 +126,7 @@ int HoneycombHandler::external_lock(THD *thd, int lock_type)
     ret |= this->flush();
     detach_thread(jvm);
   }
+
   DBUG_RETURN(ret);
 }
 
@@ -165,7 +168,7 @@ int HoneycombHandler::info(uint flag)
 {
   // TODO: Update this function to take into account the flag being passed in,
   // like the other engines
-  const char* location = "HoneycombHandler::info";
+  const char* const location = "HoneycombHandler::info";
   DBUG_ENTER(location);
   attach_thread(jvm, &env, location);
 
@@ -311,7 +314,7 @@ void HoneycombHandler::get_auto_increment(ulonglong offset, ulonglong increment,
                                  ulonglong *first_value,
                                  ulonglong *nb_reserved_values)
 {
-  const char* location = "HoneycombHandler::get_auto_increment";
+  const char* const location = "HoneycombHandler::get_auto_increment";
   DBUG_ENTER(location);
 
   jlong value = env->CallLongMethod(handler_proxy,
@@ -361,6 +364,7 @@ int HoneycombHandler::analyze(THD* thd, HA_CHECK_OPT* check_opt)
       this->table->key_info[i].rec_per_key[j] = 1;
     }
   }
+
   DBUG_RETURN(0);
 }
 
@@ -369,7 +373,7 @@ int HoneycombHandler::analyze(THD* thd, HA_CHECK_OPT* check_opt)
  */
 int HoneycombHandler::flush()
 {
-  this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().flush);
+  env->CallVoidMethod(handler_proxy, cache->handler_proxy().flush);
   return check_exceptions(env, cache, "HoneycombHandler::flush");
 }
 
