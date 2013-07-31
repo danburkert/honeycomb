@@ -54,7 +54,7 @@ void NumericFieldEncoder::encode_field_for_reading(uchar* key, uchar** buffer,
 	{
 		encode_year(key, *buffer, *field_size);
 	}
-	else if (field.real_type() == MYSQL_TYPE_TIME2)
+	else if (field.real_type() == MYSQL_TYPE_TIME2 || field.real_type() == MYSQL_TYPE_TIME)
 	{
 		field.set_key_image(key, key_len);
 		long long integral_value = field.val_int();

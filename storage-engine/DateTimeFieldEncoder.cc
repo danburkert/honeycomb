@@ -5,55 +5,6 @@
 #include "sql_class.h"
 #include <tztime.h>
 
-static void zero_time(MYSQL_TIME* time)
-{
-	memset((void*) time, 0, sizeof(*time));
-}
-
-static void extract_mysql_newdate(long tmp, MYSQL_TIME *time)
-{
-	zero_time(time);
-	time->month = tmp >> 5 & 15;
-	time->day = tmp & 31;
-	time->year = tmp >> 9;
-	time->time_type = MYSQL_TIMESTAMP_DATE;
-}
-
-static void extract_mysql_old_date(int32 tmp, MYSQL_TIME *time)
-{
-	zero_time(time);
-	time->year = (int) ((uint32) tmp / 10000L % 10000);
-	time->month = (int) ((uint32) tmp / 100 % 100);
-	time->day = (int) ((uint32) tmp % 100);
-	time->time_type = MYSQL_TIMESTAMP_DATE;
-}
-
-static void extract_mysql_datetime(longlong tmp,
-		MYSQL_TIME *time)
-{
-	zero_time(time);
-	uint32 part1, part2;
-	part1 = (uint32) (tmp / LL(1000000));
-	part2 = (uint32) (tmp - (ulonglong) part1 * LL(1000000));
-
-	time->neg = 0;
-	time->second_part = 0;
-	time->second = (int) (part2 % 100);
-	time->minute = (int) (part2 / 100 % 100);
-	time->hour = (int) (part2 / 10000);
-	time->day = (int) (part1 % 100);
-	time->month = (int) (part1 / 100 % 100);
-	time->year = (int) (part1 / 10000);
-	time->time_type = MYSQL_TIMESTAMP_DATETIME;
-}
-
-static void extract_mysql_timestamp(long tmp, MYSQL_TIME *time,
-		THD* thd)
-{
-	zero_time(time);
-	thd->variables.time_zone->gmt_sec_to_TIME(time, (my_time_t) tmp);
-}
-
 DateTimeFieldEncoder::DateTimeFieldEncoder(Field& field, THD* thd) :
 		FieldEncoder(field), thd(thd)
 {

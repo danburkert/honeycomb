@@ -17,7 +17,6 @@
  * along with Honeycomb Storage Engine.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include "HoneycombHandler.h"
 #include "TableSchema.h"
 #include "ColumnSchema.h"
@@ -43,11 +42,9 @@
 const int YEAR2_NOT_SUPPORTED = 0;
 const int ODD_TYPES_NOT_SUPPORTED = 1;
 const int UTF_REQUIRED = 2;
-const char* table_creation_errors[] = {
-  "YEAR(2) is not supported.",
-  "Bit, set and geometry are not supported.",
-  "Required: character set utf8 collate utf8_bin"
-};
+const char* table_creation_errors[] =
+{ "YEAR(2) is not supported.", "Bit, set and geometry are not supported.",
+		"Required: character set utf8 collate utf8_bin" };
 
 /**
  * @brief Called by MySQL during CREATE TABLE statements.  Converts the table's
@@ -61,62 +58,65 @@ const char* table_creation_errors[] = {
  *                    initial auto_increment value.
  */
 int HoneycombHandler::create(const char *path, TABLE *table,
-    HA_CREATE_INFO *create_info)
+		HA_CREATE_INFO *create_info)
 {
-  const char* location = "HoneycombHandler::create";
-  DBUG_ENTER(location);
-  attach_thread(jvm, &env, location);
+	const char* location = "HoneycombHandler::create";
+	DBUG_ENTER(location);
+	attach_thread(jvm, &env, location);
 
-  if(table->part_info != NULL)
-  {
-    ABORT_CREATE("Partitions are not supported.");
-  }
+	if (table->part_info != NULL)
+	{
+		ABORT_CREATE("Partitions are not supported.");
+	}
 
-  int ret = 0;
-  { // Destruct frame before calling detach_thread
-    JavaFrame frame(env, 3);
+	int ret = 0;
+	{ // Destruct frame before calling detach_thread
+		JavaFrame frame(env, 3);
 
-    TableSchema table_schema;
-    ColumnSchema column_schema;
-    IndexSchema index_schema;
+		TableSchema table_schema;
+		ColumnSchema column_schema;
+		IndexSchema index_schema;
 
-    for (Field **field_ptr = table->field; *field_ptr; field_ptr++)
-    {
-      Field* field = *field_ptr;
-      int error_number;
-      if(!is_allowed_column(field, &error_number))
-      {
-        ABORT_CREATE(table_creation_errors[error_number]);
-      }
+		for (Field **field_ptr = table->field; *field_ptr; field_ptr++)
+		{
+			Field* field = *field_ptr;
+			int error_number;
+			if (!is_allowed_column(field, &error_number))
+			{
+				ABORT_CREATE(table_creation_errors[error_number]);
+			}
 
-      column_schema.reset();
-      if (pack_column_schema(&column_schema, field))
-      {
-        ABORT_CREATE("Error while creating column schema.");
-      }
-      table_schema.add_column(field->field_name, &column_schema);
-    }
+			column_schema.reset();
+			if (pack_column_schema(&column_schema, field))
+			{
+				ABORT_CREATE("Error while creating column schema.");
+			}
+			table_schema.add_column(field->field_name, &column_schema);
+		}
 
-    for (uint i = 0; i < table->s->keys; i++)
-    {
-      if (pack_index_schema(&index_schema, &table->key_info[i]))
-      {
-        ABORT_CREATE("Error while creating index schema.");
-      }
-      table_schema.add_index(table->key_info[i].name, &index_schema);
-    }
+		for (uint i = 0; i < table->s->keys; i++)
+		{
+			if (pack_index_schema(&index_schema, &table->key_info[i]))
+			{
+				ABORT_CREATE("Error while creating index schema.");
+			}
+			table_schema.add_index(table->key_info[i].name, &index_schema);
+		}
 
-    jstring jtable_name = string_to_java_string(env, extract_table_name_from_path(path));
-    jlong jauto_inc_value = std::max(1ULL, create_info->auto_increment_value);
+		jstring jtable_name = string_to_java_string(env,
+				extract_table_name_from_path(path));
+		jlong jauto_inc_value = std::max(1ULL,
+				create_info->auto_increment_value);
 
-    jbyteArray jserialized_schema = serialize_to_java(env, table_schema);
+		jbyteArray jserialized_schema = serialize_to_java(env, table_schema);
 
-    this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().create_table,
-        jtable_name, jserialized_schema, jauto_inc_value);
-    ret |= check_exceptions(env, cache, "HoneycombHandler::create_table");
-  }
-  detach_thread(jvm);
-  DBUG_RETURN(ret);
+		this->env->CallVoidMethod(handler_proxy,
+				cache->handler_proxy().create_table, jtable_name,
+				jserialized_schema, jauto_inc_value);
+		ret |= check_exceptions(env, cache, "HoneycombHandler::create_table");
+	}
+	detach_thread(jvm);
+	DBUG_RETURN(ret);
 }
 
 /**
@@ -124,36 +124,36 @@ int HoneycombHandler::create(const char *path, TABLE *table,
  */
 bool HoneycombHandler::is_allowed_column(Field* field, int* error_number)
 {
-  bool allowed = true;
-  switch (field->real_type())
-  {
-    case MYSQL_TYPE_YEAR:
-      if (field->field_length == 2)
-      {
-        *error_number = YEAR2_NOT_SUPPORTED;
-        allowed = false;
-      }
-      break;
-    case MYSQL_TYPE_BIT:
-    case MYSQL_TYPE_SET:
-    case MYSQL_TYPE_GEOMETRY:
-      *error_number = ODD_TYPES_NOT_SUPPORTED;
-      allowed = false;
-      break;
-    case MYSQL_TYPE_STRING:
-    case MYSQL_TYPE_VARCHAR:
-    case MYSQL_TYPE_BLOB:
-      if (strncmp(field->charset()->name, "utf8_bin", 8) != 0
-          && field->binary() == false)
-      {
-        *error_number = UTF_REQUIRED;
-        allowed = false;
-      }
-      break;
-    default:
-      break;
-  }
-  return allowed;
+	bool allowed = true;
+	switch (field->real_type())
+	{
+		case MYSQL_TYPE_YEAR:
+			if (field->field_length == 2)
+			{
+				*error_number = YEAR2_NOT_SUPPORTED;
+				allowed = false;
+			}
+			break;
+		case MYSQL_TYPE_BIT:
+		case MYSQL_TYPE_SET:
+		case MYSQL_TYPE_GEOMETRY:
+			*error_number = ODD_TYPES_NOT_SUPPORTED;
+			allowed = false;
+			break;
+		case MYSQL_TYPE_STRING:
+		case MYSQL_TYPE_VARCHAR:
+		case MYSQL_TYPE_BLOB:
+			if (strncmp(field->charset()->name, "utf8_bin", 8)
+					!= 0 && field->binary() == false)
+			{
+				*error_number = UTF_REQUIRED;
+				allowed = false;
+			}
+			break;
+		default:
+			break;
+	}
+	return allowed;
 }
 
 /**
@@ -164,95 +164,96 @@ bool HoneycombHandler::is_allowed_column(Field* field, int* error_number)
  */
 int HoneycombHandler::pack_column_schema(ColumnSchema* schema, Field* field)
 {
-  int ret = 0;
-  switch (field->real_type())
-  {
-    case MYSQL_TYPE_TINY:
-    case MYSQL_TYPE_SHORT:
-    case MYSQL_TYPE_LONG:
-    case MYSQL_TYPE_LONGLONG:
-    case MYSQL_TYPE_INT24:
-    case MYSQL_TYPE_YEAR:
-      if (is_unsigned_field(*field))
-      {
-        ret |= schema->set_type(ColumnSchema::ULONG);
-      }
-      else
-      {
-        ret |= schema->set_type(ColumnSchema::LONG);
-      }
-      break;
-    case MYSQL_TYPE_FLOAT:
-    case MYSQL_TYPE_DOUBLE:
-      ret |= schema->set_type(ColumnSchema::DOUBLE);
-      break;
-    case MYSQL_TYPE_DECIMAL:
-    case MYSQL_TYPE_NEWDECIMAL:
-      {
-        uint precision = ((Field_new_decimal*) field)->precision;
-        uint scale = ((Field_new_decimal*) field)->dec;
-        ret |= schema->set_type(ColumnSchema::DECIMAL);
-        ret |= schema->set_precision(precision);
-        ret |= schema->set_scale(scale);
-      }
-      break;
-    case MYSQL_TYPE_DATE:
-    case MYSQL_TYPE_NEWDATE:
-      ret |= schema->set_type(ColumnSchema::DATE);
-      break;
-    case MYSQL_TYPE_TIME:
-      ret |= schema->set_type(ColumnSchema::TIME);
-      break;
-    case MYSQL_TYPE_DATETIME:
-    case MYSQL_TYPE_TIMESTAMP:
-      ret |= schema->set_type(ColumnSchema::DATETIME);
-      break;
-    case MYSQL_TYPE_STRING:
-    case MYSQL_TYPE_VARCHAR:
-      {
-        long long max_char_length = (long long) field->field_length;
-        ret |= schema->set_max_length(max_char_length);
+	int ret = 0;
+	switch (field->real_type())
+	{
+		case MYSQL_TYPE_TINY:
+		case MYSQL_TYPE_SHORT:
+		case MYSQL_TYPE_LONG:
+		case MYSQL_TYPE_LONGLONG:
+		case MYSQL_TYPE_INT24:
+		case MYSQL_TYPE_YEAR:
+			if (is_unsigned_field(*field))
+			{
+				ret |= schema->set_type(ColumnSchema::ULONG);
+			}
+			else
+			{
+				ret |= schema->set_type(ColumnSchema::LONG);
+			}
+			break;
+		case MYSQL_TYPE_FLOAT:
+		case MYSQL_TYPE_DOUBLE:
+			ret |= schema->set_type(ColumnSchema::DOUBLE);
+			break;
+		case MYSQL_TYPE_DECIMAL:
+		case MYSQL_TYPE_NEWDECIMAL:
+		{
+			uint precision = ((Field_new_decimal*) field)->precision;
+			uint scale = ((Field_new_decimal*) field)->dec;
+			ret |= schema->set_type(ColumnSchema::DECIMAL);
+			ret |= schema->set_precision(precision);
+			ret |= schema->set_scale(scale);
+		}
+			break;
+		case MYSQL_TYPE_DATE:
+		case MYSQL_TYPE_NEWDATE:
+			ret |= schema->set_type(ColumnSchema::DATE);
+			break;
+		case MYSQL_TYPE_TIME:
+			ret |= schema->set_type(ColumnSchema::TIME);
+			break;
+		case MYSQL_TYPE_DATETIME:
+		case MYSQL_TYPE_TIMESTAMP:
+			ret |= schema->set_type(ColumnSchema::DATETIME);
+			break;
+		case MYSQL_TYPE_STRING:
+		case MYSQL_TYPE_VARCHAR:
+		{
+			long long max_char_length = (long long) field->field_length;
+			ret |= schema->set_max_length(max_char_length);
 
-        if (field->binary())
-        {
-          ret |= schema->set_type(ColumnSchema::BINARY);
-        }
-        else
-        {
-          ret |= schema->set_type(ColumnSchema::STRING);
-        }
-      }
-      break;
-    case MYSQL_TYPE_BLOB:
-    case MYSQL_TYPE_TINY_BLOB:
-    case MYSQL_TYPE_MEDIUM_BLOB:
-    case MYSQL_TYPE_LONG_BLOB:
-      ret |= schema->set_type(ColumnSchema::BINARY);
-      break;
-    case MYSQL_TYPE_ENUM:
-      ret |= schema->set_type(ColumnSchema::ULONG);
-      break;
-    case MYSQL_TYPE_NULL:
-    case MYSQL_TYPE_BIT:
-    case MYSQL_TYPE_SET:
-    case MYSQL_TYPE_GEOMETRY:
-    case MYSQL_TYPE_VAR_STRING:
-    default:
-      break;
-  }
+			if (field->binary())
+			{
+				ret |= schema->set_type(ColumnSchema::BINARY);
+			}
+			else
+			{
+				ret |= schema->set_type(ColumnSchema::STRING);
+			}
+		}
+			break;
+		case MYSQL_TYPE_BLOB:
+		case MYSQL_TYPE_TINY_BLOB:
+		case MYSQL_TYPE_MEDIUM_BLOB:
+		case MYSQL_TYPE_LONG_BLOB:
+			ret |= schema->set_type(ColumnSchema::BINARY);
+			break;
+		case MYSQL_TYPE_ENUM:
+			ret |= schema->set_type(ColumnSchema::ULONG);
+			break;
+		case MYSQL_TYPE_NULL:
+		case MYSQL_TYPE_BIT:
+		case MYSQL_TYPE_SET:
+		case MYSQL_TYPE_GEOMETRY:
+		case MYSQL_TYPE_VAR_STRING:
+		default:
+			break;
+	}
 
-  if (field->real_maybe_null())
-  {
-    ret |= schema->set_is_nullable(true);
-  }
+	if (field->real_maybe_null())
+	{
+		ret |= schema->set_is_nullable(true);
+	}
 
-  if(field->table->found_next_number_field != NULL
-      && field == field->table->found_next_number_field)
-  {
-    ret |= schema->set_is_auto_increment(true);
-  }
-  return ret;
-};
+	if (field->table->found_next_number_field != NULL
+			&& field == field->table->found_next_number_field)
+	{
+		ret |= schema->set_is_auto_increment(true);
+	}
+	return ret;
+}
+;
 
 /**
  * Add columns in the index to the index schema.
@@ -262,60 +263,61 @@ int HoneycombHandler::pack_column_schema(ColumnSchema* schema, Field* field)
  */
 int HoneycombHandler::pack_index_schema(IndexSchema* schema, KEY* key)
 {
-  int ret = 0;
-  ret |= schema->reset();
-  for (uint i = 0; i < key->actual_key_parts; i++)
-  {
-    ret |= schema->add_column(key->key_part[i].field->field_name);
-  }
-  if (key->flags & HA_NOSAME)
-  {
-    ret |= schema->set_is_unique(true);
-  }
-  return ret;
-};
+	int ret = 0;
+	ret |= schema->reset();
+	for (uint i = 0; i < key->actual_key_parts; i++)
+	{
+		ret |= schema->add_column(key->key_part[i].field->field_name);
+	}
+	if (key->flags & HA_NOSAME)
+	{
+		ret |= schema->set_is_unique(true);
+	}
+	return ret;
+}
+;
 
 int HoneycombHandler::delete_table(const char *path)
 {
-  const char* location = "HoneycombHandler::delete_table";
-  DBUG_ENTER(location);
-  int ret = 0;
+	const char* location = "HoneycombHandler::delete_table";
+	DBUG_ENTER(location);
+	int ret = 0;
 
-  attach_thread(jvm, &env, location);
-  { // destruct frame before detaching
-    JavaFrame frame(env, 2);
-    jstring table_name = string_to_java_string(env,
-        extract_table_name_from_path(path));
-    this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().drop_table,
-        table_name);
-    ret |= check_exceptions(env, cache, location);
-  }
-  detach_thread(jvm);
+	attach_thread(jvm, &env, location);
+	{ // destruct frame before detaching
+		JavaFrame frame(env, 2);
+		jstring table_name = string_to_java_string(env,
+				extract_table_name_from_path(path));
+		this->env->CallVoidMethod(handler_proxy,
+				cache->handler_proxy().drop_table, table_name);
+		ret |= check_exceptions(env, cache, location);
+	}
+	detach_thread(jvm);
 
-  DBUG_RETURN(ret);
+	DBUG_RETURN(ret);
 }
 
 int HoneycombHandler::rename_table(const char *from, const char *to)
 {
-  const char* location = "HoneycombHandler::rename_table";
-  DBUG_ENTER(location);
-  int ret = 0;
+	const char* location = "HoneycombHandler::rename_table";
+	DBUG_ENTER(location);
+	int ret = 0;
 
-  attach_thread(jvm, &env, location);
-  {
-    JavaFrame frame(env, 2);
-    jstring old_table_name = string_to_java_string(env,
-        extract_table_name_from_path(from));
-    jstring new_table_name = string_to_java_string(env,
-        extract_table_name_from_path(to));
+	attach_thread(jvm, &env, location);
+	{
+		JavaFrame frame(env, 2);
+		jstring old_table_name = string_to_java_string(env,
+				extract_table_name_from_path(from));
+		jstring new_table_name = string_to_java_string(env,
+				extract_table_name_from_path(to));
 
-    env->CallVoidMethod(handler_proxy, cache->handler_proxy().rename_table,
-        old_table_name, new_table_name);
-    ret |= check_exceptions(env, cache, location);
-  }
-  detach_thread(jvm);
+		env->CallVoidMethod(handler_proxy, cache->handler_proxy().rename_table,
+				old_table_name, new_table_name);
+		ret |= check_exceptions(env, cache, location);
+	}
+	detach_thread(jvm);
 
-  DBUG_RETURN(ret);
+	DBUG_RETURN(ret);
 }
 
 /**
@@ -328,11 +330,12 @@ int HoneycombHandler::rename_table(const char *from, const char *to)
  * @param path  path to table
  * @return error code
  */
-int HoneycombHandler::init_table_share(TABLE_SHARE* table_share, const char* path)
+int HoneycombHandler::init_table_share(TABLE_SHARE* table_share,
+		const char* path)
 {
-  THD* thd = ha_thd();
-  init_tmp_table_share(thd, table_share, "", 0, "", path);
-  return open_table_def(thd, table_share, 0);
+	THD* thd = ha_thd();
+	init_tmp_table_share(thd, table_share, "", 0, "", path);
+	return open_table_def(thd, table_share, 0);
 }
 
 /**
@@ -340,22 +343,27 @@ int HoneycombHandler::init_table_share(TABLE_SHARE* table_share, const char* pat
  */
 void HoneycombHandler::update_create_info(HA_CREATE_INFO* create_info)
 {
-  const char* location = "HoneycombHandler::update_create_info";
-  DBUG_ENTER(location);
+	const char* location = "HoneycombHandler::update_create_info";
+	DBUG_ENTER(location);
+	//show create table
+	if (!(create_info->used_fields & HA_CREATE_USED_AUTO))
+	{
+		HoneycombHandler::info(HA_STATUS_AUTO);
+		create_info->auto_increment_value = stats.auto_increment_value;
+	}
+	//alter table
+	else if (create_info->used_fields == 1)
+	{
+		attach_thread(jvm, &env, location);
+		env->CallVoidMethod(handler_proxy,
+				cache->handler_proxy().set_auto_increment,
+				create_info->auto_increment_value);
+		check_exceptions(env, cache, location);
+		detach_thread(jvm);
+	}
 
-  //show create table
-  if (!(create_info->used_fields & HA_CREATE_USED_AUTO)) {
-    HoneycombHandler::info(HA_STATUS_AUTO);
-    create_info->auto_increment_value = stats.auto_increment_value;
-  }
-  //alter table
-  else if (create_info->used_fields == 1) {
-    env->CallVoidMethod(handler_proxy, cache->handler_proxy().set_auto_increment,
-        create_info->auto_increment_value);
-    check_exceptions(env, cache, location);
-  }
-
-  DBUG_VOID_RETURN;
+	DBUG_VOID_RETURN
+	;
 }
 
 /**
@@ -363,31 +371,31 @@ void HoneycombHandler::update_create_info(HA_CREATE_INFO* create_info)
  * rebuild.  Return COMPATIBLE_DATA_NO to require a rebuild.
  */
 bool HoneycombHandler::check_if_incompatible_data(HA_CREATE_INFO *create_info,
-    uint table_changes)
+		uint table_changes)
 {
-  // unclear what table_changes means.  When in doubt, copy inno.
-  if (table_changes != IS_EQUAL_YES)
-  {
-    return COMPATIBLE_DATA_NO;
-  }
+	// unclear what table_changes means.  When in doubt, copy inno.
+	if (table_changes != IS_EQUAL_YES)
+	{
+		return COMPATIBLE_DATA_NO;
+	}
 
-  // If a column is renamed we are forced to rebuild, because we are not given
-  // enough information to simply rename the column (AFAIK we are not given the
-  // new name).
-  if (this->check_column_being_renamed(table))
-  {
-    return COMPATIBLE_DATA_NO;
-  }
+	// If a column is renamed we are forced to rebuild, because we are not given
+	// enough information to simply rename the column (AFAIK we are not given the
+	// new name).
+	if (this->check_column_being_renamed(table))
+	{
+		return COMPATIBLE_DATA_NO;
+	}
 
-  /* Check that row format didn't change */
-  if ((create_info->used_fields & HA_CREATE_USED_ROW_FORMAT)
-      && create_info->row_type != ROW_TYPE_DEFAULT
-      && create_info->row_type != get_row_type())
-  {
-    return COMPATIBLE_DATA_NO;
-  }
+	/* Check that row format didn't change */
+	if ((create_info->used_fields & HA_CREATE_USED_ROW_FORMAT)
+			&& create_info->row_type != ROW_TYPE_DEFAULT
+			&& create_info->row_type != get_row_type())
+	{
+		return COMPATIBLE_DATA_NO;
+	}
 
-  return COMPATIBLE_DATA_YES;
+	return COMPATIBLE_DATA_YES;
 }
 
 /**
@@ -395,101 +403,109 @@ bool HoneycombHandler::check_if_incompatible_data(HA_CREATE_INFO *create_info,
  */
 bool HoneycombHandler::check_column_being_renamed(const TABLE* table)
 {
-  const Field* field;
-  for (uint i = 0; i < table->s->fields; i++)
-  {
-    field = table->field[i];
-    if (field->flags & FIELD_IS_RENAMED)
-    {
-      return true;
-    }
-  }
-  return false;
+	const Field* field;
+	for (uint i = 0; i < table->s->fields; i++)
+	{
+		field = table->field[i];
+		if (field->flags & FIELD_IS_RENAMED)
+		{
+			return true;
+		}
+	}
+	return false;
 }
 
 int HoneycombHandler::add_index(Alter_inplace_info* ha_alter_info)
 {
-  const char* location = "HoneycombHandler::add_index";
-  DBUG_ENTER(location);
-  attach_thread(jvm, &env, location);
-  int ret = 0;
-  IndexSchema schema;
-  for(uint i = 0; i < ha_alter_info->index_add_count; i++)
-  {
-    JavaFrame frame(env, 2);
-    KEY* key = &ha_alter_info->key_info_buffer[ha_alter_info->index_add_buffer[i]];
-    for (KEY_PART_INFO *key_part= key->key_part; key_part < key->key_part + key->actual_key_parts; key_part++)
-      key_part->field = table->field[key_part->fieldnr];
+	const char* location = "HoneycombHandler::add_index";
+	DBUG_ENTER(location);
+	attach_thread(jvm, &env, location);
+	int ret = 0;
+	IndexSchema schema;
+	for (uint i = 0; i < ha_alter_info->index_add_count; i++)
+	{
+		JavaFrame frame(env, 2);
+		KEY* key =
+				&ha_alter_info->key_info_buffer[ha_alter_info->index_add_buffer[i]];
+		for (KEY_PART_INFO *key_part = key->key_part;
+				key_part < key->key_part + key->actual_key_parts; key_part++)
+			key_part->field = table->field[key_part->fieldnr];
 
-    jstring index_name = string_to_java_string(env, key->name);
-    pack_index_schema(&schema, key);
+		jstring index_name = string_to_java_string(env, key->name);
+		pack_index_schema(&schema, key);
 
-    if (key->flags & HA_NOSAME)
-    {
-      // We don't support adding unique indices without a table rebuild
-      DBUG_RETURN(HA_ERR_WRONG_COMMAND);
-    }
+		if (key->flags & HA_NOSAME)
+		{
+			// We don't support adding unique indices without a table rebuild
+			DBUG_RETURN(HA_ERR_WRONG_COMMAND);
+		}
 
-    jbyteArray serialized_schema = serialize_to_java(env, schema);
+		jbyteArray serialized_schema = serialize_to_java(env, schema);
 
-    this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().add_index,
-        index_name, serialized_schema);
-    ret |= check_exceptions(env, cache, location);
-  }
-  detach_thread(jvm);
-  DBUG_RETURN(ret);
+		this->env->CallVoidMethod(handler_proxy,
+				cache->handler_proxy().add_index, index_name,
+				serialized_schema);
+		ret |= check_exceptions(env, cache, location);
+	}
+	detach_thread(jvm);
+	DBUG_RETURN(ret);
 }
 
 int HoneycombHandler::drop_index(Alter_inplace_info* ha_alter_info)
 {
-  const char* location = "HoneycombHandler::prepare_drop_index";
-  DBUG_ENTER(location);
-  attach_thread(jvm, &env, location);
-  int ret = 0;
-  for (uint i = 0; i < ha_alter_info->index_drop_count; i++) {
-    JavaFrame frame(env, 1);
-    jstring index_name = string_to_java_string(env, ha_alter_info->index_drop_buffer[i]->name);
-    this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().drop_index,
-        index_name);
-    ret |= check_exceptions(env, cache, location);
-  }
-  detach_thread(jvm);
-  DBUG_RETURN(ret);
+	const char* location = "HoneycombHandler::prepare_drop_index";
+	DBUG_ENTER(location);
+	attach_thread(jvm, &env, location);
+	int ret = 0;
+	for (uint i = 0; i < ha_alter_info->index_drop_count; i++)
+	{
+		JavaFrame frame(env, 1);
+		jstring index_name = string_to_java_string(env,
+				ha_alter_info->index_drop_buffer[i]->name);
+		this->env->CallVoidMethod(handler_proxy,
+				cache->handler_proxy().drop_index, index_name);
+		ret |= check_exceptions(env, cache, location);
+	}
+	detach_thread(jvm);
+	DBUG_RETURN(ret);
 }
 
-static const Alter_inplace_info::HA_ALTER_FLAGS ERROR_ALTER_FLAGS = 
-Alter_inplace_info::ADD_FOREIGN_KEY |
-Alter_inplace_info::DROP_FOREIGN_KEY |
-Alter_inplace_info::ADD_PARTITION |
-Alter_inplace_info::DROP_PARTITION |
-Alter_inplace_info::ALTER_PARTITION |
-Alter_inplace_info::COALESCE_PARTITION |
-Alter_inplace_info::REORGANIZE_PARTITION |
-Alter_inplace_info::ALTER_TABLE_REORG |
-Alter_inplace_info::ALTER_REMOVE_PARTITIONING |
-Alter_inplace_info::ALTER_ALL_PARTITION;
+static const Alter_inplace_info::HA_ALTER_FLAGS ERROR_ALTER_FLAGS =
+		Alter_inplace_info::ADD_FOREIGN_KEY
+				| Alter_inplace_info::DROP_FOREIGN_KEY
+				| Alter_inplace_info::ADD_PARTITION
+				| Alter_inplace_info::DROP_PARTITION
+				| Alter_inplace_info::ALTER_PARTITION
+				| Alter_inplace_info::COALESCE_PARTITION
+				| Alter_inplace_info::REORGANIZE_PARTITION
+				| Alter_inplace_info::ALTER_TABLE_REORG
+				| Alter_inplace_info::ALTER_REMOVE_PARTITIONING
+				| Alter_inplace_info::ALTER_ALL_PARTITION;
 
-enum_alter_inplace_result HoneycombHandler::check_if_supported_inplace_alter(TABLE* altered_table, Alter_inplace_info* ha_alter_info)
+enum_alter_inplace_result HoneycombHandler::check_if_supported_inplace_alter(
+		TABLE* altered_table, Alter_inplace_info* ha_alter_info)
 {
-  if (ha_alter_info->handler_flags & ERROR_ALTER_FLAGS)
-    return HA_ALTER_ERROR;
-  if (ha_alter_info->handler_flags & (Alter_inplace_info::ADD_UNIQUE_INDEX | Alter_inplace_info::ADD_PK_INDEX))
-    return HA_ALTER_INPLACE_NOT_SUPPORTED;
-  return HA_ALTER_INPLACE_EXCLUSIVE_LOCK;
+	if (ha_alter_info->handler_flags & ERROR_ALTER_FLAGS)
+		return HA_ALTER_ERROR;
+	if (ha_alter_info->handler_flags
+			& (Alter_inplace_info::ADD_INDEX | Alter_inplace_info::DROP_INDEX))
+		return HA_ALTER_INPLACE_EXCLUSIVE_LOCK;
+	return HA_ALTER_INPLACE_NOT_SUPPORTED;
 }
 
-bool HoneycombHandler::inplace_alter_table(TABLE* altered_table, Alter_inplace_info* ha_alter_info)
+bool HoneycombHandler::inplace_alter_table(TABLE* altered_table,
+		Alter_inplace_info* ha_alter_info)
 {
-  if (ha_alter_info->handler_flags & Alter_inplace_info::ADD_INDEX)
-  {
-    add_index(ha_alter_info);
-  }
+	if (ha_alter_info->handler_flags & Alter_inplace_info::ADD_INDEX)
+	{
+		add_index(ha_alter_info);
+	}
 
-  if (ha_alter_info->handler_flags & Alter_inplace_info::DROP_INDEX)
-  {
-    drop_index(ha_alter_info);
-  }
+	if (ha_alter_info->handler_flags & Alter_inplace_info::DROP_INDEX)
+	{
+		drop_index(ha_alter_info);
+	}
 
-  return false;
+	return false;
 }
 
