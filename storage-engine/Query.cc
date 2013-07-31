@@ -81,7 +81,7 @@ int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
     // If it is a null field then we have to move past the null byte.
     uchar* key_offset = is_null_field ? key_ptr + 1 : key_ptr;
     uchar* key_copy;
-    FieldEncoder* encoder = FieldEncoder::create_encoder(*field, table->in_use);
+    FieldEncoder* encoder = FieldEncoder::create_encoder(*field);
     encoder->encode_field_for_reading(key_offset, &key_copy, &key_length);
     index_key.set_value(field->field_name, (char*)key_copy, key_length);
     delete encoder;
@@ -350,7 +350,7 @@ int HoneycombHandler::unpack_row(uchar* buf, Row& row)
 void HoneycombHandler::store_field_value(Field *field, const uchar *val, size_t val_length)
 {
   enum_field_types type = field->real_type();
-  FieldEncoder* encoder = FieldEncoder::create_encoder(*field, table->in_use);
+  FieldEncoder* encoder = FieldEncoder::create_encoder(*field);
 
   if (!is_unsupported_field(type))
   {

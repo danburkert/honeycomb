@@ -16,7 +16,7 @@ FieldEncoder::~FieldEncoder()
 {
 }
 
-FieldEncoder* FieldEncoder::create_encoder(Field& field, THD* thd)
+FieldEncoder* FieldEncoder::create_encoder(Field& field)
 {
 	enum_field_types type = field.real_type();
 	switch (type)
@@ -43,7 +43,7 @@ FieldEncoder* FieldEncoder::create_encoder(Field& field, THD* thd)
 		case MYSQL_TYPE_TIMESTAMP:
 		case MYSQL_TYPE_TIMESTAMP2:
 		case MYSQL_TYPE_NEWDATE:
-			return new DateTimeFieldEncoder(field, thd);
+			return new DateTimeFieldEncoder(field);
 		case MYSQL_TYPE_VARCHAR:
 		case MYSQL_TYPE_VAR_STRING:
 		case MYSQL_TYPE_BLOB:

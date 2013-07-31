@@ -5,8 +5,8 @@
 #include "sql_class.h"
 #include <tztime.h>
 
-DateTimeFieldEncoder::DateTimeFieldEncoder(Field& field, THD* thd) :
-		FieldEncoder(field), thd(thd)
+DateTimeFieldEncoder::DateTimeFieldEncoder(Field& field) :
+		FieldEncoder(field)
 {
 }
 

@@ -64,7 +64,7 @@ int HoneycombHandler::pack_row(uchar *buf, TABLE* table, Row& row)
       continue;
     }
 
-    FieldEncoder* encoder = FieldEncoder::create_encoder(*field, table->in_use);
+    FieldEncoder* encoder = FieldEncoder::create_encoder(*field);
     encoder->encode_field_for_writing(&byte_val, &actualFieldSize);
     row.add_value((char*)byte_val, actualFieldSize);
     delete encoder;
