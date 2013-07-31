@@ -216,7 +216,7 @@ int HoneycombHandler::info(uint flag)
 
     for (uint i = 0; i < this->table->s->keys; i++)
     {
-      for (uint j = 0; j < table->key_info[i].key_parts; j++)
+      for (uint j = 0; j < table->key_info[i].actual_key_parts; j++)
       {
         rec_per_key = stats.records / 10;
 
@@ -359,7 +359,7 @@ int HoneycombHandler::analyze(THD* thd, HA_CHECK_OPT* check_opt)
 
   for (uint i = 0; i < this->table->s->keys; i++)
   {
-    for (uint j = 0; j < table->key_info[i].key_parts; j++)
+    for (uint j = 0; j < table->key_info[i].actual_key_parts; j++)
     {
       this->table->key_info[i].rec_per_key[j] = 1;
     }
@@ -377,46 +377,6 @@ int HoneycombHandler::flush()
   return check_exceptions(env, cache, "HoneycombHandler::flush");
 }
 
-bool HoneycombHandler::is_date_or_time_field(enum_field_types field_type)
-{
-  return (field_type == MYSQL_TYPE_DATE
-      || field_type == MYSQL_TYPE_DATETIME
-      || field_type == MYSQL_TYPE_TIME
-      || field_type == MYSQL_TYPE_TIMESTAMP
-      || field_type == MYSQL_TYPE_NEWDATE);
-}
-
-bool HoneycombHandler::is_floating_point_field(enum_field_types field_type)
-{
-  return (field_type == MYSQL_TYPE_FLOAT || field_type == MYSQL_TYPE_DOUBLE);
-}
-
-bool HoneycombHandler::is_integral_field(enum_field_types field_type)
-{
-  return (field_type == MYSQL_TYPE_LONG
-      || field_type == MYSQL_TYPE_SHORT
-      || field_type == MYSQL_TYPE_TINY
-      || field_type == MYSQL_TYPE_LONGLONG
-      || field_type == MYSQL_TYPE_INT24
-      || field_type == MYSQL_TYPE_ENUM
-      || field_type == MYSQL_TYPE_YEAR);
-}
-
-bool HoneycombHandler::is_decimal_field(enum_field_types field_type)
-{
-  return (field_type == MYSQL_TYPE_DECIMAL || field_type == MYSQL_TYPE_NEWDECIMAL);
-}
-
-bool HoneycombHandler::is_byte_field(enum_field_types field_type)
-{
-  return (field_type == MYSQL_TYPE_VARCHAR
-      || field_type == MYSQL_TYPE_VAR_STRING
-      || field_type == MYSQL_TYPE_STRING
-      || field_type == MYSQL_TYPE_BLOB
-      || field_type == MYSQL_TYPE_TINY_BLOB
-      || field_type == MYSQL_TYPE_MEDIUM_BLOB
-      || field_type == MYSQL_TYPE_LONG_BLOB);
-}
 bool HoneycombHandler::is_unsupported_field(enum_field_types field_type)
 {
   return (field_type == MYSQL_TYPE_NULL
@@ -499,14 +459,4 @@ double HoneycombHandler::read_time(uint index, uint ranges, ha_rows rows)
   }
 
   return (ranges + ((double) rows / (double) stats.records) * total_scan);
-}
-
-int HoneycombHandler::final_add_index(handler_add_index *add, bool commit)
-{
-  return 0;
-}
-
-int HoneycombHandler::final_drop_index(TABLE *table_arg)
-{
-  return 0;
 }

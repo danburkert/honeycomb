@@ -27,6 +27,7 @@
 #include "JNICache.h"
 #include "HoneycombShare.h"
 #include <jni.h>
+#include "FieldEncoder.h"
 
 /**
  * Pack the MySQL formatted row contained in buf and table into the Avro format.
@@ -48,7 +49,7 @@ int HoneycombHandler::pack_row(uchar *buf, TABLE* table, Row& row)
   }
 
   size_t actualFieldSize;
-  char* byte_val;
+  uchar* byte_val;
 
   for (Field **field_ptr = table->field; *field_ptr; field_ptr++)
   {
@@ -63,99 +64,10 @@ int HoneycombHandler::pack_row(uchar *buf, TABLE* table, Row& row)
       continue;
     }
 
-    enum_field_types type = field->real_type();
-    switch (type)
-    {
-    case MYSQL_TYPE_TINY:
-    case MYSQL_TYPE_SHORT:
-    case MYSQL_TYPE_LONG:
-    case MYSQL_TYPE_LONGLONG:
-    case MYSQL_TYPE_INT24:
-    case MYSQL_TYPE_YEAR:
-    case MYSQL_TYPE_ENUM:
-    case MYSQL_TYPE_TIME: // Time is a special case for sorting
-    {
-      long long integral_value = field->val_int();
-      if (is_little_endian())
-      {
-        integral_value = bswap64(integral_value);
-      }
-      actualFieldSize = sizeof integral_value;
-      byte_val = (char*) my_malloc(actualFieldSize, MYF(MY_WME));
-      memcpy(byte_val, &integral_value, actualFieldSize);
-      break;
-    }
-    case MYSQL_TYPE_FLOAT:
-    case MYSQL_TYPE_DOUBLE:
-    {
-      double fp_value = field->val_real();
-      long long* fp_ptr = (long long*) &fp_value;
-      if (is_little_endian())
-      {
-        *fp_ptr = bswap64(*fp_ptr);
-      }
-      actualFieldSize = sizeof fp_value;
-      byte_val = (char*) my_malloc(actualFieldSize, MYF(MY_WME));
-      memcpy(byte_val, fp_ptr, actualFieldSize);
-      break;
-    }
-    case MYSQL_TYPE_DECIMAL:
-    case MYSQL_TYPE_NEWDECIMAL:
-      actualFieldSize = field->key_length();
-      byte_val = (char*) my_malloc(actualFieldSize, MYF(MY_WME));
-      memcpy(byte_val, field->ptr, actualFieldSize);
-      break;
-    case MYSQL_TYPE_DATE:
-    case MYSQL_TYPE_NEWDATE:
-    case MYSQL_TYPE_DATETIME:
-    case MYSQL_TYPE_TIMESTAMP:
-    {
-      MYSQL_TIME mysql_time;
-      char temporal_value[MAX_DATE_STRING_REP_LENGTH];
-      field->get_time(&mysql_time);
-      if (mysql_time.time_type == MYSQL_TIMESTAMP_DATE && type == MYSQL_TYPE_TIMESTAMP)
-        mysql_time.time_type = MYSQL_TIMESTAMP_DATETIME;
-
-      my_TIME_to_str(&mysql_time, temporal_value);
-      actualFieldSize = strlen(temporal_value);
-      byte_val = (char*) my_malloc(actualFieldSize, MYF(MY_WME));
-      memcpy(byte_val, temporal_value, actualFieldSize);
-      break;
-    }
-    case MYSQL_TYPE_BLOB:
-    case MYSQL_TYPE_TINY_BLOB:
-    case MYSQL_TYPE_MEDIUM_BLOB:
-    case MYSQL_TYPE_LONG_BLOB:
-    {
-      String string_value;
-      field->val_str(&string_value);
-      actualFieldSize = string_value.length();
-      byte_val = (char*) my_malloc(actualFieldSize, MYF(MY_WME));
-      memcpy(byte_val, string_value.ptr(), actualFieldSize);
-      break;
-    }
-    case MYSQL_TYPE_VARCHAR:
-    case MYSQL_TYPE_VAR_STRING:
-    {
-      char string_value_buff[field->field_length];
-      String string_value(string_value_buff, sizeof(string_value_buff),&my_charset_bin);
-      field->val_str(&string_value);
-      actualFieldSize = string_value.length();
-      byte_val = (char*) my_malloc(actualFieldSize, MYF(MY_WME));
-      memcpy(byte_val, string_value.ptr(), actualFieldSize);
-      break;
-    }
-    case MYSQL_TYPE_NULL:
-    case MYSQL_TYPE_BIT:
-    case MYSQL_TYPE_SET:
-    case MYSQL_TYPE_GEOMETRY:
-    default:
-      actualFieldSize = field->key_length();
-      byte_val = (char*) my_malloc(actualFieldSize, MYF(MY_WME));
-      memcpy(byte_val, field->ptr, actualFieldSize);
-      break;
-    }
-    row.add_value(byte_val, actualFieldSize);
+    FieldEncoder* encoder = FieldEncoder::create_encoder(*field, table->in_use);
+    encoder->encode_field_for_writing(&byte_val, &actualFieldSize);
+    row.add_value((char*)byte_val, actualFieldSize);
+    delete encoder;
     MY_FREE(byte_val);
     field->move_field_offset(-offset);
   }
@@ -201,10 +113,6 @@ int HoneycombHandler::write_row(uchar *buf)
   {
     return HA_ERR_CRASHED_ON_USAGE;
   }
-  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
-  {
-    table->timestamp_field->set_time();
-  }
 
   my_bitmap_map *old_map = dbug_tmp_use_all_columns(table, table->read_set);
   rc |= pack_row(buf, table, *row);
@@ -233,10 +141,6 @@ int HoneycombHandler::update_row(const uchar *old_row, uchar *new_row)
 {
   DBUG_ENTER("HoneycombHandler::update_row");
   int rc = 0;
-  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
-  {
-    table->timestamp_field->set_time();
-  }
 
   Row old_sql_row;
   row->reset();

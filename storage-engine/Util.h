@@ -36,7 +36,7 @@
  *
  * @return Is a unsigned field
  */
-bool is_unsigned_field(Field *field);
+bool is_unsigned_field(Field& field);
 
 /**
  * @brief Reverse the bytes of a buffer
@@ -69,18 +69,6 @@ void make_big_endian(uchar *begin, uint length);
  * @return Table name i.e. "table-name"
  */
 const char* extract_table_name_from_path(const char *path);
-
-/**
- * @brief Create a copy of a MySQL index key.
- *
- * @param index_field MySQL index key field
- * @param key MySQL index key
- * @param key_len Length of the key
- * @param thd Current thread
- *
- * @return Copy of the index key
- */
-uchar* create_key_copy(Field* index_field, const uchar* key, uint* key_len, THD* thd);
 
 /**
  * @brief Reverse the endian-ness of a uint64_t

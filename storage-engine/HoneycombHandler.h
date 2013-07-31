@@ -76,11 +76,6 @@ class HoneycombHandler : public handler
     jobject handler_proxy;
     Row* row;
 
-    bool is_integral_field(enum_field_types field_type);
-    bool is_date_or_time_field(enum_field_types field_type);
-    bool is_floating_point_field(enum_field_types field_type);
-    bool is_decimal_field(enum_field_types field_type);
-    bool is_byte_field(enum_field_types field_type);
     bool is_unsupported_field(enum_field_types field_type);
 
     /* HoneycombHandler helper methods */
@@ -94,7 +89,7 @@ class HoneycombHandler : public handler
     int full_index_scan(uchar* buf, QueryKey::QueryType query);
     int retrieve_value_from_index(uchar* buf);
     int unpack_row(uchar *buf, Row& row);
-    void store_field_value(Field *field, const char* val, int length);
+    void store_field_value(Field *field, const uchar* val, size_t length);
 
     /* DDL helper methods */
     int pack_column_schema(ColumnSchema* schema, Field* field);
@@ -148,8 +143,6 @@ class HoneycombHandler : public handler
     uint max_supported_key_parts() const;
     virtual double scan_time();
     virtual double read_time(uint index, uint ranges, ha_rows rows);
-    virtual int final_add_index(handler_add_index *add, bool commit);
-    virtual int final_drop_index(TABLE *table_arg);
 
     /* Query */
     int index_init(uint idx, bool sorted);
@@ -171,9 +164,11 @@ class HoneycombHandler : public handler
     int delete_table(const char *name);
     int rename_table(const char *from, const char *to);
     bool check_if_incompatible_data(HA_CREATE_INFO *create_info, uint table_changes);
-    int prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys);
-    int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add);
     void update_create_info(HA_CREATE_INFO* create_info);
+    enum_alter_inplace_result check_if_supported_inplace_alter(TABLE* altered_table, Alter_inplace_info* ha_alter_info);
+    int add_index(Alter_inplace_info* ha_alter_info);
+    int drop_index(Alter_inplace_info* ha_alter_info);
+    bool inplace_alter_table(TABLE* altered_table, Alter_inplace_info* ha_alter_info);
 
     /* IUD */
     int write_row(uchar *buf);
