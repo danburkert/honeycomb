@@ -8,6 +8,7 @@ private:
 	float floatGet(const uchar *ptr);
 public:
 	DoubleFieldEncoder(Field& field);
+	~DoubleFieldEncoder();
 	void encode_field_for_reading(uchar* key, uchar** buffer,
 			size_t* field_size);
 

@@ -63,3 +63,7 @@ void DateTimeFieldEncoder::store_field_value(uchar* buffer,
 		field.store_time(&mysql_time, mysql_time.time_type);
 	}
 }
+
+DateTimeFieldEncoder::~DateTimeFieldEncoder()
+{
+}

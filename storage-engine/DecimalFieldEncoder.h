@@ -6,6 +6,7 @@ class DecimalFieldEncoder : public FieldEncoder
 {
 public:
 	DecimalFieldEncoder(Field& field);
+	~DecimalFieldEncoder();
 	void encode_field_for_writing(uchar** buffer, size_t* field_size);
 	void store_field_value(uchar* buffer, size_t buffer_length);
 };

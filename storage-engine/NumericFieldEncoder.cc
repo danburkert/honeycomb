@@ -106,3 +106,7 @@ void NumericFieldEncoder::store_field_value(uchar* buffer, size_t buffer_length)
 		field.store(long_value, false);
 	}
 }
+
+NumericFieldEncoder::~NumericFieldEncoder()
+{
+}

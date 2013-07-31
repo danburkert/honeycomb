@@ -54,6 +54,10 @@ void DoubleFieldEncoder::encode_field_for_writing(uchar** buffer,
 	memcpy(*buffer, fp_ptr, *field_size);
 }
 
+DoubleFieldEncoder::~DoubleFieldEncoder()
+{
+}
+
 void DoubleFieldEncoder::store_field_value(uchar* buffer, size_t buffer_length)
 {
 	double double_value;

@@ -64,3 +64,7 @@ void StringFieldEncoder::encode_field_for_writing(uchar** buffer,
 		set_field(buffer, field_size, string_value);
 	}
 }
+
+StringFieldEncoder::~StringFieldEncoder()
+{
+}

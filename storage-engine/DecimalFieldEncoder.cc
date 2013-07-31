@@ -22,6 +22,10 @@ void DecimalFieldEncoder::encode_field_for_writing(uchar** buffer,
 	memcpy(*buffer, field.ptr, *field_size);
 }
 
+DecimalFieldEncoder::~DecimalFieldEncoder()
+{
+}
+
 void DecimalFieldEncoder::store_field_value(uchar* buffer, size_t buffer_length)
 {
 	// TODO: Is this reliable? Field_decimal doesn't seem to have these members.
