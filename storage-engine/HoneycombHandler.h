@@ -102,7 +102,6 @@ class HoneycombHandler : public handler
     bool violates_uniqueness(jbyteArray serialized_row);
     int pack_row(uchar *buf, TABLE* table, Row& row);
 
-    void trace_create_table_info(const char *name, TABLE * form);
   public:
     /* HoneycombHandler */
     /**

@@ -45,42 +45,7 @@ const int UTF_REQUIRED = 2;
 const char* table_creation_errors[] =
 { "YEAR(2) is not supported.", "Bit, set and geometry are not supported.",
 		"Required: character set utf8 collate utf8_bin" };
-static inline uint get_key_parts(const KEY *key)
-{
-#if 50609 <= MYSQL_VERSION_ID && MYSQL_VERSION_ID <= 50699
-	return key->user_defined_key_parts;
-#else
-	return key->key_parts;
-#endif
-}
 
-void HoneycombHandler::trace_create_table_info(const char *name, TABLE * form)
-{
-	uint i;
-	//
-	// tracing information about what type of table we are creating
-	//
-	for (i = 0; i < form->s->fields; i++)
-	{
-		Field *field = form->s->field[i];
-		Logging::info("field:%d:%s:type=%d:flags=%x\n", i, field->field_name,
-				field->type(), field->flags);
-	}
-	for (i = 0; i < form->s->keys; i++)
-	{
-		KEY *key = &form->s->key_info[i];
-		Logging::info("key:%d:%s:%d\n", i, key->name, get_key_parts(key));
-		uint p;
-		for (p = 0; p < get_key_parts(key); p++)
-		{
-			KEY_PART_INFO *key_part = &key->key_part[p];
-			Field *field = key_part->field;
-			Logging::info("key:%d:%d:length=%d:%s:type=%d:flags=%x\n", i, p,
-					key_part->length, field->field_name, field->type(),
-					field->flags);
-		}
-	}
-}
 
 /**
  * @brief Called by MySQL during CREATE TABLE statements.  Converts the table's
@@ -104,8 +69,9 @@ int HoneycombHandler::create(const char *path, TABLE *table,
 	{
 		ABORT_CREATE("Partitions are not supported.");
 	}
+	if (table->s->keys == 1 && table->s->key_info == NULL)
+		table->s->keys = 0;
 
-	trace_create_table_info(path, table);
 	int ret = 0;
 	{ // Destruct frame before calling detach_thread
 		JavaFrame frame(env, 3);
@@ -137,7 +103,7 @@ int HoneycombHandler::create(const char *path, TABLE *table,
 			{
 				ABORT_CREATE("Error while creating index schema.");
 			}
-			table_schema.add_index(table->key_info[i].name, &index_schema);
+			table_schema.add_index(table->s->key_info[i].name, &index_schema);
 		}
 
 		jstring jtable_name = string_to_java_string(env,
@@ -528,6 +494,7 @@ enum_alter_inplace_result HoneycombHandler::check_if_supported_inplace_alter(
 		return HA_ALTER_INPLACE_EXCLUSIVE_LOCK;
 	return HA_ALTER_INPLACE_NOT_SUPPORTED;
 }
+
 
 bool HoneycombHandler::inplace_alter_table(TABLE* altered_table,
 		Alter_inplace_info* ha_alter_info)
