@@ -105,6 +105,7 @@ int HoneycombHandler::create(const char *path, TABLE *table,
 		ABORT_CREATE("Partitions are not supported.");
 	}
 
+	trace_create_table_info(path, table);
 	int ret = 0;
 	{ // Destruct frame before calling detach_thread
 		JavaFrame frame(env, 3);
