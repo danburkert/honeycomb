@@ -94,16 +94,13 @@ int HoneycombHandler::create(const char *path, TABLE *table,
 			table_schema.add_column(field->field_name, &column_schema);
 		}
 
-		if (!(table->s->keys == 1 && table->key_info == NULL))
+		for (uint i = 0; i < table->s->keys; i++)
 		{
-			for (uint i = 0; i < table->s->keys; i++)
+			if (pack_index_schema(index_schema, table->s->key_info[i]))
 			{
-				if (pack_index_schema(index_schema, table->key_info[i]))
-				{
-					ABORT_CREATE("Error while creating index schema.");
-				}
-				table_schema.add_index(table->key_info[i].name, &index_schema);
+				ABORT_CREATE("Error while creating index schema.");
 			}
+			table_schema.add_index(table->key_info[i].name, &index_schema);
 		}
 
 		jstring jtable_name = string_to_java_string(env,
