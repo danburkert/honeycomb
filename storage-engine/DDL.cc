@@ -87,20 +87,23 @@ int HoneycombHandler::create(const char *path, TABLE *table,
 			}
 
 			column_schema.reset();
-			if (pack_column_schema(&column_schema, field))
+			if (pack_column_schema(column_schema, *field))
 			{
 				ABORT_CREATE("Error while creating column schema.");
 			}
 			table_schema.add_column(field->field_name, &column_schema);
 		}
 
-		for (uint i = 0; i < table->s->keys; i++)
+		if (!(table->s->keys == 1 && table->key_info == NULL))
 		{
-			if (pack_index_schema(&index_schema, &table->key_info[i]))
+			for (uint i = 0; i < table->s->keys; i++)
 			{
-				ABORT_CREATE("Error while creating index schema.");
+				if (pack_index_schema(index_schema, table->key_info[i]))
+				{
+					ABORT_CREATE("Error while creating index schema.");
+				}
+				table_schema.add_index(table->key_info[i].name, &index_schema);
 			}
-			table_schema.add_index(table->key_info[i].name, &index_schema);
 		}
 
 		jstring jtable_name = string_to_java_string(env,
@@ -144,7 +147,7 @@ bool HoneycombHandler::is_allowed_column(Field* field, int* error_number)
 		case MYSQL_TYPE_VARCHAR:
 		case MYSQL_TYPE_BLOB:
 			if (strncmp(field->charset()->name, "utf8_bin", 8)
-					!= 0 && field->binary() == false)
+					!= 0&& field->binary() == false)
 			{
 				*error_number = UTF_REQUIRED;
 				allowed = false;
@@ -162,10 +165,10 @@ bool HoneycombHandler::is_allowed_column(Field* field, int* error_number)
  * @param schema  The schema being filled out
  * @param field   The column that is being added to the schema
  */
-int HoneycombHandler::pack_column_schema(ColumnSchema* schema, Field* field)
+int HoneycombHandler::pack_column_schema(ColumnSchema& schema, Field& field)
 {
 	int ret = 0;
-	switch (field->real_type())
+	switch (field.real_type())
 	{
 		case MYSQL_TYPE_TINY:
 		case MYSQL_TYPE_SHORT:
@@ -173,53 +176,53 @@ int HoneycombHandler::pack_column_schema(ColumnSchema* schema, Field* field)
 		case MYSQL_TYPE_LONGLONG:
 		case MYSQL_TYPE_INT24:
 		case MYSQL_TYPE_YEAR:
-			if (is_unsigned_field(*field))
+			if (is_unsigned_field(field))
 			{
-				ret |= schema->set_type(ColumnSchema::ULONG);
+				ret |= schema.set_type(ColumnSchema::ULONG);
 			}
 			else
 			{
-				ret |= schema->set_type(ColumnSchema::LONG);
+				ret |= schema.set_type(ColumnSchema::LONG);
 			}
 			break;
 		case MYSQL_TYPE_FLOAT:
 		case MYSQL_TYPE_DOUBLE:
-			ret |= schema->set_type(ColumnSchema::DOUBLE);
+			ret |= schema.set_type(ColumnSchema::DOUBLE);
 			break;
 		case MYSQL_TYPE_DECIMAL:
 		case MYSQL_TYPE_NEWDECIMAL:
 		{
-			uint precision = ((Field_new_decimal*) field)->precision;
-			uint scale = ((Field_new_decimal*) field)->dec;
-			ret |= schema->set_type(ColumnSchema::DECIMAL);
-			ret |= schema->set_precision(precision);
-			ret |= schema->set_scale(scale);
+			uint precision = ((Field_new_decimal&) field).precision;
+			uint scale = ((Field_new_decimal&) field).dec;
+			ret |= schema.set_type(ColumnSchema::DECIMAL);
+			ret |= schema.set_precision(precision);
+			ret |= schema.set_scale(scale);
 		}
 			break;
 		case MYSQL_TYPE_DATE:
 		case MYSQL_TYPE_NEWDATE:
-			ret |= schema->set_type(ColumnSchema::DATE);
+			ret |= schema.set_type(ColumnSchema::DATE);
 			break;
 		case MYSQL_TYPE_TIME:
-			ret |= schema->set_type(ColumnSchema::TIME);
+			ret |= schema.set_type(ColumnSchema::TIME);
 			break;
 		case MYSQL_TYPE_DATETIME:
 		case MYSQL_TYPE_TIMESTAMP:
-			ret |= schema->set_type(ColumnSchema::DATETIME);
+			ret |= schema.set_type(ColumnSchema::DATETIME);
 			break;
 		case MYSQL_TYPE_STRING:
 		case MYSQL_TYPE_VARCHAR:
 		{
-			long long max_char_length = (long long) field->field_length;
-			ret |= schema->set_max_length(max_char_length);
+			long long max_char_length = (long long) field.field_length;
+			ret |= schema.set_max_length(max_char_length);
 
-			if (field->binary())
+			if (field.binary())
 			{
-				ret |= schema->set_type(ColumnSchema::BINARY);
+				ret |= schema.set_type(ColumnSchema::BINARY);
 			}
 			else
 			{
-				ret |= schema->set_type(ColumnSchema::STRING);
+				ret |= schema.set_type(ColumnSchema::STRING);
 			}
 		}
 			break;
@@ -227,10 +230,10 @@ int HoneycombHandler::pack_column_schema(ColumnSchema* schema, Field* field)
 		case MYSQL_TYPE_TINY_BLOB:
 		case MYSQL_TYPE_MEDIUM_BLOB:
 		case MYSQL_TYPE_LONG_BLOB:
-			ret |= schema->set_type(ColumnSchema::BINARY);
+			ret |= schema.set_type(ColumnSchema::BINARY);
 			break;
 		case MYSQL_TYPE_ENUM:
-			ret |= schema->set_type(ColumnSchema::ULONG);
+			ret |= schema.set_type(ColumnSchema::ULONG);
 			break;
 		case MYSQL_TYPE_NULL:
 		case MYSQL_TYPE_BIT:
@@ -241,15 +244,15 @@ int HoneycombHandler::pack_column_schema(ColumnSchema* schema, Field* field)
 			break;
 	}
 
-	if (field->real_maybe_null())
+	if (field.real_maybe_null())
 	{
-		ret |= schema->set_is_nullable(true);
+		ret |= schema.set_is_nullable(true);
 	}
 
-	if (field->table->found_next_number_field != NULL
-			&& field == field->table->found_next_number_field)
+	if (field.table->found_next_number_field != NULL
+			&& &field == field.table->found_next_number_field)
 	{
-		ret |= schema->set_is_auto_increment(true);
+		ret |= schema.set_is_auto_increment(true);
 	}
 	return ret;
 }
@@ -261,21 +264,20 @@ int HoneycombHandler::pack_column_schema(ColumnSchema* schema, Field* field)
  * @param schema  The schema being filled out
  * @param key   The index whose schema is being copied.
  */
-int HoneycombHandler::pack_index_schema(IndexSchema* schema, KEY* key)
+int HoneycombHandler::pack_index_schema(IndexSchema& schema, const KEY& key)
 {
 	int ret = 0;
-	ret |= schema->reset();
-	for (uint i = 0; i < key->actual_key_parts; i++)
+	ret |= schema.reset();
+	for (uint i = 0; i < key.actual_key_parts; i++)
 	{
-		ret |= schema->add_column(key->key_part[i].field->field_name);
+		ret |= schema.add_column(key.key_part[i].field->field_name);
 	}
-	if (key->flags & HA_NOSAME)
+	if (key.flags & HA_NOSAME)
 	{
-		ret |= schema->set_is_unique(true);
+		ret |= schema.set_is_unique(true);
 	}
 	return ret;
 }
-;
 
 int HoneycombHandler::delete_table(const char *path)
 {
@@ -432,7 +434,7 @@ int HoneycombHandler::add_index(Alter_inplace_info* ha_alter_info)
 			key_part->field = table->field[key_part->fieldnr];
 
 		jstring index_name = string_to_java_string(env, key->name);
-		pack_index_schema(&schema, key);
+		pack_index_schema(schema, *key);
 
 		if (key->flags & HA_NOSAME)
 		{

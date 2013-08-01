@@ -92,8 +92,8 @@ class HoneycombHandler : public handler
     void store_field_value(Field *field, const uchar* val, size_t length);
 
     /* DDL helper methods */
-    int pack_column_schema(ColumnSchema* schema, Field* field);
-    int pack_index_schema(IndexSchema* schema, KEY* key);
+    int pack_column_schema(ColumnSchema& schema, Field& field);
+    int pack_index_schema(IndexSchema& schema, const KEY& key);
     int init_table_share(TABLE_SHARE* table_share, const char* path);
     bool is_allowed_column(Field* field, int* error_number);
     bool check_column_being_renamed(const TABLE*  table);
