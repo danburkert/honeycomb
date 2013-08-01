@@ -45,6 +45,42 @@ const int UTF_REQUIRED = 2;
 const char* table_creation_errors[] =
 { "YEAR(2) is not supported.", "Bit, set and geometry are not supported.",
 		"Required: character set utf8 collate utf8_bin" };
+static inline uint get_key_parts(const KEY *key)
+{
+#if 50609 <= MYSQL_VERSION_ID && MYSQL_VERSION_ID <= 50699
+	return key->user_defined_key_parts;
+#else
+	return key->key_parts;
+#endif
+}
+
+void HoneycombHandler::trace_create_table_info(const char *name, TABLE * form)
+{
+	uint i;
+	//
+	// tracing information about what type of table we are creating
+	//
+	for (i = 0; i < form->s->fields; i++)
+	{
+		Field *field = form->s->field[i];
+		Logging::info("field:%d:%s:type=%d:flags=%x\n", i, field->field_name,
+				field->type(), field->flags);
+	}
+	for (i = 0; i < form->s->keys; i++)
+	{
+		KEY *key = &form->s->key_info[i];
+		Logging::info("key:%d:%s:%d\n", i, key->name, get_key_parts(key));
+		uint p;
+		for (p = 0; p < get_key_parts(key); p++)
+		{
+			KEY_PART_INFO *key_part = &key->key_part[p];
+			Field *field = key_part->field;
+			Logging::info("key:%d:%d:length=%d:%s:type=%d:flags=%x\n", i, p,
+					key_part->length, field->field_name, field->type(),
+					field->flags);
+		}
+	}
+}
 
 /**
  * @brief Called by MySQL during CREATE TABLE statements.  Converts the table's
