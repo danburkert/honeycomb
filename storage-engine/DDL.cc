@@ -69,8 +69,6 @@ int HoneycombHandler::create(const char *path, TABLE *table,
 	{
 		ABORT_CREATE("Partitions are not supported.");
 	}
-	if (table->s->keys == 1 && table->s->key_info == NULL)
-		table->s->keys = 0;
 
 	int ret = 0;
 	{ // Destruct frame before calling detach_thread
@@ -108,8 +106,7 @@ int HoneycombHandler::create(const char *path, TABLE *table,
 
 		jstring jtable_name = string_to_java_string(env,
 				extract_table_name_from_path(path));
-		jlong jauto_inc_value = std::max(1ULL,
-				create_info->auto_increment_value);
+		jlong jauto_inc_value = max(1ULL, create_info->auto_increment_value);
 
 		jbyteArray jserialized_schema = serialize_to_java(env, table_schema);
 
@@ -258,6 +255,11 @@ int HoneycombHandler::pack_column_schema(ColumnSchema& schema, Field& field)
 }
 ;
 
+const unsigned int HoneycombHandler::get_key_parts(const KEY& key)
+{
+	return key.key_parts;
+}
+
 /**
  * Add columns in the index to the index schema.
  *
@@ -268,7 +270,7 @@ int HoneycombHandler::pack_index_schema(IndexSchema& schema, const KEY& key)
 {
 	int ret = 0;
 	ret |= schema.reset();
-	for (uint i = 0; i < key.actual_key_parts; i++)
+	for (uint i = 0; i < get_key_parts(key); i++)
 	{
 		ret |= schema.add_column(key.key_part[i].field->field_name);
 	}
@@ -417,98 +419,50 @@ bool HoneycombHandler::check_column_being_renamed(const TABLE* table)
 	return false;
 }
 
-int HoneycombHandler::add_index(Alter_inplace_info* ha_alter_info)
+int HoneycombHandler::add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys,
+    handler_add_index **add)
 {
-	const char* location = "HoneycombHandler::add_index";
-	DBUG_ENTER(location);
-	attach_thread(jvm, &env, location);
-	int ret = 0;
-	IndexSchema schema;
-	for (uint i = 0; i < ha_alter_info->index_add_count; i++)
-	{
-		JavaFrame frame(env, 2);
-		KEY* key =
-				&ha_alter_info->key_info_buffer[ha_alter_info->index_add_buffer[i]];
-		for (KEY_PART_INFO *key_part = key->key_part;
-				key_part < key->key_part + key->actual_key_parts; key_part++)
-			key_part->field = table->field[key_part->fieldnr];
+  const char* location = "HoneycombHandler::add_index";
+  DBUG_ENTER(location);
+  attach_thread(jvm, &env, location);
+  int ret = 0;
+  IndexSchema schema;
+  for(uint k = 0; k < num_of_keys; k++)
+  {
+    JavaFrame frame(env, 2);
+    KEY* key = key_info + k;
+    jstring index_name = string_to_java_string(env, key->name);
+    pack_index_schema(schema, *key);
 
-		jstring index_name = string_to_java_string(env, key->name);
-		pack_index_schema(schema, *key);
+    if (key->flags & HA_NOSAME)
+    {
+      // We don't support adding unique indices without a table rebuild
+      DBUG_RETURN(HA_ERR_WRONG_COMMAND);
+    }
 
-		if (key->flags & HA_NOSAME)
-		{
-			// We don't support adding unique indices without a table rebuild
-			DBUG_RETURN(HA_ERR_WRONG_COMMAND);
-		}
+    jbyteArray serialized_schema = serialize_to_java(env, schema);
 
-		jbyteArray serialized_schema = serialize_to_java(env, schema);
-
-		this->env->CallVoidMethod(handler_proxy,
-				cache->handler_proxy().add_index, index_name,
-				serialized_schema);
-		ret |= check_exceptions(env, cache, location);
-	}
-	detach_thread(jvm);
-	DBUG_RETURN(ret);
+    this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().add_index,
+        index_name, serialized_schema);
+    ret |= check_exceptions(env, cache, location);
+  }
+  detach_thread(jvm);
+  DBUG_RETURN(ret);
 }
 
-int HoneycombHandler::drop_index(Alter_inplace_info* ha_alter_info)
+int HoneycombHandler::prepare_drop_index(TABLE *table, uint *key_num, uint num_of_keys)
 {
-	const char* location = "HoneycombHandler::prepare_drop_index";
-	DBUG_ENTER(location);
-	attach_thread(jvm, &env, location);
-	int ret = 0;
-	for (uint i = 0; i < ha_alter_info->index_drop_count; i++)
-	{
-		JavaFrame frame(env, 1);
-		jstring index_name = string_to_java_string(env,
-				ha_alter_info->index_drop_buffer[i]->name);
-		this->env->CallVoidMethod(handler_proxy,
-				cache->handler_proxy().drop_index, index_name);
-		ret |= check_exceptions(env, cache, location);
-	}
-	detach_thread(jvm);
-	DBUG_RETURN(ret);
+  const char* location = "HoneycombHandler::prepare_drop_index";
+  DBUG_ENTER(location);
+  attach_thread(jvm, &env, location);
+  int ret = 0;
+  for (uint i = 0; i < num_of_keys; i++) {
+    JavaFrame frame(env, 1);
+    jstring index_name = string_to_java_string(env, (table->key_info + key_num[i])->name);
+    this->env->CallVoidMethod(handler_proxy, cache->handler_proxy().drop_index,
+        index_name);
+    ret |= check_exceptions(env, cache, location);
+  }
+  detach_thread(jvm);
+  DBUG_RETURN(ret);
 }
-
-static const Alter_inplace_info::HA_ALTER_FLAGS ERROR_ALTER_FLAGS =
-		Alter_inplace_info::ADD_FOREIGN_KEY
-				| Alter_inplace_info::DROP_FOREIGN_KEY
-				| Alter_inplace_info::ADD_PARTITION
-				| Alter_inplace_info::DROP_PARTITION
-				| Alter_inplace_info::ALTER_PARTITION
-				| Alter_inplace_info::COALESCE_PARTITION
-				| Alter_inplace_info::REORGANIZE_PARTITION
-				| Alter_inplace_info::ALTER_TABLE_REORG
-				| Alter_inplace_info::ALTER_REMOVE_PARTITIONING
-				| Alter_inplace_info::ALTER_ALL_PARTITION;
-
-enum_alter_inplace_result HoneycombHandler::check_if_supported_inplace_alter(
-		TABLE* altered_table, Alter_inplace_info* ha_alter_info)
-{
-	if (ha_alter_info->handler_flags & ERROR_ALTER_FLAGS)
-		return HA_ALTER_ERROR;
-	if (ha_alter_info->handler_flags
-			& (Alter_inplace_info::ADD_INDEX | Alter_inplace_info::DROP_INDEX))
-		return HA_ALTER_INPLACE_EXCLUSIVE_LOCK;
-	return HA_ALTER_INPLACE_NOT_SUPPORTED;
-}
-
-
-bool HoneycombHandler::inplace_alter_table(TABLE* altered_table,
-		Alter_inplace_info* ha_alter_info)
-{
-	if (ha_alter_info->handler_flags & Alter_inplace_info::ADD_INDEX)
-	{
-		add_index(ha_alter_info);
-	}
-
-	if (ha_alter_info->handler_flags & Alter_inplace_info::DROP_INDEX)
-	{
-		drop_index(ha_alter_info);
-	}
-
-	return false;
-}
-

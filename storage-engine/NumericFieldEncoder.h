@@ -6,6 +6,8 @@ class NumericFieldEncoder : public FieldEncoder
 {
 private:
 	void encode_year(uchar* key, uchar* buffer, size_t field_size);
+	bool is_time_field();
+
 public:
 	NumericFieldEncoder(Field& field);
 	~NumericFieldEncoder();

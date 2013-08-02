@@ -59,7 +59,7 @@ int HoneycombHandler::index_read_map(uchar * buf, const uchar * key,
 
   KEY *key_info = table->s->key_info + this->active_index;
   KEY_PART_INFO *key_part = key_info->key_part;
-  KEY_PART_INFO *end_key_part = key_part + key_info->actual_key_parts;
+  KEY_PART_INFO *end_key_part = key_part + get_key_parts(*key_info);
 
   index_key.set_type(query_type);
   index_key.set_name(key_info->name);

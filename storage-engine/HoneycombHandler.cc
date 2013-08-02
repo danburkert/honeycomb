@@ -216,7 +216,7 @@ int HoneycombHandler::info(uint flag)
 
     for (uint i = 0; i < this->table->s->keys; i++)
     {
-      for (uint j = 0; j < table->key_info[i].actual_key_parts; j++)
+      for (uint j = 0; j < get_key_parts(table->key_info[i]); j++)
       {
         rec_per_key = stats.records / 10;
 
@@ -359,7 +359,7 @@ int HoneycombHandler::analyze(THD* thd, HA_CHECK_OPT* check_opt)
 
   for (uint i = 0; i < this->table->s->keys; i++)
   {
-    for (uint j = 0; j < table->key_info[i].actual_key_parts; j++)
+    for (uint j = 0; j < get_key_parts(table->key_info[i]); j++)
     {
       this->table->key_info[i].rec_per_key[j] = 1;
     }

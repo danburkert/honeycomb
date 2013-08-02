@@ -101,6 +101,7 @@ class HoneycombHandler : public handler
     /* IUD helper methods*/
     bool violates_uniqueness(jbyteArray serialized_row);
     int pack_row(uchar *buf, TABLE* table, Row& row);
+	const unsigned int get_key_parts(const KEY& key);
 
   public:
     /* HoneycombHandler */
@@ -165,10 +166,8 @@ class HoneycombHandler : public handler
     int rename_table(const char *from, const char *to);
     bool check_if_incompatible_data(HA_CREATE_INFO *create_info, uint table_changes);
     void update_create_info(HA_CREATE_INFO* create_info);
-    enum_alter_inplace_result check_if_supported_inplace_alter(TABLE* altered_table, Alter_inplace_info* ha_alter_info);
-    int add_index(Alter_inplace_info* ha_alter_info);
-    int drop_index(Alter_inplace_info* ha_alter_info);
-    bool inplace_alter_table(TABLE* altered_table, Alter_inplace_info* ha_alter_info);
+    int prepare_drop_index(TABLE *table_arg, uint *key_num, uint num_of_keys);
+    int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys, handler_add_index **add);
 
     /* IUD */
     int write_row(uchar *buf);
