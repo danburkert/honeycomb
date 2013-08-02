@@ -1,6 +1,6 @@
 DROP TABLE IF EXISTS t1;
 Warnings:
-Note	1051	Unknown table 'test.t1'
+Note	1051	Unknown table 't1'
 CREATE TABLE t1 (c INT);
 INSERT INTO t1 VALUES (0), (1), (2), (3);
 SELECT * FROM t1 ORDER BY c;
@@ -119,7 +119,7 @@ SELECT * FROM t1;
 c1
 DROP TABLE IF EXISTS t1, t2;
 Warnings:
-Note	1051	Unknown table 'test.t2'
+Note	1051	Unknown table 't2'
 CREATE TABLE t1 (c1 INT, UNIQUE(c1));
 CREATE TABLE t2 (c1 INT, UNIQUE(c1));
 INSERT INTO t1 VALUES (1);
@@ -281,9 +281,9 @@ END//
 REPLACE INTO t1(c1,c2) VALUES(1,2);
 DROP TABLE IF EXISTS users, posts, posts_users;
 Warnings:
-Note	1051	Unknown table 'test.users'
-Note	1051	Unknown table 'test.posts'
-Note	1051	Unknown table 'test.posts_users'
+Note	1051	Unknown table 'users'
+Note	1051	Unknown table 'posts'
+Note	1051	Unknown table 'posts_users'
 CREATE TABLE users (
 id int,
 PRIMARY KEY (id));
