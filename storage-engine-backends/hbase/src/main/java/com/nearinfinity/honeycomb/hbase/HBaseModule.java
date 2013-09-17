@@ -25,7 +25,6 @@ package com.nearinfinity.honeycomb.hbase;
 import com.google.inject.AbstractModule;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
-import com.google.inject.name.Names;
 import com.nearinfinity.honeycomb.Store;
 import com.nearinfinity.honeycomb.Table;
 import com.nearinfinity.honeycomb.config.BackendType;
@@ -33,7 +32,7 @@ import com.nearinfinity.honeycomb.exceptions.RuntimeIOException;
 import com.nearinfinity.honeycomb.hbase.config.HBaseProperties;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.HTablePool;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -44,7 +43,6 @@ import java.util.Map;
  */
 public class HBaseModule extends AbstractModule {
     private static final Logger logger = Logger.getLogger(HBaseModule.class);
-    private final HTableProvider hTableProvider;
     private final Configuration configuration;
 
     public HBaseModule(final Map<String, String> options) {
@@ -54,8 +52,6 @@ public class HBaseModule extends AbstractModule {
         for (Map.Entry<String, String> option : options.entrySet()) {
             configuration.set(option.getKey(), option.getValue());
         }
-
-        hTableProvider = new HTableProvider(configuration);
 
         try {
             TableCreator.createTable(configuration);
@@ -77,13 +73,8 @@ public class HBaseModule extends AbstractModule {
                 .implement(Table.class, HBaseTable.class)
                 .build(HBaseTableFactory.class));
 
-        bind(HTableProvider.class).toInstance(hTableProvider);
-        bind(HTableInterface.class).toProvider(hTableProvider);
-
-        bind(Long.class).annotatedWith(Names.named(HBaseProperties.WRITE_BUFFER))
-                .toInstance(configuration.getLong(HBaseProperties.WRITE_BUFFER,
-                        HBaseProperties.DEFAULT_WRITE_BUFFER));
-        bind(String.class).annotatedWith(Names.named(HBaseProperties.COLUMN_FAMILY))
-                .toInstance(configuration.get(HBaseProperties.COLUMN_FAMILY));
+        bind(HTablePool.class).toInstance(new HTablePool(configuration,
+                configuration.getInt(HBaseProperties.TABLE_POOL_SIZE, HBaseProperties.DEFAULT_TABLE_POOL_SIZE),
+                new ConfiguredTableCreator()));
     }
 }

@@ -26,26 +26,19 @@ import com.google.common.base.Objects;
 
 
 /**
- * Runtime exception used to indicate that a table could not be found
- * for a specific table name or table identifier
+ * Runtime exception used to indicate that a table could not be found.
  */
 public class TableNotFoundException extends RuntimeException {
     private String name;
-    private long id;
 
     public TableNotFoundException(String name) {
         this.name = name;
-    }
-
-    public TableNotFoundException(Long tableId) {
-        id = tableId;
     }
 
     @Override
     public String toString() {
         return Objects.toStringHelper(this.getClass())
                 .add("Name", name)
-                .add("Id", id)
                 .toString();
     }
 }

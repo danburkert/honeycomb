@@ -38,11 +38,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * An HBase backed {@link Store}
  */
 public class HBaseStore implements Store {
-    private final static ReadWriteLock rowsLock = new ReentrantReadWriteLock();
     private final static ReadWriteLock autoIncrementLock = new ReentrantReadWriteLock();
-    private final HBaseMetadata metadata;
+    private final MultiTableHBaseMetadata metadata;
     private final HBaseTableFactory tableFactory;
     private final MetadataCache cache;
+    private final HTableManager tableManager;
 
     /**
      * Construct a HBase store with metadata, a table factory and metadata cache.
@@ -52,51 +52,21 @@ public class HBaseStore implements Store {
      * @param cache        Metadata cache
      */
     @Inject
-    public HBaseStore(HBaseMetadata metadata, HBaseTableFactory tableFactory, MetadataCache cache) {
+    public HBaseStore(MultiTableHBaseMetadata metadata, HTableManager tableManager, HBaseTableFactory tableFactory, MetadataCache cache) {
         this.metadata = metadata;
         this.tableFactory = tableFactory;
         this.cache = cache;
-    }
-
-    /**
-     * Retrieve a table's ID by its table name.
-     *
-     * @param tableName Table name
-     * @return Table ID
-     */
-    public long getTableId(String tableName) {
-        return metadata.getTableId(tableName);
-    }
-
-    /**
-     * Retrieve the index ID for a specific table by its name.
-     *
-     * @param tableId   Table ID
-     * @param indexName Index name
-     * @return Index ID
-     */
-    public long getIndexId(long tableId, String indexName) {
-        return cache.indicesCacheGet(tableId).get(indexName);
-    }
-
-    /**
-     * Retrieve the schema for a table by its ID.
-     *
-     * @param tableId Table ID
-     * @return Table schema
-     */
-    public TableSchema getSchema(Long tableId) {
-        return cache.schemaCacheGet(tableId);
+        this.tableManager = tableManager;
     }
 
     @Override
     public Table openTable(String tableName) {
-        return tableFactory.createTable(cache.tableCacheGet(tableName));
+        return tableFactory.createTable(cache.idCacheGet(tableName));
     }
 
     @Override
     public TableSchema getSchema(String tableName) {
-        return cache.schemaCacheGet(cache.tableCacheGet(tableName));
+        return cache.schemaCacheGet(cache.idCacheGet(tableName));
     }
 
     @Override
@@ -106,11 +76,11 @@ public class HBaseStore implements Store {
 
     @Override
     public void deleteTable(String tableName) {
-        long tableId = cache.tableCacheGet(tableName);
+        long tableId = cache.idCacheGet(tableName);
         cache.invalidateTableCache(tableName);
         cache.invalidateColumnsCache(tableId);
         cache.invalidateSchemaCache(tableId);
-        metadata.deleteTable(tableName);
+        metadata.dropTable(tableName);
     }
 
     @Override
@@ -119,7 +89,7 @@ public class HBaseStore implements Store {
 
         checkNotNull(schema);
 
-        final long tableId = cache.tableCacheGet(tableName);
+        final long tableId = cache.idCacheGet(tableName);
 
         metadata.createTableIndex(tableId, schema);
         cache.invalidateSchemaCache(tableId);
@@ -131,7 +101,7 @@ public class HBaseStore implements Store {
         Verify.isNotNullOrEmpty(tableName, "The table name is invalid");
         Verify.isNotNullOrEmpty(indexName, "The index name is invalid");
 
-        final long tableId = cache.tableCacheGet(tableName);
+        final long tableId = cache.idCacheGet(tableName);
 
         metadata.deleteTableIndex(tableId, indexName);
         cache.invalidateSchemaCache(tableId);
@@ -140,7 +110,7 @@ public class HBaseStore implements Store {
 
     @Override
     public void renameTable(String curTableName, String newTableName) {
-        long tableId = cache.tableCacheGet(curTableName);
+        long tableId = cache.idCacheGet(curTableName);
         metadata.renameExistingTable(curTableName, newTableName);
         cache.invalidateTableCache(curTableName);
         cache.invalidateColumnsCache(tableId);
@@ -149,7 +119,7 @@ public class HBaseStore implements Store {
 
     @Override
     public long getAutoInc(String tableName) {
-        long tableId = cache.tableCacheGet(tableName);
+        long tableId = cache.idCacheGet(tableName);
         try {
             autoIncrementLock.readLock().lock();
             return cache.autoIncCacheGet(tableId);
@@ -160,7 +130,7 @@ public class HBaseStore implements Store {
 
     @Override
     public void setAutoInc(String tableName, long value) {
-        long tableId = cache.tableCacheGet(tableName);
+        long tableId = cache.idCacheGet(tableName);
         try {
             autoIncrementLock.writeLock().lock();
             long current = cache.autoIncCacheGet(tableId);
@@ -175,7 +145,7 @@ public class HBaseStore implements Store {
 
     @Override
     public long incrementAutoInc(String tableName, long amount) {
-        long tableId = cache.tableCacheGet(tableName);
+        long tableId = cache.idCacheGet(tableName);
         long value;
         try {
             autoIncrementLock.writeLock().lock();
@@ -189,7 +159,7 @@ public class HBaseStore implements Store {
 
     @Override
     public void truncateAutoInc(String tableName) {
-        long tableId = cache.tableCacheGet(tableName);
+        long tableId = cache.idCacheGet(tableName);
         try {
             autoIncrementLock.writeLock().lock();
             metadata.setAutoInc(tableId, 1);

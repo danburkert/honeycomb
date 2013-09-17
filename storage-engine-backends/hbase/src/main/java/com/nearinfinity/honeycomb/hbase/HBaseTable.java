@@ -60,6 +60,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * An HBase backed {@link Table}
  */
 public class HBaseTable implements Table {
+    private final String tableName;
+    private final String tableId;
     private final HTableInterface hTable;
     private final HBaseStore store;
     private final long tableId;
@@ -68,9 +70,9 @@ public class HBaseTable implements Table {
     private String columnFamily;
 
     @Inject
-    public HBaseTable(HTableInterface hTable, HBaseStore store, MutationFactory mutationFactory, @Assisted Long tableId) {
-        Verify.isValidId(tableId);
-        this.hTable = checkNotNull(hTable);
+    public HBaseTable(HBaseStore store, HTableInterfaceFactory factory, MutationFactory mutationFactory, @Assisted String tableName) {
+        Verify.isNotNullOrEmpty(tableName);
+        this.hTable = factory.
         this.store = checkNotNull(store);
         this.tableId = tableId;
         this.mutationFactory = mutationFactory;

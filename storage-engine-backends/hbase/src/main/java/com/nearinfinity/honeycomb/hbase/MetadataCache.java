@@ -29,190 +29,150 @@ import com.google.common.collect.BiMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.nearinfinity.honeycomb.mysql.schema.TableSchema;
-import com.nearinfinity.honeycomb.util.Verify;
 import net.jcip.annotations.ThreadSafe;
 import org.apache.log4j.Logger;
 
 import java.util.Map;
 
 /**
- * Caches metadata about tables to reduce HBase lookups.
+ * Cache holding metadata about Honeycomb tables in the HBase backend
  */
 @Singleton
 @ThreadSafe
 public class MetadataCache {
     private static final Logger logger = Logger.getLogger(MetadataCache.class);
-    private final LoadingCache<String, Long> tableCache;
-    private final LoadingCache<Long, BiMap<String, Long>> columnsCache;
-    private final LoadingCache<Long, Long> autoIncCache;
-    private final LoadingCache<Long, TableSchema> schemaCache;
-    private final LoadingCache<Long, Map<String, Long>> indicesCache;
+    private final LoadingCache<String, String> idCache;
+    private final LoadingCache<String, BiMap<String, Long>> columnsCache;
+    private final LoadingCache<String, Map<String, Long>> indicesCache;
+    private final LoadingCache<String, Long> autoIncCache;
+    private final LoadingCache<String, TableSchema> schemaCache;
 
     @Inject
-    public MetadataCache(final HBaseMetadata metadata) {
-        tableCache = CacheBuilder
+    public MetadataCache(final MultiTableHBaseMetadata metadata) {
+        idCache = CacheBuilder
                 .newBuilder()
-                .build(new CacheLoader<String, Long>() {
+                .build(new CacheLoader<String, String>() {
                     @Override
-                    public Long load(String tableName) {
+                    public String load(String tableName) {
                         return metadata.getTableId(tableName);
                     }
                 });
 
         columnsCache = CacheBuilder
                 .newBuilder()
-                .build(new CacheLoader<Long, BiMap<String, Long>>() {
+                .build(new CacheLoader<String, BiMap<String, Long>>() {
                     @Override
-                    public BiMap<String, Long> load(Long tableId) {
-                        return metadata.getColumnIds(tableId);
+                    public BiMap<String, Long> load(String tableName) {
+                        return metadata.getColumnIds(tableName);
                     }
                 }
                 );
 
         indicesCache = CacheBuilder
                 .newBuilder()
-                .build(new CacheLoader<Long, Map<String, Long>>() {
+                .build(new CacheLoader<String, Map<String, Long>>() {
                     @Override
-                    public Map<String, Long> load(Long tableId) {
-                        return metadata.getIndexIds(tableId);
+                    public Map<String, Long> load(String tableName) {
+                        return metadata.getIndexIds(tableName);
                     }
                 });
 
         autoIncCache = CacheBuilder
                 .newBuilder()
-                .build(new CacheLoader<Long, Long>() {
+                .build(new CacheLoader<String, Long>() {
                     @Override
-                    public Long load(Long tableId) {
-                        return metadata.getAutoInc(tableId);
+                    public Long load(String tableName) {
+                        return metadata.getAutoInc(tableName);
                     }
                 }
                 );
 
         schemaCache = CacheBuilder
                 .newBuilder()
-                .build(new CacheLoader<Long, TableSchema>() {
+                .build(new CacheLoader<String, TableSchema>() {
                     @Override
-                    public TableSchema load(Long tableId) {
-                        return metadata.getSchema(tableId);
+                    public TableSchema load(String tableName) {
+                        return metadata.getSchema(tableName);
                     }
                 }
                 );
     }
 
     /**
-     * Retrieve a table ID from the cache based on the table name.
-     *
-     * @param tableName Name of the table (cannot be null/empty)
-     * @return Table ID
+     * Retrieve the table's cached ID
      */
-    public long tableCacheGet(final String tableName) {
-        Verify.isNotNullOrEmpty(tableName);
-        return cacheGet(tableCache, tableName);
+    public String idCacheGet(final String tableName) {
+        return cacheGet(idCache, tableName);
     }
 
     /**
-     * Retrieve a BiMap of column name to column ID from cache based on table ID.
-     *
-     * @param tableId Table ID
-     * @return BiMap of column name to column ID
+     * Retrieve the table's cached BiMap of column name to column ID
      */
-    public BiMap<String, Long> columnsCacheGet(final long tableId) {
-        Verify.isValidId(tableId);
-        return cacheGet(columnsCache, tableId);
+    public BiMap<String, Long> columnsCacheGet(String tableName) {
+        return cacheGet(columnsCache, tableName);
     }
 
     /**
-     * Retrieve a table schema from cache based on table ID.
-     *
-     * @param tableId Table ID
-     * @return Table schema
+     * Retrieve the table's cached schema
      */
-    public TableSchema schemaCacheGet(final long tableId) {
-        Verify.isValidId(tableId);
-        return cacheGet(schemaCache, tableId);
+    public TableSchema schemaCacheGet(String tableName) {
+        return cacheGet(schemaCache, tableName);
     }
 
     /**
-     * Retrieve a map of index name to index ID from cache based on a table ID.
-     *
-     * @param tableId Table ID
-     * @return Map of index name to index ID
+     * Retrieve the table's cached map of index name to index id
      */
-    public Map<String, Long> indicesCacheGet(Long tableId) {
-        Verify.isValidId(tableId);
-        return cacheGet(indicesCache, tableId);
+    public Map<String, Long> indicesCacheGet(String tableName) {
+        return cacheGet(indicesCache, tableName);
     }
 
     /**
-     * Retrieve the auto increment count for a table from cache.
-     *
-     * @param tableId Table ID
-     * @return Auto increment count
+     * Retrieve the table's cached auto increment value
      */
-    public Long autoIncCacheGet(Long tableId) {
-        Verify.isValidId(tableId);
-        return cacheGet(autoIncCache, tableId);
+    public Long autoIncCacheGet(String tableName) {
+        return cacheGet(autoIncCache, tableName);
     }
 
     /**
-     * Evict the index mapping from the cache for the specified table id
-     *
-     * @param tableId Table ID
+     * Evict the table's cached index map
      */
-    public void invalidateIndicesCache(long tableId) {
-        Verify.isValidId(tableId);
-        indicesCache.invalidate(tableId);
+    public void invalidateIndicesCache(String tableName) {
+        indicesCache.invalidate(tableName);
     }
 
     /**
-     * Evict the {@link TableSchema} from the cache for the specified table id
-     *
-     * @param tableId Table ID
+     * Evict the table's cached {@link TableSchema}
      */
-    public void invalidateSchemaCache(long tableId) {
-        Verify.isValidId(tableId);
-        schemaCache.invalidate(tableId);
+    public void invalidateSchemaCache(String tableName) {
+        schemaCache.invalidate(tableName);
     }
 
     /**
-     * Evict a table's columns cache.
-     *
-     * @param tableId Table ID
+     * Evict the table's cached columns
      */
-    public void invalidateColumnsCache(long tableId) {
-        Verify.isValidId(tableId);
-        columnsCache.invalidate(tableId);
+    public void invalidateColumnsCache(String tableName) {
+        columnsCache.invalidate(tableName);
     }
 
     /**
-     * Evict a table's metadata from the cache.
-     *
-     * @param tableName Table name
+     * Evict the table's cached id
      */
     public void invalidateTableCache(String tableName) {
-        Verify.isNotNullOrEmpty(tableName);
-        tableCache.invalidate(tableName);
+        idCache.invalidate(tableName);
     }
 
     /**
-     * Evict a table's auto increment count from the cache.
-     *
-     * @param tableId Table ID
+     * Evict the table's cached auto increment value
      */
-    public void invalidateAutoIncCache(long tableId) {
-        Verify.isValidId(tableId);
-        autoIncCache.invalidate(tableId);
+    public void invalidateAutoIncCache(String tableName) {
+        autoIncCache.invalidate(tableName);
     }
 
     /**
-     * Updates a table's auto increment value in cache.
-     *
-     * @param tableId Table ID
-     * @param value   New auto increment value
+     * Update the table's cached auto increment value
      */
-    public void updateAutoIncCache(long tableId, long value) {
-        Verify.isValidId(tableId);
-        autoIncCache.put(tableId, value);
+    public void updateAutoIncCache(String tableName, long value) {
+        autoIncCache.put(tableName, value);
     }
 
     private static <K, V> V cacheGet(LoadingCache<K, V> cache, K key) {
